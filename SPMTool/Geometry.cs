@@ -6,11 +6,11 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Colors;
 
 // This line is not mandatory, but improves loading performances
-[assembly: CommandClass(typeof(SPMTool.geometry))]
+[assembly: CommandClass(typeof(SPMTool.Geometry))]
 
 namespace SPMTool
 {
-    public class geometry
+    public class Geometry
     {
         [CommandMethod("AddNode")]
         public void AddNode()
