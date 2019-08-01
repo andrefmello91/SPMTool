@@ -25,80 +25,68 @@ namespace SPMTool
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
-                try
+                // Open the Layer table for read
+                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                string nodeLayer = "Node";
+
+                // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+
+                if (lyrTbl.Has(nodeLayer) == false)
                 {
-
-                    // Open the Layer table for read
-                    LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-                    string nodeLayer = "Node";
-
-                    // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-
-                    if (lyrTbl.Has(nodeLayer) == false)
+                    using (LayerTableRecord lyrTblRec = new LayerTableRecord())
                     {
-                        using (LayerTableRecord lyrTblRec = new LayerTableRecord())
-                        {
-                            // Assign the layer the ACI color 1 (red) and a name
-                            lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 1);
-                            lyrTblRec.Name = nodeLayer;
+                        // Assign the layer the ACI color 1 (red) and a name
+                        lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 1);
+                        lyrTblRec.Name = nodeLayer;
 
-                            // Upgrade the Layer table for write
-                            trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
+                        // Upgrade the Layer table for write
+                        trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
 
-                            // Append the new layer to the Layer table and the transaction
-                            lyrTbl.Add(lyrTblRec);
-                            trans.AddNewlyCreatedDBObject(lyrTblRec, true);
-                        }
+                        // Append the new layer to the Layer table and the transaction
+                        lyrTbl.Add(lyrTblRec);
+                        trans.AddNewlyCreatedDBObject(lyrTblRec, true);
                     }
-
-                    // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                    // Open the Block table record Model space for write
-                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                    // Create the node in Model space
-                    // Tell user to insert the point:
-                    PromptPointOptions pickPoint = new PromptPointOptions("Pick point or enter coordinates: ");
-                    PromptPointResult pointResult = ed.GetPoint(pickPoint);
-
-                    // If user inserted the point:
-                    if ((pointResult.Status == PromptStatus.OK))
-                    {
-                        // Create the node and set its layer to Node:
-
-                        DBPoint newNode = new DBPoint(pointResult.Value);
-                        newNode.Layer = nodeLayer;
-
-                        // Add the new object to the block table record and the transaction
-                        blkTblRec.AppendEntity(newNode);
-                        trans.AddNewlyCreatedDBObject(newNode, true);
-                    }
-
-                    // Set the style for all point objects in the drawing
-                    curDb.Pdmode = 32;
-                    curDb.Pdsize = 50;
-
-                    // Save the new object to the database
-                    trans.Commit();
                 }
 
-                catch (Exception ex)
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Open the Block table record Model space for write
+                BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                // Create the node in Model space
+                // Tell user to insert the point:
+                PromptPointOptions pickPoint = new PromptPointOptions("Pick point or enter coordinates: ");
+                PromptPointResult pointResult = ed.GetPoint(pickPoint);
+
+                // If user inserted the point:
+                if ((pointResult.Status == PromptStatus.OK))
                 {
-                    // a problem occurred, lets print it 
-                    ed.WriteMessage("a problem occurred because " + ex.Message);
+                    // Create the node and set its layer to Node:
+
+                    DBPoint newNode = new DBPoint(pointResult.Value);
+                    newNode.Layer = nodeLayer;
+
+                    // Add the new object to the block table record and the transaction
+                    blkTblRec.AppendEntity(newNode);
+                    trans.AddNewlyCreatedDBObject(newNode, true);
                 }
 
-                finally
-                {
-                    // whatever happens we must dispose the transaction 
+                // Set the style for all point objects in the drawing
+                curDb.Pdmode = 32;
+                curDb.Pdsize = 50;
 
-                    trans.Dispose();
+                // Save the new object to the database
+                trans.Commit();
 
-                }
+                // Dispose the transaction 
+
+                trans.Dispose();
+
             }
         }
+
 
         [CommandMethod("AddStringer")]
         public static void AddStringer()
@@ -130,67 +118,57 @@ namespace SPMTool
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
-                try
+                // Open the Layer table for read
+                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                string stringerLayer = "Stringer";
+
+                // Check if the layer Stringer already exists in the drawing. If it doesn't, then it's created:
+                if (lyrTbl.Has(stringerLayer) == false)
                 {
-                    // Open the Layer table for read
-                    LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-                    string stringerLayer = "Stringer";
-
-                    // Check if the layer Stringer already exists in the drawing. If it doesn't, then it's created:
-                    if (lyrTbl.Has(stringerLayer) == false)
+                    using (LayerTableRecord lyrTblRec = new LayerTableRecord())
                     {
-                        using (LayerTableRecord lyrTblRec = new LayerTableRecord())
-                        {
-                            // Assign the layer the ACI color 1 (cyan) and a name
-                            lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 4);
-                            lyrTblRec.Name = stringerLayer;
+                        // Assign the layer the ACI color 1 (cyan) and a name
+                        lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 4);
+                        lyrTblRec.Name = stringerLayer;
 
-                            // Upgrade the Layer table for write
-                            trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
+                        // Upgrade the Layer table for write
+                        trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
 
-                            // Append the new layer to the Layer table and the transaction
-                            lyrTbl.Add(lyrTblRec);
-                            trans.AddNewlyCreatedDBObject(lyrTblRec, true);
-                        }
+                        // Append the new layer to the Layer table and the transaction
+                        lyrTbl.Add(lyrTblRec);
+                        trans.AddNewlyCreatedDBObject(lyrTblRec, true);
                     }
-
-                    // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                    // Open the Block table record Model space for write
-                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                    // Create the line in Model space
-
-                    using (Line newStringer = new Line(strStart, strEnd))
-                    {
-                        // Set the layer to stringer
-                        newStringer.Layer = stringerLayer;
-
-                        // Add the line to the drawing
-                        blkTblRec.AppendEntity(newStringer);
-                        trans.AddNewlyCreatedDBObject(newStringer, true);
-                    }
-
-                    // Save the new object to the database
-                    trans.Commit();
                 }
-                
-                catch (Exception ex)
+
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Open the Block table record Model space for write
+                BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                // Create the line in Model space
+
+                using (Line newStringer = new Line(strStart, strEnd))
                 {
-                    // a problem occurred, lets print it 
-                    ed.WriteMessage("a problem occurred because " + ex.Message);
+                    // Set the layer to stringer
+                    newStringer.Layer = stringerLayer;
+
+                    // Add the line to the drawing
+                    blkTblRec.AppendEntity(newStringer);
+                    trans.AddNewlyCreatedDBObject(newStringer, true);
                 }
 
-                finally
-                {
-                    // whatever happens we must dispose the transaction 
+                // Save the new object to the database
+                trans.Commit();
 
-                    trans.Dispose();
+                // Dispose the transaction 
 
-                }
+                trans.Dispose();
+
+
             }
         }
+
     }
 }
