@@ -28,6 +28,7 @@ namespace SPMTool
 
             // Get the result
             PromptIntegerResult fcRes = ed.GetInteger(fcOp);
+            int fc = fcRes.Value;
 
             // Ask the user to input the concrete Elastic Module
             PromptIntegerOptions EcOp = new PromptIntegerOptions("Input the concrete Elastic Module (Ec) in MPa:");
@@ -38,13 +39,14 @@ namespace SPMTool
 
             // Get the result
             PromptIntegerResult EcRes = ed.GetInteger(EcOp);
+            int Ec = EcRes.Value;
 
             // Save the variables on the Xrecord
             using (Xrecord concXrec = new Xrecord())
             {
                 concXrec.Data = new ResultBuffer(
-                                             new TypedValue(fcRes.Value, 1),
-                                             new TypedValue(EcRes.Value, 2));
+                                             new TypedValue((int)DxfCode.ExtendedDataInteger32, fc),
+                                             new TypedValue((int)DxfCode.ExtendedDataInteger32, Ec));
             }
         }
 
@@ -67,6 +69,7 @@ namespace SPMTool
 
             // Get the result
             PromptIntegerResult fyRes = ed.GetInteger(fyOp);
+            int fy = fyRes.Value;
 
             // Ask the user to input the steel Elastic Module
             PromptIntegerOptions EsOp = new PromptIntegerOptions("Input the steel Elastic Module (Es) in MPa:");
@@ -77,13 +80,14 @@ namespace SPMTool
 
             // Get the result
             PromptIntegerResult EsRes = ed.GetInteger(EsOp);
+            int Es = EsRes.Value;
 
             // Save the variables on the Xrecord
             using (Xrecord steelXrec = new Xrecord())
             {
                 steelXrec.Data = new ResultBuffer(
-                                             new TypedValue(fyRes.Value, 1),
-                                             new TypedValue(EsRes.Value, 2));
+                                             new TypedValue((int)DxfCode.ExtendedDataInteger32, fy),
+                                             new TypedValue((int)DxfCode.ExtendedDataInteger32, Es));
             }
         }
     }

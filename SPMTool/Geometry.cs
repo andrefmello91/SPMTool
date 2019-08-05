@@ -165,7 +165,7 @@ namespace SPMTool
                 // Dispose the transaction 
 
                 trans.Dispose();
-                
+
             }
         }
 
@@ -263,6 +263,338 @@ namespace SPMTool
 
                 // Dispose the transaction 
 
+                trans.Dispose();
+            }
+        }
+
+        [CommandMethod("SetStringerGeometry")]
+        public void SetStringerGeometry()
+        {
+            // Simplified typing for editor:
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+
+            string appName = "SPMTool";
+            string xdataStr = "Stringer data";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Request objects to be selected in the drawing area
+                PromptSelectionResult selRes = ed.GetSelection();
+
+                // If the prompt status is OK, objects were selected
+                if (selRes.Status == PromptStatus.OK)
+                {
+                    SelectionSet set = selRes.Value;
+
+                    // Check if the selected objects are stringers
+                    foreach (SelectedObject obj in set)
+                    {
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                        if (ent.Layer.Equals("Stringer") == false)
+                        {
+                             Application.ShowAlertDialog("You selected objects other than stringers. Also, make sure that all the stringers have the layer 'Stringer' activated. Please select the stringers again.");
+
+                            // Abort the transaction
+                            trans.Abort();
+                        }
+                    }
+
+                    // Open the Registered Applications table for read
+                    RegAppTable acRegAppTbl;
+                    acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                    // Check to see if the Registered Applications table record for the custom app exists
+                    if (acRegAppTbl.Has(appName) == false)
+                    {
+                        using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                        {
+                            acRegAppTblRec.Name = appName;
+
+                            trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                            acRegAppTbl.Add(acRegAppTblRec);
+                            trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+                        }
+                    }
+
+                    // Ask the user to input the stringer width
+                    PromptIntegerOptions strWOp = new PromptIntegerOptions("Input the width (in mm) for the selected stringers");
+
+                    // Restrict input to positive and non-negative values
+                    strWOp.AllowZero = false;
+                    strWOp.AllowNegative = false;
+
+                    // Get the result
+                    PromptIntegerResult strWRes = ed.GetInteger(strWOp);
+                    int strW = strWRes.Value;
+
+                    // Ask the user to input the stringer height
+                    PromptIntegerOptions strHOp = new PromptIntegerOptions("Input the height (in mm) for the selected stringers");
+
+                    // Restrict input to positive and non-negative values
+                    strHOp.AllowZero = false;
+                    strHOp.AllowNegative = false;
+
+                    // Get the result
+                    PromptIntegerResult strHRes = ed.GetInteger(strHOp);
+                    int strH = strHRes.Value;
+
+                    // Calculate the cross-section area
+                    int strArea = strW * strH;
+
+                    // Define the Xdata to add to each selected object
+                    using (ResultBuffer rb = new ResultBuffer())
+                    {
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, strW));
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, strH));
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, strArea));
+
+                        foreach (SelectedObject obj in set)
+                        {
+                            // Open the selected object for write
+                            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForWrite) as Entity;
+
+                            // Append the extended data to each object
+                            ent.XData = rb;
+                        }
+                        
+                    }
+                }
+
+                // Save the new object to the database
+                trans.Commit();
+
+                // Dispose the transaction
+                trans.Dispose();
+            }
+        }
+
+        [CommandMethod("ViewStringerData")]
+        public void ViewStringerData()
+        {
+            // Simplified typing for editor:
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+
+            string appName = "SPMTool";
+            string msgstr = "";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Request objects to be selected in the drawing area
+                PromptSelectionOptions selOps = new PromptSelectionOptions();
+                PromptSelectionResult selRes = ed.GetSelection();
+
+                // If the prompt status is OK, objects were selected
+                if (selRes.Status == PromptStatus.OK)
+                {
+                    SelectionSet set = selRes.Value;
+
+                    // Step through the objects in the selection set
+                    foreach (SelectedObject obj in set)
+                    {
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                        // Get the extended data attached to each object for MY_APP
+                        ResultBuffer rb = ent.GetXDataForApplication(appName);
+
+                        // Make sure the Xdata is not empty
+                        if (rb != null)
+                        {
+                            // Get the values in the xdata
+                            foreach (TypedValue typeVal in rb)
+                            {
+                                msgstr = msgstr + "\n" + typeVal.TypeCode.ToString() + ":" + typeVal.Value;
+                            }
+                        }
+                        else
+                        {
+                            msgstr = "NONE";
+                        }
+
+                        // Display the values returned
+                        Application.ShowAlertDialog(appName + " xdata on " + ent.GetType().ToString() + ":\n" + msgstr);
+
+                        msgstr = "";
+                    }
+                }
+
+                // Ends the transaction and ensures any changes made are ignored
+                trans.Abort();
+
+                // Dispose of the transaction
+                trans.Dispose();
+            }
+        }
+
+        [CommandMethod("SetPanelWidth")]
+        public void SetPanelWidth()
+        {
+            // Simplified typing for editor:
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+
+            string appName = "SPMTool";
+            string xdataStr = "Panel data";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Request objects to be selected in the drawing area
+                PromptSelectionResult selRes = ed.GetSelection();
+
+                // If the prompt status is OK, objects were selected
+                if (selRes.Status == PromptStatus.OK)
+                {
+                    SelectionSet set = selRes.Value;
+
+                    // Check if the selected objects are stringers
+                    foreach (SelectedObject obj in set)
+                    {
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                        if (ent.Layer.Equals("Panel") == false)
+                        {
+                            Application.ShowAlertDialog("You selected objects other than panels. Also, make sure that all the panels have the layer 'Panel' activated. Please select the panels again.");
+
+                            // Abort the transaction
+                            trans.Abort();
+                        }
+                    }
+
+                    // Open the Registered Applications table for read
+                    RegAppTable acRegAppTbl;
+                    acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                    // Check to see if the Registered Applications table record for the custom app exists
+                    if (acRegAppTbl.Has(appName) == false)
+                    {
+                        using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                        {
+                            acRegAppTblRec.Name = appName;
+
+                            trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                            acRegAppTbl.Add(acRegAppTblRec);
+                            trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+                        }
+                    }
+
+                    // Ask the user to input the panel width
+                    PromptIntegerOptions panWOp = new PromptIntegerOptions("Input the width (in mm) for the selected panels");
+
+                    // Restrict input to positive and non-negative values
+                    panWOp.AllowZero = false;
+                    panWOp.AllowNegative = false;
+
+                    // Get the result
+                    PromptIntegerResult panWRes = ed.GetInteger(panWOp);
+                    int panW = panWRes.Value;
+
+                    // Define the Xdata to add to each selected object
+                    using (ResultBuffer rb = new ResultBuffer())
+                    {
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, panW));;
+
+                        SelectionSet objSet = selRes.Value;
+
+                        // Step through the objects in the selection set
+                        foreach (SelectedObject obj in objSet)
+                        {
+                            // Open the selected object for write
+                            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForWrite) as Entity;
+
+                            // Append the extended data to each object
+                            ent.XData = rb;
+                        }
+                    }
+                }
+
+                // Save the new object to the database
+                trans.Commit();
+
+                // Dispose the transaction
+                trans.Dispose();
+            }
+        }
+
+        [CommandMethod("ViewPanelData")]
+        public void ViewPanelData()
+        {
+            // Simplified typing for editor:
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+
+            string appName = "SPMTool";
+            string msgstr = "";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Request objects to be selected in the drawing area
+                PromptSelectionOptions selOps = new PromptSelectionOptions();
+                PromptSelectionResult selRes = ed.GetSelection();
+
+                // If the prompt status is OK, objects were selected
+                if (selRes.Status == PromptStatus.OK)
+                {
+                    SelectionSet set = selRes.Value;
+
+                    // Step through the objects in the selection set
+                    foreach (SelectedObject obj in set)
+                    {
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                        // Get the extended data attached to each object for MY_APP
+                        ResultBuffer rb = ent.GetXDataForApplication(appName);
+
+                        // Make sure the Xdata is not empty
+                        if (rb != null)
+                        {
+                            // Get the values in the xdata
+                            foreach (TypedValue typeVal in rb)
+                            {
+                                msgstr = msgstr + "\n" + typeVal.TypeCode.ToString() + ":" + typeVal.Value;
+                            }
+                        }
+                        else
+                        {
+                            msgstr = "NONE";
+                        }
+
+                        // Display the values returned
+                        Application.ShowAlertDialog(appName + " xdata on " + ent.GetType().ToString() + ":\n" + msgstr);
+
+                        msgstr = "";
+                    }
+                }
+
+                // Ends the transaction and ensures any changes made are ignored
+                trans.Abort();
+
+                // Dispose of the transaction
                 trans.Dispose();
             }
         }
