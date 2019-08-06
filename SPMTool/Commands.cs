@@ -7,11 +7,14 @@ using Autodesk.AutoCAD.Colors;
 
 // This line is not mandatory, but improves loading performances
 [assembly: CommandClass(typeof(SPMTool.Geometry))]
+[assembly: CommandClass(typeof(SPMTool.Material))]
 
 namespace SPMTool
 {
+    // Geometry related commands
     public class Geometry
     {
+
         [CommandMethod("AddNode")]
         public void AddNode()
         {
@@ -163,7 +166,6 @@ namespace SPMTool
                 trans.Commit();
 
                 // Dispose the transaction 
-
                 trans.Dispose();
 
             }
@@ -245,9 +247,9 @@ namespace SPMTool
 
                 // Create the panel as a solid with 4 segments (4 points)
                 using (Solid newPanel = new Solid(new Point3d(pan1Node.ToArray()),
-                                                  new Point3d(pan2Node.ToArray()),
-                                                  new Point3d(pan4Node.ToArray()),
-                                                  new Point3d(pan3Node.ToArray())))
+                                                    new Point3d(pan2Node.ToArray()),
+                                                    new Point3d(pan4Node.ToArray()),
+                                                    new Point3d(pan3Node.ToArray())))
                 {
 
                     // Set the layer to Panel
@@ -262,7 +264,6 @@ namespace SPMTool
                 trans.Commit();
 
                 // Dispose the transaction 
-
                 trans.Dispose();
             }
         }
@@ -277,6 +278,7 @@ namespace SPMTool
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
 
+            // Definition for the Extended Data
             string appName = "SPMTool";
             string xdataStr = "Stringer data";
 
@@ -299,7 +301,7 @@ namespace SPMTool
 
                         if (ent.Layer.Equals("Stringer") == false)
                         {
-                             Application.ShowAlertDialog("You selected objects other than stringers. Also, make sure that all the stringers have the layer 'Stringer' activated. Please select the stringers again.");
+                            Application.ShowAlertDialog("You selected objects other than stringers. Also, make sure that all the stringers have the layer 'Stringer' activated. Please select the stringers again.");
 
                             // Abort the transaction
                             trans.Abort();
@@ -316,7 +318,6 @@ namespace SPMTool
                         using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
                         {
                             acRegAppTblRec.Name = appName;
-
                             trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
                             acRegAppTbl.Add(acRegAppTblRec);
                             trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
@@ -324,37 +325,37 @@ namespace SPMTool
                     }
 
                     // Ask the user to input the stringer width
-                    PromptIntegerOptions strWOp = new PromptIntegerOptions("Input the width (in mm) for the selected stringers");
+                    PromptDoubleOptions strWOp = new PromptDoubleOptions("Input the width (in mm) for the selected stringers");
 
                     // Restrict input to positive and non-negative values
                     strWOp.AllowZero = false;
                     strWOp.AllowNegative = false;
 
                     // Get the result
-                    PromptIntegerResult strWRes = ed.GetInteger(strWOp);
-                    int strW = strWRes.Value;
+                    PromptDoubleResult strWRes = ed.GetDouble(strWOp);
+                    double strW = strWRes.Value;
 
                     // Ask the user to input the stringer height
-                    PromptIntegerOptions strHOp = new PromptIntegerOptions("Input the height (in mm) for the selected stringers");
+                    PromptDoubleOptions strHOp = new PromptDoubleOptions("Input the height (in mm) for the selected stringers");
 
                     // Restrict input to positive and non-negative values
                     strHOp.AllowZero = false;
                     strHOp.AllowNegative = false;
 
                     // Get the result
-                    PromptIntegerResult strHRes = ed.GetInteger(strHOp);
-                    int strH = strHRes.Value;
+                    PromptDoubleResult strHRes = ed.GetDouble(strHOp);
+                    double strH = strHRes.Value;
 
                     // Calculate the cross-section area
-                    int strArea = strW * strH;
+                    double strArea = strW * strH;
 
                     // Define the Xdata to add to each selected object
                     using (ResultBuffer rb = new ResultBuffer())
                     {
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, strW));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, strH));
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, strW));
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, strH));
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, strArea));
 
                         foreach (SelectedObject obj in set)
@@ -365,7 +366,7 @@ namespace SPMTool
                             // Append the extended data to each object
                             ent.XData = rb;
                         }
-                        
+
                     }
                 }
 
@@ -394,7 +395,6 @@ namespace SPMTool
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
                 // Request objects to be selected in the drawing area
-                PromptSelectionOptions selOps = new PromptSelectionOptions();
                 PromptSelectionResult selRes = ed.GetSelection();
 
                 // If the prompt status is OK, objects were selected
@@ -450,6 +450,7 @@ namespace SPMTool
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
 
+            // Definition for the Extended Data
             string appName = "SPMTool";
             string xdataStr = "Panel data";
 
@@ -474,7 +475,7 @@ namespace SPMTool
                         {
                             Application.ShowAlertDialog("You selected objects other than panels. Also, make sure that all the panels have the layer 'Panel' activated. Please select the panels again.");
 
-                            // Abort the transaction
+                            // Abort and the transaction
                             trans.Abort();
                         }
                     }
@@ -489,7 +490,6 @@ namespace SPMTool
                         using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
                         {
                             acRegAppTblRec.Name = appName;
-
                             trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
                             acRegAppTbl.Add(acRegAppTblRec);
                             trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
@@ -497,22 +497,22 @@ namespace SPMTool
                     }
 
                     // Ask the user to input the panel width
-                    PromptIntegerOptions panWOp = new PromptIntegerOptions("Input the width (in mm) for the selected panels");
+                    PromptDoubleOptions panWOp = new PromptDoubleOptions("Input the width (in mm) for the selected panels");
 
                     // Restrict input to positive and non-negative values
                     panWOp.AllowZero = false;
                     panWOp.AllowNegative = false;
 
                     // Get the result
-                    PromptIntegerResult panWRes = ed.GetInteger(panWOp);
-                    int panW = panWRes.Value;
+                    PromptDoubleResult panWRes = ed.GetDouble(panWOp);
+                    double panW = panWRes.Value;
 
                     // Define the Xdata to add to each selected object
                     using (ResultBuffer rb = new ResultBuffer())
                     {
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, panW));;
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, panW));
 
                         SelectionSet objSet = selRes.Value;
 
@@ -599,4 +599,149 @@ namespace SPMTool
             }
         }
     }
+
+    // Material related commands:
+    public class Material
+    {
+        [CommandMethod("SetConcreteParameters")]
+        public static void SetConcreteParameters()
+        {
+            // Simplified typing for editor:
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+
+            // Definition for the Extended Data
+            string appName = "SPMTool";
+            string xdataStr = "Concrete data";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Ask the user to input the concrete compressive strength
+                PromptDoubleOptions fcOp = new PromptDoubleOptions("Input the concrete compressive strength (fc) in MPa:");
+
+                // Restrict input to positive and non-negative values
+                fcOp.AllowZero = false;
+                fcOp.AllowNegative = false;
+
+                // Get the result
+                PromptDoubleResult fcRes = ed.GetDouble(fcOp);
+                double fc = fcRes.Value;
+
+                // Ask the user to input the concrete Elastic Module
+                PromptDoubleOptions EcOp = new PromptDoubleOptions("Input the concrete Elastic Module (Ec) in MPa:");
+
+                // Restrict input to positive and non-negative values
+                EcOp.AllowZero = false;
+                EcOp.AllowNegative = false;
+
+                // Get the result
+                PromptDoubleResult EcRes = ed.GetDouble(EcOp);
+                double Ec = EcRes.Value;
+
+                // Open the Registered Applications table for read
+                RegAppTable acRegAppTbl;
+                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                // Check to see if the Registered Applications table record for the custom app exists
+                if (acRegAppTbl.Has(appName) == false)
+                {
+                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                    {
+                        acRegAppTblRec.Name = appName;
+                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                        acRegAppTbl.Add(acRegAppTblRec);
+                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+                    }
+                }
+
+                // Save the variables on the Xrecord
+                using (ResultBuffer rb = new ResultBuffer())
+                {
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, fc));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, Ec));
+
+                    // Create and add data to an Xrecord
+                    Xrecord concXrec = new Xrecord();
+                    concXrec.Data = rb;
+                }
+            }
+        }
+
+        [CommandMethod("SetSteelParameters")]
+        public static void SetSteelParameters()
+        {
+            // Simplified typing for editor:
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+
+            // Definition for the Extended Data
+            string appName = "SPMTool";
+            string xdataStr = "Steel data";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Ask the user to input the steel tensile strength
+                PromptDoubleOptions fyOp = new PromptDoubleOptions("Input the steel tensile strength (fy) in MPa:");
+
+                // Restrict input to positive and non-negative values
+                fyOp.AllowZero = false;
+                fyOp.AllowNegative = false;
+
+                // Get the result
+                PromptDoubleResult fyRes = ed.GetDouble(fyOp);
+                double fy = fyRes.Value;
+
+                // Ask the user to input the steel Elastic Module
+                PromptDoubleOptions EsOp = new PromptDoubleOptions("Input the steel Elastic Module (Es) in MPa:");
+
+                // Restrict input to positive and non-negative values
+                EsOp.AllowZero = false;
+                EsOp.AllowNegative = false;
+
+                // Get the result
+                PromptDoubleResult EsRes = ed.GetDouble(EsOp);
+                double Es = EsRes.Value;
+
+                // Open the Registered Applications table for read
+                RegAppTable acRegAppTbl;
+                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                // Check to see if the Registered Applications table record for the custom app exists
+                if (acRegAppTbl.Has(appName) == false)
+                {
+                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                    {
+                        acRegAppTblRec.Name = appName;
+                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                        acRegAppTbl.Add(acRegAppTblRec);
+                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+                    }
+                }
+
+                // Save the variables on the Xrecord
+                using (ResultBuffer rb = new ResultBuffer())
+                {
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, fy));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, Es));
+                        
+                    // Create and add data to an Xrecord
+                    Xrecord steelXrec = new Xrecord();
+                    steelXrec.Data = rb;
+                }
+                
+            }
+        }
+    } 
 }
