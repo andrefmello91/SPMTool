@@ -8,6 +8,7 @@ using Autodesk.AutoCAD.Colors;
 // This line is not mandatory, but improves loading performances
 [assembly: CommandClass(typeof(SPMTool.Geometry))]
 [assembly: CommandClass(typeof(SPMTool.Material))]
+[assembly: CommandClass(typeof(SPMTool.Supports))]
 
 namespace SPMTool
 {
@@ -24,6 +25,10 @@ namespace SPMTool
             // Get the current document and database
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+
+            // Definition for the Extended Data
+            string appName = "SPMTool";
+            string xdataStr = "Node data";
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -52,6 +57,22 @@ namespace SPMTool
                     }
                 }
 
+                // Open the Registered Applications table for read
+                RegAppTable acRegAppTbl;
+                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                // Check to see if the Registered Applications table record for the custom app exists
+                if (acRegAppTbl.Has(appName) == false)
+                {
+                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                    {
+                        acRegAppTblRec.Name = appName;
+                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                        acRegAppTbl.Add(acRegAppTblRec);
+                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+                    }
+                }
+
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
@@ -75,6 +96,28 @@ namespace SPMTool
                 blkTblRec.AppendEntity(newNode);
                 trans.AddNewlyCreatedDBObject(newNode, true);
 
+                // Inicialization of node conditions
+                bool xSupport = false;
+                bool ySupport = false;
+                double xForce = 0;
+                double yForce = 0;
+
+                // Define the Xdata to add to the node
+                using (ResultBuffer rb = new ResultBuffer())
+                {
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, xSupport));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, ySupport));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, xForce));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, yForce));
+
+                    // Open the node for write
+                    Entity ent = trans.GetObject(newNode.ObjectId, OpenMode.ForWrite) as Entity;
+
+                    // Append the extended data to each object
+                    ent.XData = rb;
+                }
 
                 // Set the style for all point objects in the drawing
                 curDb.Pdmode = 32;
@@ -228,6 +271,12 @@ namespace SPMTool
                     {
                         // Assign the layer the ACI color 254 (grey) and a name
                         lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 254);
+
+                        // Assign a layer transparency
+                        byte alpha = (byte)(255 * (100 - 70) / 100);
+                        Transparency transp = new Transparency(alpha);
+
+                        // Assign the name to the layer
                         lyrTblRec.Name = panelLayer;
 
                         // Upgrade the Layer table for write
@@ -236,6 +285,9 @@ namespace SPMTool
                         // Append the new layer to the Layer table and the transaction
                         lyrTbl.Add(lyrTblRec);
                         trans.AddNewlyCreatedDBObject(lyrTblRec, true);
+
+                        // Assign teh transparency
+                        lyrTblRec.Transparency = transp;
                     }
                 }
 
@@ -246,7 +298,7 @@ namespace SPMTool
                 BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
                 // Create the panel as a solid with 4 segments (4 points)
-                using (Solid newPanel = new Solid(new Point3d(pan1Node.ToArray()),
+                using (Solid newPanel = new Solid(  new Point3d(pan1Node.ToArray()),
                                                     new Point3d(pan2Node.ToArray()),
                                                     new Point3d(pan4Node.ToArray()),
                                                     new Point3d(pan3Node.ToArray())))
@@ -286,27 +338,13 @@ namespace SPMTool
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
                 // Request objects to be selected in the drawing area
+                ed.WriteMessage("Select the stringers to assign properties (you can select other elements, the properties will be only applied to elements with 'Stringer' layer activated).");
                 PromptSelectionResult selRes = ed.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
                 {
                     SelectionSet set = selRes.Value;
-
-                    // Check if the selected objects are stringers
-                    foreach (SelectedObject obj in set)
-                    {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-
-                        if (ent.Layer.Equals("Stringer") == false)
-                        {
-                            Application.ShowAlertDialog("You selected objects other than stringers. Also, make sure that all the stringers have the layer 'Stringer' activated. Please select the stringers again.");
-
-                            // Abort the transaction
-                            trans.Abort();
-                        }
-                    }
 
                     // Open the Registered Applications table for read
                     RegAppTable acRegAppTbl;
@@ -360,11 +398,19 @@ namespace SPMTool
 
                         foreach (SelectedObject obj in set)
                         {
-                            // Open the selected object for write
-                            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForWrite) as Entity;
 
-                            // Append the extended data to each object
-                            ent.XData = rb;
+                            // Open the selected object for read
+                            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                            // Check if it's a stringer (if the stringer layer is active)
+                            if (ent.Layer.Equals("Stringer"))
+                            {
+                                // Upgrade the OpenMode
+                                ent.UpgradeOpen();
+
+                                // Append the extended data to each object
+                                ent.XData = rb;
+                            }
                         }
 
                     }
@@ -374,68 +420,6 @@ namespace SPMTool
                 trans.Commit();
 
                 // Dispose the transaction
-                trans.Dispose();
-            }
-        }
-
-        [CommandMethod("ViewStringerData")]
-        public void ViewStringerData()
-        {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
-            // Get the current document and database
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-
-            string appName = "SPMTool";
-            string msgstr = "";
-
-            // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
-            {
-                // Request objects to be selected in the drawing area
-                PromptSelectionResult selRes = ed.GetSelection();
-
-                // If the prompt status is OK, objects were selected
-                if (selRes.Status == PromptStatus.OK)
-                {
-                    SelectionSet set = selRes.Value;
-
-                    // Step through the objects in the selection set
-                    foreach (SelectedObject obj in set)
-                    {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-
-                        // Get the extended data attached to each object for MY_APP
-                        ResultBuffer rb = ent.GetXDataForApplication(appName);
-
-                        // Make sure the Xdata is not empty
-                        if (rb != null)
-                        {
-                            // Get the values in the xdata
-                            foreach (TypedValue typeVal in rb)
-                            {
-                                msgstr = msgstr + "\n" + typeVal.TypeCode.ToString() + ":" + typeVal.Value;
-                            }
-                        }
-                        else
-                        {
-                            msgstr = "NONE";
-                        }
-
-                        // Display the values returned
-                        Application.ShowAlertDialog(appName + " xdata on " + ent.GetType().ToString() + ":\n" + msgstr);
-
-                        msgstr = "";
-                    }
-                }
-
-                // Ends the transaction and ensures any changes made are ignored
-                trans.Abort();
-
-                // Dispose of the transaction
                 trans.Dispose();
             }
         }
@@ -458,27 +442,13 @@ namespace SPMTool
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
                 // Request objects to be selected in the drawing area
+                ed.WriteMessage("Select the panels to assign properties (you can select other elements, the properties will be only applied to elements with 'Panel' layer activated).");
                 PromptSelectionResult selRes = ed.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
                 {
                     SelectionSet set = selRes.Value;
-
-                    // Check if the selected objects are stringers
-                    foreach (SelectedObject obj in set)
-                    {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-
-                        if (ent.Layer.Equals("Panel") == false)
-                        {
-                            Application.ShowAlertDialog("You selected objects other than panels. Also, make sure that all the panels have the layer 'Panel' activated. Please select the panels again.");
-
-                            // Abort and the transaction
-                            trans.Abort();
-                        }
-                    }
 
                     // Open the Registered Applications table for read
                     RegAppTable acRegAppTbl;
@@ -519,11 +489,18 @@ namespace SPMTool
                         // Step through the objects in the selection set
                         foreach (SelectedObject obj in objSet)
                         {
-                            // Open the selected object for write
-                            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForWrite) as Entity;
+                            // Open the selected object for read
+                            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
-                            // Append the extended data to each object
-                            ent.XData = rb;
+                            // Check if it's a panel (if the panel layer is active)
+                            if (ent.Layer.Equals("Panel"))
+                            {
+                                // Upgrade the OpenMode
+                                ent.UpgradeOpen();
+
+                                // Append the extended data to each object
+                                ent.XData = rb;
+                            }
                         }
                     }
                 }
@@ -536,8 +513,8 @@ namespace SPMTool
             }
         }
 
-        [CommandMethod("ViewPanelData")]
-        public void ViewPanelData()
+        [CommandMethod("ViewElementData")]
+        public void ViewElementData()
         {
             // Simplified typing for editor:
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
@@ -598,6 +575,7 @@ namespace SPMTool
                 trans.Dispose();
             }
         }
+
     }
 
     // Material related commands:
@@ -735,13 +713,135 @@ namespace SPMTool
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, fy));
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, Es));
-                        
+
                     // Create and add data to an Xrecord
                     Xrecord steelXrec = new Xrecord();
                     steelXrec.Data = rb;
                 }
-                
+
             }
         }
-    } 
+    }
+
+    public class Supports
+    {
+        [CommandMethod("AddSupport")]
+        public void AddSupport()
+        {
+            // Simplified typing for editor:
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+
+            // Definition for the Extended Data
+            string appName = "SPMTool";
+            string xdataStr = "Node data";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Request objects to be selected in the drawing area
+                ed.WriteMessage("Select the nodes to add support conditions.");
+                PromptSelectionResult selRes = ed.GetSelection();
+
+                // If the prompt status is OK, objects were selected
+                if (selRes.Status == PromptStatus.OK)
+                {
+                    SelectionSet set = selRes.Value;
+
+                    // Check if the selected objects are stringers
+                    foreach (SelectedObject obj in set)
+                    {
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                        if (ent.Layer.Equals("Node") == false)
+                        {
+                            Application.ShowAlertDialog("You selected objects other than nodes. Also, make sure that all the nodes have the layer 'Node' activated. Please select the node(s) again.");
+
+                            // Abort the transaction
+                            trans.Abort();
+                        }
+                    }
+
+                    // Open the Registered Applications table for read
+                    RegAppTable acRegAppTbl;
+                    acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                    // Check to see if the Registered Applications table record for the custom app exists
+                    if (acRegAppTbl.Has(appName) == false)
+                    {
+                        using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                        {
+                            acRegAppTblRec.Name = appName;
+                            trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                            acRegAppTbl.Add(acRegAppTblRec);
+                            trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+                        }
+                    }
+
+                    // Ask the user set the support conditions in the x direction:
+                    PromptKeywordOptions xSupOp = new PromptKeywordOptions("");
+                    xSupOp.Message = "\nAdd support in the x direction?";
+                    xSupOp.Keywords.Add("Yes");
+                    xSupOp.Keywords.Add("No");
+                    xSupOp.Keywords.Default = "Yes";
+                    xSupOp.AllowNone = true;
+
+                    // Get the result
+                    PromptResult xSupRes = ed.GetKeywords(xSupOp);
+
+                    if (xSupRes.Status == PromptStatus.OK)
+                    {
+                        switch (xSupRes.StringResult)
+                        {
+                            case "Yes":
+                                {
+                                    bool xSupport = true;
+                                }
+                                break;
+
+                            case "No":
+                                {
+                                    bool xSupport = false;
+                                }
+                                break;
+                        }
+                    }
+
+                    // Ask the user set the support conditions in the y direction:
+                    PromptKeywordOptions ySupOp = new PromptKeywordOptions("");
+                    ySupOp.Message = "\nAdd support in the y direction?";
+                    ySupOp.Keywords.Add("Yes");
+                    ySupOp.Keywords.Add("No");
+                    ySupOp.Keywords.Default = "Yes";
+                    ySupOp.AllowNone = true;
+
+                    // Get the result
+                    PromptResult ySupRes = ed.GetKeywords(ySupOp);
+
+                    if (ySupRes.Status == PromptStatus.OK)
+                    {
+                        switch (ySupRes.StringResult)
+                        {
+                            case "Yes":
+                                {
+                                    bool ySupport = true;
+                                }
+                                break;
+
+                            case "No":
+                                {
+                                    bool ySupport = false;
+                                }
+                                break;
+                        }
+                    }
+
+                }
+            }
+        }
+    }
 }
