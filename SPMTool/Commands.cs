@@ -726,7 +726,7 @@ namespace SPMTool
                                 dataType = data[1].Value.ToString();
 
                                 // Get the parameters
-                                msgstr = "\nWidth = " + data[2].Value.ToString() + " mm" +
+                                msgstr = "\nWidth = "                   + data[2].Value.ToString() + " mm" +
                                          "\nReinforcement ratio (x) = " + data[3].Value.ToString() +
                                          "\nReinforcement ratio (y) = " + data[4].Value.ToString();
                             }
