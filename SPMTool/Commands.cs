@@ -152,6 +152,14 @@ namespace SPMTool
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
 
+            // Prompt for the start point of stringer
+            PromptPointOptions strStartOp = new PromptPointOptions("\nPick the start node: ");
+            PromptPointResult strStartRes = ed.GetPoint(strStartOp);
+            Point3d strStart = strStartRes.Value;
+
+            // Exit if the user presses ESC or cancels the command
+            if (strStartRes.Status == PromptStatus.Cancel) return;
+
             // Loop for creating infinite stringers (until user exits the command)
             for (; ; )
             {
@@ -180,14 +188,6 @@ namespace SPMTool
                             trans.AddNewlyCreatedDBObject(lyrTblRec, true);
                         }
                     }
-
-                    // Prompt for the start point of stringer
-                    PromptPointOptions strStartOp = new PromptPointOptions("\nPick the start node: ");
-                    PromptPointResult strStartRes = ed.GetPoint(strStartOp);
-                    Point3d strStart = strStartRes.Value;
-
-                    // Exit if the user presses ESC or cancels the command
-                    if (strStartRes.Status == PromptStatus.Cancel) return;
 
                     // Prompt for the end point
                     PromptPointOptions strEndOp = new PromptPointOptions("\nPick the end node: ");
@@ -222,6 +222,9 @@ namespace SPMTool
 
                         // Dispose the transaction 
                         trans.Dispose();
+
+                        // Set the start point of the new stringer
+                        strStart = strEnd;
                     }
                     else
                     {
