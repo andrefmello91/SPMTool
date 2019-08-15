@@ -30,106 +30,114 @@ namespace SPMTool
             string appName = "SPMTool";
             string xdataStr = "Node data";
 
-            // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            // Loop for creating infinite nodes (until user exits the command)
+            for (; ; )
             {
-                // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-                string nodeLayer = "Node";
-
-                // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-
-                if (lyrTbl.Has(nodeLayer) == false)
+                // Start a transaction
+                using (Transaction trans = curDb.TransactionManager.StartTransaction())
                 {
-                    using (LayerTableRecord lyrTblRec = new LayerTableRecord())
+                    // Open the Layer table for read
+                    LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                    string nodeLayer = "Node";
+
+                    // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+
+                    if (lyrTbl.Has(nodeLayer) == false)
                     {
-                        // Assign the layer the ACI color 1 (red) and a name
-                        lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 1);
-                        lyrTblRec.Name = nodeLayer;
+                        using (LayerTableRecord lyrTblRec = new LayerTableRecord())
+                        {
+                            // Assign the layer the ACI color 1 (red) and a name
+                            lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 1);
+                            lyrTblRec.Name = nodeLayer;
 
-                        // Upgrade the Layer table for write
-                        trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
+                            // Upgrade the Layer table for write
+                            trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
 
-                        // Append the new layer to the Layer table and the transaction
-                        lyrTbl.Add(lyrTblRec);
-                        trans.AddNewlyCreatedDBObject(lyrTblRec, true);
+                            // Append the new layer to the Layer table and the transaction
+                            lyrTbl.Add(lyrTblRec);
+                            trans.AddNewlyCreatedDBObject(lyrTblRec, true);
+                        }
+                    }
+
+                    // Open the Registered Applications table for read
+                    RegAppTable acRegAppTbl;
+                    acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                    // Check to see if the Registered Applications table record for the custom app exists
+                    if (acRegAppTbl.Has(appName) == false)
+                    {
+                        using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                        {
+                            acRegAppTblRec.Name = appName;
+                            trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                            acRegAppTbl.Add(acRegAppTblRec);
+                            trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+                        }
+                    }
+
+                    // Open the Block table for read
+                    BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                    // Open the Block table record Model space for write
+                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                    // Create the node in Model space
+                    // Tell user to insert the point:
+                    PromptPointOptions pickPoint = new PromptPointOptions("\nPick point or enter coordinates: ");
+                    PromptPointResult pointResult = ed.GetPoint(pickPoint);
+
+                    // Exit if the user presses ESC or cancels the command
+                    if (pointResult.Status == PromptStatus.OK)
+                    {
+
+                        // Create the node and set its layer to Node:
+
+                        DBPoint newNode = new DBPoint(pointResult.Value);
+                        newNode.Layer = nodeLayer;
+
+                        // Add the new object to the block table record and the transaction
+                        blkTblRec.AppendEntity(newNode);
+                        trans.AddNewlyCreatedDBObject(newNode, true);
+
+                        // Inicialization of node conditions
+                        bool xSupport = false;
+                        bool ySupport = false;
+                        double xForce = 0;
+                        double yForce = 0;
+
+                        // Define the Xdata to add to the node
+                        using (ResultBuffer rb = new ResultBuffer())
+                        {
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, xSupport));
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, ySupport));
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, xForce));
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, yForce));
+
+                            // Open the node for write
+                            Entity ent = trans.GetObject(newNode.ObjectId, OpenMode.ForWrite) as Entity;
+
+                            // Append the extended data to each object
+                            ent.XData = rb;
+                        }
+
+                        // Set the style for all point objects in the drawing
+                        curDb.Pdmode = 32;
+                        curDb.Pdsize = 50;
+
+                        // Save the new object to the database and dispose the transaction
+                        trans.Commit();
+                        trans.Dispose();
+                    }
+                    else
+                    {
+                        // Exit the command
+                        trans.Dispose();
+                        break;
                     }
                 }
-
-                // Open the Registered Applications table for read
-                RegAppTable acRegAppTbl;
-                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                // Check to see if the Registered Applications table record for the custom app exists
-                if (acRegAppTbl.Has(appName) == false)
-                {
-                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                    {
-                        acRegAppTblRec.Name = appName;
-                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                        acRegAppTbl.Add(acRegAppTblRec);
-                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                    }
-                }
-
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Open the Block table record Model space for write
-                BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                // Create the node in Model space
-                // Tell user to insert the point:
-                PromptPointOptions pickPoint = new PromptPointOptions("Pick point or enter coordinates: ");
-                PromptPointResult pointResult = ed.GetPoint(pickPoint);
-
-                // Exit if the user presses ESC or cancels the command
-                if (pointResult.Status == PromptStatus.Cancel) return;
-
-                // Create the node and set its layer to Node:
-
-                DBPoint newNode = new DBPoint(pointResult.Value);
-                newNode.Layer = nodeLayer;
-
-                // Add the new object to the block table record and the transaction
-                blkTblRec.AppendEntity(newNode);
-                trans.AddNewlyCreatedDBObject(newNode, true);
-
-                // Inicialization of node conditions
-                bool xSupport = false;
-                bool ySupport = false;
-                double xForce = 0;
-                double yForce = 0;
-
-                // Define the Xdata to add to the node
-                using (ResultBuffer rb = new ResultBuffer())
-                {
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, xSupport));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, ySupport));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, xForce));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, yForce));
-
-                    // Open the node for write
-                    Entity ent = trans.GetObject(newNode.ObjectId, OpenMode.ForWrite) as Entity;
-
-                    // Append the extended data to each object
-                    ent.XData = rb;
-                }
-
-                // Set the style for all point objects in the drawing
-                curDb.Pdmode = 32;
-                curDb.Pdsize = 50;
-
-                // Save the new object to the database
-                trans.Commit();
-
-                // Dispose the transaction 
-
-                trans.Dispose();
-
             }
         }
 
@@ -144,72 +152,84 @@ namespace SPMTool
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
 
-            // Prompt for the start point of stringer
-            PromptPointOptions strStartOp = new PromptPointOptions("Pick the start node: ");
-            PromptPointResult strStartRes = ed.GetPoint(strStartOp);
-            Point3d strStart = strStartRes.Value;
-
-            // Exit if the user presses ESC or cancels the command
-            if (strStartRes.Status == PromptStatus.Cancel) return;
-
-            // Prompt for the end point
-            PromptPointOptions strEndOp = new PromptPointOptions("Pick the end node: ");
-            strEndOp.UseBasePoint = true;
-            strEndOp.BasePoint = strStart;
-            PromptPointResult strEndRes = ed.GetPoint(strEndOp);
-            Point3d strEnd = strEndRes.Value;
-
-            if (strEndRes.Status == PromptStatus.Cancel) return;
-
-            // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            // Loop for creating infinite stringers (until user exits the command)
+            for (; ; )
             {
-                // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-                string stringerLayer = "Stringer";
-
-                // Check if the layer Stringer already exists in the drawing. If it doesn't, then it's created:
-                if (lyrTbl.Has(stringerLayer) == false)
+                // Start a transaction
+                using (Transaction trans = curDb.TransactionManager.StartTransaction())
                 {
-                    using (LayerTableRecord lyrTblRec = new LayerTableRecord())
+                    // Open the Layer table for read
+                    LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                    string stringerLayer = "Stringer";
+
+                    // Check if the layer Stringer already exists in the drawing. If it doesn't, then it's created:
+                    if (lyrTbl.Has(stringerLayer) == false)
                     {
-                        // Assign the layer the ACI color 1 (cyan) and a name
-                        lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 4);
-                        lyrTblRec.Name = stringerLayer;
+                        using (LayerTableRecord lyrTblRec = new LayerTableRecord())
+                        {
+                            // Assign the layer the ACI color 1 (cyan) and a name
+                            lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 4);
+                            lyrTblRec.Name = stringerLayer;
 
-                        // Upgrade the Layer table for write
-                        trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
+                            // Upgrade the Layer table for write
+                            trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
 
-                        // Append the new layer to the Layer table and the transaction
-                        lyrTbl.Add(lyrTblRec);
-                        trans.AddNewlyCreatedDBObject(lyrTblRec, true);
+                            // Append the new layer to the Layer table and the transaction
+                            lyrTbl.Add(lyrTblRec);
+                            trans.AddNewlyCreatedDBObject(lyrTblRec, true);
+                        }
+                    }
+
+                    // Prompt for the start point of stringer
+                    PromptPointOptions strStartOp = new PromptPointOptions("\nPick the start node: ");
+                    PromptPointResult strStartRes = ed.GetPoint(strStartOp);
+                    Point3d strStart = strStartRes.Value;
+
+                    // Exit if the user presses ESC or cancels the command
+                    if (strStartRes.Status == PromptStatus.Cancel) return;
+
+                    // Prompt for the end point
+                    PromptPointOptions strEndOp = new PromptPointOptions("\nPick the end node: ");
+                    strEndOp.UseBasePoint = true;
+                    strEndOp.BasePoint = strStart;
+                    PromptPointResult strEndRes = ed.GetPoint(strEndOp);
+                    Point3d strEnd = strEndRes.Value;
+
+                    if (strEndRes.Status == PromptStatus.OK)
+                    {
+
+                        // Open the Block table for read
+                        BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                        // Open the Block table record Model space for write
+                        BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                        // Create the line in Model space
+
+                        using (Line newStringer = new Line(strStart, strEnd))
+                        {
+                            // Set the layer to stringer
+                            newStringer.Layer = stringerLayer;
+
+                            // Add the line to the drawing
+                            blkTblRec.AppendEntity(newStringer);
+                            trans.AddNewlyCreatedDBObject(newStringer, true);
+                        }
+
+                        // Save the new object to the database
+                        trans.Commit();
+
+                        // Dispose the transaction 
+                        trans.Dispose();
+                    }
+                    else
+                    {
+                        // Exit the command
+                        trans.Dispose();
+                        break;
                     }
                 }
-
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Open the Block table record Model space for write
-                BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                // Create the line in Model space
-
-                using (Line newStringer = new Line(strStart, strEnd))
-                {
-                    // Set the layer to stringer
-                    newStringer.Layer = stringerLayer;
-
-                    // Add the line to the drawing
-                    blkTblRec.AppendEntity(newStringer);
-                    trans.AddNewlyCreatedDBObject(newStringer, true);
-                }
-
-                // Save the new object to the database
-                trans.Commit();
-
-                // Dispose the transaction 
-                trans.Dispose();
 
             }
         }
@@ -223,38 +243,6 @@ namespace SPMTool
             // Get the current document and database
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
-
-            // Prompt for the first vertex of the panel:
-            PromptPointOptions pan1NodeOp = new PromptPointOptions("Select nodes performing a loop. Pick the first node: ");
-            PromptPointResult pan1NodeOpRes = ed.GetPoint(pan1NodeOp);
-            Point3d pan1Node = pan1NodeOpRes.Value;
-
-            // Exit if the user presses ESC or cancels the command
-            if (pan1NodeOpRes.Status == PromptStatus.Cancel) return;
-
-            // Prompt for the second vertex of the panel:
-            PromptPointOptions pan2NodeOp = new PromptPointOptions("Select nodes performing a loop. Pick the second node: ");
-            PromptPointResult pan2NodeOpRes = ed.GetPoint(pan2NodeOp);
-            Point3d pan2Node = pan2NodeOpRes.Value;
-
-            // Exit if the user presses ESC or cancels the command
-            if (pan2NodeOpRes.Status == PromptStatus.Cancel) return;
-
-            // Prompt for the third vertex of the panel:
-            PromptPointOptions pan3NodeOp = new PromptPointOptions("Select nodes performing a loop. Pick the third node: ");
-            PromptPointResult pan3NodeOpRes = ed.GetPoint(pan3NodeOp);
-            Point3d pan3Node = pan3NodeOpRes.Value;
-
-            // Exit if the user presses ESC or cancels the command
-            if (pan3NodeOpRes.Status == PromptStatus.Cancel) return;
-
-            // Prompt for the fourth vertex of the panel:
-            PromptPointOptions pan4NodeOp = new PromptPointOptions("Select nodes performing a loop. Pick the fourth node: ");
-            PromptPointResult pan4NodeOpRes = ed.GetPoint(pan4NodeOp);
-            Point3d pan4Node = pan4NodeOpRes.Value;
-
-            // Exit if the user presses ESC or cancels the command
-            if (pan2NodeOpRes.Status == PromptStatus.Cancel) return;
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -291,6 +279,27 @@ namespace SPMTool
                     }
                 }
 
+                // Initialize the vertices of the panel
+                Point3d pan1Node = new Point3d();
+                Point3d pan2Node = new Point3d();
+                Point3d pan3Node = new Point3d();
+                Point3d pan4Node = new Point3d();
+
+                // Prompt for user enter four vertices of the panel
+                for (int i = 1; i < 5; i++)
+                {
+                    // Prompt each vertice
+                    PromptPointOptions panNodeOp = new PromptPointOptions("\nSelect nodes performing a loop");
+                    PromptPointResult panNodeOpRes = ed.GetPoint(panNodeOp);
+                    if (panNodeOpRes.Status == PromptStatus.OK)
+                    {
+                        if (i == 1) { pan1Node = panNodeOpRes.Value; }
+                        if (i == 2) { pan2Node = panNodeOpRes.Value; }
+                        if (i == 3) { pan3Node = panNodeOpRes.Value; }
+                        if (i == 4) { pan4Node = panNodeOpRes.Value; }
+                    }
+                }
+
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
@@ -298,12 +307,8 @@ namespace SPMTool
                 BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
                 // Create the panel as a solid with 4 segments (4 points)
-                using (Solid newPanel = new Solid(  new Point3d(pan1Node.ToArray()),
-                                                    new Point3d(pan2Node.ToArray()),
-                                                    new Point3d(pan4Node.ToArray()),
-                                                    new Point3d(pan3Node.ToArray())))
+                using (Solid newPanel = new Solid(pan1Node, pan2Node, pan4Node, pan3Node))
                 {
-
                     // Set the layer to Panel
                     newPanel.Layer = panelLayer;
 
@@ -319,6 +324,8 @@ namespace SPMTool
                 trans.Dispose();
             }
         }
+        
+
 
         [CommandMethod("SetStringerGeometry")]
         public void SetStringerGeometry()
@@ -423,6 +430,7 @@ namespace SPMTool
                 trans.Dispose();
             }
         }
+
 
         [CommandMethod("SetPanelWidth")]
         public void SetPanelWidth()
@@ -575,8 +583,8 @@ namespace SPMTool
                 trans.Dispose();
             }
         }
-
     }
+
 
     // Material related commands:
     public class Material
@@ -723,6 +731,7 @@ namespace SPMTool
         }
     }
 
+    // Support related commands
     public class Supports
     {
         [CommandMethod("AddSupport")]
