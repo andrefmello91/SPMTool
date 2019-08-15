@@ -31,7 +31,7 @@ namespace SPMTool
             string xdataStr = "Node data";
 
             // Loop for creating infinite nodes (until user exits the command)
-            for (; ; )
+            for ( ; ; )
             {
                 // Start a transaction
                 using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -101,8 +101,7 @@ namespace SPMTool
                         trans.AddNewlyCreatedDBObject(newNode, true);
 
                         // Inicialization of node conditions
-                        bool xSupport = false;
-                        bool ySupport = false;
+                        string support = "Free";
                         double xForce = 0;
                         double yForce = 0;
 
@@ -111,8 +110,7 @@ namespace SPMTool
                         {
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, xSupport));
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, ySupport));
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, xForce));
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, yForce));
 
@@ -327,8 +325,6 @@ namespace SPMTool
                 trans.Dispose();
             }
         }
-        
-
 
         [CommandMethod("SetStringerGeometry")]
         public void SetStringerGeometry()
@@ -763,22 +759,7 @@ namespace SPMTool
                 {
                     SelectionSet set = selRes.Value;
 
-                    // Check if the selected objects are stringers
-                    foreach (SelectedObject obj in set)
-                    {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-
-                        if (ent.Layer.Equals("Node") == false)
-                        {
-                            Application.ShowAlertDialog("You selected objects other than nodes. Also, make sure that all the nodes have the layer 'Node' activated. Please select the node(s) again.");
-
-                            // Abort the transaction
-                            trans.Abort();
-                        }
-                    }
-
-                    // Open the Registered Applications table for read
+                     // Open the Registered Applications table for read
                     RegAppTable acRegAppTbl;
                     acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
 
@@ -796,60 +777,45 @@ namespace SPMTool
 
                     // Ask the user set the support conditions in the x direction:
                     PromptKeywordOptions xSupOp = new PromptKeywordOptions("");
-                    xSupOp.Message = "\nAdd support in the x direction?";
-                    xSupOp.Keywords.Add("Yes");
-                    xSupOp.Keywords.Add("No");
-                    xSupOp.Keywords.Default = "Yes";
+                    xSupOp.Message = "\nAdd support in which direction?";
+                    xSupOp.Keywords.Add("Free");
+                    xSupOp.Keywords.Add("X");
+                    xSupOp.Keywords.Add("Y");
+                    xSupOp.Keywords.Add("XY");
+                    xSupOp.Keywords.Default = "Free";
                     xSupOp.AllowNone = true;
 
                     // Get the result
                     PromptResult xSupRes = ed.GetKeywords(xSupOp);
 
-                    if (xSupRes.Status == PromptStatus.OK)
+                    // Set the support
+                    string support = xSupRes.StringResult;
+
+                    foreach (SelectedObject obj in set)
                     {
-                        switch (xSupRes.StringResult)
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+                        
+                        // Check if the selected object is a node
+                        if (ent.Layer.Equals("Node"))
                         {
-                            case "Yes":
-                                {
-                                    bool xSupport = true;
-                                }
-                                break;
+                            // Upgrade the OpenMode
+                            ent.UpgradeOpen();
 
-                            case "No":
-                                {
-                                    bool xSupport = false;
-                                }
-                                break;
+                            // Access the XData as an array
+                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            TypedValue[] data = rb.AsArray();
+
+                            // Set the new support conditions (line 2 of the array)
+                            data[2] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
+
+                            // Add the new XData
+                            ResultBuffer newRb = new ResultBuffer(data);
+                            ent.XData = newRb;
                         }
-                    }
 
-                    // Ask the user set the support conditions in the y direction:
-                    PromptKeywordOptions ySupOp = new PromptKeywordOptions("");
-                    ySupOp.Message = "\nAdd support in the y direction?";
-                    ySupOp.Keywords.Add("Yes");
-                    ySupOp.Keywords.Add("No");
-                    ySupOp.Keywords.Default = "Yes";
-                    ySupOp.AllowNone = true;
-
-                    // Get the result
-                    PromptResult ySupRes = ed.GetKeywords(ySupOp);
-
-                    if (ySupRes.Status == PromptStatus.OK)
-                    {
-                        switch (ySupRes.StringResult)
-                        {
-                            case "Yes":
-                                {
-                                    bool ySupport = true;
-                                }
-                                break;
-
-                            case "No":
-                                {
-                                    bool ySupport = false;
-                                }
-                                break;
-                        }
+                        trans.Commit();
+                        trans.Dispose();
                     }
 
                 }
