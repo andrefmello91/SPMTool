@@ -4,6 +4,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Colors;
+using Autodesk.AutoCAD.DataExtraction;
 
 // This line is not mandatory, but improves loading performances
 [assembly: CommandClass(typeof(SPMTool.Geometry))]
@@ -31,7 +32,7 @@ namespace SPMTool
             string xdataStr = "Node data";
 
             // Loop for creating infinite nodes (until user exits the command)
-            for ( ; ; )
+            for (; ; )
             {
                 // Start a transaction
                 using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -111,8 +112,8 @@ namespace SPMTool
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, xForce));
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, yForce));
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xForce));
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yForce));
 
                             // Open the node for write
                             Entity ent = trans.GetObject(newNode.ObjectId, OpenMode.ForWrite) as Entity;
@@ -149,6 +150,10 @@ namespace SPMTool
             // Get the current document and database
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+
+            // Definition for the Extended Data
+            string appName = "SPMTool";
+            string xdataStr = "Stringer data";
 
             // Prompt for the start point of stringer
             PromptPointOptions strStartOp = new PromptPointOptions("\nPick the start node: ");
@@ -187,6 +192,22 @@ namespace SPMTool
                         }
                     }
 
+                    // Open the Registered Applications table for read
+                    RegAppTable acRegAppTbl;
+                    acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                    // Check to see if the Registered Applications table record for the custom app exists
+                    if (acRegAppTbl.Has(appName) == false)
+                    {
+                        using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                        {
+                            acRegAppTblRec.Name = appName;
+                            trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                            acRegAppTbl.Add(acRegAppTblRec);
+                            trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+                        }
+                    }
+
                     // Prompt for the end point
                     PromptPointOptions strEndOp = new PromptPointOptions("\nPick the end node: ");
                     strEndOp.UseBasePoint = true;
@@ -213,8 +234,28 @@ namespace SPMTool
                             // Add the line to the drawing
                             blkTblRec.AppendEntity(newStringer);
                             trans.AddNewlyCreatedDBObject(newStringer, true);
-                        }
 
+                            // Inicialization of stringer conditions
+                            double strW = 1;
+                            double strH = 1;
+                            double As = 0;
+
+                            // Define the Xdata to add to the node
+                            using (ResultBuffer rb = new ResultBuffer())
+                            {
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));
+
+                                // Open the node for write
+                                Entity ent = trans.GetObject(newStringer.ObjectId, OpenMode.ForWrite) as Entity;
+
+                                // Append the extended data to each object
+                                ent.XData = rb;
+                            }
+                        }
                         // Save the new object to the database
                         trans.Commit();
 
@@ -244,6 +285,10 @@ namespace SPMTool
             // Get the current document and database
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+
+            // Definition for the Extended Data
+            string appName = "SPMTool";
+            string xdataStr = "Panel data";
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -277,6 +322,22 @@ namespace SPMTool
 
                         // Assign teh transparency
                         lyrTblRec.Transparency = transp;
+                    }
+                }
+
+                // Open the Registered Applications table for read
+                RegAppTable acRegAppTbl;
+                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                // Check to see if the Registered Applications table record for the custom app exists
+                if (acRegAppTbl.Has(appName) == false)
+                {
+                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                    {
+                        acRegAppTblRec.Name = appName;
+                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                        acRegAppTbl.Add(acRegAppTblRec);
+                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
                     }
                 }
 
@@ -316,6 +377,27 @@ namespace SPMTool
                     // Add the line to the drawing
                     blkTblRec.AppendEntity(newPanel);
                     trans.AddNewlyCreatedDBObject(newPanel, true);
+
+                    // Initialization of the panel parameters
+                    double panW = 1;
+                    double psx = 0;
+                    double psy = 0;
+
+                    // Define the Xdata to add to the panel
+                    using (ResultBuffer rb = new ResultBuffer())
+                    {
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, panW));
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));
+
+                        // Open the selected object for write
+                        Entity ent = trans.GetObject(newPanel.ObjectId, OpenMode.ForWrite) as Entity;
+
+                        // Append the extended data to each object
+                        ent.XData = rb;
+                    }
                 }
 
                 // Save the new object to the database
@@ -326,8 +408,8 @@ namespace SPMTool
             }
         }
 
-        [CommandMethod("SetStringerGeometry")]
-        public void SetStringerGeometry()
+        [CommandMethod("SetStringerParameters")]
+        public void SetStringerParameters()
         {
             // Simplified typing for editor:
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
@@ -338,7 +420,6 @@ namespace SPMTool
 
             // Definition for the Extended Data
             string appName = "SPMTool";
-            string xdataStr = "Stringer data";
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -369,7 +450,7 @@ namespace SPMTool
                     }
 
                     // Ask the user to input the stringer width
-                    PromptDoubleOptions strWOp = new PromptDoubleOptions("Input the width (in mm) for the selected stringers");
+                    PromptDoubleOptions strWOp = new PromptDoubleOptions("\nInput the width (in mm) for the selected stringers:");
 
                     // Restrict input to positive and non-negative values
                     strWOp.AllowZero = false;
@@ -380,7 +461,7 @@ namespace SPMTool
                     double strW = strWRes.Value;
 
                     // Ask the user to input the stringer height
-                    PromptDoubleOptions strHOp = new PromptDoubleOptions("Input the height (in mm) for the selected stringers");
+                    PromptDoubleOptions strHOp = new PromptDoubleOptions("\nInput the height (in mm) for the selected stringers:");
 
                     // Restrict input to positive and non-negative values
                     strHOp.AllowZero = false;
@@ -390,35 +471,40 @@ namespace SPMTool
                     PromptDoubleResult strHRes = ed.GetDouble(strHOp);
                     double strH = strHRes.Value;
 
-                    // Calculate the cross-section area
-                    double strArea = strW * strH;
+                    // Ask the user to input the reinforcement area
+                    PromptDoubleOptions AsOp = new PromptDoubleOptions("\nInput the reinforcement area for the selected stringers (only needed in non-linear analysis):");
 
-                    // Define the Xdata to add to each selected object
-                    using (ResultBuffer rb = new ResultBuffer())
+                    // Restrict input to positive and non-negative values
+                    AsOp.AllowNegative = false;
+
+                    // Get the result
+                    PromptDoubleResult AsRes = ed.GetDouble(AsOp);
+                    double As = AsRes.Value;
+
+                    foreach (SelectedObject obj in set)
                     {
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, strW));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, strH));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, strArea));
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
-                        foreach (SelectedObject obj in set)
+                        // Check if the selected object is a node
+                        if (ent.Layer.Equals("Stringer"))
                         {
+                            // Upgrade the OpenMode
+                            ent.UpgradeOpen();
 
-                            // Open the selected object for read
-                            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+                            // Access the XData as an array
+                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            TypedValue[] data = rb.AsArray();
 
-                            // Check if it's a stringer (if the stringer layer is active)
-                            if (ent.Layer.Equals("Stringer"))
-                            {
-                                // Upgrade the OpenMode
-                                ent.UpgradeOpen();
+                            // Set the new geometry (line 2 and 3 of the array)
+                            data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
+                            data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
+                            data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, As);
 
-                                // Append the extended data to each object
-                                ent.XData = rb;
-                            }
+                            // Add the new XData
+                            ResultBuffer newRb = new ResultBuffer(data);
+                            ent.XData = newRb;
                         }
-
                     }
                 }
 
@@ -431,8 +517,8 @@ namespace SPMTool
         }
 
 
-        [CommandMethod("SetPanelWidth")]
-        public void SetPanelWidth()
+        [CommandMethod("SetPanelParameters")]
+        public void SetPanelParameters()
         {
             // Simplified typing for editor:
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
@@ -443,13 +529,12 @@ namespace SPMTool
 
             // Definition for the Extended Data
             string appName = "SPMTool";
-            string xdataStr = "Panel data";
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
                 // Request objects to be selected in the drawing area
-                ed.WriteMessage("Select the panels to assign properties (you can select other elements, the properties will be only applied to elements with 'Panel' layer activated).");
+                ed.WriteMessage("\nSelect the panels to assign properties (you can select other elements, the properties will be only applied to elements with 'Panel' layer activated).");
                 PromptSelectionResult selRes = ed.GetSelection();
 
                 // If the prompt status is OK, objects were selected
@@ -474,7 +559,7 @@ namespace SPMTool
                     }
 
                     // Ask the user to input the panel width
-                    PromptDoubleOptions panWOp = new PromptDoubleOptions("Input the width (in mm) for the selected panels");
+                    PromptDoubleOptions panWOp = new PromptDoubleOptions("\nInput the width (in mm) for the selected panels:");
 
                     // Restrict input to positive and non-negative values
                     panWOp.AllowZero = false;
@@ -484,30 +569,49 @@ namespace SPMTool
                     PromptDoubleResult panWRes = ed.GetDouble(panWOp);
                     double panW = panWRes.Value;
 
-                    // Define the Xdata to add to each selected object
-                    using (ResultBuffer rb = new ResultBuffer())
+                    // Ask the user to input the reinforcement ratio in x direction
+                    PromptDoubleOptions psxOp = new PromptDoubleOptions("\nInput the reinforcement ratio in x direction for selected panels (only needed in non-linear analysis):");
+
+                    // Restrict input to positive and non-negative values
+                    psxOp.AllowNegative = false;
+
+                    // Get the result
+                    PromptDoubleResult psxRes = ed.GetDouble(psxOp);
+                    double psx = psxRes.Value;
+
+                    // Ask the user to input the reinforcement ratio in x direction
+                    PromptDoubleOptions psyOp = new PromptDoubleOptions("\nInput the reinforcement ratio in y direction for selected panels (only needed in non-linear analysis):");
+
+                    // Restrict input to positive and non-negative values
+                    psyOp.AllowNegative = false;
+
+                    // Get the result
+                    PromptDoubleResult psyRes = ed.GetDouble(psyOp);
+                    double psy = psyRes.Value;
+
+                    foreach (SelectedObject obj in set)
                     {
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, panW));
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
-                        SelectionSet objSet = selRes.Value;
-
-                        // Step through the objects in the selection set
-                        foreach (SelectedObject obj in objSet)
+                        // Check if the selected object is a node
+                        if (ent.Layer.Equals("Panel"))
                         {
-                            // Open the selected object for read
-                            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+                            // Upgrade the OpenMode
+                            ent.UpgradeOpen();
 
-                            // Check if it's a panel (if the panel layer is active)
-                            if (ent.Layer.Equals("Panel"))
-                            {
-                                // Upgrade the OpenMode
-                                ent.UpgradeOpen();
+                            // Access the XData as an array
+                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            TypedValue[] data = rb.AsArray();
 
-                                // Append the extended data to each object
-                                ent.XData = rb;
-                            }
+                            // Set the new geometry (line 2 and 3 of the array)
+                            data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, panW);
+                            data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, psx);
+                            data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, psy);
+
+                            // Add the new XData
+                            ResultBuffer newRb = new ResultBuffer(data);
+                            ent.XData = newRb;
                         }
                     }
                 }
@@ -532,6 +636,7 @@ namespace SPMTool
 
             string appName = "SPMTool";
             string msgstr = "";
+            string dataType = "";
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -551,35 +656,91 @@ namespace SPMTool
                         // Open the selected object for read
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
-                        // Get the extended data attached to each object for MY_APP
-                        ResultBuffer rb = ent.GetXDataForApplication(appName);
-
-                        // Make sure the Xdata is not empty
-                        if (rb != null)
+                        // If it's a node
+                        if (ent.Layer == "Node")
                         {
-                            // Get the values in the xdata
-                            foreach (TypedValue typeVal in rb)
+                            // Get the extended data attached to each object for MY_APP
+                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+
+                            // Make sure the Xdata is not empty
+                            if (rb != null)
                             {
-                                msgstr = msgstr + "\n" + typeVal.TypeCode.ToString() + ":" + typeVal.Value;
+                                // Get the XData as an array
+                                TypedValue[] data = rb.AsArray();
+
+                                // Get the data type
+                                dataType = data[1].Value.ToString();
+
+                                // Get the parameters
+                                msgstr = "\nSupport conditions: "    + data[2].Value.ToString() +
+                                         "\nForce in X direction = " + data[3].Value.ToString() + " N" +
+                                         "\nForce in Y direction = " + data[4].Value.ToString() + " N";
+                            }
+
+                            else
+                            {
+                                msgstr = "NONE";
                             }
                         }
-                        else
+
+                        // If it's a stringer
+                        if (ent.Layer == "Stringer")
                         {
-                            msgstr = "NONE";
+                            // Get the extended data attached to each object for MY_APP
+                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+
+                            // Make sure the Xdata is not empty
+                            if (rb != null)
+                            {
+                                // Get the XData as an array
+                                TypedValue[] data = rb.AsArray();
+
+                                // Get the data type
+                                dataType = data[1].Value.ToString();
+
+                                // Get the parameters
+                                msgstr = "\nWidth = "         + data[2].Value.ToString() + " mm" +
+                                         "\nHeight = "        + data[3].Value.ToString() + " mm" +
+                                         "\nReinforcement = " + data[4].Value.ToString() + " mm2";
+                            }
+
+                            else
+                            {
+                                msgstr = "NONE";
+                            }
+                        }
+
+                        // If it's a panel
+                        if (ent.Layer == "Panel")
+                        {
+                            // Get the extended data attached to each object for MY_APP
+                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+
+                            // Make sure the Xdata is not empty
+                            if (rb != null)
+                            {
+                                // Get the XData as an array
+                                TypedValue[] data = rb.AsArray();
+
+                                // Get the data type
+                                dataType = data[1].Value.ToString();
+
+                                // Get the parameters
+                                msgstr = "\nWidth = " + data[2].Value.ToString() + " mm" +
+                                         "\nReinforcement ratio (x) = " + data[3].Value.ToString() +
+                                         "\nReinforcement ratio (y) = " + data[4].Value.ToString();
+                            }
+
+                            else
+                            {
+                                msgstr = "NONE";
+                            }
                         }
 
                         // Display the values returned
-                        Application.ShowAlertDialog(appName + " xdata on " + ent.GetType().ToString() + ":\n" + msgstr);
-
-                        msgstr = "";
+                        Application.ShowAlertDialog(appName + "\n\n" + dataType + msgstr);
                     }
                 }
-
-                // Ends the transaction and ensures any changes made are ignored
-                trans.Abort();
-
-                // Dispose of the transaction
-                trans.Dispose();
             }
         }
     }
@@ -643,18 +804,31 @@ namespace SPMTool
                     }
                 }
 
+                // Get the NOD in the database
+                DBDictionary nod = (DBDictionary)trans.GetObject(curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
+
                 // Save the variables on the Xrecord
                 using (ResultBuffer rb = new ResultBuffer())
                 {
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, fc));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, Ec));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fc));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Ec));
 
                     // Create and add data to an Xrecord
-                    Xrecord concXrec = new Xrecord();
-                    concXrec.Data = rb;
+                    Xrecord xRec = new Xrecord();
+                    xRec.Data = rb;
+
+                    // Create the entry in the NOD and add to the transaction
+                    nod.SetAt("ConcreteParams", xRec);
+                    trans.AddNewlyCreatedDBObject(xRec, true);
                 }
+
+                // Save the new object to the database
+                trans.Commit();
+
+                // Dispose the transaction
+                trans.Dispose();
             }
         }
 
@@ -713,22 +887,99 @@ namespace SPMTool
                     }
                 }
 
+                // Get the NOD in the database
+                DBDictionary nod = (DBDictionary)trans.GetObject(curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
+
                 // Save the variables on the Xrecord
                 using (ResultBuffer rb = new ResultBuffer())
                 {
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger16, fy));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, Es));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fy));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Es));
 
                     // Create and add data to an Xrecord
-                    Xrecord steelXrec = new Xrecord();
-                    steelXrec.Data = rb;
+                    Xrecord xRec = new Xrecord();
+                    xRec.Data = rb;
+
+                    // Create the entry in the NOD and add to the transaction
+                    nod.SetAt("SteelParams", xRec);
+                    trans.AddNewlyCreatedDBObject(xRec, true);
                 }
 
+                // Save the new object to the database
+                trans.Commit();
+
+                // Dispose the transaction
+                trans.Dispose();
+            }
+        }
+
+        [CommandMethod("ViewMaterialParameters")]
+        public void ViewMaterialParameters()
+        {
+            // Simplified typing for editor:
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+
+            // Definition for the XData
+            string appName = "SPMTool";
+            string xData = "Material Parameters";
+            string concmsg = "";
+            string steelmsg = "";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Get the NOD in the database
+                DBDictionary nod = (DBDictionary)trans.GetObject(curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
+
+                // Read the materials Xrecords
+                ObjectId concPar = nod.GetAt("ConcreteParams");
+                ObjectId steelPar = nod.GetAt("SteelParams");
+
+                if (concPar != null && steelPar != null)
+                {
+                    // Read the Concrete Xrecord
+                    Xrecord concXrec = (Xrecord)trans.GetObject(concPar, OpenMode.ForRead);
+                    ResultBuffer rb = concXrec.Data;
+                    TypedValue[] data = rb.AsArray();
+
+                    // Get the parameters
+                    concmsg = "\nConcrete Parameters" +
+                              "\nfc = " + data[2].Value.ToString() + " MPa" +
+                              "\nEc = " + data[3].Value.ToString() + " MPa";
+
+                    // Read the Steel Xrecord
+                    Xrecord steelXrec = (Xrecord)trans.GetObject(steelPar, OpenMode.ForRead);
+                    ResultBuffer rb2 = steelXrec.Data;
+                    TypedValue[] data2 = rb.AsArray();
+
+                    // Get the parameters
+                    steelmsg = "\nSteel Parameters" +
+                               "\nfy = " + data2[2].Value.ToString() + " MPa" +
+                               "\nEs = " + data2[3].Value.ToString() + " MPa";
+                }
+                else
+                {
+                    concmsg = "\nMaterial Parameters NOT SET";
+                    steelmsg = "";
+                }
+
+                // Display the values returned
+                Application.ShowAlertDialog(appName + "\n\n" + xData + "\n" + concmsg + "\n" + steelmsg);
+
+                // Dispose the transaction
+                trans.Dispose();
             }
         }
     }
+
+        
+    
 
     // Support related commands
     public class Supports
@@ -745,7 +996,6 @@ namespace SPMTool
 
             // Definition for the Extended Data
             string appName = "SPMTool";
-            string xdataStr = "Node data";
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -814,10 +1064,12 @@ namespace SPMTool
                             ent.XData = newRb;
                         }
 
+                        // Save the new object to the database
                         trans.Commit();
+
+                        // Dispose the transaction
                         trans.Dispose();
                     }
-
                 }
             }
         }
