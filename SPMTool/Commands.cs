@@ -15,10 +15,10 @@ namespace SPMTool
     // Geometry related commands
     public class Geometry
     {
-
         [CommandMethod("AddNode")]
         public void AddNode()
         {
+            
             // Simplified typing for editor:
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
 
@@ -427,6 +427,18 @@ namespace SPMTool
             }
         }
 
+        [CommandMethod("EnumerateNodes")]
+        public void EnumerateNodes()
+        {
+            // Simplified typing for editor:
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+
+        }
+
         [CommandMethod("SetStringerParameters")]
         public void SetStringerParameters()
         {
@@ -653,6 +665,7 @@ namespace SPMTool
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
 
+            // Definition for the Extended Data
             string appName = "SPMTool";
             string msgstr = "";
             string dataType = "";
@@ -945,9 +958,6 @@ namespace SPMTool
         [CommandMethod("ViewMaterialParameters")]
         public void ViewMaterialParameters()
         {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
             // Get the current document and database
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
@@ -955,8 +965,8 @@ namespace SPMTool
             // Definition for the XData
             string appName = "SPMTool";
             string xData = "Material Parameters";
-            string concmsg = "";
-            string steelmsg = "";
+            string concmsg;
+            string steelmsg;
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
