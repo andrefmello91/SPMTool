@@ -1,4 +1,5 @@
-﻿using Autodesk.AutoCAD.Runtime;
+﻿using System;
+using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
@@ -1037,14 +1038,32 @@ namespace SPMTool
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                
+                // Create a reference to DWG files containing support blocks
+                string PathName = "C:\\SPMToolBlocks\\";
+                ObjectId xSup = curDb.AttachXref(PathName + "X.dwg", "X");
+                ObjectId ySup = curDb.AttachXref(PathName + "Y.dwg", "Y");
+                ObjectId xySup = curDb.AttachXref(PathName + "XY.dwg", "XY");
+                                     
                 // Request objects to be selected in the drawing area
-                ed.WriteMessage("Select the nodes to add support conditions.");
+                ed.WriteMessage("Select a node to add support conditions.");
                 PromptSelectionResult selRes = ed.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
                 {
                     SelectionSet set = selRes.Value;
+
+                    // If user selected more than one node
+                    if (set.Count > 1)
+                    {
+                        Application.ShowAlertDialog("Please select one node at a time.");
+
+                        // Abort the transaction
+                        trans.Abort();
+                    }
 
                      // Open the Registered Applications table for read
                     RegAppTable acRegAppTbl;
@@ -1093,12 +1112,33 @@ namespace SPMTool
                             ResultBuffer rb = ent.GetXDataForApplication(appName);
                             TypedValue[] data = rb.AsArray();
 
+                            // Get the node coordinates on the XData
+                            double xPos = Convert.ToDouble(data[3].Value.ToString());
+                            double yPos = Convert.ToDouble(data[4].Value.ToString());
+
                             // Set the new support conditions (line 5 of the array)
                             data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
 
                             // Add the new XData
                             ResultBuffer newRb = new ResultBuffer(data);
                             ent.XData = newRb;
+
+                            // Add the block to selected nodes at
+                            Point3d insPt = new Point3d(xPos, yPos, 0);
+
+                            // Initialize the object id to attach
+                            ObjectId sup = xSup;
+
+                            // Choose what type of support
+                            if (support == "X") sup = xSup;
+                            if (support == "Y") sup = ySup;
+                            if (support == "XY") sup = xySup;
+
+                            // Save the block reference
+                            BlockReference blkRef = new BlockReference(insPt, sup);
+                            BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                            blkTblRec.AppendEntity(blkRef);
+                            trans.AddNewlyCreatedDBObject(blkRef, true);
                         }
 
                         // Save the new object to the database
