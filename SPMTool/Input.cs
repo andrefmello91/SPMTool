@@ -19,7 +19,7 @@ namespace SPMTool
         [CommandMethod("AddNode")]
         public void AddNode()
         {
-            
+
             // Simplified typing for editor:
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
 
@@ -705,9 +705,9 @@ namespace SPMTool
                                 dataType = data[1].Value.ToString();
 
                                 // Get the parameters
-                                msgstr = "\nNode number: "           + data[2].Value.ToString() +
-                                         "\nNode position: ("        + data[3].Value.ToString() + ", " + data[4].Value.ToString() + ")" +
-                                         "\nSupport conditions: "    + data[5].Value.ToString() +
+                                msgstr = "\nNode number: " + data[2].Value.ToString() +
+                                         "\nNode position: (" + data[3].Value.ToString() + ", " + data[4].Value.ToString() + ")" +
+                                         "\nSupport conditions: " + data[5].Value.ToString() +
                                          "\nForce in X direction = " + data[6].Value.ToString() + " N" +
                                          "\nForce in Y direction = " + data[7].Value.ToString() + " N";
                             }
@@ -734,10 +734,10 @@ namespace SPMTool
                                 dataType = data[1].Value.ToString();
 
                                 // Get the parameters
-                                msgstr = "\nStart node: ("    + data[2].Value.ToString() + ", " + data[3].Value.ToString() + ")" +
-                                         "\nEnd node: ("      + data[4].Value.ToString() + ", " + data[5].Value.ToString() + ")" +
-                                         "\nWidth = "         + data[6].Value.ToString() + " mm" +
-                                         "\nHeight = "        + data[7].Value.ToString() + " mm" +
+                                msgstr = "\nStart node: (" + data[2].Value.ToString() + ", " + data[3].Value.ToString() + ")" +
+                                         "\nEnd node: (" + data[4].Value.ToString() + ", " + data[5].Value.ToString() + ")" +
+                                         "\nWidth = " + data[6].Value.ToString() + " mm" +
+                                         "\nHeight = " + data[7].Value.ToString() + " mm" +
                                          "\nReinforcement = " + data[8].Value.ToString() + " mm2";
                             }
 
@@ -763,11 +763,11 @@ namespace SPMTool
                                 dataType = data[1].Value.ToString();
 
                                 // Get the parameters
-                                msgstr = "\nVertices: ("                + data[2 ].Value.ToString()  + ", "  + data[3].Value.ToString() + "), ("
-                                                                        + data[4 ].Value.ToString()  + ", "  + data[5].Value.ToString() + "), ("
-                                                                        + data[6 ].Value.ToString()  + ", "  + data[7].Value.ToString() + "), ("
-                                                                        + data[8 ].Value.ToString()  + ", "  + data[9].Value.ToString() + ")" +
-                                         "\nWidth = "                   + data[10].Value.ToString() + " mm" +
+                                msgstr = "\nVertices: (" + data[2].Value.ToString() + ", " + data[3].Value.ToString() + "), ("
+                                                                        + data[4].Value.ToString() + ", " + data[5].Value.ToString() + "), ("
+                                                                        + data[6].Value.ToString() + ", " + data[7].Value.ToString() + "), ("
+                                                                        + data[8].Value.ToString() + ", " + data[9].Value.ToString() + ")" +
+                                         "\nWidth = " + data[10].Value.ToString() + " mm" +
                                          "\nReinforcement ratio (x) = " + data[11].Value.ToString() +
                                          "\nReinforcement ratio (y) = " + data[12].Value.ToString();
                             }
@@ -1016,8 +1016,8 @@ namespace SPMTool
         }
     }
 
-        
-    
+
+
 
     // Support related commands
     public class Supports
@@ -1040,113 +1040,124 @@ namespace SPMTool
             {
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-                
+
                 // Create a reference to DWG files containing support blocks
                 string PathName = "C:\\SPMToolBlocks\\";
                 ObjectId xSup = curDb.AttachXref(PathName + "X.dwg", "X");
                 ObjectId ySup = curDb.AttachXref(PathName + "Y.dwg", "Y");
                 ObjectId xySup = curDb.AttachXref(PathName + "XY.dwg", "XY");
-                                     
-                // Request objects to be selected in the drawing area
-                ed.WriteMessage("Select a node to add support conditions.");
-                PromptSelectionResult selRes = ed.GetSelection();
 
-                // If the prompt status is OK, objects were selected
-                if (selRes.Status == PromptStatus.OK)
+                // Initialize variables
+                PromptSelectionResult selRes;
+                SelectionSet set;
+
+                // Enter a loop
+                for ( ; ; )
                 {
-                    SelectionSet set = selRes.Value;
+                    // Request objects to be selected in the drawing area
+                    ed.WriteMessage("Select a node to add support conditions.");
+                    selRes = ed.GetSelection();
 
-                    // If user selected more than one node
-                    if (set.Count > 1)
+                    // If the prompt status is OK, objects were selected
+                    if (selRes.Status == PromptStatus.OK)
                     {
-                        Application.ShowAlertDialog("Please select one node at a time.");
+                        // Get the objects selected
+                        set = selRes.Value;
 
-                        // Abort the transaction
-                        trans.Abort();
-                    }
-
-                     // Open the Registered Applications table for read
-                    RegAppTable acRegAppTbl;
-                    acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                    // Check to see if the Registered Applications table record for the custom app exists
-                    if (acRegAppTbl.Has(appName) == false)
-                    {
-                        using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                        // If user selected more than one node 
+                        if (set.Count > 1)
                         {
-                            acRegAppTblRec.Name = appName;
-                            trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                            acRegAppTbl.Add(acRegAppTblRec);
-                            trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                        }
-                    }
-
-                    // Ask the user set the support conditions in the x direction:
-                    PromptKeywordOptions xSupOp = new PromptKeywordOptions("");
-                    xSupOp.Message = "\nAdd support in which direction?";
-                    xSupOp.Keywords.Add("Free");
-                    xSupOp.Keywords.Add("X");
-                    xSupOp.Keywords.Add("Y");
-                    xSupOp.Keywords.Add("XY");
-                    xSupOp.Keywords.Default = "Free";
-                    xSupOp.AllowNone = true;
-
-                    // Get the result
-                    PromptResult xSupRes = ed.GetKeywords(xSupOp);
-
-                    // Set the support
-                    string support = xSupRes.StringResult;
-
-                    foreach (SelectedObject obj in set)
-                    {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-                        
-                        // Check if the selected object is a node
-                        if (ent.Layer.Equals("Node"))
-                        {
-                            // Upgrade the OpenMode
-                            ent.UpgradeOpen();
-
-                            // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(appName);
-                            TypedValue[] data = rb.AsArray();
-
-                            // Get the node coordinates on the XData
-                            double xPos = Convert.ToDouble(data[3].Value.ToString());
-                            double yPos = Convert.ToDouble(data[4].Value.ToString());
-
-                            // Set the new support conditions (line 5 of the array)
-                            data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
-
-                            // Add the new XData
-                            ResultBuffer newRb = new ResultBuffer(data);
-                            ent.XData = newRb;
-
-                            // Add the block to selected nodes at
-                            Point3d insPt = new Point3d(xPos, yPos, 0);
-
-                            // Initialize the object id to attach
-                            ObjectId sup = xSup;
-
-                            // Choose what type of support
-                            if (support == "X") sup = xSup;
-                            if (support == "Y") sup = ySup;
-                            if (support == "XY") sup = xySup;
-
-                            // Save the block reference
-                            BlockReference blkRef = new BlockReference(insPt, sup);
-                            BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                            blkTblRec.AppendEntity(blkRef);
-                            trans.AddNewlyCreatedDBObject(blkRef, true);
+                            Application.ShowAlertDialog("Please select one node at a time.");
                         }
 
-                        // Save the new object to the database
-                        trans.Commit();
-
-                        // Dispose the transaction
-                        trans.Dispose();
+                        // If user selected only one node, continue the command
+                        else break;
                     }
+                    else return;
+                }
+                
+
+                // Open the Registered Applications table for read
+                RegAppTable acRegAppTbl;
+                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                // Check to see if the Registered Applications table record for the custom app exists
+                if (acRegAppTbl.Has(appName) == false)
+                {
+                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                    {
+                        acRegAppTblRec.Name = appName;
+                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                        acRegAppTbl.Add(acRegAppTblRec);
+                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+                    }
+                }
+
+                // Ask the user set the support conditions in the x direction:
+                PromptKeywordOptions xSupOp = new PromptKeywordOptions("");
+                xSupOp.Message = "\nAdd support in which direction?";
+                xSupOp.Keywords.Add("Free");
+                xSupOp.Keywords.Add("X");
+                xSupOp.Keywords.Add("Y");
+                xSupOp.Keywords.Add("XY");
+                xSupOp.Keywords.Default = "Free";
+                xSupOp.AllowNone = true;
+
+                // Get the result
+                PromptResult xSupRes = ed.GetKeywords(xSupOp);
+
+                // Set the support
+                string support = xSupRes.StringResult;
+
+                foreach (SelectedObject obj in set)
+                {
+                    // Open the selected object for read
+                    Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                    // Check if the selected object is a node
+                    if (ent.Layer.Equals("Node"))
+                    {
+                        // Upgrade the OpenMode
+                        ent.UpgradeOpen();
+
+                        // Access the XData as an array
+                        ResultBuffer rb = ent.GetXDataForApplication(appName);
+                        TypedValue[] data = rb.AsArray();
+
+                        // Get the node coordinates on the XData
+                        double xPos = Convert.ToDouble(data[3].Value.ToString());
+                        double yPos = Convert.ToDouble(data[4].Value.ToString());
+
+                        // Set the new support conditions (line 5 of the array)
+                        data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
+
+                        // Add the new XData
+                        ResultBuffer newRb = new ResultBuffer(data);
+                        ent.XData = newRb;
+
+                        // Add the block to selected nodes at
+                        Point3d insPt = new Point3d(xPos, yPos, 0);
+
+                        // Initialize the object id to attach
+                        ObjectId sup = xSup;
+
+                        // Choose what type of support
+                        if (support == "X") sup = xSup;
+                        if (support == "Y") sup = ySup;
+                        if (support == "XY") sup = xySup;
+
+                        // Save the block reference
+                        BlockReference blkRef = new BlockReference(insPt, sup);
+                        BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                        blkTblRec.AppendEntity(blkRef);
+                        trans.AddNewlyCreatedDBObject(blkRef, true);
+                    }
+
+                    // Save the new object to the database
+                    trans.Commit();
+
+                    // Dispose the transaction
+                    trans.Dispose();
                 }
             }
         }
