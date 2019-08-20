@@ -1109,41 +1109,29 @@ namespace SPMTool
                         // Create a object collection and add the lines
                         using (DBObjectCollection lines = new DBObjectCollection())
                         {
-                            // 1st line
-                            Line line1 = new Line()
+                            // Define the points to add the lines
+                            Point3d[] blkPts =
                             {
-                                StartPoint = origin,
-                                EndPoint = new Point3d(-200, 115, 0)
+                                origin,
+                                new Point3d(-200, 115, 0),
+                                origin,
+                                new Point3d(-200, -115, 0),
+                                new Point3d(-200, 150, 0),
+                                new Point3d(-200, -150, 0),
+                                new Point3d(-250, 150, 0),
+                                new Point3d(-250, -150, 0)
                             };
-                            // Add to the collection
-                            lines.Add(line1);
 
-                            // 2nd line
-                            Line line2 = new Line
+                            // Define the lines and add to the collection
+                            for (int i = 0; i < 4; i++)
                             {
-                                StartPoint = origin,
-                                EndPoint = new Point3d(-200, -115, 0)
-                            };
-                            // Add to the collection
-                            lines.Add(line2);
-
-                            // 3rd line
-                            Line line3 = new Line
-                            {
-                                StartPoint = new Point3d(-200, 150, 0),
-                                EndPoint = new Point3d(-200, -150, 0)
-                            };
-                            // Add to the collection
-                            lines.Add(line3);
-
-                            // 4th line
-                            Line line4 = new Line
-                            {
-                                StartPoint = new Point3d(-250, 150, 0),
-                                EndPoint = new Point3d(-250, -150, 0)
-                            };
-                            // Add to the collection
-                            lines.Add(line4);
+                                Line line = new Line()
+                                {
+                                    StartPoint = blkPts[2 * i],
+                                    EndPoint = blkPts[2 * i + 1]
+                                };
+                                lines.Add(line);
+                            }
 
                             // Add the lines to the block table record
                             foreach (Entity ent in lines)
@@ -1174,41 +1162,29 @@ namespace SPMTool
                         // Create a object collection and add the lines
                         using (DBObjectCollection lines = new DBObjectCollection())
                         {
-                            // 1st line
-                            Line line1 = new Line()
+                            // Define the points to add the lines
+                            Point3d[] blkPts =
                             {
-                                StartPoint = origin,
-                                EndPoint = new Point3d(-115, -200, 0)
+                                origin,
+                                new Point3d(-115, -200, 0),
+                                origin,
+                                new Point3d(115, -200, 0),
+                                new Point3d(-150, -200, 0),
+                                new Point3d(150, -200, 0),
+                                new Point3d(-150, -250, 0),
+                                new Point3d(+150, -250, 0)
                             };
-                            // Add to the collection
-                            lines.Add(line1);
 
-                            // 2nd line
-                            Line line2 = new Line
+                            // Define the lines and add to the collection
+                            for (int i = 0; i < 4; i++)
                             {
-                                StartPoint = origin,
-                                EndPoint = new Point3d(115, -200, 0)
-                            };
-                            // Add to the collection
-                            lines.Add(line2);
-
-                            // 3rd line
-                            Line line3 = new Line
-                            {
-                                StartPoint = new Point3d(-150, -200, 0),
-                                EndPoint = new Point3d(150, -200, 0)
-                            };
-                            // Add to the collection
-                            lines.Add(line3);
-
-                            // 4th line
-                            Line line4 = new Line
-                            {
-                                StartPoint = new Point3d(-150, -250, 0),
-                                EndPoint = new Point3d(+150, -250, 0)
-                            };
-                            // Add to the collection
-                            lines.Add(line4);
+                                Line line = new Line()
+                                {
+                                    StartPoint = blkPts[2 * i],
+                                    EndPoint = blkPts[2 * i + 1]
+                                };
+                                lines.Add(line);
+                            }
 
                             // Add the lines to the block table record
                             foreach (Entity ent in lines)
@@ -1239,32 +1215,27 @@ namespace SPMTool
                         // Create a object collection and add the lines
                         using (DBObjectCollection lines = new DBObjectCollection())
                         {
-                            // 1st line
-                            Line line1 = new Line()
+                            // Define the points to add the lines
+                            Point3d[] blkPts =
                             {
-                                StartPoint = origin,
-                                EndPoint = new Point3d(-115, -200, 0)
+                                origin,
+                                new Point3d(-115, -200, 0),
+                                origin,
+                                new Point3d(115, -200, 0),
+                                new Point3d(-150, -200, 0),
+                                new Point3d(150, -200, 0)
                             };
-                            // Add to the collection
-                            lines.Add(line1);
 
-                            // 2nd line
-                            Line line2 = new Line()
+                            // Define the lines and add to the collection
+                            for (int i = 0; i < 3; i++)
                             {
-                                StartPoint = origin,
-                                EndPoint = new Point3d(115, -200, 0)
-                            };
-                            // Add to the collection
-                            lines.Add(line2);
-
-                            // 3rd line
-                            Line line3 = new Line()
-                            {
-                                StartPoint = new Point3d(-150, -200, 0),
-                                EndPoint = new Point3d(150, -200, 0)
-                            };
-                            // Add to the collection
-                            lines.Add(line3);
+                                Line line = new Line()
+                                {
+                                    StartPoint = blkPts[2 * i],
+                                    EndPoint = blkPts[2 * i + 1]
+                                };
+                                lines.Add(line);
+                            }
 
                             // Create the diagonal lines
                             for (int i = 0; i < 6; i++)
@@ -1279,7 +1250,6 @@ namespace SPMTool
 
                                 // Add to the collection
                                 lines.Add(diagLine);
-
                             }
 
                             // Add the lines to the block table record
