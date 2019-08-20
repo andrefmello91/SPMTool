@@ -436,6 +436,111 @@ namespace SPMTool
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
 
+            // Definition for the Extended Data
+            string appName = "SPMTool";
+            string xdataStr = "Nodes Matrix";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Registered Applications table for read
+                RegAppTable acRegAppTbl;
+                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                // Check to see if the Registered Applications table record for the custom app exists
+                if (acRegAppTbl.Has(appName) == false)
+                {
+                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                    {
+                        acRegAppTblRec.Name = appName;
+                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                        acRegAppTbl.Add(acRegAppTblRec);
+                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+                    }
+                }
+
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Create the nodes collection and initialize getting the elements on node layer
+                ObjectIdCollection nodes = Methods.GetEntitiesOnLayer("Node");
+
+                // Get the number of nodes
+                int numNodes = nodes.Count;
+
+                // Initialize the node number
+                int nodeNum = 1;
+
+                // Initialize the node matrix with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
+                double[,] nodesMatrix = new double[numNodes, 3];
+
+                // Access the nodes on the document
+                foreach (ObjectId obj in nodes)
+                {
+                    // Open the selected object for write
+                    Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
+
+                    // Read the entity as a point
+                    DBPoint node = ent as DBPoint;
+
+                    // Get the node number, position in the matrix and the coordinates
+                    int nodeMatrixPos = nodeNum - 1;
+                    double xCoord = node.Position.X;
+                    double yCoord = node.Position.Y;
+
+                    // Add to the matrix
+                    nodesMatrix[nodeMatrixPos, 0] = Convert.ToDouble(nodeNum);
+                    nodesMatrix[nodeMatrixPos, 1] = xCoord;
+                    nodesMatrix[nodeMatrixPos, 2] = yCoord;
+
+                    // Access the XData as an array
+                    ResultBuffer rb = ent.GetXDataForApplication(appName);
+                    TypedValue[] data = rb.AsArray();
+
+                    // Set the new node number (line 2)
+                    data[2] = new TypedValue((int)DxfCode.ExtendedDataInteger32, nodeNum);
+
+                    // Add the new XData
+                    ResultBuffer newRb = new ResultBuffer(data);
+                    ent.XData = newRb;
+
+                    // Increment the node number
+                    nodeNum++;
+                }
+
+                ed.WriteMessage("\nThere are " + numNodes.ToString() + " nodes on the model");
+                for (int i = 0; i < nodeNum - 1; i++)
+                {
+                    ed.WriteMessage("\n (" + nodesMatrix[i, 0].ToString() + ", " + nodesMatrix[i, 1].ToString() + ", " + nodesMatrix[i, 2].ToString() + ")");
+                }
+
+                // Get the NOD in the database
+    //            DBDictionary nod = (DBDictionary)trans.GetObject(curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
+
+    //            // Save the variables on an Xrecord
+				//using (ResultBuffer rb = new ResultBuffer())
+				//{
+				//	rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
+				//	rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
+				//	rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, nodesMatrix));
+
+				//	// Create and add data to an Xrecord
+				//	Xrecord xRec = new Xrecord();
+				//	xRec.Data = rb;
+
+				//	// Create the entry in the NOD and add to the transaction
+				//	nod.SetAt("NodesMatrix", xRec);
+				//	trans.AddNewlyCreatedDBObject(xRec, true);
+
+				//	ed.WriteMessage(rb.ToString());
+				//}
+
+                // Save the new object to the database
+                trans.Commit();
+
+                // Dispose the transaction
+                trans.Dispose();
+            }
         }
 
         [CommandMethod("SetStringerParameters")]
@@ -762,9 +867,9 @@ namespace SPMTool
 
                                 // Get the parameters
                                 msgstr = "\nVertices: (" + data[2].Value.ToString() + ", " + data[3].Value.ToString() + "), ("
-                                                                        + data[4].Value.ToString() + ", " + data[5].Value.ToString() + "), ("
-                                                                        + data[6].Value.ToString() + ", " + data[7].Value.ToString() + "), ("
-                                                                        + data[8].Value.ToString() + ", " + data[9].Value.ToString() + ")" +
+                                                         + data[4].Value.ToString() + ", " + data[5].Value.ToString() + "), ("
+                                                         + data[6].Value.ToString() + ", " + data[7].Value.ToString() + "), ("
+                                                         + data[8].Value.ToString() + ", " + data[9].Value.ToString() + ")" +
                                          "\nWidth = " + data[10].Value.ToString() + " mm" +
                                          "\nReinforcement ratio (x) = " + data[11].Value.ToString() +
                                          "\nReinforcement ratio (y) = " + data[12].Value.ToString();
@@ -1269,119 +1374,106 @@ namespace SPMTool
                     xyBlock = blkTbl["SupportXY"];
                 }
 
-                // Enter a loop
-                for (; ; )
+                // Request objects to be selected in the drawing area
+                ed.WriteMessage("\nSelect nodes to add support conditions:");
+                selRes = ed.GetSelection();
+
+                // If the prompt status is OK, objects were selected
+                if (selRes.Status == PromptStatus.OK)
                 {
-                    // Request objects to be selected in the drawing area
-                    ed.WriteMessage("Select a node to add support conditions.");
-                    selRes = ed.GetSelection();
+                    // Get the objects selected
+                    set = selRes.Value;
 
-                    // If the prompt status is OK, objects were selected
-                    if (selRes.Status == PromptStatus.OK)
+                    // Ask the user set the support conditions:
+                    PromptKeywordOptions supOp = new PromptKeywordOptions("\nAdd support in which direction?");
+                    supOp.Message = "\nAdd support in which direction?";
+                    supOp.Keywords.Add("Free");
+                    supOp.Keywords.Add("X");
+                    supOp.Keywords.Add("Y");
+                    supOp.Keywords.Add("XY");
+                    supOp.Keywords.Default = "Free";
+                    supOp.AllowNone = true;
+
+                    // Get the result
+                    PromptResult supRes = ed.GetKeywords(supOp);
+
+                    // Set the support
+                    string support = supRes.StringResult;
+
+                    foreach (SelectedObject obj in set)
                     {
-                        // Get the objects selected
-                        set = selRes.Value;
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
-                        // If user selected more than one node 
-                        if (set.Count > 1)
+                        // Check if the selected object is a node
+                        if (ent.Layer.Equals("Node"))
                         {
-                            Application.ShowAlertDialog("Please select one node at a time.");
-                        }
+                            // Upgrade the OpenMode
+                            ent.UpgradeOpen();
 
-                        // If user selected only one node, continue the command
-                        else break;
-                    }
-                    else return;
-                }
+                            // Access the XData as an array
+                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            TypedValue[] data = rb.AsArray();
 
-                // Ask the user set the support conditions:
-                PromptKeywordOptions supOp = new PromptKeywordOptions("");
-                supOp.Message = "\nAdd support in which direction?";
-                supOp.Keywords.Add("Free");
-                supOp.Keywords.Add("X");
-                supOp.Keywords.Add("Y");
-                supOp.Keywords.Add("XY");
-                supOp.Keywords.Default = "Free";
-                supOp.AllowNone = true;
+                            // Get the node coordinates on the XData
+                            double xPos = Convert.ToDouble(data[3].Value);
+                            double yPos = Convert.ToDouble(data[4].Value);
 
-                // Get the result
-                PromptResult supRes = ed.GetKeywords(supOp);
+                            // Set the new support conditions (line 5 of the array)
+                            data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
 
-                // Set the support
-                string support = supRes.StringResult;
+                            // Add the new XData
+                            ResultBuffer newRb = new ResultBuffer(data);
+                            ent.XData = newRb;
 
-                foreach (SelectedObject obj in set)
-                {
-                    // Open the selected object for read
-                    Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+                            // Add the block to selected node at
+                            Point3d insPt = new Point3d(xPos, yPos, 0);
 
-                    // Check if the selected object is a node
-                    if (ent.Layer.Equals("Node"))
-                    {
-                        // Upgrade the OpenMode
-                        ent.UpgradeOpen();
-
-                        // Access the XData as an array
-                        ResultBuffer rb = ent.GetXDataForApplication(appName);
-                        TypedValue[] data = rb.AsArray();
-
-                        // Get the node coordinates on the XData
-                        double xPos = Convert.ToDouble(data[3].Value);
-                        double yPos = Convert.ToDouble(data[4].Value);
-
-                        // Set the new support conditions (line 5 of the array)
-                        data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
-
-                        // Add the new XData
-                        ResultBuffer newRb = new ResultBuffer(data);
-                        ent.XData = newRb;
-
-                        // Add the block to selected node at
-                        Point3d insPt = new Point3d(xPos, yPos, 0);
-
-                        // Insert the block into the current space
-                        if (support == "X" && xBlock != ObjectId.Null)
-                        {
-                            using (BlockReference blkRef = new BlockReference(insPt, xBlock))
+                            // Insert the block into the current space
+                            if (support == "X" && xBlock != ObjectId.Null)
                             {
-                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                blkTblRec.AppendEntity(blkRef);
-                                blkRef.Layer = layer;
-                                trans.AddNewlyCreatedDBObject(blkRef, true);
+                                using (BlockReference blkRef = new BlockReference(insPt, xBlock))
+                                {
+                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    blkTblRec.AppendEntity(blkRef);
+                                    blkRef.Layer = layer;
+                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+                                }
                             }
-                        }
 
-                        if (support == "Y" && yBlock != ObjectId.Null)
-                        {
-                            using (BlockReference blkRef = new BlockReference(insPt, yBlock))
+                            if (support == "Y" && yBlock != ObjectId.Null)
                             {
-                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                blkTblRec.AppendEntity(blkRef);
-                                blkRef.Layer = layer;
-                                trans.AddNewlyCreatedDBObject(blkRef, true);
+                                using (BlockReference blkRef = new BlockReference(insPt, yBlock))
+                                {
+                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    blkTblRec.AppendEntity(blkRef);
+                                    blkRef.Layer = layer;
+                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+                                }
                             }
-                        }
 
-                        if (support == "XY" && xyBlock != ObjectId.Null)
-                        {
-                            using (BlockReference blkRef = new BlockReference(insPt, xyBlock))
+                            if (support == "XY" && xyBlock != ObjectId.Null)
                             {
-                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                blkTblRec.AppendEntity(blkRef);
-                                blkRef.Layer = layer;
-                                trans.AddNewlyCreatedDBObject(blkRef, true);
+                                using (BlockReference blkRef = new BlockReference(insPt, xyBlock))
+                                {
+                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    blkTblRec.AppendEntity(blkRef);
+                                    blkRef.Layer = layer;
+                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+                                }
                             }
                         }
                     }
-
-                    // Save the new object to the database
-                    trans.Commit();
-
-                    // Dispose the transaction
-                    trans.Dispose();
                 }
+
+                // Save the new object to the database
+                trans.Commit();
+
+                // Dispose the transaction
+                trans.Dispose();
             }
         }
+        
 
         [CommandMethod("AddForce")]
         public void AddForce()
@@ -1477,14 +1569,14 @@ namespace SPMTool
                             // Create the arrow line and solid)
                             Line line = new Line()
                             {
-                                StartPoint = new Point3d(0, 150, 0),
-                                EndPoint = new Point3d(0, 500, 0)
+                                StartPoint = new Point3d(0, 75, 0),
+                                EndPoint = new Point3d(0, 250, 0)
                             };
                             // Add to the collection
                             arrow.Add(line);
 
                             // Create the solid and add to the collection
-                            Solid solid = new Solid(origin, new Point3d(-100, 150, 0), new Point3d(100, 150, 0));
+                            Solid solid = new Solid(origin, new Point3d(-50, 75, 0), new Point3d(50, 75, 0));
                             arrow.Add(solid);
 
                             // Add the lines to the block table record
@@ -1502,193 +1594,217 @@ namespace SPMTool
                     ForceBlock = blkTbl["ForceBlock"];
                 }
 
-                // Enter a loop
-                for ( ; ; )
+                // Request objects to be selected in the drawing area
+                ed.WriteMessage("\nSelect a node to add load:");
+                selRes = ed.GetSelection();
+
+                // If the prompt status is OK, objects were selected
+                if (selRes.Status == PromptStatus.OK)
                 {
-                    // Request objects to be selected in the drawing area
-                    ed.WriteMessage("\nSelect a node to add load:");
-                    selRes = ed.GetSelection();
+                    // Get the objects selected
+                    set = selRes.Value;
 
-                    // If the prompt status is OK, objects were selected
-                    if (selRes.Status == PromptStatus.OK)
+                    // Ask the user set the load value in x direction:
+                    PromptDoubleOptions xForceOp = new PromptDoubleOptions("\nEnter force (in N) in X direction(positive following axis direction)?")
                     {
-                        // Get the objects selected
-                        set = selRes.Value;
+                        DefaultValue = 0
+                    };
 
-                        // If user selected more than one node 
-                        if (set.Count > 1)
+                    // Get the result
+                    PromptDoubleResult xForceRes = ed.GetDouble(xForceOp);
+                    Double xForce = xForceRes.Value;
+
+                    // Ask the user set the load value in y direction:
+                    PromptDoubleOptions yForceOp = new PromptDoubleOptions("\nEnter force (in N) in Y direction(positive following axis direction)?")
+                    {
+                        DefaultValue = 0
+                    };
+
+                    // Get the result
+                    PromptDoubleResult yForceRes = ed.GetDouble(yForceOp);
+                    Double yForce = yForceRes.Value;
+
+                    foreach (SelectedObject obj in set)
+                    {
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                        // Check if the selected object is a node
+                        if (ent.Layer.Equals("Node"))
                         {
-                            Application.ShowAlertDialog("Please select one node at a time.");
-                        }
+                            // Upgrade the OpenMode
+                            ent.UpgradeOpen();
 
-                        // If user selected only one node, continue the command
-                        else break;
+                            // Access the XData as an array
+                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            TypedValue[] data = rb.AsArray();
+
+                            // Get the node coordinates on the XData
+                            double xPos = Convert.ToDouble(data[3].Value);
+                            double yPos = Convert.ToDouble(data[4].Value);
+
+                            // Set the new forces (line 6 and 7 of the array)
+                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, xForce);
+                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, yForce);
+
+                            // Add the new XData
+                            ResultBuffer newRb = new ResultBuffer(data);
+                            ent.XData = newRb;
+
+                            // Add the block to selected node at
+                            Point3d insPt = new Point3d(xPos, yPos, 0);
+
+                            // Insert the block into the current space
+                            if (xForce > 0) // positive force in x
+                            {
+                                using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
+                                {
+                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    blkTblRec.AppendEntity(blkRef);
+                                    blkRef.Layer = layer;
+                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+
+                                    // Rotate 90 degress counterclockwise
+                                    blkRef.TransformBy(Matrix3d.Rotation(1.570796, curUCS.Zaxis, insPt));
+
+                                    // Insert the force value as text and add to the block table
+                                    DBText text = new DBText()
+                                    {
+                                        Position = new Point3d(xPos - 400, yPos + 25, 0),
+                                        Height = 50,
+                                        TextString = xForce.ToString() + " N",
+                                        Layer = layer
+                                    };
+
+                                    blkTblRec.AppendEntity(text);
+                                    trans.AddNewlyCreatedDBObject(text, true);
+                                }
+                            }
+
+                            if (xForce < 0) // negative force in x
+                            {
+                                using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
+                                {
+                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    blkTblRec.AppendEntity(blkRef);
+                                    blkRef.Layer = layer;
+                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+
+                                    // Rotate 90 degress clockwise
+                                    blkRef.TransformBy(Matrix3d.Rotation(-1.570796, curUCS.Zaxis, insPt));
+
+                                    // Get the force absolute value
+                                    double xForceAbs = Math.Abs(xForce);
+
+                                    // Insert the force value as text and add to the block table
+                                    DBText text = new DBText()
+                                    {
+                                        Position = new Point3d(xPos + 150, yPos + 25, 0),
+                                        Height = 50,
+                                        TextString = xForceAbs.ToString() + " N",
+                                        Layer = layer
+                                    };
+
+                                    blkTblRec.AppendEntity(text);
+                                    trans.AddNewlyCreatedDBObject(text, true);
+                                }
+                            }
+
+                            if (yForce > 0) // positive force in y
+                            {
+                                using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
+                                {
+                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    blkTblRec.AppendEntity(blkRef);
+                                    blkRef.Layer = layer;
+                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+
+                                    // Rotate 90 degress counterclockwise
+                                    blkRef.TransformBy(Matrix3d.Rotation(3.14159265, curUCS.Zaxis, insPt));
+
+                                    // Insert the force value as text and add to the block table
+                                    DBText text = new DBText()
+                                    {
+                                        Position = new Point3d(xPos + 25, yPos - 250, 0),
+                                        Height = 50,
+                                        TextString = yForce.ToString() + " N",
+                                        Layer = layer
+                                    };
+
+                                    blkTblRec.AppendEntity(text);
+                                    trans.AddNewlyCreatedDBObject(text, true);
+                                }
+                            }
+
+                            if (yForce < 0) // negative force in y
+                            {
+                                using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
+                                {
+                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    blkTblRec.AppendEntity(blkRef);
+                                    blkRef.Layer = layer;
+                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+
+                                    // No rotation needed
+
+                                    // Get the force absolute value
+                                    double yForceAbs = Math.Abs(yForce);
+
+                                    // Insert the force value as text and add to the block table
+                                    DBText text = new DBText()
+                                    {
+                                        Position = new Point3d(xPos + 25, yPos + 200, 0),
+                                        Height = 50,
+                                        TextString = yForceAbs.ToString() + " N",
+                                        Layer = layer
+                                    };
+
+                                    blkTblRec.AppendEntity(text);
+                                    trans.AddNewlyCreatedDBObject(text, true);
+                                }
+                            }
+                            // If x or y forces are 0, the block is not added
+                        }
                     }
-                    else return;
                 }
 
-                // Ask the user set the load value in x direction:
-                PromptDoubleOptions xForceOp = new PromptDoubleOptions("\nEnter force (in N) in X direction(positive following axis direction)?")
-                {
-                    DefaultValue = 0
-                };
+                // Save the new object to the database
+                trans.Commit();
 
-                // Get the result
-                PromptDoubleResult xForceRes = ed.GetDouble(xForceOp);
-                Double xForce = xForceRes.Value;
+                // Dispose the transaction
+                trans.Dispose();
 
-                // Ask the user set the load value in y direction:
-                PromptDoubleOptions yForceOp = new PromptDoubleOptions("\nEnter force (in N) in Y direction(positive following axis direction)?")
-                {
-                    DefaultValue = 0
-                };
-
-                // Get the result
-                PromptDoubleResult yForceRes = ed.GetDouble(yForceOp);
-                Double yForce = yForceRes.Value;
-
-                foreach (SelectedObject obj in set)
-                {
-                    // Open the selected object for read
-                    Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-
-                    // Check if the selected object is a node
-                    if (ent.Layer.Equals("Node"))
-                    {
-                        // Upgrade the OpenMode
-                        ent.UpgradeOpen();
-
-                        // Access the XData as an array
-                        ResultBuffer rb = ent.GetXDataForApplication(appName);
-                        TypedValue[] data = rb.AsArray();
-
-                        // Get the node coordinates on the XData
-                        double xPos = Convert.ToDouble(data[3].Value);
-                        double yPos = Convert.ToDouble(data[4].Value);
-
-                        // Set the new forces (line 6 and 7 of the array)
-                        data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, xForce);
-                        data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, yForce);
-
-                        // Add the new XData
-                        ResultBuffer newRb = new ResultBuffer(data);
-                        ent.XData = newRb;
-
-                        // Add the block to selected node at
-                        Point3d insPt = new Point3d(xPos, yPos, 0);
-
-                        // Insert the block into the current space
-                        if (xForce > 0) // positive force in x
-                        {
-                            using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
-                            {
-                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                blkTblRec.AppendEntity(blkRef);
-                                blkRef.Layer = layer;
-                                trans.AddNewlyCreatedDBObject(blkRef, true);
-
-                                // Rotate 90 degress counterclockwise
-                                blkRef.TransformBy(Matrix3d.Rotation(1.570796, curUCS.Zaxis, insPt));
-
-                                // Insert the force value as text and add to the block table
-                                DBText text = new DBText()
-                                {
-                                    Position = new Point3d (xPos - 800, yPos + 50, 0),
-                                    Height = 100,
-                                    TextString = xForce.ToString() + " N",
-                                    Layer = layer
-                                };
-
-                                blkTblRec.AppendEntity(text);
-                                trans.AddNewlyCreatedDBObject(text, true);
-                            }
-                        }
-                        if (xForce < 0) // negative force in x
-                        {
-                            using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
-                            {
-                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                blkTblRec.AppendEntity(blkRef);
-                                blkRef.Layer = layer;
-                                trans.AddNewlyCreatedDBObject(blkRef, true);
-
-                                // Rotate 90 degress clockwise
-                                blkRef.TransformBy(Matrix3d.Rotation(-1.570796, curUCS.Zaxis, insPt));
-
-                                // Insert the force value as text and add to the block table
-                                DBText text = new DBText()
-                                {
-                                    Position = new Point3d(xPos + 300, yPos + 50, 0),
-                                    Height = 100,
-                                    TextString = xForce.ToString() + " N",
-                                    Layer = layer
-                                };
-
-                                blkTblRec.AppendEntity(text);
-                                trans.AddNewlyCreatedDBObject(text, true);
-                            }
-                        }
-
-                        if (yForce > 0) // positive force in y
-                        {
-                            using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
-                            {
-                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                blkTblRec.AppendEntity(blkRef);
-                                blkRef.Layer = layer;
-                                trans.AddNewlyCreatedDBObject(blkRef, true);
-
-                                // Rotate 90 degress counterclockwise
-                                blkRef.TransformBy(Matrix3d.Rotation(3.14159265, curUCS.Zaxis, insPt));
-
-                                // Insert the force value as text and add to the block table
-                                DBText text = new DBText()
-                                {
-                                    Position = new Point3d(xPos + 50, yPos - 500, 0),
-                                    Height = 100,
-                                    TextString = yForce.ToString() + " N",
-                                    Layer = layer
-                                };
-
-                                blkTblRec.AppendEntity(text);
-                                trans.AddNewlyCreatedDBObject(text, true);
-                            }
-                        }
-
-                        if (yForce < 0) // negative force in y
-                        {
-                            using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
-                            {
-                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                blkTblRec.AppendEntity(blkRef);
-                                blkRef.Layer = layer;
-                                trans.AddNewlyCreatedDBObject(blkRef, true);
-
-                                // No rotation needed
-
-                                // Insert the force value as text and add to the block table
-                                DBText text = new DBText()
-                                {
-                                    Position = new Point3d(xPos + 50, yPos + 400, 0),
-                                    Height = 100,
-                                    TextString = yForce.ToString() + " N",
-                                    Layer = layer
-                                };
-
-                                blkTblRec.AppendEntity(text);
-                                trans.AddNewlyCreatedDBObject(text, true);
-                            }
-                        }
-                        // If x or y forces are 0, the block is not added
-                    }
-
-                    // Save the new object to the database
-                    trans.Commit();
-
-                    // Dispose the transaction
-                    trans.Dispose();
-                }
             }
+        }
+    }
+
+    public class Methods
+    {
+        public static ObjectIdCollection GetEntitiesOnLayer(string layerName)
+        {
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Editor ed = curDoc.Editor;
+
+            // Build a filter list so that only entities on the specified layer are selected
+            TypedValue[] tvs = new TypedValue[1] 
+            {
+                new TypedValue((int)DxfCode.LayerName, layerName)
+            };
+
+            SelectionFilter selFt = new SelectionFilter(tvs);
+
+            // Get the entities on the layername
+            PromptSelectionResult selRes = ed.SelectAll(selFt);
+
+            if (selRes.Status == PromptStatus.OK)
+
+                return
+
+                  new ObjectIdCollection(selRes.Value.GetObjectIds());
+
+            else
+
+                return new ObjectIdCollection();
         }
     }
 }
