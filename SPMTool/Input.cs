@@ -357,10 +357,13 @@ namespace SPMTool
                 }
 
                 // Initialize the vertices of the panel
-                Point3d pan0Node = new Point3d();
-                Point3d pan1Node = new Point3d();
-                Point3d pan2Node = new Point3d();
-                Point3d pan3Node = new Point3d();
+                Point3d[] panVerts =
+                {
+                    new Point3d(),
+                    new Point3d(),
+                    new Point3d(),
+                    new Point3d()
+                };
 
                 // Initialize the panel parameters
                 double panW = 1; // width
@@ -379,13 +382,8 @@ namespace SPMTool
                     PromptPointOptions panNodeOp = new PromptPointOptions("\nSelect nodes performing a loop");
                     PromptPointResult panNodeOpRes = ed.GetPoint(panNodeOp);
 
-                    if (panNodeOpRes.Status == PromptStatus.OK)
-                    {
-                        if (i == 0) pan0Node = panNodeOpRes.Value;
-                        if (i == 1) pan1Node = panNodeOpRes.Value;
-                        if (i == 2) pan2Node = panNodeOpRes.Value;
-                        if (i == 3) pan3Node = panNodeOpRes.Value;
-                    }
+                    // Add to the vertices array
+                    panVerts[i] = panNodeOpRes.Value;
 
                     // Add the node position to the Result Buffer
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, panNodeOpRes.Value.X));  // 2, 4, 6, 8
@@ -399,7 +397,7 @@ namespace SPMTool
                 BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
                 // Create the panel as a solid with 4 segments (4 points)
-                using (Solid newPanel = new Solid(pan0Node, pan1Node, pan3Node, pan2Node))
+                using (Solid newPanel = new Solid(panVerts[0], panVerts[1], panVerts[3], panVerts[2]))
                 {
                     // Set the layer to Panel
                     newPanel.Layer = panelLayer;
@@ -1129,7 +1127,6 @@ namespace SPMTool
                             // Add to the collection
                             lines.Add(line2);
 
-
                             // 3rd line
                             Line line3 = new Line
                             {
@@ -1138,7 +1135,6 @@ namespace SPMTool
                             };
                             // Add to the collection
                             lines.Add(line3);
-
 
                             // 4th line
                             Line line4 = new Line
@@ -1196,7 +1192,6 @@ namespace SPMTool
                             // Add to the collection
                             lines.Add(line2);
 
-
                             // 3rd line
                             Line line3 = new Line
                             {
@@ -1205,7 +1200,6 @@ namespace SPMTool
                             };
                             // Add to the collection
                             lines.Add(line3);
-
 
                             // 4th line
                             Line line4 = new Line
