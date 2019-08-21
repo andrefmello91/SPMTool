@@ -33,23 +33,11 @@ namespace SPMTool
             string ndLayer = "Node";
             short red = 1;
 
-            // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
-            {
-                // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+            // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+            AuxMethods.CreateLayer(ndLayer, red, 0);
 
-                // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-                if (!lyrTbl.Has(ndLayer)) AuxMethods.CreateLayer(ndLayer, red, 0);
-
-                // Open the Registered Applications table for read and check if custom app exists
-                RegAppTable regAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-                if (!regAppTbl.Has(appName)) AuxMethods.RegisterApp();
-
-                // Commit and dispose the transaction
-                trans.Commit();
-                trans.Dispose();
-            }
+            // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
+            AuxMethods.RegisterApp();
 
             // Loop for creating infinite nodes (until user exits the command)
             for (; ; )
@@ -138,9 +126,6 @@ namespace SPMTool
             Database curDb = curDoc.Database;
             Editor ed = curDoc.Editor;
 
-            // Enumerate the nodes
-            AuxMethods.EnumerateNodes();
-
             // Definition for the Extended Data
             string appName = "SPMTool";
             string xdataStr = "Stringer data";
@@ -149,23 +134,14 @@ namespace SPMTool
             string strLayer = "Stringer";
             short cyan = 4;
 
-            // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
-            {
-                // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+            // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+            AuxMethods.CreateLayer(strLayer, cyan, 0);
 
-                // Check if the layer already exists in the drawing. If it doesn't, then it's created:
-                if (!lyrTbl.Has(strLayer)) AuxMethods.CreateLayer(strLayer, cyan, 0);
+            // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
+            AuxMethods.RegisterApp();
 
-                // Open the Registered Applications table for read and check if custom app exists
-                RegAppTable regAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-                if (!regAppTbl.Has(appName)) AuxMethods.RegisterApp();
-
-                // Commit and dispose the transaction
-                trans.Commit();
-                trans.Dispose();
-            }
+            // Enumerate the nodes
+            AuxMethods.EnumerateNodes();
 
             // Prompt for the start point of stringer
             PromptPointOptions strStartOp = new PromptPointOptions("\nPick the start node: ");
@@ -276,31 +252,15 @@ namespace SPMTool
             string pnlLayer = "Panel";
             short grey = 254;
 
+            // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+            AuxMethods.CreateLayer(pnlLayer, grey, 30);
+
+            // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
+            AuxMethods.RegisterApp();
+
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
-                // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-                // Check if the layer Panel already exists in the drawing. If it doesn't, then it's created:
-                if (!lyrTbl.Has(pnlLayer)) AuxMethods.CreateLayer(pnlLayer, grey, 30);
-
-                // Open the Registered Applications table for read
-                RegAppTable acRegAppTbl;
-                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                // Check to see if the Registered Applications table record for the custom app exists
-                if (acRegAppTbl.Has(appName) == false)
-                {
-                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                    {
-                        acRegAppTblRec.Name = appName;
-                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                        acRegAppTbl.Add(acRegAppTblRec);
-                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                    }
-                }
-
                 // Initialize the vertices of the panel
                 Point3d[] panVerts =
                 {
@@ -982,13 +942,12 @@ namespace SPMTool
             string appName = "SPMTool";
             string xdataStr = "Concrete data";
 
+            // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
+            AuxMethods.RegisterApp();
+
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
-                // Open the Registered Applications table for read and check if custom app exists
-                RegAppTable regAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-                if (!regAppTbl.Has(appName)) AuxMethods.RegisterApp();
-
                 // Ask the user to input the concrete compressive strength
                 PromptDoubleOptions fcOp = new PromptDoubleOptions("Input the concrete compressive strength (fc) in MPa:");
 
@@ -1049,13 +1008,12 @@ namespace SPMTool
             string appName = "SPMTool";
             string xdataStr = "Steel data";
 
+            // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
+            AuxMethods.RegisterApp();
+
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
-                // Open the Registered Applications table for read and check if custom app exists
-                RegAppTable regAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-                if (!regAppTbl.Has(appName)) AuxMethods.RegisterApp();
-
                 // Ask the user to input the steel tensile strength
                 PromptDoubleOptions fyOp = new PromptDoubleOptions("Input the steel tensile strength (fy) in MPa:");
 
@@ -1164,10 +1122,7 @@ namespace SPMTool
         }
     }
 
-
-
-
-    // Support related commands
+    // Support and forces related commands
     public class SupportsAndForces
     {
         [CommandMethod("AddSupport")]
@@ -1187,21 +1142,421 @@ namespace SPMTool
             string supLayer = "Support";
             short red = 1;
 
+            // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+            AuxMethods.CreateLayer(supLayer, red, 0);
+
+            // Initialize variables
+            PromptSelectionResult selRes;
+            SelectionSet set;
+
+            // Check if the support blocks already exist. If not, create the blocks
+            AuxMethods.CreateSupportBlocks();
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Read the object Ids of the support blocks
+                ObjectId xBlock = blkTbl["SupportX"];
+                ObjectId yBlock = blkTbl["SupportY"];
+                ObjectId xyBlock = blkTbl["SupportXY"];
+
+                // Request objects to be selected in the drawing area
+                ed.WriteMessage("\nSelect nodes to add support conditions:");
+                selRes = ed.GetSelection();
+
+                // If the prompt status is OK, objects were selected
+                if (selRes.Status == PromptStatus.OK)
+                {
+                    // Get the objects selected
+                    set = selRes.Value;
+
+                    // Ask the user set the support conditions:
+                    PromptKeywordOptions supOp = new PromptKeywordOptions("\nAdd support in which direction?");
+                    supOp.Message = "\nAdd support in which direction?";
+                    supOp.Keywords.Add("Free");
+                    supOp.Keywords.Add("X");
+                    supOp.Keywords.Add("Y");
+                    supOp.Keywords.Add("XY");
+                    supOp.Keywords.Default = "Free";
+                    supOp.AllowNone = true;
+
+                    // Get the result
+                    PromptResult supRes = ed.GetKeywords(supOp);
+
+                    // Set the support
+                    string support = supRes.StringResult;
+
+                    foreach (SelectedObject obj in set)
+                    {
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                        // Check if the selected object is a node
+                        if (ent.Layer.Equals("Node"))
+                        {
+                            // Upgrade the OpenMode
+                            ent.UpgradeOpen();
+
+                            // Read as a point and get the position
+                            DBPoint nd = ent as DBPoint;
+                            Point3d ndPos = nd.Position;
+
+                            // Get the node coordinates
+                            double xPos = ndPos.X;
+                            double yPos = ndPos.Y;
+
+                            // Access the XData as an array
+                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            TypedValue[] data = rb.AsArray();
+
+                            // Set the new support conditions (line 5 of the array)
+                            data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
+
+                            // Add the new XData
+                            ResultBuffer newRb = new ResultBuffer(data);
+                            ent.XData = newRb;
+
+                            // Add the block to selected node at
+                            Point3d insPt = ndPos;
+
+                            // Choose the block to insert
+                            ObjectId supBlock = ObjectId.Null;
+                            if (support == "X" && xBlock != ObjectId.Null)   supBlock = xBlock;
+                            if (support == "Y" && yBlock != ObjectId.Null)   supBlock = yBlock;
+                            if (support == "XY" && xyBlock != ObjectId.Null) supBlock = xyBlock;
+
+                            // Insert the block into the current space
+                            using (BlockReference blkRef = new BlockReference(insPt, supBlock))
+                            {
+                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                blkTblRec.AppendEntity(blkRef);
+                                blkRef.Layer = supLayer;
+                                trans.AddNewlyCreatedDBObject(blkRef, true);
+                            }
+                        }
+                    }
+                }
+
+                // Save the new object to the database
+                trans.Commit();
+                trans.Dispose();
+            }
+        }
+        
+
+        [CommandMethod("AddForce")]
+        public void AddForce()
+        {
+            // Simplified typing for editor:
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+
+            // Get the coordinate system for transformations
+            Matrix3d curUCSMatrix = curDoc.Editor.CurrentUserCoordinateSystem;
+            CoordinateSystem3d curUCS = curUCSMatrix.CoordinateSystem3d;
+
+            // Definition for the Extended Data
+            string appName = "SPMTool";
+
+            // Define the layer parameters
+            string fLayer = "Force";
+            short yellow = 2;
+
+            // Initialize variables
+            PromptSelectionResult selRes;
+            SelectionSet set;
+
+            // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+            AuxMethods.CreateLayer(fLayer, yellow, 0);
+
+            // Check if the force block already exist. If not, create the blocks
+            AuxMethods.CreateForceBlock();
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Read the force block
+                ObjectId ForceBlock = blkTbl["ForceBlock"];
+
+                // Request objects to be selected in the drawing area
+                ed.WriteMessage("\nSelect a node to add load:");
+                selRes = ed.GetSelection();
+
+                // If the prompt status is OK, objects were selected
+                if (selRes.Status == PromptStatus.OK)
+                {
+                    // Get the objects selected
+                    set = selRes.Value;
+
+                    // Ask the user set the load value in x direction:
+                    PromptDoubleOptions xForceOp = new PromptDoubleOptions("\nEnter force (in N) in X direction(positive following axis direction)?")
+                    {
+                        DefaultValue = 0
+                    };
+
+                    // Get the result
+                    PromptDoubleResult xForceRes = ed.GetDouble(xForceOp);
+                    Double xForce = xForceRes.Value;
+
+                    // Ask the user set the load value in y direction:
+                    PromptDoubleOptions yForceOp = new PromptDoubleOptions("\nEnter force (in N) in Y direction(positive following axis direction)?")
+                    {
+                        DefaultValue = 0
+                    };
+
+                    // Get the result
+                    PromptDoubleResult yForceRes = ed.GetDouble(yForceOp);
+                    Double yForce = yForceRes.Value;
+
+                    foreach (SelectedObject obj in set)
+                    {
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                        // Check if the selected object is a node
+                        if (ent.Layer.Equals("Node"))
+                        {
+                            // Upgrade the OpenMode
+                            ent.UpgradeOpen();
+
+                            // Read as a point and get the position
+                            DBPoint nd = ent as DBPoint;
+                            Point3d ndPos = nd.Position;
+
+                            // Get the node coordinates
+                            double xPos = ndPos.X;
+                            double yPos = ndPos.Y;
+
+                            // Access the XData as an array
+                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            TypedValue[] data = rb.AsArray();
+
+                            // Set the new forces (line 6 and 7 of the array)
+                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, xForce);
+                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, yForce);
+
+                            // Add the new XData
+                            ResultBuffer newRb = new ResultBuffer(data);
+                            ent.XData = newRb;
+
+                            // Add the block to selected node at
+                            Point3d insPt = ndPos;
+
+                            // Insert the block into the current space
+                            // For forces in x
+                            using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
+                            {
+                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                
+                                // Add the block if the force is not 0
+                                if (xForce != 0)
+                                {
+                                    blkTblRec.AppendEntity(blkRef);
+                                    blkRef.Layer = fLayer;
+                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+                                }
+
+                                // Initialize the force text
+                                DBText text = new DBText()
+                                {
+                                    Height = 50,
+                                    Layer = fLayer
+                                };
+
+                                if (xForce > 0) // positive force in x
+                                {
+                                    // Rotate 90 degress counterclockwise
+                                    blkRef.TransformBy(Matrix3d.Rotation(1.570796, curUCS.Zaxis, insPt));
+
+                                    // Insert the force value as text and add to the block table
+                                    text.Position = new Point3d(xPos - 400, yPos + 25, 0);
+                                    text.TextString = xForce.ToString() + " N";
+                                }
+
+                                if (xForce < 0) // negative force in x
+                                {
+                                    // Rotate 90 degress clockwise
+                                    blkRef.TransformBy(Matrix3d.Rotation(-1.570796, curUCS.Zaxis, insPt));
+
+                                    // Get the force absolute value
+                                    double xForceAbs = Math.Abs(xForce);
+
+                                    // Insert the force value as text and add to the block table
+                                    text.Position = new Point3d(xPos + 150, yPos + 25, 0);
+                                    text.TextString = xForceAbs.ToString() + " N";
+                                }
+                                
+                                // Append to the block table record if force is not 0
+                                if (xForce != 0)
+                                {
+                                    blkTblRec.AppendEntity(text);
+                                    trans.AddNewlyCreatedDBObject(text, true);
+                                }
+                            }
+
+                            // For forces in y
+                            using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
+                            {
+                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+
+                                // Add the block if the force is not 0
+                                if (yForce != 0)
+                                {
+                                    blkTblRec.AppendEntity(blkRef);
+                                    blkRef.Layer = fLayer;
+                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+                                }
+
+                                // Initialize the force text
+                                DBText text = new DBText()
+                                {
+                                    Height = 50,
+                                    Layer = fLayer
+                                };
+
+                                if (yForce > 0) // positive force in y
+                                {
+                                    // Rotate 90 degress counterclockwise
+                                    blkRef.TransformBy(Matrix3d.Rotation(3.14159265, curUCS.Zaxis, insPt));
+
+                                    // Insert the force value as text and add to the block table
+                                    text.Position = new Point3d(xPos + 25, yPos - 250, 0);
+                                    text.TextString = yForce.ToString() + " N";
+
+                                    blkTblRec.AppendEntity(text);
+                                    trans.AddNewlyCreatedDBObject(text, true);
+                                }
+
+                                if (yForce < 0) // negative force in y
+                                {
+                                    // No rotation needed
+
+                                    // Get the force absolute value
+                                    double yForceAbs = Math.Abs(yForce);
+
+                                    // Insert the force value as text and add to the block table
+                                    text.Position = new Point3d(xPos + 25, yPos + 200, 0);
+                                    text.TextString = yForceAbs.ToString() + " N";
+
+                                    blkTblRec.AppendEntity(text);
+                                    trans.AddNewlyCreatedDBObject(text, true);
+                                }
+
+                                // Append to the block table record if force is not 0
+                                if (yForce != 0)
+                                {
+                                    blkTblRec.AppendEntity(text);
+                                    trans.AddNewlyCreatedDBObject(text, true);
+                                }
+                            }
+                        }
+                        // If x or y forces are 0, the block is not added
+                    }
+                }
+
+                // Save the new object to the database
+                trans.Commit();
+                trans.Dispose();
+            }
+        }
+    }
+
+    public class AuxMethods
+    {
+        // Add the app to the Registered Applications Record
+        public static void RegisterApp()
+        {
+            // Define the appName
+            string appName = "SPMTool";
+
+            // Get the current document, database and editor
+            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Registered Applications table for read
+                RegAppTable regAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+                if (!regAppTbl.Has(appName))
+                {
+                    using (RegAppTableRecord regAppTblRec = new RegAppTableRecord())
+                    {
+                        regAppTblRec.Name = appName;
+                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                        regAppTbl.Add(regAppTblRec);
+                        trans.AddNewlyCreatedDBObject(regAppTblRec, true);
+                    }
+                }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+                trans.Dispose();
+            }
+        }
+
+        // Method to create a layer given a name, a color and transparency
+        public static void CreateLayer(string layerName, short layerColor, int layerTransp)
+        {
+            // Get the current document and database
+            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
+
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
                 // Open the Layer table for read
                 LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
 
-                // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-                if (!lyrTbl.Has(supLayer)) AuxMethods.CreateLayer(supLayer, red, 0);
+                if (!lyrTbl.Has(layerName))
+                {
+                    lyrTbl.UpgradeOpen();
+                    using (LayerTableRecord lyrTblRec = new LayerTableRecord())
+                    {
+                        // Assign the layer the ACI color and a name
+                        lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, layerColor);
 
+                        // Assign a layer transparency
+                        byte alpha = (byte)(255 * (100 - layerTransp) / 100);
+                        Transparency transp = new Transparency(alpha);
+
+                        // Upgrade the Layer table for write
+                        trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
+
+                        // Append the new layer to the Layer table and the transaction
+                        lyrTbl.Add(lyrTblRec);
+                        trans.AddNewlyCreatedDBObject(lyrTblRec, true);
+
+                        // Assign the name and transparency to the layer
+                        lyrTblRec.Name = layerName;
+                        lyrTblRec.Transparency = transp;
+                    }
+                }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+                trans.Dispose();
+            }
+        }
+
+        // Method to create the support blocks
+        public static void CreateSupportBlocks()
+        {
+            // Get the current document and database
+            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Initialize variables
-                PromptSelectionResult selRes;
-                SelectionSet set;
 
                 // Initialize the block Ids
                 ObjectId xBlock = ObjectId.Null;
@@ -1383,134 +1738,23 @@ namespace SPMTool
                         }
                     }
                 }
-                else
-                {
-                    // The blocks already exist
-                    xBlock = blkTbl["SupportX"];
-                    yBlock = blkTbl["SupportY"];
-                    xyBlock = blkTbl["SupportXY"];
-                }
 
-                // Request objects to be selected in the drawing area
-                ed.WriteMessage("\nSelect nodes to add support conditions:");
-                selRes = ed.GetSelection();
-
-                // If the prompt status is OK, objects were selected
-                if (selRes.Status == PromptStatus.OK)
-                {
-                    // Get the objects selected
-                    set = selRes.Value;
-
-                    // Ask the user set the support conditions:
-                    PromptKeywordOptions supOp = new PromptKeywordOptions("\nAdd support in which direction?");
-                    supOp.Message = "\nAdd support in which direction?";
-                    supOp.Keywords.Add("Free");
-                    supOp.Keywords.Add("X");
-                    supOp.Keywords.Add("Y");
-                    supOp.Keywords.Add("XY");
-                    supOp.Keywords.Default = "Free";
-                    supOp.AllowNone = true;
-
-                    // Get the result
-                    PromptResult supRes = ed.GetKeywords(supOp);
-
-                    // Set the support
-                    string support = supRes.StringResult;
-
-                    foreach (SelectedObject obj in set)
-                    {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-
-                        // Check if the selected object is a node
-                        if (ent.Layer.Equals("Node"))
-                        {
-                            // Upgrade the OpenMode
-                            ent.UpgradeOpen();
-
-                            // Read as a point and get the position
-                            DBPoint nd = ent as DBPoint;
-                            Point3d ndPos = nd.Position;
-
-                            // Get the node coordinates
-                            double xPos = ndPos.X;
-                            double yPos = ndPos.Y;
-
-                            // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(appName);
-                            TypedValue[] data = rb.AsArray();
-
-                            // Set the new support conditions (line 5 of the array)
-                            data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
-
-                            // Add the new XData
-                            ResultBuffer newRb = new ResultBuffer(data);
-                            ent.XData = newRb;
-
-                            // Add the block to selected node at
-                            Point3d insPt = ndPos;
-
-                            // Choose the block to insert
-                            ObjectId supBlock = ObjectId.Null;
-                            if (support == "X" && xBlock != ObjectId.Null)   supBlock = xBlock;
-                            if (support == "Y" && yBlock != ObjectId.Null)   supBlock = yBlock;
-                            if (support == "XY" && xyBlock != ObjectId.Null) supBlock = xyBlock;
-
-                            // Insert the block into the current space
-                            using (BlockReference blkRef = new BlockReference(insPt, supBlock))
-                            {
-                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                blkTblRec.AppendEntity(blkRef);
-                                blkRef.Layer = supLayer;
-                                trans.AddNewlyCreatedDBObject(blkRef, true);
-                            }
-                        }
-                    }
-                }
-
-                // Save the new object to the database
+                // Commit and dispose the transaction
                 trans.Commit();
                 trans.Dispose();
             }
         }
-        
 
-        [CommandMethod("AddForce")]
-        public void AddForce()
+        // Method to create the force block
+        public static void CreateForceBlock()
         {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
             // Get the current document and database
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
+            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
 
-            // Get the coordinate system for transformations
-            Matrix3d curUCSMatrix = curDoc.Editor.CurrentUserCoordinateSystem;
-            CoordinateSystem3d curUCS = curUCSMatrix.CoordinateSystem3d;
-
-            // Definition for the Extended Data
-            string appName = "SPMTool";
-
-            // Define the layer parameters
-            string fLayer = "Force";
-            short yellow = 2;
-
-            // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
-                // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-                // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-                if (!lyrTbl.Has(fLayer)) AuxMethods.CreateLayer(fLayer, yellow, 0);
-
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Initialize variables
-                PromptSelectionResult selRes;
-                SelectionSet set;
 
                 // Initialize the block Ids
                 ObjectId ForceBlock = ObjectId.Null;
@@ -1560,222 +1804,6 @@ namespace SPMTool
                         }
                     }
                 }
-                else
-                {
-                    // The blocks already exist
-                    ForceBlock = blkTbl["ForceBlock"];
-                }
-
-                // Request objects to be selected in the drawing area
-                ed.WriteMessage("\nSelect a node to add load:");
-                selRes = ed.GetSelection();
-
-                // If the prompt status is OK, objects were selected
-                if (selRes.Status == PromptStatus.OK)
-                {
-                    // Get the objects selected
-                    set = selRes.Value;
-
-                    // Ask the user set the load value in x direction:
-                    PromptDoubleOptions xForceOp = new PromptDoubleOptions("\nEnter force (in N) in X direction(positive following axis direction)?")
-                    {
-                        DefaultValue = 0
-                    };
-
-                    // Get the result
-                    PromptDoubleResult xForceRes = ed.GetDouble(xForceOp);
-                    Double xForce = xForceRes.Value;
-
-                    // Ask the user set the load value in y direction:
-                    PromptDoubleOptions yForceOp = new PromptDoubleOptions("\nEnter force (in N) in Y direction(positive following axis direction)?")
-                    {
-                        DefaultValue = 0
-                    };
-
-                    // Get the result
-                    PromptDoubleResult yForceRes = ed.GetDouble(yForceOp);
-                    Double yForce = yForceRes.Value;
-
-                    foreach (SelectedObject obj in set)
-                    {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-
-                        // Check if the selected object is a node
-                        if (ent.Layer.Equals("Node"))
-                        {
-                            // Upgrade the OpenMode
-                            ent.UpgradeOpen();
-
-                            // Read as a point and get the position
-                            DBPoint nd = ent as DBPoint;
-                            Point3d ndPos = nd.Position;
-
-                            // Get the node coordinates
-                            double xPos = ndPos.X;
-                            double yPos = ndPos.Y;
-
-                            // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(appName);
-                            TypedValue[] data = rb.AsArray();
-
-                            // Set the new forces (line 6 and 7 of the array)
-                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, xForce);
-                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, yForce);
-
-                            // Add the new XData
-                            ResultBuffer newRb = new ResultBuffer(data);
-                            ent.XData = newRb;
-
-                            // Add the block to selected node at
-                            Point3d insPt = ndPos;
-
-                            // Insert the block into the current space
-                            if (xForce > 0) // positive force in x
-                            {
-                                using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
-                                {
-                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                    blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = fLayer;
-                                    trans.AddNewlyCreatedDBObject(blkRef, true);
-
-                                    // Rotate 90 degress counterclockwise
-                                    blkRef.TransformBy(Matrix3d.Rotation(1.570796, curUCS.Zaxis, insPt));
-
-                                    // Insert the force value as text and add to the block table
-                                    DBText text = new DBText()
-                                    {
-                                        Position = new Point3d(xPos - 400, yPos + 25, 0),
-                                        Height = 50,
-                                        TextString = xForce.ToString() + " N",
-                                        Layer = fLayer
-                                    };
-
-                                    blkTblRec.AppendEntity(text);
-                                    trans.AddNewlyCreatedDBObject(text, true);
-                                }
-                            }
-
-                            if (xForce < 0) // negative force in x
-                            {
-                                using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
-                                {
-                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                    blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = fLayer;
-                                    trans.AddNewlyCreatedDBObject(blkRef, true);
-
-                                    // Rotate 90 degress clockwise
-                                    blkRef.TransformBy(Matrix3d.Rotation(-1.570796, curUCS.Zaxis, insPt));
-
-                                    // Get the force absolute value
-                                    double xForceAbs = Math.Abs(xForce);
-
-                                    // Insert the force value as text and add to the block table
-                                    DBText text = new DBText()
-                                    {
-                                        Position = new Point3d(xPos + 150, yPos + 25, 0),
-                                        Height = 50,
-                                        TextString = xForceAbs.ToString() + " N",
-                                        Layer = fLayer
-                                    };
-
-                                    blkTblRec.AppendEntity(text);
-                                    trans.AddNewlyCreatedDBObject(text, true);
-                                }
-                            }
-
-                            if (yForce > 0) // positive force in y
-                            {
-                                using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
-                                {
-                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                    blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = fLayer;
-                                    trans.AddNewlyCreatedDBObject(blkRef, true);
-
-                                    // Rotate 90 degress counterclockwise
-                                    blkRef.TransformBy(Matrix3d.Rotation(3.14159265, curUCS.Zaxis, insPt));
-
-                                    // Insert the force value as text and add to the block table
-                                    DBText text = new DBText()
-                                    {
-                                        Position = new Point3d(xPos + 25, yPos - 250, 0),
-                                        Height = 50,
-                                        TextString = yForce.ToString() + " N",
-                                        Layer = fLayer
-                                    };
-
-                                    blkTblRec.AppendEntity(text);
-                                    trans.AddNewlyCreatedDBObject(text, true);
-                                }
-                            }
-
-                            if (yForce < 0) // negative force in y
-                            {
-                                using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
-                                {
-                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                    blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = fLayer;
-                                    trans.AddNewlyCreatedDBObject(blkRef, true);
-
-                                    // No rotation needed
-
-                                    // Get the force absolute value
-                                    double yForceAbs = Math.Abs(yForce);
-
-                                    // Insert the force value as text and add to the block table
-                                    DBText text = new DBText()
-                                    {
-                                        Position = new Point3d(xPos + 25, yPos + 200, 0),
-                                        Height = 50,
-                                        TextString = yForceAbs.ToString() + " N",
-                                        Layer = fLayer
-                                    };
-
-                                    blkTblRec.AppendEntity(text);
-                                    trans.AddNewlyCreatedDBObject(text, true);
-                                }
-                            }
-                            // If x or y forces are 0, the block is not added
-                        }
-                    }
-                }
-
-                // Save the new object to the database
-                trans.Commit();
-                trans.Dispose();
-
-            }
-        }
-    }
-
-    public class AuxMethods
-    {
-        // Add the app to the Registered Applications Record
-        public static void RegisterApp()
-        {
-            // Define the appName
-            string appName = "SPMTool";
-
-            // Get the current document, database and editor
-            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
-
-            // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
-            {
-                // Open the Registered Applications table for write
-                RegAppTable regAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite) as RegAppTable;
-
-                using (RegAppTableRecord regAppTblRec = new RegAppTableRecord())
-                {
-                    regAppTblRec.Name = appName;
-                    trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                    regAppTbl.Add(regAppTblRec);
-                    trans.AddNewlyCreatedDBObject(regAppTblRec, true);
-                }
 
                 // Commit and dispose the transaction
                 trans.Commit();
@@ -1783,46 +1811,8 @@ namespace SPMTool
             }
         }
 
-                public static void CreateLayer(string layerName, short layerColor, int layerTransp)
-        {
-            // Get the current document and database
-            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
-
-            // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
-            {
-                // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite) as LayerTable;
-
-                using (LayerTableRecord lyrTblRec = new LayerTableRecord())
-                {
-                    // Assign the layer the ACI color and a name
-                    lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, layerColor);
-
-                    // Assign a layer transparency
-                    byte alpha = (byte)(255 * (100 - layerTransp) / 100);
-                    Transparency transp = new Transparency(alpha);
-
-                    // Upgrade the Layer table for write
-                    trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
-
-                    // Append the new layer to the Layer table and the transaction
-                    lyrTbl.Add(lyrTblRec);
-                    trans.AddNewlyCreatedDBObject(lyrTblRec, true);
-
-                    // Assign the name and transparency to the layer
-                    lyrTblRec.Name = layerName;
-                    lyrTblRec.Transparency = transp;
-                }
-
-                // Commit and dispose the transaction
-                trans.Commit();
-                trans.Dispose();
-            }
-        }
-
-            // This method select all objects on a determined layer
-            public static ObjectIdCollection GetEntitiesOnLayer(string layerName)
+        // This method select all objects on a determined layer
+        public static ObjectIdCollection GetEntitiesOnLayer(string layerName)
         {
             // Get the current document and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
