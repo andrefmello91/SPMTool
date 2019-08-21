@@ -29,52 +29,34 @@ namespace SPMTool
             string appName = "SPMTool";
             string xdataStr = "Node data";
 
+            // Define the layer parameters
+            string ndLayer = "Node";
+            short red = 1;
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Layer table for read
+                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+                if (!lyrTbl.Has(ndLayer)) AuxMethods.CreateLayer(ndLayer, red, 0);
+
+                // Open the Registered Applications table for read and check if custom app exists
+                RegAppTable regAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+                if (!regAppTbl.Has(appName)) AuxMethods.RegisterApp();
+
+                // Commit and dispose the transaction
+                trans.Commit();
+                trans.Dispose();
+            }
+
             // Loop for creating infinite nodes (until user exits the command)
             for (; ; )
             {
                 // Start a transaction
                 using (Transaction trans = curDb.TransactionManager.StartTransaction())
                 {
-                    // Open the Layer table for read
-                    LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-                    string nodeLayer = "Node";
-
-                    // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-
-                    if (lyrTbl.Has(nodeLayer) == false)
-                    {
-                        using (LayerTableRecord lyrTblRec = new LayerTableRecord())
-                        {
-                            // Assign the layer the ACI color 1 (red) and a name
-                            lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 1);
-                            lyrTblRec.Name = nodeLayer;
-
-                            // Upgrade the Layer table for write
-                            trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
-
-                            // Append the new layer to the Layer table and the transaction
-                            lyrTbl.Add(lyrTblRec);
-                            trans.AddNewlyCreatedDBObject(lyrTblRec, true);
-                        }
-                    }
-
-                    // Open the Registered Applications table for read
-                    RegAppTable acRegAppTbl;
-                    acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                    // Check to see if the Registered Applications table record for the custom app exists
-                    if (acRegAppTbl.Has(appName) == false)
-                    {
-                        using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                        {
-                            acRegAppTblRec.Name = appName;
-                            trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                            acRegAppTbl.Add(acRegAppTblRec);
-                            trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                        }
-                    }
-
                     // Open the Block table for read
                     BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
@@ -89,11 +71,10 @@ namespace SPMTool
                     // Exit if the user presses ESC or cancels the command
                     if (pointResult.Status == PromptStatus.OK)
                     {
-
                         // Create the node and set its layer to Node:
 
                         DBPoint newNode = new DBPoint(pointResult.Value);
-                        newNode.Layer = nodeLayer;
+                        newNode.Layer = ndLayer;
 
                         // Add the new object to the block table record and the transaction
                         blkTblRec.AppendEntity(newNode);
@@ -137,7 +118,7 @@ namespace SPMTool
                     else
                     {
                         // Enumerate the nodes
-                        Methods.EnumerateNodes();
+                        AuxMethods.EnumerateNodes();
 
                         // Exit the command
                         trans.Commit();
@@ -158,11 +139,33 @@ namespace SPMTool
             Editor ed = curDoc.Editor;
 
             // Enumerate the nodes
-            Methods.EnumerateNodes();
+            AuxMethods.EnumerateNodes();
 
             // Definition for the Extended Data
             string appName = "SPMTool";
             string xdataStr = "Stringer data";
+
+            // Define the layer parameters
+            string strLayer = "Stringer";
+            short cyan = 4;
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Layer table for read
+                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                // Check if the layer already exists in the drawing. If it doesn't, then it's created:
+                if (!lyrTbl.Has(strLayer)) AuxMethods.CreateLayer(strLayer, cyan, 0);
+
+                // Open the Registered Applications table for read and check if custom app exists
+                RegAppTable regAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+                if (!regAppTbl.Has(appName)) AuxMethods.RegisterApp();
+
+                // Commit and dispose the transaction
+                trans.Commit();
+                trans.Dispose();
+            }
 
             // Prompt for the start point of stringer
             PromptPointOptions strStartOp = new PromptPointOptions("\nPick the start node: ");
@@ -172,52 +175,13 @@ namespace SPMTool
             if (strStartRes.Status == PromptStatus.Cancel) return;
 
             // Loop for creating infinite stringers (until user exits the command)
-            for (; ; )
+            for ( ; ; )
             {
                 // Start a transaction
                 using (Transaction trans = curDb.TransactionManager.StartTransaction())
                 {
                     // Get the stringer start point
                     Point3d strStart = strStartRes.Value;
-
-                    // Open the Layer table for read
-                    LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-                    string stringerLayer = "Stringer";
-
-                    // Check if the layer Stringer already exists in the drawing. If it doesn't, then it's created:
-                    if (lyrTbl.Has(stringerLayer) == false)
-                    {
-                        using (LayerTableRecord lyrTblRec = new LayerTableRecord())
-                        {
-                            // Assign the layer the ACI color 1 (cyan) and a name
-                            lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 4);
-                            lyrTblRec.Name = stringerLayer;
-
-                            // Upgrade the Layer table for write
-                            trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
-
-                            // Append the new layer to the Layer table and the transaction
-                            lyrTbl.Add(lyrTblRec);
-                            trans.AddNewlyCreatedDBObject(lyrTblRec, true);
-                        }
-                    }
-
-                    // Open the Registered Applications table for read
-                    RegAppTable acRegAppTbl;
-                    acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                    // Check to see if the Registered Applications table record for the custom app exists
-                    if (acRegAppTbl.Has(appName) == false)
-                    {
-                        using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                        {
-                            acRegAppTblRec.Name = appName;
-                            trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                            acRegAppTbl.Add(acRegAppTblRec);
-                            trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                        }
-                    }
 
                     // Prompt for the end point
                     PromptPointOptions strEndOp = new PromptPointOptions("\nPick the end node: ");
@@ -236,20 +200,19 @@ namespace SPMTool
                         BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
                         // Create the line in Model space
-
-                        using (Line newStringer = new Line(strStart, strEnd))
+                        using (Line newStr = new Line(strStart, strEnd))
                         {
                             // Set the layer to stringer
-                            newStringer.Layer = stringerLayer;
+                            newStr.Layer = strLayer;
 
                             // Add the line to the drawing
-                            blkTblRec.AppendEntity(newStringer);
-                            trans.AddNewlyCreatedDBObject(newStringer, true);
+                            blkTblRec.AppendEntity(newStr);
+                            trans.AddNewlyCreatedDBObject(newStr, true);
 
                             // Inicialization of stringer conditions
                             double strStNd = 0;                     // Stringer start node (initially unassigned)
                             double strEnNd = 0;                     // Stringer end node (initially unassigned)
-                            double strLgt = newStringer.Length;     // Stringer lenght
+                            double strLgt = newStr.Length;     // Stringer lenght
                             double strW = 1;                        // Width
                             double strH = 1;                        // Height
                             double As = 0;                          // Reinforcement Area
@@ -267,16 +230,15 @@ namespace SPMTool
                                 rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));              // 7
 
                                 // Open the stringer for write
-                                Entity ent = trans.GetObject(newStringer.ObjectId, OpenMode.ForWrite) as Entity;
+                                Entity ent = trans.GetObject(newStr.ObjectId, OpenMode.ForWrite) as Entity;
 
                                 // Append the extended data to each object
                                 ent.XData = rb;
                             }
                         }
+
                         // Save the new object to the database
                         trans.Commit();
-
-                        // Dispose the transaction 
                         trans.Dispose();
 
                         // Set the start point of the new stringer
@@ -285,7 +247,7 @@ namespace SPMTool
                     else
                     {
                         // Update the stringers
-                        Methods.UpdateStringers();
+                        AuxMethods.UpdateStringers();
 
                         // Commit and dispose the transaction
                         trans.Commit();
@@ -301,16 +263,18 @@ namespace SPMTool
         [CommandMethod("AddPanel")]
         public static void AddPanel()
         {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
-            // Get the current document and database
+            // Get the current document, database and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
 
             // Definition for the Extended Data
             string appName = "SPMTool";
             string xdataStr = "Panel data";
+
+            // Define the layer parameters
+            string pnlLayer = "Panel";
+            short grey = 254;
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -318,34 +282,8 @@ namespace SPMTool
                 // Open the Layer table for read
                 LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
 
-                string panelLayer = "Panel";
-
-                // Check if the layer Stringer already exists in the drawing. If it doesn't, then it's created:
-                if (lyrTbl.Has(panelLayer) == false)
-                {
-                    using (LayerTableRecord lyrTblRec = new LayerTableRecord())
-                    {
-                        // Assign the layer the ACI color 254 (grey) and a name
-                        lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 254);
-
-                        // Assign a layer transparency
-                        byte alpha = (byte)(255 * (100 - 70) / 100);
-                        Transparency transp = new Transparency(alpha);
-
-                        // Assign the name to the layer
-                        lyrTblRec.Name = panelLayer;
-
-                        // Upgrade the Layer table for write
-                        trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
-
-                        // Append the new layer to the Layer table and the transaction
-                        lyrTbl.Add(lyrTblRec);
-                        trans.AddNewlyCreatedDBObject(lyrTblRec, true);
-
-                        // Assign teh transparency
-                        lyrTblRec.Transparency = transp;
-                    }
-                }
+                // Check if the layer Panel already exists in the drawing. If it doesn't, then it's created:
+                if (!lyrTbl.Has(pnlLayer)) AuxMethods.CreateLayer(pnlLayer, grey, 30);
 
                 // Open the Registered Applications table for read
                 RegAppTable acRegAppTbl;
@@ -404,7 +342,7 @@ namespace SPMTool
                 using (Solid newPanel = new Solid(panVerts[0], panVerts[1], panVerts[3], panVerts[2]))
                 {
                     // Set the layer to Panel
-                    newPanel.Layer = panelLayer;
+                    newPanel.Layer = pnlLayer;
 
                     // Add the line to the drawing
                     blkTblRec.AppendEntity(newPanel);
@@ -438,10 +376,10 @@ namespace SPMTool
         public void RefreshElements()
         {
             // Enumerate nodes
-            Methods.EnumerateNodes();
+            AuxMethods.EnumerateNodes();
 
             // Update Stringers
-            Methods.UpdateStringers();
+            AuxMethods.UpdateStringers();
 
             //// Get the current document, database and editor
             //Document curDoc = Application.DocumentManager.MdiActiveDocument;
@@ -474,7 +412,7 @@ namespace SPMTool
             //    BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
             //    // Create the nodes collection and initialize getting the elements on node layer
-            //    ObjectIdCollection nds = Methods.GetEntitiesOnLayer("Node");
+            //    ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
 
             //    // Get the number of nodes
             //    int numNds = nds.Count;
@@ -563,7 +501,7 @@ namespace SPMTool
             //    // Refresh the stringers
 
             //    // Create the stringer collection and initialize getting the elements on node layer
-            //    ObjectIdCollection strs = Methods.GetEntitiesOnLayer("Stringer");
+            //    ObjectIdCollection strs = AuxMethods.GetEntitiesOnLayer("Stringer");
 
             //    // Access the nodes on the document
             //    foreach (ObjectId obj in strs)
@@ -633,7 +571,7 @@ namespace SPMTool
             //// Refresh the panels
 
             //// Create the stringer collection and initialize getting the elements on node layer
-            //ObjectIdCollection pnls = Methods.GetEntitiesOnLayer("Panel");
+            //ObjectIdCollection pnls = AuxMethods.GetEntitiesOnLayer("Panel");
 
             //// Access the nodes on the document
             //foreach (ObjectId obj in pnls)
@@ -835,23 +773,8 @@ namespace SPMTool
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
                 {
+                    // Get the selection
                     SelectionSet set = selRes.Value;
-
-                    // Open the Registered Applications table for read
-                    RegAppTable acRegAppTbl;
-                    acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                    // Check to see if the Registered Applications table record for the custom app exists
-                    if (acRegAppTbl.Has(appName) == false)
-                    {
-                        using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                        {
-                            acRegAppTblRec.Name = appName;
-                            trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                            acRegAppTbl.Add(acRegAppTblRec);
-                            trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                        }
-                    }
 
                     // Ask the user to input the panel width
                     PromptDoubleOptions panWOp = new PromptDoubleOptions("\nInput the width (in mm) for the selected panels:");
@@ -1062,6 +985,10 @@ namespace SPMTool
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
+                // Open the Registered Applications table for read and check if custom app exists
+                RegAppTable regAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+                if (!regAppTbl.Has(appName)) AuxMethods.RegisterApp();
+
                 // Ask the user to input the concrete compressive strength
                 PromptDoubleOptions fcOp = new PromptDoubleOptions("Input the concrete compressive strength (fc) in MPa:");
 
@@ -1083,22 +1010,6 @@ namespace SPMTool
                 // Get the result
                 PromptDoubleResult EcRes = ed.GetDouble(EcOp);
                 double Ec = EcRes.Value;
-
-                // Open the Registered Applications table for read
-                RegAppTable acRegAppTbl;
-                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                // Check to see if the Registered Applications table record for the custom app exists
-                if (acRegAppTbl.Has(appName) == false)
-                {
-                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                    {
-                        acRegAppTblRec.Name = appName;
-                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                        acRegAppTbl.Add(acRegAppTblRec);
-                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                    }
-                }
 
                 // Get the NOD in the database
                 DBDictionary nod = (DBDictionary)trans.GetObject(curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
@@ -1122,8 +1033,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-
-                // Dispose the transaction
                 trans.Dispose();
             }
         }
@@ -1143,6 +1052,10 @@ namespace SPMTool
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
+                // Open the Registered Applications table for read and check if custom app exists
+                RegAppTable regAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+                if (!regAppTbl.Has(appName)) AuxMethods.RegisterApp();
+
                 // Ask the user to input the steel tensile strength
                 PromptDoubleOptions fyOp = new PromptDoubleOptions("Input the steel tensile strength (fy) in MPa:");
 
@@ -1164,22 +1077,6 @@ namespace SPMTool
                 // Get the result
                 PromptDoubleResult EsRes = ed.GetDouble(EsOp);
                 double Es = EsRes.Value;
-
-                // Open the Registered Applications table for read
-                RegAppTable acRegAppTbl;
-                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                // Check to see if the Registered Applications table record for the custom app exists
-                if (acRegAppTbl.Has(appName) == false)
-                {
-                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                    {
-                        acRegAppTblRec.Name = appName;
-                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                        acRegAppTbl.Add(acRegAppTblRec);
-                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                    }
-                }
 
                 // Get the NOD in the database
                 DBDictionary nod = (DBDictionary)trans.GetObject(curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
@@ -1203,8 +1100,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-
-                // Dispose the transaction
                 trans.Dispose();
             }
         }
@@ -1288,53 +1183,25 @@ namespace SPMTool
             // Definition for the Extended Data
             string appName = "SPMTool";
 
+            // Define the layer parameters
+            string supLayer = "Support";
+            short red = 1;
+
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
+                // Open the Layer table for read
+                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+                if (!lyrTbl.Has(supLayer)) AuxMethods.CreateLayer(supLayer, red, 0);
+
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize variables
                 PromptSelectionResult selRes;
                 SelectionSet set;
-
-                // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-                // Check if the layer Stringer already exists in the drawing. If it doesn't, then it's created:
-                string layer = "Support";
-                if (lyrTbl.Has(layer) == false)
-                {
-                    using (LayerTableRecord lyrTblRec = new LayerTableRecord())
-                    {
-                        // Assign the layer the ACI color 1 (red) and a name
-                        lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 1);
-                        lyrTblRec.Name = layer;
-
-                        // Upgrade the Layer table for write
-                        trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
-
-                        // Append the new layer to the Layer table and the transaction
-                        lyrTbl.Add(lyrTblRec);
-                        trans.AddNewlyCreatedDBObject(lyrTblRec, true);
-                    }
-                }
-
-                // Open the Registered Applications table for read
-                RegAppTable acRegAppTbl;
-                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                // Check to see if the Registered Applications table record for the custom app exists
-                if (acRegAppTbl.Has(appName) == false)
-                {
-                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                    {
-                        acRegAppTblRec.Name = appName;
-                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                        acRegAppTbl.Add(acRegAppTblRec);
-                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                    }
-                }
 
                 // Initialize the block Ids
                 ObjectId xBlock = ObjectId.Null;
@@ -1561,13 +1428,17 @@ namespace SPMTool
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
 
+                            // Read as a point and get the position
+                            DBPoint nd = ent as DBPoint;
+                            Point3d ndPos = nd.Position;
+
+                            // Get the node coordinates
+                            double xPos = ndPos.X;
+                            double yPos = ndPos.Y;
+
                             // Access the XData as an array
                             ResultBuffer rb = ent.GetXDataForApplication(appName);
                             TypedValue[] data = rb.AsArray();
-
-                            // Get the node coordinates on the XData
-                            double xPos = Convert.ToDouble(data[3].Value);
-                            double yPos = Convert.ToDouble(data[4].Value);
 
                             // Set the new support conditions (line 5 of the array)
                             data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
@@ -1577,40 +1448,21 @@ namespace SPMTool
                             ent.XData = newRb;
 
                             // Add the block to selected node at
-                            Point3d insPt = new Point3d(xPos, yPos, 0);
+                            Point3d insPt = ndPos;
+
+                            // Choose the block to insert
+                            ObjectId supBlock = ObjectId.Null;
+                            if (support == "X" && xBlock != ObjectId.Null)   supBlock = xBlock;
+                            if (support == "Y" && yBlock != ObjectId.Null)   supBlock = yBlock;
+                            if (support == "XY" && xyBlock != ObjectId.Null) supBlock = xyBlock;
 
                             // Insert the block into the current space
-                            if (support == "X" && xBlock != ObjectId.Null)
+                            using (BlockReference blkRef = new BlockReference(insPt, supBlock))
                             {
-                                using (BlockReference blkRef = new BlockReference(insPt, xBlock))
-                                {
-                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                    blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = layer;
-                                    trans.AddNewlyCreatedDBObject(blkRef, true);
-                                }
-                            }
-
-                            if (support == "Y" && yBlock != ObjectId.Null)
-                            {
-                                using (BlockReference blkRef = new BlockReference(insPt, yBlock))
-                                {
-                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                    blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = layer;
-                                    trans.AddNewlyCreatedDBObject(blkRef, true);
-                                }
-                            }
-
-                            if (support == "XY" && xyBlock != ObjectId.Null)
-                            {
-                                using (BlockReference blkRef = new BlockReference(insPt, xyBlock))
-                                {
-                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                    blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = layer;
-                                    trans.AddNewlyCreatedDBObject(blkRef, true);
-                                }
+                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                blkTblRec.AppendEntity(blkRef);
+                                blkRef.Layer = supLayer;
+                                trans.AddNewlyCreatedDBObject(blkRef, true);
                             }
                         }
                     }
@@ -1618,8 +1470,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-
-                // Dispose the transaction
                 trans.Dispose();
             }
         }
@@ -1642,53 +1492,25 @@ namespace SPMTool
             // Definition for the Extended Data
             string appName = "SPMTool";
 
+            // Define the layer parameters
+            string fLayer = "Force";
+            short yellow = 2;
+
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
+                // Open the Layer table for read
+                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+                if (!lyrTbl.Has(fLayer)) AuxMethods.CreateLayer(fLayer, yellow, 0);
+
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize variables
                 PromptSelectionResult selRes;
                 SelectionSet set;
-
-                // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-                // Check if the layer Stringer already exists in the drawing. If it doesn't, then it's created:
-                string layer = "Force";
-                if (lyrTbl.Has(layer) == false)
-                {
-                    using (LayerTableRecord lyrTblRec = new LayerTableRecord())
-                    {
-                        // Assign the layer the ACI color 2 (yellow) and a name
-                        lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 2);
-                        lyrTblRec.Name = layer;
-
-                        // Upgrade the Layer table for write
-                        trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
-
-                        // Append the new layer to the Layer table and the transaction
-                        lyrTbl.Add(lyrTblRec);
-                        trans.AddNewlyCreatedDBObject(lyrTblRec, true);
-                    }
-                }
-
-                // Open the Registered Applications table for read
-                RegAppTable acRegAppTbl;
-                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                // Check to see if the Registered Applications table record for the custom app exists
-                if (acRegAppTbl.Has(appName) == false)
-                {
-                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                    {
-                        acRegAppTblRec.Name = appName;
-                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                        acRegAppTbl.Add(acRegAppTblRec);
-                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                    }
-                }
 
                 // Initialize the block Ids
                 ObjectId ForceBlock = ObjectId.Null;
@@ -1785,13 +1607,17 @@ namespace SPMTool
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
 
+                            // Read as a point and get the position
+                            DBPoint nd = ent as DBPoint;
+                            Point3d ndPos = nd.Position;
+
+                            // Get the node coordinates
+                            double xPos = ndPos.X;
+                            double yPos = ndPos.Y;
+
                             // Access the XData as an array
                             ResultBuffer rb = ent.GetXDataForApplication(appName);
                             TypedValue[] data = rb.AsArray();
-
-                            // Get the node coordinates on the XData
-                            double xPos = Convert.ToDouble(data[3].Value);
-                            double yPos = Convert.ToDouble(data[4].Value);
 
                             // Set the new forces (line 6 and 7 of the array)
                             data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, xForce);
@@ -1802,7 +1628,7 @@ namespace SPMTool
                             ent.XData = newRb;
 
                             // Add the block to selected node at
-                            Point3d insPt = new Point3d(xPos, yPos, 0);
+                            Point3d insPt = ndPos;
 
                             // Insert the block into the current space
                             if (xForce > 0) // positive force in x
@@ -1811,7 +1637,7 @@ namespace SPMTool
                                 {
                                     BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = layer;
+                                    blkRef.Layer = fLayer;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
 
                                     // Rotate 90 degress counterclockwise
@@ -1823,7 +1649,7 @@ namespace SPMTool
                                         Position = new Point3d(xPos - 400, yPos + 25, 0),
                                         Height = 50,
                                         TextString = xForce.ToString() + " N",
-                                        Layer = layer
+                                        Layer = fLayer
                                     };
 
                                     blkTblRec.AppendEntity(text);
@@ -1837,7 +1663,7 @@ namespace SPMTool
                                 {
                                     BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = layer;
+                                    blkRef.Layer = fLayer;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
 
                                     // Rotate 90 degress clockwise
@@ -1852,7 +1678,7 @@ namespace SPMTool
                                         Position = new Point3d(xPos + 150, yPos + 25, 0),
                                         Height = 50,
                                         TextString = xForceAbs.ToString() + " N",
-                                        Layer = layer
+                                        Layer = fLayer
                                     };
 
                                     blkTblRec.AppendEntity(text);
@@ -1866,7 +1692,7 @@ namespace SPMTool
                                 {
                                     BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = layer;
+                                    blkRef.Layer = fLayer;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
 
                                     // Rotate 90 degress counterclockwise
@@ -1878,7 +1704,7 @@ namespace SPMTool
                                         Position = new Point3d(xPos + 25, yPos - 250, 0),
                                         Height = 50,
                                         TextString = yForce.ToString() + " N",
-                                        Layer = layer
+                                        Layer = fLayer
                                     };
 
                                     blkTblRec.AppendEntity(text);
@@ -1892,7 +1718,7 @@ namespace SPMTool
                                 {
                                     BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = layer;
+                                    blkRef.Layer = fLayer;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
 
                                     // No rotation needed
@@ -1906,7 +1732,7 @@ namespace SPMTool
                                         Position = new Point3d(xPos + 25, yPos + 200, 0),
                                         Height = 50,
                                         TextString = yForceAbs.ToString() + " N",
-                                        Layer = layer
+                                        Layer = fLayer
                                     };
 
                                     blkTblRec.AppendEntity(text);
@@ -1920,17 +1746,83 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-
-                // Dispose the transaction
                 trans.Dispose();
 
             }
         }
     }
 
-    public class Methods
+    public class AuxMethods
     {
-        public static ObjectIdCollection GetEntitiesOnLayer(string layerName)
+        // Add the app to the Registered Applications Record
+        public static void RegisterApp()
+        {
+            // Define the appName
+            string appName = "SPMTool";
+
+            // Get the current document, database and editor
+            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Registered Applications table for write
+                RegAppTable regAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite) as RegAppTable;
+
+                using (RegAppTableRecord regAppTblRec = new RegAppTableRecord())
+                {
+                    regAppTblRec.Name = appName;
+                    trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                    regAppTbl.Add(regAppTblRec);
+                    trans.AddNewlyCreatedDBObject(regAppTblRec, true);
+                }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+                trans.Dispose();
+            }
+        }
+
+                public static void CreateLayer(string layerName, short layerColor, int layerTransp)
+        {
+            // Get the current document and database
+            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Layer table for read
+                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite) as LayerTable;
+
+                using (LayerTableRecord lyrTblRec = new LayerTableRecord())
+                {
+                    // Assign the layer the ACI color and a name
+                    lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, layerColor);
+
+                    // Assign a layer transparency
+                    byte alpha = (byte)(255 * (100 - layerTransp) / 100);
+                    Transparency transp = new Transparency(alpha);
+
+                    // Upgrade the Layer table for write
+                    trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
+
+                    // Append the new layer to the Layer table and the transaction
+                    lyrTbl.Add(lyrTblRec);
+                    trans.AddNewlyCreatedDBObject(lyrTblRec, true);
+
+                    // Assign the name and transparency to the layer
+                    lyrTblRec.Name = layerName;
+                    lyrTblRec.Transparency = transp;
+                }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+                trans.Dispose();
+            }
+        }
+
+            // This method select all objects on a determined layer
+            public static ObjectIdCollection GetEntitiesOnLayer(string layerName)
         {
             // Get the current document and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
@@ -1958,6 +1850,7 @@ namespace SPMTool
                 return new ObjectIdCollection();
         }
 
+        // Enumerate all the nodes in the model
         public static void EnumerateNodes()
         {
             // Get the current document and database
@@ -1971,22 +1864,6 @@ namespace SPMTool
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
-                // Open the Registered Applications table for read
-                RegAppTable acRegAppTbl;
-                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                // Check to see if the Registered Applications table record for the custom app exists
-                if (acRegAppTbl.Has(appName) == false)
-                {
-                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                    {
-                        acRegAppTblRec.Name = appName;
-                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                        acRegAppTbl.Add(acRegAppTblRec);
-                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                    }
-                }
-
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
@@ -2083,12 +1960,12 @@ namespace SPMTool
             }
         }
 
+        // Update the node numbers on the XData of each stringer in the model
         public static void UpdateStringers()
         {
             // Get the current document and database
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
 
             // Definition for the Extended Data
             string appName = "SPMTool";
@@ -2096,22 +1973,6 @@ namespace SPMTool
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
-                // Open the Registered Applications table for read
-                RegAppTable acRegAppTbl;
-                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                // Check to see if the Registered Applications table record for the custom app exists
-                if (acRegAppTbl.Has(appName) == false)
-                {
-                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                    {
-                        acRegAppTblRec.Name = appName;
-                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                        acRegAppTbl.Add(acRegAppTblRec);
-                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                    }
-                }
-
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
