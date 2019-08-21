@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -102,7 +103,7 @@ namespace SPMTool
                         trans.AddNewlyCreatedDBObject(newNode, true);
 
                         // Inicialization of node conditions
-                        int nodeNumber = 0;                     // Node number (to be set later)
+                        double nodeNumber = 0;                     // Node number (to be set later)
                         double xPosition = pointResult.Value.X; // X position
                         double yPosition = pointResult.Value.Y; // Y position
                         string support = "Free";                // Support condition
@@ -114,7 +115,7 @@ namespace SPMTool
                         {
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, nodeNumber)); // 2
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, nodeNumber));      // 2
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));       // 3
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));       // 4
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));  // 5
@@ -438,7 +439,6 @@ namespace SPMTool
 
             // Definition for the Extended Data
             string appName = "SPMTool";
-            string xdataStr = "Nodes Matrix";
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -463,19 +463,50 @@ namespace SPMTool
                 BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Create the nodes collection and initialize getting the elements on node layer
-                ObjectIdCollection nodes = Methods.GetEntitiesOnLayer("Node");
+                ObjectIdCollection nds = Methods.GetEntitiesOnLayer("Node");
 
                 // Get the number of nodes
-                int numNodes = nodes.Count;
-
-                // Initialize the node number
-                int nodeNum = 1;
+                int numNds = nds.Count;
 
                 // Initialize the node matrix with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
-                double[,] nodesMatrix = new double[numNodes, 3];
+                double[][] ndsMtrx = new double[numNds][];
+
 
                 // Access the nodes on the document
-                foreach (ObjectId obj in nodes)
+                int i = 0; // matrix position
+                foreach (ObjectId obj in nds)
+                {
+                    // Open the selected object for write
+                    Entity ent = trans.GetObject(obj, OpenMode.ForRead) as Entity;
+
+                    // Read the entity as a point
+                    DBPoint node = ent as DBPoint;
+
+                    // Add the coordinates on the matrix (number stays unassigned)
+                    double xCoord = node.Position.X;
+                    double yCoord = node.Position.Y;
+
+                    // Add to the matrix
+                    ndsMtrx[i] = new double[] { 0, xCoord, yCoord };
+
+                    // Increment the matrix position
+                    i++;
+                }
+                
+                // Sort the matrix in ascending xCoord, then ascending yCoord
+                var ndsMtrxSrtd = ndsMtrx.OrderBy(y => y[2]).ThenBy(x => x[1]);
+                ndsMtrx = ndsMtrxSrtd.ToArray();
+
+                // Set the node numbers in the matrix
+                for (int ndNum = 1; ndNum <= numNds; ndNum++)
+                {
+                    // Matrix position
+                    i = ndNum - 1;
+                    ndsMtrx[i][0] = ndNum;
+                }
+
+                // Access the nodes on the document
+                foreach (ObjectId obj in nds)
                 {
                     // Open the selected object for write
                     Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
@@ -483,57 +514,41 @@ namespace SPMTool
                     // Read the entity as a point
                     DBPoint node = ent as DBPoint;
 
-                    // Get the node number, position in the matrix and the coordinates
-                    int nodeMatrixPos = nodeNum - 1;
+                    // Initialize the node number
+                    double ndNum = 0;
+
+                    // Get the node position
                     double xCoord = node.Position.X;
                     double yCoord = node.Position.Y;
 
-                    // Add to the matrix
-                    nodesMatrix[nodeMatrixPos, 0] = Convert.ToDouble(nodeNum);
-                    nodesMatrix[nodeMatrixPos, 1] = xCoord;
-                    nodesMatrix[nodeMatrixPos, 2] = yCoord;
+                    // Assign the node number from the matrix
+                    for (i = 0; i < numNds; i++)
+                    {
+                        // Check what line of the matrix corresponds the node position
+                        if (xCoord == ndsMtrx[i][1] && yCoord == ndsMtrx[i][2])
+                        {
+                            // Assign the node number from the matrix
+                            ndNum = ndsMtrx[i][0];
+                        }
+                    }
 
                     // Access the XData as an array
                     ResultBuffer rb = ent.GetXDataForApplication(appName);
                     TypedValue[] data = rb.AsArray();
 
                     // Set the new node number (line 2)
-                    data[2] = new TypedValue((int)DxfCode.ExtendedDataInteger32, nodeNum);
+                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
 
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);
                     ent.XData = newRb;
-
-                    // Increment the node number
-                    nodeNum++;
                 }
 
-                ed.WriteMessage("\nThere are " + numNodes.ToString() + " nodes on the model");
-                for (int i = 0; i < nodeNum - 1; i++)
+                ed.WriteMessage("\nThere are " + numNds.ToString() + " nodes on the model");
+                for (i = 0; i < numNds; i++)
                 {
-                    ed.WriteMessage("\n (" + nodesMatrix[i, 0].ToString() + ", " + nodesMatrix[i, 1].ToString() + ", " + nodesMatrix[i, 2].ToString() + ")");
+                    ed.WriteMessage("\n (" + ndsMtrx[i][0].ToString() + ", " + ndsMtrx[i][1].ToString() + ", " + ndsMtrx[i][2].ToString() + ")");
                 }
-
-                // Get the NOD in the database
-    //            DBDictionary nod = (DBDictionary)trans.GetObject(curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
-
-    //            // Save the variables on an Xrecord
-				//using (ResultBuffer rb = new ResultBuffer())
-				//{
-				//	rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
-				//	rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
-				//	rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, nodesMatrix));
-
-				//	// Create and add data to an Xrecord
-				//	Xrecord xRec = new Xrecord();
-				//	xRec.Data = rb;
-
-				//	// Create the entry in the NOD and add to the transaction
-				//	nod.SetAt("NodesMatrix", xRec);
-				//	trans.AddNewlyCreatedDBObject(xRec, true);
-
-				//	ed.WriteMessage(rb.ToString());
-				//}
 
                 // Save the new object to the database
                 trans.Commit();
