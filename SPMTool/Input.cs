@@ -249,6 +249,8 @@ namespace SPMTool
                             double strStYPos = strStartRes.Value.Y; // Stringer start point (Y)
                             double strEnXPos = strEndRes.Value.X;   // Stringer end point (X)
                             double strEnYPos = strEndRes.Value.Y;   // Stringer end point (Y)
+                            double strStNd = 0;                     // Stringer start node (initially unassigned)
+                            double strEnNd = 0;                     // Stringer end node (initially unassigned)
                             double strW = 1;                        // Width
                             double strH = 1;                        // Height
                             double As = 0;                          // Reinforcement Area
@@ -262,9 +264,11 @@ namespace SPMTool
                                 rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStYPos));       // 3
                                 rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnXPos));       // 4
                                 rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnYPos));       // 5
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));            // 6
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));            // 7
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));              // 8
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStNd));         // 6
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd));         // 7
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));            // 8
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));            // 9
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));              // 10
 
                                 // Open the stringer for write
                                 Entity ent = trans.GetObject(newStringer.ObjectId, OpenMode.ForWrite) as Entity;
@@ -367,9 +371,10 @@ namespace SPMTool
                 };
 
                 // Initialize the panel parameters
-                double panW = 1; // width
-                double psx = 0;  // reinforcement ratio (X)
-                double psy = 0;  // reinforcement ratio (Y)
+                double panW = 1;                 // width
+                double psx = 0;                  // reinforcement ratio (X)
+                double psy = 0;                  // reinforcement ratio (Y)
+                double[] verts = { 0, 0, 0, 0 }; // Panel vertices (initially unassigned)
 
                 // Initialize a Result Buffer to add to the panel
                 ResultBuffer rb = new ResultBuffer();
@@ -408,9 +413,13 @@ namespace SPMTool
                     trans.AddNewlyCreatedDBObject(newPanel, true);
 
                     // Add the final data to the Result Buffer
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, panW)); // 10
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));  // 11
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));  // 12
+                    for (int i = 0; i <= 3; i++)
+                    {
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, verts[i])); // 10, 11, 12, 13
+                    }
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, panW));         // 14
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));          // 15
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));          // 16
 
                     // Open the selected object for write
                     Entity ent = trans.GetObject(newPanel.ObjectId, OpenMode.ForWrite) as Entity;
@@ -427,8 +436,8 @@ namespace SPMTool
             }
         }
 
-        [CommandMethod("EnumerateNodes")]
-        public void EnumerateNodes()
+        [CommandMethod("RefreshElements")]
+        public void RefreshElements()
         {
             // Simplified typing for editor:
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
@@ -470,7 +479,6 @@ namespace SPMTool
 
                 // Initialize the node matrix with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
                 double[][] ndsMtrx = new double[numNds][];
-
 
                 // Access the nodes on the document
                 int i = 0; // matrix position
@@ -549,6 +557,145 @@ namespace SPMTool
                 {
                     ed.WriteMessage("\n (" + ndsMtrx[i][0].ToString() + ", " + ndsMtrx[i][1].ToString() + ", " + ndsMtrx[i][2].ToString() + ")");
                 }
+
+                // Refresh the stringers
+
+                // Create the stringer collection and initialize getting the elements on node layer
+                ObjectIdCollection strs = Methods.GetEntitiesOnLayer("Stringer");
+
+                // Access the nodes on the document
+                foreach (ObjectId obj in strs)
+                {
+                    // Initialize the variables
+                    double strStNd = 0;
+                    double strEnNd = 0;
+
+                    // Open the selected object for write
+                    Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
+
+                    // Read the entity as a line
+                    Line str = ent as Line;
+
+                    // Get the points of the line
+                    Point3d strStPos = str.StartPoint;
+                    Point3d strEnPos = str.EndPoint;
+
+                    // Compare to the nodes collection
+                    foreach (ObjectId ndObj in nds)
+                    {
+                        // Open the selected object for read
+                        Entity entNd = trans.GetObject(ndObj, OpenMode.ForRead) as Entity;
+
+                        // Read the entity as a point and get the position
+                        DBPoint nd = entNd as DBPoint;
+                        Point3d ndPos = nd.Position;
+
+                        // Compare the start node
+                        if (strStPos == ndPos)
+                        {
+                            // Get the node number
+                            // Access the XData as an array
+                            ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
+                            TypedValue[] dataNd = rbNd.AsArray();
+
+                            // Get the node number (line 2)
+                            strStNd = Convert.ToDouble(dataNd[2].Value);
+                        }
+
+                        // Compare the end node
+                        if (strEnPos == ndPos)
+                        {
+                            // Get the node number
+                            // Access the XData as an array
+                            ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
+                            TypedValue[] dataNd = rbNd.AsArray();
+
+                            // Get the node number (line 2)
+                            strEnNd = Convert.ToDouble(dataNd[2].Value);
+                        }
+                    }
+
+                    // Access the XData as an array
+                    ResultBuffer rb = ent.GetXDataForApplication(appName);
+                    TypedValue[] data = rb.AsArray();
+
+                    // Set the updated nodes (line 6 and 7 of the array)
+                    data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
+                    data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
+
+                    // Add the new XData
+                    ResultBuffer newRb = new ResultBuffer(data);
+                    ent.XData = newRb;
+                }
+
+                //// Refresh the panels
+
+                //// Create the stringer collection and initialize getting the elements on node layer
+                //ObjectIdCollection pnls = Methods.GetEntitiesOnLayer("Panel");
+
+                //// Access the nodes on the document
+                //foreach (ObjectId obj in pnls)
+                //{
+                //    // Initialize the variables
+                //    double[] verts = { 0, 0, 0, 0 };
+
+                //    // Open the selected object for write
+                //    Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
+
+                //    // Read the entity as a solid
+                //    Solid pnl = ent as Solid;
+
+                //    // Get the points of the line
+                //    Point3d strStPos = str.StartPoint;
+                //    Point3d strEnPos = str.EndPoint;
+
+                //    // Compare to the nodes collection
+                //    foreach (ObjectId ndObj in nds)
+                //    {
+                //        // Open the selected object for read
+                //        Entity entNd = trans.GetObject(ndObj, OpenMode.ForRead) as Entity;
+
+                //        // Read the entity as a point and get the position
+                //        DBPoint nd = entNd as DBPoint;
+                //        Point3d ndPos = nd.Position;
+
+                //        // Compare the start node
+                //        if (strStPos == ndPos)
+                //        {
+                //            // Get the node number
+                //            // Access the XData as an array
+                //            ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
+                //            TypedValue[] dataNd = rbNd.AsArray();
+
+                //            // Get the node number (line 2)
+                //            strStNd = Convert.ToDouble(dataNd[2].Value);
+                //        }
+
+                //        // Compare the end node
+                //        if (strEnPos == ndPos)
+                //        {
+                //            // Get the node number
+                //            // Access the XData as an array
+                //            ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
+                //            TypedValue[] dataNd = rbNd.AsArray();
+
+                //            // Get the node number (line 2)
+                //            strEnNd = Convert.ToDouble(dataNd[2].Value);
+                //        }
+                //    }
+
+                //    // Access the XData as an array
+                //    ResultBuffer rb = ent.GetXDataForApplication(appName);
+                //    TypedValue[] data = rb.AsArray();
+
+                //    // Set the updated nodes (line 6 and 7 of the array)
+                //    data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
+                //    data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
+
+                //    // Add the new XData
+                //    ResultBuffer newRb = new ResultBuffer(data);
+                //    ent.XData = newRb;
+                //}
 
                 // Save the new object to the database
                 trans.Commit();
@@ -852,13 +999,11 @@ namespace SPMTool
                                 dataType = data[1].Value.ToString();
 
                                 // Get the parameters
-                                msgstr = "\nStart node: (" + data[2].Value.ToString() + ", " + data[3].Value.ToString() + ")" +
-                                         "\nEnd node: (" + data[4].Value.ToString() + ", " + data[5].Value.ToString() + ")" +
-                                         "\nWidth = " + data[6].Value.ToString() + " mm" +
-                                         "\nHeight = " + data[7].Value.ToString() + " mm" +
-                                         "\nReinforcement = " + data[8].Value.ToString() + " mm2";
+                                msgstr = "\nNodes: (" + data[6].Value.ToString() + " - " + data[7].Value.ToString() + ")" +
+                                         "\nWidth = " + data[8].Value.ToString() + " mm" +
+                                         "\nHeight = " + data[9].Value.ToString() + " mm" +
+                                         "\nReinforcement = " + data[10].Value.ToString() + " mm2";
                             }
-
                             else
                             {
                                 msgstr = "NONE";
@@ -881,13 +1026,10 @@ namespace SPMTool
                                 dataType = data[1].Value.ToString();
 
                                 // Get the parameters
-                                msgstr = "\nVertices: (" + data[2].Value.ToString() + ", " + data[3].Value.ToString() + "), ("
-                                                         + data[4].Value.ToString() + ", " + data[5].Value.ToString() + "), ("
-                                                         + data[6].Value.ToString() + ", " + data[7].Value.ToString() + "), ("
-                                                         + data[8].Value.ToString() + ", " + data[9].Value.ToString() + ")" +
-                                         "\nWidth = " + data[10].Value.ToString() + " mm" +
-                                         "\nReinforcement ratio (x) = " + data[11].Value.ToString() +
-                                         "\nReinforcement ratio (y) = " + data[12].Value.ToString();
+                                msgstr = "\nNodes: (" + data[10].Value.ToString() + " - " + data[11].Value.ToString() + " - " + data[12].Value.ToString() + " - " + data[13].Value.ToString() + ")" +
+                                         "\nWidth = " + data[14].Value.ToString() + " mm" +
+                                         "\nReinforcement ratio (x) = " + data[15].Value.ToString() +
+                                         "\nReinforcement ratio (y) = " + data[16].Value.ToString();
                             }
 
                             else
