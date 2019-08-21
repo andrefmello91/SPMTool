@@ -20,13 +20,10 @@ namespace SPMTool
         [CommandMethod("AddNode")]
         public void AddNode()
         {
-
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
-            // Get the current document and database
+            // Get the current document, database and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
 
             // Definition for the Extended Data
             string appName = "SPMTool";
@@ -139,7 +136,11 @@ namespace SPMTool
                     }
                     else
                     {
+                        // Enumerate the nodes
+                        Methods.EnumerateNodes();
+
                         // Exit the command
+                        trans.Commit();
                         trans.Dispose();
                         break;
                     }
@@ -151,12 +152,13 @@ namespace SPMTool
         [CommandMethod("AddStringer")]
         public static void AddStringer()
         {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
-            // Get the current document and database
+            // Get the current document, database and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
+
+            // Enumerate the nodes
+            Methods.EnumerateNodes();
 
             // Definition for the Extended Data
             string appName = "SPMTool";
@@ -245,12 +247,9 @@ namespace SPMTool
                             trans.AddNewlyCreatedDBObject(newStringer, true);
 
                             // Inicialization of stringer conditions
-                            double strStXPos = strStartRes.Value.X; // Stringer start point (X)
-                            double strStYPos = strStartRes.Value.Y; // Stringer start point (Y)
-                            double strEnXPos = strEndRes.Value.X;   // Stringer end point (X)
-                            double strEnYPos = strEndRes.Value.Y;   // Stringer end point (Y)
                             double strStNd = 0;                     // Stringer start node (initially unassigned)
                             double strEnNd = 0;                     // Stringer end node (initially unassigned)
+                            double strLgt = newStringer.Length;     // Stringer lenght
                             double strW = 1;                        // Width
                             double strH = 1;                        // Height
                             double As = 0;                          // Reinforcement Area
@@ -260,15 +259,12 @@ namespace SPMTool
                             {
                                 rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
                                 rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStXPos));       // 2
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStYPos));       // 3
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnXPos));       // 4
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnYPos));       // 5
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStNd));         // 6
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd));         // 7
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));            // 8
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));            // 9
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));              // 10
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStNd));         // 2
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd));         // 3
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strLgt));          // 4
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));            // 5
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));            // 6
+                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));              // 7
 
                                 // Open the stringer for write
                                 Entity ent = trans.GetObject(newStringer.ObjectId, OpenMode.ForWrite) as Entity;
@@ -288,8 +284,14 @@ namespace SPMTool
                     }
                     else
                     {
-                        // Exit the command
+                        // Update the stringers
+                        Methods.UpdateStringers();
+
+                        // Commit and dispose the transaction
+                        trans.Commit();
                         trans.Dispose();
+
+                        // Exit the command
                         break;
                     }
                 }
@@ -390,10 +392,6 @@ namespace SPMTool
 
                     // Add to the vertices array
                     panVerts[i] = panNodeOpRes.Value;
-
-                    // Add the node position to the Result Buffer
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, panNodeOpRes.Value.X));  // 2, 4, 6, 8
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, panNodeOpRes.Value.Y));  // 3, 5, 7, 9
                 }
 
                 // Open the Block table for read
@@ -415,11 +413,11 @@ namespace SPMTool
                     // Add the final data to the Result Buffer
                     for (int i = 0; i <= 3; i++)
                     {
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, verts[i])); // 10, 11, 12, 13
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, verts[i])); // 2, 3, 4, 5
                     }
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, panW));         // 14
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));          // 15
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));          // 16
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, panW));         // 6
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));          // 7
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));          // 8
 
                     // Open the selected object for write
                     Entity ent = trans.GetObject(newPanel.ObjectId, OpenMode.ForWrite) as Entity;
@@ -439,281 +437,283 @@ namespace SPMTool
         [CommandMethod("RefreshElements")]
         public void RefreshElements()
         {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+            // Enumerate nodes
+            Methods.EnumerateNodes();
 
-            // Get the current document and database
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
+            // Update Stringers
+            Methods.UpdateStringers();
 
-            // Definition for the Extended Data
-            string appName = "SPMTool";
+            //// Get the current document, database and editor
+            //Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            //Database curDb = curDoc.Database;
+            //Editor ed = curDoc.Editor;
 
-            // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
-            {
-                // Open the Registered Applications table for read
-                RegAppTable acRegAppTbl;
-                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+            //// Definition for the Extended Data
+            //string appName = "SPMTool";
 
-                // Check to see if the Registered Applications table record for the custom app exists
-                if (acRegAppTbl.Has(appName) == false)
-                {
-                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                    {
-                        acRegAppTblRec.Name = appName;
-                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                        acRegAppTbl.Add(acRegAppTblRec);
-                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                    }
-                }
+            //// Start a transaction
+            //using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            //{
+            //    // Open the Registered Applications table for read
+            //    RegAppTable acRegAppTbl;
+            //    acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
 
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+            //    // Check to see if the Registered Applications table record for the custom app exists
+            //    if (acRegAppTbl.Has(appName) == false)
+            //    {
+            //        using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+            //        {
+            //            acRegAppTblRec.Name = appName;
+            //            trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+            //            acRegAppTbl.Add(acRegAppTblRec);
+            //            trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+            //        }
+            //    }
 
-                // Create the nodes collection and initialize getting the elements on node layer
-                ObjectIdCollection nds = Methods.GetEntitiesOnLayer("Node");
+            //    // Open the Block table for read
+            //    BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
-                // Get the number of nodes
-                int numNds = nds.Count;
+            //    // Create the nodes collection and initialize getting the elements on node layer
+            //    ObjectIdCollection nds = Methods.GetEntitiesOnLayer("Node");
 
-                // Initialize the node matrix with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
-                double[][] ndsMtrx = new double[numNds][];
+            //    // Get the number of nodes
+            //    int numNds = nds.Count;
 
-                // Access the nodes on the document
-                int i = 0; // matrix position
-                foreach (ObjectId obj in nds)
-                {
-                    // Open the selected object for write
-                    Entity ent = trans.GetObject(obj, OpenMode.ForRead) as Entity;
+            //    // Initialize the node matrix with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
+            //    double[][] ndsMtrx = new double[numNds][];
 
-                    // Read the entity as a point
-                    DBPoint node = ent as DBPoint;
+            //    // Access the nodes on the document
+            //    int i = 0; // matrix position
+            //    foreach (ObjectId obj in nds)
+            //    {
+            //        // Open the selected object for write
+            //        Entity ent = trans.GetObject(obj, OpenMode.ForRead) as Entity;
 
-                    // Add the coordinates on the matrix (number stays unassigned)
-                    double xCoord = node.Position.X;
-                    double yCoord = node.Position.Y;
+            //        // Read the entity as a point
+            //        DBPoint node = ent as DBPoint;
 
-                    // Add to the matrix
-                    ndsMtrx[i] = new double[] { 0, xCoord, yCoord };
+            //        // Add the coordinates on the matrix (number stays unassigned)
+            //        double xCoord = node.Position.X;
+            //        double yCoord = node.Position.Y;
 
-                    // Increment the matrix position
-                    i++;
-                }
-                
-                // Sort the matrix in ascending xCoord, then ascending yCoord
-                var ndsMtrxSrtd = ndsMtrx.OrderBy(y => y[2]).ThenBy(x => x[1]);
-                ndsMtrx = ndsMtrxSrtd.ToArray();
+            //        // Add to the matrix
+            //        ndsMtrx[i] = new double[] { 0, xCoord, yCoord };
 
-                // Set the node numbers in the matrix
-                for (int ndNum = 1; ndNum <= numNds; ndNum++)
-                {
-                    // Matrix position
-                    i = ndNum - 1;
-                    ndsMtrx[i][0] = ndNum;
-                }
+            //        // Increment the matrix position
+            //        i++;
+            //    }
 
-                // Access the nodes on the document
-                foreach (ObjectId obj in nds)
-                {
-                    // Open the selected object for write
-                    Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
+            //    // Sort the matrix in ascending xCoord, then ascending yCoord
+            //    var ndsMtrxSrtd = ndsMtrx.OrderBy(y => y[2]).ThenBy(x => x[1]);
+            //    ndsMtrx = ndsMtrxSrtd.ToArray();
 
-                    // Read the entity as a point
-                    DBPoint node = ent as DBPoint;
+            //    // Set the node numbers in the matrix
+            //    for (int ndNum = 1; ndNum <= numNds; ndNum++)
+            //    {
+            //        // Matrix position
+            //        i = ndNum - 1;
+            //        ndsMtrx[i][0] = ndNum;
+            //    }
 
-                    // Initialize the node number
-                    double ndNum = 0;
+            //    // Access the nodes on the document
+            //    foreach (ObjectId obj in nds)
+            //    {
+            //        // Open the selected object for write
+            //        Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
 
-                    // Get the node position
-                    double xCoord = node.Position.X;
-                    double yCoord = node.Position.Y;
+            //        // Read the entity as a point
+            //        DBPoint node = ent as DBPoint;
 
-                    // Assign the node number from the matrix
-                    for (i = 0; i < numNds; i++)
-                    {
-                        // Check what line of the matrix corresponds the node position
-                        if (xCoord == ndsMtrx[i][1] && yCoord == ndsMtrx[i][2])
-                        {
-                            // Assign the node number from the matrix
-                            ndNum = ndsMtrx[i][0];
-                        }
-                    }
+            //        // Initialize the node number
+            //        double ndNum = 0;
 
-                    // Access the XData as an array
-                    ResultBuffer rb = ent.GetXDataForApplication(appName);
-                    TypedValue[] data = rb.AsArray();
+            //        // Get the node position
+            //        double xCoord = node.Position.X;
+            //        double yCoord = node.Position.Y;
 
-                    // Set the new node number (line 2)
-                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
+            //        // Assign the node number from the matrix
+            //        for (i = 0; i < numNds; i++)
+            //        {
+            //            // Check what line of the matrix corresponds the node position
+            //            if (xCoord == ndsMtrx[i][1] && yCoord == ndsMtrx[i][2])
+            //            {
+            //                // Assign the node number from the matrix
+            //                ndNum = ndsMtrx[i][0];
+            //            }
+            //        }
 
-                    // Add the new XData
-                    ResultBuffer newRb = new ResultBuffer(data);
-                    ent.XData = newRb;
-                }
+            //        // Access the XData as an array
+            //        ResultBuffer rb = ent.GetXDataForApplication(appName);
+            //        TypedValue[] data = rb.AsArray();
 
-                ed.WriteMessage("\nThere are " + numNds.ToString() + " nodes on the model");
-                for (i = 0; i < numNds; i++)
-                {
-                    ed.WriteMessage("\n (" + ndsMtrx[i][0].ToString() + ", " + ndsMtrx[i][1].ToString() + ", " + ndsMtrx[i][2].ToString() + ")");
-                }
+            //        // Set the new node number (line 2)
+            //        data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
 
-                // Refresh the stringers
+            //        // Add the new XData
+            //        ResultBuffer newRb = new ResultBuffer(data);
+            //        ent.XData = newRb;
+            //    }
 
-                // Create the stringer collection and initialize getting the elements on node layer
-                ObjectIdCollection strs = Methods.GetEntitiesOnLayer("Stringer");
+            //    ed.WriteMessage("\nThere are " + numNds.ToString() + " nodes on the model");
+            //    for (i = 0; i < numNds; i++)
+            //    {
+            //        ed.WriteMessage("\n (" + ndsMtrx[i][0].ToString() + ", " + ndsMtrx[i][1].ToString() + ", " + ndsMtrx[i][2].ToString() + ")");
+            //    }
 
-                // Access the nodes on the document
-                foreach (ObjectId obj in strs)
-                {
-                    // Initialize the variables
-                    double strStNd = 0;
-                    double strEnNd = 0;
+            //    // Refresh the stringers
 
-                    // Open the selected object for write
-                    Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
+            //    // Create the stringer collection and initialize getting the elements on node layer
+            //    ObjectIdCollection strs = Methods.GetEntitiesOnLayer("Stringer");
 
-                    // Read the entity as a line
-                    Line str = ent as Line;
+            //    // Access the nodes on the document
+            //    foreach (ObjectId obj in strs)
+            //    {
+            //        // Initialize the variables
+            //        double strStNd = 0;
+            //        double strEnNd = 0;
 
-                    // Get the points of the line
-                    Point3d strStPos = str.StartPoint;
-                    Point3d strEnPos = str.EndPoint;
+            //        // Open the selected object for write
+            //        Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
 
-                    // Compare to the nodes collection
-                    foreach (ObjectId ndObj in nds)
-                    {
-                        // Open the selected object for read
-                        Entity entNd = trans.GetObject(ndObj, OpenMode.ForRead) as Entity;
+            //        // Read the entity as a line
+            //        Line str = ent as Line;
 
-                        // Read the entity as a point and get the position
-                        DBPoint nd = entNd as DBPoint;
-                        Point3d ndPos = nd.Position;
+            //        // Get the points of the line
+            //        Point3d strStPos = str.StartPoint;
+            //        Point3d strEnPos = str.EndPoint;
 
-                        // Compare the start node
-                        if (strStPos == ndPos)
-                        {
-                            // Get the node number
-                            // Access the XData as an array
-                            ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
-                            TypedValue[] dataNd = rbNd.AsArray();
+            //        // Compare to the nodes collection
+            //        foreach (ObjectId ndObj in nds)
+            //        {
+            //            // Open the selected object for read
+            //            Entity entNd = trans.GetObject(ndObj, OpenMode.ForRead) as Entity;
 
-                            // Get the node number (line 2)
-                            strStNd = Convert.ToDouble(dataNd[2].Value);
-                        }
+            //            // Read the entity as a point and get the position
+            //            DBPoint nd = entNd as DBPoint;
+            //            Point3d ndPos = nd.Position;
 
-                        // Compare the end node
-                        if (strEnPos == ndPos)
-                        {
-                            // Get the node number
-                            // Access the XData as an array
-                            ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
-                            TypedValue[] dataNd = rbNd.AsArray();
+            //            // Compare the start node
+            //            if (strStPos == ndPos)
+            //            {
+            //                // Get the node number
+            //                // Access the XData as an array
+            //                ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
+            //                TypedValue[] dataNd = rbNd.AsArray();
 
-                            // Get the node number (line 2)
-                            strEnNd = Convert.ToDouble(dataNd[2].Value);
-                        }
-                    }
+            //                // Get the node number (line 2)
+            //                strStNd = Convert.ToDouble(dataNd[2].Value);
+            //            }
 
-                    // Access the XData as an array
-                    ResultBuffer rb = ent.GetXDataForApplication(appName);
-                    TypedValue[] data = rb.AsArray();
+            //            // Compare the end node
+            //            if (strEnPos == ndPos)
+            //            {
+            //                // Get the node number
+            //                // Access the XData as an array
+            //                ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
+            //                TypedValue[] dataNd = rbNd.AsArray();
 
-                    // Set the updated nodes (line 6 and 7 of the array)
-                    data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
-                    data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
+            //                // Get the node number (line 2)
+            //                strEnNd = Convert.ToDouble(dataNd[2].Value);
+            //            }
+            //        }
 
-                    // Add the new XData
-                    ResultBuffer newRb = new ResultBuffer(data);
-                    ent.XData = newRb;
-                }
+            //        // Access the XData as an array
+            //        ResultBuffer rb = ent.GetXDataForApplication(appName);
+            //        TypedValue[] data = rb.AsArray();
 
-                //// Refresh the panels
+            //        // Set the updated nodes (line 6 and 7 of the array)
+            //        data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
+            //        data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
 
-                //// Create the stringer collection and initialize getting the elements on node layer
-                //ObjectIdCollection pnls = Methods.GetEntitiesOnLayer("Panel");
+            //        // Add the new XData
+            //        ResultBuffer newRb = new ResultBuffer(data);
+            //        ent.XData = newRb;
+            //    }
 
-                //// Access the nodes on the document
-                //foreach (ObjectId obj in pnls)
-                //{
-                //    // Initialize the variables
-                //    double[] verts = { 0, 0, 0, 0 };
+            //// Refresh the panels
 
-                //    // Open the selected object for write
-                //    Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
+            //// Create the stringer collection and initialize getting the elements on node layer
+            //ObjectIdCollection pnls = Methods.GetEntitiesOnLayer("Panel");
 
-                //    // Read the entity as a solid
-                //    Solid pnl = ent as Solid;
+            //// Access the nodes on the document
+            //foreach (ObjectId obj in pnls)
+            //{
+            //    // Initialize the variables
+            //    double[] verts = { 0, 0, 0, 0 };
 
-                //    // Get the points of the line
-                //    Point3d strStPos = str.StartPoint;
-                //    Point3d strEnPos = str.EndPoint;
+            //    // Open the selected object for write
+            //    Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
 
-                //    // Compare to the nodes collection
-                //    foreach (ObjectId ndObj in nds)
-                //    {
-                //        // Open the selected object for read
-                //        Entity entNd = trans.GetObject(ndObj, OpenMode.ForRead) as Entity;
+            //    // Read the entity as a solid
+            //    Solid pnl = ent as Solid;
 
-                //        // Read the entity as a point and get the position
-                //        DBPoint nd = entNd as DBPoint;
-                //        Point3d ndPos = nd.Position;
+            //    // Get the points of the line
+            //    Point3d strStPos = str.StartPoint;
+            //    Point3d strEnPos = str.EndPoint;
 
-                //        // Compare the start node
-                //        if (strStPos == ndPos)
-                //        {
-                //            // Get the node number
-                //            // Access the XData as an array
-                //            ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
-                //            TypedValue[] dataNd = rbNd.AsArray();
+            //    // Compare to the nodes collection
+            //    foreach (ObjectId ndObj in nds)
+            //    {
+            //        // Open the selected object for read
+            //        Entity entNd = trans.GetObject(ndObj, OpenMode.ForRead) as Entity;
 
-                //            // Get the node number (line 2)
-                //            strStNd = Convert.ToDouble(dataNd[2].Value);
-                //        }
+            //        // Read the entity as a point and get the position
+            //        DBPoint nd = entNd as DBPoint;
+            //        Point3d ndPos = nd.Position;
 
-                //        // Compare the end node
-                //        if (strEnPos == ndPos)
-                //        {
-                //            // Get the node number
-                //            // Access the XData as an array
-                //            ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
-                //            TypedValue[] dataNd = rbNd.AsArray();
+            //        // Compare the start node
+            //        if (strStPos == ndPos)
+            //        {
+            //            // Get the node number
+            //            // Access the XData as an array
+            //            ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
+            //            TypedValue[] dataNd = rbNd.AsArray();
 
-                //            // Get the node number (line 2)
-                //            strEnNd = Convert.ToDouble(dataNd[2].Value);
-                //        }
-                //    }
+            //            // Get the node number (line 2)
+            //            strStNd = Convert.ToDouble(dataNd[2].Value);
+            //        }
 
-                //    // Access the XData as an array
-                //    ResultBuffer rb = ent.GetXDataForApplication(appName);
-                //    TypedValue[] data = rb.AsArray();
+            //        // Compare the end node
+            //        if (strEnPos == ndPos)
+            //        {
+            //            // Get the node number
+            //            // Access the XData as an array
+            //            ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
+            //            TypedValue[] dataNd = rbNd.AsArray();
 
-                //    // Set the updated nodes (line 6 and 7 of the array)
-                //    data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
-                //    data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
+            //            // Get the node number (line 2)
+            //            strEnNd = Convert.ToDouble(dataNd[2].Value);
+            //        }
+            //    }
 
-                //    // Add the new XData
-                //    ResultBuffer newRb = new ResultBuffer(data);
-                //    ent.XData = newRb;
-                //}
+            //    // Access the XData as an array
+            //    ResultBuffer rb = ent.GetXDataForApplication(appName);
+            //    TypedValue[] data = rb.AsArray();
 
-                // Save the new object to the database
-                trans.Commit();
+            //    // Set the updated nodes (line 6 and 7 of the array)
+            //    data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
+            //    data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
 
-                // Dispose the transaction
-                trans.Dispose();
-            }
+            //    // Add the new XData
+            //    ResultBuffer newRb = new ResultBuffer(data);
+            //    ent.XData = newRb;
+            //}
+
+            //Save the new object to the database
+            //trans.Commit();
+
+            //Dispose the transaction
+            //trans.Dispose();
+
         }
 
         [CommandMethod("SetStringerParameters")]
         public void SetStringerParameters()
         {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
-            // Get the current document and database
+            // Get the current document, database and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
 
             // Definition for the Extended Data
             string appName = "SPMTool";
@@ -793,10 +793,10 @@ namespace SPMTool
                             ResultBuffer rb = ent.GetXDataForApplication(appName);
                             TypedValue[] data = rb.AsArray();
 
-                            // Set the new geometry and reinforcement (line 6, 7 and 8 of the array)
-                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
-                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
-                            data[8] = new TypedValue((int)DxfCode.ExtendedDataReal, As);
+                            // Set the new geometry and reinforcement (line 5, 6 and 7 of the array)
+                            data[5] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
+                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
+                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, As);
 
                             // Add the new XData
                             ResultBuffer newRb = new ResultBuffer(data);
@@ -817,12 +817,10 @@ namespace SPMTool
         [CommandMethod("SetPanelParameters")]
         public void SetPanelParameters()
         {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
-            // Get the current document and database
+            // Get the current document, database and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
 
             // Definition for the Extended Data
             string appName = "SPMTool";
@@ -901,10 +899,10 @@ namespace SPMTool
                             ResultBuffer rb = ent.GetXDataForApplication(appName);
                             TypedValue[] data = rb.AsArray();
 
-                            // Set the new geometry and reinforcement (line 10, 11 and 12 of the array)
-                            data[10] = new TypedValue((int)DxfCode.ExtendedDataReal, panW);
-                            data[11] = new TypedValue((int)DxfCode.ExtendedDataReal, psx);
-                            data[12] = new TypedValue((int)DxfCode.ExtendedDataReal, psy);
+                            // Set the new geometry and reinforcement (line 6, 7 and 8 of the array)
+                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, panW);
+                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, psx);
+                            data[8] = new TypedValue((int)DxfCode.ExtendedDataReal, psy);
 
                             // Add the new XData
                             ResultBuffer newRb = new ResultBuffer(data);
@@ -924,12 +922,10 @@ namespace SPMTool
         [CommandMethod("ViewElementData")]
         public void ViewElementData()
         {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
-            // Get the current document and database
+            // Get the current document, database and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
 
             // Definition for the Extended Data
             string appName = "SPMTool";
@@ -999,10 +995,11 @@ namespace SPMTool
                                 dataType = data[1].Value.ToString();
 
                                 // Get the parameters
-                                msgstr = "\nNodes: (" + data[6].Value.ToString() + " - " + data[7].Value.ToString() + ")" +
-                                         "\nWidth = " + data[8].Value.ToString() + " mm" +
-                                         "\nHeight = " + data[9].Value.ToString() + " mm" +
-                                         "\nReinforcement = " + data[10].Value.ToString() + " mm2";
+                                msgstr = "\nNodes: ("         + data[2].Value.ToString() + " - " + data[3].Value.ToString() + ")" +
+                                         "\nLenght = "        + data[4].Value.ToString() + " mm" +
+                                         "\nWidth = "         + data[5].Value.ToString() + " mm" +
+                                         "\nHeight = "        + data[6].Value.ToString() + " mm" +
+                                         "\nReinforcement = " + data[7].Value.ToString() + " mm2";
                             }
                             else
                             {
@@ -1026,10 +1023,10 @@ namespace SPMTool
                                 dataType = data[1].Value.ToString();
 
                                 // Get the parameters
-                                msgstr = "\nNodes: (" + data[10].Value.ToString() + " - " + data[11].Value.ToString() + " - " + data[12].Value.ToString() + " - " + data[13].Value.ToString() + ")" +
-                                         "\nWidth = " + data[14].Value.ToString() + " mm" +
-                                         "\nReinforcement ratio (x) = " + data[15].Value.ToString() +
-                                         "\nReinforcement ratio (y) = " + data[16].Value.ToString();
+                                msgstr = "\nNodes: ("                   + data[2].Value.ToString() + " - " + data[3].Value.ToString() + " - " + data[4].Value.ToString() + " - " + data[5].Value.ToString() + ")" +
+                                         "\nWidth = "                   + data[6].Value.ToString() + " mm" +
+                                         "\nReinforcement ratio (x) = " + data[7].Value.ToString() +
+                                         "\nReinforcement ratio (y) = " + data[8].Value.ToString();
                             }
 
                             else
@@ -1053,12 +1050,10 @@ namespace SPMTool
         [CommandMethod("SetConcreteParameters")]
         public static void SetConcreteParameters()
         {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
-            // Get the current document and database
+            // Get the current document, database and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
 
             // Definition for the Extended Data
             string appName = "SPMTool";
@@ -1136,12 +1131,10 @@ namespace SPMTool
         [CommandMethod("SetSteelParameters")]
         public static void SetSteelParameters()
         {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
-            // Get the current document and database
+            // Get the current document, database and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
 
             // Definition for the Extended Data
             string appName = "SPMTool";
@@ -1939,11 +1932,12 @@ namespace SPMTool
     {
         public static ObjectIdCollection GetEntitiesOnLayer(string layerName)
         {
+            // Get the current document and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Editor ed = curDoc.Editor;
 
             // Build a filter list so that only entities on the specified layer are selected
-            TypedValue[] tvs = new TypedValue[1] 
+            TypedValue[] tvs = new TypedValue[1]
             {
                 new TypedValue((int)DxfCode.LayerName, layerName)
             };
@@ -1962,6 +1956,236 @@ namespace SPMTool
             else
 
                 return new ObjectIdCollection();
+        }
+
+        public static void EnumerateNodes()
+        {
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
+
+            // Definition for the Extended Data
+            string appName = "SPMTool";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Registered Applications table for read
+                RegAppTable acRegAppTbl;
+                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                // Check to see if the Registered Applications table record for the custom app exists
+                if (acRegAppTbl.Has(appName) == false)
+                {
+                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                    {
+                        acRegAppTblRec.Name = appName;
+                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                        acRegAppTbl.Add(acRegAppTblRec);
+                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+                    }
+                }
+
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Create the nodes collection and initialize getting the elements on node layer
+                ObjectIdCollection nds = GetEntitiesOnLayer("Node");
+
+                // Get the number of nodes
+                int numNds = nds.Count;
+
+                // Initialize the node matrix with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
+                double[][] ndsMtrx = new double[numNds][];
+
+                // Access the nodes on the document
+                int i = 0; // matrix position
+                foreach (ObjectId obj in nds)
+                {
+                    // Open the selected object for write
+                    Entity ent = trans.GetObject(obj, OpenMode.ForRead) as Entity;
+
+                    // Read the entity as a point
+                    DBPoint node = ent as DBPoint;
+
+                    // Add the coordinates on the matrix (number stays unassigned)
+                    double xCoord = node.Position.X;
+                    double yCoord = node.Position.Y;
+
+                    // Add to the matrix
+                    ndsMtrx[i] = new double[] { 0, xCoord, yCoord };
+
+                    // Increment the matrix position
+                    i++;
+                }
+
+                // Sort the matrix in ascending xCoord, then ascending yCoord
+                var ndsMtrxSrtd = ndsMtrx.OrderBy(y => y[2]).ThenBy(x => x[1]);
+                ndsMtrx = ndsMtrxSrtd.ToArray();
+
+                // Set the node numbers in the matrix
+                for (int ndNum = 1; ndNum <= numNds; ndNum++)
+                {
+                    // Matrix position
+                    i = ndNum - 1;
+                    ndsMtrx[i][0] = ndNum;
+                }
+
+                // Access the nodes on the document
+                foreach (ObjectId obj in nds)
+                {
+                    // Open the selected object for write
+                    Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
+
+                    // Read the entity as a point
+                    DBPoint node = ent as DBPoint;
+
+                    // Initialize the node number
+                    double ndNum = 0;
+
+                    // Get the node position
+                    double xCoord = node.Position.X;
+                    double yCoord = node.Position.Y;
+
+                    // Assign the node number from the matrix
+                    for (i = 0; i < numNds; i++)
+                    {
+                        // Check what line of the matrix corresponds the node position
+                        if (xCoord == ndsMtrx[i][1] && yCoord == ndsMtrx[i][2])
+                        {
+                            // Assign the node number from the matrix
+                            ndNum = ndsMtrx[i][0];
+                        }
+                    }
+
+                    // Access the XData as an array
+                    ResultBuffer rb = ent.GetXDataForApplication(appName);
+                    TypedValue[] data = rb.AsArray();
+
+                    // Set the new node number (line 2)
+                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
+
+                    // Add the new XData
+                    ResultBuffer newRb = new ResultBuffer(data);
+                    ent.XData = newRb;
+                }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+                trans.Dispose();
+
+                //ed.WriteMessage("\nThere are " + numNds.ToString() + " nodes on the model");
+                //for (i = 0; i < numNds; i++)
+                //{
+                //    ed.WriteMessage("\n (" + ndsMtrx[i][0].ToString() + ", " + ndsMtrx[i][1].ToString() + ", " + ndsMtrx[i][2].ToString() + ")");
+                //}
+            }
+        }
+
+        public static void UpdateStringers()
+        {
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
+
+            // Definition for the Extended Data
+            string appName = "SPMTool";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Registered Applications table for read
+                RegAppTable acRegAppTbl;
+                acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+
+                // Check to see if the Registered Applications table record for the custom app exists
+                if (acRegAppTbl.Has(appName) == false)
+                {
+                    using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
+                    {
+                        acRegAppTblRec.Name = appName;
+                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                        acRegAppTbl.Add(acRegAppTblRec);
+                        trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
+                    }
+                }
+
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Create the nodes collection and initialize getting the elements on node layer
+                ObjectIdCollection nds = GetEntitiesOnLayer("Node");
+
+                // Create the stringer collection and initialize getting the elements on node layer
+                ObjectIdCollection strs = GetEntitiesOnLayer("Stringer");
+
+                // Access the nodes on the document
+                foreach (ObjectId strObj in strs)
+                {
+                    // Initialize the variables
+                    double strStNd = 0;
+                    double strEnNd = 0;
+
+                    // Open the selected object as a line for write
+                    Line str = trans.GetObject(strObj, OpenMode.ForWrite) as Line;
+
+                    // Get the points of the line
+                    Point3d strStPos = str.StartPoint;
+                    Point3d strEnPos = str.EndPoint;
+
+                    // Compare to the nodes collection
+                    foreach (ObjectId ndObj in nds)
+                    {
+                        // Open the selected object as a point for read
+                        DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+
+                        // Read the entity as a point and get the position
+                        Point3d ndPos = nd.Position;
+
+                        // Compare the start node
+                        if (strStPos == ndPos)
+                        {
+                            // Get the node number
+                            // Access the XData as an array
+                            ResultBuffer ndRb = nd.GetXDataForApplication(appName);
+                            TypedValue[] dataNd = ndRb.AsArray();
+
+                            // Get the node number (line 2)
+                            strStNd = Convert.ToDouble(dataNd[2].Value);
+                        }
+
+                        // Compare the end node
+                        if (strEnPos == ndPos)
+                        {
+                            // Get the node number
+                            // Access the XData as an array
+                            ResultBuffer ndRb = nd.GetXDataForApplication(appName);
+                            TypedValue[] dataNd = ndRb.AsArray();
+
+                            // Get the node number (line 2)
+                            strEnNd = Convert.ToDouble(dataNd[2].Value);
+                        }
+                    }
+
+                    // Access the XData as an array
+                    ResultBuffer strRb = str.GetXDataForApplication(appName);
+                    TypedValue[] data = strRb.AsArray();
+
+                    // Set the updated nodes (line 2 and 3 of the array)
+                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
+                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
+
+                    // Add the new XData
+                    ResultBuffer newRb = new ResultBuffer(data);
+                    str.XData = newRb;
+                }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+                trans.Dispose();
+            }
         }
     }
 }
