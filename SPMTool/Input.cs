@@ -258,6 +258,9 @@ namespace SPMTool
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
             AuxMethods.RegisterApp();
 
+            // Enumerate the nodes
+            AuxMethods.EnumerateNodes();
+
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
@@ -309,7 +312,7 @@ namespace SPMTool
                     trans.AddNewlyCreatedDBObject(newPanel, true);
 
                     // Add the final data to the Result Buffer
-                    for (int i = 0; i <= 3; i++)
+                    for (int i = 0; i < 4; i++)
                     {
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, verts[i])); // 2, 3, 4, 5
                     }
@@ -326,9 +329,10 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-
-                // Dispose the transaction 
                 trans.Dispose();
+
+                // Update the panels
+                AuxMethods.UpdatePanels();
             }
         }
 
@@ -2031,6 +2035,93 @@ namespace SPMTool
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);
                     str.XData = newRb;
+                }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+                trans.Dispose();
+            }
+        }
+
+        // Update the node numbers on the XData of each panel in the model
+        public static void UpdatePanels()
+        {
+            // Get the current document and database
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+
+            // Definition for the Extended Data
+            string appName = "SPMTool";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Create the nodes collection and initialize getting the elements on node layer
+                ObjectIdCollection nds = GetEntitiesOnLayer("Node");
+
+                // Create the panels collection and initialize getting the elements on node layer
+                ObjectIdCollection pnls = GetEntitiesOnLayer("Panel");
+
+                // Access the nodes on the document
+                foreach (ObjectId pnlObj in pnls)
+                {
+                    // Initialize the array of node numbers and the position on the array
+                    int[] ndNum = { 0, 0, 0, 0 };
+                    int i = 0;
+                    
+                    // Open the selected object as a solid for write
+                    Solid pnl = trans.GetObject(pnlObj, OpenMode.ForWrite) as Solid;
+
+                    // Get the vertices
+                    Point3dCollection pnlVerts = new Point3dCollection();
+                    pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+
+                    // Compare the node position to the panel vertices
+                    foreach (Point3d vert in pnlVerts)
+                    {
+                        // Get the nodes in the collection
+                        foreach (ObjectId ndObj in nds)
+                        {
+                            // Open the selected object as a point for read
+                            DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+
+                            // Read the entity as a point and get the position
+                            Point3d ndPos = nd.Position;
+
+                            // Compare the position
+                            if (vert == ndPos)
+                            {
+                                // Access the XData as an array
+                                ResultBuffer ndRb = nd.GetXDataForApplication(appName);
+                                TypedValue[] dataNd = ndRb.AsArray();
+
+                                // Get the node number (line 2) and assign it to the node array
+                                ndNum[i] = Convert.ToInt32(dataNd[2].Value);
+                                i++;
+                            }
+                        }
+                    }
+
+                    // Order the nodes array in ascending
+                    var ndOrd = ndNum.OrderBy(x => x);
+                    ndNum = ndOrd.ToArray();
+
+                    // Access the XData as an array
+                    ResultBuffer pnlRb = pnl.GetXDataForApplication(appName);
+                    TypedValue[] data = pnlRb.AsArray();
+
+                    // Set the updated node numbers (line 2 to 5 of the array)
+                    for (int j = 2; j <= 5; j++)
+                    {
+                        data[j] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum[j-2]);
+                    }
+
+                    // Add the new XData
+                    ResultBuffer newRb = new ResultBuffer(data);
+                    pnl.XData = newRb;
                 }
 
                 // Commit and dispose the transaction
