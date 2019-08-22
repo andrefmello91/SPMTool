@@ -344,269 +344,6 @@ namespace SPMTool
 
             // Update Stringers
             AuxMethods.UpdateStringers();
-
-            //// Get the current document, database and editor
-            //Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            //Database curDb = curDoc.Database;
-            //Editor ed = curDoc.Editor;
-
-            //// Definition for the Extended Data
-            //string appName = "SPMTool";
-
-            //// Start a transaction
-            //using (Transaction trans = curDb.TransactionManager.StartTransaction())
-            //{
-            //    // Open the Registered Applications table for read
-            //    RegAppTable acRegAppTbl;
-            //    acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-            //    // Check to see if the Registered Applications table record for the custom app exists
-            //    if (acRegAppTbl.Has(appName) == false)
-            //    {
-            //        using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-            //        {
-            //            acRegAppTblRec.Name = appName;
-            //            trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-            //            acRegAppTbl.Add(acRegAppTblRec);
-            //            trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-            //        }
-            //    }
-
-            //    // Open the Block table for read
-            //    BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-            //    // Create the nodes collection and initialize getting the elements on node layer
-            //    ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
-
-            //    // Get the number of nodes
-            //    int numNds = nds.Count;
-
-            //    // Initialize the node matrix with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
-            //    double[][] ndsMtrx = new double[numNds][];
-
-            //    // Access the nodes on the document
-            //    int i = 0; // matrix position
-            //    foreach (ObjectId obj in nds)
-            //    {
-            //        // Open the selected object for write
-            //        Entity ent = trans.GetObject(obj, OpenMode.ForRead) as Entity;
-
-            //        // Read the entity as a point
-            //        DBPoint node = ent as DBPoint;
-
-            //        // Add the coordinates on the matrix (number stays unassigned)
-            //        double xCoord = node.Position.X;
-            //        double yCoord = node.Position.Y;
-
-            //        // Add to the matrix
-            //        ndsMtrx[i] = new double[] { 0, xCoord, yCoord };
-
-            //        // Increment the matrix position
-            //        i++;
-            //    }
-
-            //    // Sort the matrix in ascending xCoord, then ascending yCoord
-            //    var ndsMtrxSrtd = ndsMtrx.OrderBy(y => y[2]).ThenBy(x => x[1]);
-            //    ndsMtrx = ndsMtrxSrtd.ToArray();
-
-            //    // Set the node numbers in the matrix
-            //    for (int ndNum = 1; ndNum <= numNds; ndNum++)
-            //    {
-            //        // Matrix position
-            //        i = ndNum - 1;
-            //        ndsMtrx[i][0] = ndNum;
-            //    }
-
-            //    // Access the nodes on the document
-            //    foreach (ObjectId obj in nds)
-            //    {
-            //        // Open the selected object for write
-            //        Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
-
-            //        // Read the entity as a point
-            //        DBPoint node = ent as DBPoint;
-
-            //        // Initialize the node number
-            //        double ndNum = 0;
-
-            //        // Get the node position
-            //        double xCoord = node.Position.X;
-            //        double yCoord = node.Position.Y;
-
-            //        // Assign the node number from the matrix
-            //        for (i = 0; i < numNds; i++)
-            //        {
-            //            // Check what line of the matrix corresponds the node position
-            //            if (xCoord == ndsMtrx[i][1] && yCoord == ndsMtrx[i][2])
-            //            {
-            //                // Assign the node number from the matrix
-            //                ndNum = ndsMtrx[i][0];
-            //            }
-            //        }
-
-            //        // Access the XData as an array
-            //        ResultBuffer rb = ent.GetXDataForApplication(appName);
-            //        TypedValue[] data = rb.AsArray();
-
-            //        // Set the new node number (line 2)
-            //        data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
-
-            //        // Add the new XData
-            //        ResultBuffer newRb = new ResultBuffer(data);
-            //        ent.XData = newRb;
-            //    }
-
-            //    ed.WriteMessage("\nThere are " + numNds.ToString() + " nodes on the model");
-            //    for (i = 0; i < numNds; i++)
-            //    {
-            //        ed.WriteMessage("\n (" + ndsMtrx[i][0].ToString() + ", " + ndsMtrx[i][1].ToString() + ", " + ndsMtrx[i][2].ToString() + ")");
-            //    }
-
-            //    // Refresh the stringers
-
-            //    // Create the stringer collection and initialize getting the elements on node layer
-            //    ObjectIdCollection strs = AuxMethods.GetEntitiesOnLayer("Stringer");
-
-            //    // Access the nodes on the document
-            //    foreach (ObjectId obj in strs)
-            //    {
-            //        // Initialize the variables
-            //        double strStNd = 0;
-            //        double strEnNd = 0;
-
-            //        // Open the selected object for write
-            //        Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
-
-            //        // Read the entity as a line
-            //        Line str = ent as Line;
-
-            //        // Get the points of the line
-            //        Point3d strStPos = str.StartPoint;
-            //        Point3d strEnPos = str.EndPoint;
-
-            //        // Compare to the nodes collection
-            //        foreach (ObjectId ndObj in nds)
-            //        {
-            //            // Open the selected object for read
-            //            Entity entNd = trans.GetObject(ndObj, OpenMode.ForRead) as Entity;
-
-            //            // Read the entity as a point and get the position
-            //            DBPoint nd = entNd as DBPoint;
-            //            Point3d ndPos = nd.Position;
-
-            //            // Compare the start node
-            //            if (strStPos == ndPos)
-            //            {
-            //                // Get the node number
-            //                // Access the XData as an array
-            //                ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
-            //                TypedValue[] dataNd = rbNd.AsArray();
-
-            //                // Get the node number (line 2)
-            //                strStNd = Convert.ToDouble(dataNd[2].Value);
-            //            }
-
-            //            // Compare the end node
-            //            if (strEnPos == ndPos)
-            //            {
-            //                // Get the node number
-            //                // Access the XData as an array
-            //                ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
-            //                TypedValue[] dataNd = rbNd.AsArray();
-
-            //                // Get the node number (line 2)
-            //                strEnNd = Convert.ToDouble(dataNd[2].Value);
-            //            }
-            //        }
-
-            //        // Access the XData as an array
-            //        ResultBuffer rb = ent.GetXDataForApplication(appName);
-            //        TypedValue[] data = rb.AsArray();
-
-            //        // Set the updated nodes (line 6 and 7 of the array)
-            //        data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
-            //        data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
-
-            //        // Add the new XData
-            //        ResultBuffer newRb = new ResultBuffer(data);
-            //        ent.XData = newRb;
-            //    }
-
-            //// Refresh the panels
-
-            //// Create the stringer collection and initialize getting the elements on node layer
-            //ObjectIdCollection pnls = AuxMethods.GetEntitiesOnLayer("Panel");
-
-            //// Access the nodes on the document
-            //foreach (ObjectId obj in pnls)
-            //{
-            //    // Initialize the variables
-            //    double[] verts = { 0, 0, 0, 0 };
-
-            //    // Open the selected object for write
-            //    Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
-
-            //    // Read the entity as a solid
-            //    Solid pnl = ent as Solid;
-
-            //    // Get the points of the line
-            //    Point3d strStPos = str.StartPoint;
-            //    Point3d strEnPos = str.EndPoint;
-
-            //    // Compare to the nodes collection
-            //    foreach (ObjectId ndObj in nds)
-            //    {
-            //        // Open the selected object for read
-            //        Entity entNd = trans.GetObject(ndObj, OpenMode.ForRead) as Entity;
-
-            //        // Read the entity as a point and get the position
-            //        DBPoint nd = entNd as DBPoint;
-            //        Point3d ndPos = nd.Position;
-
-            //        // Compare the start node
-            //        if (strStPos == ndPos)
-            //        {
-            //            // Get the node number
-            //            // Access the XData as an array
-            //            ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
-            //            TypedValue[] dataNd = rbNd.AsArray();
-
-            //            // Get the node number (line 2)
-            //            strStNd = Convert.ToDouble(dataNd[2].Value);
-            //        }
-
-            //        // Compare the end node
-            //        if (strEnPos == ndPos)
-            //        {
-            //            // Get the node number
-            //            // Access the XData as an array
-            //            ResultBuffer rbNd = entNd.GetXDataForApplication(appName);
-            //            TypedValue[] dataNd = rbNd.AsArray();
-
-            //            // Get the node number (line 2)
-            //            strEnNd = Convert.ToDouble(dataNd[2].Value);
-            //        }
-            //    }
-
-            //    // Access the XData as an array
-            //    ResultBuffer rb = ent.GetXDataForApplication(appName);
-            //    TypedValue[] data = rb.AsArray();
-
-            //    // Set the updated nodes (line 6 and 7 of the array)
-            //    data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
-            //    data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
-
-            //    // Add the new XData
-            //    ResultBuffer newRb = new ResultBuffer(data);
-            //    ent.XData = newRb;
-            //}
-
-            //Save the new object to the database
-            //trans.Commit();
-
-            //Dispose the transaction
-            //trans.Dispose();
-
         }
 
         [CommandMethod("SetStringerParameters")]
@@ -1357,107 +1094,107 @@ namespace SPMTool
 
                             // Insert the block into the current space
                             // For forces in x
-                            using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
+                            if (xForce != 0)
                             {
-                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                
-                                // Add the block if the force is not 0
-                                if (xForce != 0)
+                                using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
                                 {
+                                    // Append the block to drawing
+                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
                                     blkRef.Layer = fLayer;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
-                                }
-
-                                // Initialize the force text
-                                DBText text = new DBText()
-                                {
-                                    Height = 50,
-                                    Layer = fLayer
-                                };
-
-                                if (xForce > 0) // positive force in x
-                                {
-                                    // Rotate 90 degress counterclockwise
-                                    blkRef.TransformBy(Matrix3d.Rotation(1.570796, curUCS.Zaxis, insPt));
-
-                                    // Insert the force value as text and add to the block table
-                                    text.Position = new Point3d(xPos - 400, yPos + 25, 0);
-                                    text.TextString = xForce.ToString() + " N";
-                                }
-
-                                if (xForce < 0) // negative force in x
-                                {
-                                    // Rotate 90 degress clockwise
-                                    blkRef.TransformBy(Matrix3d.Rotation(-1.570796, curUCS.Zaxis, insPt));
 
                                     // Get the force absolute value
                                     double xForceAbs = Math.Abs(xForce);
 
-                                    // Insert the force value as text and add to the block table
-                                    text.Position = new Point3d(xPos + 150, yPos + 25, 0);
-                                    text.TextString = xForceAbs.ToString() + " N";
-                                }
-                                
-                                // Append to the block table record if force is not 0
-                                if (xForce != 0)
-                                {
+                                    // Initialize the rotation angle and the text position
+                                    double rotAng = 0;
+                                    Point3d txtPos = new Point3d();
+
+                                    if (xForce > 0) // positive force in x
+                                    {
+                                        // Rotate 90 degress counterclockwise
+                                        rotAng = 1.570796;
+
+                                        // Set the text position
+                                        txtPos = new Point3d(xPos - 400, yPos + 25, 0);
+                                    }
+
+                                    if (xForce < 0) // negative force in x
+                                    {
+                                        // Rotate 90 degress clockwise
+                                        rotAng = -1.570796;
+
+                                        // Set the text position
+                                        txtPos = new Point3d(xPos + 150, yPos + 25, 0);
+                                    }
+
+                                    // Rotate the block
+                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, curUCS.Zaxis, insPt));
+
+                                    // Define the force text
+                                    DBText text = new DBText()
+                                    {
+                                        TextString = xForceAbs.ToString() + " N",
+                                        Position = txtPos,
+                                        Height = 50,
+                                        Layer = fLayer
+                                    };
+
+                                    // Append the text to drawing
                                     blkTblRec.AppendEntity(text);
                                     trans.AddNewlyCreatedDBObject(text, true);
                                 }
                             }
 
                             // For forces in y
-                            using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
+                            if (yForce != 0)
                             {
-                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-
-                                // Add the block if the force is not 0
-                                if (yForce != 0)
+                                using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
                                 {
+                                    // Append the block to drawing
+                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
                                     blkRef.Layer = fLayer;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
-                                }
-
-                                // Initialize the force text
-                                DBText text = new DBText()
-                                {
-                                    Height = 50,
-                                    Layer = fLayer
-                                };
-
-                                if (yForce > 0) // positive force in y
-                                {
-                                    // Rotate 90 degress counterclockwise
-                                    blkRef.TransformBy(Matrix3d.Rotation(3.14159265, curUCS.Zaxis, insPt));
-
-                                    // Insert the force value as text and add to the block table
-                                    text.Position = new Point3d(xPos + 25, yPos - 250, 0);
-                                    text.TextString = yForce.ToString() + " N";
-
-                                    blkTblRec.AppendEntity(text);
-                                    trans.AddNewlyCreatedDBObject(text, true);
-                                }
-
-                                if (yForce < 0) // negative force in y
-                                {
-                                    // No rotation needed
 
                                     // Get the force absolute value
                                     double yForceAbs = Math.Abs(yForce);
 
-                                    // Insert the force value as text and add to the block table
-                                    text.Position = new Point3d(xPos + 25, yPos + 200, 0);
-                                    text.TextString = yForceAbs.ToString() + " N";
+                                    // Initialize the rotation angle and the text position
+                                    double rotAng = 0;
+                                    Point3d txtPos = new Point3d();
 
-                                    blkTblRec.AppendEntity(text);
-                                    trans.AddNewlyCreatedDBObject(text, true);
-                                }
+                                    if (yForce > 0) // positive force in y
+                                    {
+                                        // Rotate 90 degress counterclockwise
+                                        rotAng = 3.14159265;
 
-                                // Append to the block table record if force is not 0
-                                if (yForce != 0)
-                                {
+                                        // Set the text position
+                                        txtPos = new Point3d(xPos + 25, yPos - 250, 0);
+                                    }
+
+                                    if (yForce < 0) // negative force in y
+                                    {
+                                        // No rotation needed
+
+                                        // Set the text position
+                                        txtPos = new Point3d(xPos + 25, yPos + 200, 0);
+                                    }
+
+                                    // Rotate the block
+                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, curUCS.Zaxis, insPt));
+
+                                    // Define the force text
+                                    DBText text = new DBText()
+                                    {
+                                        TextString = yForceAbs.ToString() + " N",
+                                        Position = txtPos,
+                                        Height = 50,
+                                        Layer = fLayer
+                                    };
+
+                                    // Append the text to drawing
                                     blkTblRec.AppendEntity(text);
                                     trans.AddNewlyCreatedDBObject(text, true);
                                 }
@@ -1867,71 +1604,65 @@ namespace SPMTool
                 // Get the number of nodes
                 int numNds = nds.Count;
 
-                // Initialize the node matrix with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
-                double[][] ndsMtrx = new double[numNds][];
+                // Initialize the node array with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
+                double[][] ndsArray = new double[numNds][];
 
                 // Access the nodes on the document
-                int i = 0; // matrix position
+                int i = 0; // array position
                 foreach (ObjectId obj in nds)
                 {
-                    // Open the selected object for write
-                    Entity ent = trans.GetObject(obj, OpenMode.ForRead) as Entity;
+                    // Read the object as a point
+                    DBPoint nd = trans.GetObject(obj, OpenMode.ForRead) as DBPoint;
 
-                    // Read the entity as a point
-                    DBPoint node = ent as DBPoint;
+                    // Add the coordinates on the array (number stays unassigned)
+                    double xCoord = nd.Position.X;
+                    double yCoord = nd.Position.Y;
 
-                    // Add the coordinates on the matrix (number stays unassigned)
-                    double xCoord = node.Position.X;
-                    double yCoord = node.Position.Y;
+                    // Add to the array
+                    ndsArray[i] = new double[] { 0, xCoord, yCoord };
 
-                    // Add to the matrix
-                    ndsMtrx[i] = new double[] { 0, xCoord, yCoord };
-
-                    // Increment the matrix position
+                    // Increment the array position
                     i++;
                 }
 
-                // Sort the matrix in ascending xCoord, then ascending yCoord
-                var ndsMtrxSrtd = ndsMtrx.OrderBy(y => y[2]).ThenBy(x => x[1]);
-                ndsMtrx = ndsMtrxSrtd.ToArray();
+                // Sort the array in ascending xCoord, then ascending yCoord
+                var ndsArrayOrd = ndsArray.OrderBy(y => y[2]).ThenBy(x => x[1]);
+                ndsArray = ndsArrayOrd.ToArray();
 
-                // Set the node numbers in the matrix
+                // Set the node numbers in the array
                 for (int ndNum = 1; ndNum <= numNds; ndNum++)
                 {
-                    // Matrix position
+                    // array position
                     i = ndNum - 1;
-                    ndsMtrx[i][0] = ndNum;
+                    ndsArray[i][0] = ndNum;
                 }
 
                 // Access the nodes on the document
                 foreach (ObjectId obj in nds)
                 {
-                    // Open the selected object for write
-                    Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
-
-                    // Read the entity as a point
-                    DBPoint node = ent as DBPoint;
+                    // Read the object as a point
+                    DBPoint nd = trans.GetObject(obj, OpenMode.ForWrite) as DBPoint;
 
                     // Initialize the node number
                     double ndNum = 0;
 
                     // Get the node position
-                    double xCoord = node.Position.X;
-                    double yCoord = node.Position.Y;
+                    double xCoord = nd.Position.X;
+                    double yCoord = nd.Position.Y;
 
-                    // Assign the node number from the matrix
+                    // Assign the node number from the array
                     for (i = 0; i < numNds; i++)
                     {
-                        // Check what line of the matrix corresponds the node position
-                        if (xCoord == ndsMtrx[i][1] && yCoord == ndsMtrx[i][2])
+                        // Check what line of the array corresponds the node position
+                        if (xCoord == ndsArray[i][1] && yCoord == ndsArray[i][2])
                         {
-                            // Assign the node number from the matrix
-                            ndNum = ndsMtrx[i][0];
+                            // Assign the node number from the array
+                            ndNum = ndsArray[i][0];
                         }
                     }
 
                     // Access the XData as an array
-                    ResultBuffer rb = ent.GetXDataForApplication(appName);
+                    ResultBuffer rb = nd.GetXDataForApplication(appName);
                     TypedValue[] data = rb.AsArray();
 
                     // Set the new node number (line 2)
@@ -1939,18 +1670,12 @@ namespace SPMTool
 
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);
-                    ent.XData = newRb;
+                    nd.XData = newRb;
                 }
 
                 // Commit and dispose the transaction
                 trans.Commit();
                 trans.Dispose();
-
-                //ed.WriteMessage("\nThere are " + numNds.ToString() + " nodes on the model");
-                //for (i = 0; i < numNds; i++)
-                //{
-                //    ed.WriteMessage("\n (" + ndsMtrx[i][0].ToString() + ", " + ndsMtrx[i][1].ToString() + ", " + ndsMtrx[i][2].ToString() + ")");
-                //}
             }
         }
 
