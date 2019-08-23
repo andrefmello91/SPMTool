@@ -336,14 +336,33 @@ namespace SPMTool
             }
         }
 
-        [CommandMethod("RefreshElements")]
-        public void RefreshElements()
+        [CommandMethod("UpdateElements")]
+        public void UpdateElements()
         {
-            // Enumerate nodes
-            AuxMethods.EnumerateNodes();
+            // Get the editor
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
 
-            // Update Stringers
-            AuxMethods.UpdateStringers();
+            // Enumerate and get the number of nodes
+            int numNds = AuxMethods.EnumerateNodes();
+
+            // Update and get the number of stringers
+            int numStrs = AuxMethods.UpdateStringers();
+
+            // Update and get the number of panels
+            int numPnls = AuxMethods.UpdatePanels();
+
+            // Get the number of elements
+            //ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
+            //int numNds = nds.Count;
+
+            //ObjectIdCollection strs = AuxMethods.GetEntitiesOnLayer("Stringer");
+            //int numStrs = strs.Count;
+
+            //ObjectIdCollection pnls = AuxMethods.GetEntitiesOnLayer("Panel");
+            //int numPnls = pnls.Count;
+
+            // Display the number of updated elements
+            ed.WriteMessage(numNds.ToString() + " nodes, " + numStrs.ToString() + " stringers and " + numPnls.ToString() + " panels updated.");
         }
 
         [CommandMethod("SetStringerParameters")]
@@ -1581,8 +1600,8 @@ namespace SPMTool
                 return new ObjectIdCollection();
         }
 
-        // Enumerate all the nodes in the model
-        public static void EnumerateNodes()
+        // Enumerate all the nodes in the model and return the number of nodes
+        public static int EnumerateNodes()
         {
             // Get the current document and database
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
@@ -1591,6 +1610,9 @@ namespace SPMTool
 
             // Definition for the Extended Data
             string appName = "SPMTool";
+
+            // Initialize the number of nodes
+            int numNds = 0;
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -1602,7 +1624,7 @@ namespace SPMTool
                 ObjectIdCollection nds = GetEntitiesOnLayer("Node");
 
                 // Get the number of nodes
-                int numNds = nds.Count;
+                numNds = nds.Count;
 
                 // Initialize the node array with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
                 double[][] ndsArray = new double[numNds][];
@@ -1677,10 +1699,13 @@ namespace SPMTool
                 trans.Commit();
                 trans.Dispose();
             }
+
+            // Return the number of nodes
+            return numNds;
         }
 
-        // Update the node numbers on the XData of each stringer in the model
-        public static void UpdateStringers()
+        // Update the node numbers on the XData of each stringer in the model and return the number of stringers
+        public static int UpdateStringers()
         {
             // Get the current document and database
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
@@ -1688,6 +1713,9 @@ namespace SPMTool
 
             // Definition for the Extended Data
             string appName = "SPMTool";
+
+            // Initialize the number of stringers
+            int numStrs = 0;
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -1700,6 +1728,9 @@ namespace SPMTool
 
                 // Create the stringer collection and initialize getting the elements on node layer
                 ObjectIdCollection strs = GetEntitiesOnLayer("Stringer");
+
+                // Get the number of stringers
+                numStrs = strs.Count;
 
                 // Access the nodes on the document
                 foreach (ObjectId strObj in strs)
@@ -1753,9 +1784,9 @@ namespace SPMTool
                     ResultBuffer strRb = str.GetXDataForApplication(appName);
                     TypedValue[] data = strRb.AsArray();
 
-                    // Set the updated nodes (line 2 and 3 of the array)
-                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
-                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
+                    // Set the updated nodes in ascending number (line 2 and 3 of the array)
+                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, Math.Min(strStNd, strEnNd));
+                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, Math.Max(strStNd, strEnNd));
 
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);
@@ -1766,10 +1797,13 @@ namespace SPMTool
                 trans.Commit();
                 trans.Dispose();
             }
+
+            // Return the number of stringers
+            return numStrs;
         }
 
-        // Update the node numbers on the XData of each panel in the model
-        public static void UpdatePanels()
+        // Update the node numbers on the XData of each panel in the model and return the number of panels
+        public static int UpdatePanels()
         {
             // Get the current document and database
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
@@ -1777,6 +1811,9 @@ namespace SPMTool
 
             // Definition for the Extended Data
             string appName = "SPMTool";
+
+            // Initialize the number of panels
+            int numPnls = 0;
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -1789,6 +1826,9 @@ namespace SPMTool
 
                 // Create the panels collection and initialize getting the elements on node layer
                 ObjectIdCollection pnls = GetEntitiesOnLayer("Panel");
+
+                // Get the number of panels
+                numPnls = pnls.Count;
 
                 // Access the nodes on the document
                 foreach (ObjectId pnlObj in pnls)
@@ -1853,6 +1893,9 @@ namespace SPMTool
                 trans.Commit();
                 trans.Dispose();
             }
+
+            // Return the number of panels
+            return numPnls;
         }
     }
 }
