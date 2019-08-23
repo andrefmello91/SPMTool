@@ -98,23 +98,21 @@ namespace SPMTool
                         // Set the style for all point objects in the drawing
                         curDb.Pdmode = 32;
                         curDb.Pdsize = 50;
-
-                        // Save the new object to the database and dispose the transaction
-                        trans.Commit();
-                        trans.Dispose();
                     }
                     else
                     {
-                        // Enumerate the nodes
-                        AuxMethods.EnumerateNodes();
-
-                        // Exit the command
-                        trans.Commit();
-                        trans.Dispose();
+                        // Finish the command
                         break;
                     }
+
+                    // Save the new object to the database and dispose the transaction
+                    trans.Commit();
+                    trans.Dispose();
                 }
             }
+
+            // Enumerate the nodes
+            AuxMethods.EnumerateNodes();
         }
 
 
@@ -134,7 +132,7 @@ namespace SPMTool
             string strLayer = "Stringer";
             short cyan = 4;
 
-            // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+            // Check if the layer stringer already exists in the drawing. If it doesn't, then it's created:
             AuxMethods.CreateLayer(strLayer, cyan, 0);
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
@@ -143,12 +141,18 @@ namespace SPMTool
             // Enumerate the nodes
             AuxMethods.EnumerateNodes();
 
+            // Get the current Object Snap Setting
+            Object curOsmode = Application.GetSystemVariable("osmode");
+
+            // Set the Object Snap Setting to node (8)
+            Application.SetSystemVariable("OSMODE", 8);
+
             // Prompt for the start point of stringer
-            PromptPointOptions strStartOp = new PromptPointOptions("\nPick the start node: ");
-            PromptPointResult strStartRes = ed.GetPoint(strStartOp);
+            PromptPointOptions strStOp = new PromptPointOptions("\nPick the start node: ");
+            PromptPointResult strStRes = ed.GetPoint(strStOp);
 
             // Exit if the user presses ESC or cancels the command
-            if (strStartRes.Status == PromptStatus.Cancel) return;
+            if (strStRes.Status == PromptStatus.Cancel) return;
 
             // Loop for creating infinite stringers (until user exits the command)
             for ( ; ; )
@@ -157,26 +161,25 @@ namespace SPMTool
                 using (Transaction trans = curDb.TransactionManager.StartTransaction())
                 {
                     // Get the stringer start point
-                    Point3d strStart = strStartRes.Value;
+                    Point3d strSt = strStRes.Value;
 
                     // Prompt for the end point
                     PromptPointOptions strEndOp = new PromptPointOptions("\nPick the end node: ");
                     strEndOp.UseBasePoint = true;
-                    strEndOp.BasePoint = strStart;
+                    strEndOp.BasePoint = strSt;
                     PromptPointResult strEndRes = ed.GetPoint(strEndOp);
                     Point3d strEnd = strEndRes.Value;
 
                     if (strEndRes.Status == PromptStatus.OK)
                     {
-
                         // Open the Block table for read
                         BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
+                        
                         // Open the Block table record Model space for write
                         BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
+                        
                         // Create the line in Model space
-                        using (Line newStr = new Line(strStart, strEnd))
+                        using (Line newStr = new Line(strSt, strEnd))
                         {
                             // Set the layer to stringer
                             newStr.Layer = strLayer;
@@ -213,27 +216,27 @@ namespace SPMTool
                             }
                         }
 
-                        // Save the new object to the database
-                        trans.Commit();
-                        trans.Dispose();
 
                         // Set the start point of the new stringer
-                        strStartRes = strEndRes;
+                        strStRes = strEndRes;
                     }
                     else
                     {
-                        // Update the stringers
-                        AuxMethods.UpdateStringers();
-
-                        // Commit and dispose the transaction
-                        trans.Commit();
-                        trans.Dispose();
-
-                        // Exit the command
+                        // Finish the command
                         break;
                     }
+
+                    // Save the new object to the database
+                    trans.Commit();
+                    trans.Dispose();
                 }
             }
+
+            // Update the stringers
+            AuxMethods.UpdateStringers();
+
+            // Set the Object Snap Setting to the initial
+            Application.SetSystemVariable("OSMODE", curOsmode);
         }
 
         [CommandMethod("AddPanel")]
@@ -252,8 +255,14 @@ namespace SPMTool
             string pnlLayer = "Panel";
             short grey = 254;
 
-            // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-            AuxMethods.CreateLayer(pnlLayer, grey, 30);
+            // Get the current Object Snap Setting
+            Object curOsmode = Application.GetSystemVariable("osmode");
+
+            // Set the Object Snap Setting to node (8)
+            Application.SetSystemVariable("OSMODE", 8);
+
+            // Check if the layer panel already exists in the drawing. If it doesn't, then it's created:
+            AuxMethods.CreateLayer(pnlLayer, grey, 80);
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
             AuxMethods.RegisterApp();
@@ -265,7 +274,7 @@ namespace SPMTool
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
                 // Initialize the vertices of the panel
-                Point3d[] panVerts =
+                Point3d[] pnlVerts =
                 {
                     new Point3d(),
                     new Point3d(),
@@ -274,7 +283,7 @@ namespace SPMTool
                 };
 
                 // Initialize the panel parameters
-                double panW = 1;                 // width
+                double pnlW = 1;                 // width
                 double psx = 0;                  // reinforcement ratio (X)
                 double psy = 0;                  // reinforcement ratio (Y)
                 double[] verts = { 0, 0, 0, 0 }; // Panel vertices (initially unassigned)
@@ -288,11 +297,11 @@ namespace SPMTool
                 for (int i = 0; i < 4; i++)
                 {
                     // Prompt each vertice
-                    PromptPointOptions panNodeOp = new PromptPointOptions("\nSelect nodes performing a loop");
-                    PromptPointResult panNodeOpRes = ed.GetPoint(panNodeOp);
+                    PromptPointOptions pnlNdOp = new PromptPointOptions("\nSelect nodes performing a loop");
+                    PromptPointResult pnlNdRes = ed.GetPoint(pnlNdOp);
 
                     // Add to the vertices array
-                    panVerts[i] = panNodeOpRes.Value;
+                    pnlVerts[i] = pnlNdRes.Value;
                 }
 
                 // Open the Block table for read
@@ -302,7 +311,7 @@ namespace SPMTool
                 BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
                 // Create the panel as a solid with 4 segments (4 points)
-                using (Solid newPanel = new Solid(panVerts[0], panVerts[1], panVerts[3], panVerts[2]))
+                using (Solid newPanel = new Solid(pnlVerts[0], pnlVerts[1], pnlVerts[3], pnlVerts[2]))
                 {
                     // Set the layer to Panel
                     newPanel.Layer = pnlLayer;
@@ -316,7 +325,7 @@ namespace SPMTool
                     {
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, verts[i])); // 2, 3, 4, 5
                     }
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, panW));         // 6
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));         // 6
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));          // 7
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));          // 8
 
@@ -331,9 +340,13 @@ namespace SPMTool
                 trans.Commit();
                 trans.Dispose();
 
-                // Update the panels
-                AuxMethods.UpdatePanels();
             }
+
+            // Update the panels
+            AuxMethods.UpdatePanels();
+
+            // Set the Object Snap Setting to the initial
+            Application.SetSystemVariable("OSMODE", curOsmode);
         }
 
         [CommandMethod("UpdateElements")]
@@ -388,49 +401,36 @@ namespace SPMTool
                 {
                     SelectionSet set = selRes.Value;
 
-                    // Open the Registered Applications table for read
-                    RegAppTable acRegAppTbl;
-                    acRegAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-
-                    // Check to see if the Registered Applications table record for the custom app exists
-                    if (acRegAppTbl.Has(appName) == false)
-                    {
-                        using (RegAppTableRecord acRegAppTblRec = new RegAppTableRecord())
-                        {
-                            acRegAppTblRec.Name = appName;
-                            trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
-                            acRegAppTbl.Add(acRegAppTblRec);
-                            trans.AddNewlyCreatedDBObject(acRegAppTblRec, true);
-                        }
-                    }
-
                     // Ask the user to input the stringer width
-                    PromptDoubleOptions strWOp = new PromptDoubleOptions("\nInput the width (in mm) for the selected stringers:");
-
-                    // Restrict input to positive and non-negative values
-                    strWOp.AllowZero = false;
-                    strWOp.AllowNegative = false;
+                    PromptDoubleOptions strWOp = new PromptDoubleOptions("\nInput the width (in mm) for the selected stringers:")
+                    {
+                        DefaultValue = 1,
+                        AllowZero = false,
+                        AllowNegative = false
+                    };
 
                     // Get the result
                     PromptDoubleResult strWRes = ed.GetDouble(strWOp);
                     double strW = strWRes.Value;
 
                     // Ask the user to input the stringer height
-                    PromptDoubleOptions strHOp = new PromptDoubleOptions("\nInput the height (in mm) for the selected stringers:");
-
-                    // Restrict input to positive and non-negative values
-                    strHOp.AllowZero = false;
-                    strHOp.AllowNegative = false;
+                    PromptDoubleOptions strHOp = new PromptDoubleOptions("\nInput the height (in mm) for the selected stringers:")
+                    {
+                        DefaultValue = 1,
+                        AllowZero = false,
+                        AllowNegative = false
+                    };
 
                     // Get the result
                     PromptDoubleResult strHRes = ed.GetDouble(strHOp);
                     double strH = strHRes.Value;
 
                     // Ask the user to input the reinforcement area
-                    PromptDoubleOptions AsOp = new PromptDoubleOptions("\nInput the reinforcement area for the selected stringers (only needed in non-linear analysis):");
-
-                    // Restrict input to positive and non-negative values
-                    AsOp.AllowNegative = false;
+                    PromptDoubleOptions AsOp = new PromptDoubleOptions("\nInput the reinforcement area for the selected stringers (only needed in non-linear analysis):")
+                    {
+                        DefaultValue = 0,
+                        AllowNegative = false
+                    };
 
                     // Get the result
                     PromptDoubleResult AsRes = ed.GetDouble(AsOp);
@@ -465,8 +465,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-
-                // Dispose the transaction
                 trans.Dispose();
             }
         }
@@ -497,31 +495,34 @@ namespace SPMTool
                     SelectionSet set = selRes.Value;
 
                     // Ask the user to input the panel width
-                    PromptDoubleOptions panWOp = new PromptDoubleOptions("\nInput the width (in mm) for the selected panels:");
-
-                    // Restrict input to positive and non-negative values
-                    panWOp.AllowZero = false;
-                    panWOp.AllowNegative = false;
+                    PromptDoubleOptions pnlWOp = new PromptDoubleOptions("\nInput the width (in mm) for the selected panels:")
+                    {
+                        DefaultValue = 1,
+                        AllowZero = false,
+                        AllowNegative = false
+                    };
 
                     // Get the result
-                    PromptDoubleResult panWRes = ed.GetDouble(panWOp);
-                    double panW = panWRes.Value;
+                    PromptDoubleResult pnlWRes = ed.GetDouble(pnlWOp);
+                    double pnlW = pnlWRes.Value;
 
                     // Ask the user to input the reinforcement ratio in x direction
-                    PromptDoubleOptions psxOp = new PromptDoubleOptions("\nInput the reinforcement ratio in x direction for selected panels (only needed in non-linear analysis):");
-
-                    // Restrict input to positive and non-negative values
-                    psxOp.AllowNegative = false;
+                    PromptDoubleOptions psxOp = new PromptDoubleOptions("\nInput the reinforcement ratio in x direction for selected panels (only needed in non-linear analysis):")
+                    {
+                        DefaultValue = 0,
+                        AllowNegative = false
+                    };
 
                     // Get the result
                     PromptDoubleResult psxRes = ed.GetDouble(psxOp);
                     double psx = psxRes.Value;
 
-                    // Ask the user to input the reinforcement ratio in x direction
-                    PromptDoubleOptions psyOp = new PromptDoubleOptions("\nInput the reinforcement ratio in y direction for selected panels (only needed in non-linear analysis):");
-
-                    // Restrict input to positive and non-negative values
-                    psyOp.AllowNegative = false;
+                    // Ask the user to input the reinforcement ratio in y direction
+                    PromptDoubleOptions psyOp = new PromptDoubleOptions("\nInput the reinforcement ratio in y direction for selected panels (only needed in non-linear analysis):")
+                    {
+                        DefaultValue = 0,
+                        AllowNegative = false
+                    };
 
                     // Get the result
                     PromptDoubleResult psyRes = ed.GetDouble(psyOp);
@@ -543,7 +544,7 @@ namespace SPMTool
                             TypedValue[] data = rb.AsArray();
 
                             // Set the new geometry and reinforcement (line 6, 7 and 8 of the array)
-                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, panW);
+                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlW);
                             data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, psx);
                             data[8] = new TypedValue((int)DxfCode.ExtendedDataReal, psy);
 
@@ -556,8 +557,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-
-                // Dispose the transaction
                 trans.Dispose();
             }
         }
@@ -609,9 +608,9 @@ namespace SPMTool
                                 dataType = data[1].Value.ToString();
 
                                 // Get the parameters
-                                msgstr = "\nNode number: " + data[2].Value.ToString() +
-                                         "\nNode position: (" + data[3].Value.ToString() + ", " + data[4].Value.ToString() + ")" +
-                                         "\nSupport conditions: " + data[5].Value.ToString() +
+                                msgstr = "\nNode number: "           + data[2].Value.ToString() +
+                                         "\nNode position: ("        + data[3].Value.ToString() + ", " + data[4].Value.ToString() + ")" +
+                                         "\nSupport conditions: "    + data[5].Value.ToString() +
                                          "\nForce in X direction = " + data[6].Value.ToString() + " N" +
                                          "\nForce in Y direction = " + data[7].Value.ToString() + " N";
                             }
@@ -709,22 +708,22 @@ namespace SPMTool
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
                 // Ask the user to input the concrete compressive strength
-                PromptDoubleOptions fcOp = new PromptDoubleOptions("Input the concrete compressive strength (fc) in MPa:");
-
-                // Restrict input to positive and non-negative values
-                fcOp.AllowZero = false;
-                fcOp.AllowNegative = false;
+                PromptDoubleOptions fcOp = new PromptDoubleOptions("\nInput the concrete compressive strength (fc) in MPa:")
+                {
+                    AllowZero = false,
+                    AllowNegative = false
+                };
 
                 // Get the result
                 PromptDoubleResult fcRes = ed.GetDouble(fcOp);
                 double fc = fcRes.Value;
 
                 // Ask the user to input the concrete Elastic Module
-                PromptDoubleOptions EcOp = new PromptDoubleOptions("Input the concrete Elastic Module (Ec) in MPa:");
-
-                // Restrict input to positive and non-negative values
-                EcOp.AllowZero = false;
-                EcOp.AllowNegative = false;
+                PromptDoubleOptions EcOp = new PromptDoubleOptions("\nInput the concrete Elastic Module (Ec) in MPa:")
+                {
+                    AllowZero = false,
+                    AllowNegative = false
+                };
 
                 // Get the result
                 PromptDoubleResult EcRes = ed.GetDouble(EcOp);
@@ -775,22 +774,22 @@ namespace SPMTool
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
                 // Ask the user to input the steel tensile strength
-                PromptDoubleOptions fyOp = new PromptDoubleOptions("Input the steel tensile strength (fy) in MPa:");
-
-                // Restrict input to positive and non-negative values
-                fyOp.AllowZero = false;
-                fyOp.AllowNegative = false;
+                PromptDoubleOptions fyOp = new PromptDoubleOptions("\nInput the steel tensile strength (fy) in MPa:")
+                {                
+                    AllowZero = false,
+                    AllowNegative = false
+                };
 
                 // Get the result
                 PromptDoubleResult fyRes = ed.GetDouble(fyOp);
                 double fy = fyRes.Value;
 
                 // Ask the user to input the steel Elastic Module
-                PromptDoubleOptions EsOp = new PromptDoubleOptions("Input the steel Elastic Module (Es) in MPa:");
-
-                // Restrict input to positive and non-negative values
-                EsOp.AllowZero = false;
-                EsOp.AllowNegative = false;
+                PromptDoubleOptions EsOp = new PromptDoubleOptions("Input the steel Elastic Module (Es) in MPa:")
+                {
+                    AllowZero = false,
+                    AllowNegative = false
+                };
 
                 // Get the result
                 PromptDoubleResult EsRes = ed.GetDouble(EsOp);
@@ -854,8 +853,8 @@ namespace SPMTool
 
                     // Get the parameters
                     concmsg = "\nConcrete Parameters" +
-                              "\nfc = " + data[2].Value.ToString() + " MPa" +
-                              "\nEc = " + data[3].Value.ToString() + " MPa";
+                              "\nfc = "               + data[2].Value.ToString() + " MPa" +
+                              "\nEc = "               + data[3].Value.ToString() + " MPa";
 
                     // Read the Steel Xrecord
                     Xrecord steelXrec = (Xrecord)trans.GetObject(steelPar, OpenMode.ForRead);
@@ -864,8 +863,8 @@ namespace SPMTool
 
                     // Get the parameters
                     steelmsg = "\nSteel Parameters" +
-                               "\nfy = " + data2[2].Value.ToString() + " MPa" +
-                               "\nEs = " + data2[3].Value.ToString() + " MPa";
+                               "\nfy = "            + data2[2].Value.ToString() + " MPa" +
+                               "\nEs = "            + data2[3].Value.ToString() + " MPa";
                 }
                 else
                 {
@@ -888,12 +887,10 @@ namespace SPMTool
         [CommandMethod("AddSupport")]
         public void AddSupport()
         {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
-            // Get the current document and database
+            // Get the current document, database and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
 
             // Definition for the Extended Data
             string appName = "SPMTool";
@@ -1010,12 +1007,10 @@ namespace SPMTool
         [CommandMethod("AddForce")]
         public void AddForce()
         {
-            // Simplified typing for editor:
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
-            // Get the current document and database
+            // Get the current document, database and editor
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
 
             // Get the coordinate system for transformations
             Matrix3d curUCSMatrix = curDoc.Editor.CurrentUserCoordinateSystem;
