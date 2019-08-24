@@ -60,7 +60,6 @@ namespace SPMTool
                     if (pointResult.Status == PromptStatus.OK)
                     {
                         // Create the node and set its layer to Node:
-
                         DBPoint newNode = new DBPoint(pointResult.Value);
                         newNode.Layer = ndLayer;
 
@@ -69,19 +68,19 @@ namespace SPMTool
                         trans.AddNewlyCreatedDBObject(newNode, true);
 
                         // Inicialization of node conditions
-                        double nodeNum = 0;                     // Node number (to be set later)
-                        double xPosition = pointResult.Value.X; // X position
-                        double yPosition = pointResult.Value.Y; // Y position
-                        string support = "Free";                // Support condition
-                        double xForce = 0;                      // Force on X direction
-                        double yForce = 0;                      // Force on Y direction
+                        double nodeNum = 0;                             // Node number (to be set later)
+                        double xPosition = newNode.Position.X;          // X position
+                        double yPosition = newNode.Position.Y;          // Y position
+                        string support = "Free";                        // Support condition
+                        double xForce = 0;                              // Force on X direction
+                        double yForce = 0;                              // Force on Y direction
 
                         // Define the Xdata to add to the node
                         using (ResultBuffer rb = new ResultBuffer())
                         {
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, nodeNum));      // 2
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, nodeNum));         // 2
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));       // 3
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));       // 4
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));  // 5
@@ -189,13 +188,13 @@ namespace SPMTool
                             trans.AddNewlyCreatedDBObject(newStr, true);
 
                             // Inicialization of stringer conditions
-                            double strNum = 0;                      // Stringer number (initially unassigned)
-                            double strStNd = 0;                     // Stringer start node (initially unassigned)
-                            double strEnNd = 0;                     // Stringer end node (initially unassigned)
-                            double strLgt = newStr.Length;          // Stringer lenght
-                            double strW = 1;                        // Width
-                            double strH = 1;                        // Height
-                            double As = 0;                          // Reinforcement Area
+                            double strNum = 0;                 // Stringer number (initially unassigned)
+                            double strStNd = 0;                // Stringer start node (initially unassigned)
+                            double strEnNd = 0;                // Stringer end node (initially unassigned)
+                            double strLgt = newStr.Length;     // Stringer lenght
+                            double strW = 1;                   // Width
+                            double strH = 1;                   // Height
+                            double As = 0;                     // Reinforcement Area
 
                             // Define the Xdata to add to the node
                             using (ResultBuffer rb = new ResultBuffer())
@@ -284,10 +283,11 @@ namespace SPMTool
                 };
 
                 // Initialize the panel parameters
+                double pnlNum = 0;               // Panel number (initially unassigned)
+                double[] verts = { 0, 0, 0, 0 }; // Panel vertices (initially unassigned)
                 double pnlW = 1;                 // width
                 double psx = 0;                  // reinforcement ratio (X)
                 double psy = 0;                  // reinforcement ratio (Y)
-                double[] verts = { 0, 0, 0, 0 }; // Panel vertices (initially unassigned)
 
                 // Initialize a Result Buffer to add to the panel
                 ResultBuffer rb = new ResultBuffer();
@@ -321,19 +321,21 @@ namespace SPMTool
                     blkTblRec.AppendEntity(newPanel);
                     trans.AddNewlyCreatedDBObject(newPanel, true);
 
+                    // Open the selected object for read
+                    Entity ent = trans.GetObject(newPanel.ObjectId, OpenMode.ForRead) as Entity;
+
                     // Add the final data to the Result Buffer
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum));       // 2
                     for (int i = 0; i < 4; i++)
                     {
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, verts[i])); // 2, 3, 4, 5
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, verts[i])); // 3, 4, 5, 6
                     }
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));         // 6
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));          // 7
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));          // 8
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));         // 7
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));          // 8
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));          // 9
 
-                    // Open the selected object for write
-                    Entity ent = trans.GetObject(newPanel.ObjectId, OpenMode.ForWrite) as Entity;
-
-                    // Append the extended data to each object
+                    // Append the extended data to the object
+                    ent.UpgradeOpen();
                     ent.XData = rb;
                 }
 
@@ -452,10 +454,10 @@ namespace SPMTool
                             ResultBuffer rb = ent.GetXDataForApplication(appName);
                             TypedValue[] data = rb.AsArray();
 
-                            // Set the new geometry and reinforcement (line 5, 6 and 7 of the array)
-                            data[5] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
-                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
-                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, As);
+                            // Set the new geometry and reinforcement (line 6 to 8 of the array)
+                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
+                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
+                            data[8] = new TypedValue((int)DxfCode.ExtendedDataReal, As);
 
                             // Add the new XData
                             ResultBuffer newRb = new ResultBuffer(data);
@@ -544,10 +546,10 @@ namespace SPMTool
                             ResultBuffer rb = ent.GetXDataForApplication(appName);
                             TypedValue[] data = rb.AsArray();
 
-                            // Set the new geometry and reinforcement (line 6, 7 and 8 of the array)
-                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlW);
-                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, psx);
-                            data[8] = new TypedValue((int)DxfCode.ExtendedDataReal, psy);
+                            // Set the new geometry and reinforcement (line 7 to 9 of the array)
+                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlW);
+                            data[8] = new TypedValue((int)DxfCode.ExtendedDataReal, psx);
+                            data[9] = new TypedValue((int)DxfCode.ExtendedDataReal, psy);
 
                             // Add the new XData
                             ResultBuffer newRb = new ResultBuffer(data);
@@ -573,7 +575,6 @@ namespace SPMTool
             // Definition for the Extended Data
             string appName = "SPMTool";
             string msgstr = "";
-            string dataType = "";
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -605,9 +606,6 @@ namespace SPMTool
                                 // Get the XData as an array
                                 TypedValue[] data = rb.AsArray();
 
-                                // Get the data type
-                                dataType = data[1].Value.ToString();
-
                                 // Get the parameters
                                 string ndNum = data[2].Value.ToString(), posX = data[3].Value.ToString(), posY = data[4].Value.ToString();
                                 string sup = data[5].Value.ToString(), forX = data[6].Value.ToString(), forY = data[7].Value.ToString();
@@ -637,19 +635,16 @@ namespace SPMTool
                                 // Get the XData as an array
                                 TypedValue[] data = rb.AsArray();
 
-                                // Get the data type
-                                dataType = data[1].Value.ToString();
-
                                 // Get the parameters
                                 string strNum = data[2].Value.ToString(), strtNd = data[3].Value.ToString(), endNd = data[4].Value.ToString();
                                 string lgt = data[5].Value.ToString(), wdt = data[6].Value.ToString(), hgt = data[7].Value.ToString();
                                 string As = data[8].Value.ToString();
 
-                                msgstr = "Stringer "        + strNum + "\n\n" +
-                                         "Nodes: ("         + strtNd + " - "  + endNd + ")" + "\n" +
-                                         "Lenght = "        + lgt    + " mm"  + "\n"  +
-                                         "Width = "         + wdt    + " mm"  + "\n"  +
-                                         "Height = "        + hgt    + " mm"  + "\n"  +
+                                msgstr = "Stringer "        + strNum                        + "\n\n" +
+                                         "Nodes: ("         + strtNd + " - "  + endNd + ")" + "\n"   +
+                                         "Lenght = "        + lgt    + " mm"                + "\n"   +
+                                         "Width = "         + wdt    + " mm"                + "\n"   +
+                                         "Height = "        + hgt    + " mm"                + "\n"   +
                                          "Reinforcement = " + As     + " mm2";
                             }
                             else
@@ -670,14 +665,19 @@ namespace SPMTool
                                 // Get the XData as an array
                                 TypedValue[] data = rb.AsArray();
 
-                                // Get the data type
-                                dataType = data[1].Value.ToString();
-
                                 // Get the parameters
-                                msgstr = "\nNodes: ("                   + data[2].Value.ToString() + " - " + data[3].Value.ToString() + " - " + data[4].Value.ToString() + " - " + data[5].Value.ToString() + ")" +
-                                         "\nWidth = "                   + data[6].Value.ToString() + " mm" +
-                                         "\nReinforcement ratio (x) = " + data[7].Value.ToString() +
-                                         "\nReinforcement ratio (y) = " + data[8].Value.ToString();
+                                string pnlNum = data[2].Value.ToString();
+                                string[] pnlNds = { data[3].Value.ToString(),
+                                                    data[4].Value.ToString(),
+                                                    data[5].Value.ToString(),
+                                                    data[6].Value.ToString() };
+                                string pnlW = data[7].Value.ToString(), psx = data[8].Value.ToString(), psy = data[9].Value.ToString();
+
+                                msgstr = "Panel "                     + pnlNum    + "\n\n" +
+                                         "Nodes: ("                   + pnlNds[0] + " - " + pnlNds[1] + " - " + pnlNds[2] + " - " + pnlNds[3] + ")" + "\n" +
+                                         "Width = "                   + pnlW      + " mm" + "\n" +
+                                         "Reinforcement ratio (x) = " + psx       + "\n" +
+                                         "Reinforcement ratio (y) = " + psy;
                             }
 
                             else
@@ -687,7 +687,7 @@ namespace SPMTool
                         }
 
                         // Display the values returned
-                        Application.ShowAlertDialog(appName + "\n\n" + dataType + "\n\n" + msgstr);
+                        Application.ShowAlertDialog(appName + "\n\n" + msgstr);
                     }
                 }
             }
@@ -1714,6 +1714,10 @@ namespace SPMTool
                     // Set the new node number (line 2)
                     data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
 
+                    // Set the updated coordinates (in case of a node copy)
+                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, nd.Position.X);
+                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, nd.Position.Y);
+
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);
                     nd.XData = newRb;
@@ -1883,22 +1887,75 @@ namespace SPMTool
                 // Create the panels collection and initialize getting the elements on node layer
                 ObjectIdCollection pnls = GetEntitiesOnLayer("Panel");
 
+                // Create a point collection
+                Point3dCollection cntrPts = new Point3dCollection();
+
                 // Get the number of panels
                 numPnls = pnls.Count;
+
+                // Add the centerpoint of each panel to the collection
+                foreach (ObjectId pnlObj in pnls)
+                {
+                    // Read the object as a solid
+                    Solid pnl = trans.GetObject(pnlObj, OpenMode.ForRead) as Solid;
+
+                    // Get the vertices
+                    Point3dCollection pnlVerts = new Point3dCollection();
+                    pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+
+                    // Get the summation of the coordinates of the vertices
+                    double xCrdSum = 0, yCrdSum = 0;
+                    for (int i = 0; i < 4; i++)
+                    {
+                        xCrdSum = xCrdSum + pnlVerts[i].X;
+                        yCrdSum = yCrdSum + pnlVerts[i].Y;
+                    }
+
+                    // Get the approximate coordinates of the center point of the panel
+                    double cntrPtX = xCrdSum / 4;
+                    double cntrPtY = yCrdSum / 4;
+
+                    // Set the center and add to the collection
+                    Point3d cntrPt = new Point3d(cntrPtX, cntrPtY, 0);
+                    cntrPts.Add(cntrPt);
+                }
+
+                // Get the array of center points ordered
+                double[][] cntrPtsArray = OrderElements(numPnls, cntrPts);
 
                 // Access the nodes on the document
                 foreach (ObjectId pnlObj in pnls)
                 {
                     // Initialize the array of node numbers and the position on the array
-                    int[] ndNum = { 0, 0, 0, 0 };
+                    int[] ndNums = { 0, 0, 0, 0 };
                     int i = 0;
                     
                     // Open the selected object as a solid for write
                     Solid pnl = trans.GetObject(pnlObj, OpenMode.ForWrite) as Solid;
 
+                    // Read it as a block and get the draw order table
+                    BlockTableRecord blck = trans.GetObject(pnl.BlockId, OpenMode.ForRead) as BlockTableRecord;
+                    DrawOrderTable drawOrder = trans.GetObject(blck.DrawOrderTableId, OpenMode.ForWrite) as DrawOrderTable;
+
                     // Get the vertices
                     Point3dCollection pnlVerts = new Point3dCollection();
                     pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+
+                    // Get the summation of the coordinates of the vertices
+                    double xCrdSum = 0, yCrdSum = 0;
+                    for (int j = 0; j < 4; j++)
+                    {
+                        xCrdSum = xCrdSum + pnlVerts[j].X;
+                        yCrdSum = yCrdSum + pnlVerts[j].Y;
+                    }
+
+                    // Get the approximate coordinates of the center point of the panel
+                    double cntrPtX = xCrdSum / 4;
+                    double cntrPtY = yCrdSum / 4;
+                    Point3d cntrPt = new Point3d(cntrPtX, cntrPtY, 0);
+
+                    // Get the panel number
+                    double pnlNum = SetElementNumber(cntrPt, numPnls, cntrPtsArray);
 
                     // Compare the node position to the panel vertices
                     foreach (Point3d vert in pnlVerts)
@@ -1909,40 +1966,44 @@ namespace SPMTool
                             // Open the selected object as a point for read
                             DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
 
-                            // Read the entity as a point and get the position
-                            Point3d ndPos = nd.Position;
-
                             // Compare the position
-                            if (vert == ndPos)
+                            if (vert == nd.Position)
                             {
                                 // Access the XData as an array
                                 ResultBuffer ndRb = nd.GetXDataForApplication(appName);
                                 TypedValue[] dataNd = ndRb.AsArray();
 
                                 // Get the node number (line 2) and assign it to the node array
-                                ndNum[i] = Convert.ToInt32(dataNd[2].Value);
+                                ndNums[i] = Convert.ToInt32(dataNd[2].Value);
                                 i++;
                             }
                         }
                     }
 
+
                     // Order the nodes array in ascending
-                    var ndOrd = ndNum.OrderBy(x => x);
-                    ndNum = ndOrd.ToArray();
+                    var ndOrd = ndNums.OrderBy(x => x);
+                    ndNums = ndOrd.ToArray();
 
                     // Access the XData as an array
                     ResultBuffer pnlRb = pnl.GetXDataForApplication(appName);
                     TypedValue[] data = pnlRb.AsArray();
 
-                    // Set the updated node numbers (line 2 to 5 of the array)
-                    for (int j = 2; j <= 5; j++)
+                    // Set the updated panel number (line 2)
+                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
+
+                    // Set the updated node numbers (line 3 to 6 of the array)
+                    for (int j = 3; j <= 6; j++)
                     {
-                        data[j] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum[j-2]);
+                        data[j] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[j-3]);
                     }
 
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);
                     pnl.XData = newRb;
+
+                    // Move the panels to bottom
+                    drawOrder.MoveToBottom(pnls);
                 }
 
                 // Commit and dispose the transaction
