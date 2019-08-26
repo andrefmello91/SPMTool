@@ -25,13 +25,13 @@ namespace SPMTool
             Database curDb = curDoc.Database;
             Editor ed = curDoc.Editor;
 
-            // Definition for the Extended Data
-            string appName = "SPMTool";
-            string xdataStr = "Node data";
-
             // Define the layer parameters
             string ndLayer = "Node";
             short red = 1;
+
+            // Set the style for all point objects in the drawing
+            curDb.Pdmode = 32;
+            curDb.Pdsize = 50;
 
             // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
             AuxMethods.CreateLayer(ndLayer, red, 0);
@@ -40,7 +40,7 @@ namespace SPMTool
             AuxMethods.RegisterApp();
 
             // Loop for creating infinite nodes (until user exits the command)
-            for (; ; )
+            for ( ; ; )
             {
                 // Start a transaction
                 using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -66,37 +66,6 @@ namespace SPMTool
                         // Add the new object to the block table record and the transaction
                         blkTblRec.AppendEntity(newNode);
                         trans.AddNewlyCreatedDBObject(newNode, true);
-
-                        // Inicialization of node conditions
-                        double nodeNum = 0;                             // Node number (to be set later)
-                        double xPosition = newNode.Position.X;          // X position
-                        double yPosition = newNode.Position.Y;          // Y position
-                        string support = "Free";                        // Support condition
-                        double xForce = 0;                              // Force on X direction
-                        double yForce = 0;                              // Force on Y direction
-
-                        // Define the Xdata to add to the node
-                        using (ResultBuffer rb = new ResultBuffer())
-                        {
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, nodeNum));         // 2
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));       // 3
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));       // 4
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));  // 5
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xForce));          // 6
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yForce));          // 7
-
-                            // Open the node for write
-                            Entity ent = trans.GetObject(newNode.ObjectId, OpenMode.ForWrite) as Entity;
-
-                            // Append the extended data to each object
-                            ent.XData = rb;
-                        }
-
-                        // Set the style for all point objects in the drawing
-                        curDb.Pdmode = 32;
-                        curDb.Pdsize = 50;
                     }
                     else
                     {
@@ -114,7 +83,6 @@ namespace SPMTool
             AuxMethods.UpdateNodes();
         }
 
-
         [CommandMethod("AddStringer")]
         public static void AddStringer()
         {
@@ -122,10 +90,6 @@ namespace SPMTool
             Document curDoc = Application.DocumentManager.MdiActiveDocument;
             Database curDb = curDoc.Database;
             Editor ed = curDoc.Editor;
-
-            // Definition for the Extended Data
-            string appName = "SPMTool";
-            string xdataStr = "Stringer data";
 
             // Define the layer parameters
             string strLayer = "Stringer";
@@ -186,35 +150,6 @@ namespace SPMTool
                             // Add the line to the drawing
                             blkTblRec.AppendEntity(newStr);
                             trans.AddNewlyCreatedDBObject(newStr, true);
-
-                            // Inicialization of stringer conditions
-                            double strNum = 0;                 // Stringer number (initially unassigned)
-                            double strStNd = 0;                // Stringer start node (initially unassigned)
-                            double strEnNd = 0;                // Stringer end node (initially unassigned)
-                            double strLgt = newStr.Length;     // Stringer lenght
-                            double strW = 1;                   // Width
-                            double strH = 1;                   // Height
-                            double As = 0;                     // Reinforcement Area
-
-                            // Define the Xdata to add to the node
-                            using (ResultBuffer rb = new ResultBuffer())
-                            {
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strNum));          // 2
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStNd));         // 3
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd));         // 4
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strLgt));          // 5
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));            // 6
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));            // 7
-                                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));              // 8
-
-                                // Open the stringer for write
-                                Entity ent = trans.GetObject(newStr.ObjectId, OpenMode.ForWrite) as Entity;
-
-                                // Append the extended data to each object
-                                ent.XData = rb;
-                            }
                         }
 
                         // Set the start point of the new stringer
@@ -247,10 +182,6 @@ namespace SPMTool
             Database curDb = curDoc.Database;
             Editor ed = curDoc.Editor;
 
-            // Definition for the Extended Data
-            string appName = "SPMTool";
-            string xdataStr = "Panel data";
-
             // Define the layer parameters
             string pnlLayer = "Panel";
             short grey = 254;
@@ -273,26 +204,8 @@ namespace SPMTool
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
-                // Initialize the vertices of the panel
-                Point3d[] pnlVerts =
-                {
-                    new Point3d(),
-                    new Point3d(),
-                    new Point3d(),
-                    new Point3d()
-                };
-
-                // Initialize the panel parameters
-                double pnlNum = 0;               // Panel number (initially unassigned)
-                double[] verts = { 0, 0, 0, 0 }; // Panel vertices (initially unassigned)
-                double pnlW = 1;                 // width
-                double psx = 0;                  // reinforcement ratio (X)
-                double psy = 0;                  // reinforcement ratio (Y)
-
-                // Initialize a Result Buffer to add to the panel
-                ResultBuffer rb = new ResultBuffer();
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
+                // Initialize the array of vertices of the panel
+                Point3d[] pnlVerts = new Point3d[4];
 
                 // Prompt for user enter four vertices of the panel
                 for (int i = 0; i < 4; i++)
@@ -311,38 +224,49 @@ namespace SPMTool
                 // Open the Block table record Model space for write
                 BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
+                //// Initialize the panel parameters
+                //double pnlNum = 0;               // Panel number (initially unassigned)
+                //double[] verts = { 0, 0, 0, 0 }; // Panel vertices (initially unassigned)
+                //double pnlW = 1;                 // width
+                //double psx = 0;                  // reinforcement ratio (X)
+                //double psy = 0;                  // reinforcement ratio (Y)
+
+                //// Initialize a Result Buffer to add to the panel
+                //ResultBuffer rb = new ResultBuffer();
+                //rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
+                //rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
+
                 // Create the panel as a solid with 4 segments (4 points)
                 using (Solid newPanel = new Solid(pnlVerts[0], pnlVerts[1], pnlVerts[3], pnlVerts[2]))
                 {
                     // Set the layer to Panel
                     newPanel.Layer = pnlLayer;
 
-                    // Add the line to the drawing
+                    // Add the panel to the drawing
                     blkTblRec.AppendEntity(newPanel);
                     trans.AddNewlyCreatedDBObject(newPanel, true);
 
                     // Open the selected object for read
-                    Entity ent = trans.GetObject(newPanel.ObjectId, OpenMode.ForRead) as Entity;
+                    //Entity ent = trans.GetObject(newPanel.ObjectId, OpenMode.ForRead) as Entity;
 
-                    // Add the final data to the Result Buffer
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum));       // 2
-                    for (int i = 0; i < 4; i++)
-                    {
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, verts[i])); // 3, 4, 5, 6
-                    }
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));         // 7
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));          // 8
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));          // 9
+                    //// Add the final data to the Result Buffer
+                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum));       // 2
+                    //for (int i = 0; i < 4; i++)
+                    //{
+                    //    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, verts[i])); // 3, 4, 5, 6
+                    //}
+                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));         // 7
+                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));          // 8
+                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));          // 9
 
-                    // Append the extended data to the object
-                    ent.UpgradeOpen();
-                    ent.XData = rb;
+                    //// Append the extended data to the object
+                    //ent.UpgradeOpen();
+                    //ent.XData = rb;
                 }
 
                 // Save the new object to the database
                 trans.Commit();
                 trans.Dispose();
-
             }
 
             // Update the panels
@@ -351,6 +275,140 @@ namespace SPMTool
             // Set the Object Snap Setting to the initial
             Application.SetSystemVariable("OSMODE", curOsmode);
         }
+
+        [CommandMethod("DivideStringer")]
+        public static void DivideStringer()
+        {
+            // Get the current document, database and editor
+            Document curDoc = Application.DocumentManager.MdiActiveDocument;
+            Database curDb = curDoc.Database;
+            Editor ed = curDoc.Editor;
+
+            // Definition for the Extended Data
+            string appName = "SPMTool";
+
+            // Start a transaction
+            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Open the Block table record Model space for write
+                BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                // Prompt for select stringers
+                ed.WriteMessage("\nSelect stringers to divide:");
+                PromptSelectionResult selRes = ed.GetSelection();
+
+                if (selRes.Status == PromptStatus.OK)
+                {
+                    // Prompt for the number of segments
+                    PromptIntegerOptions strNumOp = new PromptIntegerOptions("\nEnter the number of stringers:")
+                    {
+                        AllowNegative = false,
+                        AllowZero = false
+                    };
+
+                    // Get the number
+                    PromptIntegerResult strNumRes = ed.GetInteger(strNumOp);
+                    int strNum = strNumRes.Value;
+
+                    // Get the selection set and analyse the elements
+                    SelectionSet set = selRes.Value;
+                    foreach (SelectedObject obj in set)
+                    {
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                        // Check if the selected object is a node
+                        if (ent.Layer.Equals("Stringer"))
+                        {
+                            // Read as a line
+                            Line str = ent as Line;
+
+                            // Access the XData as an array
+                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+
+                            // Get the coordinates of the initial and end points
+                            Point3d strSt = str.StartPoint;
+                            Point3d strEnd = str.EndPoint;
+
+                            // Calculate the distance of the points in X and Y
+                            double distX = (strEnd.X - strSt.X) / strNum;
+                            double distY = (strEnd.Y - strSt.Y) / strNum;
+
+                            // Initialize the start point
+                            Point3d stPt = strSt;
+
+                            // Create the new stringers
+                            for (int i = 0; i <= strNum; i++)
+                            {
+                                // Get the coordinates of the other points
+                                double xCrd = str.StartPoint.X + i * distX;
+                                double yCrd = str.StartPoint.Y + i * distY;
+                                Point3d endPt = new Point3d(xCrd, yCrd, 0);
+
+                                // Create the stringer
+                                Line newStr = new Line()
+                                {
+                                    StartPoint = stPt,
+                                    EndPoint = endPt,
+                                    Layer = "Stringer"
+                                };
+
+                                // Add the line to the drawing
+                                blkTblRec.AppendEntity(newStr);
+                                trans.AddNewlyCreatedDBObject(newStr, true);
+
+                                // Open the stringer for write
+                                //Entity newStrEnt = trans.GetObject(newStr.ObjectId, OpenMode.ForWrite) as Entity;
+
+                                // Append the XData of the original stringer
+                                newStr.XData = rb;
+
+                                // Set the start point of the next stringer
+                                stPt = endPt;
+                            }
+
+                            // Create the new nodes (initial and end node already exist)
+                            for (int j = 1; j < strNum; j++)
+                            {
+                                // Get the coordinates
+                                double xCrd = str.StartPoint.X + j * distX;
+                                double yCrd = str.StartPoint.Y + j * distY;
+                                Point3d ndPt = new Point3d(xCrd, yCrd, 0);
+
+                                // Create the node and set its layer to Node:
+                                DBPoint newNd = new DBPoint()
+                                {
+                                    Position = ndPt,
+                                    Layer = "Node",
+                                };
+
+                                // Add the new object to the block table record and the transaction
+                                blkTblRec.AppendEntity(newNd);
+                                trans.AddNewlyCreatedDBObject(newNd, true);
+                            }
+
+                            // Erase the original stringer
+                            ent.UpgradeOpen();
+                            ent.Erase();
+                        }
+                    }
+                }
+
+                // Save the new object to the database
+                trans.Commit();
+                trans.Dispose();
+            }
+
+            // Update nodes and stringers
+            AuxMethods.UpdateNodes();
+            AuxMethods.UpdateStringers();
+        }
+
+
+    
 
         [CommandMethod("UpdateElements")]
         public void UpdateElements()
@@ -471,7 +529,6 @@ namespace SPMTool
                 trans.Dispose();
             }
         }
-
 
         [CommandMethod("SetPanelParameters")]
         public void SetPanelParameters()
@@ -1668,6 +1725,7 @@ namespace SPMTool
 
             // Definition for the Extended Data
             string appName = "SPMTool";
+            string xdataStr = "Node Data";
 
             // Initialize the number of nodes
             int numNds = 0;
@@ -1707,7 +1765,38 @@ namespace SPMTool
                     // Get the node number
                     double ndNum = SetElementNumber(nd.Position, numNds, ptsArray);
 
-                    // Access the XData as an array
+                    // If the Extended data does not exist, create it
+                    if (nd.XData == null)
+                    {
+                        // Inicialization of node conditions
+                        double nodeNum = 0;                             // Node number (to be set later)
+                        double xPosition = nd.Position.X;               // X position
+                        double yPosition = nd.Position.Y;               // Y position
+                        string support = "Free";                        // Support condition
+                        double xForce = 0;                              // Force on X direction
+                        double yForce = 0;                              // Force on Y direction
+
+                        // Define the Xdata to add to the node
+                        using (ResultBuffer defRb = new ResultBuffer())
+                        {
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, nodeNum));         // 2
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));       // 3
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));       // 4
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));  // 5
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xForce));          // 6
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yForce));          // 7
+
+                            // Open the node for write
+                            Entity ent = trans.GetObject(nd.ObjectId, OpenMode.ForWrite) as Entity;
+
+                            // Append the extended data to each object
+                            ent.XData = defRb;
+                        }
+                    }
+
+                    // Get the result buffer as an array
                     ResultBuffer rb = nd.GetXDataForApplication(appName);
                     TypedValue[] data = rb.AsArray();
 
@@ -1722,6 +1811,10 @@ namespace SPMTool
                     ResultBuffer newRb = new ResultBuffer(data);
                     nd.XData = newRb;
                 }
+
+                // Set the style for all point objects in the drawing
+                curDb.Pdmode = 32;
+                curDb.Pdsize = 50;
 
                 // Commit and dispose the transaction
                 trans.Commit();
@@ -1741,6 +1834,7 @@ namespace SPMTool
 
             // Definition for the Extended Data
             string appName = "SPMTool";
+            string xdataStr = "Stringer Data";
 
             // Initialize the number of stringers
             int numStrs = 0;
@@ -1839,14 +1933,48 @@ namespace SPMTool
                         }
                     }
 
+                    // If XData does not exist, create it
+                    if (str.XData == null)
+                    {
+                        // Inicialization of stringer conditions
+                        double strNumb = 0;                // Stringer number (initially unassigned)
+                        double strSrtNd = 0;               // Stringer start node (initially unassigned)
+                        double strEndNd = 0;               // Stringer end node (initially unassigned)
+                        double strLgt = str.Length;        // Stringer lenght
+                        double strW = 1;                   // Width
+                        double strH = 1;                   // Height
+                        double As = 0;                     // Reinforcement Area
+
+                        // Define the Xdata to add to the node
+                        using (ResultBuffer rb = new ResultBuffer())
+                        {
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strNumb));         // 2
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strSrtNd));        // 3
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEndNd));        // 4
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strLgt));          // 5
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));            // 6
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));            // 7
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));              // 8
+
+                            // Open the stringer for write
+                            Entity ent = trans.GetObject(str.ObjectId, OpenMode.ForWrite) as Entity;
+
+                            // Append the extended data to each object
+                            ent.XData = rb;
+                        }
+                    }
+
                     // Access the XData as an array
                     ResultBuffer strRb = str.GetXDataForApplication(appName);
                     TypedValue[] data = strRb.AsArray();
 
-                    // Set the updated number and nodes in ascending number (line 2 and 3 of the array)
+                    // Set the updated number and nodes in ascending number (line 2 and 3 of the array) and length
                     data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
                     data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, Math.Min(strStNd, strEnNd));
                     data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, Math.Max(strStNd, strEnNd));
+                    data[5] = new TypedValue((int)DxfCode.ExtendedDataReal, str.Length);
 
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);
@@ -1871,6 +1999,7 @@ namespace SPMTool
 
             // Definition for the Extended Data
             string appName = "SPMTool";
+            string xdataStr = "Panel Data";
 
             // Initialize the number of panels
             int numPnls = 0;
@@ -1985,6 +2114,33 @@ namespace SPMTool
                     var ndOrd = ndNums.OrderBy(x => x);
                     ndNums = ndOrd.ToArray();
 
+                    // Check if the XData already exist. If not, create it
+                    if (pnl.XData == null)
+                    {
+                        // Initialize the panel parameters
+                        double pnlN = 0;               // Panel number (initially unassigned)
+                        double[] verts = { 0, 0, 0, 0 }; // Panel vertices (initially unassigned)
+                        double pnlW = 1;                 // width
+                        double psx = 0;                  // reinforcement ratio (X)
+                        double psy = 0;                  // reinforcement ratio (Y)
+
+                        // Initialize a Result Buffer to add to the panel
+                        ResultBuffer rb = new ResultBuffer();
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlN));            // 2
+                        for (int j = 0; j < 4; j++)
+                        {
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, verts[j]));    // 3, 4, 5, 6
+                        }
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));            // 7
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));             // 8
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));             // 9
+
+                        // Append the extended data to the object
+                        pnl.XData = rb;
+                    }
+
                     // Access the XData as an array
                     ResultBuffer pnlRb = pnl.GetXDataForApplication(appName);
                     TypedValue[] data = pnlRb.AsArray();
@@ -1993,9 +2149,9 @@ namespace SPMTool
                     data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
 
                     // Set the updated node numbers (line 3 to 6 of the array)
-                    for (int j = 3; j <= 6; j++)
+                    for (int k = 3; k <= 6; k++)
                     {
-                        data[j] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[j-3]);
+                        data[k] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[k-3]);
                     }
 
                     // Add the new XData
