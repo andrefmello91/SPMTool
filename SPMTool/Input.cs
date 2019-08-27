@@ -53,19 +53,19 @@ namespace SPMTool
 
                     // Create the node in Model space
                     // Tell user to insert the point:
-                    PromptPointOptions pickPoint = new PromptPointOptions("\nPick point or enter coordinates: ");
-                    PromptPointResult pointResult = ed.GetPoint(pickPoint);
+                    PromptPointOptions ptOp = new PromptPointOptions("\nPick point or enter coordinates: ");
+                    PromptPointResult ptRes = ed.GetPoint(ptOp);
 
                     // Exit if the user presses ESC or cancels the command
-                    if (pointResult.Status == PromptStatus.OK)
+                    if (ptRes.Status == PromptStatus.OK)
                     {
                         // Create the node and set its layer to Node:
-                        DBPoint newNode = new DBPoint(pointResult.Value);
-                        newNode.Layer = ndLayer;
+                        DBPoint newNd = new DBPoint(ptRes.Value);
+                        newNd.Layer = ndLayer;
 
                         // Add the new object to the block table record and the transaction
-                        blkTblRec.AppendEntity(newNode);
-                        trans.AddNewlyCreatedDBObject(newNode, true);
+                        blkTblRec.AppendEntity(newNd);
+                        trans.AddNewlyCreatedDBObject(newNd, true);
                     }
                     else
                     {
@@ -127,9 +127,11 @@ namespace SPMTool
                     Point3d strSt = strStRes.Value;
 
                     // Prompt for the end point
-                    PromptPointOptions strEndOp = new PromptPointOptions("\nPick the end node: ");
-                    strEndOp.UseBasePoint = true;
-                    strEndOp.BasePoint = strSt;
+                    PromptPointOptions strEndOp = new PromptPointOptions("\nPick the end node: ")
+                    {
+                        UseBasePoint = true,
+                        BasePoint = strSt
+                    };
                     PromptPointResult strEndRes = ed.GetPoint(strEndOp);
                     Point3d strEnd = strEndRes.Value;
 
@@ -224,18 +226,6 @@ namespace SPMTool
                 // Open the Block table record Model space for write
                 BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
-                //// Initialize the panel parameters
-                //double pnlNum = 0;               // Panel number (initially unassigned)
-                //double[] verts = { 0, 0, 0, 0 }; // Panel vertices (initially unassigned)
-                //double pnlW = 1;                 // width
-                //double psx = 0;                  // reinforcement ratio (X)
-                //double psy = 0;                  // reinforcement ratio (Y)
-
-                //// Initialize a Result Buffer to add to the panel
-                //ResultBuffer rb = new ResultBuffer();
-                //rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
-                //rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
-
                 // Create the panel as a solid with 4 segments (4 points)
                 using (Solid newPanel = new Solid(pnlVerts[0], pnlVerts[1], pnlVerts[3], pnlVerts[2]))
                 {
@@ -245,23 +235,6 @@ namespace SPMTool
                     // Add the panel to the drawing
                     blkTblRec.AppendEntity(newPanel);
                     trans.AddNewlyCreatedDBObject(newPanel, true);
-
-                    // Open the selected object for read
-                    //Entity ent = trans.GetObject(newPanel.ObjectId, OpenMode.ForRead) as Entity;
-
-                    //// Add the final data to the Result Buffer
-                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum));       // 2
-                    //for (int i = 0; i < 4; i++)
-                    //{
-                    //    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, verts[i])); // 3, 4, 5, 6
-                    //}
-                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));         // 7
-                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));          // 8
-                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));          // 9
-
-                    //// Append the extended data to the object
-                    //ent.UpgradeOpen();
-                    //ent.XData = rb;
                 }
 
                 // Save the new object to the database
@@ -407,9 +380,6 @@ namespace SPMTool
             AuxMethods.UpdateStringers();
         }
 
-
-    
-
         [CommandMethod("UpdateElements")]
         public void UpdateElements()
         {
@@ -454,7 +424,7 @@ namespace SPMTool
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
                 // Request objects to be selected in the drawing area
-                ed.WriteMessage("Select the stringers to assign properties (you can select other elements, the properties will be only applied to elements with 'Stringer' layer activated).");
+                ed.WriteMessage("\nSelect the stringers to assign properties (you can select other elements, the properties will be only applied to elements with 'Stringer' layer activated).");
                 PromptSelectionResult selRes = ed.GetSelection();
 
                 // If the prompt status is OK, objects were selected
@@ -851,7 +821,7 @@ namespace SPMTool
                 double fy = fyRes.Value;
 
                 // Ask the user to input the steel Elastic Module
-                PromptDoubleOptions EsOp = new PromptDoubleOptions("Input the steel Elastic Module (Es) in MPa:")
+                PromptDoubleOptions EsOp = new PromptDoubleOptions("\nInput the steel Elastic Module (Es) in MPa:")
                 {
                     AllowZero = false,
                     AllowNegative = false
@@ -998,7 +968,6 @@ namespace SPMTool
 
                     // Ask the user set the support conditions:
                     PromptKeywordOptions supOp = new PromptKeywordOptions("\nAdd support in which direction?");
-                    supOp.Message = "\nAdd support in which direction?";
                     supOp.Keywords.Add("Free");
                     supOp.Keywords.Add("X");
                     supOp.Keywords.Add("Y");
@@ -1026,10 +995,6 @@ namespace SPMTool
                             // Read as a point and get the position
                             DBPoint nd = ent as DBPoint;
                             Point3d ndPos = nd.Position;
-
-                            // Get the node coordinates
-                            double xPos = ndPos.X;
-                            double yPos = ndPos.Y;
 
                             // Access the XData as an array
                             ResultBuffer rb = ent.GetXDataForApplication(appName);
@@ -1769,12 +1734,12 @@ namespace SPMTool
                     if (nd.XData == null)
                     {
                         // Inicialization of node conditions
-                        double nodeNum = 0;                             // Node number (to be set later)
-                        double xPosition = nd.Position.X;               // X position
-                        double yPosition = nd.Position.Y;               // Y position
-                        string support = "Free";                        // Support condition
-                        double xForce = 0;                              // Force on X direction
-                        double yForce = 0;                              // Force on Y direction
+                        double nodeNum = 0;                                // Node number (to be set later)
+                        double xPosition = nd.Position.X;                  // X position
+                        double yPosition = nd.Position.Y;                  // Y position
+                        string support = "Free";                           // Support condition
+                        double xForce = 0;                                 // Force on X direction
+                        double yForce = 0;                                 // Force on Y direction
 
                         // Define the Xdata to add to the node
                         using (ResultBuffer defRb = new ResultBuffer())
@@ -2027,7 +1992,7 @@ namespace SPMTool
                 {
                     // Read the object as a solid
                     Solid pnl = trans.GetObject(pnlObj, OpenMode.ForRead) as Solid;
-
+                    
                     // Get the vertices
                     Point3dCollection pnlVerts = new Point3dCollection();
                     pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
@@ -2118,11 +2083,11 @@ namespace SPMTool
                     if (pnl.XData == null)
                     {
                         // Initialize the panel parameters
-                        double pnlN = 0;               // Panel number (initially unassigned)
-                        double[] verts = { 0, 0, 0, 0 }; // Panel vertices (initially unassigned)
-                        double pnlW = 1;                 // width
-                        double psx = 0;                  // reinforcement ratio (X)
-                        double psy = 0;                  // reinforcement ratio (Y)
+                        double pnlN = 0;                              // Panel number (initially unassigned)
+                        double[] verts = { 0, 0, 0, 0 };              // Panel vertices (initially unassigned)
+                        double pnlW = 1;                              // width
+                        double psx = 0;                               // reinforcement ratio (X)
+                        double psy = 0;                               // reinforcement ratio (Y)
 
                         // Initialize a Result Buffer to add to the panel
                         ResultBuffer rb = new ResultBuffer();
