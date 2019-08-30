@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
-using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.Colors;
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 [assembly: CommandClass(typeof(SPMTool.LinearAnalysis))]
 
@@ -25,7 +24,7 @@ namespace SPMTool
             string appName = "SPMTool";
 
             // Initialize the parameters needed
-            double Ec = 0;       // concrete elastic modulus
+            double Ec = 0; // concrete elastic modulus
 
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -62,7 +61,7 @@ namespace SPMTool
                     Line str = trans.GetObject(obj, OpenMode.ForWrite) as Line;
 
                     // Get the length and angles
-                    double l = str.Length;
+                    double lngt = str.Length;
                     double alpha = str.Angle;             // angle with x coordinate
                     double beta = Math.PI / 2 - alpha;    // angle with y coordinate
                     double gamma = Math.PI / 2;           // angle with z coordinate
@@ -79,26 +78,42 @@ namespace SPMTool
                     // Calculate the cross sectional area
                     double A = wd * h;
 
+                    // Get the direction cosines
+                    double l, m, n;
+
+                    // If the angle is 90 or 270 degrees, the cosine is zero
+                    if (alpha == Math.PI / 2 || alpha == 3* Math.PI / 2) l = 0;
+                    else l = Math.Cos(alpha);
+                    if (beta == Math.PI / 2 || beta == 3 * Math.PI / 2) m = 0;
+                    else m = Math.Cos(beta);
+                    if (gamma == Math.PI / 2 || gamma == 3 * Math.PI / 2) n = 0;
+                    else n = Math.Cos(gamma);
+
+                    // Obtain the transformation matrix
+                    var T = Matrix<double>.Build.DenseOfArray(new double[,] {
+                        {l, m, n, 0, 0, 0, 0 },
+                        {0, 0, 0, 1, 0, 0, 0 },
+                        {0, 0, 0, 0, l, m, n }
+                    });
+
                     // Calculate the constant factor of stifness
-                    double cnt = Ec * A / l;
+                    double cnt = Ec * A / lngt;
 
                     // Calculate the local stiffness matrix
-                    double k00 = 4 * cnt;
-                    double k01 = -6 * cnt;
-                    double k02 = 2 * cnt;
-                    double k11 = 12 * cnt;
-                    double[,] kl =
-                    {
-                        {k00, k01, k02 },
-                        {k01, k11, k01 },
-                        {k02, k01, k00 }
-                    };
+                    var kl = cnt * Matrix<double>.Build.DenseOfArray(new double[,] {
+                        {  4, -6,  2 },
+                        { -6, 12, -6 },
+                        {  2, -6,  4 }
+                    });
+
+                    // Calculate the transformated stiffness matrix
+                    var k = T.Transpose() * kl * T;
 
                     // Save to the XData
-                    strData[9] = new TypedValue((int)DxfCode.ExtendedDataReal, k00);
-                    strData[10] = new TypedValue((int)DxfCode.ExtendedDataReal, k01);
-                    strData[11] = new TypedValue((int)DxfCode.ExtendedDataReal, k02);
-                    strData[12] = new TypedValue((int)DxfCode.ExtendedDataReal, k11);
+                    strData[9] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, kl.ToString());
+                    strData[10] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, k.ToString());
+                    //strData[11] = new TypedValue((int)DxfCode.ExtendedDataReal, kl[0, 2]);
+                    //strData[12] = new TypedValue((int)DxfCode.ExtendedDataReal, kl[1, 1]);
 
                     // Save the new XData
                     strRb = new ResultBuffer(strData);
@@ -157,15 +172,22 @@ namespace SPMTool
                                 TypedValue[] data = rb.AsArray();
 
                                 // Get the parameters
-                                string k00 = data[9].Value.ToString(), k01 = data[10].Value.ToString();
-                                string k02 = data[11].Value.ToString(), k11 = data[12].Value.ToString();
-                                //double k00 = Convert.ToDouble(data[9].Value), k01 = Convert.ToDouble(data[10].Value);
-                                //double k02 = Convert.ToDouble(data[11].Value), k11 = Convert.ToDouble(data[12].Value);
+                                string strNum = data[2].Value.ToString();
+                                string kl = data[9].Value.ToString(), k = data[10].Value.ToString();
 
-                                msgstr = "Stringer Local Stifness Matrix \n\n" +
-                                         "[ " + k00  + " , " + k01  + " , " + k02  + " ]\n" +
-                                         "[ " + k01  + " , " + k11  + " , " + k01  + " ]\n" +
-                                         "[ " + k02  + " , " + k01  + " , " + k00  + " ]" ;
+                                //string k00 = data[9].Value.ToString(), k01 = data[10].Value.ToString();
+                                //string k02 = data[11].Value.ToString(), k11 = data[12].Value.ToString();
+
+                                msgstr = "Stringer " + strNum + "\n\n" +
+                                         "Local Stifness Matrix: \n" +
+                                         kl + "\n\n" +
+                                         "Transformated Stifness Matrix: \n" +
+                                         k;
+
+                                //msgstr = "Stringer Local Stifness Matrix \n\n" +
+                                //         "[ " + k00  + " , " + k01  + " , " + k02  + " ]\n" +
+                                //         "[ " + k01  + " , " + k11  + " , " + k01  + " ]\n" +
+                                //         "[ " + k02  + " , " + k01  + " , " + k00  + " ]" ;
                             }
                             else
                             {
@@ -174,7 +196,7 @@ namespace SPMTool
                         }
 
                         // Display the values returned
-                        Application.ShowAlertDialog(appName + "\n\n" + msgstr);
+                        ed.WriteMessage(msgstr);
                     }
                 }
             }
