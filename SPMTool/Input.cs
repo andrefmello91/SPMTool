@@ -771,10 +771,10 @@ namespace SPMTool
                 // Save the variables on the Xrecord
                 using (ResultBuffer rb = new ResultBuffer())
                 {
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fc));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Ec));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));            // 0
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));          // 1
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fc));                       // 2
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Ec));                       // 3
 
                     // Create and add data to an Xrecord
                     Xrecord xRec = new Xrecord();
@@ -1033,7 +1033,6 @@ namespace SPMTool
                 trans.Dispose();
             }
         }
-        
 
         [CommandMethod("AddForce")]
         public void AddForce()
@@ -1909,6 +1908,8 @@ namespace SPMTool
                         double strW = 1;                   // Width
                         double strH = 1;                   // Height
                         double As = 0;                     // Reinforcement Area
+                        double k00, k01, k02, k11;         // Elements of stifness matrix
+                        k00 = k01 = k02 = k11 = 0;
 
                         // Define the Xdata to add to the node
                         using (ResultBuffer rb = new ResultBuffer())
@@ -1922,6 +1923,11 @@ namespace SPMTool
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));            // 6
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));            // 7
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));              // 8
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k00));             // 9
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k01));             // 10 
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k02));             // 11
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k11));             // 12
+
 
                             // Open the stringer for write
                             Entity ent = trans.GetObject(str.ObjectId, OpenMode.ForWrite) as Entity;
