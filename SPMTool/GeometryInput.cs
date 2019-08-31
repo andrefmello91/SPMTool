@@ -208,18 +208,44 @@ namespace SPMTool
             // Start a transaction
             using (Transaction trans = curDb.TransactionManager.StartTransaction())
             {
-                // Initialize the array of vertices of the panel
-                Point3d[] pnlVerts = new Point3d[4];
+                // Create a point3d collection
+                Point3dCollection nds = new Point3dCollection();
 
-                // Prompt for user enter four vertices of the panel
+                // Prompt the first vertex
+                PromptPointOptions pnlNdOp = new PromptPointOptions("\nSelect nodes performing a loop");
+                PromptPointResult pnlNdRes = ed.GetPoint(pnlNdOp);
+
+                // Add to the collection
+                nds.Add(pnlNdRes.Value);
+
+                // Prompt for user enter the other vertices of the panel
+                for (int i = 1; i <= 3; i++)
+                {
+                    // Set the base point
+                    Point3d bp = nds[i - 1];
+
+                    // Prompt each vertice (using the base point)
+                    pnlNdOp = new PromptPointOptions("\nSelect nodes performing a loop")
+                    {
+                        UseBasePoint = true,
+                        BasePoint = bp
+                    };
+                    pnlNdRes = ed.GetPoint(pnlNdOp);
+
+                    // Add to the collection
+                    nds.Add(pnlNdRes.Value);
+                }
+
+                // Order the vertices in ascending Y and ascending X
+                double[][] vrts = AuxMethods.OrderElements(4, nds);
+
+                // Initialize the array of vertices of the panel
+                Point3d[] pnlVrts = new Point3d[4];
+
+                // Add the vertices ordered
                 for (int i = 0; i < 4; i++)
                 {
-                    // Prompt each vertice
-                    PromptPointOptions pnlNdOp = new PromptPointOptions("\nSelect nodes performing a loop");
-                    PromptPointResult pnlNdRes = ed.GetPoint(pnlNdOp);
-
-                    // Add to the vertices array
-                    pnlVerts[i] = pnlNdRes.Value;
+                    pnlVrts[i] = new Point3d(vrts[i][1], vrts[i][2], 0);
                 }
 
                 // Open the Block table for read
@@ -229,14 +255,14 @@ namespace SPMTool
                 BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
                 // Create the panel as a solid with 4 segments (4 points)
-                using (Solid newPanel = new Solid(pnlVerts[0], pnlVerts[1], pnlVerts[3], pnlVerts[2]))
+                using (Solid newPnl = new Solid(pnlVrts[0], pnlVrts[1], pnlVrts[2], pnlVrts[3]))
                 {
                     // Set the layer to Panel
-                    newPanel.Layer = pnlLayer;
+                    newPnl.Layer = pnlLayer;
 
                     // Add the panel to the drawing
-                    blkTblRec.AppendEntity(newPanel);
-                    trans.AddNewlyCreatedDBObject(newPanel, true);
+                    blkTblRec.AppendEntity(newPnl);
+                    trans.AddNewlyCreatedDBObject(newPnl, true);
                 }
 
                 // Save the new object to the database
