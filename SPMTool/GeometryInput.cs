@@ -113,7 +113,7 @@ namespace SPMTool
             if (strStRes.Status == PromptStatus.OK)
             {
                 // Loop for creating infinite stringers (until user exits the command)
-                for ( ; ; )
+                for (; ; )
                 {
                     // Start a transaction
                     using (Transaction trans = curDb.TransactionManager.StartTransaction())
@@ -416,16 +416,6 @@ namespace SPMTool
             // Update and get the number of panels
             int numPnls = AuxMethods.UpdatePanels();
 
-            // Get the number of elements
-            //ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
-            //int numNds = nds.Count;
-
-            //ObjectIdCollection strs = AuxMethods.GetEntitiesOnLayer("Stringer");
-            //int numStrs = strs.Count;
-
-            //ObjectIdCollection pnls = AuxMethods.GetEntitiesOnLayer("Panel");
-            //int numPnls = pnls.Count;
-
             // Display the number of updated elements
             ed.WriteMessage(numNds.ToString() + " nodes, " + numStrs.ToString() + " stringers and " + numPnls.ToString() + " panels updated.");
         }
@@ -613,6 +603,7 @@ namespace SPMTool
         }
 
         [CommandMethod("ViewElementData")]
+        [Obsolete]
         public void ViewElementData()
         {
             // Get the current document, database and editor
@@ -624,36 +615,35 @@ namespace SPMTool
             string appName = "SPMTool";
             string msgstr = "";
 
-            // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
-            {
-                // Request objects to be selected in the drawing area
-                PromptSelectionOptions selOps = new PromptSelectionOptions();
-                PromptSelectionResult selRes = ed.GetSelection();
+            // Start a loop for viewing continuous elements
+            for ( ; ; )
+            { 
+                // Request the object to be selected in the drawing area
+                PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to view data:");
+                PromptEntityResult entRes = ed.GetEntity(entOp);
 
                 // If the prompt status is OK, objects were selected
-                if (selRes.Status == PromptStatus.OK)
+                if (entRes.Status == PromptStatus.OK)
                 {
-                    SelectionSet set = selRes.Value;
-
-                    // Step through the objects in the selection set
-                    foreach (SelectedObject obj in set)
+                    // Start a transaction
+                    using (Transaction trans = curDb.TransactionManager.StartTransaction())
                     {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
-                        // If it's a node
-                        if (ent.Layer == "Node")
+                        // Get the entity for read
+                        Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
+
+                        // Get the extended data attached to each object for SPMTool
+                        ResultBuffer rb = ent.GetXDataForApplication(appName);
+
+                        // Make sure the Xdata is not empty
+                        if (rb != null)
                         {
-                            // Get the extended data attached to each object for MY_APP
-                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            // Get the XData as an array
+                            TypedValue[] data = rb.AsArray();
 
-                            // Make sure the Xdata is not empty
-                            if (rb != null)
+                            // If it's a node
+                            if (ent.Layer == "Node")
                             {
-                                // Get the XData as an array
-                                TypedValue[] data = rb.AsArray();
-
                                 // Get the parameters
                                 string ndNum = data[2].Value.ToString(), posX = data[3].Value.ToString(), posY = data[4].Value.ToString();
                                 string sup = data[5].Value.ToString(), forX = data[6].Value.ToString(), forY = data[7].Value.ToString();
@@ -665,24 +655,9 @@ namespace SPMTool
                                          "Force in Y direction = " + forY + " N";
                             }
 
-                            else
+                            // If it's a stringer
+                            if (ent.Layer == "Stringer")
                             {
-                                msgstr = "NONE";
-                            }
-                        }
-
-                        // If it's a stringer
-                        if (ent.Layer == "Stringer")
-                        {
-                            // Get the extended data attached to each object for MY_APP
-                            ResultBuffer rb = ent.GetXDataForApplication(appName);
-
-                            // Make sure the Xdata is not empty
-                            if (rb != null)
-                            {
-                                // Get the XData as an array
-                                TypedValue[] data = rb.AsArray();
-
                                 // Get the parameters
                                 string strNum = data[2].Value.ToString(), strtNd = data[3].Value.ToString(), endNd = data[4].Value.ToString();
                                 string lgt = data[5].Value.ToString(), wdt = data[6].Value.ToString(), hgt = data[7].Value.ToString();
@@ -694,24 +669,12 @@ namespace SPMTool
                                          "Width = " + wdt + " mm" + "\n" +
                                          "Height = " + hgt + " mm" + "\n" +
                                          "Reinforcement = " + As + " mm2";
-                            }
-                            else
-                            {
-                                msgstr = "NONE";
-                            }
-                        }
 
-                        // If it's a panel
-                        if (ent.Layer == "Panel")
-                        {
-                            // Get the extended data attached to each object for MY_APP
-                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            }
 
-                            // Make sure the Xdata is not empty
-                            if (rb != null)
+                            // If it's a panel
+                            if (ent.Layer == "Panel")
                             {
-                                // Get the XData as an array
-                                TypedValue[] data = rb.AsArray();
 
                                 // Get the parameters
                                 string pnlNum = data[2].Value.ToString();
@@ -727,17 +690,20 @@ namespace SPMTool
                                          "Reinforcement ratio (x) = " + psx + "\n" +
                                          "Reinforcement ratio (y) = " + psy;
                             }
-
-                            else
-                            {
-                                msgstr = "NONE";
-                            }
+                        }
+                        else
+                        {
+                            msgstr = "NONE";
                         }
 
                         // Display the values returned
                         Application.ShowAlertDialog(appName + "\n\n" + msgstr);
+
+                        // Dispose the transaction
+                        trans.Dispose();
                     }
                 }
+                else break;
             }
         }
     }

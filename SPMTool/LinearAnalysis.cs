@@ -82,7 +82,7 @@ namespace SPMTool
                     double l, m, n;
 
                     // If the angle is 90 or 270 degrees, the cosine is zero
-                    if (alpha == Math.PI / 2 || alpha == 3* Math.PI / 2) l = 0;
+                    if (alpha == Math.PI / 2 || alpha == 3 * Math.PI / 2) l = 0;
                     else l = Math.Cos(alpha);
                     if (beta == Math.PI / 2 || beta == 3 * Math.PI / 2) m = 0;
                     else m = Math.Cos(beta);
@@ -112,8 +112,6 @@ namespace SPMTool
                     // Save to the XData
                     strData[9] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, kl.ToString());
                     strData[10] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, k.ToString());
-                    //strData[11] = new TypedValue((int)DxfCode.ExtendedDataReal, kl[0, 2]);
-                    //strData[12] = new TypedValue((int)DxfCode.ExtendedDataReal, kl[1, 1]);
 
                     // Save the new XData
                     strRb = new ResultBuffer(strData);
@@ -141,63 +139,53 @@ namespace SPMTool
             string appName = "SPMTool";
             string msgstr = "";
 
-            // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            // Request the object to be selected in the drawing area
+            PromptEntityOptions entOp = new PromptEntityOptions("\nSelect a stringer to print the stiffness matrix:");
+            PromptEntityResult entRes = ed.GetEntity(entOp);
+
+            // If the prompt status is OK, objects were selected
+            if (entRes.Status == PromptStatus.OK)
             {
-                // Request objects to be selected in the drawing area
-                PromptSelectionOptions selOps = new PromptSelectionOptions();
-                PromptSelectionResult selRes = ed.GetSelection();
-
-                // If the prompt status is OK, objects were selected
-                if (selRes.Status == PromptStatus.OK)
+                // Start a transaction
+                using (Transaction trans = curDb.TransactionManager.StartTransaction())
                 {
-                    SelectionSet set = selRes.Value;
+                    // Open the selected object for read
+                    Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
 
-                    // Step through the objects in the selection set
-                    foreach (SelectedObject obj in set)
+                    // If it's a stringer
+                    if (ent.Layer == "Stringer")
                     {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+                        // Get the extended data attached to each object for MY_APP
+                        ResultBuffer rb = ent.GetXDataForApplication(appName);
 
-                        // If it's a stringer
-                        if (ent.Layer == "Stringer")
+                        // Make sure the Xdata is not empty
+                        if (rb != null)
                         {
-                            // Get the extended data attached to each object for MY_APP
-                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            // Get the XData as an array
+                            TypedValue[] data = rb.AsArray();
 
-                            // Make sure the Xdata is not empty
-                            if (rb != null)
-                            {
-                                // Get the XData as an array
-                                TypedValue[] data = rb.AsArray();
+                            // Get the parameters
+                            string strNum = data[2].Value.ToString();
+                            string kl = data[9].Value.ToString(), k = data[10].Value.ToString();
 
-                                // Get the parameters
-                                string strNum = data[2].Value.ToString();
-                                string kl = data[9].Value.ToString(), k = data[10].Value.ToString();
+                            //string k00 = data[9].Value.ToString(), k01 = data[10].Value.ToString();
+                            //string k02 = data[11].Value.ToString(), k11 = data[12].Value.ToString();
 
-                                //string k00 = data[9].Value.ToString(), k01 = data[10].Value.ToString();
-                                //string k02 = data[11].Value.ToString(), k11 = data[12].Value.ToString();
-
-                                msgstr = "Stringer " + strNum + "\n\n" +
-                                         "Local Stifness Matrix: \n" +
-                                         kl + "\n\n" +
-                                         "Transformated Stifness Matrix: \n" +
-                                         k;
-
-                                //msgstr = "Stringer Local Stifness Matrix \n\n" +
-                                //         "[ " + k00  + " , " + k01  + " , " + k02  + " ]\n" +
-                                //         "[ " + k01  + " , " + k11  + " , " + k01  + " ]\n" +
-                                //         "[ " + k02  + " , " + k01  + " , " + k00  + " ]" ;
-                            }
-                            else
-                            {
-                                msgstr = "NONE";
-                            }
+                            msgstr = "Stringer " + strNum + "\n\n" +
+                                     "Local Stifness Matrix: \n" +
+                                     kl + "\n\n" +
+                                     "Transformated Stifness Matrix: \n" +
+                                     k;
                         }
-
-                        // Display the values returned
-                        ed.WriteMessage(msgstr);
+                        else msgstr = "NONE";
                     }
+                    else msgstr = "Object is not a stringer.";
+
+                    // Display the values returned
+                    ed.WriteMessage("\n" + msgstr);
+
+                    // Dispose the transaction
+                    trans.Dispose();
                 }
             }
         }

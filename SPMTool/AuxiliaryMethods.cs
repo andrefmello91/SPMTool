@@ -662,8 +662,8 @@ namespace SPMTool
                         double strW = 1;                   // Width
                         double strH = 1;                   // Height
                         double As = 0;                     // Reinforcement Area
-                        double k00, k01, k02, k11;         // Elements of stifness matrix
-                        k00 = k01 = k02 = k11 = 0;
+                        double kl = 0;                     // Local stiffness matrix
+                        double k = 0;                      // Transformated stiffness matrix
 
                         // Define the Xdata to add to the node
                         using (ResultBuffer rb = new ResultBuffer())
@@ -677,11 +677,8 @@ namespace SPMTool
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));            // 6
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));            // 7
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));              // 8
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k00));             // 9
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k01));             // 10 
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k02));             // 11
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k11));             // 12
-
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, kl));              // 9
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k));               // 10 
 
                             // Open the stringer for write
                             Entity ent = trans.GetObject(str.ObjectId, OpenMode.ForWrite) as Entity;
