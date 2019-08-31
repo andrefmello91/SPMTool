@@ -110,57 +110,64 @@ namespace SPMTool
             PromptPointResult strStRes = ed.GetPoint(strStOp);
 
             // Exit if the user presses ESC or cancels the command
-            if (strStRes.Status == PromptStatus.Cancel) return;
-
-            // Loop for creating infinite stringers (until user exits the command)
-            for (; ; )
+            if (strStRes.Status == PromptStatus.OK)
             {
-                // Start a transaction
-                using (Transaction trans = curDb.TransactionManager.StartTransaction())
+                // Loop for creating infinite stringers (until user exits the command)
+                for ( ; ; )
                 {
-                    // Get the stringer start point
-                    Point3d strSt = strStRes.Value;
-
-                    // Prompt for the end point
-                    PromptPointOptions strEndOp = new PromptPointOptions("\nPick the end node: ")
+                    // Start a transaction
+                    using (Transaction trans = curDb.TransactionManager.StartTransaction())
                     {
-                        UseBasePoint = true,
-                        BasePoint = strSt
-                    };
-                    PromptPointResult strEndRes = ed.GetPoint(strEndOp);
-                    Point3d strEnd = strEndRes.Value;
+                        // Create a point3d collection and add the stringer start point
+                        Point3dCollection nds = new Point3dCollection();
+                        nds.Add(strStRes.Value);
 
-                    if (strEndRes.Status == PromptStatus.OK)
-                    {
-                        // Open the Block table for read
-                        BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                        // Open the Block table record Model space for write
-                        BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                        // Create the line in Model space
-                        using (Line newStr = new Line(strSt, strEnd))
+                        // Prompt for the end point and add to the collection
+                        PromptPointOptions strEndOp = new PromptPointOptions("\nPick the end node: ")
                         {
-                            // Set the layer to stringer
-                            newStr.Layer = strLayer;
+                            UseBasePoint = true,
+                            BasePoint = strStRes.Value
+                        };
+                        PromptPointResult strEndRes = ed.GetPoint(strEndOp);
+                        nds.Add(strEndRes.Value);
 
-                            // Add the line to the drawing
-                            blkTblRec.AppendEntity(newStr);
-                            trans.AddNewlyCreatedDBObject(newStr, true);
+                        if (strEndRes.Status == PromptStatus.OK)
+                        {
+                            // Get the points ordered in ascending Y and ascending X:
+                            double[][] extNds = AuxMethods.OrderElements(2, nds);
+                            Point3d strSt = new Point3d(extNds[0][1], extNds[0][2], 0);
+                            Point3d strEnd = new Point3d(extNds[1][1], extNds[1][2], 0);
+
+                            // Open the Block table for read
+                            BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                            // Open the Block table record Model space for write
+                            BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                            // Create the line in Model space
+                            using (Line newStr = new Line(strSt, strEnd))
+                            {
+                                // Set the layer to stringer
+                                newStr.Layer = strLayer;
+
+                                // Add the line to the drawing
+                                blkTblRec.AppendEntity(newStr);
+                                trans.AddNewlyCreatedDBObject(newStr, true);
+                            }
+
+                            // Set the start point of the new stringer
+                            strStRes = strEndRes;
+                        }
+                        else
+                        {
+                            // Finish the command
+                            break;
                         }
 
-                        // Set the start point of the new stringer
-                        strStRes = strEndRes;
+                        // Save the new object to the database
+                        trans.Commit();
+                        trans.Dispose();
                     }
-                    else
-                    {
-                        // Finish the command
-                        break;
-                    }
-
-                    // Save the new object to the database
-                    trans.Commit();
-                    trans.Dispose();
                 }
             }
 
