@@ -211,28 +211,21 @@ namespace SPMTool
                 // Create a point3d collection
                 Point3dCollection nds = new Point3dCollection();
 
-                // Prompt the first vertex
-                PromptPointOptions pnlNdOp = new PromptPointOptions("\nSelect nodes performing a loop");
-                PromptPointResult pnlNdRes = ed.GetPoint(pnlNdOp);
-
-                // Add to the collection
-                nds.Add(pnlNdRes.Value);
-
-                // Prompt for user enter the other vertices of the panel
-                for (int i = 1; i <= 3; i++)
+                // Prompt for user enter the vertices of the panel
+                for (int i = 0; i < 4; i++)
                 {
-                    // Set the base point
-                    Point3d bp = nds[i - 1];
-
                     // Prompt each vertice (using the base point)
-                    pnlNdOp = new PromptPointOptions("\nSelect nodes performing a loop")
-                    {
-                        UseBasePoint = true,
-                        BasePoint = bp
-                    };
-                    pnlNdRes = ed.GetPoint(pnlNdOp);
+                    PromptPointOptions pnlNdOp = new PromptPointOptions("\nSelect nodes performing a loop");
 
-                    // Add to the collection
+                    // If the first point were already selected, use the previous point as a basepoint
+                    if (i >= 1)
+                    {
+                        pnlNdOp.UseBasePoint = true;
+                        pnlNdOp.BasePoint = nds[i - 1];
+                    }
+
+                    // Get the result and add to the collection
+                    PromptPointResult pnlNdRes = ed.GetPoint(pnlNdOp);
                     nds.Add(pnlNdRes.Value);
                 }
 
