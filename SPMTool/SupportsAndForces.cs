@@ -15,14 +15,6 @@ namespace SPMTool
         [CommandMethod("AddSupport")]
         public void AddSupport()
         {
-            // Get the current document, database and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
-            // Definition for the Extended Data
-            string appName = "SPMTool";
-
             // Define the layer parameters
             string supLayer = "Support";
             short red = 1;
@@ -38,10 +30,10 @@ namespace SPMTool
             AuxMethods.CreateSupportBlocks();
 
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Read the object Ids of the support blocks
                 ObjectId xBlock = blkTbl["SupportX"];
@@ -49,8 +41,8 @@ namespace SPMTool
                 ObjectId xyBlock = blkTbl["SupportXY"];
 
                 // Request objects to be selected in the drawing area
-                ed.WriteMessage("\nSelect nodes to add support conditions:");
-                selRes = ed.GetSelection();
+                Global.ed.WriteMessage("\nSelect nodes to add support conditions:");
+                selRes = Global.ed.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
@@ -68,7 +60,7 @@ namespace SPMTool
                     supOp.AllowNone = true;
 
                     // Get the result
-                    PromptResult supRes = ed.GetKeywords(supOp);
+                    PromptResult supRes = Global.ed.GetKeywords(supOp);
 
                     // Set the support
                     string support = supRes.StringResult;
@@ -89,7 +81,7 @@ namespace SPMTool
                             Point3d ndPos = nd.Position;
 
                             // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
                             TypedValue[] data = rb.AsArray();
 
                             // Set the new support conditions (line 5 of the array)
@@ -111,7 +103,7 @@ namespace SPMTool
                             // Insert the block into the current space
                             using (BlockReference blkRef = new BlockReference(insPt, supBlock))
                             {
-                                BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                BlockTableRecord blkTblRec = trans.GetObject(Global.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                 blkTblRec.AppendEntity(blkRef);
                                 blkRef.Layer = supLayer;
                                 trans.AddNewlyCreatedDBObject(blkRef, true);
@@ -129,17 +121,9 @@ namespace SPMTool
         [CommandMethod("AddForce")]
         public void AddForce()
         {
-            // Get the current document, database and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
             // Get the coordinate system for transformations
-            Matrix3d curUCSMatrix = curDoc.Editor.CurrentUserCoordinateSystem;
+            Matrix3d curUCSMatrix = Global.curDoc.Editor.CurrentUserCoordinateSystem;
             CoordinateSystem3d curUCS = curUCSMatrix.CoordinateSystem3d;
-
-            // Definition for the Extended Data
-            string appName = "SPMTool";
 
             // Define the layer parameters
             string fLayer = "Force";
@@ -156,17 +140,17 @@ namespace SPMTool
             AuxMethods.CreateForceBlock();
 
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Read the force block
                 ObjectId ForceBlock = blkTbl["ForceBlock"];
 
                 // Request objects to be selected in the drawing area
-                ed.WriteMessage("\nSelect a node to add load:");
-                selRes = ed.GetSelection();
+                Global.ed.WriteMessage("\nSelect a node to add load:");
+                selRes = Global.ed.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
@@ -181,7 +165,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult xForceRes = ed.GetDouble(xForceOp);
+                    PromptDoubleResult xForceRes = Global.ed.GetDouble(xForceOp);
                     Double xForce = xForceRes.Value;
 
                     // Ask the user set the load value in y direction:
@@ -191,7 +175,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult yForceRes = ed.GetDouble(yForceOp);
+                    PromptDoubleResult yForceRes = Global.ed.GetDouble(yForceOp);
                     Double yForce = yForceRes.Value;
 
                     foreach (SelectedObject obj in set)
@@ -214,7 +198,7 @@ namespace SPMTool
                             double yPos = ndPos.Y;
 
                             // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
                             TypedValue[] data = rb.AsArray();
 
                             // Set the new forces (line 6 and 7 of the array)
@@ -235,7 +219,7 @@ namespace SPMTool
                                 using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
                                 {
                                     // Append the block to drawing
-                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    BlockTableRecord blkTblRec = trans.GetObject(Global.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
                                     blkRef.Layer = fLayer;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
@@ -289,7 +273,7 @@ namespace SPMTool
                                 using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
                                 {
                                     // Append the block to drawing
-                                    BlockTableRecord blkTblRec = trans.GetObject(curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    BlockTableRecord blkTblRec = trans.GetObject(Global.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
                                     blkRef.Layer = fLayer;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);

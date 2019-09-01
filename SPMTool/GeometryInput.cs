@@ -15,18 +15,13 @@ namespace SPMTool
         [CommandMethod("AddNode")]
         public void AddNode()
         {
-            // Get the current document, database and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
             // Define the layer parameters
             string ndLayer = "Node";
             short red = 1;
 
             // Set the style for all point objects in the drawing
-            curDb.Pdmode = 32;
-            curDb.Pdsize = 50;
+            Global.curDb.Pdmode = 32;
+            Global.curDb.Pdsize = 50;
 
             // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
             AuxMethods.CreateLayer(ndLayer, red, 0);
@@ -35,13 +30,13 @@ namespace SPMTool
             AuxMethods.RegisterApp();
 
             // Loop for creating infinite nodes (until user exits the command)
-            for (; ; )
+            for ( ; ; )
             {
                 // Start a transaction
-                using (Transaction trans = curDb.TransactionManager.StartTransaction())
+                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
                 {
                     // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                     // Open the Block table record Model space for write
                     BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
@@ -49,7 +44,7 @@ namespace SPMTool
                     // Create the node in Model space
                     // Tell user to insert the point:
                     PromptPointOptions ptOp = new PromptPointOptions("\nPick point or enter coordinates: ");
-                    PromptPointResult ptRes = ed.GetPoint(ptOp);
+                    PromptPointResult ptRes = Global.ed.GetPoint(ptOp);
 
                     // Exit if the user presses ESC or cancels the command
                     if (ptRes.Status == PromptStatus.OK)
@@ -81,11 +76,6 @@ namespace SPMTool
         [CommandMethod("AddStringer")]
         public static void AddStringer()
         {
-            // Get the current document, database and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
             // Define the layer parameters
             string strLayer = "Stringer";
             short cyan = 4;
@@ -107,16 +97,16 @@ namespace SPMTool
 
             // Prompt for the start point of stringer
             PromptPointOptions strStOp = new PromptPointOptions("\nPick the start node: ");
-            PromptPointResult strStRes = ed.GetPoint(strStOp);
+            PromptPointResult strStRes = Global.ed.GetPoint(strStOp);
 
             // Exit if the user presses ESC or cancels the command
             if (strStRes.Status == PromptStatus.OK)
             {
                 // Loop for creating infinite stringers (until user exits the command)
-                for (; ; )
+                for ( ; ; )
                 {
                     // Start a transaction
-                    using (Transaction trans = curDb.TransactionManager.StartTransaction())
+                    using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
                     {
                         // Create a point3d collection and add the stringer start point
                         Point3dCollection nds = new Point3dCollection();
@@ -128,7 +118,7 @@ namespace SPMTool
                             UseBasePoint = true,
                             BasePoint = strStRes.Value
                         };
-                        PromptPointResult strEndRes = ed.GetPoint(strEndOp);
+                        PromptPointResult strEndRes = Global.ed.GetPoint(strEndOp);
                         nds.Add(strEndRes.Value);
 
                         if (strEndRes.Status == PromptStatus.OK)
@@ -139,7 +129,7 @@ namespace SPMTool
                             Point3d strEnd = new Point3d(extNds[1][1], extNds[1][2], 0);
 
                             // Open the Block table for read
-                            BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                            BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                             // Open the Block table record Model space for write
                             BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
@@ -181,11 +171,6 @@ namespace SPMTool
         [CommandMethod("AddPanel")]
         public static void AddPanel()
         {
-            // Get the current document, database and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
             // Define the layer parameters
             string pnlLayer = "Panel";
             short grey = 254;
@@ -206,7 +191,7 @@ namespace SPMTool
             AuxMethods.UpdateNodes();
 
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Create a point3d collection
                 Point3dCollection nds = new Point3dCollection();
@@ -225,7 +210,7 @@ namespace SPMTool
                     }
 
                     // Get the result and add to the collection
-                    PromptPointResult pnlNdRes = ed.GetPoint(pnlNdOp);
+                    PromptPointResult pnlNdRes = Global.ed.GetPoint(pnlNdOp);
                     nds.Add(pnlNdRes.Value);
                 }
 
@@ -242,7 +227,7 @@ namespace SPMTool
                 }
 
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Open the Block table record Model space for write
                 BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
@@ -273,26 +258,18 @@ namespace SPMTool
         [CommandMethod("DivideStringer")]
         public static void DivideStringer()
         {
-            // Get the current document, database and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
-            // Definition for the Extended Data
-            string appName = "SPMTool";
-
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Open the Block table record Model space for write
                 BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
                 // Prompt for select stringers
-                ed.WriteMessage("\nSelect stringers to divide:");
-                PromptSelectionResult selRes = ed.GetSelection();
+                Global.ed.WriteMessage("\nSelect stringers to divide:");
+                PromptSelectionResult selRes = Global.ed.GetSelection();
 
                 if (selRes.Status == PromptStatus.OK)
                 {
@@ -304,7 +281,7 @@ namespace SPMTool
                     };
 
                     // Get the number
-                    PromptIntegerResult strNumRes = ed.GetInteger(strNumOp);
+                    PromptIntegerResult strNumRes = Global.ed.GetInteger(strNumOp);
                     int strNum = strNumRes.Value;
 
                     // Get the selection set and analyse the elements
@@ -321,7 +298,7 @@ namespace SPMTool
                             Line str = ent as Line;
 
                             // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
 
                             // Get the coordinates of the initial and end points
                             Point3d strSt = str.StartPoint;
@@ -353,9 +330,6 @@ namespace SPMTool
                                 // Add the line to the drawing
                                 blkTblRec.AppendEntity(newStr);
                                 trans.AddNewlyCreatedDBObject(newStr, true);
-
-                                // Open the stringer for write
-                                //Entity newStrEnt = trans.GetObject(newStr.ObjectId, OpenMode.ForWrite) as Entity;
 
                                 // Append the XData of the original stringer
                                 newStr.XData = rb;
@@ -404,9 +378,6 @@ namespace SPMTool
         [CommandMethod("UpdateElements")]
         public void UpdateElements()
         {
-            // Get the editor
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-
             // Enumerate and get the number of nodes
             int numNds = AuxMethods.UpdateNodes();
 
@@ -417,26 +388,18 @@ namespace SPMTool
             int numPnls = AuxMethods.UpdatePanels();
 
             // Display the number of updated elements
-            ed.WriteMessage(numNds.ToString() + " nodes, " + numStrs.ToString() + " stringers and " + numPnls.ToString() + " panels updated.");
+            Global.ed.WriteMessage(numNds.ToString() + " nodes, " + numStrs.ToString() + " stringers and " + numPnls.ToString() + " panels updated.");
         }
 
         [CommandMethod("SetStringerParameters")]
         public void SetStringerParameters()
         {
-            // Get the current document, database and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
-            // Definition for the Extended Data
-            string appName = "SPMTool";
-
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Request objects to be selected in the drawing area
-                ed.WriteMessage("\nSelect the stringers to assign properties (you can select other elements, the properties will be only applied to elements with 'Stringer' layer activated).");
-                PromptSelectionResult selRes = ed.GetSelection();
+                Global.ed.WriteMessage("\nSelect the stringers to assign properties (you can select other elements, the properties will be only applied to elements with 'Stringer' layer activated).");
+                PromptSelectionResult selRes = Global.ed.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
@@ -452,7 +415,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult strWRes = ed.GetDouble(strWOp);
+                    PromptDoubleResult strWRes = Global.ed.GetDouble(strWOp);
                     double strW = strWRes.Value;
 
                     // Ask the user to input the stringer height
@@ -464,7 +427,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult strHRes = ed.GetDouble(strHOp);
+                    PromptDoubleResult strHRes = Global.ed.GetDouble(strHOp);
                     double strH = strHRes.Value;
 
                     // Ask the user to input the reinforcement area
@@ -475,7 +438,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult AsRes = ed.GetDouble(AsOp);
+                    PromptDoubleResult AsRes = Global.ed.GetDouble(AsOp);
                     double As = AsRes.Value;
 
                     foreach (SelectedObject obj in set)
@@ -490,7 +453,7 @@ namespace SPMTool
                             ent.UpgradeOpen();
 
                             // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
                             TypedValue[] data = rb.AsArray();
 
                             // Set the new geometry and reinforcement (line 6 to 8 of the array)
@@ -514,20 +477,12 @@ namespace SPMTool
         [CommandMethod("SetPanelParameters")]
         public void SetPanelParameters()
         {
-            // Get the current document, database and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
-            // Definition for the Extended Data
-            string appName = "SPMTool";
-
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Request objects to be selected in the drawing area
-                ed.WriteMessage("\nSelect the panels to assign properties (you can select other elements, the properties will be only applied to elements with 'Panel' layer activated).");
-                PromptSelectionResult selRes = ed.GetSelection();
+                Global.ed.WriteMessage("\nSelect the panels to assign properties (you can select other elements, the properties will be only applied to elements with 'Panel' layer activated).");
+                PromptSelectionResult selRes = Global.ed.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
@@ -544,7 +499,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult pnlWRes = ed.GetDouble(pnlWOp);
+                    PromptDoubleResult pnlWRes = Global.ed.GetDouble(pnlWOp);
                     double pnlW = pnlWRes.Value;
 
                     // Ask the user to input the reinforcement ratio in x direction
@@ -555,7 +510,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult psxRes = ed.GetDouble(psxOp);
+                    PromptDoubleResult psxRes = Global.ed.GetDouble(psxOp);
                     double psx = psxRes.Value;
 
                     // Ask the user to input the reinforcement ratio in y direction
@@ -566,7 +521,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult psyRes = ed.GetDouble(psyOp);
+                    PromptDoubleResult psyRes = Global.ed.GetDouble(psyOp);
                     double psy = psyRes.Value;
 
                     foreach (SelectedObject obj in set)
@@ -581,7 +536,7 @@ namespace SPMTool
                             ent.UpgradeOpen();
 
                             // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(appName);
+                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
                             TypedValue[] data = rb.AsArray();
 
                             // Set the new geometry and reinforcement (line 7 to 9 of the array)
@@ -603,16 +558,9 @@ namespace SPMTool
         }
 
         [CommandMethod("ViewElementData")]
-        [Obsolete]
         public void ViewElementData()
         {
-            // Get the current document, database and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
-            // Definition for the Extended Data
-            string appName = "SPMTool";
+            // Initialize a message to display
             string msgstr = "";
 
             // Start a loop for viewing continuous elements
@@ -620,20 +568,20 @@ namespace SPMTool
             { 
                 // Request the object to be selected in the drawing area
                 PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to view data:");
-                PromptEntityResult entRes = ed.GetEntity(entOp);
+                PromptEntityResult entRes = Global.ed.GetEntity(entOp);
 
                 // If the prompt status is OK, objects were selected
                 if (entRes.Status == PromptStatus.OK)
                 {
                     // Start a transaction
-                    using (Transaction trans = curDb.TransactionManager.StartTransaction())
+                    using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
                     {
 
                         // Get the entity for read
                         Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Get the extended data attached to each object for SPMTool
-                        ResultBuffer rb = ent.GetXDataForApplication(appName);
+                        ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
 
                         // Make sure the Xdata is not empty
                         if (rb != null)
@@ -697,7 +645,7 @@ namespace SPMTool
                         }
 
                         // Display the values returned
-                        Application.ShowAlertDialog(appName + "\n\n" + msgstr);
+                        Application.ShowAlertDialog(Global.appName + "\n\n" + msgstr);
 
                         // Dispose the transaction
                         trans.Dispose();

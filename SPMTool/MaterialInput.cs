@@ -13,20 +13,14 @@ namespace SPMTool
         [CommandMethod("SetConcreteParameters")]
         public static void SetConcreteParameters()
         {
-            // Get the current document, database and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
             // Definition for the Extended Data
-            string appName = "SPMTool";
             string xdataStr = "Concrete data";
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
             AuxMethods.RegisterApp();
 
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Ask the user to input the concrete compressive strength
                 PromptDoubleOptions fcOp = new PromptDoubleOptions("\nInput the concrete compressive strength (fc) in MPa:")
@@ -36,7 +30,7 @@ namespace SPMTool
                 };
 
                 // Get the result
-                PromptDoubleResult fcRes = ed.GetDouble(fcOp);
+                PromptDoubleResult fcRes = Global.ed.GetDouble(fcOp);
                 double fc = fcRes.Value;
 
                 // Ask the user to input the concrete Elastic Module
@@ -47,16 +41,16 @@ namespace SPMTool
                 };
 
                 // Get the result
-                PromptDoubleResult EcRes = ed.GetDouble(EcOp);
+                PromptDoubleResult EcRes = Global.ed.GetDouble(EcOp);
                 double Ec = EcRes.Value;
 
                 // Get the NOD in the database
-                DBDictionary nod = (DBDictionary)trans.GetObject(curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
+                DBDictionary nod = (DBDictionary)trans.GetObject(Global.curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
 
                 // Save the variables on the Xrecord
                 using (ResultBuffer rb = new ResultBuffer())
                 {
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));            // 0
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));            // 0
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));          // 1
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fc));                       // 2
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Ec));                       // 3
@@ -79,20 +73,14 @@ namespace SPMTool
         [CommandMethod("SetSteelParameters")]
         public static void SetSteelParameters()
         {
-            // Get the current document, database and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
             // Definition for the Extended Data
-            string appName = "SPMTool";
             string xdataStr = "Steel data";
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
             AuxMethods.RegisterApp();
 
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Ask the user to input the steel tensile strength
                 PromptDoubleOptions fyOp = new PromptDoubleOptions("\nInput the steel tensile strength (fy) in MPa:")
@@ -102,7 +90,7 @@ namespace SPMTool
                 };
 
                 // Get the result
-                PromptDoubleResult fyRes = ed.GetDouble(fyOp);
+                PromptDoubleResult fyRes = Global.ed.GetDouble(fyOp);
                 double fy = fyRes.Value;
 
                 // Ask the user to input the steel Elastic Module
@@ -113,16 +101,16 @@ namespace SPMTool
                 };
 
                 // Get the result
-                PromptDoubleResult EsRes = ed.GetDouble(EsOp);
+                PromptDoubleResult EsRes = Global.ed.GetDouble(EsOp);
                 double Es = EsRes.Value;
 
                 // Get the NOD in the database
-                DBDictionary nod = (DBDictionary)trans.GetObject(curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
+                DBDictionary nod = (DBDictionary)trans.GetObject(Global.curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
 
                 // Save the variables on the Xrecord
                 using (ResultBuffer rb = new ResultBuffer())
                 {
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fy));
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Es));
@@ -145,21 +133,16 @@ namespace SPMTool
         [CommandMethod("ViewMaterialParameters")]
         public void ViewMaterialParameters()
         {
-            // Get the current document and database
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-
             // Definition for the XData
-            string appName = "SPMTool";
             string xData = "Material Parameters";
-            string concmsg;
-            string steelmsg;
+            string concmsg = "";
+            string steelmsg = "";
 
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Get the NOD in the database
-                DBDictionary nod = (DBDictionary)trans.GetObject(curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
+                DBDictionary nod = (DBDictionary)trans.GetObject(Global.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
 
                 // Read the materials Xrecords
                 ObjectId concPar = nod.GetAt("ConcreteParams");
@@ -194,7 +177,7 @@ namespace SPMTool
                 }
 
                 // Display the values returned
-                Application.ShowAlertDialog(appName + "\n\n" + xData + "\n" + concmsg + "\n" + steelmsg);
+                Application.ShowAlertDialog(Global.appName + "\n\n" + xData + "\n" + concmsg + "\n" + steelmsg);
 
                 // Dispose the transaction
                 trans.Dispose();

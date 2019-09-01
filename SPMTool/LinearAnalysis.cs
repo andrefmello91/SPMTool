@@ -15,25 +15,17 @@ namespace SPMTool
         [CommandMethod("StringerStiffness")]
         public void StringerStifness()
         {
-            // Get the current document and database
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
-            // Definition for the Extended Data
-            string appName = "SPMTool";
-
             // Initialize the parameters needed
             double Ec = 0; // concrete elastic modulus
 
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Get the NOD in the database
-                DBDictionary nod = (DBDictionary)trans.GetObject(curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
+                DBDictionary nod = (DBDictionary)trans.GetObject(Global.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
 
                 // Read the concrete Xrecord
                 ObjectId concPar = nod.GetAt("ConcreteParams");
@@ -67,7 +59,7 @@ namespace SPMTool
                     double gamma = Math.PI / 2;           // angle with z coordinate
 
                     // Read the XData and get the necessary data
-                    ResultBuffer strRb = str.GetXDataForApplication(appName);
+                    ResultBuffer strRb = str.GetXDataForApplication(Global.appName);
                     TypedValue[] strData = strRb.AsArray();
                     double strNum = Convert.ToDouble(strData[2].Value);
                     double strNd = Convert.ToDouble(strData[3].Value);
@@ -124,30 +116,24 @@ namespace SPMTool
             }
 
             // If all went OK, notify the user
-            ed.WriteMessage("Linear stifness matrix of stringers obtained.");
+            Global.ed.WriteMessage("Linear stifness matrix of stringers obtained.");
         }
 
         [CommandMethod("ViewStringerStifness")]
         public void ViewStringerStifness()
         {
-            // Get the current document, database and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-            Editor ed = curDoc.Editor;
-
-            // Definition for the Extended Data
-            string appName = "SPMTool";
+            // Initialize the message to display
             string msgstr = "";
 
             // Request the object to be selected in the drawing area
             PromptEntityOptions entOp = new PromptEntityOptions("\nSelect a stringer to print the stiffness matrix:");
-            PromptEntityResult entRes = ed.GetEntity(entOp);
+            PromptEntityResult entRes = Global.ed.GetEntity(entOp);
 
             // If the prompt status is OK, objects were selected
             if (entRes.Status == PromptStatus.OK)
             {
                 // Start a transaction
-                using (Transaction trans = curDb.TransactionManager.StartTransaction())
+                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
                 {
                     // Open the selected object for read
                     Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
@@ -156,7 +142,7 @@ namespace SPMTool
                     if (ent.Layer == "Stringer")
                     {
                         // Get the extended data attached to each object for MY_APP
-                        ResultBuffer rb = ent.GetXDataForApplication(appName);
+                        ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
 
                         // Make sure the Xdata is not empty
                         if (rb != null)
@@ -167,9 +153,6 @@ namespace SPMTool
                             // Get the parameters
                             string strNum = data[2].Value.ToString();
                             string kl = data[9].Value.ToString(), k = data[10].Value.ToString();
-
-                            //string k00 = data[9].Value.ToString(), k01 = data[10].Value.ToString();
-                            //string k02 = data[11].Value.ToString(), k11 = data[12].Value.ToString();
 
                             msgstr = "Stringer " + strNum + "\n\n" +
                                      "Local Stifness Matrix: \n" +
@@ -182,7 +165,7 @@ namespace SPMTool
                     else msgstr = "Object is not a stringer.";
 
                     // Display the values returned
-                    ed.WriteMessage("\n" + msgstr);
+                    Global.ed.WriteMessage("\n" + msgstr);
 
                     // Dispose the transaction
                     trans.Dispose();

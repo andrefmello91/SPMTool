@@ -8,29 +8,35 @@ using Autodesk.AutoCAD.Colors;
 
 namespace SPMTool
 {
+    // Global variables
+    public static class Global
+    {
+        // Get the current document, database and editor
+        public static Document curDoc = Application.DocumentManager.MdiActiveDocument;
+        public static Database curDb = curDoc.Database;
+        public static Editor ed = curDoc.Editor;
+
+        // Define the appName
+        public static string appName = "SPMTool";
+    }
+
     // Auxiliary Methods
     public class AuxMethods
     {
         // Add the app to the Registered Applications Record
         public static void RegisterApp()
         {
-            // Define the appName
-            string appName = "SPMTool";
-
-            // Get the current document, database and editor
-            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
-
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Registered Applications table for read
-                RegAppTable regAppTbl = trans.GetObject(curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-                if (!regAppTbl.Has(appName))
+                RegAppTable regAppTbl = trans.GetObject(Global.curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+                if (!regAppTbl.Has(Global.appName))
                 {
                     using (RegAppTableRecord regAppTblRec = new RegAppTableRecord())
                     {
-                        regAppTblRec.Name = appName;
-                        trans.GetObject(curDb.RegAppTableId, OpenMode.ForWrite);
+                        regAppTblRec.Name = Global.appName;
+                        trans.GetObject(Global.curDb.RegAppTableId, OpenMode.ForWrite);
                         regAppTbl.Add(regAppTblRec);
                         trans.AddNewlyCreatedDBObject(regAppTblRec, true);
                     }
@@ -45,14 +51,11 @@ namespace SPMTool
         // Method to create a layer given a name, a color and transparency
         public static void CreateLayer(string layerName, short layerColor, int layerTransp)
         {
-            // Get the current document and database
-            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
-
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+                LayerTable lyrTbl = trans.GetObject(Global.curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
 
                 if (!lyrTbl.Has(layerName))
                 {
@@ -67,7 +70,7 @@ namespace SPMTool
                         Transparency transp = new Transparency(alpha);
 
                         // Upgrade the Layer table for write
-                        trans.GetObject(curDb.LayerTableId, OpenMode.ForWrite);
+                        trans.GetObject(Global.curDb.LayerTableId, OpenMode.ForWrite);
 
                         // Append the new layer to the Layer table and the transaction
                         lyrTbl.Add(lyrTblRec);
@@ -88,14 +91,11 @@ namespace SPMTool
         // Method to create the support blocks
         public static void CreateSupportBlocks()
         {
-            // Get the current document and database
-            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
-
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
                 ObjectId xBlock = ObjectId.Null;
@@ -287,13 +287,10 @@ namespace SPMTool
         // Method to create the force block
         public static void CreateForceBlock()
         {
-            // Get the current document and database
-            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
-
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
                 ObjectId ForceBlock = ObjectId.Null;
@@ -353,10 +350,6 @@ namespace SPMTool
         // This method select all objects on a determined layer
         public static ObjectIdCollection GetEntitiesOnLayer(string layerName)
         {
-            // Get the current document and editor
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Editor ed = curDoc.Editor;
-
             // Build a filter list so that only entities on the specified layer are selected
             TypedValue[] tvs = new TypedValue[1]
             {
@@ -366,17 +359,16 @@ namespace SPMTool
             SelectionFilter selFt = new SelectionFilter(tvs);
 
             // Get the entities on the layername
-            PromptSelectionResult selRes = ed.SelectAll(selFt);
+            PromptSelectionResult selRes = Global.ed.SelectAll(selFt);
 
             if (selRes.Status == PromptStatus.OK)
-
-                return
-
-                  new ObjectIdCollection(selRes.Value.GetObjectIds());
-
+            {
+                return new ObjectIdCollection(selRes.Value.GetObjectIds());
+            }
             else
-
+            {
                 return new ObjectIdCollection();
+            }
         }
 
         // This method order the elements in a collection in ascending yCoord, then ascending xCoord, returns the array of points ordered
@@ -416,10 +408,12 @@ namespace SPMTool
             return elmntsArray;
         }
 
+        // This method returns an array of points enumerated (num, xCoord, yCoord)
         public static double SetElementNumber(Point3d point, int numElements, double[][] elmntsArray)
         {
             // Initialize the element number
             double elmntNum = 0;
+
             // Assign the node number from the array
             for (int i = 0; i < numElements; i++)
             {
@@ -438,21 +432,17 @@ namespace SPMTool
         // Enumerate all the nodes in the model and return the number of nodes
         public static int UpdateNodes()
         {
-            // Get the current database
-            Database curDb = Application.DocumentManager.MdiActiveDocument.Database;
-
             // Definition for the Extended Data
-            string appName = "SPMTool";
             string xdataStr = "Node Data";
 
             // Initialize the number of nodes
             int numNds = 0;
 
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Create the nodes collection and initialize getting the elements on node layer
                 ObjectIdCollection nds = GetEntitiesOnLayer("Node");
@@ -497,7 +487,7 @@ namespace SPMTool
                         // Define the Xdata to add to the node
                         using (ResultBuffer defRb = new ResultBuffer())
                         {
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, nodeNum));         // 2
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));       // 3
@@ -515,7 +505,7 @@ namespace SPMTool
                     }
 
                     // Get the result buffer as an array
-                    ResultBuffer rb = nd.GetXDataForApplication(appName);
+                    ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
                     TypedValue[] data = rb.AsArray();
 
                     // Set the new node number (line 2)
@@ -531,8 +521,8 @@ namespace SPMTool
                 }
 
                 // Set the style for all point objects in the drawing
-                curDb.Pdmode = 32;
-                curDb.Pdsize = 50;
+                Global.curDb.Pdmode = 32;
+                Global.curDb.Pdsize = 50;
 
                 // Commit and dispose the transaction
                 trans.Commit();
@@ -546,22 +536,17 @@ namespace SPMTool
         // Update the node numbers on the XData of each stringer in the model and return the number of stringers
         public static int UpdateStringers()
         {
-            // Get the current document and database
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-
             // Definition for the Extended Data
-            string appName = "SPMTool";
             string xdataStr = "Stringer Data";
 
             // Initialize the number of stringers
             int numStrs = 0;
 
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Create the nodes collection and initialize getting the elements on node layer
                 ObjectIdCollection nds = GetEntitiesOnLayer("Node");
@@ -631,7 +616,7 @@ namespace SPMTool
                         {
                             // Get the node number
                             // Access the XData as an array
-                            ResultBuffer ndRb = nd.GetXDataForApplication(appName);
+                            ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
                             TypedValue[] dataNd = ndRb.AsArray();
 
                             // Get the node number (line 2)
@@ -643,7 +628,7 @@ namespace SPMTool
                         {
                             // Get the node number
                             // Access the XData as an array
-                            ResultBuffer ndRb = nd.GetXDataForApplication(appName);
+                            ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
                             TypedValue[] dataNd = ndRb.AsArray();
 
                             // Get the node number (line 2)
@@ -655,30 +640,30 @@ namespace SPMTool
                     if (str.XData == null)
                     {
                         // Inicialization of stringer conditions
-                        double strNumb = 0;                // Stringer number (initially unassigned)
-                        double strSrtNd = 0;               // Stringer start node (initially unassigned)
-                        double strEndNd = 0;               // Stringer end node (initially unassigned)
-                        double strLgt = str.Length;        // Stringer lenght
-                        double strW = 1;                   // Width
-                        double strH = 1;                   // Height
-                        double As = 0;                     // Reinforcement Area
-                        double kl = 0;                     // Local stiffness matrix
-                        double k = 0;                      // Transformated stiffness matrix
+                        double strNumb = 0;                       // Stringer number (initially unassigned)
+                        double strSrtNd = 0;                      // Stringer start node (initially unassigned)
+                        double strEndNd = 0;                      // Stringer end node (initially unassigned)
+                        double strLgt = str.Length;               // Stringer lenght
+                        double strW = 1;                          // Width
+                        double strH = 1;                          // Height
+                        double As = 0;                            // Reinforcement Area
+                        double kl = 0;                            // Local stiffness matrix
+                        double k = 0;                             // Transformated stiffness matrix
 
                         // Define the Xdata to add to the node
                         using (ResultBuffer rb = new ResultBuffer())
                         {
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strNumb));         // 2
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strSrtNd));        // 3
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEndNd));        // 4
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strLgt));          // 5
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));            // 6
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));            // 7
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));              // 8
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, kl));              // 9
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k));               // 10 
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strNumb));                // 2
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strSrtNd));               // 3
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEndNd));               // 4
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strLgt));                 // 5
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));                   // 6
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));                   // 7
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));                     // 8
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, kl));                     // 9
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k));                      // 10 
 
                             // Open the stringer for write
                             Entity ent = trans.GetObject(str.ObjectId, OpenMode.ForWrite) as Entity;
@@ -689,7 +674,7 @@ namespace SPMTool
                     }
 
                     // Access the XData as an array
-                    ResultBuffer strRb = str.GetXDataForApplication(appName);
+                    ResultBuffer strRb = str.GetXDataForApplication(Global.appName);
                     TypedValue[] data = strRb.AsArray();
 
                     // Set the updated number and nodes in ascending number (line 2 and 3 of the array) and length
@@ -715,22 +700,17 @@ namespace SPMTool
         // Update the node numbers on the XData of each panel in the model and return the number of panels
         public static int UpdatePanels()
         {
-            // Get the current document and database
-            Document curDoc = Application.DocumentManager.MdiActiveDocument;
-            Database curDb = curDoc.Database;
-
             // Definition for the Extended Data
-            string appName = "SPMTool";
             string xdataStr = "Panel Data";
 
             // Initialize the number of panels
             int numPnls = 0;
 
             // Start a transaction
-            using (Transaction trans = curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Create the nodes collection and initialize getting the elements on node layer
                 ObjectIdCollection nds = GetEntitiesOnLayer("Node");
@@ -821,7 +801,7 @@ namespace SPMTool
                             if (vert == nd.Position)
                             {
                                 // Access the XData as an array
-                                ResultBuffer ndRb = nd.GetXDataForApplication(appName);
+                                ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
                                 TypedValue[] dataNd = ndRb.AsArray();
 
                                 // Get the node number (line 2) and assign it to the node array
@@ -848,7 +828,7 @@ namespace SPMTool
 
                         // Initialize a Result Buffer to add to the panel
                         ResultBuffer rb = new ResultBuffer();
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, appName));   // 0
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlN));            // 2
                         for (int j = 0; j < 4; j++)
@@ -864,7 +844,7 @@ namespace SPMTool
                     }
 
                     // Access the XData as an array
-                    ResultBuffer pnlRb = pnl.GetXDataForApplication(appName);
+                    ResultBuffer pnlRb = pnl.GetXDataForApplication(Global.appName);
                     TypedValue[] data = pnlRb.AsArray();
 
                     // Set the updated panel number (line 2)
