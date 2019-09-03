@@ -13,7 +13,7 @@ namespace SPMTool
     public class Geometry
     {
         [CommandMethod("AddNode")]
-        public void AddNode()
+        public static void AddNode()
         {
             // Define the layer parameters
             string ndLayer = "Node";
