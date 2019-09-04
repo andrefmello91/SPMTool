@@ -39,6 +39,7 @@ namespace SPMTool
             // Create the Ribbon panels
             GeometryPanel(Tab);
             MaterialPanel(Tab);
+            ConditionsPanel(Tab);
 
             // Activate tab
             Tab.IsActive = true;
@@ -60,7 +61,6 @@ namespace SPMTool
                 ToolTip = "Create a node",
                 ShowText = true,
                 ShowImage = true,
-                LargeImage = getBitmap(Properties.Resources.node_large),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "AddNode"
             };
@@ -71,7 +71,6 @@ namespace SPMTool
                 ToolTip = "Create a stringer conecting two nodes",
                 ShowText = true,
                 ShowImage = true,
-                LargeImage = getBitmap(Properties.Resources.stringer_large),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "AddStringer"
             };
@@ -82,7 +81,6 @@ namespace SPMTool
                 ToolTip = "Create a panel conecting four nodes",
                 ShowText = true,
                 ShowImage = true,
-                LargeImage = getBitmap(Properties.Resources.panel_large),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "AddPanel"
             };
@@ -92,6 +90,7 @@ namespace SPMTool
             {
                 ShowText = true,
                 IsSplit = true,
+                LargeImage = getBitmap(Properties.Resources.plus_large),
                 Size = RibbonItemSize.Large,
                 IsSynchronizedWithCurrentItem = true
             };
@@ -111,8 +110,6 @@ namespace SPMTool
                 Text = "Stringer parameters",
                 ToolTip = "Set the geometry and steel reinforcement to a selection of stringers",
                 ShowText = true,
-                ShowImage = true,
-                Image = getBitmap(Properties.Resources.set_small),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "SetStringerParameters"
             };
@@ -122,8 +119,6 @@ namespace SPMTool
                 Text = "Panel parameters",
                 ToolTip = "Set the geometry and steel reinforcement to a selection of panels",
                 ShowText = true,
-                ShowImage = true,
-                Image = getBitmap(Properties.Resources.set_small),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "SetPanelParameters"
             };
@@ -145,13 +140,11 @@ namespace SPMTool
             // View element data button
             RibbonButton button6 = new RibbonButton()
             {
-                Text = "View element data",
-                ToolTip = "View information stored in a determined element",
+                Text = "Divide stringer",
+                ToolTip = "Divide a stringer into smaller ones",
                 ShowText = true,
-                ShowImage = true,
-                Image = getBitmap(Properties.Resources.view_small),
                 CommandHandler = new CmdHandler(),
-                CommandParameter = "ViewElementData"
+                CommandParameter = "DivideStringer"
             };
             subPnl.Items.Add(button6);
             subPnl.Items.Add(new RibbonRowBreak());
@@ -175,16 +168,16 @@ namespace SPMTool
             // Create a dropdown menu to secondary commands
             pnlSrc.Items.Add(new RibbonPanelBreak());
 
-            // Divide stringer button
+            // View element data button
             RibbonButton button8 = new RibbonButton()
             {
-                Text = "Divide stringer",
-                ToolTip = "Divide a stringer into smaller ones",
+                Text = "View element data",
+                ToolTip = "View information stored in a determined element",
                 ShowText = true,
                 ShowImage = true,
-                Image = getBitmap(Properties.Resources.divstr_small),
+                Image = getBitmap(Properties.Resources.view_small),
                 CommandHandler = new CmdHandler(),
-                CommandParameter = "DivideStringer"
+                CommandParameter = "ViewElementData"
             };
             pnlSrc.Items.Add(button8);
         }
@@ -251,6 +244,53 @@ namespace SPMTool
             };
             pnlSrc.Items.Add(button3);
         }
+
+        // Create Conditions Panel
+        public void ConditionsPanel(RibbonTab Tab)
+        {
+            RibbonPanelSource pnlSrc = new RibbonPanelSource();
+            pnlSrc.Title = "Conditions";
+            RibbonPanel Panel = new RibbonPanel();
+            Panel.Source = pnlSrc;
+            Tab.Panels.Add(Panel);
+
+            RibbonButton button1 = new RibbonButton()
+            {
+                Text = "Support",
+                ToolTip = "Set support condition to a group of nodes",
+                ShowText = true,
+                ShowImage = true,
+                LargeImage = getBitmap(Properties.Resources.support_large),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "AddSupport"
+            };
+
+            RibbonButton button2 = new RibbonButton()
+            {
+                Text = "Force",
+                ToolTip = "Add forces to a group of nodes",
+                ShowText = true,
+                ShowImage = true,
+                LargeImage = getBitmap(Properties.Resources.force_large),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "AddForce"
+            };
+
+            // Create a split button for conditions
+            RibbonSplitButton rbSpBtn1 = new RibbonSplitButton()
+            {
+                ShowText = true,
+                IsSplit = true,
+                Size = RibbonItemSize.Large,
+                IsSynchronizedWithCurrentItem = true
+            };
+            rbSpBtn1.Items.Add(button1);
+            rbSpBtn1.Items.Add(button2);
+
+            // Add to the panel source
+            pnlSrc.Items.Add(rbSpBtn1);
+        }
+
 
         public class CmdHandler : System.Windows.Input.ICommand
         {

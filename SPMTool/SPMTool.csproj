@@ -123,16 +123,10 @@
     <None Include="Resources\panel_large.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\view_small.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\divstr_small.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\set_small.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\update_small.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\steel_large.png" />
@@ -141,7 +135,25 @@
     <None Include="Resources\concrete_large.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\support_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\update_small.png" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="Resources\view_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\view_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\plus_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\force_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\plus_large.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
