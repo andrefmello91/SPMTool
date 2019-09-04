@@ -61,6 +61,7 @@ namespace SPMTool
                 ToolTip = "Create a node",
                 ShowText = true,
                 ShowImage = true,
+                LargeImage = getBitmap(Properties.Resources.node_large),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "AddNode"
             };
@@ -71,6 +72,7 @@ namespace SPMTool
                 ToolTip = "Create a stringer conecting two nodes",
                 ShowText = true,
                 ShowImage = true,
+                LargeImage = getBitmap(Properties.Resources.stringer_large),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "AddStringer"
             };
@@ -81,6 +83,7 @@ namespace SPMTool
                 ToolTip = "Create a panel conecting four nodes",
                 ShowText = true,
                 ShowImage = true,
+                LargeImage = getBitmap(Properties.Resources.panel_large),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "AddPanel"
             };
@@ -90,7 +93,6 @@ namespace SPMTool
             {
                 ShowText = true,
                 IsSplit = true,
-                LargeImage = getBitmap(Properties.Resources.plus_large),
                 Size = RibbonItemSize.Large,
                 IsSynchronizedWithCurrentItem = true
             };
@@ -110,6 +112,8 @@ namespace SPMTool
                 Text = "Stringer parameters",
                 ToolTip = "Set the geometry and steel reinforcement to a selection of stringers",
                 ShowText = true,
+                ShowImage = true,
+                Image = getBitmap(Properties.Resources.set_small),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "SetStringerParameters"
             };
@@ -119,6 +123,8 @@ namespace SPMTool
                 Text = "Panel parameters",
                 ToolTip = "Set the geometry and steel reinforcement to a selection of panels",
                 ShowText = true,
+                ShowImage = true,
+                Image = getBitmap(Properties.Resources.set_small),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "SetPanelParameters"
             };
@@ -143,6 +149,8 @@ namespace SPMTool
                 Text = "Divide stringer",
                 ToolTip = "Divide a stringer into smaller ones",
                 ShowText = true,
+                ShowImage = true,
+                Image = getBitmap(Properties.Resources.divstr_small),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "DivideStringer"
             };
@@ -238,7 +246,7 @@ namespace SPMTool
                 ToolTip = "View concrete and steel parameters",
                 ShowText = true,
                 ShowImage = true,
-                LargeImage = getBitmap(Properties.Resources.view_large),
+                LargeImage = getBitmap(Properties.Resources.view_small),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "ViewMaterialParameters"
             };

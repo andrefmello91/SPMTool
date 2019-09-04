@@ -70,6 +70,9 @@
     <Reference Include="AdWindows, Version=2018.11.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\AutoCAD.NET.23.1.0\lib\net47\AdWindows.dll</HintPath>
     </Reference>
+    <Reference Include="ControlzEx, Version=3.0.2.4, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ControlzEx.3.0.2.4\lib\net462\ControlzEx.dll</HintPath>
+    </Reference>
     <Reference Include="MathNet.Numerics, Version=4.8.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MathNet.Numerics.4.8.1\lib\net461\MathNet.Numerics.dll</HintPath>
     </Reference>
@@ -80,6 +83,9 @@
     <Reference Include="System.Numerics" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\ControlzEx.3.0.2.4\lib\net462\System.Windows.Interactivity.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -114,30 +120,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\node_large.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\stringer_large.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\panel_large.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\divstr_small.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\set_small.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\steel_large.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\concrete_large.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\support_large.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\update_small.png" />
   </ItemGroup>
   <ItemGroup>
@@ -150,10 +132,37 @@
     <None Include="Resources\plus_small.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\force_large.png" />
+    <None Include="Resources\plus_large.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\plus_large.png" />
+    <None Include="Resources\support_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\support_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringer_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\set_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\node_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panel_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\steel_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\concrete_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\divstr_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\force_large.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
