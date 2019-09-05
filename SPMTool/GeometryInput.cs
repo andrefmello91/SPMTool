@@ -375,6 +375,116 @@ namespace SPMTool
             AuxMethods.UpdateStringers();
         }
 
+        [CommandMethod("DividePanel")]
+        public static void DividePanel()
+        {
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Open the Block table record Model space for write
+                BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                // Prompt for select panels
+                Global.ed.WriteMessage("\nSelect panels to divide (panels must be rectangular):");
+                PromptSelectionResult selRes = Global.ed.GetSelection();
+
+                if (selRes.Status == PromptStatus.OK)
+                {
+                    // Prompt for the number of rows
+                    PromptIntegerOptions rowOp = new PromptIntegerOptions("\nEnter the number of rows for adding panels:")
+                    {
+                        AllowNegative = false,
+                        AllowZero = false
+                    };
+
+                    // Get the number
+                    PromptIntegerResult rowRes = Global.ed.GetInteger(rowOp);
+                    int row = rowRes.Value;
+
+                    // Prompt for the number of columns
+                    PromptIntegerOptions clmnOp = new PromptIntegerOptions("\nEnter the number of columns for adding panels:")
+                    {
+                        AllowNegative = false,
+                        AllowZero = false
+                    };
+
+                    // Get the number
+                    PromptIntegerResult clmnRes = Global.ed.GetInteger(clmnOp);
+                    int clmn = rowRes.Value;
+
+                    // Get the selection set and analyse the elements
+                    SelectionSet set = selRes.Value;
+                    foreach (SelectedObject obj in set)
+                    {
+                        // Open the selected object for read
+                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                        // Check if the selected object is a node
+                        if (ent.Layer.Equals("Panel"))
+                        {
+                            // Read as a solid
+                            Solid pnl = ent as Solid;
+
+                            // Access the XData as an array
+                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
+
+                            // Get the coordinates of the grip points
+                            Point3dCollection grpPts = new Point3dCollection();
+                            pnl.GetGripPoints(grpPts, new IntegerCollection(), new IntegerCollection());
+
+                            // Calculate the distance of the points in X and Y
+                            double distX = (grpPts[1].X - grpPts[0].X) / clmn;
+                            double distY = (grpPts[2].Y - grpPts[0].Y) / row;
+                            
+                            // Initialize the start point
+                            Point3d stPt = grpPts[0];
+                            Point3d[] verts = new Point3d[4];
+                            
+                            // Create the new panels
+                            for (int i = 0; i < row; i++)
+                            {
+                                for (int j = 0; j < clmn; j++)
+                                {
+                                   // Get the vertices of the panel
+                                    verts[0] = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0);
+                                    verts[1] = new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0);
+                                    verts[2] = new Point3d(stPt.X + j * distX, stPt.Y + (i + 1) * distY, 0);
+                                    verts[3] = new Point3d(stPt.X + (j + 1) * distX, stPt.Y + (i + 1) * distY, 0);
+
+                                    // Create the panel
+                                    Solid newPnl = new Solid(verts[0], verts[1], verts[2], verts[3])
+                                    {
+                                        Layer = "Panel"
+                                    };
+
+                                    // Add the line to the drawing
+                                    blkTblRec.AppendEntity(newPnl);
+                                    trans.AddNewlyCreatedDBObject(newPnl, true);
+
+                                    // Append the XData of the original panel
+                                    newPnl.XData = rb;
+                                }
+                            }
+
+                            // Erase the original panel
+                            ent.UpgradeOpen();
+                            ent.Erase();
+                        }
+                    }
+                }
+
+                // Save the new object to the database
+                trans.Commit();
+                trans.Dispose();
+            }
+
+            // Update panels
+            AuxMethods.UpdatePanels();
+        }
+
         [CommandMethod("UpdateElements")]
         public void UpdateElements()
         {
