@@ -442,7 +442,7 @@ namespace SPMTool
                             // Initialize the start point
                             Point3d stPt = grpPts[0];
                             Point3d[] verts = new Point3d[4];
-                            
+
                             // Create the new panels
                             for (int i = 0; i < row; i++)
                             {
@@ -466,7 +466,52 @@ namespace SPMTool
 
                                     // Append the XData of the original panel
                                     newPnl.XData = rb;
+
+                                    // Create the internal nodes
+                                    if (i > 0 && j > 0)
+                                    {
+                                        DBPoint nd = new DBPoint(new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0))
+                                        {
+                                            Layer = "Node"
+                                        };
+
+                                        // Add the node to the drawing
+                                        blkTblRec.AppendEntity(nd);
+                                        trans.AddNewlyCreatedDBObject(nd, true);
+                                    }
+
+                                    // Create the internal horizontal stringers
+                                    if (i > 0)
+                                    {
+                                        Line strX = new Line()
+                                        {
+                                            StartPoint = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
+                                            EndPoint = new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0),
+                                            Layer = "Stringer"
+                                        };
+
+                                        // Add the line to the drawing
+                                        blkTblRec.AppendEntity(strX);
+                                        trans.AddNewlyCreatedDBObject(strX, true);
+                                    }
+
+                                    // Create the internal vertical stringers
+                                    if (j > 0)
+                                    {
+                                        Line strY = new Line()
+                                        {
+                                            StartPoint = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
+                                            EndPoint = new Point3d(stPt.X + j * distX, stPt.Y + (i + 1) * distY, 0),
+                                            Layer = "Stringer"
+                                        };
+
+                                        // Add the line to the drawing
+                                        blkTblRec.AppendEntity(strY);
+                                        trans.AddNewlyCreatedDBObject(strY, true);
+                                    }
+
                                 }
+
                             }
 
                             // Erase the original panel
@@ -481,7 +526,9 @@ namespace SPMTool
                 trans.Dispose();
             }
 
-            // Update panels
+            // Update the elements
+            AuxMethods.UpdateNodes();
+            AuxMethods.UpdateStringers();
             AuxMethods.UpdatePanels();
         }
 

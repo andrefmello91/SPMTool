@@ -73,6 +73,16 @@ namespace SPMTool.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap divpnl_small {
+            get {
+                object obj = ResourceManager.GetObject("divpnl_small", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap divstr_small {
             get {
                 object obj = ResourceManager.GetObject("divstr_small", resourceCulture);

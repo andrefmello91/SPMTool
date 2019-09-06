@@ -164,5 +164,8 @@
   <ItemGroup>
     <None Include="Resources\force_large.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\divpnl_small.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

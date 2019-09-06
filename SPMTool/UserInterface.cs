@@ -6,12 +6,30 @@ using System.IO;
 using Autodesk.Windows;
 using Autodesk.AutoCAD.Runtime;
 
-[assembly: CommandClass(typeof(SPMTool.UserInterface))]
-
 namespace SPMTool
 {
     public class UserInterface
     {
+        public class Initializer : IExtensionApplication
+        {
+            public void Initialize()
+            {
+                Autodesk.AutoCAD.ApplicationServices.Application.Idle +=
+                new EventHandler(on_ApplicationIdle);
+            }
+
+            public void on_ApplicationIdle(object sender, EventArgs e)
+            {
+                RibbonButtons();
+                Autodesk.AutoCAD.ApplicationServices.Application.Idle -= on_ApplicationIdle;
+            }
+
+            public void Terminate()
+            {
+                
+            }
+        }
+
         public static BitmapImage getBitmap(Bitmap image)
         {
             MemoryStream stream = new MemoryStream();
@@ -23,8 +41,7 @@ namespace SPMTool
             return bmp;
         }
 
-        [CommandMethod("RibbonButtons")]
-        public void RibbonButtons()
+        public static void RibbonButtons()
         {
             Autodesk.Windows.RibbonControl ribbonControl = Autodesk.Windows.ComponentManager.Ribbon;
 
@@ -46,7 +63,7 @@ namespace SPMTool
         }
 
         // Create Geometry Panel
-        public void GeometryPanel(RibbonTab Tab)
+        public static void GeometryPanel(RibbonTab Tab)
         {
             RibbonPanelSource pnlSrc = new RibbonPanelSource();
             pnlSrc.Title = "Geometry";
@@ -143,7 +160,8 @@ namespace SPMTool
             subPnl.Items.Add(rbSpBtn2);
             subPnl.Items.Add(new RibbonRowBreak());
 
-            // View element data button
+            // Element division buttons
+
             RibbonButton button6 = new RibbonButton()
             {
                 Text = "Divide stringer",
@@ -154,11 +172,34 @@ namespace SPMTool
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "DivideStringer"
             };
-            subPnl.Items.Add(button6);
+
+            RibbonButton button7 = new RibbonButton()
+            {
+                Text = "Divide panel",
+                ToolTip = "Divide a panel into smaller ones and creates internal nodes and stringers (surrounding stringers still need to be divided).",
+                ShowText = true,
+                ShowImage = true,
+                Image = getBitmap(Properties.Resources.divpnl_small),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "DividePanel"
+            };
+
+            // Create a split button for Element division
+            RibbonSplitButton rbSpBtn3 = new RibbonSplitButton()
+            {
+                ShowText = true,
+                IsSplit = true,
+                IsSynchronizedWithCurrentItem = true
+            };
+            rbSpBtn3.Items.Add(button6);
+            rbSpBtn3.Items.Add(button7);
+
+            // Add to the sub panel and create a new ribbon row
+            subPnl.Items.Add(rbSpBtn3);
             subPnl.Items.Add(new RibbonRowBreak());
 
             // Update elements button
-            RibbonButton button7 = new RibbonButton()
+            RibbonButton button8 = new RibbonButton()
             {
                 Text = "Update elements",
                 ToolTip = "Update the number of nodes, stringers and panels in the whole model",
@@ -168,8 +209,8 @@ namespace SPMTool
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "UpdateElements"
             };
-            subPnl.Items.Add(button7);
-
+            subPnl.Items.Add(button8);
+            
             // Add the sub panel to the panel source
             pnlSrc.Items.Add(subPnl);
 
@@ -177,7 +218,7 @@ namespace SPMTool
             pnlSrc.Items.Add(new RibbonPanelBreak());
 
             // View element data button
-            RibbonButton button8 = new RibbonButton()
+            RibbonButton button9 = new RibbonButton()
             {
                 Text = "View element data",
                 ToolTip = "View information stored in a determined element",
@@ -187,11 +228,11 @@ namespace SPMTool
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "ViewElementData"
             };
-            pnlSrc.Items.Add(button8);
+            pnlSrc.Items.Add(button9);
         }
 
         // Create Material Panel
-        public void MaterialPanel(RibbonTab Tab)
+        public static void MaterialPanel(RibbonTab Tab)
         {
             RibbonPanelSource pnlSrc = new RibbonPanelSource();
             pnlSrc.Title = "Materials";
@@ -254,7 +295,7 @@ namespace SPMTool
         }
 
         // Create Conditions Panel
-        public void ConditionsPanel(RibbonTab Tab)
+        public static void ConditionsPanel(RibbonTab Tab)
         {
             RibbonPanelSource pnlSrc = new RibbonPanelSource();
             pnlSrc.Title = "Conditions";
@@ -299,7 +340,7 @@ namespace SPMTool
             pnlSrc.Items.Add(rbSpBtn1);
         }
 
-
+        // Command Handler
         public class CmdHandler : System.Windows.Input.ICommand
         {
             public bool CanExecute(object parameter)
