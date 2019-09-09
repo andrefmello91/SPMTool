@@ -55,8 +55,6 @@ namespace SPMTool
                     // Get the length and angles
                     double lngt = str.Length;
                     double alpha = str.Angle;             // angle with x coordinate
-                    double beta = Math.PI / 2 - alpha;    // angle with y coordinate
-                    double gamma = Math.PI / 2;           // angle with z coordinate
 
                     // Read the XData and get the necessary data
                     ResultBuffer strRb = str.GetXDataForApplication(Global.appName);
@@ -71,15 +69,14 @@ namespace SPMTool
                     double A = wd * h;
 
                     // Get the direction cosines
-                    double l, m, n;
+                    double l;                                         // cosine with x
 
                     // If the angle is 90 or 270 degrees, the cosine is zero
-                    if (alpha == Math.PI / 2 || alpha == 3 * Math.PI / 2) l = 0;
-                    else l = Math.Cos(alpha);
-                    if (beta == Math.PI / 2 || beta == 3 * Math.PI / 2) m = 0;
-                    else m = Math.Cos(beta);
-                    if (gamma == Math.PI / 2 || gamma == 3 * Math.PI / 2) n = 0;
-                    else n = Math.Cos(gamma);
+                    if (alpha == MathNet.Numerics.Constants.Pi / 2 || alpha == 3 * MathNet.Numerics.Constants.Pi / 2) l = 0;
+                    else l = MathNet.Numerics.Trig.Cos(alpha);
+
+                    double m = MathNet.Numerics.Trig.Sin(alpha);      // cosine with y
+                    double n = 0;                                     // cosine with z
 
                     // Obtain the transformation matrix
                     var T = Matrix<double>.Build.DenseOfArray(new double[,] {

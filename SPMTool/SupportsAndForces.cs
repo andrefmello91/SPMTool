@@ -234,7 +234,7 @@ namespace SPMTool
                                     if (xForce > 0) // positive force in x
                                     {
                                         // Rotate 90 degress counterclockwise
-                                        rotAng = 1.570796;
+                                        rotAng = MathNet.Numerics.Constants.Pi / 2;
 
                                         // Set the text position
                                         txtPos = new Point3d(xPos - 400, yPos + 25, 0);
@@ -243,7 +243,7 @@ namespace SPMTool
                                     if (xForce < 0) // negative force in x
                                     {
                                         // Rotate 90 degress clockwise
-                                        rotAng = -1.570796;
+                                        rotAng = - MathNet.Numerics.Constants.Pi / 2;
 
                                         // Set the text position
                                         txtPos = new Point3d(xPos + 150, yPos + 25, 0);
@@ -287,8 +287,8 @@ namespace SPMTool
 
                                     if (yForce > 0) // positive force in y
                                     {
-                                        // Rotate 90 degress counterclockwise
-                                        rotAng = 3.14159265;
+                                        // Rotate 180 degress counterclockwise
+                                        rotAng = MathNet.Numerics.Constants.Pi;
 
                                         // Set the text position
                                         txtPos = new Point3d(xPos + 25, yPos - 250, 0);
