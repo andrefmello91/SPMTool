@@ -679,8 +679,8 @@ namespace SPMTool
 
                     // Set the updated number and nodes in ascending number (line 2 and 3 of the array) and length
                     data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
-                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, Math.Min(strStNd, strEnNd));
-                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, Math.Max(strStNd, strEnNd));
+                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
+                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
                     data[5] = new TypedValue((int)DxfCode.ExtendedDataReal, str.Length);
 
                     // Add the new XData
@@ -812,9 +812,9 @@ namespace SPMTool
                     }
 
 
-                    // Order the nodes array in ascending
-                    var ndOrd = ndNums.OrderBy(x => x);
-                    ndNums = ndOrd.ToArray();
+                    //// Order the nodes array in ascending
+                    //var ndOrd = ndNums.OrderBy(x => x);
+                    //ndNums = ndOrd.ToArray();
 
                     // Check if the XData already exist. If not, create it
                     if (pnl.XData == null)
@@ -850,11 +850,16 @@ namespace SPMTool
                     // Set the updated panel number (line 2)
                     data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
 
-                    // Set the updated node numbers (line 3 to 6 of the array)
-                    for (int k = 3; k <= 6; k++)
-                    {
-                        data[k] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[k-3]);
-                    }
+                    // Set the updated node numbers in the necessary order (line 3 to 6 of the array)
+                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[0]);
+                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[1]);
+                    data[5] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[3]);
+                    data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[2]);
+
+                    //for (int k = 3; k <= 6; k++)
+                    //{
+                    //    data[k] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[k-3]);
+                    //}
 
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);

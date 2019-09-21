@@ -72,7 +72,7 @@ namespace SPMTool
                     double l;                                         // cosine with x
 
                     // If the angle is 90 or 270 degrees, the cosine is zero
-                    if (alpha == MathNet.Numerics.Constants.Pi / 2 || alpha == 3 * MathNet.Numerics.Constants.Pi / 2) l = 0;
+                    if (alpha == MathNet.Numerics.Constants.PiOver2 || alpha == MathNet.Numerics.Constants.Pi3Over2) l = 0;
                     else l = MathNet.Numerics.Trig.Cos(alpha);
 
                     double m = MathNet.Numerics.Trig.Sin(alpha);      // cosine with y
