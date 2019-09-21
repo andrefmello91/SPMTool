@@ -18,6 +18,11 @@ namespace SPMTool
 
         // Define the appName
         public static string appName = "SPMTool";
+
+        // Constants
+        public static double pi = MathNet.Numerics.Constants.Pi;
+        public static double piOver2 = MathNet.Numerics.Constants.PiOver2;
+        public static double pi3Over2 = MathNet.Numerics.Constants.Pi3Over2;
     }
 
     // Auxiliary Methods

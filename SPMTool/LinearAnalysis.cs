@@ -4,7 +4,6 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double;
 using Autodesk.AutoCAD.Geometry;
 
 [assembly: CommandClass(typeof(SPMTool.LinearAnalysis))]
@@ -55,7 +54,7 @@ namespace SPMTool
 
                     // Get the length and angles
                     double lngt = str.Length;
-                    double alpha = str.Angle;             // angle with x coordinate
+                    double alpha = str.Angle;                          // angle with x coordinate
 
                     // Read the XData and get the necessary data
                     ResultBuffer strRb = str.GetXDataForApplication(Global.appName);
@@ -73,7 +72,7 @@ namespace SPMTool
                     double l;                                         // cosine with x
 
                     // If the angle is 90 or 270 degrees, the cosine is zero
-                    if (alpha == MathNet.Numerics.Constants.PiOver2 || alpha == MathNet.Numerics.Constants.Pi3Over2) l = 0;
+                    if (alpha == Global.piOver2 || alpha == Global.pi3Over2) l = 0;
                     else l = MathNet.Numerics.Trig.Cos(alpha);
 
                     double m = MathNet.Numerics.Trig.Sin(alpha);      // cosine with y
@@ -183,11 +182,10 @@ namespace SPMTool
 
                     // Get the angles
                     double ang1 = ln1.Angle - ln0.Angle;
-                    double ang2 = ln2.Angle - ln1.Angle;
                     double ang3 = ln3.Angle - ln2.Angle;
 
                     // If the panel is rectangular (all angles will be equal, and equal to 90 degrees)
-                    if (ang1.Equals(ang2) || ang1.Equals(ang2))
+                    if (ang1.Equals(Global.piOver2) || ang3.Equals(Global.piOver2))
                     {
                         Global.ed.WriteMessage("\n Painel " + pnlNum.ToString() + " is rectangular!");
                     }
