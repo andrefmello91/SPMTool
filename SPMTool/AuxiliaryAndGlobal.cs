@@ -811,11 +811,6 @@ namespace SPMTool
                         }
                     }
 
-
-                    //// Order the nodes array in ascending
-                    //var ndOrd = ndNums.OrderBy(x => x);
-                    //ndNums = ndOrd.ToArray();
-
                     // Check if the XData already exist. If not, create it
                     if (pnl.XData == null)
                     {
@@ -855,11 +850,6 @@ namespace SPMTool
                     data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[1]);
                     data[5] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[3]);
                     data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[2]);
-
-                    //for (int k = 3; k <= 6; k++)
-                    //{
-                    //    data[k] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[k-3]);
-                    //}
 
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);
