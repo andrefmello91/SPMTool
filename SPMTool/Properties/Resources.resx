@@ -121,46 +121,91 @@
   <data name="concrete_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\concrete_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="concrete_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\concrete_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="divpnl_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\divpnl_small.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="divpnl_small_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\divpnl_small_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="divstr_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\divstr_small.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="divstr_small_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\divstr_small_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="force_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\force_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="force_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\force_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="node_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\node_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="node_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\node_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="panel_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panel_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="panel_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\panel_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="plus_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\plus_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="plus_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\plus_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="plus_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\plus_small.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="plus_small_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\plus_small_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="set_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\set_small.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="set_small_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\set_small_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="steel_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\steel_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="steel_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\steel_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="stringer_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\stringer_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="stringer_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\stringer_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="support_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\support_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="support_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\support_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="update_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\update_small.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="update_small_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\update_small_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="view_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\view_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="view_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\view_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="view_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\view_small.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="view_small_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\view_small_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

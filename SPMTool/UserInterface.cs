@@ -3,6 +3,7 @@ using System.Windows.Media.Imaging;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
 using Autodesk.AutoCAD.Runtime;
 
@@ -23,7 +24,7 @@ namespace SPMTool
                 RibbonButtons();
                 Autodesk.AutoCAD.ApplicationServices.Application.Idle -= on_ApplicationIdle;
             }
-
+            
             public void Terminate()
             {
                 
@@ -45,6 +46,48 @@ namespace SPMTool
         {
             Autodesk.Windows.RibbonControl ribbonControl = Autodesk.Windows.ComponentManager.Ribbon;
 
+            // Check the current theme
+            short theme = (short)Application.GetSystemVariable("COLORTHEME");
+
+            // Initialize the icons
+            Bitmap ndBmp, strBmp, pnlBmp,
+                   setBmp, dvStrBmp, dvPnlBmp,
+                   updtBmp, viewBmp,
+                   cncrtBmp, stlBmp,
+                   suprtBmp, fcBmp;
+
+            // If the theme is dark (0), get the light icons
+            if (theme == 0)
+            {
+                ndBmp = Properties.Resources.node_large_light;
+                strBmp = Properties.Resources.stringer_large_light;
+                pnlBmp = Properties.Resources.panel_large_light;
+                setBmp = Properties.Resources.set_small_light;
+                dvStrBmp = Properties.Resources.divstr_small_light;
+                dvPnlBmp = Properties.Resources.divpnl_small_light;
+                updtBmp = Properties.Resources.update_small_light;
+                viewBmp = Properties.Resources.view_small_light;
+                cncrtBmp = Properties.Resources.concrete_large_light;
+                stlBmp = Properties.Resources.steel_large_light;
+                suprtBmp = Properties.Resources.support_large_light;
+                fcBmp = Properties.Resources.force_large_light;
+            }
+            else // If the theme is light
+            {
+                ndBmp = Properties.Resources.node_large;
+                strBmp = Properties.Resources.stringer_large;
+                pnlBmp = Properties.Resources.panel_large;
+                setBmp = Properties.Resources.set_small;
+                dvStrBmp = Properties.Resources.divstr_small;
+                dvPnlBmp = Properties.Resources.divpnl_small;
+                updtBmp = Properties.Resources.update_small;
+                viewBmp = Properties.Resources.view_small;
+                cncrtBmp = Properties.Resources.concrete_large;
+                stlBmp = Properties.Resources.steel_large;
+                suprtBmp = Properties.Resources.support_large;
+                fcBmp = Properties.Resources.force_large;
+            }
+
             // Create the Ribbon Tab
             RibbonTab Tab = new RibbonTab()
             {
@@ -54,16 +97,16 @@ namespace SPMTool
             ribbonControl.Tabs.Add(Tab);
 
             // Create the Ribbon panels
-            GeometryPanel(Tab);
-            MaterialPanel(Tab);
-            ConditionsPanel(Tab);
+            GeometryPanel(Tab, ndBmp, strBmp, pnlBmp, setBmp, dvStrBmp, dvPnlBmp, updtBmp, viewBmp);
+            MaterialPanel(Tab, cncrtBmp, stlBmp, viewBmp);
+            ConditionsPanel(Tab, suprtBmp, fcBmp);
 
             // Activate tab
             Tab.IsActive = true;
         }
 
         // Create Geometry Panel
-        public static void GeometryPanel(RibbonTab Tab)
+        public static void GeometryPanel(RibbonTab Tab, Bitmap node, Bitmap stringer, Bitmap panel, Bitmap set, Bitmap divideStringer, Bitmap dividePanel, Bitmap update, Bitmap view)
         {
             RibbonPanelSource pnlSrc = new RibbonPanelSource();
             pnlSrc.Title = "Geometry";
@@ -78,7 +121,7 @@ namespace SPMTool
                 ToolTip = "Create a node",
                 ShowText = true,
                 ShowImage = true,
-                LargeImage = getBitmap(Properties.Resources.node_large),
+                LargeImage = getBitmap(node),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "AddNode"
             };
@@ -89,7 +132,7 @@ namespace SPMTool
                 ToolTip = "Create a stringer conecting two nodes",
                 ShowText = true,
                 ShowImage = true,
-                LargeImage = getBitmap(Properties.Resources.stringer_large),
+                LargeImage = getBitmap(stringer),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "AddStringer"
             };
@@ -100,7 +143,7 @@ namespace SPMTool
                 ToolTip = "Create a panel conecting four nodes",
                 ShowText = true,
                 ShowImage = true,
-                LargeImage = getBitmap(Properties.Resources.panel_large),
+                LargeImage = getBitmap(panel),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "AddPanel"
             };
@@ -130,7 +173,7 @@ namespace SPMTool
                 ToolTip = "Set the geometry and steel reinforcement to a selection of stringers",
                 ShowText = true,
                 ShowImage = true,
-                Image = getBitmap(Properties.Resources.set_small),
+                Image = getBitmap(set),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "SetStringerParameters"
             };
@@ -141,7 +184,7 @@ namespace SPMTool
                 ToolTip = "Set the geometry and steel reinforcement to a selection of panels",
                 ShowText = true,
                 ShowImage = true,
-                Image = getBitmap(Properties.Resources.set_small),
+                Image = getBitmap(set),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "SetPanelParameters"
             };
@@ -168,7 +211,7 @@ namespace SPMTool
                 ToolTip = "Divide a stringer into smaller ones",
                 ShowText = true,
                 ShowImage = true,
-                Image = getBitmap(Properties.Resources.divstr_small),
+                Image = getBitmap(divideStringer),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "DivideStringer"
             };
@@ -179,7 +222,7 @@ namespace SPMTool
                 ToolTip = "Divide a panel into smaller ones and creates internal nodes and stringers (surrounding stringers still need to be divided).",
                 ShowText = true,
                 ShowImage = true,
-                Image = getBitmap(Properties.Resources.divpnl_small),
+                Image = getBitmap(dividePanel),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "DividePanel"
             };
@@ -205,7 +248,7 @@ namespace SPMTool
                 ToolTip = "Update the number of nodes, stringers and panels in the whole model",
                 ShowText = true,
                 ShowImage = true,
-                Image = getBitmap(Properties.Resources.update_small),
+                Image = getBitmap(update),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "UpdateElements"
             };
@@ -224,7 +267,7 @@ namespace SPMTool
                 ToolTip = "View information stored in a determined element",
                 ShowText = true,
                 ShowImage = true,
-                Image = getBitmap(Properties.Resources.view_small),
+                Image = getBitmap(view),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "ViewElementData"
             };
@@ -232,7 +275,7 @@ namespace SPMTool
         }
 
         // Create Material Panel
-        public static void MaterialPanel(RibbonTab Tab)
+        public static void MaterialPanel(RibbonTab Tab, Bitmap concrete, Bitmap steel, Bitmap view)
         {
             RibbonPanelSource pnlSrc = new RibbonPanelSource();
             pnlSrc.Title = "Materials";
@@ -247,7 +290,7 @@ namespace SPMTool
                 ToolTip = "Set concrete compressive strength and elastic module",
                 ShowText = true,
                 ShowImage = true,
-                LargeImage = getBitmap(Properties.Resources.concrete_large),
+                LargeImage = getBitmap(concrete),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "SetConcreteParameters"
             };
@@ -258,7 +301,7 @@ namespace SPMTool
                 ToolTip = "Set concrete yield strength and elastic module",
                 ShowText = true,
                 ShowImage = true,
-                LargeImage = getBitmap(Properties.Resources.steel_large),
+                LargeImage = getBitmap(steel),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "SetSteelParameters"
             };
@@ -287,7 +330,7 @@ namespace SPMTool
                 ToolTip = "View concrete and steel parameters",
                 ShowText = true,
                 ShowImage = true,
-                LargeImage = getBitmap(Properties.Resources.view_small),
+                LargeImage = getBitmap(view),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "ViewMaterialParameters"
             };
@@ -295,7 +338,7 @@ namespace SPMTool
         }
 
         // Create Conditions Panel
-        public static void ConditionsPanel(RibbonTab Tab)
+        public static void ConditionsPanel(RibbonTab Tab, Bitmap support, Bitmap force)
         {
             RibbonPanelSource pnlSrc = new RibbonPanelSource();
             pnlSrc.Title = "Conditions";
@@ -309,7 +352,7 @@ namespace SPMTool
                 ToolTip = "Set support condition to a group of nodes",
                 ShowText = true,
                 ShowImage = true,
-                LargeImage = getBitmap(Properties.Resources.support_large),
+                LargeImage = getBitmap(support),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "AddSupport"
             };
@@ -320,7 +363,7 @@ namespace SPMTool
                 ToolTip = "Add forces to a group of nodes",
                 ShowText = true,
                 ShowImage = true,
-                LargeImage = getBitmap(Properties.Resources.force_large),
+                LargeImage = getBitmap(force),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "AddForce"
             };

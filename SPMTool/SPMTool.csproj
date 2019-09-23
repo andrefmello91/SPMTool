@@ -135,9 +135,6 @@
     <None Include="Resources\plus_large.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\support_small.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\support_large.png" />
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +163,51 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\divpnl_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\concrete_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\divpnl_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\divstr_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\force_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\node_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panel_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\plus_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\plus_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\set_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\steel_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringer_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\support_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\update_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\view_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\view_small_light.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
