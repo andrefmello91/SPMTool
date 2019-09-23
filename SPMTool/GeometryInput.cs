@@ -795,6 +795,16 @@ namespace SPMTool
                                          "Reinforcement ratio (x) = " + psx + "\n" +
                                          "Reinforcement ratio (y) = " + psy;
                             }
+
+                            // If it's a force text
+                            if (ent.Layer == "ForceText")
+                            {
+                                // Get the parameters
+                                string posX = data[2].Value.ToString(), posY = data[3].Value.ToString();
+
+                                msgstr = "Force at position  (" + posX + ", " + posY + ")";
+                            }
+
                         }
                         else
                         {

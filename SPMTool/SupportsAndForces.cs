@@ -29,6 +29,12 @@ namespace SPMTool
             // Check if the support blocks already exist. If not, create the blocks
             AuxMethods.CreateSupportBlocks();
 
+            // Get all the supports in the model
+            ObjectIdCollection sprts = AuxMethods.GetEntitiesOnLayer(supLayer);
+
+            // Update the nodes
+            //AuxMethods.UpdateNodes();
+
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
@@ -57,10 +63,11 @@ namespace SPMTool
                     supOp.Keywords.Add("Y");
                     supOp.Keywords.Add("XY");
                     supOp.Keywords.Default = "Free";
-                    supOp.AllowNone = true;
+                    supOp.AllowNone = false;
 
                     // Get the result
                     PromptResult supRes = Global.ed.GetKeywords(supOp);
+                    if (supRes.Status == PromptStatus.Cancel) return;
 
                     // Set the support
                     string support = supRes.StringResult;
@@ -75,7 +82,7 @@ namespace SPMTool
                         {
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
-
+                            
                             // Read as a point and get the position
                             DBPoint nd = ent as DBPoint;
                             Point3d ndPos = nd.Position;
@@ -84,6 +91,24 @@ namespace SPMTool
                             ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
                             TypedValue[] data = rb.AsArray();
 
+                            // Check if there is a support block at the node position
+                            if (sprts.Count > 0)
+                            {
+                                foreach (ObjectId spObj in sprts)
+                                {
+                                    // Read as a block reference
+                                    BlockReference spBlk = trans.GetObject(spObj, OpenMode.ForRead) as BlockReference;
+
+                                    // Check if the position is equal to the selected node
+                                    if (spBlk.Position == ndPos)
+                                    {
+                                        // Erase the support
+                                        spBlk.UpgradeOpen();
+                                        spBlk.Erase();
+                                    }
+                                }
+                            }
+
                             // Set the new support conditions (line 5 of the array)
                             data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
 
@@ -91,22 +116,26 @@ namespace SPMTool
                             ResultBuffer newRb = new ResultBuffer(data);
                             ent.XData = newRb;
 
-                            // Add the block to selected node at
-                            Point3d insPt = ndPos;
-
-                            // Choose the block to insert
-                            ObjectId supBlock = ObjectId.Null;
-                            if (support == "X" && xBlock != ObjectId.Null) supBlock = xBlock;
-                            if (support == "Y" && yBlock != ObjectId.Null) supBlock = yBlock;
-                            if (support == "XY" && xyBlock != ObjectId.Null) supBlock = xyBlock;
-
-                            // Insert the block into the current space
-                            using (BlockReference blkRef = new BlockReference(insPt, supBlock))
+                            // If the node is not Free, add the support blocks
+                            if (support != "Free")
                             {
-                                BlockTableRecord blkTblRec = trans.GetObject(Global.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                blkTblRec.AppendEntity(blkRef);
-                                blkRef.Layer = supLayer;
-                                trans.AddNewlyCreatedDBObject(blkRef, true);
+                                // Add the block to selected node at
+                                Point3d insPt = ndPos;
+
+                                // Choose the block to insert
+                                ObjectId supBlock = new ObjectId();
+                                if (support == "X" && xBlock != ObjectId.Null) supBlock = xBlock;
+                                if (support == "Y" && yBlock != ObjectId.Null) supBlock = yBlock;
+                                if (support == "XY" && xyBlock != ObjectId.Null) supBlock = xyBlock;
+
+                                // Insert the block into the current space
+                                using (BlockReference blkRef = new BlockReference(insPt, supBlock))
+                                {
+                                    BlockTableRecord blkTblRec = trans.GetObject(Global.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    blkTblRec.AppendEntity(blkRef);
+                                    blkRef.Layer = supLayer;
+                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+                                }
                             }
                         }
                     }
@@ -122,22 +151,30 @@ namespace SPMTool
         public void AddForce()
         {
             // Get the coordinate system for transformations
-            Matrix3d curUCSMatrix = Global.curDoc.Editor.CurrentUserCoordinateSystem;
+            Matrix3d curUCSMatrix = Global.ed.CurrentUserCoordinateSystem;
             CoordinateSystem3d curUCS = curUCSMatrix.CoordinateSystem3d;
 
             // Define the layer parameters
             string fLayer = "Force";
+            string fTxtLayer = "ForceText";
             short yellow = 2;
 
             // Initialize variables
             PromptSelectionResult selRes;
             SelectionSet set;
 
-            // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+            // Check if the layer Force and ForceText already exists in the drawing. If it doesn't, then it's created:
             AuxMethods.CreateLayer(fLayer, yellow, 0);
+            AuxMethods.CreateLayer(fTxtLayer, yellow, 0);
 
             // Check if the force block already exist. If not, create the blocks
             AuxMethods.CreateForceBlock();
+
+            // Get all the force blocks in the model
+            ObjectIdCollection fcs = AuxMethods.GetEntitiesOnLayer(fLayer);
+
+            // Get all the force texts in the model
+            ObjectIdCollection fcTxts = AuxMethods.GetEntitiesOnLayer(fTxtLayer);
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
@@ -163,10 +200,11 @@ namespace SPMTool
                     {
                         DefaultValue = 0
                     };
-
+                    
                     // Get the result
                     PromptDoubleResult xForceRes = Global.ed.GetDouble(xForceOp);
-                    Double xForce = xForceRes.Value;
+                    if (xForceRes.Status == PromptStatus.Cancel) return;
+                    double xForce = xForceRes.Value;
 
                     // Ask the user set the load value in y direction:
                     PromptDoubleOptions yForceOp = new PromptDoubleOptions("\nEnter force (in N) in Y direction(positive following axis direction)?")
@@ -176,7 +214,8 @@ namespace SPMTool
 
                     // Get the result
                     PromptDoubleResult yForceRes = Global.ed.GetDouble(yForceOp);
-                    Double yForce = yForceRes.Value;
+                    if (yForceRes.Status == PromptStatus.Cancel) return;
+                    double yForce = yForceRes.Value;
 
                     foreach (SelectedObject obj in set)
                     {
@@ -211,6 +250,51 @@ namespace SPMTool
 
                             // Add the block to selected node at
                             Point3d insPt = ndPos;
+
+                            // Check if there is a force block at the node position
+                            if (fcs.Count > 0)
+                            {
+                                foreach (ObjectId fcObj in fcs)
+                                {
+                                    // Read as a block reference
+                                    BlockReference fcBlk = trans.GetObject(fcObj, OpenMode.ForRead) as BlockReference;
+
+                                    // Check if the position is equal to the selected node
+                                    if (fcBlk.Position == ndPos)
+                                    {
+                                        // Erase the force block
+                                        fcBlk.UpgradeOpen();
+                                        fcBlk.Erase();
+                                    }
+                                }
+                            }
+
+                            // Check if there is a force text at the node position
+                            if (fcTxts.Count > 0)
+                            {
+                                foreach (ObjectId txtObj in fcTxts)
+                                {
+                                    // Read as text
+                                    Entity txtEnt = trans.GetObject(txtObj, OpenMode.ForRead) as Entity;
+
+                                    // Access the XData as an array
+                                    ResultBuffer txtRb = txtEnt.GetXDataForApplication(Global.appName);
+                                    TypedValue[] txtData = txtRb.AsArray();
+
+                                    // Get the position of the node of the text
+                                    double ndX = Convert.ToDouble(txtData[2].Value);
+                                    double ndY = Convert.ToDouble(txtData[3].Value);
+                                    Point3d ndTxtPos = new Point3d(ndX, ndY, 0);
+
+                                    // Check if the position is equal to the selected node
+                                    if (ndTxtPos == ndPos)
+                                    {
+                                        // Erase the text
+                                        txtEnt.UpgradeOpen();
+                                        txtEnt.Erase();
+                                    }
+                                }
+                            }
 
                             // Insert the block into the current space
                             // For forces in x
@@ -258,12 +342,23 @@ namespace SPMTool
                                         TextString = xForceAbs.ToString() + " N",
                                         Position = txtPos,
                                         Height = 50,
-                                        Layer = fLayer
+                                        Layer = fTxtLayer
                                     };
 
                                     // Append the text to drawing
                                     blkTblRec.AppendEntity(text);
                                     trans.AddNewlyCreatedDBObject(text, true);
+
+                                    // Add the node position to the text XData
+                                    using (ResultBuffer txtRb = new ResultBuffer())
+                                    {
+                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));    // 0
+                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Force at nodes")); // 1
+                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndPos.X));                 // 2
+                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndPos.Y));                 // 3
+
+                                        text.XData = txtRb;
+                                    }
                                 }
                             }
 
@@ -311,12 +406,23 @@ namespace SPMTool
                                         TextString = yForceAbs.ToString() + " N",
                                         Position = txtPos,
                                         Height = 50,
-                                        Layer = fLayer
+                                        Layer = fTxtLayer
                                     };
 
                                     // Append the text to drawing
                                     blkTblRec.AppendEntity(text);
                                     trans.AddNewlyCreatedDBObject(text, true);
+
+                                    // Add the node position to the text XData
+                                    using (ResultBuffer txtRb = new ResultBuffer())
+                                    {
+                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));    // 0
+                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Force at nodes")); // 1
+                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndPos.X));                 // 2
+                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndPos.Y));                 // 3
+
+                                        text.XData = txtRb;
+                                    }
                                 }
                             }
                         }
