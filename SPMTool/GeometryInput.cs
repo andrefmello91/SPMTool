@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -124,9 +125,9 @@ namespace SPMTool
                         if (strEndRes.Status == PromptStatus.OK)
                         {
                             // Get the points ordered in ascending Y and ascending X:
-                            double[][] extNds = AuxMethods.OrderElements(2, nds);
-                            Point3d strSt = new Point3d(extNds[0][1], extNds[0][2], 0);
-                            Point3d strEnd = new Point3d(extNds[1][1], extNds[1][2], 0);
+                            List<Point3d> extNds = AuxMethods.OrderPoints(nds);
+                            Point3d strSt = extNds[0];
+                            Point3d strEnd = extNds[1];
 
                             // Open the Block table for read
                             BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
@@ -215,16 +216,16 @@ namespace SPMTool
                 }
 
                 // Order the vertices in ascending Y and ascending X
-                double[][] vrts = AuxMethods.OrderElements(4, nds);
+                List<Point3d> vrts = AuxMethods.OrderPoints(nds);
 
                 // Initialize the array of vertices of the panel
-                Point3d[] pnlVrts = new Point3d[4];
+                //Point3d[] pnlVrts = new Point3d[4];
 
-                // Add the vertices ordered
-                for (int i = 0; i < 4; i++)
-                {
-                    pnlVrts[i] = new Point3d(vrts[i][1], vrts[i][2], 0);
-                }
+                //// Add the vertices ordered
+                //for (int i = 0; i < 4; i++)
+                //{
+                //    pnlVrts[i] = new Point3d(vrts[i][1], vrts[i][2], 0);
+                //}
 
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
@@ -233,7 +234,7 @@ namespace SPMTool
                 BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
                 // Create the panel as a solid with 4 segments (4 points)
-                using (Solid newPnl = new Solid(pnlVrts[0], pnlVrts[1], pnlVrts[2], pnlVrts[3]))
+                using (Solid newPnl = new Solid(vrts[0], vrts[1], vrts[2], vrts[3]))
                 {
                     // Set the layer to Panel
                     newPnl.Layer = pnlLayer;

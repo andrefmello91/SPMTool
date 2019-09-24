@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -377,62 +378,78 @@ namespace SPMTool
         }
 
         // This method order the elements in a collection in ascending yCoord, then ascending xCoord, returns the array of points ordered
-        public static double[][] OrderElements(int numElements, Point3dCollection points)
+        //public static double[][] OrderElements(int numElements, Point3dCollection points)
+        //{
+        //    // Initialize the point array with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
+        //    double[][] elmntsArray = new double[numElements][];
+
+        //    // Access the nodes on the document
+        //    int i = 0; // array position
+        //    foreach (Point3d pt in points)
+        //    {
+        //        // Get the coordinates
+        //        double xCoord = pt.X;
+        //        double yCoord = pt.Y;
+
+        //        // Add to the array with the number initially unassigned
+        //        elmntsArray[i] = new double[] { 0, xCoord, yCoord };
+
+        //        // Increment the array position
+        //        i++;
+        //    }
+
+        //    // Order the array
+        //    var elmntsArrayOrd = elmntsArray.OrderBy(y => y[2]).ThenBy(x => x[1]);
+        //    elmntsArray = elmntsArrayOrd.ToArray();
+
+        //    // Set the node numbers in the array
+        //    for (int elmntNum = 1; elmntNum <= numElements; elmntNum++)
+        //    {
+        //        // array position
+        //        i = elmntNum - 1;
+        //        elmntsArray[i][0] = elmntNum;
+        //    }
+
+        //    // Return the array ordered
+        //    return elmntsArray;
+        //}
+
+        // This method order the elements in a collection in ascending yCoord, then ascending xCoord, returns the array of points ordered
+        public static List<Point3d> OrderPoints(Point3dCollection points)
         {
-            // Initialize the point array with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
-            double[][] elmntsArray = new double[numElements][];
+            // Initialize the point list
+            List<Point3d> ptList = new List<Point3d>();
 
-            // Access the nodes on the document
-            int i = 0; // array position
-            foreach (Point3d pt in points)
-            {
-                // Get the coordinates
-                double xCoord = pt.X;
-                double yCoord = pt.Y;
+            // Add the point collection to the list
+            foreach (Point3d pt in points) ptList.Add(pt);
 
-                // Add to the array with the number initially unassigned
-                elmntsArray[i] = new double[] { 0, xCoord, yCoord };
+            // Order the point list
+            ptList = ptList.OrderBy(pt => pt.Y).ThenBy(pt => pt.X).ToList();
 
-                // Increment the array position
-                i++;
-            }
-
-            // Order the array
-            var elmntsArrayOrd = elmntsArray.OrderBy(y => y[2]).ThenBy(x => x[1]);
-            elmntsArray = elmntsArrayOrd.ToArray();
-
-            // Set the node numbers in the array
-            for (int elmntNum = 1; elmntNum <= numElements; elmntNum++)
-            {
-                // array position
-                i = elmntNum - 1;
-                elmntsArray[i][0] = elmntNum;
-            }
-
-            // Return the array ordered
-            return elmntsArray;
+            // Return the point list
+            return ptList;
         }
 
-        // This method returns an array of points enumerated (num, xCoord, yCoord)
-        public static double SetElementNumber(Point3d point, int numElements, double[][] elmntsArray)
-        {
-            // Initialize the element number
-            double elmntNum = 0;
+        //// This method returns an array of points enumerated (num, xCoord, yCoord)
+        //public static double SetElementNumber(Point3d point, int numElements, double[][] elmntsArray)
+        //{
+        //    // Initialize the element number
+        //    double elmntNum = 0;
 
-            // Assign the node number from the array
-            for (int i = 0; i < numElements; i++)
-            {
-                // Check what line of the array corresponds the point position
-                if (point.X == elmntsArray[i][1] && point.Y == elmntsArray[i][2])
-                {
-                    // Get the element number from the array
-                    elmntNum = elmntsArray[i][0];
-                }
-            }
+        //    // Assign the node number from the array
+        //    for (int i = 0; i < numElements; i++)
+        //    {
+        //        // Check what line of the array corresponds the point position
+        //        if (point.X == elmntsArray[i][1] && point.Y == elmntsArray[i][2])
+        //        {
+        //            // Get the element number from the array
+        //            elmntNum = elmntsArray[i][0];
+        //        }
+        //    }
 
-            // Return the element number
-            return elmntNum;
-        }
+        //    // Return the element number
+        //    return elmntNum;
+        //}
 
         // Enumerate all the nodes in the model and return the number of nodes
         public static int UpdateNodes()
@@ -467,16 +484,13 @@ namespace SPMTool
                 }
 
                 // Get the array of points ordered
-                double[][] ptsArray = OrderElements(numNds, pts);
+                List<Point3d> ndList = OrderPoints(pts);
 
                 // Access the nodes on the document
                 foreach (ObjectId obj in nds)
                 {
                     // Read the object as a point
                     DBPoint nd = trans.GetObject(obj, OpenMode.ForWrite) as DBPoint;
-
-                    // Get the node number
-                    double ndNum = SetElementNumber(nd.Position, numNds, ptsArray);
 
                     // If the Extended data does not exist, create it
                     if (nd.XData == null)
@@ -508,6 +522,9 @@ namespace SPMTool
                             ent.XData = defRb;
                         }
                     }
+
+                    // Get the node number on the list
+                    double ndNum = ndList.IndexOf(nd.Position) + 1;
 
                     // Get the result buffer as an array
                     ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
@@ -581,7 +598,7 @@ namespace SPMTool
                 }
 
                 // Get the array of midpoints ordered
-                double[][] midPtsArray = OrderElements(numStrs, midPts);
+                List<Point3d> midPtsList = OrderPoints(midPts);
 
                 // Access the nodes on the document
                 foreach (ObjectId strObj in strs)
@@ -589,57 +606,9 @@ namespace SPMTool
                     // Initialize the variables
                     double strStNd = 0;
                     double strEnNd = 0;
-                    double strNum = 0;
 
                     // Open the selected object as a line for write
                     Line str = trans.GetObject(strObj, OpenMode.ForWrite) as Line;
-                    
-                    // Get the points of the line
-                    Point3d strStPos = str.StartPoint;
-                    Point3d strEnPos = str.EndPoint;
-
-                    // Get the coordinates of the midpoint of the stringer
-                    double midPtX = (str.StartPoint.X + str.EndPoint.X) / 2;
-                    double midPtY = (str.StartPoint.Y + str.EndPoint.Y) / 2;
-                    Point3d midPt = new Point3d(midPtX, midPtY, 0);
-
-                    // Get the stringer number
-                    strNum = SetElementNumber(midPt, numStrs, midPtsArray);
-
-                    // Compare to the nodes collection
-                    foreach (ObjectId ndObj in nds)
-                    {
-                        // Open the selected object as a point for read
-                        DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-
-                        // Read the entity as a point and get the position
-                        Point3d ndPos = nd.Position;
-
-                        // Get the start and end nodes
-                        // Compare the start node
-                        if (strStPos == ndPos)
-                        {
-                            // Get the node number
-                            // Access the XData as an array
-                            ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
-                            TypedValue[] dataNd = ndRb.AsArray();
-
-                            // Get the node number (line 2)
-                            strStNd = Convert.ToDouble(dataNd[2].Value);
-                        }
-
-                        // Compare the end node
-                        if (strEnPos == ndPos)
-                        {
-                            // Get the node number
-                            // Access the XData as an array
-                            ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
-                            TypedValue[] dataNd = ndRb.AsArray();
-
-                            // Get the node number (line 2)
-                            strEnNd = Convert.ToDouble(dataNd[2].Value);
-                        }
-                    }
 
                     // If XData does not exist, create it
                     if (str.XData == null)
@@ -675,6 +644,53 @@ namespace SPMTool
 
                             // Append the extended data to each object
                             ent.XData = rb;
+                        }
+                    }
+
+                    // Get the points of the line
+                    Point3d strStPos = str.StartPoint;
+                    Point3d strEnPos = str.EndPoint;
+
+                    // Get the coordinates of the midpoint of the stringer
+                    double midPtX = (str.StartPoint.X + str.EndPoint.X) / 2;
+                    double midPtY = (str.StartPoint.Y + str.EndPoint.Y) / 2;
+                    Point3d midPt = new Point3d(midPtX, midPtY, 0);
+
+                    // Get the stringer number
+                    double strNum = midPtsList.IndexOf(midPt) + 1;
+
+                    // Compare to the nodes collection
+                    foreach (ObjectId ndObj in nds)
+                    {
+                        // Open the selected object as a point for read
+                        DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+
+                        // Read the entity as a point and get the position
+                        Point3d ndPos = nd.Position;
+
+                        // Get the start and end nodes
+                        // Compare the start node
+                        if (strStPos == ndPos)
+                        {
+                            // Get the node number
+                            // Access the XData as an array
+                            ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
+                            TypedValue[] dataNd = ndRb.AsArray();
+
+                            // Get the node number (line 2)
+                            strStNd = Convert.ToDouble(dataNd[2].Value);
+                        }
+
+                        // Compare the end node
+                        if (strEnPos == ndPos)
+                        {
+                            // Get the node number
+                            // Access the XData as an array
+                            ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
+                            TypedValue[] dataNd = ndRb.AsArray();
+
+                            // Get the node number (line 2)
+                            strEnNd = Convert.ToDouble(dataNd[2].Value);
                         }
                     }
 
@@ -756,8 +772,8 @@ namespace SPMTool
                     cntrPts.Add(cntrPt);
                 }
 
-                // Get the array of center points ordered
-                double[][] cntrPtsArray = OrderElements(numPnls, cntrPts);
+                // Get the list of center points ordered
+                List<Point3d> cntrPtsList = OrderPoints(cntrPts);
 
                 // Access the nodes on the document
                 foreach (ObjectId pnlObj in pnls)
@@ -791,7 +807,7 @@ namespace SPMTool
                     Point3d cntrPt = new Point3d(cntrPtX, cntrPtY, 0);
 
                     // Get the panel number
-                    double pnlNum = SetElementNumber(cntrPt, numPnls, cntrPtsArray);
+                    double pnlNum = cntrPtsList.IndexOf(cntrPt) + 1;
 
                     // Compare the node position to the panel vertices
                     foreach (Point3d vert in pnlVerts)
