@@ -378,43 +378,6 @@ namespace SPMTool
         }
 
         // This method order the elements in a collection in ascending yCoord, then ascending xCoord, returns the array of points ordered
-        //public static double[][] OrderElements(int numElements, Point3dCollection points)
-        //{
-        //    // Initialize the point array with numNodes lines and 3 columns (nodeNumber, xCoord, yCoord)
-        //    double[][] elmntsArray = new double[numElements][];
-
-        //    // Access the nodes on the document
-        //    int i = 0; // array position
-        //    foreach (Point3d pt in points)
-        //    {
-        //        // Get the coordinates
-        //        double xCoord = pt.X;
-        //        double yCoord = pt.Y;
-
-        //        // Add to the array with the number initially unassigned
-        //        elmntsArray[i] = new double[] { 0, xCoord, yCoord };
-
-        //        // Increment the array position
-        //        i++;
-        //    }
-
-        //    // Order the array
-        //    var elmntsArrayOrd = elmntsArray.OrderBy(y => y[2]).ThenBy(x => x[1]);
-        //    elmntsArray = elmntsArrayOrd.ToArray();
-
-        //    // Set the node numbers in the array
-        //    for (int elmntNum = 1; elmntNum <= numElements; elmntNum++)
-        //    {
-        //        // array position
-        //        i = elmntNum - 1;
-        //        elmntsArray[i][0] = elmntNum;
-        //    }
-
-        //    // Return the array ordered
-        //    return elmntsArray;
-        //}
-
-        // This method order the elements in a collection in ascending yCoord, then ascending xCoord, returns the array of points ordered
         public static List<Point3d> OrderPoints(Point3dCollection points)
         {
             // Initialize the point list
@@ -429,27 +392,6 @@ namespace SPMTool
             // Return the point list
             return ptList;
         }
-
-        //// This method returns an array of points enumerated (num, xCoord, yCoord)
-        //public static double SetElementNumber(Point3d point, int numElements, double[][] elmntsArray)
-        //{
-        //    // Initialize the element number
-        //    double elmntNum = 0;
-
-        //    // Assign the node number from the array
-        //    for (int i = 0; i < numElements; i++)
-        //    {
-        //        // Check what line of the array corresponds the point position
-        //        if (point.X == elmntsArray[i][1] && point.Y == elmntsArray[i][2])
-        //        {
-        //            // Get the element number from the array
-        //            elmntNum = elmntsArray[i][0];
-        //        }
-        //    }
-
-        //    // Return the element number
-        //    return elmntNum;
-        //}
 
         // Enumerate all the nodes in the model and return the number of nodes
         public static int UpdateNodes()

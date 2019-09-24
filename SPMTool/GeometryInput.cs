@@ -218,15 +218,6 @@ namespace SPMTool
                 // Order the vertices in ascending Y and ascending X
                 List<Point3d> vrts = AuxMethods.OrderPoints(nds);
 
-                // Initialize the array of vertices of the panel
-                //Point3d[] pnlVrts = new Point3d[4];
-
-                //// Add the vertices ordered
-                //for (int i = 0; i < 4; i++)
-                //{
-                //    pnlVrts[i] = new Point3d(vrts[i][1], vrts[i][2], 0);
-                //}
-
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
