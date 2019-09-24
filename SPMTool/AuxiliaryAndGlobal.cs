@@ -825,6 +825,7 @@ namespace SPMTool
                         double pnlW = 1;                              // width
                         double psx = 0;                               // reinforcement ratio (X)
                         double psy = 0;                               // reinforcement ratio (Y)
+                        string pnlK = "";                             // stifness matrix
 
                         // Initialize a Result Buffer to add to the panel
                         ResultBuffer rb = new ResultBuffer();
@@ -838,6 +839,7 @@ namespace SPMTool
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));            // 7
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));             // 8
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));             // 9
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, pnlK));     // 10
 
                         // Append the extended data to the object
                         pnl.XData = rb;
