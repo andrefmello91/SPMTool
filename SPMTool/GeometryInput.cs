@@ -546,7 +546,7 @@ namespace SPMTool
             int numPnls = AuxMethods.UpdatePanels();
 
             // Display the number of updated elements
-            Global.ed.WriteMessage(numNds.ToString() + " nodes, " + numStrs.ToString() + " stringers and " + numPnls.ToString() + " panels updated.");
+            Global.ed.WriteMessage("\n" + numNds.ToString() + " nodes, " + numStrs.ToString() + " stringers and " + numPnls.ToString() + " panels updated.");
         }
 
         [CommandMethod("SetStringerParameters")]
