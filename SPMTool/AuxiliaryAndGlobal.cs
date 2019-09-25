@@ -377,6 +377,19 @@ namespace SPMTool
             }
         }
 
+        // This method calculates the midpoint between two points
+        public static Point3d MidPoint(Point3d point1, Point3d point2)
+        {
+            // Get the coordinates of the Midpoint
+            double x = (point1.X + point2.X) / 2;
+            double y = (point1.Y + point2.Y) / 2;
+            double z = (point1.Z + point2.Z) / 2;
+
+            // Create the point
+            Point3d midPoint = new Point3d(x, y, z);
+            return midPoint;
+        }
+
         // This method order the elements in a collection in ascending yCoord, then ascending xCoord, returns the array of points ordered
         public static List<Point3d> OrderPoints(Point3dCollection points)
         {
@@ -449,13 +462,13 @@ namespace SPMTool
                         using (ResultBuffer defRb = new ResultBuffer())
                         {
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, nodeNum));         // 2
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));       // 3
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));       // 4
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));  // 5
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xForce));          // 6
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yForce));          // 7
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, nodeNum));                // 2
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));              // 3
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));              // 4
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));         // 5
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xForce));                 // 6
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yForce));                 // 7
 
                             // Open the node for write
                             Entity ent = trans.GetObject(nd.ObjectId, OpenMode.ForWrite) as Entity;
@@ -530,12 +543,8 @@ namespace SPMTool
                     // Read the object as a line
                     Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
 
-                    // Get the coordinates of the midpoint of the stringer
-                    double midPtX = (str.StartPoint.X + str.EndPoint.X) / 2;
-                    double midPtY = (str.StartPoint.Y + str.EndPoint.Y) / 2;
-
-                    // Set the midpoint and add to the collection
-                    Point3d midPt = new Point3d(midPtX, midPtY, 0);
+                    // Get the midpoint and add to the collection
+                    Point3d midPt = MidPoint(str.StartPoint, str.EndPoint);
                     midPts.Add(midPt);
                 }
 
@@ -589,14 +598,8 @@ namespace SPMTool
                         }
                     }
 
-                    // Get the points of the line
-                    Point3d strStPos = str.StartPoint;
-                    Point3d strEnPos = str.EndPoint;
-
                     // Get the coordinates of the midpoint of the stringer
-                    double midPtX = (str.StartPoint.X + str.EndPoint.X) / 2;
-                    double midPtY = (str.StartPoint.Y + str.EndPoint.Y) / 2;
-                    Point3d midPt = new Point3d(midPtX, midPtY, 0);
+                    Point3d midPt = MidPoint(str.StartPoint, str.EndPoint);
 
                     // Get the stringer number
                     double strNum = midPtsList.IndexOf(midPt) + 1;
@@ -607,12 +610,9 @@ namespace SPMTool
                         // Open the selected object as a point for read
                         DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
 
-                        // Read the entity as a point and get the position
-                        Point3d ndPos = nd.Position;
-
                         // Get the start and end nodes
                         // Compare the start node
-                        if (strStPos == ndPos)
+                        if (str.StartPoint == nd.Position)
                         {
                             // Get the node number
                             // Access the XData as an array
@@ -624,7 +624,7 @@ namespace SPMTool
                         }
 
                         // Compare the end node
-                        if (strEnPos == ndPos)
+                        if (str.EndPoint == nd.Position)
                         {
                             // Get the node number
                             // Access the XData as an array
@@ -697,82 +697,19 @@ namespace SPMTool
                     Point3dCollection pnlVerts = new Point3dCollection();
                     pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
 
-                    // Get the summation of the coordinates of the vertices
-                    double xCrdSum = 0, yCrdSum = 0;
-                    for (int i = 0; i < 4; i++)
-                    {
-                        xCrdSum = xCrdSum + pnlVerts[i].X;
-                        yCrdSum = yCrdSum + pnlVerts[i].Y;
-                    }
-
                     // Get the approximate coordinates of the center point of the panel
-                    double cntrPtX = xCrdSum / 4;
-                    double cntrPtY = yCrdSum / 4;
-
-                    // Set the center and add to the collection
-                    Point3d cntrPt = new Point3d(cntrPtX, cntrPtY, 0);
+                    Point3d cntrPt = MidPoint(pnlVerts[0], pnlVerts[3]);
                     cntrPts.Add(cntrPt);
                 }
 
                 // Get the list of center points ordered
                 List<Point3d> cntrPtsList = OrderPoints(cntrPts);
 
-                // Access the nodes on the document
+                // Access the panels on the document
                 foreach (ObjectId pnlObj in pnls)
                 {
-                    // Initialize the array of node numbers and the position on the array
-                    int[] ndNums = { 0, 0, 0, 0 };
-                    int i = 0;
-                    
                     // Open the selected object as a solid for write
                     Solid pnl = trans.GetObject(pnlObj, OpenMode.ForWrite) as Solid;
-
-                    // Read it as a block and get the draw order table
-                    BlockTableRecord blck = trans.GetObject(pnl.BlockId, OpenMode.ForRead) as BlockTableRecord;
-                    DrawOrderTable drawOrder = trans.GetObject(blck.DrawOrderTableId, OpenMode.ForWrite) as DrawOrderTable;
-
-                    // Get the vertices
-                    Point3dCollection pnlVerts = new Point3dCollection();
-                    pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
-
-                    // Get the summation of the coordinates of the vertices
-                    double xCrdSum = 0, yCrdSum = 0;
-                    for (int j = 0; j < 4; j++)
-                    {
-                        xCrdSum = xCrdSum + pnlVerts[j].X;
-                        yCrdSum = yCrdSum + pnlVerts[j].Y;
-                    }
-
-                    // Get the approximate coordinates of the center point of the panel
-                    double cntrPtX = xCrdSum / 4;
-                    double cntrPtY = yCrdSum / 4;
-                    Point3d cntrPt = new Point3d(cntrPtX, cntrPtY, 0);
-
-                    // Get the panel number
-                    double pnlNum = cntrPtsList.IndexOf(cntrPt) + 1;
-
-                    // Compare the node position to the panel vertices
-                    foreach (Point3d vert in pnlVerts)
-                    {
-                        // Get the nodes in the collection
-                        foreach (ObjectId ndObj in nds)
-                        {
-                            // Open the selected object as a point for read
-                            DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-
-                            // Compare the position
-                            if (vert == nd.Position)
-                            {
-                                // Access the XData as an array
-                                ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
-                                TypedValue[] dataNd = ndRb.AsArray();
-
-                                // Get the node number (line 2) and assign it to the node array
-                                ndNums[i] = Convert.ToInt32(dataNd[2].Value);
-                                i++;
-                            }
-                        }
-                    }
 
                     // Check if the XData already exist. If not, create it
                     if (pnl.XData == null)
@@ -801,6 +738,48 @@ namespace SPMTool
 
                         // Append the extended data to the object
                         pnl.XData = rb;
+                    }
+
+                    // Read it as a block and get the draw order table
+                    BlockTableRecord blck = trans.GetObject(pnl.BlockId, OpenMode.ForRead) as BlockTableRecord;
+                    DrawOrderTable drawOrder = trans.GetObject(blck.DrawOrderTableId, OpenMode.ForWrite) as DrawOrderTable;
+
+                    // Get the vertices
+                    Point3dCollection pnlVerts = new Point3dCollection();
+                    pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+
+                    // Get the approximate coordinates of the center point of the panel
+                    Point3d cntrPt = MidPoint(pnlVerts[0], pnlVerts[3]);
+
+                    // Get the panel number
+                    double pnlNum = cntrPtsList.IndexOf(cntrPt) + 1;
+
+                    // Initialize the array of node numbers
+                    int[] ndNums = { 0, 0, 0, 0 };
+
+                    // Compare the node position to the panel vertices
+                    foreach (Point3d vert in pnlVerts)
+                    {
+                        // Get the nodes in the collection
+                        foreach (ObjectId ndObj in nds)
+                        {
+                            // Open the selected object as a point for read
+                            DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+                            
+                            // Compare the position
+                            if (vert == nd.Position)
+                            {
+                                // Access the XData as an array
+                                ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
+                                TypedValue[] dataNd = ndRb.AsArray();
+
+                                // Get the position of the vertex in the array
+                                int i = pnlVerts.IndexOf(vert);
+
+                                // Get the node number (line 2) and assign it to the node array in the position of the vertex
+                                ndNums[i] = Convert.ToInt32(dataNd[2].Value);
+                            }
+                        }
                     }
 
                     // Access the XData as an array

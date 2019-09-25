@@ -314,6 +314,97 @@ namespace SPMTool
             Global.ed.WriteMessage("\nStifness matrix of panels obtained.");
         }
 
+        [CommandMethod("ForceVector")]
+        public void ForceVector()
+        {
+            // Access the nodes in the model
+            ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
+
+            // Get the number of nodes
+            int numNds = nds.Count;
+
+            // Initialize the force vector with size 2x number of nodes (forces in x and y)
+            var f = Vector<double>.Build.Dense(numNds * 2);
+
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                // Read the nodes data
+                foreach (ObjectId nd in nds)
+                {
+                    // Read as an entity
+                    Entity ndEnt = trans.GetObject(nd, OpenMode.ForRead) as Entity;
+
+                    // Get the result buffer as an array
+                    ResultBuffer rb = ndEnt.GetXDataForApplication(Global.appName);
+                    TypedValue[] data = rb.AsArray();
+
+                    // Read the node number
+                    int ndNum = Convert.ToInt32(data[2].Value);
+
+                    // Read the forces in x and y
+                    double Fx = Convert.ToDouble(data[6].Value),
+                           Fy = Convert.ToDouble(data[7].Value);
+
+                    // Get the position in the vector
+                    int i = 2 * ndNum - 2;
+
+                    // If force is not zero, assign the values in the force vector at position (i) and (i + 1)
+                    if (Fx != 0) f.At(i, Fx);
+                    if (Fy != 0) f.At(i + 1, Fy);
+                }
+            }
+
+            // Write the values
+            Global.ed.WriteMessage("\nVector of forces:\n" + f.ToString());
+        }
+
+        [CommandMethod("DisplacementVector")]
+        public void DisplacementVector()
+        {
+            // Access the nodes in the model
+            ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
+
+            // Get the number of nodes
+            int numNds = nds.Count;
+
+            // Initialize the displacement vector with size 2x number of nodes (displacements in x and y)
+            // Assign 1 (free node) initially to each value
+            var u = Vector<double>.Build.Dense(numNds * 2, 1);
+
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                // Read the nodes data
+                foreach (ObjectId nd in nds)
+                {
+                    // Read as an entity
+                    Entity ndEnt = trans.GetObject(nd, OpenMode.ForRead) as Entity;
+
+                    // Get the result buffer as an array
+                    ResultBuffer rb = ndEnt.GetXDataForApplication(Global.appName);
+                    TypedValue[] data = rb.AsArray();
+
+                    // Read the node number
+                    int ndNum = Convert.ToInt32(data[2].Value);
+
+                    // Read the support condition
+                    string sup = data[5].Value.ToString();
+
+                    // Get the position in the vector
+                    int i = 2 * ndNum - 2;
+
+                    // If there is a support the value on the vector will be zero on that direction
+                    // X (i) , Y (i + 1)
+                    if (sup == "X" || sup == "XY") u.At(i, 0);
+                    if (sup == "Y" || sup == "XY") u.At(i + 1, 0);
+                }
+            }
+
+            // Write the values
+            Global.ed.WriteMessage("\nVector of displacements:\n" + u.ToString());
+        }
+
         [CommandMethod("ViewElasticStifness")]
         public void ViewElasticStifness()
         {
