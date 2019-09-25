@@ -76,13 +76,12 @@ namespace SPMTool
                     else l = MathNet.Numerics.Trig.Cos(alpha);
 
                     double m = MathNet.Numerics.Trig.Sin(alpha);      // cosine with y
-                    double n = 0;                                     // cosine with z
 
                     // Obtain the transformation matrix
                     var T = Matrix<double>.Build.DenseOfArray(new double[,] {
-                        {l, m, n, 0, 0, 0, 0 },
-                        {0, 0, 0, 1, 0, 0, 0 },
-                        {0, 0, 0, 0, l, m, n }
+                        {l, m, 0, 0, 0 },
+                        {0, 0, 1, 0, 0 },
+                        {0, 0, 0, l, m }
                     });
 
                     // Calculate the constant factor of stifness
@@ -322,7 +321,7 @@ namespace SPMTool
             string msgstr = "";
 
             // Request the object to be selected in the drawing area
-            PromptEntityOptions entOp = new PromptEntityOptions("\nSelect a stringer to print the stiffness matrix:");
+            PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to print the stiffness matrix:");
             PromptEntityResult entRes = Global.ed.GetEntity(entOp);
 
             // If the prompt status is OK, objects were selected
@@ -356,9 +355,11 @@ namespace SPMTool
                                      "Transformated Stifness Matrix: \n" +
                                      k;
                         }
+
                         else msgstr = "NONE";
                     }
-                    // If it's a stringer
+
+                    // If it's a panel
                     if (ent.Layer == "Panel")
                     {
                         // Get the extended data attached to each object for MY_APP
@@ -377,9 +378,11 @@ namespace SPMTool
                             msgstr = "Panel " + pnlNum + "\n\n" +
                                      "Stifness Matrix: \n" + K;
                         }
+
                         else msgstr = "NONE";
                     }
-                    else msgstr = "Object is not a stringer or panel.";
+
+                    //else msgstr = "Object is not a stringer or panel.";
 
                     // Display the values returned
                     Global.ed.WriteMessage("\n" + msgstr);
