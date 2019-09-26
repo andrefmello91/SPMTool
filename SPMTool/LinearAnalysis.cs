@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -318,23 +319,26 @@ namespace SPMTool
             // Access the nodes in the model
             ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
 
-            // Get the number of nodes
-            int numNds = nds.Count;
+            // Get the list of DoFs
+            List<Point3d> dofs = DoFs();
 
-            // Initialize the force vector with size 2x number of nodes (forces in x and y)
-            var f = Vector<double>.Build.Dense(numNds * 2);
+            // Get the number of DoFs
+            int numDofs = dofs.Count;
+
+            // Initialize the force vector with size 2x number of DoFs (forces in x and y)
+            var f = Vector<double>.Build.Dense(numDofs * 2);
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Read the nodes data
-                foreach (ObjectId nd in nds)
+                foreach (ObjectId ndObj in nds)
                 {
-                    // Read as an entity
-                    Entity ndEnt = trans.GetObject(nd, OpenMode.ForRead) as Entity;
+                    // Read as a DBPoint
+                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
 
                     // Get the result buffer as an array
-                    ResultBuffer rb = ndEnt.GetXDataForApplication(Global.appName);
+                    ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
                     TypedValue[] data = rb.AsArray();
 
                     // Read the node number
@@ -344,8 +348,8 @@ namespace SPMTool
                     double Fx = Convert.ToDouble(data[6].Value),
                            Fy = Convert.ToDouble(data[7].Value);
 
-                    // Get the position in the vector
-                    int i = 2 * ndNum - 2;
+                    // Get the position in the vector from the DoF list
+                    int i = 2 * dofs.IndexOf(nd.Position);
 
                     // If force is not zero, assign the values in the force vector at position (i) and (i + 1)
                     if (Fx != 0) f.At(i, Fx);
@@ -363,24 +367,27 @@ namespace SPMTool
             // Access the nodes in the model
             ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
 
-            // Get the number of nodes
-            int numNds = nds.Count;
+            // Get the list of DoFs
+            List<Point3d> dofs = DoFs();
+
+            // Get the number of DoFs
+            int numDofs = dofs.Count;
 
             // Initialize the displacement vector with size 2x number of nodes (displacements in x and y)
             // Assign 1 (free node) initially to each value
-            var u = Vector<double>.Build.Dense(numNds * 2, 1);
+            var u = Vector<double>.Build.Dense(numDofs * 2, 1);
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Read the nodes data
-                foreach (ObjectId nd in nds)
+                foreach (ObjectId ndObj in nds)
                 {
-                    // Read as an entity
-                    Entity ndEnt = trans.GetObject(nd, OpenMode.ForRead) as Entity;
+                    // Read as a DBPoint
+                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
 
                     // Get the result buffer as an array
-                    ResultBuffer rb = ndEnt.GetXDataForApplication(Global.appName);
+                    ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
                     TypedValue[] data = rb.AsArray();
 
                     // Read the node number
@@ -389,13 +396,13 @@ namespace SPMTool
                     // Read the support condition
                     string sup = data[5].Value.ToString();
 
-                    // Get the position in the vector
-                    int i = 2 * ndNum - 2;
+                    // Get the position in the vector from the DoF list
+                    int i = 2 * dofs.IndexOf(nd.Position);
 
                     // If there is a support the value on the vector will be zero on that direction
                     // X (i) , Y (i + 1)
-                    if (sup == "X" || sup == "XY") u.At(i, 0);
-                    if (sup == "Y" || sup == "XY") u.At(i + 1, 0);
+                    if (sup.Contains("X")) u.At(i, 0);
+                    if (sup.Contains("Y")) u.At(i + 1, 0);
                 }
             }
 
@@ -476,6 +483,42 @@ namespace SPMTool
                     // Display the values returned
                     Global.ed.WriteMessage("\n" + msgstr);
                 }
+            }
+        }
+
+        // Get the list of DoFs
+        public List<Point3d> DoFs()
+        {
+            // Initiate a point3D list of Dofs
+            Point3dCollection dofs = new Point3dCollection();
+
+            // Access the nodes and stringers in the model
+            ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
+            ObjectIdCollection strs = AuxMethods.GetEntitiesOnLayer("Stringer");
+
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                // Add the nodes positions to the collection
+                foreach (ObjectId ndObj in nds)
+                {
+                    // Read as point
+                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+                    dofs.Add(nd.Position);
+                }
+
+                // Add the stringers midpoints to the collection
+                foreach (ObjectId strObj in strs)
+                {
+                    // Read as Line
+                    Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
+                    Point3d midPt = AuxMethods.MidPoint(str.StartPoint, str.EndPoint);
+                    dofs.Add(midPt);
+                }
+
+                // Create a list with Dofs in order
+                List<Point3d> dofList = AuxMethods.OrderPoints(dofs);
+                return dofList;
             }
         }
     }
