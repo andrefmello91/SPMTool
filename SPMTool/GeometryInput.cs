@@ -66,7 +66,6 @@ namespace SPMTool
 
                     // Save the new object to the database and dispose the transaction
                     trans.Commit();
-                    trans.Dispose();
                 }
             }
 
@@ -157,7 +156,6 @@ namespace SPMTool
 
                         // Save the new object to the database
                         trans.Commit();
-                        trans.Dispose();
                     }
                 }
             }
@@ -237,7 +235,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-                trans.Dispose();
             }
 
             // Update the panels
@@ -359,7 +356,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-                trans.Dispose();
             }
 
             // Update nodes and stringers
@@ -515,7 +511,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-                trans.Dispose();
             }
 
             // Update the elements
@@ -619,7 +614,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-                trans.Dispose();
             }
         }
 
@@ -702,7 +696,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-                trans.Dispose();
             }
         }
 
@@ -805,9 +798,6 @@ namespace SPMTool
 
                         // Display the values returned
                         Application.ShowAlertDialog(Global.appName + "\n\n" + msgstr);
-
-                        // Dispose the transaction
-                        trans.Dispose();
                     }
                 }
                 else break;

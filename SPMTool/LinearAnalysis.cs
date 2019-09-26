@@ -108,7 +108,6 @@ namespace SPMTool
 
                 // Commit and dispose the transaction
                 trans.Commit();
-                trans.Dispose();
             }
 
             // If all went OK, notify the user
@@ -307,7 +306,6 @@ namespace SPMTool
 
                 // Commit and dispose the transaction
                 trans.Commit();
-                trans.Dispose();
             }
 
             // If all went OK, notify the user
@@ -477,9 +475,6 @@ namespace SPMTool
 
                     // Display the values returned
                     Global.ed.WriteMessage("\n" + msgstr);
-
-                    // Dispose the transaction
-                    trans.Dispose();
                 }
             }
         }

@@ -66,7 +66,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-                trans.Dispose();
             }
         }
 
@@ -126,7 +125,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-                trans.Dispose();
             }
         }
 
@@ -178,9 +176,6 @@ namespace SPMTool
 
                 // Display the values returned
                 Application.ShowAlertDialog(Global.appName + "\n\n" + xData + "\n" + concmsg + "\n" + steelmsg);
-
-                // Dispose the transaction
-                trans.Dispose();
             }
         }
     }

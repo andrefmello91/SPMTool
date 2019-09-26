@@ -50,7 +50,6 @@ namespace SPMTool
 
                 // Commit and dispose the transaction
                 trans.Commit();
-                trans.Dispose();
             }
         }
 
@@ -90,7 +89,6 @@ namespace SPMTool
 
                 // Commit and dispose the transaction
                 trans.Commit();
-                trans.Dispose();
             }
         }
 
@@ -286,7 +284,6 @@ namespace SPMTool
 
                 // Commit and dispose the transaction
                 trans.Commit();
-                trans.Dispose();
             }
         }
 
@@ -349,7 +346,6 @@ namespace SPMTool
 
                 // Commit and dispose the transaction
                 trans.Commit();
-                trans.Dispose();
             }
         }
 
@@ -503,7 +499,6 @@ namespace SPMTool
 
                 // Commit and dispose the transaction
                 trans.Commit();
-                trans.Dispose();
             }
 
             // Return the number of nodes
@@ -653,7 +648,6 @@ namespace SPMTool
 
                 // Commit and dispose the transaction
                 trans.Commit();
-                trans.Dispose();
             }
 
             // Return the number of stringers
@@ -692,7 +686,7 @@ namespace SPMTool
                 {
                     // Read the object as a solid
                     Solid pnl = trans.GetObject(pnlObj, OpenMode.ForRead) as Solid;
-                    
+
                     // Get the vertices
                     Point3dCollection pnlVerts = new Point3dCollection();
                     pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
@@ -765,7 +759,7 @@ namespace SPMTool
                         {
                             // Open the selected object as a point for read
                             DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-                            
+
                             // Compare the position
                             if (vert == nd.Position)
                             {
@@ -805,11 +799,178 @@ namespace SPMTool
 
                 // Commit and dispose the transaction
                 trans.Commit();
-                trans.Dispose();
             }
 
             // Return the number of panels
             return numPnls;
         }
+
+        // Generate the degrees of freedom of the model
+        //public void GenerateDoFs()
+        //{
+        //    // Create the layer
+        //    CreateLayer("DoF", 5, 0);
+
+        //    // Get the nodes and stringers collections
+        //    ObjectIdCollection nds = GetEntitiesOnLayer("Node");
+        //    ObjectIdCollection strs = GetEntitiesOnLayer("Stringer");
+        //    ObjectIdCollection dofs = GetEntitiesOnLayer("DoF");
+
+        //    // Create a point3D collection for the position of DoFs
+        //    Point3dCollection dofPts = new Point3dCollection();
+
+        //    // Start a transaction
+        //    using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+        //    {
+        //        // Open the Block table for read
+        //        BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+        //        // Open the Block table record Model space for write
+        //        BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+        //        // Erase the DoFs created previously
+        //        if (dofs.Count > 0)
+        //        {
+        //            foreach (ObjectId dof in dofs)
+        //            {
+        //                // Get the entity and erase it
+        //                Entity ent = trans.GetObject(dof, OpenMode.ForWrite) as Entity;
+        //                ent.Erase();
+        //            }
+        //        }
+
+        //        // Get the nodes positions
+        //        foreach (ObjectId ndObj in nds)
+        //        {
+        //            // Read as a point and add to the collection
+        //            DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+        //            dofPts.Add(nd.Position);
+        //        }
+
+        //        // Get the stringers midpoints
+        //        foreach (ObjectId strObj in strs)
+        //        {
+        //            // Read as a line and get the midpoint
+        //            Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
+        //            Point3d midPt = MidPoint(str.StartPoint, str.EndPoint);
+        //            dofPts.Add(midPt);
+        //        }
+
+        //        // Create the DoFs
+        //        foreach (Point3d dofPt in dofPts)
+        //        {
+        //            DBPoint dof = new DBPoint(dofPt);
+
+        //            // Set the layer
+        //            dof.Layer = "DoF";
+
+        //            // Add the new object to the block table record and the transaction
+        //            blkTblRec.AppendEntity(dof);
+        //            trans.AddNewlyCreatedDBObject(dof, true);
+        //        }
+
+        //        // Save the new object to the database and dispose the transaction
+        //        trans.Commit();
+        //    }
+        //}
+
+        // Enumerate all the nodes in the model and return the number of nodes
+        //public static int UpdateDoFs()
+        //{
+        //    // Definition for the Extended Data
+        //    string xdataStr = "DoF Data";
+
+        //    // Initialize the number of DoFs
+        //    int numDofs = 0;
+
+        //    // Start a transaction
+        //    using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+        //    {
+        //        // Open the Block table for read
+        //        BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+        //        // Create the nodes collection and initialize getting the elements on node layer
+        //        ObjectIdCollection dofs = GetEntitiesOnLayer("DoF");
+
+        //        // Create a point collection
+        //        Point3dCollection pts = new Point3dCollection();
+
+        //        // Get the number of Dofs
+        //        numDofs = dofs.Count;
+
+        //        // Add each point to the collection
+        //        foreach (ObjectId obj in dofs)
+        //        {
+        //            // Read the object as a point
+        //            DBPoint dof = trans.GetObject(obj, OpenMode.ForRead) as DBPoint;
+        //            pts.Add(dof.Position);
+        //        }
+
+        //        // Get the array of points ordered
+        //        List<Point3d> dofList = OrderPoints(pts);
+
+        //        // Access the dofs on the document
+        //        foreach (ObjectId obj in dofs)
+        //        {
+        //            // Read the object as a point
+        //            DBPoint dof = trans.GetObject(obj, OpenMode.ForWrite) as DBPoint;
+
+        //            // If the Extended data does not exist, create it
+        //            if (dof.XData == null)
+        //            {
+        //                // Inicialization of node conditions
+        //                double dofNum = 0;                                  // Dof number (to be set later)
+        //                double xPosition = dof.Position.X;                  // X position
+        //                double yPosition = dof.Position.Y;                  // Y position
+        //                double xDisp = 1;                                   // Displacement in X (0 if there is a support)
+        //                double yDisp = 1;                                   // Displacement in X (0 if there is a support)
+
+        //                // Define the Xdata to add to the node
+        //                using (ResultBuffer defRb = new ResultBuffer())
+        //                {
+        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
+        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
+        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, dofNum));                 // 2
+        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));              // 3
+        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));              // 4
+        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xDisp));                  // 5
+        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yDisp));                  // 6
+                            
+        //                    // Append the extended data to each object
+        //                    dof.XData = defRb;
+        //                }
+        //            }
+
+        //            // Get the Dof number on the list
+        //            double dofNum = dofList.IndexOf(dof.Position) + 1;
+
+        //            // Get the result buffer as an array
+        //            ResultBuffer rb = dof.GetXDataForApplication(Global.appName);
+        //            TypedValue[] data = rb.AsArray();
+
+        //            // Set the new DoF number (line 2)
+        //            data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, dofNum);
+
+        //            // Set the updated coordinates
+        //            data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, dof.Position.X);
+        //            data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, dof.Position.Y);
+
+        //            // Add the new XData
+        //            ResultBuffer newRb = new ResultBuffer(data);
+        //            dof.XData = newRb;
+        //        }
+
+        //        // Set the style for all point objects in the drawing
+        //        Global.curDb.Pdmode = 32;
+        //        Global.curDb.Pdsize = 50;
+
+        //        // Commit and dispose the transaction
+        //        trans.Commit();
+        //    }
+
+        //    // Return the number of nodes
+        //    return numDofs;
+        //}
+
     }
 }

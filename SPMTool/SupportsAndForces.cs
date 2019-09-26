@@ -143,7 +143,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-                trans.Dispose();
             }
         }
 
@@ -432,7 +431,6 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
-                trans.Dispose();
             }
         }
     }
