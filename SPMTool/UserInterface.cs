@@ -50,7 +50,7 @@ namespace SPMTool
             short theme = (short)Application.GetSystemVariable("COLORTHEME");
 
             // Initialize the icons
-            Bitmap ndBmp, strBmp, pnlBmp,
+            Bitmap strBmp, pnlBmp,
                    setBmp, dvStrBmp, dvPnlBmp,
                    updtBmp, viewBmp,
                    cncrtBmp, stlBmp,

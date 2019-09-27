@@ -21,7 +21,7 @@ namespace SPMTool
             string extNdLyr = "ExtNode";
             string intNdLyr = "IntNode";
             short red = 1;
-            short blue = 5;
+            short blue = 150;
 
             // For stringers
             string strLayer = "Stringer";
@@ -56,11 +56,7 @@ namespace SPMTool
                         nds.Add(strStRes.Value);
 
                         // Prompt for the end point and add to the collection
-                        PromptPointOptions strEndOp = new PromptPointOptions("\nEnter the end point: ")
-                        {
-                            UseDashedLine = true,
-                            UseBasePoint = true
-                        };
+                        PromptPointOptions strEndOp = new PromptPointOptions("\nEnter the end point: ");
                         PromptPointResult strEndRes = Global.ed.GetPoint(strEndOp);
                         nds.Add(strEndRes.Value);
 

@@ -488,7 +488,7 @@ namespace SPMTool
 
                 // Set the style for all point objects in the drawing
                 Global.curDb.Pdmode = 32;
-                Global.curDb.Pdsize = 30;
+                Global.curDb.Pdsize = 40;
 
                 // Commit and dispose the transaction
                 trans.Commit();
@@ -543,12 +543,12 @@ namespace SPMTool
                     Line str = trans.GetObject(strObj, OpenMode.ForWrite) as Line;
 
                     // Initialize the variables
-                    double strStNd = 0,                           // Start node
-                           strMidNd = 0,                          // Mid node
-                           strEnNd = 0;                           // End node
+                    int strStNd = 0,                             // Start node
+                        strMidNd = 0,                            // Mid node
+                        strEnNd = 0;                             // End node
 
                     // Inicialization of stringer conditions
-                    double strNum = 0;                          // Stringer number (initially unassigned)
+                    double strNum = 0;                           // Stringer number (initially unassigned)
                     double strLgt = str.Length;                  // Stringer lenght
                     double strW = 1;                             // Width
                     double strH = 1;                             // Height
@@ -590,49 +590,10 @@ namespace SPMTool
                     // Get the stringer number
                     strNum = midPtsList.IndexOf(midPt) + 1;
 
-                    // Compare to the nodes collection
-                    foreach (ObjectId ndObj in nds)
-                    {
-                        // Open the selected object as a point for read
-                        DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-
-                        // Get the start and end nodes
-                        // Compare the start node
-                        if (str.StartPoint == nd.Position)
-                        {
-                            // Get the node number
-                            // Access the XData as an array
-                            ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
-                            TypedValue[] dataNd = ndRb.AsArray();
-
-                            // Get the node number (line 2)
-                            strStNd = Convert.ToDouble(dataNd[2].Value);
-                        }
-
-                        // Compare the mid node
-                        if (midPt == nd.Position)
-                        {
-                            // Get the node number
-                            // Access the XData as an array
-                            ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
-                            TypedValue[] dataNd = ndRb.AsArray();
-
-                            // Get the node number (line 2)
-                            strMidNd = Convert.ToDouble(dataNd[2].Value);
-                        }
-
-                        // Compare the end node
-                        if (str.EndPoint == nd.Position)
-                        {
-                            // Get the node number
-                            // Access the XData as an array
-                            ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
-                            TypedValue[] dataNd = ndRb.AsArray();
-
-                            // Get the node number (line 2)
-                            strEnNd = Convert.ToDouble(dataNd[2].Value);
-                        }
-                    }
+                    // Get the start, mid and end nodes
+                    strStNd = GetNodeNumber(str.StartPoint, nds);
+                    strMidNd = GetNodeNumber(midPt, nds);
+                    strEnNd = GetNodeNumber(str.EndPoint, nds);
 
                     // Access the XData as an array
                     ResultBuffer strRb = str.GetXDataForApplication(Global.appName);
@@ -759,26 +720,11 @@ namespace SPMTool
                     // Compare the node position to the panel vertices
                     foreach (Point3d dof in pnlDofs)
                     {
-                        // Get the nodes in the collection
-                        foreach (ObjectId ndObj in intNds)
-                        {
-                            // Open the selected object as a point for read
-                            DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+                        // Get the position of the vertex in the array
+                        int i = pnlDofs.IndexOf(dof);
 
-                            // Compare the position
-                            if (dof == nd.Position)
-                            {
-                                // Access the XData as an array
-                                ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
-                                TypedValue[] dataNd = ndRb.AsArray();
-
-                                // Get the position of the vertex in the array
-                                int i = pnlDofs.IndexOf(dof);
-
-                                // Get the node number (line 2) and assign it to the node array in the position of the DoF
-                                dofs[i] = Convert.ToInt32(dataNd[2].Value);
-                            }
-                        }
+                        // Get the node number
+                        dofs[i] = GetNodeNumber(dof, intNds);
                     }
 
                     // Access the XData as an array
@@ -823,6 +769,38 @@ namespace SPMTool
             foreach (ObjectId ndObj in intNds) nds.Add(ndObj);
 
             return nds;
+        }
+
+        // Get the node number at the position
+        public static int GetNodeNumber(Point3d position, ObjectIdCollection nodes)
+        {
+            // Initiate the node number
+            int ndNum = 0;
+
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                // Compare to the nodes collection
+                foreach (ObjectId ndObj in nodes)
+                {
+                    // Open the selected object as a point for read
+                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+
+                    // Compare the positions
+                    if (position == nd.Position)
+                    {
+                        // Get the node number
+                        // Access the XData as an array
+                        ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
+                        TypedValue[] dataNd = ndRb.AsArray();
+
+                        // Get the node number (line 2)
+                        ndNum = Convert.ToInt32(dataNd[2].Value);
+                    }
+                }
+            }
+
+            return ndNum;
         }
     }
 }
