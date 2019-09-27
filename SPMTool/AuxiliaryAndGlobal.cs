@@ -408,74 +408,67 @@ namespace SPMTool
             // Definition for the Extended Data
             string xdataStr = "Node Data";
 
-            // Initialize the number of nodes
-            int numNds = 0;
+            // Get all the nodes in the model
+            ObjectIdCollection nds = AllNodes();
+
+            // Get the number of nodes
+            int numNds = nds.Count;
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
+                // Create a point collection
+                Point3dCollection ndPos = new Point3dCollection();
+
+                foreach (ObjectId ndObj in nds)
+                {
+                    // Read as a point and add to the collection
+                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+                    ndPos.Add(nd.Position);
+                }
+
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
-                // Create the nodes collection and initialize getting the elements on node layer
-                ObjectIdCollection nds = GetEntitiesOnLayer("Node");
-
-                // Create a point collection
-                Point3dCollection pts = new Point3dCollection();
-
-                // Get the number of nodes
-                numNds = nds.Count;
-
-                // Add each point to the collection
-                foreach (ObjectId obj in nds)
-                {
-                    // Read the object as a point
-                    DBPoint nd = trans.GetObject(obj, OpenMode.ForRead) as DBPoint;
-                    pts.Add(nd.Position);
-                }
-
                 // Get the array of points ordered
-                List<Point3d> ndList = OrderPoints(pts);
+                List<Point3d> ndList = OrderPoints(ndPos);
 
                 // Access the nodes on the document
-                foreach (ObjectId obj in nds)
+                foreach (ObjectId ndObj in nds)
                 {
                     // Read the object as a point
-                    DBPoint nd = trans.GetObject(obj, OpenMode.ForWrite) as DBPoint;
+                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForWrite) as DBPoint;
+
+                    // Initialize the node conditions
+                    double ndNum = 0;                                // Node number (to be set later)
+                    double xPosition = nd.Position.X;                  // X position
+                    double yPosition = nd.Position.Y;                  // Y position
+                    string support = "Free";                           // Support condition
+                    double xForce = 0;                                 // Force on X direction
+                    double yForce = 0;                                 // Force on Y direction
 
                     // If the Extended data does not exist, create it
                     if (nd.XData == null)
                     {
-                        // Inicialization of node conditions
-                        double nodeNum = 0;                                // Node number (to be set later)
-                        double xPosition = nd.Position.X;                  // X position
-                        double yPosition = nd.Position.Y;                  // Y position
-                        string support = "Free";                           // Support condition
-                        double xForce = 0;                                 // Force on X direction
-                        double yForce = 0;                                 // Force on Y direction
-
                         // Define the Xdata to add to the node
                         using (ResultBuffer defRb = new ResultBuffer())
                         {
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, nodeNum));                // 2
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndNum));                  // 2
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));              // 3
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));              // 4
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));         // 5
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xForce));                 // 6
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yForce));                 // 7
 
-                            // Open the node for write
-                            Entity ent = trans.GetObject(nd.ObjectId, OpenMode.ForWrite) as Entity;
-
                             // Append the extended data to each object
-                            ent.XData = defRb;
+                            nd.XData = defRb;
                         }
                     }
 
                     // Get the node number on the list
-                    double ndNum = ndList.IndexOf(nd.Position) + 1;
+                    ndNum = ndList.IndexOf(nd.Position) + 1;
 
                     // Get the result buffer as an array
                     ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
@@ -495,7 +488,7 @@ namespace SPMTool
 
                 // Set the style for all point objects in the drawing
                 Global.curDb.Pdmode = 32;
-                Global.curDb.Pdsize = 50;
+                Global.curDb.Pdsize = 30;
 
                 // Commit and dispose the transaction
                 trans.Commit();
@@ -511,8 +504,14 @@ namespace SPMTool
             // Definition for the Extended Data
             string xdataStr = "Stringer Data";
 
-            // Initialize the number of stringers
-            int numStrs = 0;
+            // Create the stringer collection and initialize getting the elements on layer
+            ObjectIdCollection strs = GetEntitiesOnLayer("Stringer");
+
+            // Get the number of stringers
+            int numStrs = strs.Count;
+
+            // Get all the nodes in the model
+            ObjectIdCollection nds = AllNodes();
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
@@ -520,17 +519,8 @@ namespace SPMTool
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
-                // Create the nodes collection and initialize getting the elements on node layer
-                ObjectIdCollection nds = GetEntitiesOnLayer("Node");
-
-                // Create the stringer collection and initialize getting the elements on node layer
-                ObjectIdCollection strs = GetEntitiesOnLayer("Stringer");
-
                 // Create a point collection
                 Point3dCollection midPts = new Point3dCollection();
-
-                // Get the number of stringers
-                numStrs = strs.Count;
 
                 // Add the midpoint of each stringer to the collection
                 foreach (ObjectId strObj in strs)
@@ -549,41 +539,42 @@ namespace SPMTool
                 // Access the nodes on the document
                 foreach (ObjectId strObj in strs)
                 {
-                    // Initialize the variables
-                    double strStNd = 0;
-                    double strEnNd = 0;
-
                     // Open the selected object as a line for write
                     Line str = trans.GetObject(strObj, OpenMode.ForWrite) as Line;
+
+                    // Initialize the variables
+                    double strStNd = 0,                           // Start node
+                           strMidNd = 0,                          // Mid node
+                           strEnNd = 0;                           // End node
+
+                    // Inicialization of stringer conditions
+                    double strNum = 0;                          // Stringer number (initially unassigned)
+                    double strLgt = str.Length;                  // Stringer lenght
+                    double strW = 1;                             // Width
+                    double strH = 1;                             // Height
+                    double As = 0;                               // Reinforcement Area
+                    double kl = 0;                               // Local stiffness matrix
+                    double k = 0;                                // Transformated stiffness matrix
 
                     // If XData does not exist, create it
                     if (str.XData == null)
                     {
-                        // Inicialization of stringer conditions
-                        double strNumb = 0;                       // Stringer number (initially unassigned)
-                        double strSrtNd = 0;                      // Stringer start node (initially unassigned)
-                        double strEndNd = 0;                      // Stringer end node (initially unassigned)
-                        double strLgt = str.Length;               // Stringer lenght
-                        double strW = 1;                          // Width
-                        double strH = 1;                          // Height
-                        double As = 0;                            // Reinforcement Area
-                        double kl = 0;                            // Local stiffness matrix
-                        double k = 0;                             // Transformated stiffness matrix
 
                         // Define the Xdata to add to the node
                         using (ResultBuffer rb = new ResultBuffer())
                         {
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strNumb));                // 2
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strSrtNd));               // 3
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEndNd));               // 4
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strLgt));                 // 5
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));                   // 6
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));                   // 7
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));                     // 8
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, kl));                     // 9
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k));                      // 10 
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strNum));                 // 2
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStNd));                // 3
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd));               // 4
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd));                // 5
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strLgt));                 // 6
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));                   // 7
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));                   // 8
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));                     // 9
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, kl));                     // 10
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k));                      // 11 
 
                             // Open the stringer for write
                             Entity ent = trans.GetObject(str.ObjectId, OpenMode.ForWrite) as Entity;
@@ -597,7 +588,7 @@ namespace SPMTool
                     Point3d midPt = MidPoint(str.StartPoint, str.EndPoint);
 
                     // Get the stringer number
-                    double strNum = midPtsList.IndexOf(midPt) + 1;
+                    strNum = midPtsList.IndexOf(midPt) + 1;
 
                     // Compare to the nodes collection
                     foreach (ObjectId ndObj in nds)
@@ -618,6 +609,18 @@ namespace SPMTool
                             strStNd = Convert.ToDouble(dataNd[2].Value);
                         }
 
+                        // Compare the mid node
+                        if (midPt == nd.Position)
+                        {
+                            // Get the node number
+                            // Access the XData as an array
+                            ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
+                            TypedValue[] dataNd = ndRb.AsArray();
+
+                            // Get the node number (line 2)
+                            strMidNd = Convert.ToDouble(dataNd[2].Value);
+                        }
+
                         // Compare the end node
                         if (str.EndPoint == nd.Position)
                         {
@@ -635,11 +638,12 @@ namespace SPMTool
                     ResultBuffer strRb = str.GetXDataForApplication(Global.appName);
                     TypedValue[] data = strRb.AsArray();
 
-                    // Set the updated number and nodes in ascending number (line 2 and 3 of the array) and length
+                    // Set the updated number and nodes in ascending number and length (line 2 to 6)
                     data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
                     data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
-                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
-                    data[5] = new TypedValue((int)DxfCode.ExtendedDataReal, str.Length);
+                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd);
+                    data[5] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
+                    data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, str.Length);
 
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);
@@ -660,26 +664,23 @@ namespace SPMTool
             // Definition for the Extended Data
             string xdataStr = "Panel Data";
 
-            // Initialize the number of panels
-            int numPnls = 0;
+            // Get the internal nodes of the model
+            ObjectIdCollection intNds = GetEntitiesOnLayer("IntNode");
+
+            // Create the panels collection and initialize getting the elements on node layer
+            ObjectIdCollection pnls = GetEntitiesOnLayer("Panel");
+
+            // Get the number of panels
+            int numPnls = pnls.Count;
+
+            // Create a point collection
+            Point3dCollection cntrPts = new Point3dCollection();
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Create the nodes collection and initialize getting the elements on node layer
-                ObjectIdCollection nds = GetEntitiesOnLayer("Node");
-
-                // Create the panels collection and initialize getting the elements on node layer
-                ObjectIdCollection pnls = GetEntitiesOnLayer("Panel");
-
-                // Create a point collection
-                Point3dCollection cntrPts = new Point3dCollection();
-
-                // Get the number of panels
-                numPnls = pnls.Count;
 
                 // Add the centerpoint of each panel to the collection
                 foreach (ObjectId pnlObj in pnls)
@@ -705,30 +706,30 @@ namespace SPMTool
                     // Open the selected object as a solid for write
                     Solid pnl = trans.GetObject(pnlObj, OpenMode.ForWrite) as Solid;
 
+                    // Initialize the panel parameters
+                    double pnlNum = 0;                            // Panel number (initially unassigned)
+                    int[] dofs = { 0, 0, 0, 0 };                  // Panel DoFs (initially unassigned)
+                    double pnlW = 1;                              // width
+                    double psx = 0;                               // reinforcement ratio (X)
+                    double psy = 0;                               // reinforcement ratio (Y)
+                    string pnlK = "";                             // stifness matrix
+
                     // Check if the XData already exist. If not, create it
                     if (pnl.XData == null)
                     {
-                        // Initialize the panel parameters
-                        double pnlN = 0;                              // Panel number (initially unassigned)
-                        double[] verts = { 0, 0, 0, 0 };              // Panel vertices (initially unassigned)
-                        double pnlW = 1;                              // width
-                        double psx = 0;                               // reinforcement ratio (X)
-                        double psy = 0;                               // reinforcement ratio (Y)
-                        string pnlK = "";                             // stifness matrix
-
                         // Initialize a Result Buffer to add to the panel
                         ResultBuffer rb = new ResultBuffer();
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr)); // 1
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlN));            // 2
-                        for (int j = 0; j < 4; j++)
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum));                 // 2
+                        for (int i = 0; i < 4; i++)
                         {
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, verts[j]));    // 3, 4, 5, 6
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, dofs[i]));            // 3, 4, 5, 6
                         }
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));            // 7
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));             // 8
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));             // 9
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, pnlK));     // 10
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));                   // 7
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));                    // 8
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));                    // 9
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, pnlK));            // 10
 
                         // Append the extended data to the object
                         pnl.XData = rb;
@@ -745,33 +746,37 @@ namespace SPMTool
                     // Get the approximate coordinates of the center point of the panel
                     Point3d cntrPt = MidPoint(pnlVerts[0], pnlVerts[3]);
 
-                    // Get the panel number
-                    double pnlNum = cntrPtsList.IndexOf(cntrPt) + 1;
+                    // Get the coordinates of the panel DoFs in the necessary order
+                    Point3dCollection pnlDofs = new Point3dCollection();
+                    pnlDofs.Add(MidPoint(pnlVerts[0], pnlVerts[1]));
+                    pnlDofs.Add(MidPoint(pnlVerts[1], pnlVerts[3]));
+                    pnlDofs.Add(MidPoint(pnlVerts[3], pnlVerts[2]));
+                    pnlDofs.Add(MidPoint(pnlVerts[2], pnlVerts[0]));
 
-                    // Initialize the array of node numbers
-                    int[] ndNums = { 0, 0, 0, 0 };
+                    // Get the panel number
+                    pnlNum = cntrPtsList.IndexOf(cntrPt) + 1;
 
                     // Compare the node position to the panel vertices
-                    foreach (Point3d vert in pnlVerts)
+                    foreach (Point3d dof in pnlDofs)
                     {
                         // Get the nodes in the collection
-                        foreach (ObjectId ndObj in nds)
+                        foreach (ObjectId ndObj in intNds)
                         {
                             // Open the selected object as a point for read
                             DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
 
                             // Compare the position
-                            if (vert == nd.Position)
+                            if (dof == nd.Position)
                             {
                                 // Access the XData as an array
                                 ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
                                 TypedValue[] dataNd = ndRb.AsArray();
 
                                 // Get the position of the vertex in the array
-                                int i = pnlVerts.IndexOf(vert);
+                                int i = pnlDofs.IndexOf(dof);
 
-                                // Get the node number (line 2) and assign it to the node array in the position of the vertex
-                                ndNums[i] = Convert.ToInt32(dataNd[2].Value);
+                                // Get the node number (line 2) and assign it to the node array in the position of the DoF
+                                dofs[i] = Convert.ToInt32(dataNd[2].Value);
                             }
                         }
                     }
@@ -784,10 +789,10 @@ namespace SPMTool
                     data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
 
                     // Set the updated node numbers in the necessary order (line 3 to 6 of the array)
-                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[0]);
-                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[1]);
-                    data[5] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[3]);
-                    data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNums[2]);
+                    for (int i = 3; i <= 6; i++)
+                    {
+                        data[i] = new TypedValue((int)DxfCode.ExtendedDataReal, dofs[i-3]);
+                    }
 
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);
@@ -805,172 +810,19 @@ namespace SPMTool
             return numPnls;
         }
 
-        // Generate the degrees of freedom of the model
-        //public void GenerateDoFs()
-        //{
-        //    // Create the layer
-        //    CreateLayer("DoF", 5, 0);
+        // Get the collection of all of the nodes
+        public static ObjectIdCollection AllNodes()
+        {
+            // Create the nodes collection and initialize getting the elements on node layer
+            ObjectIdCollection extNds = GetEntitiesOnLayer("ExtNode");
+            ObjectIdCollection intNds = GetEntitiesOnLayer("IntNode");
 
-        //    // Get the nodes and stringers collections
-        //    ObjectIdCollection nds = GetEntitiesOnLayer("Node");
-        //    ObjectIdCollection strs = GetEntitiesOnLayer("Stringer");
-        //    ObjectIdCollection dofs = GetEntitiesOnLayer("DoF");
+            // Create a unique collection for all the nodes
+            ObjectIdCollection nds = new ObjectIdCollection();
+            foreach (ObjectId ndObj in extNds) nds.Add(ndObj);
+            foreach (ObjectId ndObj in intNds) nds.Add(ndObj);
 
-        //    // Create a point3D collection for the position of DoFs
-        //    Point3dCollection dofPts = new Point3dCollection();
-
-        //    // Start a transaction
-        //    using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
-        //    {
-        //        // Open the Block table for read
-        //        BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-        //        // Open the Block table record Model space for write
-        //        BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-        //        // Erase the DoFs created previously
-        //        if (dofs.Count > 0)
-        //        {
-        //            foreach (ObjectId dof in dofs)
-        //            {
-        //                // Get the entity and erase it
-        //                Entity ent = trans.GetObject(dof, OpenMode.ForWrite) as Entity;
-        //                ent.Erase();
-        //            }
-        //        }
-
-        //        // Get the nodes positions
-        //        foreach (ObjectId ndObj in nds)
-        //        {
-        //            // Read as a point and add to the collection
-        //            DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-        //            dofPts.Add(nd.Position);
-        //        }
-
-        //        // Get the stringers midpoints
-        //        foreach (ObjectId strObj in strs)
-        //        {
-        //            // Read as a line and get the midpoint
-        //            Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
-        //            Point3d midPt = MidPoint(str.StartPoint, str.EndPoint);
-        //            dofPts.Add(midPt);
-        //        }
-
-        //        // Create the DoFs
-        //        foreach (Point3d dofPt in dofPts)
-        //        {
-        //            DBPoint dof = new DBPoint(dofPt);
-
-        //            // Set the layer
-        //            dof.Layer = "DoF";
-
-        //            // Add the new object to the block table record and the transaction
-        //            blkTblRec.AppendEntity(dof);
-        //            trans.AddNewlyCreatedDBObject(dof, true);
-        //        }
-
-        //        // Save the new object to the database and dispose the transaction
-        //        trans.Commit();
-        //    }
-        //}
-
-        // Enumerate all the nodes in the model and return the number of nodes
-        //public static int UpdateDoFs()
-        //{
-        //    // Definition for the Extended Data
-        //    string xdataStr = "DoF Data";
-
-        //    // Initialize the number of DoFs
-        //    int numDofs = 0;
-
-        //    // Start a transaction
-        //    using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
-        //    {
-        //        // Open the Block table for read
-        //        BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-        //        // Create the nodes collection and initialize getting the elements on node layer
-        //        ObjectIdCollection dofs = GetEntitiesOnLayer("DoF");
-
-        //        // Create a point collection
-        //        Point3dCollection pts = new Point3dCollection();
-
-        //        // Get the number of Dofs
-        //        numDofs = dofs.Count;
-
-        //        // Add each point to the collection
-        //        foreach (ObjectId obj in dofs)
-        //        {
-        //            // Read the object as a point
-        //            DBPoint dof = trans.GetObject(obj, OpenMode.ForRead) as DBPoint;
-        //            pts.Add(dof.Position);
-        //        }
-
-        //        // Get the array of points ordered
-        //        List<Point3d> dofList = OrderPoints(pts);
-
-        //        // Access the dofs on the document
-        //        foreach (ObjectId obj in dofs)
-        //        {
-        //            // Read the object as a point
-        //            DBPoint dof = trans.GetObject(obj, OpenMode.ForWrite) as DBPoint;
-
-        //            // If the Extended data does not exist, create it
-        //            if (dof.XData == null)
-        //            {
-        //                // Inicialization of node conditions
-        //                double dofNum = 0;                                  // Dof number (to be set later)
-        //                double xPosition = dof.Position.X;                  // X position
-        //                double yPosition = dof.Position.Y;                  // Y position
-        //                double xDisp = 1;                                   // Displacement in X (0 if there is a support)
-        //                double yDisp = 1;                                   // Displacement in X (0 if there is a support)
-
-        //                // Define the Xdata to add to the node
-        //                using (ResultBuffer defRb = new ResultBuffer())
-        //                {
-        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
-        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
-        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, dofNum));                 // 2
-        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));              // 3
-        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));              // 4
-        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xDisp));                  // 5
-        //                    defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yDisp));                  // 6
-                            
-        //                    // Append the extended data to each object
-        //                    dof.XData = defRb;
-        //                }
-        //            }
-
-        //            // Get the Dof number on the list
-        //            double dofNum = dofList.IndexOf(dof.Position) + 1;
-
-        //            // Get the result buffer as an array
-        //            ResultBuffer rb = dof.GetXDataForApplication(Global.appName);
-        //            TypedValue[] data = rb.AsArray();
-
-        //            // Set the new DoF number (line 2)
-        //            data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, dofNum);
-
-        //            // Set the updated coordinates
-        //            data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, dof.Position.X);
-        //            data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, dof.Position.Y);
-
-        //            // Add the new XData
-        //            ResultBuffer newRb = new ResultBuffer(data);
-        //            dof.XData = newRb;
-        //        }
-
-        //        // Set the style for all point objects in the drawing
-        //        Global.curDb.Pdmode = 32;
-        //        Global.curDb.Pdsize = 50;
-
-        //        // Commit and dispose the transaction
-        //        trans.Commit();
-        //    }
-
-        //    // Return the number of nodes
-        //    return numDofs;
-        //}
-
+            return nds;
+        }
     }
 }

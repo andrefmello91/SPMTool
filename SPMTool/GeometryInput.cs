@@ -13,74 +13,23 @@ namespace SPMTool
     // Geometry related commands
     public class Geometry
     {
-        [CommandMethod("AddNode")]
-        public static void AddNode()
-        {
-            // Define the layer parameters
-            string ndLayer = "Node";
-            short red = 1;
-
-            // Set the style for all point objects in the drawing
-            Global.curDb.Pdmode = 32;
-            Global.curDb.Pdsize = 50;
-
-            // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-            AuxMethods.CreateLayer(ndLayer, red, 0);
-
-            // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-            AuxMethods.RegisterApp();
-
-            // Loop for creating infinite nodes (until user exits the command)
-            for ( ; ; )
-            {
-                // Start a transaction
-                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
-                {
-                    // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                    // Open the Block table record Model space for write
-                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                    // Create the node in Model space
-                    // Tell user to insert the point:
-                    PromptPointOptions ptOp = new PromptPointOptions("\nPick point or enter coordinates: ");
-                    PromptPointResult ptRes = Global.ed.GetPoint(ptOp);
-
-                    // Exit if the user presses ESC or cancels the command
-                    if (ptRes.Status == PromptStatus.OK)
-                    {
-                        // Create the node and set its layer to Node:
-                        DBPoint newNd = new DBPoint(ptRes.Value);
-                        newNd.Layer = ndLayer;
-
-                        // Add the new object to the block table record and the transaction
-                        blkTblRec.AppendEntity(newNd);
-                        trans.AddNewlyCreatedDBObject(newNd, true);
-                    }
-                    else
-                    {
-                        // Finish the command
-                        break;
-                    }
-
-                    // Save the new object to the database and dispose the transaction
-                    trans.Commit();
-                }
-            }
-
-            // Enumerate the nodes
-            AuxMethods.UpdateNodes();
-        }
-
         [CommandMethod("AddStringer")]
         public static void AddStringer()
         {
             // Define the layer parameters
+            // For Nodes (external and internal nodes)
+            string extNdLyr = "ExtNode";
+            string intNdLyr = "IntNode";
+            short red = 1;
+            short blue = 5;
+
+            // For stringers
             string strLayer = "Stringer";
             short cyan = 4;
 
-            // Check if the layer stringer already exists in the drawing. If it doesn't, then it's created:
+            // Check if the layers already exists in the drawing. If it doesn't, then it's created:
+            AuxMethods.CreateLayer(extNdLyr, red, 0);
+            AuxMethods.CreateLayer(intNdLyr, blue, 0);
             AuxMethods.CreateLayer(strLayer, cyan, 0);
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
@@ -89,14 +38,8 @@ namespace SPMTool
             // Enumerate the nodes
             AuxMethods.UpdateNodes();
 
-            // Get the current Object Snap Setting
-            Object curOsmode = Application.GetSystemVariable("osmode");
-
-            // Set the Object Snap Setting to node (8)
-            Application.SetSystemVariable("OSMODE", 8);
-
             // Prompt for the start point of stringer
-            PromptPointOptions strStOp = new PromptPointOptions("\nPick the start node: ");
+            PromptPointOptions strStOp = new PromptPointOptions("\nEnter the start point: ");
             PromptPointResult strStRes = Global.ed.GetPoint(strStOp);
 
             // Exit if the user presses ESC or cancels the command
@@ -113,10 +56,10 @@ namespace SPMTool
                         nds.Add(strStRes.Value);
 
                         // Prompt for the end point and add to the collection
-                        PromptPointOptions strEndOp = new PromptPointOptions("\nPick the end node: ")
+                        PromptPointOptions strEndOp = new PromptPointOptions("\nEnter the end point: ")
                         {
-                            UseBasePoint = true,
-                            BasePoint = strStRes.Value
+                            UseDashedLine = true,
+                            UseBasePoint = true
                         };
                         PromptPointResult strEndRes = Global.ed.GetPoint(strEndOp);
                         nds.Add(strEndRes.Value);
@@ -145,6 +88,14 @@ namespace SPMTool
                                 trans.AddNewlyCreatedDBObject(newStr, true);
                             }
 
+                            // Create the external nodes
+                            AddNode(strSt,  extNdLyr);
+                            AddNode(strEnd, extNdLyr);
+
+                            // Get the midpoint and add the internal node
+                            Point3d midPt = AuxMethods.MidPoint(strSt, strEnd);
+                            AddNode(midPt, intNdLyr);
+
                             // Set the start point of the new stringer
                             strStRes = strEndRes;
                         }
@@ -160,11 +111,9 @@ namespace SPMTool
                 }
             }
 
-            // Update the stringers
+            // Update the nodes and stringers
+            AuxMethods.UpdateNodes();
             AuxMethods.UpdateStringers();
-
-            // Set the Object Snap Setting to the initial
-            Application.SetSystemVariable("OSMODE", curOsmode);
         }
 
         [CommandMethod("AddPanel")]
@@ -174,74 +123,93 @@ namespace SPMTool
             string pnlLayer = "Panel";
             short grey = 254;
 
-            // Get the current Object Snap Setting
-            Object curOsmode = Application.GetSystemVariable("osmode");
-
-            // Set the Object Snap Setting to node (8)
-            Application.SetSystemVariable("OSMODE", 8);
-
             // Check if the layer panel already exists in the drawing. If it doesn't, then it's created:
             AuxMethods.CreateLayer(pnlLayer, grey, 80);
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
             AuxMethods.RegisterApp();
 
-            // Enumerate the nodes
-            AuxMethods.UpdateNodes();
-
-            // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            // Create a loop for creating infinite panels
+            for ( ; ; )
             {
-                // Create a point3d collection
-                Point3dCollection nds = new Point3dCollection();
+                // Prompt for user select 4 vertices of the panel
+                Global.ed.WriteMessage("\nSelect four nodes to be the vertices of the panel:");
+                PromptSelectionResult selRes = Global.ed.GetSelection();
 
-                // Prompt for user enter the vertices of the panel
-                for (int i = 0; i < 4; i++)
+                if (selRes.Status == PromptStatus.OK)
                 {
-                    // Prompt each vertice (using the base point)
-                    PromptPointOptions pnlNdOp = new PromptPointOptions("\nSelect nodes performing a loop");
+                    SelectionSet set = selRes.Value;
 
-                    // If the first point were already selected, use the previous point as a basepoint
-                    if (i >= 1)
+                    // Create a collection
+                    ObjectIdCollection verts = new ObjectIdCollection();
+
+                    // Create a point3d collection
+                    Point3dCollection nds = new Point3dCollection();
+
+                    // Start a transaction
+                    using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
                     {
-                        pnlNdOp.UseBasePoint = true;
-                        pnlNdOp.BasePoint = nds[i - 1];
+                        // Get the objects in the selection and add to the collection only the external nodes
+                        foreach (SelectedObject obj in set)
+                        {
+                            // Read as entity
+                            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                            // Check if it is a external node
+                            if (ent.Layer == "ExtNode") verts.Add(obj.ObjectId);
+                        }
+
+                        // Check if there are four objects
+                        if (verts.Count == 4)
+                        {
+                            // Get the position of the points and add to the collection
+                            foreach (ObjectId obj in verts)
+                            {
+                                DBPoint nd = trans.GetObject(obj, OpenMode.ForRead) as DBPoint;
+                                nds.Add(nd.Position);
+                            }
+
+                            // Order the vertices in ascending Y and ascending X
+                            List<Point3d> vrts = AuxMethods.OrderPoints(nds);
+
+                            // Open the Block table for read
+                            BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                            // Open the Block table record Model space for write
+                            BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                            // Create the panel as a solid with 4 segments (4 points)
+                            using (Solid newPnl = new Solid(vrts[0], vrts[1], vrts[2], vrts[3]))
+                            {
+                                // Set the layer to Panel
+                                newPnl.Layer = pnlLayer;
+
+                                // Add the panel to the drawing
+                                blkTblRec.AppendEntity(newPnl);
+                                trans.AddNewlyCreatedDBObject(newPnl, true);
+                            }
+
+                            // Save the new object to the database
+                            trans.Commit();
+                        }
+
+                        else
+                        {
+                            Application.ShowAlertDialog("Please select four external nodes.");
+                        }
                     }
-
-                    // Get the result and add to the collection
-                    PromptPointResult pnlNdRes = Global.ed.GetPoint(pnlNdOp);
-                    nds.Add(pnlNdRes.Value);
                 }
 
-                // Order the vertices in ascending Y and ascending X
-                List<Point3d> vrts = AuxMethods.OrderPoints(nds);
-
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Open the Block table record Model space for write
-                BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                // Create the panel as a solid with 4 segments (4 points)
-                using (Solid newPnl = new Solid(vrts[0], vrts[1], vrts[2], vrts[3]))
+                else
                 {
-                    // Set the layer to Panel
-                    newPnl.Layer = pnlLayer;
-
-                    // Add the panel to the drawing
-                    blkTblRec.AppendEntity(newPnl);
-                    trans.AddNewlyCreatedDBObject(newPnl, true);
+                    // Finish the command
+                    break;
                 }
-
-                // Save the new object to the database
-                trans.Commit();
             }
 
-            // Update the panels
+            // Update nodes and panels
+            AuxMethods.UpdateNodes();
             AuxMethods.UpdatePanels();
-
-            // Set the Object Snap Setting to the initial
-            Application.SetSystemVariable("OSMODE", curOsmode);
         }
 
         [CommandMethod("DivideStringer")]
@@ -300,6 +268,24 @@ namespace SPMTool
                             // Initialize the start point
                             Point3d stPt = strSt;
 
+                            // Get the midpoint
+                            Point3d midPt = AuxMethods.MidPoint(strSt, strEnd);
+
+                            // Access the internal nodes in the model
+                            ObjectIdCollection intNds = AuxMethods.GetEntitiesOnLayer("IntNode");
+                            foreach (ObjectId intNd in intNds)
+                            {
+                                // Read as point
+                                DBPoint nd = trans.GetObject(intNd, OpenMode.ForRead) as DBPoint;
+
+                                // Erase the internal node
+                                if (nd.Position == midPt)
+                                {
+                                    nd.UpgradeOpen();
+                                    nd.Erase();
+                                }
+                            }
+
                             // Create the new stringers
                             for (int i = 0; i <= strNum; i++)
                             {
@@ -323,28 +309,16 @@ namespace SPMTool
                                 // Append the XData of the original stringer
                                 newStr.XData = rb;
 
+                                // Create the external nodes
+                                AddNode(stPt, "ExtNode");
+                                AddNode(endPt, "ExtNode");
+
+                                // Get the mid point and add the internal node
+                                midPt = AuxMethods.MidPoint(stPt, endPt);
+                                AddNode(midPt, "IntNode");
+
                                 // Set the start point of the next stringer
                                 stPt = endPt;
-                            }
-
-                            // Create the new nodes (initial and end node already exist)
-                            for (int j = 1; j < strNum; j++)
-                            {
-                                // Get the coordinates
-                                double xCrd = str.StartPoint.X + j * distX;
-                                double yCrd = str.StartPoint.Y + j * distY;
-                                Point3d ndPt = new Point3d(xCrd, yCrd, 0);
-
-                                // Create the node and set its layer to Node:
-                                DBPoint newNd = new DBPoint()
-                                {
-                                    Position = ndPt,
-                                    Layer = "Node",
-                                };
-
-                                // Add the new object to the block table record and the transaction
-                                blkTblRec.AppendEntity(newNd);
-                                trans.AddNewlyCreatedDBObject(newNd, true);
                             }
 
                             // Erase the original stringer
@@ -455,17 +429,12 @@ namespace SPMTool
                                     // Append the XData of the original panel
                                     newPnl.XData = rb;
 
-                                    // Create the internal nodes
+                                    // Create the internal nodes of the panel (external fo stringers)
                                     if (i > 0 && j > 0)
                                     {
-                                        DBPoint nd = new DBPoint(new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0))
-                                        {
-                                            Layer = "Node"
-                                        };
-
-                                        // Add the node to the drawing
-                                        blkTblRec.AppendEntity(nd);
-                                        trans.AddNewlyCreatedDBObject(nd, true);
+                                        // Position
+                                        Point3d pt = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0);
+                                        AddNode(pt, "ExtNode");
                                     }
 
                                     // Create the internal horizontal stringers
@@ -481,6 +450,10 @@ namespace SPMTool
                                         // Add the line to the drawing
                                         blkTblRec.AppendEntity(strX);
                                         trans.AddNewlyCreatedDBObject(strX, true);
+
+                                        // Get the midpoint and add the internal node
+                                        Point3d midPt = AuxMethods.MidPoint(strX.StartPoint, strX.EndPoint);
+                                        AddNode(midPt, "IntNode");
                                     }
 
                                     // Create the internal vertical stringers
@@ -496,6 +469,10 @@ namespace SPMTool
                                         // Add the line to the drawing
                                         blkTblRec.AppendEntity(strY);
                                         trans.AddNewlyCreatedDBObject(strY, true);
+
+                                        // Get the midpoint and add the internal node
+                                        Point3d midPt = AuxMethods.MidPoint(strY.StartPoint, strY.EndPoint);
+                                        AddNode(midPt, "IntNode");
                                     }
 
                                 }
@@ -600,10 +577,10 @@ namespace SPMTool
                             ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
                             TypedValue[] data = rb.AsArray();
 
-                            // Set the new geometry and reinforcement (line 6 to 8 of the array)
-                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
-                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
-                            data[8] = new TypedValue((int)DxfCode.ExtendedDataReal, As);
+                            // Set the new geometry and reinforcement (line 7 to 9 of the array)
+                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
+                            data[8] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
+                            data[9] = new TypedValue((int)DxfCode.ExtendedDataReal, As);
 
                             // Add the new XData
                             ResultBuffer newRb = new ResultBuffer(data);
@@ -718,7 +695,6 @@ namespace SPMTool
                     // Start a transaction
                     using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
                     {
-
                         // Get the entity for read
                         Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
 
@@ -732,11 +708,15 @@ namespace SPMTool
                             TypedValue[] data = rb.AsArray();
 
                             // If it's a node
-                            if (ent.Layer == "Node")
+                            if (ent.Layer == "ExtNode" || ent.Layer == "IntNode")
                             {
                                 // Get the parameters
-                                string ndNum = data[2].Value.ToString(), posX = data[3].Value.ToString(), posY = data[4].Value.ToString();
-                                string sup = data[5].Value.ToString(), forX = data[6].Value.ToString(), forY = data[7].Value.ToString();
+                                string ndNum = data[2].Value.ToString(),
+                                       posX  = data[3].Value.ToString(),
+                                       posY  = data[4].Value.ToString(),
+                                       sup   = data[5].Value.ToString(),
+                                       forX  = data[6].Value.ToString(),
+                                       forY  = data[7].Value.ToString();
 
                                 msgstr = "Node " + ndNum + "\n\n" +
                                          "Node position: (" + posX + ", " + posY + ")" + "\n" +
@@ -749,12 +729,17 @@ namespace SPMTool
                             if (ent.Layer == "Stringer")
                             {
                                 // Get the parameters
-                                string strNum = data[2].Value.ToString(), strtNd = data[3].Value.ToString(), endNd = data[4].Value.ToString();
-                                string lgt = data[5].Value.ToString(), wdt = data[6].Value.ToString(), hgt = data[7].Value.ToString();
-                                string As = data[8].Value.ToString();
+                                string strNum = data[2].Value.ToString(),
+                                       strtNd = data[3].Value.ToString(),
+                                       midNd  = data[4].Value.ToString(),
+                                       endNd  = data[5].Value.ToString(),
+                                       lgt    = data[6].Value.ToString(),
+                                       wdt    = data[7].Value.ToString(),
+                                       hgt    = data[8].Value.ToString(),
+                                       As     = data[9].Value.ToString();
 
                                 msgstr = "Stringer " + strNum + "\n\n" +
-                                         "Nodes: (" + strtNd + " - " + endNd + ")" + "\n" +
+                                         "DoFs: (" + strtNd + " - " + midNd + " - " + endNd + ")" + "\n" +
                                          "Lenght = " + lgt + " mm" + "\n" +
                                          "Width = " + wdt + " mm" + "\n" +
                                          "Height = " + hgt + " mm" + "\n" +
@@ -765,17 +750,18 @@ namespace SPMTool
                             // If it's a panel
                             if (ent.Layer == "Panel")
                             {
-
                                 // Get the parameters
-                                string pnlNum = data[2].Value.ToString();
+                                string pnlNum   =   data[2].Value.ToString();
                                 string[] pnlNds = { data[3].Value.ToString(),
                                                     data[4].Value.ToString(),
                                                     data[5].Value.ToString(),
                                                     data[6].Value.ToString() };
-                                string pnlW = data[7].Value.ToString(), psx = data[8].Value.ToString(), psy = data[9].Value.ToString();
+                                string pnlW    =    data[7].Value.ToString(),
+                                       psx     =    data[8].Value.ToString(),
+                                       psy     =    data[9].Value.ToString();
 
                                 msgstr = "Panel " + pnlNum + "\n\n" +
-                                         "Nodes: (" + pnlNds[0] + " - " + pnlNds[1] + " - " + pnlNds[2] + " - " + pnlNds[3] + ")" + "\n" +
+                                         "DoFs: (" + pnlNds[0] + " - " + pnlNds[1] + " - " + pnlNds[2] + " - " + pnlNds[3] + ")" + "\n" +
                                          "Width = " + pnlW + " mm" + "\n" +
                                          "Reinforcement ratio (x) = " + psx + "\n" +
                                          "Reinforcement ratio (y) = " + psy;
@@ -801,6 +787,49 @@ namespace SPMTool
                     }
                 }
                 else break;
+            }
+        }
+
+        // Method to add a node given a point and a layer name
+        public static void AddNode(Point3d position, string layerName)
+        {
+            // Access the nodes in the model
+            ObjectIdCollection nds = AuxMethods.AllNodes();
+
+            // Create a point collection and add the position of the nodes
+            Point3dCollection ndPos = new Point3dCollection();
+
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                foreach (ObjectId ndObj in nds)
+                {
+                    // Read as a point and add to the collection
+                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+                    ndPos.Add(nd.Position);
+                }
+
+                // Check if a node already exists at the position. If not, its created
+                if (!ndPos.Contains(position))
+                {
+                    // Open the Block table for read
+                    BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                    // Open the Block table record Model space for write
+                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                    // Create the node in Model space
+                    // Create the node and set its layer to Node:
+                    DBPoint newNd = new DBPoint(position);
+                    newNd.Layer = layerName;
+
+                    // Add the new object to the block table record and the transaction
+                    blkTblRec.AppendEntity(newNd);
+                    trans.AddNewlyCreatedDBObject(newNd, true);
+
+                    // Save the new object to the database and dispose the transaction
+                    trans.Commit();
+                }
             }
         }
     }

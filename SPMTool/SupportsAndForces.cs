@@ -78,7 +78,7 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer.Equals("Node"))
+                        if (ent.Layer.Equals("ExtNode"))
                         {
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
@@ -222,7 +222,7 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer.Equals("Node"))
+                        if (ent.Layer.Equals("ExtNode"))
                         {
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();

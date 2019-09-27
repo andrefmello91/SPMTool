@@ -50,7 +50,7 @@ namespace SPMTool
                 // Save the variables on the Xrecord
                 using (ResultBuffer rb = new ResultBuffer())
                 {
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));            // 0
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));     // 0
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));          // 1
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fc));                       // 2
                     rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Ec));                       // 3
@@ -109,10 +109,10 @@ namespace SPMTool
                 // Save the variables on the Xrecord
                 using (ResultBuffer rb = new ResultBuffer())
                 {
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fy));
-                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Es));
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));            // 0
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));                 // 1   
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fy));                              // 2
+                    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Es));                              // 3
 
                     // Create and add data to an Xrecord
                     Xrecord xRec = new Xrecord();

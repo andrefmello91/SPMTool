@@ -59,7 +59,6 @@ namespace SPMTool
             // If the theme is dark (0), get the light icons
             if (theme == 0)
             {
-                ndBmp = Properties.Resources.node_large_light;
                 strBmp = Properties.Resources.stringer_large_light;
                 pnlBmp = Properties.Resources.panel_large_light;
                 setBmp = Properties.Resources.set_small_light;
@@ -74,7 +73,6 @@ namespace SPMTool
             }
             else // If the theme is light
             {
-                ndBmp = Properties.Resources.node_large;
                 strBmp = Properties.Resources.stringer_large;
                 pnlBmp = Properties.Resources.panel_large;
                 setBmp = Properties.Resources.set_small;
@@ -97,7 +95,7 @@ namespace SPMTool
             ribbonControl.Tabs.Add(Tab);
 
             // Create the Ribbon panels
-            GeometryPanel(Tab, ndBmp, strBmp, pnlBmp, setBmp, dvStrBmp, dvPnlBmp, updtBmp, viewBmp);
+            GeometryPanel(Tab, strBmp, pnlBmp, setBmp, dvStrBmp, dvPnlBmp, updtBmp, viewBmp);
             MaterialPanel(Tab, cncrtBmp, stlBmp, viewBmp);
             ConditionsPanel(Tab, suprtBmp, fcBmp);
 
@@ -106,25 +104,13 @@ namespace SPMTool
         }
 
         // Create Geometry Panel
-        public static void GeometryPanel(RibbonTab Tab, Bitmap node, Bitmap stringer, Bitmap panel, Bitmap set, Bitmap divideStringer, Bitmap dividePanel, Bitmap update, Bitmap view)
+        public static void GeometryPanel(RibbonTab Tab, Bitmap stringer, Bitmap panel, Bitmap set, Bitmap divideStringer, Bitmap dividePanel, Bitmap update, Bitmap view)
         {
             RibbonPanelSource pnlSrc = new RibbonPanelSource();
             pnlSrc.Title = "Geometry";
             RibbonPanel Panel = new RibbonPanel();
             Panel.Source = pnlSrc;
             Tab.Panels.Add(Panel);
-
-            // Geometry creation buttons
-            RibbonButton button1 = new RibbonButton()
-            {
-                Text = "Add node",
-                ToolTip = "Create a node",
-                ShowText = true,
-                ShowImage = true,
-                LargeImage = getBitmap(node),
-                CommandHandler = new CmdHandler(),
-                CommandParameter = "AddNode"
-            };
 
             RibbonButton button2 = new RibbonButton()
             {
@@ -156,7 +142,6 @@ namespace SPMTool
                 Size = RibbonItemSize.Large,
                 IsSynchronizedWithCurrentItem = true
             };
-            rbSpBtn1.Items.Add(button1);
             rbSpBtn1.Items.Add(button2);
             rbSpBtn1.Items.Add(button3);
 

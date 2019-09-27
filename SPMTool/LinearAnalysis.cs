@@ -54,17 +54,18 @@ namespace SPMTool
                     Line str = trans.GetObject(obj, OpenMode.ForWrite) as Line;
 
                     // Get the length and angles
-                    double lngt = str.Length;
-                    double alpha = str.Angle;                          // angle with x coordinate
+                    double lngt =  str.Length,
+                           alpha = str.Angle;                          // angle with x coordinate
 
                     // Read the XData and get the necessary data
                     ResultBuffer strRb = str.GetXDataForApplication(Global.appName);
                     TypedValue[] strData = strRb.AsArray();
-                    double strNum = Convert.ToDouble(strData[2].Value);
-                    double strNd = Convert.ToDouble(strData[3].Value);
-                    double endNd = Convert.ToDouble(strData[4].Value);
-                    double wd = Convert.ToDouble(strData[6].Value);
-                    double h = Convert.ToDouble(strData[7].Value);
+                    double strNum = Convert.ToDouble(strData[2].Value),
+                           strNd  = Convert.ToDouble(strData[3].Value),
+                           midNd  = Convert.ToDouble(strData[4].Value),
+                           endNd  = Convert.ToDouble(strData[5].Value),
+                           wd     = Convert.ToDouble(strData[7].Value),
+                           h      = Convert.ToDouble(strData[8].Value);
 
                     // Calculate the cross sectional area
                     double A = wd * h;
@@ -99,8 +100,8 @@ namespace SPMTool
                     var k = T.Transpose() * kl * T;
 
                     // Save to the XData
-                    strData[9] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, kl.ToString());
-                    strData[10] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, k.ToString());
+                    strData[10] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, kl.ToString());
+                    strData[11] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, k.ToString());
 
                     // Save the new XData
                     strRb = new ResultBuffer(strData);
@@ -178,11 +179,11 @@ namespace SPMTool
                     // Get the panel width
                     double t = Convert.ToDouble(pnlData[7].Value);
 
-                    // Get the number of the nodes
-                    DoubleCollection pnlNds = new DoubleCollection();
+                    // Get the number of the DoFs
+                    DoubleCollection pnlDofs = new DoubleCollection();
                     for(int i = 3; i <= 6; i++)
                     {
-                        pnlNds.Add(Convert.ToDouble(pnlData[i].Value));
+                        pnlDofs.Add(Convert.ToDouble(pnlData[i].Value));
                     }
 
                     // Create lines to measure the angles between the edges
@@ -317,13 +318,10 @@ namespace SPMTool
         public void ForceVector()
         {
             // Access the nodes in the model
-            ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
-
-            // Get the list of DoFs
-            List<Point3d> dofs = DoFs();
+            ObjectIdCollection nds = AuxMethods.AllNodes();
 
             // Get the number of DoFs
-            int numDofs = dofs.Count;
+            int numDofs = nds.Count;
 
             // Initialize the force vector with size 2x number of DoFs (forces in x and y)
             var f = Vector<double>.Build.Dense(numDofs * 2);
@@ -349,7 +347,7 @@ namespace SPMTool
                            Fy = Convert.ToDouble(data[7].Value);
 
                     // Get the position in the vector from the DoF list
-                    int i = 2 * dofs.IndexOf(nd.Position);
+                    int i = 2 * ndNum - 2;
 
                     // If force is not zero, assign the values in the force vector at position (i) and (i + 1)
                     if (Fx != 0) f.At(i, Fx);
@@ -365,13 +363,10 @@ namespace SPMTool
         public void DisplacementVector()
         {
             // Access the nodes in the model
-            ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
-
-            // Get the list of DoFs
-            List<Point3d> dofs = DoFs();
+            ObjectIdCollection nds = AuxMethods.AllNodes();
 
             // Get the number of DoFs
-            int numDofs = dofs.Count;
+            int numDofs = nds.Count;
 
             // Initialize the displacement vector with size 2x number of nodes (displacements in x and y)
             // Assign 1 (free node) initially to each value
@@ -396,8 +391,8 @@ namespace SPMTool
                     // Read the support condition
                     string sup = data[5].Value.ToString();
 
-                    // Get the position in the vector from the DoF list
-                    int i = 2 * dofs.IndexOf(nd.Position);
+                    // Get the position in the vector
+                    int i = 2 * ndNum - 2;
 
                     // If there is a support the value on the vector will be zero on that direction
                     // X (i) , Y (i + 1)
@@ -442,8 +437,9 @@ namespace SPMTool
                             TypedValue[] data = rb.AsArray();
 
                             // Get the parameters
-                            string strNum = data[2].Value.ToString();
-                            string kl = data[9].Value.ToString(), k = data[10].Value.ToString();
+                            string strNum = data[2 ].Value.ToString(),
+                                   kl     = data[10].Value.ToString(),
+                                   k      = data[11].Value.ToString();
 
                             msgstr = "Stringer " + strNum + "\n\n" +
                                      "Local Stifness Matrix: \n" +
@@ -483,42 +479,6 @@ namespace SPMTool
                     // Display the values returned
                     Global.ed.WriteMessage("\n" + msgstr);
                 }
-            }
-        }
-
-        // Get the list of DoFs
-        public List<Point3d> DoFs()
-        {
-            // Initiate a point3D list of Dofs
-            Point3dCollection dofs = new Point3dCollection();
-
-            // Access the nodes and stringers in the model
-            ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
-            ObjectIdCollection strs = AuxMethods.GetEntitiesOnLayer("Stringer");
-
-            // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
-            {
-                // Add the nodes positions to the collection
-                foreach (ObjectId ndObj in nds)
-                {
-                    // Read as point
-                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-                    dofs.Add(nd.Position);
-                }
-
-                // Add the stringers midpoints to the collection
-                foreach (ObjectId strObj in strs)
-                {
-                    // Read as Line
-                    Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
-                    Point3d midPt = AuxMethods.MidPoint(str.StartPoint, str.EndPoint);
-                    dofs.Add(midPt);
-                }
-
-                // Create a list with Dofs in order
-                List<Point3d> dofList = AuxMethods.OrderPoints(dofs);
-                return dofList;
             }
         }
     }
