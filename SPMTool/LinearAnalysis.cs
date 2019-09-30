@@ -81,9 +81,9 @@ namespace SPMTool
 
                     // Obtain the transformation matrix
                     var T = Matrix<double>.Build.DenseOfArray(new double[,] {
-                        {l, m, 0, 0, 0 },
-                        {0, 0, 1, 0, 0 },
-                        {0, 0, 0, l, m }
+                        {l, m, 0, 0, 0, 0 },
+                        {0, 0, l, m, 0, 0 },
+                        {0, 0, 0, 0, l, m }
                     });
 
                     // Calculate the constant factor of stifness
