@@ -32,9 +32,6 @@ namespace SPMTool
             // Get all the supports in the model
             ObjectIdCollection sprts = AuxMethods.GetEntitiesOnLayer(supLayer);
 
-            // Update the nodes
-            //AuxMethods.UpdateNodes();
-
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {

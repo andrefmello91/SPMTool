@@ -402,8 +402,32 @@ namespace SPMTool
             return ptList;
         }
 
-        // Enumerate all the nodes in the model and return the number of nodes
-        public static int UpdateNodes()
+        // Get the list of node positions ordered
+        public static List<Point3d> ListOfNodes()
+        {
+            // Get all the nodes in the model
+            ObjectIdCollection nds = AllNodes();
+
+            // Create a point collection
+            Point3dCollection ndPos = new Point3dCollection();
+
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                foreach (ObjectId ndObj in nds)
+                {
+                    // Read as a point and add to the collection
+                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+                    ndPos.Add(nd.Position);
+                }
+            }
+
+            // Return the node list ordered
+            return OrderPoints(ndPos);
+        }
+
+        // Enumerate all the nodes in the model and return the collection of nodes
+        public static ObjectIdCollection UpdateNodes()
         {
             // Definition for the Extended Data
             string xdataStr = "Node Data";
@@ -411,27 +435,14 @@ namespace SPMTool
             // Get all the nodes in the model
             ObjectIdCollection nds = AllNodes();
 
-            // Get the number of nodes
-            int numNds = nds.Count;
-
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
-                // Create a point collection
-                Point3dCollection ndPos = new Point3dCollection();
-
-                foreach (ObjectId ndObj in nds)
-                {
-                    // Read as a point and add to the collection
-                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-                    ndPos.Add(nd.Position);
-                }
-
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
-                // Get the array of points ordered
-                List<Point3d> ndList = OrderPoints(ndPos);
+                // Get the list of nodes ordered
+                List<Point3d> ndList = ListOfNodes();
 
                 // Access the nodes on the document
                 foreach (ObjectId ndObj in nds)
@@ -494,21 +505,18 @@ namespace SPMTool
                 trans.Commit();
             }
 
-            // Return the number of nodes
-            return numNds;
+            // Return the collection of nodes
+            return nds;
         }
 
-        // Update the node numbers on the XData of each stringer in the model and return the number of stringers
-        public static int UpdateStringers()
+        // Update the node numbers on the XData of each stringer in the model and return the collection of stringers
+        public static ObjectIdCollection UpdateStringers()
         {
             // Definition for the Extended Data
             string xdataStr = "Stringer Data";
 
             // Create the stringer collection and initialize getting the elements on layer
             ObjectIdCollection strs = GetEntitiesOnLayer("Stringer");
-
-            // Get the number of stringers
-            int numStrs = strs.Count;
 
             // Get all the nodes in the model
             ObjectIdCollection nds = AllNodes();
@@ -615,12 +623,12 @@ namespace SPMTool
                 trans.Commit();
             }
 
-            // Return the number of stringers
-            return numStrs;
+            // Return the collection of stringers
+            return strs;
         }
 
-        // Update the node numbers on the XData of each panel in the model and return the number of panels
-        public static int UpdatePanels()
+        // Update the node numbers on the XData of each panel in the model and return the collection of panels
+        public static ObjectIdCollection UpdatePanels()
         {
             // Definition for the Extended Data
             string xdataStr = "Panel Data";
@@ -630,9 +638,6 @@ namespace SPMTool
 
             // Create the panels collection and initialize getting the elements on node layer
             ObjectIdCollection pnls = GetEntitiesOnLayer("Panel");
-
-            // Get the number of panels
-            int numPnls = pnls.Count;
 
             // Create a point collection
             Point3dCollection cntrPts = new Point3dCollection();
@@ -753,8 +758,8 @@ namespace SPMTool
                 trans.Commit();
             }
 
-            // Return the number of panels
-            return numPnls;
+            // Return the collection of panels
+            return pnls;
         }
 
         // Get the collection of all of the nodes
@@ -804,23 +809,19 @@ namespace SPMTool
             return ndNum;
         }
 
-        // Calculate the cossine of an angle, return 0 if 90 or 270 degrees
-        public static double Cos(double angle)
+        // Get the direction cosines of a vector
+        public static (double l, double m) DirectionCosines(double angle)
         {
-            double cos;
-            if (angle == Global.piOver2 || angle == Global.pi3Over2) cos = 0;
-            else cos = MathNet.Numerics.Trig.Cos(angle);
-            return cos;
-        }
+            double l, m;
+            // Calculate the cossine, return 0 if 90 or 270 degrees
+            if (angle == Global.piOver2 || angle == Global.pi3Over2) l = 0;
+            else l = MathNet.Numerics.Trig.Cos(angle);
 
-        // Calculate the sine of an angle, return 0 if 0 or 180 degrees
-        public static double Sin(double angle)
-        {
-            double sin;
-            if (angle == 0 || angle == Global.pi) sin = 0;
-            else sin = MathNet.Numerics.Trig.Sin(angle);
-            return sin;
-        }
+            // Calculate the sine, return 0 if 0 or 180 degrees
+            if (angle == 0 || angle == Global.pi) m = 0;
+            else m = MathNet.Numerics.Trig.Sin(angle);
 
+            return (l, m);
+        }
     }
 }

@@ -496,13 +496,16 @@ namespace SPMTool
         public void UpdateElements()
         {
             // Enumerate and get the number of nodes
-            int numNds = AuxMethods.UpdateNodes();
+            ObjectIdCollection nds = AuxMethods.UpdateNodes();
+            int numNds = nds.Count;
 
             // Update and get the number of stringers
-            int numStrs = AuxMethods.UpdateStringers();
+            ObjectIdCollection strs = AuxMethods.UpdateStringers();
+            int numStrs = strs.Count;
 
             // Update and get the number of panels
-            int numPnls = AuxMethods.UpdatePanels();
+            ObjectIdCollection pnls = AuxMethods.UpdatePanels();
+            int numPnls = pnls.Count;
 
             // Display the number of updated elements
             Global.ed.WriteMessage("\n" + numNds.ToString() + " nodes, " + numStrs.ToString() + " stringers and " + numPnls.ToString() + " panels updated.");
