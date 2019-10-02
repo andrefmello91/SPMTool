@@ -16,302 +16,288 @@ namespace SPMTool
         [CommandMethod("StringerStiffness")]
         public void StringerStifness()
         {
-            // Initialize the parameters needed
-            double Ec = 0; // concrete elastic modulus
+            // Get the concrete parameters
+            var (fc, Ec) = Material.ConcreteParams();
 
-            // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            // Verify if concrete parameters were set
+            if (fc > 0 || Ec > 0)
             {
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Get the NOD in the database
-                DBDictionary nod = (DBDictionary)trans.GetObject(Global.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
-
-                // Read the concrete Xrecord
-                ObjectId concPar = nod.GetAt("ConcreteParams");
-                if (concPar != null)
+                // Start a transaction
+                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
                 {
-                    // Read the Concrete Xrecord
-                    Xrecord concXrec = (Xrecord)trans.GetObject(concPar, OpenMode.ForRead);
-                    ResultBuffer concRb = concXrec.Data;
-                    TypedValue[] concData = concRb.AsArray();
+                    // Get the stringer collection
+                    ObjectIdCollection strs = AuxMethods.GetEntitiesOnLayer("Stringer");
 
-                    // Get the elastic modulus
-                    Ec = Convert.ToDouble(concData[3].Value);
-                }
-                else
-                {
-                    Application.ShowAlertDialog("Please set the material parameters.");
-                }
+                    foreach (ObjectId obj in strs)
+                    {
+                        // Read each stringer as a line
+                        Line str = trans.GetObject(obj, OpenMode.ForWrite) as Line;
 
-                // Get the stringer collection
-                ObjectIdCollection strs = AuxMethods.GetEntitiesOnLayer("Stringer");
+                        // Get the length and angles
+                        double lngt = str.Length,
+                               alpha = str.Angle;                          // angle with x coordinate
 
-                foreach (ObjectId obj in strs)
-                {
-                    // Read each stringer as a line
-                    Line str = trans.GetObject(obj, OpenMode.ForWrite) as Line;
+                        // Read the XData and get the necessary data
+                        ResultBuffer strRb = str.GetXDataForApplication(Global.appName);
+                        TypedValue[] strData = strRb.AsArray();
+                        double strNum = Convert.ToDouble(strData[2].Value),
+                               strNd  = Convert.ToDouble(strData[3].Value),
+                               midNd  = Convert.ToDouble(strData[4].Value),
+                               endNd  = Convert.ToDouble(strData[5].Value),
+                               wd     = Convert.ToDouble(strData[7].Value),
+                               h      = Convert.ToDouble(strData[8].Value);
 
-                    // Get the length and angles
-                    double lngt =  str.Length,
-                           alpha = str.Angle;                          // angle with x coordinate
+                        // Calculate the cross sectional area
+                        double A = wd * h;
 
-                    // Read the XData and get the necessary data
-                    ResultBuffer strRb = str.GetXDataForApplication(Global.appName);
-                    TypedValue[] strData = strRb.AsArray();
-                    double strNum = Convert.ToDouble(strData[2].Value),
-                           strNd  = Convert.ToDouble(strData[3].Value),
-                           midNd  = Convert.ToDouble(strData[4].Value),
-                           endNd  = Convert.ToDouble(strData[5].Value),
-                           wd     = Convert.ToDouble(strData[7].Value),
-                           h      = Convert.ToDouble(strData[8].Value);
+                        // Get the direction cosines
+                        double l = AuxMethods.Cos(alpha);                  // cosine with x
+                        double m = AuxMethods.Sin(alpha);                  // cosine with y
 
-                    // Calculate the cross sectional area
-                    double A = wd * h;
-
-                    // Get the direction cosines
-                    double l;                                         // cosine with x
-
-                    // If the angle is 90 or 270 degrees, the cosine is zero
-                    if (alpha == Global.piOver2 || alpha == Global.pi3Over2) l = 0;
-                    else l = MathNet.Numerics.Trig.Cos(alpha);
-
-                    double m = MathNet.Numerics.Trig.Sin(alpha);      // cosine with y
-
-                    // Obtain the transformation matrix
-                    var T = Matrix<double>.Build.DenseOfArray(new double[,] {
+                        // Obtain the transformation matrix
+                        var T = Matrix<double>.Build.DenseOfArray(new double[,] {
                         {l, m, 0, 0, 0, 0 },
                         {0, 0, l, m, 0, 0 },
                         {0, 0, 0, 0, l, m }
-                    });
+                        });
 
-                    // Calculate the constant factor of stifness
-                    double EcAOverL = Ec * A / lngt;
+                        // Calculate the constant factor of stifness
+                        double EcAOverL = Ec * A / lngt;
 
-                    // Calculate the local stiffness matrix
-                    var kl = EcAOverL * Matrix<double>.Build.DenseOfArray(new double[,] {
+                        // Calculate the local stiffness matrix
+                        var kl = EcAOverL * Matrix<double>.Build.DenseOfArray(new double[,] {
                         {  4, -6,  2 },
                         { -6, 12, -6 },
                         {  2, -6,  4 }
-                    });
+                        });
 
-                    // Calculate the transformated stiffness matrix
-                    var k = T.Transpose() * kl * T;
+                        // Calculate the transformated stiffness matrix
+                        var k = T.Transpose() * kl * T;
 
-                    // Save to the XData
-                    strData[10] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, kl.ToString());
-                    strData[11] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, k.ToString());
+                        // Save to the XData
+                        strData[10] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, kl.ToString());
+                        strData[11] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, k.ToString());
 
-                    // Save the new XData
-                    strRb = new ResultBuffer(strData);
-                    str.XData = strRb;
+                        // Save the new XData
+                        strRb = new ResultBuffer(strData);
+                        str.XData = strRb;
+                    }
+
+                    // Commit and dispose the transaction
+                    trans.Commit();
                 }
 
-                // Commit and dispose the transaction
-                trans.Commit();
+                // If all went OK, notify the user
+                Global.ed.WriteMessage("\nLinear stifness matrix of stringers obtained.");
             }
-
-            // If all went OK, notify the user
-            Global.ed.WriteMessage("\nLinear stifness matrix of stringers obtained.");
+            else
+            {
+                Application.ShowAlertDialog("Please set the material parameters.");
+            }
         }
 
         [CommandMethod("PanelStiffness")]
         public void PanelStifness()
         {
-            // Initialize the parameters needed
-            double Ec = 0; // concrete elastic modulus
+            // Get the concrete parameters
+            var (fc, Ec) = Material.ConcreteParams();
 
-            // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            // Verify if concrete parameters were set
+            if (fc > 0 || Ec > 0)
             {
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Get the NOD in the database
-                DBDictionary nod = (DBDictionary)trans.GetObject(Global.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
-
-                // Read the concrete Xrecord
-                ObjectId concPar = nod.GetAt("ConcreteParams");
-                if (concPar != null)
+                // Start a transaction
+                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
                 {
-                    // Read the Concrete Xrecord
-                    Xrecord concXrec = (Xrecord)trans.GetObject(concPar, OpenMode.ForRead);
-                    ResultBuffer concRb = concXrec.Data;
-                    TypedValue[] concData = concRb.AsArray();
+                    // Calculate the aproximated shear modulus (elastic material)
+                    double Gc = Ec / 2.4;
 
-                    // Get the elastic modulus
-                    Ec = Convert.ToDouble(concData[3].Value);
-                }
-                else
-                {
-                    Application.ShowAlertDialog("Please set the material parameters.");
-                }
+                    // Get the panel collection
+                    ObjectIdCollection pnls = AuxMethods.GetEntitiesOnLayer("Panel");
 
-                // Calculate the aproximated shear modulus (elastic material)
-                double Gc = Ec / 2.4;
-
-                // Get the panel collection
-                ObjectIdCollection pnls = AuxMethods.GetEntitiesOnLayer("Panel");
-
-                foreach (ObjectId obj in pnls)
-                {
-                    // Read each panel as a solid
-                    Solid pnl = trans.GetObject(obj, OpenMode.ForWrite) as Solid;
-
-                    // Get the vertices
-                    Point3dCollection pnlVerts = new Point3dCollection();
-                    pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
-
-                    // Get the vertices in the order needed for calculations
-                    Point3d nd1 = pnlVerts[0],
-                            nd2 = pnlVerts[1],
-                            nd3 = pnlVerts[3],
-                            nd4 = pnlVerts[2];
-
-                    // Read the XData and get the necessary data
-                    ResultBuffer pnlRb = pnl.GetXDataForApplication(Global.appName);
-                    TypedValue[] pnlData = pnlRb.AsArray();
-
-                    // Get the number of the panel
-                    double pnlNum = Convert.ToDouble(pnlData[2].Value);
-
-                    // Get the panel width
-                    double t = Convert.ToDouble(pnlData[7].Value);
-
-                    // Get the number of the DoFs
-                    DoubleCollection pnlDofs = new DoubleCollection();
-                    for(int i = 3; i <= 6; i++)
+                    foreach (ObjectId obj in pnls)
                     {
-                        pnlDofs.Add(Convert.ToDouble(pnlData[i].Value));
-                    }
+                        // Read each panel as a solid
+                        Solid pnl = trans.GetObject(obj, OpenMode.ForWrite) as Solid;
 
-                    // Create lines to measure the angles between the edges
-                    Line ln1 = new Line(nd1, nd2);
-                    Line ln2 = new Line(nd2, nd3);
-                    Line ln3 = new Line(nd3, nd4);
-                    Line ln4 = new Line(nd4, nd1);
+                        // Get the vertices
+                        Point3dCollection pnlVerts = new Point3dCollection();
+                        pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
 
-                    // Get the angles
-                    double ang2 = ln2.Angle - ln1.Angle;
-                    double ang4 = ln4.Angle - ln3.Angle;
+                        // Get the vertices in the order needed for calculations
+                        Point3d nd1 = pnlVerts[0],
+                                nd2 = pnlVerts[1],
+                                nd3 = pnlVerts[3],
+                                nd4 = pnlVerts[2];
 
-                    // Initialize the stifness matrix
-                    var K = Matrix<double>.Build.Dense(4, 4);
+                        // Read the XData and get the necessary data
+                        ResultBuffer pnlRb = pnl.GetXDataForApplication(Global.appName);
+                        TypedValue[] pnlData = pnlRb.AsArray();
 
-                    // If the panel is rectangular (ang1 and ang3 will be equal to 90 degrees)
-                    if (ang2.Equals(Global.piOver2) || ang4.Equals(Global.piOver2))
-                    {
-                        // Get the dimensions
-                        double a = ln1.Length,
-                               b = ln2.Length;
+                        // Get the number of the panel
+                        double pnlNum = Convert.ToDouble(pnlData[2].Value);
 
-                        // Calculate the parameters of the stifness matrix
-                        double aOverb = a / b,
-                               bOvera = b / a;
+                        // Get the panel width
+                        double t = Convert.ToDouble(pnlData[7].Value);
 
-                        // Calculate the stiffness matrix
-                        K = Gc * t * Matrix<double>.Build.DenseOfArray(new double[,]
+                        // Get the number of the DoFs
+                        DoubleCollection pnlDofs = new DoubleCollection();
+                        for (int i = 3; i <= 6; i++)
                         {
+                            pnlDofs.Add(Convert.ToDouble(pnlData[i].Value));
+                        }
+
+                        // Create lines to measure the angles between the edges
+                        Line ln1 = new Line(nd1, nd2);
+                        Line ln2 = new Line(nd2, nd3);
+                        Line ln3 = new Line(nd3, nd4);
+                        Line ln4 = new Line(nd4, nd1);
+
+                        // Get the angles
+                        double ang2 = ln2.Angle - ln1.Angle;
+                        double ang4 = ln4.Angle - ln3.Angle;
+
+                        // Initialize the stifness matrix
+                        var Kl = Matrix<double>.Build.Dense(4, 4);
+
+                        // If the panel is rectangular (ang2 and ang4 will be equal to 90 degrees)
+                        if (ang2.Equals(Global.piOver2) && ang4.Equals(Global.piOver2))
+                        {
+                            // Get the dimensions
+                            double a = ln1.Length,
+                                   b = ln2.Length;
+
+                            // Calculate the parameters of the stifness matrix
+                            double aOverb = a / b,
+                                   bOvera = b / a;
+
+                            // Calculate the stiffness matrix
+                            Kl = Gc * t * Matrix<double>.Build.DenseOfArray(new double[,]
+                            {
                             {  aOverb,   -1  ,  aOverb,   -1   },
                             {    -1  , bOvera,    -1  , bOvera },
                             {  aOverb,   -1  ,  aOverb,   -1   },
                             {    -1  , bOvera,    -1  , bOvera }
-                        });
-                    }
+                            });
+                        }
 
-                    // If the panel is not rectangular
-                    else
-                    {
-                        // Get the dimensions
-                        double l1 = ln1.Length,
-                               l2 = ln2.Length,
-                               l3 = ln3.Length,
-                               l4 = ln4.Length;
-
-                        // Equilibrium parameters
-                        double c1 = nd2.X - nd1.X, c2 = nd3.X - nd2.X, c3 = nd4.X - nd3.X, c4 = nd1.X - nd4.X,
-                               s1 = nd2.Y - nd1.Y, s2 = nd3.Y - nd2.Y, s3 = nd4.Y - nd3.Y, s4 = nd1.Y - nd4.Y,
-                               r1 = nd1.X * nd2.Y - nd2.X * nd1.Y,     r2 = nd2.X * nd3.Y - nd3.X * nd2.Y,
-                               r3 = nd3.X * nd4.Y - nd4.X * nd3.Y,     r4 = nd4.X * nd1.Y - nd1.X * nd4.Y;
-
-                        // Kinematic parameters
-                        double a = (c1 - c3) / 2,
-                               b = (s2 - s4) / 2,
-                               c = (c2 - c4) / 2,
-                               d = (s1 - s3) / 2;
-
-                        double t1 = -b * c1 - c * s1,
-                               t2 =  a * s2 + d * c2,
-                               t3 =  b * c3 + c * s3,
-                               t4 = -a * s4 - d * c4;
-
-                        // Matrices to calculate the determinants
-                        var m1 = Matrix<double>.Build.DenseOfArray(new double[,]
+                        // If the panel is not rectangular
+                        else
                         {
+                            // Get the dimensions
+                            double l1 = ln1.Length,
+                                   l2 = ln2.Length,
+                                   l3 = ln3.Length,
+                                   l4 = ln4.Length;
+
+                            // Equilibrium parameters
+                            double c1 = nd2.X - nd1.X, c2 = nd3.X - nd2.X, c3 = nd4.X - nd3.X, c4 = nd1.X - nd4.X,
+                                   s1 = nd2.Y - nd1.Y, s2 = nd3.Y - nd2.Y, s3 = nd4.Y - nd3.Y, s4 = nd1.Y - nd4.Y,
+                                   r1 = nd1.X * nd2.Y - nd2.X * nd1.Y, r2 = nd2.X * nd3.Y - nd3.X * nd2.Y,
+                                   r3 = nd3.X * nd4.Y - nd4.X * nd3.Y, r4 = nd4.X * nd1.Y - nd1.X * nd4.Y;
+
+                            // Kinematic parameters
+                            double a = (c1 - c3) / 2,
+                                   b = (s2 - s4) / 2,
+                                   c = (c2 - c4) / 2,
+                                   d = (s1 - s3) / 2;
+
+                            double t1 = -b * c1 - c * s1,
+                                   t2 = a * s2 + d * c2,
+                                   t3 = b * c3 + c * s3,
+                                   t4 = -a * s4 - d * c4;
+
+                            // Matrices to calculate the determinants
+                            var km1 = Matrix<double>.Build.DenseOfArray(new double[,]
+                            {
                             { c2, c3, c4 },
                             { s2, s3, s4 },
                             { r2, r3, r4 },
-                        });
+                            });
 
-                        var m2 = Matrix<double>.Build.DenseOfArray(new double[,]
-                        {
+                            var km2 = Matrix<double>.Build.DenseOfArray(new double[,]
+                            {
                             { c1, c3, c4 },
                             { s1, s3, s4 },
                             { r1, r3, r4 },
-                        });
+                            });
 
-                        var m3 = Matrix<double>.Build.DenseOfArray(new double[,]
-                        {
+                            var km3 = Matrix<double>.Build.DenseOfArray(new double[,]
+                            {
                             { c1, c2, c4 },
                             { s1, s2, s4 },
                             { r1, r2, r4 },
-                        });
+                            });
 
-                        var m4 = Matrix<double>.Build.DenseOfArray(new double[,]
-                        {
+                            var km4 = Matrix<double>.Build.DenseOfArray(new double[,]
+                            {
                             { c1, c2, c3 },
                             { s1, s2, s3 },
                             { r1, r2, r3 },
-                        });
+                            });
 
-                        // Calculate the determinants
-                        double k1 = m1.Determinant(),
-                               k2 = m2.Determinant(),
-                               k3 = m3.Determinant(),
-                               k4 = m4.Determinant();
+                            // Calculate the determinants
+                            double k1 = km1.Determinant(),
+                                   k2 = km2.Determinant(),
+                                   k3 = km3.Determinant(),
+                                   k4 = km4.Determinant();
 
-                        // Calculate kf and ku
-                        double kf = k1 + k2 + k3 + k4,
-                               ku = -t1 * k1 + t2 * k2 - t3 * k3 + t4 * k4;
+                            // Calculate kf and ku
+                            double kf = k1 + k2 + k3 + k4,
+                                   ku = -t1 * k1 + t2 * k2 - t3 * k3 + t4 * k4;
 
-                        // Calculate D
-                        double D = 16 * Gc * t / (kf * ku);
+                            // Calculate D
+                            double D = 16 * Gc * t / (kf * ku);
 
-                        // Get the vector B
-                        var B = Vector<double>.Build.DenseOfArray(new double[]
-                        {
+                            // Get the vector B
+                            var B = Vector<double>.Build.DenseOfArray(new double[]
+                            {
                             -k1 * l1, k2 * l2, -k3 * l3, k4 * l4
+                            });
+
+                            // Get the stifness matrix
+                            Kl = B.ToColumnMatrix() * D * B.ToRowMatrix();
+                        }
+
+                        // Get the transformation matrix
+                        // Direction cosines
+                        double m1 = AuxMethods.Cos(ln1.Angle), n1 = AuxMethods.Sin(ln1.Angle),
+                               m2 = AuxMethods.Cos(ln2.Angle), n2 = AuxMethods.Sin(ln2.Angle),
+                               m3 = AuxMethods.Cos(ln3.Angle), n3 = AuxMethods.Sin(ln3.Angle),
+                               m4 = AuxMethods.Cos(ln4.Angle), n4 = AuxMethods.Sin(ln4.Angle);
+
+                        // T matrix
+                        var T = Matrix<double>.Build.DenseOfArray(new double[,]
+                        {
+                        { m1, n1,  0,  0,  0,  0,  0,  0 },
+                        {  0,  0, m2, n2,  0,  0,  0,  0 },
+                        {  0,  0,  0,  0, m3, n3,  0,  0 },
+                        {  0,  0,  0,  0,  0,  0, m4, n4 },
+
                         });
 
-                        // Get the stifness matrix
-                        K = B.ToColumnMatrix() * D * B.ToRowMatrix();
+                        // Global stifness matrix
+                        var K = T.Transpose() * Kl * T;
+
+                        // Save to the XData
+                        pnlData[10] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, Kl.ToString());
+                        pnlData[11] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, K.ToString());
+
+                        // Save the new XData
+                        pnlRb = new ResultBuffer(pnlData);
+                        pnl.XData = pnlRb;
                     }
 
-                    // Save to the XData
-                    pnlData[10] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, K.ToString());
-
-                    // Save the new XData
-                    pnlRb = new ResultBuffer(pnlData);
-                    pnl.XData = pnlRb;
+                    // Commit and dispose the transaction
+                    trans.Commit();
                 }
 
-                // Commit and dispose the transaction
-                trans.Commit();
+                // If all went OK, notify the user
+                Global.ed.WriteMessage("\nStifness matrix of panels obtained.");
             }
-
-            // If all went OK, notify the user
-            Global.ed.WriteMessage("\nStifness matrix of panels obtained.");
+            else
+            {
+                Application.ShowAlertDialog("Please set the material parameters.");
+            }
         }
 
         [CommandMethod("ForceVector")]
@@ -465,10 +451,13 @@ namespace SPMTool
 
                             // Get the parameters
                             string pnlNum = data[2].Value.ToString(),
-                                   K = data[10].Value.ToString();
+                                   Kl     = data[10].Value.ToString(),
+                                   K      = data[11].Value.ToString();
 
                             msgstr = "Panel " + pnlNum + "\n\n" +
-                                     "Stifness Matrix: \n" + K;
+                                     "Local Stifness Matrix:\n" + Kl + "\n" +
+                                     "Global Stifness Matrix:\n" + K;
+
                         }
 
                         else msgstr = "NONE";

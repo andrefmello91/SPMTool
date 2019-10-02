@@ -691,6 +691,7 @@ namespace SPMTool
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));                    // 8
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));                    // 9
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, pnlK));            // 10
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, pnlK));            // 11
 
                         // Append the extended data to the object
                         pnl.XData = rb;
@@ -802,5 +803,24 @@ namespace SPMTool
 
             return ndNum;
         }
+
+        // Calculate the cossine of an angle, return 0 if 90 or 270 degrees
+        public static double Cos(double angle)
+        {
+            double cos;
+            if (angle == Global.piOver2 || angle == Global.pi3Over2) cos = 0;
+            else cos = MathNet.Numerics.Trig.Cos(angle);
+            return cos;
+        }
+
+        // Calculate the sine of an angle, return 0 if 0 or 180 degrees
+        public static double Sin(double angle)
+        {
+            double sin;
+            if (angle == 0 || angle == Global.pi) sin = 0;
+            else sin = MathNet.Numerics.Trig.Sin(angle);
+            return sin;
+        }
+
     }
 }
