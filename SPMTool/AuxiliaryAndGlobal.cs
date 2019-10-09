@@ -871,9 +871,6 @@ namespace SPMTool
                 // Start a transaction
                 using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
                 {
-                    // Initialize a counter
-                    int i = 0;
-
                     foreach (ObjectId obj in fcs)
                     {
                         // Read as a block reference
