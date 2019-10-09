@@ -102,6 +102,7 @@ namespace SPMTool
                                         // Erase the support
                                         spBlk.UpgradeOpen();
                                         spBlk.Erase();
+                                        break;
                                     }
                                 }
                             }

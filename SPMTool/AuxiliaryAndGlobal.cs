@@ -435,6 +435,10 @@ namespace SPMTool
             // Get all the nodes in the model
             ObjectIdCollection nds = AllNodes();
 
+            // Get the position of supports and forces
+            Point3dCollection supPos = SupportPositions();
+            var (fcXPos, fcYPos) = ForcePositions();
+
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
@@ -823,5 +827,121 @@ namespace SPMTool
 
             return (l, m);
         }
+
+        // Collection of support positions
+        public static Point3dCollection SupportPositions()
+        {
+            // Initialize the collection of points
+            Point3dCollection supPos = new Point3dCollection();
+
+            // Get the supports
+            ObjectIdCollection spts = GetEntitiesOnLayer("Support");
+
+            if (spts.Count > 0)
+            {
+                // Start a transaction
+                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+                {
+
+                    foreach (ObjectId obj in spts)
+                    {
+                        // Read as a block reference
+                        BlockReference blkRef = trans.GetObject(obj, OpenMode.ForRead) as BlockReference;
+                        
+                        // Get the position and add to the collection
+                        supPos.Add(blkRef.Position);
+                    }
+                }
+            }
+            return supPos;
+        }
+
+        // Collections of force positions (in X and Y)
+        public static (Point3dCollection fcXPos, Point3dCollection fcYPos) ForcePositions()
+        {
+            // Initialize the collection of points and directions
+            Point3dCollection fcXPos = new Point3dCollection(),
+                              fcYPos = new Point3dCollection();
+
+            // Get the supports
+            ObjectIdCollection fcs = GetEntitiesOnLayer("Force");
+
+            if (fcs.Count > 0)
+            {
+                // Start a transaction
+                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+                {
+                    // Initialize a counter
+                    int i = 0;
+
+                    foreach (ObjectId obj in fcs)
+                    {
+                        // Read as a block reference
+                        BlockReference blkRef = trans.GetObject(obj, OpenMode.ForRead) as BlockReference;
+
+                        // If the rotation of the block is 90 or -90 degrees, the direction is X
+                        if (blkRef.Rotation == Global.piOver2 || blkRef.Rotation == - Global.piOver2)
+                        {
+                            fcXPos.Add(blkRef.Position);
+                        }
+
+                        // If the rotation of the block is 0 or 180 degrees, the direction is Y
+                        if (blkRef.Rotation == 0 || blkRef.Rotation == Global.pi)
+                        {
+                            fcYPos.Add(blkRef.Position);
+                        }
+                    }
+                }
+            }
+            return (fcXPos, fcYPos);
+        }
+
+        // In case a support or force is erased
+        //public static void BlockErased(object sender, ObjectEventArgs eventArgs)
+        //{
+        //    if (eventArgs.DBObject.IsErased)
+        //    {
+        //        // Read as a block reference
+        //        BlockReference blkRef = eventArgs.DBObject as BlockReference;
+
+        //        // Check if it's a support
+        //        if (blkRef.Layer == "Support")
+        //        {
+        //            // Get the nodes collection
+        //            ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
+
+        //            // Start a transaction
+        //            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+        //            {
+        //                // Update the support condition in the node XData
+        //                foreach (ObjectId obj in nds)
+        //                {
+        //                    // Read as a point
+        //                    DBPoint nd = trans.GetObject(obj, OpenMode.ForRead) as DBPoint;
+
+        //                    if (nd.Position == blkRef.Position)
+        //                    {
+        //                        // Get the result buffer as an array
+        //                        ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
+        //                        TypedValue[] data = rb.AsArray();
+
+        //                        // Set the updated support condition (in case of a support block was erased)
+        //                        string support = "Free";
+        //                        data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
+
+        //                        // Add the new XData
+        //                        nd.UpgradeOpen();
+        //                        ResultBuffer newRb = new ResultBuffer(data);
+        //                        nd.XData = newRb;
+        //                        break;
+        //                    }
+        //                }
+
+        //                // Commit
+        //                trans.Commit();
+        //            }
+        //        }
+        //    }
+        //}
     }
 }

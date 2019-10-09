@@ -279,6 +279,7 @@ namespace SPMTool
                                 {
                                     nd.UpgradeOpen();
                                     nd.Erase();
+                                    break;
                                 }
                             }
 

@@ -6,31 +6,33 @@ using System.IO;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
 using Autodesk.AutoCAD.Runtime;
+using Autodesk.AutoCAD.DatabaseServices;
+
 
 namespace SPMTool
 {
-    public class UserInterface
+    public class Initializer : IExtensionApplication
     {
-        public class Initializer : IExtensionApplication
+        public void Initialize()
         {
-            public void Initialize()
-            {
-                Autodesk.AutoCAD.ApplicationServices.Application.Idle +=
-                new EventHandler(on_ApplicationIdle);
-            }
-
-            public void on_ApplicationIdle(object sender, EventArgs e)
-            {
-                RibbonButtons();
-                Autodesk.AutoCAD.ApplicationServices.Application.Idle -= on_ApplicationIdle;
-            }
-            
-            public void Terminate()
-            {
-                
-            }
+            Autodesk.AutoCAD.ApplicationServices.Application.Idle +=
+            new EventHandler(on_ApplicationIdle);
         }
 
+        public void on_ApplicationIdle(object sender, EventArgs e)
+        {
+            UserInterface.RibbonButtons();
+            Autodesk.AutoCAD.ApplicationServices.Application.Idle -= on_ApplicationIdle;
+        }
+
+        public void Terminate()
+        {
+
+        }
+    }
+
+    public class UserInterface
+    {
         public static BitmapImage getBitmap(Bitmap image)
         {
             MemoryStream stream = new MemoryStream();
