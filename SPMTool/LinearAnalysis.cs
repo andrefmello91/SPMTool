@@ -40,13 +40,32 @@ namespace SPMTool
                 var (StrsK, StrsT) = StringersLinearStifness(strs, ndList, Ec, Kg);
                 var (PnlsK, PnlsT) = PanelsLinearStifness(pnls, ndList, Gc, Kg);
 
-                // Get the force vector and the initial displacement vector
+                // Get the force vector and the constraints vector
                 var f = ForceVector();
-                var u = DisplacementVector();
+                var cons = ConstraintVector();
+
+                // Get cons as a enumerated list (row, column, value)
+                var consEnum = cons.EnumerateIndexed();
+                
+                // Simplify the matrices removing the lines that have supports
+                foreach (Tuple<int, int, double> con in consEnum)
+                {
+                    if (con.Item3 == 0) // There is a support in this direction
+                    {
+                        // Get the index of the row
+                        int i = con.Item1;
+
+                        // Remove the row and column [i] in the stiffness matrix
+                        Kg = Kg.RemoveRow(i);
+                        Kg = Kg.RemoveColumn(i);
+
+                        // Remove the row in the force vector and the constraint vector
+                        f = f.RemoveRow(i);
+                    }
+                }
 
                 // If all went OK, notify the user
-                Global.ed.WriteMessage(Kg.ToString() + "\n" + StrsK.ToString() + "\n" + PnlsK.ToString());
-               
+                Global.ed.WriteMessage(Kg.ToString() + "\n" + f.ToString());
             }
             else
             {
@@ -469,7 +488,7 @@ namespace SPMTool
         }
 
         // Get the force vector
-        public Vector<double> ForceVector()
+        public Matrix<double> ForceVector()
         {
             // Access the nodes in the model
             ObjectIdCollection nds = AuxMethods.AllNodes();
@@ -511,11 +530,11 @@ namespace SPMTool
 
             // Write the values
             //Global.ed.WriteMessage("\nVector of forces:\n" + f.ToString());
-            return f;
+            return f.ToColumnMatrix();
         }
         
-        // Get the initial displacement vector to get the support conditions
-        public Vector<double> DisplacementVector()
+        // Get the constraint vector to get the support conditions
+        public Matrix<double> ConstraintVector()
         {
             // Access the nodes in the model
             ObjectIdCollection nds = AuxMethods.AllNodes();
@@ -523,9 +542,9 @@ namespace SPMTool
             // Get the number of DoFs
             int numDofs = nds.Count;
 
-            // Initialize the displacement vector with size 2x number of nodes (displacements in x and y)
+            // Initialize the constraint list with size 2x number of nodes (displacements in x and y)
             // Assign 1 (free node) initially to each value
-            var u = Vector<double>.Build.Dense(numDofs * 2, 1);
+            var cons = Vector<double>.Build.Dense(2 * numDofs, 1);
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
@@ -551,14 +570,14 @@ namespace SPMTool
 
                     // If there is a support the value on the vector will be zero on that direction
                     // X (i) , Y (i + 1)
-                    if (sup.Contains("X")) u.At(i, 0);
-                    if (sup.Contains("Y")) u.At(i + 1, 0);
+                    if (sup.Contains("X")) cons.At(i, 0);
+                    if (sup.Contains("Y")) cons.At(i + 1, 0);
                 }
             }
 
             // Write the values
             //Global.ed.WriteMessage("\nVector of displacements:\n" + u.ToString());
-            return u;
+            return cons.ToColumnMatrix();
         }
 
         [CommandMethod("ViewElasticStifness")]
