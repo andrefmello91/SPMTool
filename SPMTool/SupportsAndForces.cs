@@ -15,12 +15,8 @@ namespace SPMTool
         [CommandMethod("AddSupport")]
         public void AddSupport()
         {
-            // Define the layer parameters
-            string supLayer = "Support";
-            short red = 1;
-
             // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-            AuxMethods.CreateLayer(supLayer, red, 0);
+            AuxMethods.CreateLayer(Global.supLyr, Global.red, 0);
 
             // Initialize variables
             PromptSelectionResult selRes;
@@ -30,7 +26,7 @@ namespace SPMTool
             AuxMethods.CreateSupportBlocks();
 
             // Get all the supports in the model
-            ObjectIdCollection sprts = AuxMethods.GetEntitiesOnLayer(supLayer);
+            ObjectIdCollection sprts = AuxMethods.GetEntitiesOnLayer(Global.supLyr);
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
@@ -75,7 +71,7 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer.Equals("ExtNode"))
+                        if (ent.Layer == Global.extNdLyr)
                         {
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
@@ -131,7 +127,7 @@ namespace SPMTool
                                 {
                                     BlockTableRecord blkTblRec = trans.GetObject(Global.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = supLayer;
+                                    blkRef.Layer = Global.supLyr;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
                                 }
                             }
@@ -151,27 +147,22 @@ namespace SPMTool
             Matrix3d curUCSMatrix = Global.ed.CurrentUserCoordinateSystem;
             CoordinateSystem3d curUCS = curUCSMatrix.CoordinateSystem3d;
 
-            // Define the layer parameters
-            string fLayer = "Force";
-            string fTxtLayer = "ForceText";
-            short yellow = 2;
-
             // Initialize variables
             PromptSelectionResult selRes;
             SelectionSet set;
 
             // Check if the layer Force and ForceText already exists in the drawing. If it doesn't, then it's created:
-            AuxMethods.CreateLayer(fLayer, yellow, 0);
-            AuxMethods.CreateLayer(fTxtLayer, yellow, 0);
+            AuxMethods.CreateLayer(Global.fLyr, Global.yellow, 0);
+            AuxMethods.CreateLayer(Global.fTxtLyr, Global.yellow, 0);
 
             // Check if the force block already exist. If not, create the blocks
             AuxMethods.CreateForceBlock();
 
             // Get all the force blocks in the model
-            ObjectIdCollection fcs = AuxMethods.GetEntitiesOnLayer(fLayer);
+            ObjectIdCollection fcs = AuxMethods.GetEntitiesOnLayer(Global.fLyr);
 
             // Get all the force texts in the model
-            ObjectIdCollection fcTxts = AuxMethods.GetEntitiesOnLayer(fTxtLayer);
+            ObjectIdCollection fcTxts = AuxMethods.GetEntitiesOnLayer(Global.fTxtLyr);
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
@@ -220,7 +211,7 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer.Equals("ExtNode"))
+                        if (ent.Layer == Global.extNdLyr)
                         {
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
@@ -302,7 +293,7 @@ namespace SPMTool
                                     // Append the block to drawing
                                     BlockTableRecord blkTblRec = trans.GetObject(Global.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = fLayer;
+                                    blkRef.Layer = Global.fLyr;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
 
                                     // Get the force absolute value
@@ -339,7 +330,7 @@ namespace SPMTool
                                         TextString = xForceAbs.ToString() + " N",
                                         Position = txtPos,
                                         Height = 50,
-                                        Layer = fTxtLayer
+                                        Layer = Global.fTxtLyr
                                     };
 
                                     // Append the text to drawing
@@ -367,7 +358,7 @@ namespace SPMTool
                                     // Append the block to drawing
                                     BlockTableRecord blkTblRec = trans.GetObject(Global.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = fLayer;
+                                    blkRef.Layer = Global.fLyr;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
 
                                     // Get the force absolute value
@@ -403,7 +394,7 @@ namespace SPMTool
                                         TextString = yForceAbs.ToString() + " N",
                                         Position = txtPos,
                                         Height = 50,
-                                        Layer = fTxtLayer
+                                        Layer = Global.fTxtLyr
                                     };
 
                                     // Append the text to drawing

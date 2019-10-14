@@ -16,21 +16,10 @@ namespace SPMTool
         [CommandMethod("AddStringer")]
         public static void AddStringer()
         {
-            // Define the layer parameters
-            // For Nodes (external and internal nodes)
-            string extNdLyr = "ExtNode";
-            string intNdLyr = "IntNode";
-            short red = 1;
-            short blue = 150;
-
-            // For stringers
-            string strLayer = "Stringer";
-            short cyan = 4;
-
             // Check if the layers already exists in the drawing. If it doesn't, then it's created:
-            AuxMethods.CreateLayer(extNdLyr, red, 0);
-            AuxMethods.CreateLayer(intNdLyr, blue, 0);
-            AuxMethods.CreateLayer(strLayer, cyan, 0);
+            AuxMethods.CreateLayer(Global.extNdLyr, Global.red, 0);
+            AuxMethods.CreateLayer(Global.intNdLyr, Global.blue, 0);
+            AuxMethods.CreateLayer(Global.strLyr, Global.cyan, 0);
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
             AuxMethods.RegisterApp();
@@ -77,7 +66,7 @@ namespace SPMTool
                             using (Line newStr = new Line(strSt, strEnd))
                             {
                                 // Set the layer to stringer
-                                newStr.Layer = strLayer;
+                                newStr.Layer = Global.strLyr;
 
                                 // Add the line to the drawing
                                 blkTblRec.AppendEntity(newStr);
@@ -85,12 +74,12 @@ namespace SPMTool
                             }
 
                             // Create the external nodes
-                            AddNode(strSt,  extNdLyr);
-                            AddNode(strEnd, extNdLyr);
+                            AddNode(strSt,  Global.extNdLyr);
+                            AddNode(strEnd, Global.extNdLyr);
 
                             // Get the midpoint and add the internal node
                             Point3d midPt = AuxMethods.MidPoint(strSt, strEnd);
-                            AddNode(midPt, intNdLyr);
+                            AddNode(midPt, Global.intNdLyr);
 
                             // Set the start point of the new stringer
                             strStRes = strEndRes;
@@ -115,12 +104,8 @@ namespace SPMTool
         [CommandMethod("AddPanel")]
         public static void AddPanel()
         {
-            // Define the layer parameters
-            string pnlLayer = "Panel";
-            short grey = 254;
-
             // Check if the layer panel already exists in the drawing. If it doesn't, then it's created:
-            AuxMethods.CreateLayer(pnlLayer, grey, 80);
+            AuxMethods.CreateLayer(Global.pnlLyr, Global.grey, 80);
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
             AuxMethods.RegisterApp();
@@ -152,7 +137,7 @@ namespace SPMTool
                             Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                             // Check if it is a external node
-                            if (ent.Layer == "ExtNode") verts.Add(obj.ObjectId);
+                            if (ent.Layer == Global.extNdLyr) verts.Add(obj.ObjectId);
                         }
 
                         // Check if there are four objects
@@ -178,7 +163,7 @@ namespace SPMTool
                             using (Solid newPnl = new Solid(vrts[0], vrts[1], vrts[2], vrts[3]))
                             {
                                 // Set the layer to Panel
-                                newPnl.Layer = pnlLayer;
+                                newPnl.Layer = Global.pnlLyr;
 
                                 // Add the panel to the drawing
                                 blkTblRec.AppendEntity(newPnl);
@@ -245,7 +230,7 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer.Equals("Stringer"))
+                        if (ent.Layer == Global.strLyr)
                         {
                             // Read as a line
                             Line str = ent as Line;
@@ -268,7 +253,7 @@ namespace SPMTool
                             Point3d midPt = AuxMethods.MidPoint(strSt, strEnd);
 
                             // Access the internal nodes in the model
-                            ObjectIdCollection intNds = AuxMethods.GetEntitiesOnLayer("IntNode");
+                            ObjectIdCollection intNds = AuxMethods.GetEntitiesOnLayer(Global.intNdLyr);
                             foreach (ObjectId intNd in intNds)
                             {
                                 // Read as point
@@ -296,7 +281,7 @@ namespace SPMTool
                                 {
                                     StartPoint = stPt,
                                     EndPoint = endPt,
-                                    Layer = "Stringer"
+                                    Layer = Global.strLyr
                                 };
 
                                 // Add the line to the drawing
@@ -307,12 +292,12 @@ namespace SPMTool
                                 newStr.XData = rb;
 
                                 // Create the external nodes
-                                AddNode(stPt, "ExtNode");
-                                AddNode(endPt, "ExtNode");
+                                AddNode(stPt, Global.extNdLyr);
+                                AddNode(endPt, Global.extNdLyr);
 
                                 // Get the mid point and add the internal node
                                 midPt = AuxMethods.MidPoint(stPt, endPt);
-                                AddNode(midPt, "IntNode");
+                                AddNode(midPt, Global.intNdLyr);
 
                                 // Set the start point of the next stringer
                                 stPt = endPt;
@@ -382,7 +367,7 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer.Equals("Panel"))
+                        if (ent.Layer == Global.pnlLyr)
                         {
                             // Read as a solid
                             Solid pnl = ent as Solid;
@@ -416,7 +401,7 @@ namespace SPMTool
                                     // Create the panel
                                     Solid newPnl = new Solid(verts[0], verts[1], verts[2], verts[3])
                                     {
-                                        Layer = "Panel"
+                                        Layer = Global.pnlLyr
                                     };
 
                                     // Add the line to the drawing
@@ -431,7 +416,7 @@ namespace SPMTool
                                     {
                                         // Position
                                         Point3d pt = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0);
-                                        AddNode(pt, "ExtNode");
+                                        AddNode(pt, Global.extNdLyr);
                                     }
 
                                     // Create the internal horizontal stringers
@@ -441,7 +426,7 @@ namespace SPMTool
                                         {
                                             StartPoint = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
                                             EndPoint = new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0),
-                                            Layer = "Stringer"
+                                            Layer = Global.strLyr
                                         };
 
                                         // Add the line to the drawing
@@ -450,7 +435,7 @@ namespace SPMTool
 
                                         // Get the midpoint and add the internal node
                                         Point3d midPt = AuxMethods.MidPoint(strX.StartPoint, strX.EndPoint);
-                                        AddNode(midPt, "IntNode");
+                                        AddNode(midPt, Global.intNdLyr);
                                     }
 
                                     // Create the internal vertical stringers
@@ -460,7 +445,7 @@ namespace SPMTool
                                         {
                                             StartPoint = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
                                             EndPoint = new Point3d(stPt.X + j * distX, stPt.Y + (i + 1) * distY, 0),
-                                            Layer = "Stringer"
+                                            Layer = Global.strLyr
                                         };
 
                                         // Add the line to the drawing
@@ -469,7 +454,7 @@ namespace SPMTool
 
                                         // Get the midpoint and add the internal node
                                         Point3d midPt = AuxMethods.MidPoint(strY.StartPoint, strY.EndPoint);
-                                        AddNode(midPt, "IntNode");
+                                        AddNode(midPt, Global.intNdLyr);
                                     }
 
                                 }
@@ -568,7 +553,7 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer.Equals("Stringer"))
+                        if (ent.Layer == Global.strLyr)
                         {
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
@@ -650,7 +635,7 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer.Equals("Panel"))
+                        if (ent.Layer == Global.pnlLyr)
                         {
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
@@ -708,7 +693,7 @@ namespace SPMTool
                             TypedValue[] data = rb.AsArray();
 
                             // If it's a node
-                            if (ent.Layer == "ExtNode" || ent.Layer == "IntNode")
+                            if (ent.Layer == Global.extNdLyr || ent.Layer == Global.intNdLyr)
                             {
                                 // Get the parameters
                                 string ndNum = data[2].Value.ToString(),
@@ -726,7 +711,7 @@ namespace SPMTool
                             }
 
                             // If it's a stringer
-                            if (ent.Layer == "Stringer")
+                            if (ent.Layer == Global.strLyr)
                             {
                                 // Get the parameters
                                 string strNum = data[2].Value.ToString(),
@@ -748,7 +733,7 @@ namespace SPMTool
                             }
 
                             // If it's a panel
-                            if (ent.Layer == "Panel")
+                            if (ent.Layer == Global.pnlLyr)
                             {
                                 // Get the parameters
                                 string pnlNum   =   data[2].Value.ToString();
@@ -768,7 +753,7 @@ namespace SPMTool
                             }
 
                             // If it's a force text
-                            if (ent.Layer == "ForceText")
+                            if (ent.Layer == Global.fTxtLyr)
                             {
                                 // Get the parameters
                                 string posX = data[2].Value.ToString(), posY = data[3].Value.ToString();

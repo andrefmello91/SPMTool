@@ -20,10 +20,26 @@ namespace SPMTool
         // Define the appName
         public static string appName = "SPMTool";
 
+        // Layer names
+        public static string extNdLyr = "ExtNode",
+                             intNdLyr = "IntNode",
+                             strLyr   = "Stringer",
+                             pnlLyr   = "Panel",
+                             supLyr   = "Support",
+                             fLyr     = "Force",
+                             fTxtLyr  = "ForceText";
+
+        // Color codes
+        public static short red    = 1,
+                            yellow = 2,
+                            cyan   = 4,
+                            blue   = 150,
+                            grey   = 254;
+
         // Constants
-        public static double pi = MathNet.Numerics.Constants.Pi;
-        public static double piOver2 = MathNet.Numerics.Constants.PiOver2;
-        public static double pi3Over2 = MathNet.Numerics.Constants.Pi3Over2;
+        public static double pi       = MathNet.Numerics.Constants.Pi,
+                             piOver2  = MathNet.Numerics.Constants.PiOver2,
+                             pi3Over2 = MathNet.Numerics.Constants.Pi3Over2;
     }
 
     // Auxiliary Methods
@@ -403,10 +419,15 @@ namespace SPMTool
         }
 
         // Get the list of node positions ordered
-        public static List<Point3d> ListOfNodes()
+        public static List<Point3d> ListOfNodes(string nodeType)
         {
-            // Get all the nodes in the model
-            ObjectIdCollection nds = AllNodes();
+            // Initialize an object collection
+            ObjectIdCollection nds = new ObjectIdCollection();
+
+            // Select the node type
+            if (nodeType == "All") nds = AllNodes();
+            if (nodeType == "Int") nds = GetEntitiesOnLayer(Global.intNdLyr);
+            if (nodeType == "Ext") nds = GetEntitiesOnLayer(Global.extNdLyr);
 
             // Create a point collection
             Point3dCollection ndPos = new Point3dCollection();
@@ -446,7 +467,7 @@ namespace SPMTool
                 BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Get the list of nodes ordered
-                List<Point3d> ndList = ListOfNodes();
+                List<Point3d> ndList = ListOfNodes("All");
 
                 // Access the nodes on the document
                 foreach (ObjectId ndObj in nds)
@@ -520,7 +541,7 @@ namespace SPMTool
             string xdataStr = "Stringer Data";
 
             // Create the stringer collection and initialize getting the elements on layer
-            ObjectIdCollection strs = GetEntitiesOnLayer("Stringer");
+            ObjectIdCollection strs = GetEntitiesOnLayer(Global.strLyr);
 
             // Get all the nodes in the model
             ObjectIdCollection nds = AllNodes();
@@ -638,10 +659,10 @@ namespace SPMTool
             string xdataStr = "Panel Data";
 
             // Get the internal nodes of the model
-            ObjectIdCollection intNds = GetEntitiesOnLayer("IntNode");
+            ObjectIdCollection intNds = GetEntitiesOnLayer(Global.intNdLyr);
 
             // Create the panels collection and initialize getting the elements on node layer
-            ObjectIdCollection pnls = GetEntitiesOnLayer("Panel");
+            ObjectIdCollection pnls = GetEntitiesOnLayer(Global.pnlLyr);
 
             // Create a point collection
             Point3dCollection cntrPts = new Point3dCollection();
@@ -770,8 +791,8 @@ namespace SPMTool
         public static ObjectIdCollection AllNodes()
         {
             // Create the nodes collection and initialize getting the elements on node layer
-            ObjectIdCollection extNds = GetEntitiesOnLayer("ExtNode");
-            ObjectIdCollection intNds = GetEntitiesOnLayer("IntNode");
+            ObjectIdCollection extNds = GetEntitiesOnLayer(Global.extNdLyr);
+            ObjectIdCollection intNds = GetEntitiesOnLayer(Global.intNdLyr);
 
             // Create a unique collection for all the nodes
             ObjectIdCollection nds = new ObjectIdCollection();
@@ -828,6 +849,13 @@ namespace SPMTool
             return (l, m);
         }
 
+        // Function to verify if a number is not zero
+        public static Func<double, bool> otherThanZero = delegate (double num)
+        {
+            if (num != 0) return true;
+            else return false;
+        };
+
         // Collection of support positions
         public static Point3dCollection SupportPositions()
         {
@@ -835,7 +863,7 @@ namespace SPMTool
             Point3dCollection supPos = new Point3dCollection();
 
             // Get the supports
-            ObjectIdCollection spts = GetEntitiesOnLayer("Support");
+            ObjectIdCollection spts = GetEntitiesOnLayer(Global.supLyr);
 
             if (spts.Count > 0)
             {
@@ -864,7 +892,7 @@ namespace SPMTool
                               fcYPos = new Point3dCollection();
 
             // Get the supports
-            ObjectIdCollection fcs = GetEntitiesOnLayer("Force");
+            ObjectIdCollection fcs = GetEntitiesOnLayer(Global.fLyr);
 
             if (fcs.Count > 0)
             {
@@ -902,7 +930,7 @@ namespace SPMTool
         //        BlockReference blkRef = eventArgs.DBObject as BlockReference;
 
         //        // Check if it's a support
-        //        if (blkRef.Layer == "Support")
+        //        if (blkRef.Layer == Global.supLyr)
         //        {
         //            // Get the nodes collection
         //            ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");

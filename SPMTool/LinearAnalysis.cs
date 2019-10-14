@@ -6,6 +6,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using MathNet.Numerics.LinearAlgebra;
 using Autodesk.AutoCAD.Geometry;
+using MathNet.Numerics.Data.Text;
 
 [assembly: CommandClass(typeof(SPMTool.LinearAnalysis))]
 
@@ -31,41 +32,30 @@ namespace SPMTool
                                    pnls = AuxMethods.UpdatePanels();
 
                 // Get the list of node positions
-                List<Point3d> ndList = AuxMethods.ListOfNodes();
+                List<Point3d> ndList = AuxMethods.ListOfNodes("All");
 
                 // Initialize the global stiffness matrix
                 var Kg = Matrix<double>.Build.Dense(2 * nds.Count, 2 * nds.Count);
-
+                
                 // Calculate the stifness of each stringer and panel, add to the global stiffness and get the matrices of the stiffness of elements
-                var (StrsK, StrsT) = StringersLinearStifness(strs, ndList, Ec, Kg);
-                var (PnlsK, PnlsT) = PanelsLinearStifness(pnls, ndList, Gc, Kg);
+                var strMats = StringersLinearStifness(strs, ndList, Ec, Kg);
+                var pnlMats = PanelsLinearStifness(pnls, ndList, Gc, Kg);
 
                 // Get the force vector and the constraints vector
                 var f = ForceVector();
                 var cons = ConstraintVector();
 
-                // Get cons as a enumerated list (row, column, value)
-                var consEnum = cons.EnumerateIndexed();
-                
-                // Simplify the matrices removing the lines that have supports
-                foreach (Tuple<int, int, double> con in consEnum)
-                {
-                    if (con.Item3 == 0) // There is a support in this direction
-                    {
-                        // Get the index of the row
-                        int i = con.Item1;
+                // Simplify the stifness matrix
+                SimplifyStiffnessMatrix(Kg, f, ndList, cons);
 
-                        // Remove the row and column [i] in the stiffness matrix
-                        Kg = Kg.RemoveRow(i);
-                        Kg = Kg.RemoveColumn(i);
-
-                        // Remove the row in the force vector and the constraint vector
-                        f = f.RemoveRow(i);
-                    }
-                }
+                // Solve the sistem
+                var u = Kg.Solve(f);
 
                 // If all went OK, notify the user
-                Global.ed.WriteMessage(Kg.ToString() + "\n" + f.ToString());
+                DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
+                DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
+
+                //Global.ed.WriteMessage(u.ToString() + f.ToString());
             }
             else
             {
@@ -73,12 +63,11 @@ namespace SPMTool
             }
         }
 
-        // Calculate the stifness matrix stringers, save to XData and add to global stifness matrix
-        public (Matrix<double> StrsK, Matrix<double> StrsT) StringersLinearStifness(ObjectIdCollection stringers, List<Point3d> nodeList, double Ec, Matrix<double> Kg)
+        // Calculate the stifness matrix stringers, save to XData and add to global stifness matrix, returns the all the matrices in an ordered list
+        public List<Tuple<Matrix<double>, Matrix<double>>> StringersLinearStifness(ObjectIdCollection stringers, List<Point3d> nodeList, double Ec, Matrix<double> Kg)
         {
-            // Initialize matrices to store the stiffness and tranformation matrices of each stringer
-            var StrsK = Matrix<double>.Build.Dense(6 * stringers.Count, 6);
-            var StrsT = Matrix<double>.Build.Dense(3 * stringers.Count, 6);
+            // Initialize a tuple list to store the matrices of stringers
+            List<Tuple<Matrix<double>, Matrix<double>>> strMats = new List<Tuple<Matrix<double>, Matrix<double>>>(stringers.Count);
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
@@ -139,11 +128,8 @@ namespace SPMTool
                     strRb = new ResultBuffer(strData);
                     str.XData = strRb;
 
-                    // Copy the matrix to the collection of stringer matrices at
-                    int idxK = 6 * strNum - 6,
-                        idxT = 3 * strNum - 3;
-                    StrsK.SetSubMatrix(idxK, 0, K);
-                    StrsT.SetSubMatrix(idxT, 0, T);
+                    // Save to the list (Local stiffness and transformation matrix)
+                    strMats[strNum - 1] = new Tuple<Matrix<double>, Matrix<double>>(Kl, T);
 
                     // Get the positions in the global matrix
                     int i = 2 * nodeList.IndexOf(str.StartPoint),               // DoF 1
@@ -177,47 +163,16 @@ namespace SPMTool
                         // Increment the line index
                         o++;
                     }
-
-                    //// 1st line              
-                    //Kg[i, i] = Kg[i, i] + K[0, 0];              Kg[i, i + 1] = Kg[i, i + 1] + K[0, 1];
-                    //Kg[i, j] = Kg[i, j] + K[0, 2];              Kg[i, j + 1] = Kg[i, j + 1] + K[0, 3];
-                    //Kg[i, k] = Kg[i, k] + K[0, 4];              Kg[i, k + 1] = Kg[i, k + 1] + K[0, 5];
-
-                    //// 2nd line
-                    //Kg[i + 1, i] = Kg[i + 1, i] + K[1, 0];      Kg[i + 1, i + 1] = Kg[i + 1, i + 1] + K[1, 1];
-                    //Kg[i + 1, j] = Kg[i + 1, j] + K[1, 2];      Kg[i + 1, j + 1] = Kg[i + 1, j + 1] + K[1, 3];
-                    //Kg[i + 1, k] = Kg[i + 1, k] + K[1, 4];      Kg[i + 1, k + 1] = Kg[i + 1, k + 1] + K[1, 5];
-
-                    //// 3rd line
-                    //Kg[j, i] = Kg[j, i] + K[2, 0];              Kg[j, i + 1] = Kg[j, i + 1] + K[2, 1];
-                    //Kg[j, j] = Kg[j, j] + K[2, 2];              Kg[j, j + 1] = Kg[j, j + 1] + K[2, 3];
-                    //Kg[j, k] = Kg[j, k] + K[2, 4];              Kg[j, k + 1] = Kg[j, k + 1] + K[2, 5];
-
-                    //// 4th line
-                    //Kg[j + 1, i] = Kg[j + 1, i] + K[3, 0];      Kg[j + 1, i + 1] = Kg[j + 1, i + 1] + K[3, 1];
-                    //Kg[j + 1, j] = Kg[j + 1, j] + K[3, 2];      Kg[j + 1, j + 1] = Kg[j + 1, j + 1] + K[3, 3];
-                    //Kg[j + 1, k] = Kg[j + 1, k] + K[3, 4];      Kg[j + 1, k + 1] = Kg[j + 1, k + 1] + K[3, 5];
-
-                    //// 5th line
-                    //Kg[k, i] = Kg[k, i] + K[4, 0];              Kg[k, i + 1] = Kg[k, i + 1] + K[4, 1];
-                    //Kg[k, j] = Kg[k, j] + K[4, 2];              Kg[k, j + 1] = Kg[k, j + 1] + K[4, 3];
-                    //Kg[k, k] = Kg[k, k] + K[4, 4];              Kg[k, k + 1] = Kg[k, k + 1] + K[4, 5];
-
-                    //// 6th line
-                    //Kg[k + 1, i] = Kg[k + 1, i] + K[5, 0];      Kg[k + 1, i + 1] = Kg[k + 1, i + 1] + K[5, 1];
-                    //Kg[k + 1, j] = Kg[k + 1, j] + K[5, 2];      Kg[k + 1, j + 1] = Kg[k + 1, j + 1] + K[5, 3];
-                    //Kg[k + 1, k] = Kg[k + 1, k] + K[5, 4];      Kg[k + 1, k + 1] = Kg[k + 1, k + 1] + K[5, 5];
                 }
             }
-            return (StrsK, StrsT);
+            return strMats;
         }
 
-        // Calculate the stifness matrix of a panel, get the dofs and save to XData
-        public (Matrix<double> PnlsK, Matrix<double> PnlsT) PanelsLinearStifness(ObjectIdCollection panels, List<Point3d> nodeList, double Gc, Matrix<double> Kg)
+        // Calculate the stifness matrix of a panel, get the dofs and save to XData, returns the all the matrices in an ordered list
+        public List<Tuple<Matrix<double>, Matrix<double>>> PanelsLinearStifness(ObjectIdCollection panels, List<Point3d> nodeList, double Gc, Matrix<double> Kg)
         {
-            // Initialize matrices to store the stiffness and tranformation matrices of each panel
-            var PnlsK = Matrix<double>.Build.Dense(8 * panels.Count, 8);
-            var PnlsT = Matrix<double>.Build.Dense(4 * panels.Count, 8);
+            // Initialize a tuple list to store the matrices of stringers
+            List<Tuple<Matrix<double>, Matrix<double>>> pnlMats = new List<Tuple<Matrix<double>, Matrix<double>>>(panels.Count);
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
@@ -392,11 +347,8 @@ namespace SPMTool
                     pnlRb = new ResultBuffer(pnlData);
                     panel.XData = pnlRb;
 
-                    // Copy the matrix to the collection of stringer matrices at
-                    int idxK = 8 * pnlNum - 8,
-                        idxT = 4 * pnlNum - 4;
-                    PnlsK.SetSubMatrix(idxK, 0, K);
-                    PnlsT.SetSubMatrix(idxT, 0, T);
+                    // Save to the list (Local stiffness and transformation matrix)
+                    pnlMats[pnlNum - 1] = new Tuple<Matrix<double>, Matrix<double>>(Kl, T);
 
                     // Get the positions in the global matrix
                     int i = 2 * nodeList.IndexOf(dof1),
@@ -433,62 +385,13 @@ namespace SPMTool
                         // Increment the line index
                         o++;
                     }
-
-                    //// Add the local matrix to the global at the DoFs positions
-                    //// 1st line
-                    //Kg[i, i] = Kg[i, i] + K[0, 0];              Kg[i, i + 1] = Kg[i, i + 1] + K[0, 1];
-                    //Kg[i, j] = Kg[i, j] + K[0, 2];              Kg[i, j + 1] = Kg[i, j + 1] + K[0, 3];
-                    //Kg[i, k] = Kg[i, k] + K[0, 4];              Kg[i, k + 1] = Kg[i, k + 1] + K[0, 5];
-                    //Kg[i, l] = Kg[i, l] + K[0, 6];              Kg[i, l + 1] = Kg[i, l + 1] + K[0, 7];
-
-                    //// 2nd line
-                    //Kg[i + 1, i] = Kg[i + 1, i] + K[1, 0];      Kg[i + 1, i + 1] = Kg[i + 1, i + 1] + K[1, 1];
-                    //Kg[i + 1, j] = Kg[i + 1, j] + K[1, 2];      Kg[i + 1, j + 1] = Kg[i + 1, j + 1] + K[1, 3];
-                    //Kg[i + 1, k] = Kg[i + 1, k] + K[1, 4];      Kg[i + 1, k + 1] = Kg[i + 1, k + 1] + K[1, 5];
-                    //Kg[i + 1, l] = Kg[i + 1, l] + K[1, 6];      Kg[i + 1, l + 1] = Kg[i + 1, l + 1] + K[1, 7];
-
-                    //// 3rd line
-                    //Kg[j, i] = Kg[j, i] + K[2, 0];              Kg[j, i + 1] = Kg[j, i + 1] + K[2, 1];
-                    //Kg[j, j] = Kg[j, j] + K[2, 2];              Kg[j, j + 1] = Kg[j, j + 1] + K[2, 3];
-                    //Kg[j, k] = Kg[j, k] + K[2, 4];              Kg[j, k + 1] = Kg[j, k + 1] + K[2, 5];
-                    //Kg[j, l] = Kg[j, l] + K[2, 6];              Kg[j, l + 1] = Kg[j, l + 1] + K[2, 7];
-
-                    //// 4th line
-                    //Kg[j + 1, i] = Kg[j + 1, i] + K[3, 0];      Kg[j + 1, i + 1] = Kg[j + 1, i + 1] + K[3, 1];
-                    //Kg[j + 1, j] = Kg[j + 1, j] + K[3, 2];      Kg[j + 1, j + 1] = Kg[j + 1, j + 1] + K[3, 3];
-                    //Kg[j + 1, k] = Kg[j + 1, k] + K[3, 4];      Kg[j + 1, k + 1] = Kg[j + 1, k + 1] + K[3, 5];
-                    //Kg[j + 1, l] = Kg[j + 1, l] + K[3, 6];      Kg[j + 1, l + 1] = Kg[j + 1, l + 1] + K[3, 7];
-
-                    //// 5th line
-                    //Kg[k, i] = Kg[k, i] + K[4, 0];              Kg[k, i + 1] = Kg[k, i + 1] + K[4, 1];
-                    //Kg[k, j] = Kg[k, j] + K[4, 2];              Kg[k, j + 1] = Kg[k, j + 1] + K[4, 3];
-                    //Kg[k, k] = Kg[k, k] + K[4, 4];              Kg[k, k + 1] = Kg[k, k + 1] + K[4, 5];
-                    //Kg[k, l] = Kg[k, l] + K[4, 6];              Kg[k, l + 1] = Kg[k, l + 1] + K[4, 7];
-
-                    //// 6th line
-                    //Kg[k + 1, i] = Kg[k + 1, i] + K[5, 0];      Kg[k + 1, i + 1] = Kg[k + 1, i + 1] + K[5, 1];
-                    //Kg[k + 1, j] = Kg[k + 1, j] + K[5, 2];      Kg[k + 1, j + 1] = Kg[k + 1, j + 1] + K[5, 3];
-                    //Kg[k + 1, k] = Kg[k + 1, k] + K[5, 4];      Kg[k + 1, k + 1] = Kg[k + 1, k + 1] + K[5, 5];
-                    //Kg[k + 1, l] = Kg[k + 1, l] + K[5, 6];      Kg[k + 1, l + 1] = Kg[k + 1, l + 1] + K[5, 7];
-
-                    //// 7th line
-                    //Kg[l, i] = Kg[l, i] + K[6, 0];              Kg[l, i + 1] = Kg[l, i + 1] + K[6, 1];
-                    //Kg[l, j] = Kg[l, j] + K[6, 2];              Kg[l, j + 1] = Kg[l, j + 1] + K[6, 3];
-                    //Kg[l, k] = Kg[l, k] + K[6, 4];              Kg[l, k + 1] = Kg[l, k + 1] + K[6, 5];
-                    //Kg[l, l] = Kg[l, l] + K[6, 6];              Kg[l, l + 1] = Kg[l, l + 1] + K[6, 7];
-
-                    //// 8th line
-                    //Kg[l + 1, i] = Kg[l + 1, i] + K[7, 0];      Kg[l + 1, i + 1] = Kg[l + 1, i + 1] + K[7, 1];
-                    //Kg[l + 1, j] = Kg[l + 1, j] + K[7, 2];      Kg[l + 1, j + 1] = Kg[l + 1, j + 1] + K[7, 3];
-                    //Kg[l + 1, k] = Kg[l + 1, k] + K[7, 4];      Kg[l + 1, k + 1] = Kg[l + 1, k + 1] + K[7, 5];
-                    //Kg[l + 1, l] = Kg[l + 1, l] + K[7, 6];      Kg[l + 1, l + 1] = Kg[l + 1, l + 1] + K[7, 7];
                 }
             }
-            return (PnlsK, PnlsT);
+            return pnlMats;
         }
 
         // Get the force vector
-        public Matrix<double> ForceVector()
+        public Vector<double> ForceVector()
         {
             // Access the nodes in the model
             ObjectIdCollection nds = AuxMethods.AllNodes();
@@ -530,11 +433,11 @@ namespace SPMTool
 
             // Write the values
             //Global.ed.WriteMessage("\nVector of forces:\n" + f.ToString());
-            return f.ToColumnMatrix();
+            return f;
         }
         
-        // Get the constraint vector to get the support conditions
-        public Matrix<double> ConstraintVector()
+        // Get the constraint vector as enumerated list to get the support conditions
+        public IEnumerable<Tuple<int, double>> ConstraintVector()
         {
             // Access the nodes in the model
             ObjectIdCollection nds = AuxMethods.AllNodes();
@@ -577,7 +480,69 @@ namespace SPMTool
 
             // Write the values
             //Global.ed.WriteMessage("\nVector of displacements:\n" + u.ToString());
-            return cons.ToColumnMatrix();
+            return cons.EnumerateIndexed();
+        }
+
+        public void SimplifyStiffnessMatrix(Matrix<double> Kg, Vector<double> f, List<Point3d> allNds, IEnumerable<Tuple<int, double>> constraints)
+        {
+            // Get the list of internal nodes
+            List<Point3d> intNds = AuxMethods.ListOfNodes("Int");
+
+            // Simplify the matrices removing the rows that have constraints
+            foreach (Tuple<int, double> con in constraints)
+            {
+                // Simplification by the constraints
+                if (con.Item2 == 0) // There is a support in this direction
+                {
+                    // Get the index of the row
+                    int i = con.Item1;
+
+                    // Clear the row and column [i] in the stiffness matrix (all elements will be zero)
+                    Kg.ClearRow(i);
+                    Kg.ClearColumn(i);
+
+                    // Set the diagonal element to 1
+                    Kg[i, i] = 1;
+
+                    // Clear the row in the force vector
+                    f[i] = 0;
+                    
+                    // So ui = 0
+                }
+            }
+
+            // Simplification for internal nodes (There is only a displacement at the stringer direction, the perpendicular one will be zero)
+            foreach (Point3d intNd in intNds)
+            {
+                // Get the index of the global matrix
+                int i = 2 * allNds.IndexOf(intNd);
+
+                // Get the rows of the matrix as vectors
+                Vector<double> row1 = Kg.Row(i),
+                               row2 = Kg.Row(i + 1);
+
+                // Verify what line of the matrix is composed of zeroes
+                if (!row1.Exists(AuxMethods.otherThanZero))
+                {
+                    // The row is composed of only zeroes, so the displacement must be zero
+                    // Set the diagonal element to 1
+                    Kg[i, i] = 1;
+
+                    // Clear the row in the force vector
+                    f[i] = 0;
+                }
+
+                if (!row2.Exists(AuxMethods.otherThanZero))
+                {
+                    // The row is composed of only zeroes, so the displacement must be zero
+                    // Set the diagonal element to 1
+                    Kg[i + 1, i + 1] = 1;
+
+                    // Clear the row in the force vector
+                    f[i + 1] = 0;
+                }
+                // Else nothing is done
+            }
         }
 
         [CommandMethod("ViewElasticStifness")]
@@ -600,7 +565,7 @@ namespace SPMTool
                     Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
 
                     // If it's a stringer
-                    if (ent.Layer == "Stringer")
+                    if (ent.Layer == Global.strLyr)
                     {
                         // Get the extended data attached to each object for MY_APP
                         ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
@@ -627,7 +592,7 @@ namespace SPMTool
                     }
 
                     // If it's a panel
-                    if (ent.Layer == "Panel")
+                    if (ent.Layer == Global.pnlLyr)
                     {
                         // Get the extended data attached to each object for MY_APP
                         ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
