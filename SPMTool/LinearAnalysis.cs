@@ -148,17 +148,25 @@ namespace SPMTool
                     foreach (int n in ind)
                     {
                         // Line o
-                        Kg[n, i] = Kg[n, i] + K[o, 0];                  Kg[n, i + 1] = Kg[n, i + 1] + K[o, 1];
-                        Kg[n, j] = Kg[n, j] + K[o, 2];                  Kg[n, j + 1] = Kg[n, j + 1] + K[o, 3];
-                        Kg[n, k] = Kg[n, k] + K[o, 4];                  Kg[n, k + 1] = Kg[n, k + 1] + K[o, 5];
+                        // Check if the row is composed of zeroes
+                        if (K.Row(o).Exists(AuxMethods.NotZero))
+                        {
+                            Kg[n, i] = Kg[n, i] + K[o, 0];              Kg[n, i + 1] = Kg[n, i + 1] + K[o, 1];
+                            Kg[n, j] = Kg[n, j] + K[o, 2];              Kg[n, j + 1] = Kg[n, j + 1] + K[o, 3];
+                            Kg[n, k] = Kg[n, k] + K[o, 4];              Kg[n, k + 1] = Kg[n, k + 1] + K[o, 5];
+                        }
 
                         // Increment the line index
                         o++;
 
                         // Line o + 1
-                        Kg[n + 1, i] = Kg[n + 1, i] + K[o, 0];          Kg[n + 1, i + 1] = Kg[n + 1, i + 1] + K[o, 1];
-                        Kg[n + 1, j] = Kg[n + 1, j] + K[o, 2];          Kg[n + 1, j + 1] = Kg[n + 1, j + 1] + K[o, 3];
-                        Kg[n + 1, k] = Kg[n + 1, k] + K[o, 4];          Kg[n + 1, k + 1] = Kg[n + 1, k + 1] + K[o, 5];
+                        // Check if the row is composed of zeroes
+                        if (K.Row(o).Exists(AuxMethods.NotZero))
+                        {
+                            Kg[n + 1, i] = Kg[n + 1, i] + K[o, 0];      Kg[n + 1, i + 1] = Kg[n + 1, i + 1] + K[o, 1];
+                            Kg[n + 1, j] = Kg[n + 1, j] + K[o, 2];      Kg[n + 1, j + 1] = Kg[n + 1, j + 1] + K[o, 3];
+                            Kg[n + 1, k] = Kg[n + 1, k] + K[o, 4];      Kg[n + 1, k + 1] = Kg[n + 1, k + 1] + K[o, 5];
+                        }
 
                         // Increment the line index
                         o++;
@@ -368,19 +376,27 @@ namespace SPMTool
                     foreach (int n in ind)
                     {
                         // Line o
-                        Kg[n, i] = Kg[n, i] + K[o, 0];                  Kg[n, i + 1] = Kg[n, i + 1] + K[o, 1];
-                        Kg[n, j] = Kg[n, j] + K[o, 2];                  Kg[n, j + 1] = Kg[n, j + 1] + K[o, 3];
-                        Kg[n, k] = Kg[n, k] + K[o, 4];                  Kg[n, k + 1] = Kg[n, k + 1] + K[o, 5];
-                        Kg[n, l] = Kg[n, l] + K[o, 6];                  Kg[n, l + 1] = Kg[n, l + 1] + K[o, 7];
+                        // Check if the row is composed of zeroes
+                        if (K.Row(o).Exists(AuxMethods.NotZero))
+                        {
+                            Kg[n, i] = Kg[n, i] + K[o, 0];              Kg[n, i + 1] = Kg[n, i + 1] + K[o, 1];
+                            Kg[n, j] = Kg[n, j] + K[o, 2];              Kg[n, j + 1] = Kg[n, j + 1] + K[o, 3];
+                            Kg[n, k] = Kg[n, k] + K[o, 4];              Kg[n, k + 1] = Kg[n, k + 1] + K[o, 5];
+                            Kg[n, l] = Kg[n, l] + K[o, 6];              Kg[n, l + 1] = Kg[n, l + 1] + K[o, 7];
+                        }
 
                         // Increment the line index
                         o++;
 
                         // Line o + 1
-                        Kg[n + 1, i] = Kg[n + 1, i] + K[o, 0];          Kg[n + 1, i + 1] = Kg[n + 1, i + 1] + K[o, 1];
-                        Kg[n + 1, j] = Kg[n + 1, j] + K[o, 2];          Kg[n + 1, j + 1] = Kg[n + 1, j + 1] + K[o, 3];
-                        Kg[n + 1, k] = Kg[n + 1, k] + K[o, 4];          Kg[n + 1, k + 1] = Kg[n + 1, k + 1] + K[o, 5];
-                        Kg[n + 1, l] = Kg[n + 1, l] + K[o, 6];          Kg[n + 1, l + 1] = Kg[n + 1, l + 1] + K[o, 7];
+                        // Check if the row is composed of zeroes
+                        if (K.Row(o).Exists(AuxMethods.NotZero))
+                        {
+                            Kg[n + 1, i] = Kg[n + 1, i] + K[o, 0];      Kg[n + 1, i + 1] = Kg[n + 1, i + 1] + K[o, 1];
+                            Kg[n + 1, j] = Kg[n + 1, j] + K[o, 2];      Kg[n + 1, j + 1] = Kg[n + 1, j + 1] + K[o, 3];
+                            Kg[n + 1, k] = Kg[n + 1, k] + K[o, 4];      Kg[n + 1, k + 1] = Kg[n + 1, k + 1] + K[o, 5];
+                            Kg[n + 1, l] = Kg[n + 1, l] + K[o, 6];      Kg[n + 1, l + 1] = Kg[n + 1, l + 1] + K[o, 7];
+                        }
 
                         // Increment the line index
                         o++;
@@ -517,12 +533,8 @@ namespace SPMTool
                 // Get the index of the global matrix
                 int i = 2 * allNds.IndexOf(intNd);
 
-                // Get the rows of the matrix as vectors
-                Vector<double> row1 = Kg.Row(i),
-                               row2 = Kg.Row(i + 1);
-
                 // Verify what line of the matrix is composed of zeroes
-                if (!row1.Exists(AuxMethods.otherThanZero))
+                if (!Kg.Row(i).Exists(AuxMethods.NotZero))
                 {
                     // The row is composed of only zeroes, so the displacement must be zero
                     // Set the diagonal element to 1
@@ -532,7 +544,7 @@ namespace SPMTool
                     f[i] = 0;
                 }
 
-                if (!row2.Exists(AuxMethods.otherThanZero))
+                if (!Kg.Row(i + 1).Exists(AuxMethods.NotZero))
                 {
                     // The row is composed of only zeroes, so the displacement must be zero
                     // Set the diagonal element to 1

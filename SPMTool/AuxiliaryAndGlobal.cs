@@ -850,7 +850,7 @@ namespace SPMTool
         }
 
         // Function to verify if a number is not zero
-        public static Func<double, bool> otherThanZero = delegate (double num)
+        public static Func<double, bool> NotZero = delegate (double num)
         {
             if (num != 0) return true;
             else return false;
