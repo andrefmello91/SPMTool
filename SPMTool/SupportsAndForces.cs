@@ -143,10 +143,6 @@ namespace SPMTool
         [CommandMethod("AddForce")]
         public void AddForce()
         {
-            // Get the coordinate system for transformations
-            Matrix3d curUCSMatrix = Global.ed.CurrentUserCoordinateSystem;
-            CoordinateSystem3d curUCS = curUCSMatrix.CoordinateSystem3d;
-
             // Initialize variables
             PromptSelectionResult selRes;
             SelectionSet set;
@@ -322,7 +318,7 @@ namespace SPMTool
                                     }
 
                                     // Rotate the block
-                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, curUCS.Zaxis, insPt));
+                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, Global.curUCS.Zaxis, insPt));
 
                                     // Define the force text
                                     DBText text = new DBText()
@@ -386,7 +382,7 @@ namespace SPMTool
                                     }
 
                                     // Rotate the block
-                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, curUCS.Zaxis, insPt));
+                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, Global.curUCS.Zaxis, insPt));
 
                                     // Define the force text
                                     DBText text = new DBText()

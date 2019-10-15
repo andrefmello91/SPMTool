@@ -700,14 +700,14 @@ namespace SPMTool
                                        posX  = data[3].Value.ToString(),
                                        posY  = data[4].Value.ToString(),
                                        sup   = data[5].Value.ToString(),
-                                       forX  = data[6].Value.ToString(),
-                                       forY  = data[7].Value.ToString();
+                                       fX    = data[6].Value.ToString(),
+                                       fY    = data[7].Value.ToString();
 
                                 msgstr = "Node " + ndNum + "\n\n" +
                                          "Node position: (" + posX + ", " + posY + ")" + "\n" +
                                          "Support conditions: " + sup + "\n" +
-                                         "Force in X direction = " + forX + " kN" + "\n" +
-                                         "Force in Y direction = " + forY + " kN";
+                                         "Force in X direction = " + fX + " kN" + "\n" +
+                                         "Force in Y direction = " + fY + " kN";
                             }
 
                             // If it's a stringer

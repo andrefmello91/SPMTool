@@ -17,22 +17,28 @@ namespace SPMTool
         public static Database curDb = curDoc.Database;
         public static Editor ed = curDoc.Editor;
 
+        // Get the coordinate system for transformations
+        public static Matrix3d curUCSMatrix = Global.ed.CurrentUserCoordinateSystem;
+        public static CoordinateSystem3d curUCS = curUCSMatrix.CoordinateSystem3d;
+
         // Define the appName
         public static string appName = "SPMTool";
 
         // Layer names
         public static string extNdLyr = "ExtNode",
                              intNdLyr = "IntNode",
-                             strLyr   = "Stringer",
-                             pnlLyr   = "Panel",
-                             supLyr   = "Support",
-                             fLyr     = "Force",
-                             fTxtLyr  = "ForceText";
+                             strLyr = "Stringer",
+                             pnlLyr = "Panel",
+                             supLyr = "Support",
+                             fLyr = "Force",
+                             fTxtLyr = "ForceText",
+                             strF = "StringerForces";
 
         // Color codes
         public static short red    = 1,
                             yellow = 2,
                             cyan   = 4,
+                            blue1  = 5,
                             blue   = 150,
                             grey   = 254;
 

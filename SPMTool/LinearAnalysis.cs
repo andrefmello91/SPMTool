@@ -57,8 +57,8 @@ namespace SPMTool
                 PanelForces(pnls, pnlParams, u);
 
                 // If all went OK, notify the user
-                DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
-                DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
+                //DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
+                //DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
 
                 //Global.ed.WriteMessage(u.ToString() + f.ToString());
             }
@@ -72,7 +72,7 @@ namespace SPMTool
         public List<Tuple<int, int[], Matrix<double>, Matrix<double>>> StringersLinearStifness(ObjectIdCollection stringers, List<Point3d> nodeList, double Ec, Matrix<double> Kg)
         {
             // Initialize a tuple list to store the matrices of stringers
-            List<Tuple<int, int[], Matrix<double>, Matrix<double>>> strMats = new List<Tuple<int, int[], Matrix<double>, Matrix<double>>>(stringers.Count);
+            List<Tuple<int, int[], Matrix<double>, Matrix<double>>> strMats = new List<Tuple<int, int[], Matrix<double>, Matrix<double>>>();
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
@@ -181,13 +181,16 @@ namespace SPMTool
             }
 
             // Order and return the list
-            strMats.OrderBy(tuple => tuple.Item1);
+            strMats = strMats.OrderBy(tuple => tuple.Item1).ToList();
             return strMats;
         }
 
         // Calculate stringer forces
         public void StringerForces(ObjectIdCollection stringers, List<Tuple<int, int[], Matrix<double>, Matrix<double>>> strParams, Vector<double> u)
         {
+            // Create a list to store the stringer forces
+            List<Tuple<int, Vector<double>>> strForces = new List<Tuple<int, Vector<double>>>();
+
             foreach (var strParam in strParams)
             {
                 // Get the parameters
@@ -211,8 +214,17 @@ namespace SPMTool
                 // Aproximate small values to zero
                 fl.CoerceZero(0.000001);
 
-                Global.ed.WriteMessage("\nStringer " + strNum.ToString() + ":\n" + fl.ToString());
+                // Save to the list of stringer forces
+                strForces.Add(Tuple.Create(strNum, fl));
+
+                //Global.ed.WriteMessage("\nStringer " + strNum.ToString() + ":\n" + fl.ToString());
             }
+
+            // Order the list
+            strForces = strForces.OrderBy(tuple => tuple.Item1).ToList();
+
+            // Draw the stringer forces diagrams
+            Drawing.DrawStringerForces(stringers, strForces);
         }
 
         // Calculate the stifness matrix of a panel, get the dofs and save to XData, returns the all the matrices in an ordered list
