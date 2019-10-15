@@ -205,8 +205,11 @@ namespace SPMTool
                 // Get the displacements in the direction of the stringer
                 var ul = T * uStr;
 
-                // Calculate the vector of normal forces
-                var fl = Kl * ul;
+                // Calculate the vector of normal forces (in kN)
+                var fl = 0.001 * Kl * ul;
+
+                // Aproximate small values to zero
+                fl.CoerceZero(0.000001);
 
                 Global.ed.WriteMessage("\nStringer " + strNum.ToString() + ":\n" + fl.ToString());
             }
@@ -465,7 +468,7 @@ namespace SPMTool
                 // Get the displacements in the direction of the stringer
                 var ul = T * uStr;
 
-                // Calculate the vector of normal forces
+                // Calculate the vector of forces
                 var fl = Kl * ul;
 
                 Global.ed.WriteMessage("\nPanel " + pnlNum.ToString() + ":\n" + fl.ToString());
@@ -501,9 +504,9 @@ namespace SPMTool
                     // Read the node number
                     int ndNum = Convert.ToInt32(data[2].Value);
 
-                    // Read the forces in x and y
-                    double Fx = Convert.ToDouble(data[6].Value),
-                           Fy = Convert.ToDouble(data[7].Value);
+                    // Read the forces in x and y (transform in N)
+                    double Fx = Convert.ToDouble(data[6].Value) * 1000,
+                           Fy = Convert.ToDouble(data[7].Value) * 1000;
 
                     // Get the position in the vector from the DoF list
                     int i = 2 * ndNum - 2;
@@ -513,9 +516,6 @@ namespace SPMTool
                     if (Fy != 0) f.At(i + 1, Fy);
                 }
             }
-
-            // Write the values
-            //Global.ed.WriteMessage("\nVector of forces:\n" + f.ToString());
             return f;
         }
         

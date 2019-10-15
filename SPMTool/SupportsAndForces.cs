@@ -184,7 +184,7 @@ namespace SPMTool
                     set = selRes.Value;
 
                     // Ask the user set the load value in x direction:
-                    PromptDoubleOptions xForceOp = new PromptDoubleOptions("\nEnter force (in N) in X direction(positive following axis direction)?")
+                    PromptDoubleOptions xForceOp = new PromptDoubleOptions("\nEnter force (in kN) in X direction(positive following axis direction)?")
                     {
                         DefaultValue = 0
                     };
@@ -195,7 +195,7 @@ namespace SPMTool
                     double xForce = xForceRes.Value;
 
                     // Ask the user set the load value in y direction:
-                    PromptDoubleOptions yForceOp = new PromptDoubleOptions("\nEnter force (in N) in Y direction(positive following axis direction)?")
+                    PromptDoubleOptions yForceOp = new PromptDoubleOptions("\nEnter force (in kN) in Y direction(positive following axis direction)?")
                     {
                         DefaultValue = 0
                     };
@@ -327,7 +327,7 @@ namespace SPMTool
                                     // Define the force text
                                     DBText text = new DBText()
                                     {
-                                        TextString = xForceAbs.ToString() + " N",
+                                        TextString = xForceAbs.ToString() + " kN",
                                         Position = txtPos,
                                         Height = 50,
                                         Layer = Global.fTxtLyr
@@ -391,7 +391,7 @@ namespace SPMTool
                                     // Define the force text
                                     DBText text = new DBText()
                                     {
-                                        TextString = yForceAbs.ToString() + " N",
+                                        TextString = yForceAbs.ToString() + " kN",
                                         Position = txtPos,
                                         Height = 50,
                                         Layer = Global.fTxtLyr

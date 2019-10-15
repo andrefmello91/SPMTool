@@ -706,8 +706,8 @@ namespace SPMTool
                                 msgstr = "Node " + ndNum + "\n\n" +
                                          "Node position: (" + posX + ", " + posY + ")" + "\n" +
                                          "Support conditions: " + sup + "\n" +
-                                         "Force in X direction = " + forX + " N" + "\n" +
-                                         "Force in Y direction = " + forY + " N";
+                                         "Force in X direction = " + forX + " kN" + "\n" +
+                                         "Force in Y direction = " + forY + " kN";
                             }
 
                             // If it's a stringer
