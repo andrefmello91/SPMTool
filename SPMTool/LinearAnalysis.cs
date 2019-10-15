@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
@@ -38,8 +39,8 @@ namespace SPMTool
                 var Kg = Matrix<double>.Build.Dense(2 * nds.Count, 2 * nds.Count);
                 
                 // Calculate the stifness of each stringer and panel, add to the global stiffness and get the matrices of the stiffness of elements
-                var strMats = StringersLinearStifness(strs, ndList, Ec, Kg);
-                var pnlMats = PanelsLinearStifness(pnls, ndList, Gc, Kg);
+                var strParams = StringersLinearStifness(strs, ndList, Ec, Kg);
+                var pnlParams = PanelsLinearStifness(pnls, ndList, Gc, Kg);
 
                 // Get the force vector and the constraints vector
                 var f = ForceVector();
@@ -50,6 +51,10 @@ namespace SPMTool
 
                 // Solve the sistem
                 var u = Kg.Solve(f);
+
+                // Calculate the stringer and panel forces
+                StringerForces(strs, strParams, u);
+                PanelForces(pnls, pnlParams, u);
 
                 // If all went OK, notify the user
                 DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
@@ -63,11 +68,11 @@ namespace SPMTool
             }
         }
 
-        // Calculate the stifness matrix stringers, save to XData and add to global stifness matrix, returns the all the matrices in an ordered list
-        public List<Tuple<Matrix<double>, Matrix<double>>> StringersLinearStifness(ObjectIdCollection stringers, List<Point3d> nodeList, double Ec, Matrix<double> Kg)
+        // Calculate the stifness matrix stringers, save to XData and add to global stifness matrix, returns the all the matrices in an numbered list
+        public List<Tuple<int, int[], Matrix<double>, Matrix<double>>> StringersLinearStifness(ObjectIdCollection stringers, List<Point3d> nodeList, double Ec, Matrix<double> Kg)
         {
             // Initialize a tuple list to store the matrices of stringers
-            List<Tuple<Matrix<double>, Matrix<double>>> strMats = new List<Tuple<Matrix<double>, Matrix<double>>>(stringers.Count);
+            List<Tuple<int, int[], Matrix<double>, Matrix<double>>> strMats = new List<Tuple<int, int[], Matrix<double>, Matrix<double>>>(stringers.Count);
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
@@ -128,8 +133,6 @@ namespace SPMTool
                     strRb = new ResultBuffer(strData);
                     str.XData = strRb;
 
-                    // Save to the list (Local stiffness and transformation matrix)
-                    strMats[strNum - 1] = new Tuple<Matrix<double>, Matrix<double>>(Kl, T);
 
                     // Get the positions in the global matrix
                     int i = 2 * nodeList.IndexOf(str.StartPoint),               // DoF 1
@@ -171,16 +174,49 @@ namespace SPMTool
                         // Increment the line index
                         o++;
                     }
+
+                    // Save to the list of stringer parameters
+                    strMats.Add(Tuple.Create(strNum, ind, Kl, T));
                 }
             }
+
+            // Order and return the list
+            strMats.OrderBy(tuple => tuple.Item1);
             return strMats;
         }
 
+        // Calculate stringer forces
+        public void StringerForces(ObjectIdCollection stringers, List<Tuple<int, int[], Matrix<double>, Matrix<double>>> strParams, Vector<double> u)
+        {
+            foreach (var strParam in strParams)
+            {
+                // Get the parameters
+                int strNum = strParam.Item1;
+                int[] ind  = strParam.Item2;
+                var Kl     = strParam.Item3;
+                var T      = strParam.Item4;
+
+                // Get the displacements
+                var uStr = Vector<double>.Build.DenseOfArray(new double[]
+                {
+                    u[ind[0]] , u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1]
+                });
+
+                // Get the displacements in the direction of the stringer
+                var ul = T * uStr;
+
+                // Calculate the vector of normal forces
+                var fl = Kl * ul;
+
+                Global.ed.WriteMessage("\nStringer " + strNum.ToString() + ":\n" + fl.ToString());
+            }
+        }
+
         // Calculate the stifness matrix of a panel, get the dofs and save to XData, returns the all the matrices in an ordered list
-        public List<Tuple<Matrix<double>, Matrix<double>>> PanelsLinearStifness(ObjectIdCollection panels, List<Point3d> nodeList, double Gc, Matrix<double> Kg)
+        public List<Tuple<int, int[], Matrix<double>, Matrix<double>>> PanelsLinearStifness(ObjectIdCollection panels, List<Point3d> nodeList, double Gc, Matrix<double> Kg)
         {
             // Initialize a tuple list to store the matrices of stringers
-            List<Tuple<Matrix<double>, Matrix<double>>> pnlMats = new List<Tuple<Matrix<double>, Matrix<double>>>(panels.Count);
+            List<Tuple<int, int[], Matrix<double>, Matrix<double>>> pnlMats = new List<Tuple<int, int[], Matrix<double>, Matrix<double>>>(panels.Count);
 
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
@@ -355,9 +391,6 @@ namespace SPMTool
                     pnlRb = new ResultBuffer(pnlData);
                     panel.XData = pnlRb;
 
-                    // Save to the list (Local stiffness and transformation matrix)
-                    pnlMats[pnlNum - 1] = new Tuple<Matrix<double>, Matrix<double>>(Kl, T);
-
                     // Get the positions in the global matrix
                     int i = 2 * nodeList.IndexOf(dof1),
                         j = 2 * nodeList.IndexOf(dof2),
@@ -401,10 +434,44 @@ namespace SPMTool
                         // Increment the line index
                         o++;
                     }
+
+                    // Save to the list of panel parameters
+                    pnlMats.Add(Tuple.Create(pnlNum, ind, Kl, T));
                 }
             }
+
+            // Order and return the list
+            pnlMats.OrderBy(tuple => tuple.Item1);
             return pnlMats;
         }
+
+        // Calculate panel forces
+        public void PanelForces(ObjectIdCollection panels, List<Tuple<int, int[], Matrix<double>, Matrix<double>>> pnlParams, Vector<double> u)
+        {
+            foreach (var pnlParam in pnlParams)
+            {
+                // Get the parameters
+                int pnlNum = pnlParam.Item1;
+                int[] ind = pnlParam.Item2;
+                var Kl = pnlParam.Item3;
+                var T = pnlParam.Item4;
+
+                // Get the displacements
+                var uStr = Vector<double>.Build.DenseOfArray(new double[]
+                {
+                    u[ind[0]] , u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1], u[ind[3]] , u[ind[3] + 1]
+                });
+
+                // Get the displacements in the direction of the stringer
+                var ul = T * uStr;
+
+                // Calculate the vector of normal forces
+                var fl = Kl * ul;
+
+                Global.ed.WriteMessage("\nPanel " + pnlNum.ToString() + ":\n" + fl.ToString());
+            }
+        }
+
 
         // Get the force vector
         public Vector<double> ForceVector()
