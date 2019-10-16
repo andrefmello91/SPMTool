@@ -75,8 +75,16 @@ namespace SPMTool
             }
         }
 
+        // Method to assign transparency to an object
+        public static Transparency Transparency(int transparency)
+        {
+            byte alpha = (byte)(255 * (100 - transparency) / 100);
+            Transparency transp = new Transparency(alpha);
+            return transp;
+        }
+
         // Method to create a layer given a name, a color and transparency
-        public static void CreateLayer(string layerName, short layerColor, int layerTransp)
+        public static void CreateLayer(string layerName, short layerColor, int transparency)
         {
             // Start a transaction
             using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
@@ -92,10 +100,6 @@ namespace SPMTool
                         // Assign the layer the ACI color and a name
                         lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, layerColor);
 
-                        // Assign a layer transparency
-                        byte alpha = (byte)(255 * (100 - layerTransp) / 100);
-                        Transparency transp = new Transparency(alpha);
-
                         // Upgrade the Layer table for write
                         trans.GetObject(Global.curDb.LayerTableId, OpenMode.ForWrite);
 
@@ -105,7 +109,7 @@ namespace SPMTool
 
                         // Assign the name and transparency to the layer
                         lyrTblRec.Name = layerName;
-                        lyrTblRec.Transparency = transp;
+                        lyrTblRec.Transparency = Transparency(transparency);
                     }
                 }
 
@@ -806,6 +810,26 @@ namespace SPMTool
             foreach (ObjectId ndObj in intNds) nds.Add(ndObj);
 
             return nds;
+        }
+
+        // Erase the objects in a collection
+        public static void EraseObjects(ObjectIdCollection objects)
+        {
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                foreach (ObjectId obj in objects)
+                {
+                    // Read as entity
+                    Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
+
+                    // Erase the object
+                    ent.Erase();
+                }
+
+                // Commit changes
+                trans.Commit();
+            }
         }
 
         // Get the node number at the position
