@@ -335,8 +335,8 @@ namespace SPMTool
 
             RibbonButton button1 = new RibbonButton()
             {
-                Text = "Support",
-                ToolTip = "Set support condition to a group of nodes",
+                Text = "Constraints",
+                ToolTip = "Set constraint condition to a group of nodes",
                 ShowText = true,
                 ShowImage = true,
                 LargeImage = getBitmap(support),
