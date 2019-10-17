@@ -43,8 +43,8 @@ namespace SPMTool
                 var pnlParams = PanelsLinearStifness(pnls, ndList, Gc, Kg);
 
                 // Get the force vector and the constraints vector
-                var f = ForceVector();
-                var cons = ConstraintVector();
+                var f = Forces.ForceVector();
+                var cons = Constraints.ConstraintList();
 
                 // Simplify the stifness matrix
                 SimplifyStiffnessMatrix(Kg, f, ndList, cons);
@@ -53,12 +53,12 @@ namespace SPMTool
                 var u = Kg.Solve(f);
 
                 // Calculate the stringer and panel forces
-                StringerForces(strs, strParams, u);
-                PanelForces(pnls, pnlParams, u);
+                Results.StringerForces(strs, strParams, u);
+                Results.PanelForces(pnls, pnlParams, u);
 
                 // If all went OK, notify the user
-                //DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
-                //DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
+                DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
+                DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
 
                 //Global.ed.WriteMessage(u.ToString() + f.ToString());
             }
@@ -183,48 +183,6 @@ namespace SPMTool
             // Order and return the list
             strMats = strMats.OrderBy(tuple => tuple.Item1).ToList();
             return strMats;
-        }
-
-        // Calculate stringer forces
-        public void StringerForces(ObjectIdCollection stringers, List<Tuple<int, int[], Matrix<double>, Matrix<double>>> strParams, Vector<double> u)
-        {
-            // Create a list to store the stringer forces
-            List<Tuple<int, Vector<double>>> strForces = new List<Tuple<int, Vector<double>>>();
-
-            foreach (var strParam in strParams)
-            {
-                // Get the parameters
-                int strNum = strParam.Item1;
-                int[] ind  = strParam.Item2;
-                var Kl     = strParam.Item3;
-                var T      = strParam.Item4;
-
-                // Get the displacements
-                var uStr = Vector<double>.Build.DenseOfArray(new double[]
-                {
-                    u[ind[0]] , u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1]
-                });
-
-                // Get the displacements in the direction of the stringer
-                var ul = T * uStr;
-
-                // Calculate the vector of normal forces (in kN)
-                var fl = 0.001 * Kl * ul;
-
-                // Aproximate small values to zero
-                fl.CoerceZero(0.000001);
-
-                // Save to the list of stringer forces
-                strForces.Add(Tuple.Create(strNum, fl));
-
-                //Global.ed.WriteMessage("\nStringer " + strNum.ToString() + ":\n" + fl.ToString());
-            }
-
-            // Order the list
-            strForces = strForces.OrderBy(tuple => tuple.Item1).ToList();
-
-            // Draw the stringer forces diagrams
-            Results.DrawStringerForces(stringers, strForces);
         }
 
         // Calculate the stifness matrix of a panel, get the dofs and save to XData, returns the all the matrices in an ordered list
@@ -460,134 +418,7 @@ namespace SPMTool
             return pnlMats;
         }
 
-        // Calculate panel forces
-        public void PanelForces(ObjectIdCollection panels, List<Tuple<int, int[], Matrix<double>, Matrix<double>>> pnlParams, Vector<double> u)
-        {
-            // Create a list to store the panel forces
-            List<Tuple<int, Vector<double>>> pnlForces = new List<Tuple<int, Vector<double>>>();
-
-            foreach (var pnlParam in pnlParams)
-            {
-                // Get the parameters
-                int pnlNum = pnlParam.Item1;
-                int[] ind = pnlParam.Item2;
-                var Kl = pnlParam.Item3;
-                var T = pnlParam.Item4;
-
-                // Get the displacements
-                var uStr = Vector<double>.Build.DenseOfArray(new double[]
-                {
-                    u[ind[0]] , u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1], u[ind[3]] , u[ind[3] + 1]
-                });
-
-                // Get the displacements in the direction of the stringer
-                var ul = T * uStr;
-
-                // Calculate the vector of forces
-                var fl = Kl * ul;
-
-                // Save to the list of stringer forces
-                pnlForces.Add(Tuple.Create(pnlNum, fl));
-            }
-
-            // Order the list
-            pnlForces = pnlForces.OrderBy(tuple => tuple.Item1).ToList();
-
-            // Draw the panel shear blocks
-            Results.DrawPanelForces(panels, pnlForces);
-        }
-
-
-        // Get the force vector
-        public Vector<double> ForceVector()
-        {
-            // Access the nodes in the model
-            ObjectIdCollection nds = AuxMethods.AllNodes();
-
-            // Get the number of DoFs
-            int numDofs = nds.Count;
-
-            // Initialize the force vector with size 2x number of DoFs (forces in x and y)
-            var f = Vector<double>.Build.Dense(numDofs * 2);
-
-            // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
-            {
-                // Read the nodes data
-                foreach (ObjectId ndObj in nds)
-                {
-                    // Read as a DBPoint
-                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-
-                    // Get the result buffer as an array
-                    ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
-                    TypedValue[] data = rb.AsArray();
-
-                    // Read the node number
-                    int ndNum = Convert.ToInt32(data[2].Value);
-
-                    // Read the forces in x and y (transform in N)
-                    double Fx = Convert.ToDouble(data[6].Value) * 1000,
-                           Fy = Convert.ToDouble(data[7].Value) * 1000;
-
-                    // Get the position in the vector from the DoF list
-                    int i = 2 * ndNum - 2;
-
-                    // If force is not zero, assign the values in the force vector at position (i) and (i + 1)
-                    if (Fx != 0) f.At(i, Fx);
-                    if (Fy != 0) f.At(i + 1, Fy);
-                }
-            }
-            return f;
-        }
-        
-        // Get the constraint vector as enumerated list to get the support conditions
-        public IEnumerable<Tuple<int, double>> ConstraintVector()
-        {
-            // Access the nodes in the model
-            ObjectIdCollection nds = AuxMethods.AllNodes();
-
-            // Get the number of DoFs
-            int numDofs = nds.Count;
-
-            // Initialize the constraint list with size 2x number of nodes (displacements in x and y)
-            // Assign 1 (free node) initially to each value
-            var cons = Vector<double>.Build.Dense(2 * numDofs, 1);
-
-            // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
-            {
-                // Read the nodes data
-                foreach (ObjectId ndObj in nds)
-                {
-                    // Read as a DBPoint
-                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-
-                    // Get the result buffer as an array
-                    ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
-                    TypedValue[] data = rb.AsArray();
-
-                    // Read the node number
-                    int ndNum = Convert.ToInt32(data[2].Value);
-
-                    // Read the support condition
-                    string sup = data[5].Value.ToString();
-
-                    // Get the position in the vector
-                    int i = 2 * ndNum - 2;
-
-                    // If there is a support the value on the vector will be zero on that direction
-                    // X (i) , Y (i + 1)
-                    if (sup.Contains("X")) cons.At(i, 0);
-                    if (sup.Contains("Y")) cons.At(i + 1, 0);
-                }
-            }
-
-            // Write the values
-            //Global.ed.WriteMessage("\nVector of displacements:\n" + u.ToString());
-            return cons.EnumerateIndexed();
-        }
-
+        // Simplify the stiffness matrix
         public void SimplifyStiffnessMatrix(Matrix<double> Kg, Vector<double> f, List<Point3d> allNds, IEnumerable<Tuple<int, double>> constraints)
         {
             // Get the list of internal nodes

@@ -341,7 +341,7 @@ namespace SPMTool
                 ShowImage = true,
                 LargeImage = getBitmap(support),
                 CommandHandler = new CmdHandler(),
-                CommandParameter = "AddSupport"
+                CommandParameter = "AddConstraint"
             };
 
             RibbonButton button2 = new RibbonButton()

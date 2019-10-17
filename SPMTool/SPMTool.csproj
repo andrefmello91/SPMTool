@@ -94,6 +94,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Forces.cs" />
     <Compile Include="Results.cs" />
     <Compile Include="GeometryInput.cs" />
     <Compile Include="AuxiliaryAndGlobal.cs" />
@@ -105,7 +106,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="SupportsAndForces.cs" />
+    <Compile Include="Constraints.cs" />
     <Compile Include="UserInterface.cs" />
   </ItemGroup>
   <ItemGroup>

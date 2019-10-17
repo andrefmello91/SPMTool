@@ -269,7 +269,7 @@ namespace SPMTool
                             }
 
                             // Create the new stringers
-                            for (int i = 0; i <= strNum; i++)
+                            for (int i = 1; i <= strNum; i++)
                             {
                                 // Get the coordinates of the other points
                                 double xCrd = str.StartPoint.X + i * distX;

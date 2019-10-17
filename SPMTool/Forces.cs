@@ -1,145 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using MathNet.Numerics.LinearAlgebra;
 
-[assembly: CommandClass(typeof(SPMTool.SupportsAndForces))]
+[assembly: CommandClass(typeof(SPMTool.Forces))]
 
 namespace SPMTool
 {
-    // Support and forces related commands
-    public class SupportsAndForces
+    // Constraints related commands
+    public class Forces
     {
-        [CommandMethod("AddSupport")]
-        public void AddSupport()
-        {
-            // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-            AuxMethods.CreateLayer(Global.supLyr, Global.red, 0);
-
-            // Initialize variables
-            PromptSelectionResult selRes;
-            SelectionSet set;
-
-            // Check if the support blocks already exist. If not, create the blocks
-            CreateSupportBlocks();
-
-            // Get all the supports in the model
-            ObjectIdCollection sprts = AuxMethods.GetEntitiesOnLayer(Global.supLyr);
-
-            // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
-            {
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Read the object Ids of the support blocks
-                ObjectId xBlock = blkTbl[Global.supportX];
-                ObjectId yBlock = blkTbl[Global.supportY];
-                ObjectId xyBlock = blkTbl[Global.supportXY];
-
-                // Request objects to be selected in the drawing area
-                Global.ed.WriteMessage("\nSelect nodes to add support conditions:");
-                selRes = Global.ed.GetSelection();
-
-                // If the prompt status is OK, objects were selected
-                if (selRes.Status == PromptStatus.OK)
-                {
-                    // Get the objects selected
-                    set = selRes.Value;
-
-                    // Ask the user set the support conditions:
-                    PromptKeywordOptions supOp = new PromptKeywordOptions("\nAdd support in which direction?");
-                    supOp.Keywords.Add("Free");
-                    supOp.Keywords.Add("X");
-                    supOp.Keywords.Add("Y");
-                    supOp.Keywords.Add("XY");
-                    supOp.Keywords.Default = "Free";
-                    supOp.AllowNone = false;
-
-                    // Get the result
-                    PromptResult supRes = Global.ed.GetKeywords(supOp);
-                    if (supRes.Status == PromptStatus.Cancel) return;
-
-                    // Set the support
-                    string support = supRes.StringResult;
-
-                    foreach (SelectedObject obj in set)
-                    {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-
-                        // Check if the selected object is a node
-                        if (ent.Layer == Global.extNdLyr)
-                        {
-                            // Upgrade the OpenMode
-                            ent.UpgradeOpen();
-                            
-                            // Read as a point and get the position
-                            DBPoint nd = ent as DBPoint;
-                            Point3d ndPos = nd.Position;
-
-                            // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
-                            TypedValue[] data = rb.AsArray();
-
-                            // Check if there is a support block at the node position
-                            if (sprts.Count > 0)
-                            {
-                                foreach (ObjectId spObj in sprts)
-                                {
-                                    // Read as a block reference
-                                    BlockReference spBlk = trans.GetObject(spObj, OpenMode.ForRead) as BlockReference;
-
-                                    // Check if the position is equal to the selected node
-                                    if (spBlk.Position == ndPos)
-                                    {
-                                        // Erase the support
-                                        spBlk.UpgradeOpen();
-                                        spBlk.Erase();
-                                        break;
-                                    }
-                                }
-                            }
-
-                            // Set the new support conditions (line 5 of the array)
-                            data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
-
-                            // Add the new XData
-                            ResultBuffer newRb = new ResultBuffer(data);
-                            ent.XData = newRb;
-
-                            // If the node is not Free, add the support blocks
-                            if (support != "Free")
-                            {
-                                // Add the block to selected node at
-                                Point3d insPt = ndPos;
-
-                                // Choose the block to insert
-                                ObjectId supBlock = new ObjectId();
-                                if (support == "X" && xBlock != ObjectId.Null) supBlock = xBlock;
-                                if (support == "Y" && yBlock != ObjectId.Null) supBlock = yBlock;
-                                if (support == "XY" && xyBlock != ObjectId.Null) supBlock = xyBlock;
-
-                                // Insert the block into the current space
-                                using (BlockReference blkRef = new BlockReference(insPt, supBlock))
-                                {
-                                    BlockTableRecord blkTblRec = trans.GetObject(Global.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                    blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = Global.supLyr;
-                                    trans.AddNewlyCreatedDBObject(blkRef, true);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Save the new object to the database
-                trans.Commit();
-            }
-        }
-
         [CommandMethod("AddForce")]
         public void AddForce()
         {
@@ -419,201 +293,6 @@ namespace SPMTool
             }
         }
 
-        // Method to create the support blocks
-        public static void CreateSupportBlocks()
-        {
-            // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
-            {
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Initialize the block Ids
-                ObjectId xBlock = ObjectId.Null;
-                ObjectId yBlock = ObjectId.Null;
-                ObjectId xyBlock = ObjectId.Null;
-
-                // Check if the support blocks already exist in the drawing
-                if (!blkTbl.Has(Global.supportX))
-                {
-                    // Create the X block
-                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
-                    {
-                        blkTblRec.Name = Global.supportX;
-
-                        // Add the block table record to the block table and to the transaction
-                        blkTbl.UpgradeOpen();
-                        blkTbl.Add(blkTblRec);
-                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-                        // Set the name
-                        xBlock = blkTblRec.Id;
-
-                        // Set the insertion point for the block
-                        Point3d origin = new Point3d(0, 0, 0);
-                        blkTblRec.Origin = origin;
-
-                        // Create a object collection and add the lines
-                        using (DBObjectCollection lines = new DBObjectCollection())
-                        {
-                            // Define the points to add the lines
-                            Point3d[] blkPts =
-                            {
-                                origin,
-                                new Point3d(-200, 115, 0),
-                                origin,
-                                new Point3d(-200, -115, 0),
-                                new Point3d(-200, 150, 0),
-                                new Point3d(-200, -150, 0),
-                                new Point3d(-250, 150, 0),
-                                new Point3d(-250, -150, 0)
-                            };
-
-                            // Define the lines and add to the collection
-                            for (int i = 0; i < 4; i++)
-                            {
-                                Line line = new Line()
-                                {
-                                    StartPoint = blkPts[2 * i],
-                                    EndPoint = blkPts[2 * i + 1]
-                                };
-                                lines.Add(line);
-                            }
-
-                            // Add the lines to the block table record
-                            foreach (Entity ent in lines)
-                            {
-                                blkTblRec.AppendEntity(ent);
-                                trans.AddNewlyCreatedDBObject(ent, true);
-                            }
-                        }
-                    }
-
-                    // Create the Y block
-                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
-                    {
-                        blkTblRec.Name = Global.supportY;
-
-                        // Set the insertion point for the block
-                        Point3d origin = new Point3d(0, 0, 0);
-                        blkTblRec.Origin = origin;
-
-                        // Add the block table record to the block table and to the transaction
-                        blkTbl.UpgradeOpen();
-                        blkTbl.Add(blkTblRec);
-                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-                        // Set the name
-                        yBlock = blkTblRec.Id;
-
-                        // Create a object collection and add the lines
-                        using (DBObjectCollection lines = new DBObjectCollection())
-                        {
-                            // Define the points to add the lines
-                            Point3d[] blkPts =
-                            {
-                                origin,
-                                new Point3d(-115, -200, 0),
-                                origin,
-                                new Point3d(115, -200, 0),
-                                new Point3d(-150, -200, 0),
-                                new Point3d(150, -200, 0),
-                                new Point3d(-150, -250, 0),
-                                new Point3d(+150, -250, 0)
-                            };
-
-                            // Define the lines and add to the collection
-                            for (int i = 0; i < 4; i++)
-                            {
-                                Line line = new Line()
-                                {
-                                    StartPoint = blkPts[2 * i],
-                                    EndPoint = blkPts[2 * i + 1]
-                                };
-                                lines.Add(line);
-                            }
-
-                            // Add the lines to the block table record
-                            foreach (Entity ent in lines)
-                            {
-                                blkTblRec.AppendEntity(ent);
-                                trans.AddNewlyCreatedDBObject(ent, true);
-                            }
-                        }
-                    }
-
-                    // Create the XY block
-                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
-                    {
-                        blkTblRec.Name = Global.supportXY;
-
-                        // Add the block table record to the block table and to the transaction
-                        blkTbl.UpgradeOpen();
-                        blkTbl.Add(blkTblRec);
-                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-                        // Set the name
-                        xyBlock = blkTblRec.Id;
-
-                        // Set the insertion point for the block
-                        Point3d origin = new Point3d(0, 0, 0);
-                        blkTblRec.Origin = origin;
-
-                        // Create a object collection and add the lines
-                        using (DBObjectCollection lines = new DBObjectCollection())
-                        {
-                            // Define the points to add the lines
-                            Point3d[] blkPts =
-                            {
-                                origin,
-                                new Point3d(-115, -200, 0),
-                                origin,
-                                new Point3d(115, -200, 0),
-                                new Point3d(-150, -200, 0),
-                                new Point3d(150, -200, 0)
-                            };
-
-                            // Define the lines and add to the collection
-                            for (int i = 0; i < 3; i++)
-                            {
-                                Line line = new Line()
-                                {
-                                    StartPoint = blkPts[2 * i],
-                                    EndPoint = blkPts[2 * i + 1]
-                                };
-                                lines.Add(line);
-                            }
-
-                            // Create the diagonal lines
-                            for (int i = 0; i < 6; i++)
-                            {
-                                int xInc = 46 * i; // distance between the lines
-
-                                Line diagLine = new Line()
-                                {
-                                    StartPoint = new Point3d(-115 + xInc, -200, 0),
-                                    EndPoint = new Point3d(-140 + xInc, -245, 0)
-                                };
-
-                                // Add to the collection
-                                lines.Add(diagLine);
-                            }
-
-                            // Add the lines to the block table record
-                            foreach (Entity ent in lines)
-                            {
-                                blkTblRec.AppendEntity(ent);
-                                trans.AddNewlyCreatedDBObject(ent, true);
-                            }
-                        }
-                    }
-                }
-
-                // Commit and dispose the transaction
-                trans.Commit();
-            }
-        }
-
         // Method to create the force block
         public static void CreateForceBlock()
         {
@@ -676,32 +355,47 @@ namespace SPMTool
             }
         }
 
-        // Collection of support positions
-        public static Point3dCollection SupportPositions()
+        // Get the force vector
+        public static Vector<double> ForceVector()
         {
-            // Initialize the collection of points
-            Point3dCollection supPos = new Point3dCollection();
+            // Access the nodes in the model
+            ObjectIdCollection nds = AuxMethods.AllNodes();
 
-            // Get the supports
-            ObjectIdCollection spts = AuxMethods.GetEntitiesOnLayer(Global.supLyr);
+            // Get the number of DoFs
+            int numDofs = nds.Count;
 
-            if (spts.Count > 0)
+            // Initialize the force vector with size 2x number of DoFs (forces in x and y)
+            var f = Vector<double>.Build.Dense(numDofs * 2);
+
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
             {
-                // Start a transaction
-                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+                // Read the nodes data
+                foreach (ObjectId ndObj in nds)
                 {
+                    // Read as a DBPoint
+                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
 
-                    foreach (ObjectId obj in spts)
-                    {
-                        // Read as a block reference
-                        BlockReference blkRef = trans.GetObject(obj, OpenMode.ForRead) as BlockReference;
+                    // Get the result buffer as an array
+                    ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
+                    TypedValue[] data = rb.AsArray();
 
-                        // Get the position and add to the collection
-                        supPos.Add(blkRef.Position);
-                    }
+                    // Read the node number
+                    int ndNum = Convert.ToInt32(data[2].Value);
+
+                    // Read the forces in x and y (transform in N)
+                    double Fx = Convert.ToDouble(data[6].Value) * 1000,
+                           Fy = Convert.ToDouble(data[7].Value) * 1000;
+
+                    // Get the position in the vector from the DoF list
+                    int i = 2 * ndNum - 2;
+
+                    // If force is not zero, assign the values in the force vector at position (i) and (i + 1)
+                    if (Fx != 0) f.At(i, Fx);
+                    if (Fy != 0) f.At(i + 1, Fy);
                 }
             }
-            return supPos;
+            return f;
         }
 
         // Collections of force positions (in X and Y)

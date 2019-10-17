@@ -12,6 +12,49 @@ namespace SPMTool
 {
     public class Results
     {
+        // Calculate stringer forces
+        public static void StringerForces(ObjectIdCollection stringers, List<Tuple<int, int[], Matrix<double>, Matrix<double>>> strParams, Vector<double> u)
+        {
+            // Create a list to store the stringer forces
+            List<Tuple<int, Vector<double>>> strForces = new List<Tuple<int, Vector<double>>>();
+
+            foreach (var strParam in strParams)
+            {
+                // Get the parameters
+                int strNum = strParam.Item1;
+                int[] ind = strParam.Item2;
+                var Kl = strParam.Item3;
+                var T = strParam.Item4;
+
+                // Get the displacements
+                var uStr = Vector<double>.Build.DenseOfArray(new double[]
+                {
+                    u[ind[0]] , u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1]
+                });
+
+                // Get the displacements in the direction of the stringer
+                var ul = T * uStr;
+
+                // Calculate the vector of normal forces (in kN)
+                var fl = 0.001 * Kl * ul;
+
+                // Aproximate small values to zero
+                fl.CoerceZero(0.000001);
+
+                // Save to the list of stringer forces
+                strForces.Add(Tuple.Create(strNum, fl));
+
+                //Global.ed.WriteMessage("\nStringer " + strNum.ToString() + ":\n" + fl.ToString());
+            }
+
+            // Order the list
+            strForces = strForces.OrderBy(tuple => tuple.Item1).ToList();
+
+            // Draw the stringer forces diagrams
+            DrawStringerForces(stringers, strForces);
+        }
+
+        // Draw the stringer forces diagrams
         public static void DrawStringerForces(ObjectIdCollection stringers, List<Tuple<int, Vector<double>>> stringerForces)
         {
             // Check if the layer already exists in the drawing. If it doesn't, then it's created:
@@ -225,6 +268,44 @@ namespace SPMTool
             }
         }
 
+        // Calculate panel forces
+        public static void PanelForces(ObjectIdCollection panels, List<Tuple<int, int[], Matrix<double>, Matrix<double>>> pnlParams, Vector<double> u)
+        {
+            // Create a list to store the panel forces
+            List<Tuple<int, Vector<double>>> pnlForces = new List<Tuple<int, Vector<double>>>();
+
+            foreach (var pnlParam in pnlParams)
+            {
+                // Get the parameters
+                int pnlNum = pnlParam.Item1;
+                int[] ind = pnlParam.Item2;
+                var Kl = pnlParam.Item3;
+                var T = pnlParam.Item4;
+
+                // Get the displacements
+                var uStr = Vector<double>.Build.DenseOfArray(new double[]
+                {
+                    u[ind[0]] , u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1], u[ind[3]] , u[ind[3] + 1]
+                });
+
+                // Get the displacements in the direction of the stringer
+                var ul = T * uStr;
+
+                // Calculate the vector of forces
+                var fl = Kl * ul;
+
+                // Save to the list of stringer forces
+                pnlForces.Add(Tuple.Create(pnlNum, fl));
+            }
+
+            // Order the list
+            pnlForces = pnlForces.OrderBy(tuple => tuple.Item1).ToList();
+
+            // Draw the panel shear blocks
+            DrawPanelForces(panels, pnlForces);
+        }
+
+        // Draw the panel shear blocks
         public static void DrawPanelForces(ObjectIdCollection panels, List<Tuple<int, Vector<double>>> panelForces)
         {
             // Check if the layer already exists in the drawing. If it doesn't, then it's created:
