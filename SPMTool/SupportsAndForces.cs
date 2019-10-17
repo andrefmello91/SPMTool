@@ -23,7 +23,7 @@ namespace SPMTool
             SelectionSet set;
 
             // Check if the support blocks already exist. If not, create the blocks
-            AuxMethods.CreateSupportBlocks();
+            CreateSupportBlocks();
 
             // Get all the supports in the model
             ObjectIdCollection sprts = AuxMethods.GetEntitiesOnLayer(Global.supLyr);
@@ -35,9 +35,9 @@ namespace SPMTool
                 BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Read the object Ids of the support blocks
-                ObjectId xBlock = blkTbl["SupportX"];
-                ObjectId yBlock = blkTbl["SupportY"];
-                ObjectId xyBlock = blkTbl["SupportXY"];
+                ObjectId xBlock = blkTbl[Global.supportX];
+                ObjectId yBlock = blkTbl[Global.supportY];
+                ObjectId xyBlock = blkTbl[Global.supportXY];
 
                 // Request objects to be selected in the drawing area
                 Global.ed.WriteMessage("\nSelect nodes to add support conditions:");
@@ -152,7 +152,7 @@ namespace SPMTool
             AuxMethods.CreateLayer(Global.fTxtLyr, Global.yellow, 0);
 
             // Check if the force block already exist. If not, create the blocks
-            AuxMethods.CreateForceBlock();
+            CreateForceBlock();
 
             // Get all the force blocks in the model
             ObjectIdCollection fcs = AuxMethods.GetEntitiesOnLayer(Global.fLyr);
@@ -167,7 +167,7 @@ namespace SPMTool
                 BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Read the force block
-                ObjectId ForceBlock = blkTbl["ForceBlock"];
+                ObjectId ForceBlock = blkTbl[Global.forceBlock];
 
                 // Request objects to be selected in the drawing area
                 Global.ed.WriteMessage("\nSelect a node to add load:");
@@ -417,6 +417,328 @@ namespace SPMTool
                 // Save the new object to the database
                 trans.Commit();
             }
+        }
+
+        // Method to create the support blocks
+        public static void CreateSupportBlocks()
+        {
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Initialize the block Ids
+                ObjectId xBlock = ObjectId.Null;
+                ObjectId yBlock = ObjectId.Null;
+                ObjectId xyBlock = ObjectId.Null;
+
+                // Check if the support blocks already exist in the drawing
+                if (!blkTbl.Has(Global.supportX))
+                {
+                    // Create the X block
+                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
+                    {
+                        blkTblRec.Name = Global.supportX;
+
+                        // Add the block table record to the block table and to the transaction
+                        blkTbl.UpgradeOpen();
+                        blkTbl.Add(blkTblRec);
+                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
+
+                        // Set the name
+                        xBlock = blkTblRec.Id;
+
+                        // Set the insertion point for the block
+                        Point3d origin = new Point3d(0, 0, 0);
+                        blkTblRec.Origin = origin;
+
+                        // Create a object collection and add the lines
+                        using (DBObjectCollection lines = new DBObjectCollection())
+                        {
+                            // Define the points to add the lines
+                            Point3d[] blkPts =
+                            {
+                                origin,
+                                new Point3d(-200, 115, 0),
+                                origin,
+                                new Point3d(-200, -115, 0),
+                                new Point3d(-200, 150, 0),
+                                new Point3d(-200, -150, 0),
+                                new Point3d(-250, 150, 0),
+                                new Point3d(-250, -150, 0)
+                            };
+
+                            // Define the lines and add to the collection
+                            for (int i = 0; i < 4; i++)
+                            {
+                                Line line = new Line()
+                                {
+                                    StartPoint = blkPts[2 * i],
+                                    EndPoint = blkPts[2 * i + 1]
+                                };
+                                lines.Add(line);
+                            }
+
+                            // Add the lines to the block table record
+                            foreach (Entity ent in lines)
+                            {
+                                blkTblRec.AppendEntity(ent);
+                                trans.AddNewlyCreatedDBObject(ent, true);
+                            }
+                        }
+                    }
+
+                    // Create the Y block
+                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
+                    {
+                        blkTblRec.Name = Global.supportY;
+
+                        // Set the insertion point for the block
+                        Point3d origin = new Point3d(0, 0, 0);
+                        blkTblRec.Origin = origin;
+
+                        // Add the block table record to the block table and to the transaction
+                        blkTbl.UpgradeOpen();
+                        blkTbl.Add(blkTblRec);
+                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
+
+                        // Set the name
+                        yBlock = blkTblRec.Id;
+
+                        // Create a object collection and add the lines
+                        using (DBObjectCollection lines = new DBObjectCollection())
+                        {
+                            // Define the points to add the lines
+                            Point3d[] blkPts =
+                            {
+                                origin,
+                                new Point3d(-115, -200, 0),
+                                origin,
+                                new Point3d(115, -200, 0),
+                                new Point3d(-150, -200, 0),
+                                new Point3d(150, -200, 0),
+                                new Point3d(-150, -250, 0),
+                                new Point3d(+150, -250, 0)
+                            };
+
+                            // Define the lines and add to the collection
+                            for (int i = 0; i < 4; i++)
+                            {
+                                Line line = new Line()
+                                {
+                                    StartPoint = blkPts[2 * i],
+                                    EndPoint = blkPts[2 * i + 1]
+                                };
+                                lines.Add(line);
+                            }
+
+                            // Add the lines to the block table record
+                            foreach (Entity ent in lines)
+                            {
+                                blkTblRec.AppendEntity(ent);
+                                trans.AddNewlyCreatedDBObject(ent, true);
+                            }
+                        }
+                    }
+
+                    // Create the XY block
+                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
+                    {
+                        blkTblRec.Name = Global.supportXY;
+
+                        // Add the block table record to the block table and to the transaction
+                        blkTbl.UpgradeOpen();
+                        blkTbl.Add(blkTblRec);
+                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
+
+                        // Set the name
+                        xyBlock = blkTblRec.Id;
+
+                        // Set the insertion point for the block
+                        Point3d origin = new Point3d(0, 0, 0);
+                        blkTblRec.Origin = origin;
+
+                        // Create a object collection and add the lines
+                        using (DBObjectCollection lines = new DBObjectCollection())
+                        {
+                            // Define the points to add the lines
+                            Point3d[] blkPts =
+                            {
+                                origin,
+                                new Point3d(-115, -200, 0),
+                                origin,
+                                new Point3d(115, -200, 0),
+                                new Point3d(-150, -200, 0),
+                                new Point3d(150, -200, 0)
+                            };
+
+                            // Define the lines and add to the collection
+                            for (int i = 0; i < 3; i++)
+                            {
+                                Line line = new Line()
+                                {
+                                    StartPoint = blkPts[2 * i],
+                                    EndPoint = blkPts[2 * i + 1]
+                                };
+                                lines.Add(line);
+                            }
+
+                            // Create the diagonal lines
+                            for (int i = 0; i < 6; i++)
+                            {
+                                int xInc = 46 * i; // distance between the lines
+
+                                Line diagLine = new Line()
+                                {
+                                    StartPoint = new Point3d(-115 + xInc, -200, 0),
+                                    EndPoint = new Point3d(-140 + xInc, -245, 0)
+                                };
+
+                                // Add to the collection
+                                lines.Add(diagLine);
+                            }
+
+                            // Add the lines to the block table record
+                            foreach (Entity ent in lines)
+                            {
+                                blkTblRec.AppendEntity(ent);
+                                trans.AddNewlyCreatedDBObject(ent, true);
+                            }
+                        }
+                    }
+                }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+            }
+        }
+
+        // Method to create the force block
+        public static void CreateForceBlock()
+        {
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Initialize the block Ids
+                ObjectId ForceBlock = ObjectId.Null;
+
+                // Check if the support blocks already exist in the drawing
+                if (!blkTbl.Has(Global.forceBlock))
+                {
+                    // Create the X block
+                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
+                    {
+                        blkTblRec.Name = Global.forceBlock;
+
+                        // Add the block table record to the block table and to the transaction
+                        blkTbl.UpgradeOpen();
+                        blkTbl.Add(blkTblRec);
+                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
+
+                        // Set the name
+                        ForceBlock = blkTblRec.Id;
+
+                        // Set the insertion point for the block
+                        Point3d origin = new Point3d(0, 0, 0);
+                        blkTblRec.Origin = origin;
+
+                        // Create a collection
+                        using (DBObjectCollection arrow = new DBObjectCollection())
+                        {
+                            // Create the arrow line and solid)
+                            Line line = new Line()
+                            {
+                                StartPoint = new Point3d(0, 75, 0),
+                                EndPoint = new Point3d(0, 250, 0)
+                            };
+                            // Add to the collection
+                            arrow.Add(line);
+
+                            // Create the solid and add to the collection
+                            Solid solid = new Solid(origin, new Point3d(-50, 75, 0), new Point3d(50, 75, 0));
+                            arrow.Add(solid);
+
+                            // Add the lines to the block table record
+                            foreach (Entity ent in arrow)
+                            {
+                                blkTblRec.AppendEntity(ent);
+                                trans.AddNewlyCreatedDBObject(ent, true);
+                            }
+                        }
+                    }
+                }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+            }
+        }
+
+        // Collection of support positions
+        public static Point3dCollection SupportPositions()
+        {
+            // Initialize the collection of points
+            Point3dCollection supPos = new Point3dCollection();
+
+            // Get the supports
+            ObjectIdCollection spts = AuxMethods.GetEntitiesOnLayer(Global.supLyr);
+
+            if (spts.Count > 0)
+            {
+                // Start a transaction
+                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+                {
+
+                    foreach (ObjectId obj in spts)
+                    {
+                        // Read as a block reference
+                        BlockReference blkRef = trans.GetObject(obj, OpenMode.ForRead) as BlockReference;
+
+                        // Get the position and add to the collection
+                        supPos.Add(blkRef.Position);
+                    }
+                }
+            }
+            return supPos;
+        }
+
+        // Collections of force positions (in X and Y)
+        public static (Point3dCollection fcXPos, Point3dCollection fcYPos) ForcePositions()
+        {
+            // Initialize the collection of points and directions
+            Point3dCollection fcXPos = new Point3dCollection(),
+                              fcYPos = new Point3dCollection();
+
+            // Get the supports
+            ObjectIdCollection fcs = AuxMethods.GetEntitiesOnLayer(Global.fLyr);
+
+            if (fcs.Count > 0)
+            {
+                // Start a transaction
+                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+                {
+                    foreach (ObjectId obj in fcs)
+                    {
+                        // Read as a block reference
+                        BlockReference blkRef = trans.GetObject(obj, OpenMode.ForRead) as BlockReference;
+
+                        // If the rotation of the block is 90 or -90 degrees, the direction is X
+                        if (blkRef.Rotation == Global.piOver2 || blkRef.Rotation == -Global.piOver2)
+                        {
+                            fcXPos.Add(blkRef.Position);
+                        }
+
+                        // If the rotation of the block is 0 or 180 degrees, the direction is Y
+                        if (blkRef.Rotation == 0 || blkRef.Rotation == Global.pi)
+                        {
+                            fcYPos.Add(blkRef.Position);
+                        }
+                    }
+                }
+            }
+            return (fcXPos, fcYPos);
         }
     }
 }

@@ -224,7 +224,7 @@ namespace SPMTool
             strForces = strForces.OrderBy(tuple => tuple.Item1).ToList();
 
             // Draw the stringer forces diagrams
-            Drawing.DrawStringerForces(stringers, strForces);
+            Results.DrawStringerForces(stringers, strForces);
         }
 
         // Calculate the stifness matrix of a panel, get the dofs and save to XData, returns the all the matrices in an ordered list
@@ -463,6 +463,9 @@ namespace SPMTool
         // Calculate panel forces
         public void PanelForces(ObjectIdCollection panels, List<Tuple<int, int[], Matrix<double>, Matrix<double>>> pnlParams, Vector<double> u)
         {
+            // Create a list to store the panel forces
+            List<Tuple<int, Vector<double>>> pnlForces = new List<Tuple<int, Vector<double>>>();
+
             foreach (var pnlParam in pnlParams)
             {
                 // Get the parameters
@@ -483,8 +486,15 @@ namespace SPMTool
                 // Calculate the vector of forces
                 var fl = Kl * ul;
 
-                Global.ed.WriteMessage("\nPanel " + pnlNum.ToString() + ":\n" + fl.ToString());
+                // Save to the list of stringer forces
+                pnlForces.Add(Tuple.Create(pnlNum, fl));
             }
+
+            // Order the list
+            pnlForces = pnlForces.OrderBy(tuple => tuple.Item1).ToList();
+
+            // Draw the panel shear blocks
+            Results.DrawPanelForces(panels, pnlForces);
         }
 
 

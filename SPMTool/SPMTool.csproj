@@ -94,7 +94,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Drawing.cs" />
+    <Compile Include="Results.cs" />
     <Compile Include="GeometryInput.cs" />
     <Compile Include="AuxiliaryAndGlobal.cs" />
     <Compile Include="LinearAnalysis.cs" />
