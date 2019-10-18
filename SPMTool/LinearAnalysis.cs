@@ -28,12 +28,12 @@ namespace SPMTool
                 double Gc = Ec / 2.4;
 
                 // Update and get the elements collection
-                ObjectIdCollection nds = AuxMethods.UpdateNodes(),
-                                   strs = AuxMethods.UpdateStringers(),
-                                   pnls = AuxMethods.UpdatePanels();
+                ObjectIdCollection nds = Geometry.UpdateNodes(),
+                                   strs = Geometry.UpdateStringers(),
+                                   pnls = Geometry.UpdatePanels();
 
                 // Get the list of node positions
-                List<Point3d> ndList = AuxMethods.ListOfNodes("All");
+                List<Point3d> ndList = Geometry.ListOfNodes("All");
 
                 // Initialize the global stiffness matrix
                 var Kg = Matrix<double>.Build.Dense(2 * nds.Count, 2 * nds.Count);
@@ -52,9 +52,10 @@ namespace SPMTool
                 // Solve the sistem
                 var u = Kg.Solve(f);
 
-                // Calculate the stringer and panel forces
+                // Calculate the stringer, panel forces and nodal displacements
                 Results.StringerForces(strs, strParams, u);
                 Results.PanelForces(pnls, pnlParams, u);
+                Results.NodalDisplacements(nds, ndList, u);
 
                 // If all went OK, notify the user
                 //DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
@@ -405,7 +406,7 @@ namespace SPMTool
         public void SimplifyStiffnessMatrix(Matrix<double> Kg, Vector<double> f, List<Point3d> allNds, IEnumerable<Tuple<int, double>> constraints)
         {
             // Get the list of internal nodes
-            List<Point3d> intNds = AuxMethods.ListOfNodes("Int");
+            List<Point3d> intNds = Geometry.ListOfNodes("Int");
 
             // Simplify the matrices removing the rows that have constraints
             foreach (Tuple<int, double> con in constraints)

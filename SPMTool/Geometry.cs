@@ -25,7 +25,7 @@ namespace SPMTool
             AuxMethods.RegisterApp();
 
             // Enumerate the nodes
-            AuxMethods.UpdateNodes();
+            UpdateNodes();
 
             // Prompt for the start point of stringer
             PromptPointOptions strStOp = new PromptPointOptions("\nEnter the start point: ");
@@ -97,8 +97,8 @@ namespace SPMTool
             }
 
             // Update the nodes and stringers
-            AuxMethods.UpdateNodes();
-            AuxMethods.UpdateStringers();
+            UpdateNodes();
+            UpdateStringers();
         }
 
         [CommandMethod("AddPanel")]
@@ -189,8 +189,8 @@ namespace SPMTool
             }
 
             // Update nodes and panels
-            AuxMethods.UpdateNodes();
-            AuxMethods.UpdatePanels();
+            UpdateNodes();
+            UpdatePanels();
         }
 
         [CommandMethod("DivideStringer")]
@@ -315,8 +315,8 @@ namespace SPMTool
             }
 
             // Update nodes and stringers
-            AuxMethods.UpdateNodes();
-            AuxMethods.UpdateStringers();
+            UpdateNodes();
+            UpdateStringers();
         }
 
         [CommandMethod("DividePanel")]
@@ -473,24 +473,24 @@ namespace SPMTool
             }
 
             // Update the elements
-            AuxMethods.UpdateNodes();
-            AuxMethods.UpdateStringers();
-            AuxMethods.UpdatePanels();
+            UpdateNodes();
+            UpdateStringers();
+            UpdatePanels();
         }
 
         [CommandMethod("UpdateElements")]
         public void UpdateElements()
         {
             // Enumerate and get the number of nodes
-            ObjectIdCollection nds = AuxMethods.UpdateNodes();
+            ObjectIdCollection nds = UpdateNodes();
             int numNds = nds.Count;
 
             // Update and get the number of stringers
-            ObjectIdCollection strs = AuxMethods.UpdateStringers();
+            ObjectIdCollection strs = UpdateStringers();
             int numStrs = strs.Count;
 
             // Update and get the number of panels
-            ObjectIdCollection pnls = AuxMethods.UpdatePanels();
+            ObjectIdCollection pnls = UpdatePanels();
             int numPnls = pnls.Count;
 
             // Display the number of updated elements
@@ -661,125 +661,11 @@ namespace SPMTool
             }
         }
 
-        [CommandMethod("ViewElementData")]
-        public void ViewElementData()
-        {
-            // Initialize a message to display
-            string msgstr = "";
-
-            // Start a loop for viewing continuous elements
-            for ( ; ; )
-            { 
-                // Request the object to be selected in the drawing area
-                PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to view data:");
-                PromptEntityResult entRes = Global.ed.GetEntity(entOp);
-
-                // If the prompt status is OK, objects were selected
-                if (entRes.Status == PromptStatus.OK)
-                {
-                    // Start a transaction
-                    using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
-                    {
-                        // Get the entity for read
-                        Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
-
-                        // Get the extended data attached to each object for SPMTool
-                        ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
-
-                        // Make sure the Xdata is not empty
-                        if (rb != null)
-                        {
-                            // Get the XData as an array
-                            TypedValue[] data = rb.AsArray();
-
-                            // If it's a node
-                            if (ent.Layer == Global.extNdLyr || ent.Layer == Global.intNdLyr)
-                            {
-                                // Get the parameters
-                                string ndNum = data[2].Value.ToString(),
-                                       posX  = data[3].Value.ToString(),
-                                       posY  = data[4].Value.ToString(),
-                                       sup   = data[5].Value.ToString(),
-                                       fX    = data[6].Value.ToString(),
-                                       fY    = data[7].Value.ToString();
-
-                                msgstr = "Node " + ndNum + "\n\n" +
-                                         "Node position: (" + posX + ", " + posY + ")" + "\n" +
-                                         "Support conditions: " + sup + "\n" +
-                                         "Force in X direction = " + fX + " kN" + "\n" +
-                                         "Force in Y direction = " + fY + " kN";
-                            }
-
-                            // If it's a stringer
-                            if (ent.Layer == Global.strLyr)
-                            {
-                                // Get the parameters
-                                string strNum = data[2].Value.ToString(),
-                                       strtNd = data[3].Value.ToString(),
-                                       midNd  = data[4].Value.ToString(),
-                                       endNd  = data[5].Value.ToString(),
-                                       lgt    = data[6].Value.ToString(),
-                                       wdt    = data[7].Value.ToString(),
-                                       hgt    = data[8].Value.ToString(),
-                                       As     = data[9].Value.ToString();
-
-                                msgstr = "Stringer " + strNum + "\n\n" +
-                                         "DoFs: (" + strtNd + " - " + midNd + " - " + endNd + ")" + "\n" +
-                                         "Lenght = " + lgt + " mm" + "\n" +
-                                         "Width = " + wdt + " mm" + "\n" +
-                                         "Height = " + hgt + " mm" + "\n" +
-                                         "Reinforcement = " + As + " mm2";
-
-                            }
-
-                            // If it's a panel
-                            if (ent.Layer == Global.pnlLyr)
-                            {
-                                // Get the parameters
-                                string pnlNum   =   data[2].Value.ToString();
-                                string[] pnlNds = { data[3].Value.ToString(),
-                                                    data[4].Value.ToString(),
-                                                    data[5].Value.ToString(),
-                                                    data[6].Value.ToString() };
-                                string pnlW    =    data[7].Value.ToString(),
-                                       psx     =    data[8].Value.ToString(),
-                                       psy     =    data[9].Value.ToString();
-
-                                msgstr = "Panel " + pnlNum + "\n\n" +
-                                         "DoFs: (" + pnlNds[0] + " - " + pnlNds[1] + " - " + pnlNds[2] + " - " + pnlNds[3] + ")" + "\n" +
-                                         "Width = " + pnlW + " mm" + "\n" +
-                                         "Reinforcement ratio (x) = " + psx + "\n" +
-                                         "Reinforcement ratio (y) = " + psy;
-                            }
-
-                            // If it's a force text
-                            if (ent.Layer == Global.fTxtLyr)
-                            {
-                                // Get the parameters
-                                string posX = data[2].Value.ToString(), posY = data[3].Value.ToString();
-
-                                msgstr = "Force at position  (" + posX + ", " + posY + ")";
-                            }
-
-                        }
-                        else
-                        {
-                            msgstr = "NONE";
-                        }
-
-                        // Display the values returned
-                        Application.ShowAlertDialog(Global.appName + "\n\n" + msgstr);
-                    }
-                }
-                else break;
-            }
-        }
-
         // Method to add a node given a point and a layer name
         public static void AddNode(Point3d position, string layerName)
         {
             // Access the nodes in the model
-            ObjectIdCollection nds = AuxMethods.AllNodes();
+            ObjectIdCollection nds = AllNodes();
 
             // Create a point collection and add the position of the nodes
             Point3dCollection ndPos = new Point3dCollection();
@@ -816,6 +702,415 @@ namespace SPMTool
                     trans.Commit();
                 }
             }
+        }
+
+        // Enumerate all the nodes in the model and return the collection of nodes
+        public static ObjectIdCollection UpdateNodes()
+        {
+            // Definition for the Extended Data
+            string xdataStr = "Node Data";
+
+            // Get all the nodes in the model
+            ObjectIdCollection nds = AllNodes();
+
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Get the list of nodes ordered
+                List<Point3d> ndList = ListOfNodes("All");
+
+                // Access the nodes on the document
+                foreach (ObjectId ndObj in nds)
+                {
+                    // Read the object as a point
+                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForWrite) as DBPoint;
+
+                    // Initialize the node conditions
+                    double ndNum = 0;                                // Node number (to be set later)
+                    double xPosition = nd.Position.X;                  // X position
+                    double yPosition = nd.Position.Y;                  // Y position
+                    string support = "Free";                           // Support condition
+                    double xForce = 0,                                 // Force on X direction
+                           yForce = 0,                                 // Force on Y direction
+                           ux = 0,                                     // Displacment on X direction
+                           uy = 0;                                     // Displacment on X direction
+
+                    // If the Extended data does not exist, create it
+                    if (nd.XData == null)
+                    {
+                        // Define the Xdata to add to the node
+                        using (ResultBuffer defRb = new ResultBuffer())
+                        {
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndNum));                  // 2
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));              // 3
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));              // 4
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));         // 5
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xForce));                 // 6
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yForce));                 // 7
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ux));                     // 8
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, uy));                     // 9
+
+                            // Append the extended data to each object
+                            nd.XData = defRb;
+                        }
+                    }
+
+                    // Get the node number on the list
+                    ndNum = ndList.IndexOf(nd.Position) + 1;
+
+                    // Get the result buffer as an array
+                    ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
+                    TypedValue[] data = rb.AsArray();
+
+                    // Set the new node number (line 2)
+                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
+
+                    // Set the updated coordinates (in case of a node copy)
+                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, nd.Position.X);
+                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, nd.Position.Y);
+
+                    // Add the new XData
+                    ResultBuffer newRb = new ResultBuffer(data);
+                    nd.XData = newRb;
+                }
+
+                // Set the style for all point objects in the drawing
+                Global.curDb.Pdmode = 32;
+                Global.curDb.Pdsize = 40;
+
+                // Commit and dispose the transaction
+                trans.Commit();
+            }
+
+            // Return the collection of nodes
+            return nds;
+        }
+
+        // Update the node numbers on the XData of each stringer in the model and return the collection of stringers
+        public static ObjectIdCollection UpdateStringers()
+        {
+            // Definition for the Extended Data
+            string xdataStr = "Stringer Data";
+
+            // Create the stringer collection and initialize getting the elements on layer
+            ObjectIdCollection strs = AuxMethods.GetEntitiesOnLayer(Global.strLyr);
+
+            // Get all the nodes in the model
+            ObjectIdCollection nds = AllNodes();
+
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Create a point collection
+                Point3dCollection midPts = new Point3dCollection();
+
+                // Add the midpoint of each stringer to the collection
+                foreach (ObjectId strObj in strs)
+                {
+                    // Read the object as a line
+                    Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
+
+                    // Get the midpoint and add to the collection
+                    Point3d midPt = AuxMethods.MidPoint(str.StartPoint, str.EndPoint);
+                    midPts.Add(midPt);
+                }
+
+                // Get the array of midpoints ordered
+                List<Point3d> midPtsList = AuxMethods.OrderPoints(midPts);
+
+                // Access the nodes on the document
+                foreach (ObjectId strObj in strs)
+                {
+                    // Open the selected object as a line for write
+                    Line str = trans.GetObject(strObj, OpenMode.ForWrite) as Line;
+
+                    // Initialize the variables
+                    int strStNd = 0,                             // Start node
+                        strMidNd = 0,                            // Mid node
+                        strEnNd = 0;                             // End node
+
+                    // Inicialization of stringer conditions
+                    double strNum = 0;                           // Stringer number (initially unassigned)
+                    double strLgt = str.Length;                  // Stringer lenght
+                    double strW = 1;                             // Width
+                    double strH = 1;                             // Height
+                    double As = 0;                               // Reinforcement Area
+
+                    // If XData does not exist, create it
+                    if (str.XData == null)
+                    {
+
+                        // Define the Xdata to add to the node
+                        using (ResultBuffer rb = new ResultBuffer())
+                        {
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strNum));                 // 2
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStNd));                // 3
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd));               // 4
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd));                // 5
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strLgt));                 // 6
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));                   // 7
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));                   // 8
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));                     // 9
+
+                            // Open the stringer for write
+                            Entity ent = trans.GetObject(str.ObjectId, OpenMode.ForWrite) as Entity;
+
+                            // Append the extended data to each object
+                            ent.XData = rb;
+                        }
+                    }
+
+                    // Get the coordinates of the midpoint of the stringer
+                    Point3d midPt = AuxMethods.MidPoint(str.StartPoint, str.EndPoint);
+
+                    // Get the stringer number
+                    strNum = midPtsList.IndexOf(midPt) + 1;
+
+                    // Get the start, mid and end nodes
+                    strStNd = GetNodeNumber(str.StartPoint, nds);
+                    strMidNd = GetNodeNumber(midPt, nds);
+                    strEnNd = GetNodeNumber(str.EndPoint, nds);
+
+                    // Access the XData as an array
+                    ResultBuffer strRb = str.GetXDataForApplication(Global.appName);
+                    TypedValue[] data = strRb.AsArray();
+
+                    // Set the updated number and nodes in ascending number and length (line 2 to 6)
+                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
+                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
+                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd);
+                    data[5] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
+                    data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, str.Length);
+
+                    // Add the new XData
+                    ResultBuffer newRb = new ResultBuffer(data);
+                    str.XData = newRb;
+                }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+            }
+
+            // Return the collection of stringers
+            return strs;
+        }
+
+        // Update the node numbers on the XData of each panel in the model and return the collection of panels
+        public static ObjectIdCollection UpdatePanels()
+        {
+            // Definition for the Extended Data
+            string xdataStr = "Panel Data";
+
+            // Get the internal nodes of the model
+            ObjectIdCollection intNds = AuxMethods.GetEntitiesOnLayer(Global.intNdLyr);
+
+            // Create the panels collection and initialize getting the elements on node layer
+            ObjectIdCollection pnls = AuxMethods.GetEntitiesOnLayer(Global.pnlLyr);
+
+            // Create a point collection
+            Point3dCollection cntrPts = new Point3dCollection();
+
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Add the centerpoint of each panel to the collection
+                foreach (ObjectId pnlObj in pnls)
+                {
+                    // Read the object as a solid
+                    Solid pnl = trans.GetObject(pnlObj, OpenMode.ForRead) as Solid;
+
+                    // Get the vertices
+                    Point3dCollection pnlVerts = new Point3dCollection();
+                    pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+
+                    // Get the approximate coordinates of the center point of the panel
+                    Point3d cntrPt = AuxMethods.MidPoint(pnlVerts[0], pnlVerts[3]);
+                    cntrPts.Add(cntrPt);
+                }
+
+                // Get the list of center points ordered
+                List<Point3d> cntrPtsList = AuxMethods.OrderPoints(cntrPts);
+
+                // Access the panels on the document
+                foreach (ObjectId pnlObj in pnls)
+                {
+                    // Open the selected object as a solid for write
+                    Solid pnl = trans.GetObject(pnlObj, OpenMode.ForWrite) as Solid;
+
+                    // Initialize the panel parameters
+                    double pnlNum = 0;                            // Panel number (initially unassigned)
+                    int[] dofs = { 0, 0, 0, 0 };                  // Panel DoFs (initially unassigned)
+                    double pnlW = 1;                              // width
+                    double psx = 0;                               // reinforcement ratio (X)
+                    double psy = 0;                               // reinforcement ratio (Y)
+
+                    // Check if the XData already exist. If not, create it
+                    if (pnl.XData == null)
+                    {
+                        // Initialize a Result Buffer to add to the panel
+                        ResultBuffer rb = new ResultBuffer();
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum));                 // 2
+                        for (int i = 0; i < 4; i++)
+                        {
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, dofs[i]));            // 3, 4, 5, 6
+                        }
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));                   // 7
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));                    // 8
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));                    // 9
+
+                        // Append the extended data to the object
+                        pnl.XData = rb;
+                    }
+
+                    // Read it as a block and get the draw order table
+                    BlockTableRecord blck = trans.GetObject(pnl.BlockId, OpenMode.ForRead) as BlockTableRecord;
+                    DrawOrderTable drawOrder = trans.GetObject(blck.DrawOrderTableId, OpenMode.ForWrite) as DrawOrderTable;
+
+                    // Get the vertices
+                    Point3dCollection pnlVerts = new Point3dCollection();
+                    pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+
+                    // Get the approximate coordinates of the center point of the panel
+                    Point3d cntrPt = AuxMethods.MidPoint(pnlVerts[0], pnlVerts[3]);
+
+                    // Get the coordinates of the panel DoFs in the necessary order
+                    Point3dCollection pnlDofs = new Point3dCollection();
+                    pnlDofs.Add(AuxMethods.MidPoint(pnlVerts[0], pnlVerts[1]));
+                    pnlDofs.Add(AuxMethods.MidPoint(pnlVerts[1], pnlVerts[3]));
+                    pnlDofs.Add(AuxMethods.MidPoint(pnlVerts[3], pnlVerts[2]));
+                    pnlDofs.Add(AuxMethods.MidPoint(pnlVerts[2], pnlVerts[0]));
+
+                    // Get the panel number
+                    pnlNum = cntrPtsList.IndexOf(cntrPt) + 1;
+
+                    // Compare the node position to the panel vertices
+                    foreach (Point3d dof in pnlDofs)
+                    {
+                        // Get the position of the vertex in the array
+                        int i = pnlDofs.IndexOf(dof);
+
+                        // Get the node number
+                        dofs[i] = GetNodeNumber(dof, intNds);
+                    }
+
+                    // Access the XData as an array
+                    ResultBuffer pnlRb = pnl.GetXDataForApplication(Global.appName);
+                    TypedValue[] data = pnlRb.AsArray();
+
+                    // Set the updated panel number (line 2)
+                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
+
+                    // Set the updated node numbers in the necessary order (line 3 to 6 of the array)
+                    for (int i = 3; i <= 6; i++)
+                    {
+                        data[i] = new TypedValue((int)DxfCode.ExtendedDataReal, dofs[i - 3]);
+                    }
+
+                    // Add the new XData
+                    ResultBuffer newRb = new ResultBuffer(data);
+                    pnl.XData = newRb;
+
+                    // Move the panels to bottom
+                    drawOrder.MoveToBottom(pnls);
+                }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+            }
+
+            // Return the collection of panels
+            return pnls;
+        }
+
+        // Get the list of node positions ordered
+        public static List<Point3d> ListOfNodes(string nodeType)
+        {
+            // Initialize an object collection
+            ObjectIdCollection nds = new ObjectIdCollection();
+
+            // Select the node type
+            if (nodeType == "All") nds = AllNodes();
+            if (nodeType == "Int") nds = AuxMethods.GetEntitiesOnLayer(Global.intNdLyr);
+            if (nodeType == "Ext") nds = AuxMethods.GetEntitiesOnLayer(Global.extNdLyr);
+
+            // Create a point collection
+            Point3dCollection ndPos = new Point3dCollection();
+
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                foreach (ObjectId ndObj in nds)
+                {
+                    // Read as a point and add to the collection
+                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+                    ndPos.Add(nd.Position);
+                }
+            }
+
+            // Return the node list ordered
+            return AuxMethods.OrderPoints(ndPos);
+        }
+
+        // Get the collection of all of the nodes
+        public static ObjectIdCollection AllNodes()
+        {
+            // Create the nodes collection and initialize getting the elements on node layer
+            ObjectIdCollection extNds = AuxMethods.GetEntitiesOnLayer(Global.extNdLyr);
+            ObjectIdCollection intNds = AuxMethods.GetEntitiesOnLayer(Global.intNdLyr);
+
+            // Create a unique collection for all the nodes
+            ObjectIdCollection nds = new ObjectIdCollection();
+            foreach (ObjectId ndObj in extNds) nds.Add(ndObj);
+            foreach (ObjectId ndObj in intNds) nds.Add(ndObj);
+
+            return nds;
+        }
+
+        // Get the node number at the position
+        public static int GetNodeNumber(Point3d position, ObjectIdCollection nodes)
+        {
+            // Initiate the node number
+            int ndNum = 0;
+
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                // Compare to the nodes collection
+                foreach (ObjectId ndObj in nodes)
+                {
+                    // Open the selected object as a point for read
+                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+
+                    // Compare the positions
+                    if (position == nd.Position)
+                    {
+                        // Get the node number
+                        // Access the XData as an array
+                        ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
+                        TypedValue[] dataNd = ndRb.AsArray();
+
+                        // Get the node number (line 2)
+                        ndNum = Convert.ToInt32(dataNd[2].Value);
+                    }
+                }
+            }
+
+            return ndNum;
         }
     }
 }

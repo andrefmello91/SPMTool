@@ -359,7 +359,7 @@ namespace SPMTool
         public static Vector<double> ForceVector()
         {
             // Access the nodes in the model
-            ObjectIdCollection nds = AuxMethods.AllNodes();
+            ObjectIdCollection nds = Geometry.AllNodes();
 
             // Get the number of DoFs
             int numDofs = nds.Count;

@@ -8,6 +8,8 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 
+[assembly: CommandClass(typeof(SPMTool.Results))]
+
 namespace SPMTool
 {
     public class Results
@@ -79,7 +81,7 @@ namespace SPMTool
                     Line str = trans.GetObject(obj, OpenMode.ForWrite) as Line;
 
                     // Get the parameters of the stringer
-                    double l   = str.Length,
+                    double l = str.Length,
                            ang = str.Angle;
 
                     // Read the XData and get the stringer number
@@ -89,8 +91,8 @@ namespace SPMTool
 
                     // Get the forces in the list
                     var f = stringerForces[strNum - 1].Item2;
-                    double f1 =   Math.Round(f[0], 2),
-                           f3 = - Math.Round(f[2], 2);
+                    double f1 = Math.Round(f[0], 2),
+                           f3 = -Math.Round(f[2], 2);
 
                     // Check if at least one force is not zero
                     if (f1 != 0 || f3 != 0)
@@ -512,6 +514,156 @@ namespace SPMTool
                     // Commit and dispose the transaction
                     trans.Commit();
                 }
+            }
+        }
+
+        // Get the nodal displacements and save to XData
+        public static void NodalDisplacements(ObjectIdCollection nodes, List<Point3d> nodeList, Vector<double> u)
+        {
+            // Start a transaction
+            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            {
+                // Get the stringers stifness matrix and add to the global stifness matrix
+                foreach (ObjectId obj in nodes)
+                {
+                    // Read the object as a point
+                    DBPoint nd = trans.GetObject(obj, OpenMode.ForWrite) as DBPoint;
+
+                    // Get the index of the node on the list
+                    int i = 2 * nodeList.IndexOf(nd.Position);
+
+                    // Get the displacements
+                    double ux = u[i],
+                           uy = u[i + 1];
+
+                    // Get the result buffer as an array
+                    ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
+                    TypedValue[] data = rb.AsArray();
+
+                    // Save the displacements on the XData
+                    data[8] = new TypedValue((int)DxfCode.ExtendedDataReal, ux);
+                    data[9] = new TypedValue((int)DxfCode.ExtendedDataReal, uy);
+                }
+
+                // Commit changes
+                trans.Commit();
+            }
+        }
+
+        [CommandMethod("ViewElementData")]
+        public void ViewElementData()
+        {
+            // Initialize a message to display
+            string msgstr = "";
+
+            // Start a loop for viewing continuous elements
+            for (; ; )
+            {
+                // Request the object to be selected in the drawing area
+                PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to view data:");
+                PromptEntityResult entRes = Global.ed.GetEntity(entOp);
+
+                // If the prompt status is OK, objects were selected
+                if (entRes.Status == PromptStatus.OK)
+                {
+                    // Start a transaction
+                    using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+                    {
+                        // Get the entity for read
+                        Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
+
+                        // Get the extended data attached to each object for SPMTool
+                        ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
+
+                        // Make sure the Xdata is not empty
+                        if (rb != null)
+                        {
+                            // Get the XData as an array
+                            TypedValue[] data = rb.AsArray();
+
+                            // If it's a node
+                            if (ent.Layer == Global.extNdLyr || ent.Layer == Global.intNdLyr)
+                            {
+                                // Get the parameters
+                                string ndNum = data[2].Value.ToString(),
+                                       posX  = data[3].Value.ToString(),
+                                       posY  = data[4].Value.ToString(),
+                                       sup   = data[5].Value.ToString(),
+                                       fX    = data[6].Value.ToString(),
+                                       fY    = data[7].Value.ToString(),
+                                       ux    = data[8].Value.ToString(),
+                                       uy    = data[9].Value.ToString();
+
+                                msgstr = "Node " + ndNum + "\n\n" +
+                                         "Node position: (" + posX + ", " + posY + ")" + "\n" +
+                                         "Support conditions: " + sup + "\n" +
+                                         "Fx = " + fX + " kN" + "\n" +
+                                         "Fy = " + fY + " kN" + "\n" +
+                                         "ux = " + ux + " mm" + "\n" +
+                                         "uy = " + uy + " mm";
+                            }
+
+                            // If it's a stringer
+                            if (ent.Layer == Global.strLyr)
+                            {
+                                // Get the parameters
+                                string strNum = data[2].Value.ToString(),
+                                       strtNd = data[3].Value.ToString(),
+                                       midNd = data[4].Value.ToString(),
+                                       endNd = data[5].Value.ToString(),
+                                       lgt = data[6].Value.ToString(),
+                                       wdt = data[7].Value.ToString(),
+                                       hgt = data[8].Value.ToString(),
+                                       As = data[9].Value.ToString();
+
+                                msgstr = "Stringer " + strNum + "\n\n" +
+                                         "DoFs: (" + strtNd + " - " + midNd + " - " + endNd + ")" + "\n" +
+                                         "Lenght = " + lgt + " mm" + "\n" +
+                                         "Width = " + wdt + " mm" + "\n" +
+                                         "Height = " + hgt + " mm" + "\n" +
+                                         "Reinforcement = " + As + " mm2";
+                            }
+
+                            // If it's a panel
+                            if (ent.Layer == Global.pnlLyr)
+                            {
+                                // Get the parameters
+                                string pnlNum = data[2].Value.ToString();
+                                string[] pnlNds = { data[3].Value.ToString(),
+                                                    data[4].Value.ToString(),
+                                                    data[5].Value.ToString(),
+                                                    data[6].Value.ToString() };
+                                string pnlW = data[7].Value.ToString(),
+                                       psx = data[8].Value.ToString(),
+                                       psy = data[9].Value.ToString();
+
+                                msgstr = "Panel " + pnlNum + "\n\n" +
+                                         "DoFs: (" + pnlNds[0] + " - " + pnlNds[1] + " - " + pnlNds[2] + " - " + pnlNds[3] + ")" + "\n" +
+                                         "Width = " + pnlW + " mm" + "\n" +
+                                         "Reinforcement ratio (x) = " + psx + "\n" +
+                                         "Reinforcement ratio (y) = " + psy;
+                            }
+
+                            // If it's a force text
+                            if (ent.Layer == Global.fTxtLyr)
+                            {
+                                // Get the parameters
+                                string posX = data[2].Value.ToString(), posY = data[3].Value.ToString();
+
+                                msgstr = "Force at position  (" + posX + ", " + posY + ")";
+                            }
+
+                        }
+                        else
+                        {
+                            msgstr = "NONE";
+                        }
+
+                        // Display the values returned
+                        Application.ShowAlertDialog(Global.appName + "\n\n" + msgstr);
+                    }
+                }
+                else break;
             }
         }
     }

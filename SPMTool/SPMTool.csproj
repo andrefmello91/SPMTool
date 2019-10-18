@@ -96,7 +96,7 @@
   <ItemGroup>
     <Compile Include="Forces.cs" />
     <Compile Include="Results.cs" />
-    <Compile Include="GeometryInput.cs" />
+    <Compile Include="Geometry.cs" />
     <Compile Include="AuxiliaryAndGlobal.cs" />
     <Compile Include="LinearAnalysis.cs" />
     <Compile Include="MaterialInput.cs" />
