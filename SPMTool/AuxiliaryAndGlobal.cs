@@ -344,8 +344,6 @@ namespace SPMTool
                     double strW = 1;                             // Width
                     double strH = 1;                             // Height
                     double As = 0;                               // Reinforcement Area
-                    double kl = 0;                               // Local stiffness matrix
-                    double k = 0;                                // Transformated stiffness matrix
 
                     // If XData does not exist, create it
                     if (str.XData == null)
@@ -364,8 +362,6 @@ namespace SPMTool
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));                   // 7
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));                   // 8
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));                     // 9
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, kl));                     // 10
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, k));                      // 11 
 
                             // Open the stringer for write
                             Entity ent = trans.GetObject(str.ObjectId, OpenMode.ForWrite) as Entity;
@@ -461,7 +457,6 @@ namespace SPMTool
                     double pnlW = 1;                              // width
                     double psx = 0;                               // reinforcement ratio (X)
                     double psy = 0;                               // reinforcement ratio (Y)
-                    string pnlK = "";                             // stifness matrix
 
                     // Check if the XData already exist. If not, create it
                     if (pnl.XData == null)
@@ -478,8 +473,6 @@ namespace SPMTool
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));                   // 7
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));                    // 8
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));                    // 9
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, pnlK));            // 10
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, pnlK));            // 11
 
                         // Append the extended data to the object
                         pnl.XData = rb;

@@ -57,10 +57,8 @@ namespace SPMTool
                 Results.PanelForces(pnls, pnlParams, u);
 
                 // If all went OK, notify the user
-                DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
-                DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
-
-                //Global.ed.WriteMessage(u.ToString() + f.ToString());
+                //DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
+                //DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
             }
             else
             {
@@ -125,15 +123,6 @@ namespace SPMTool
                     // Calculate the transformated stiffness matrix
                     var K = T.Transpose() * Kl * T;
 
-                    // Save to the XData
-                    strData[10] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, Kl.ToString());
-                    strData[11] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, K.ToString());
-
-                    // Save the new XData
-                    strRb = new ResultBuffer(strData);
-                    str.XData = strRb;
-
-
                     // Get the positions in the global matrix
                     int i = 2 * nodeList.IndexOf(str.StartPoint),               // DoF 1
                         j = 2 * nodeList.IndexOf(strMidPt),                     // DoF 2
@@ -177,6 +166,7 @@ namespace SPMTool
 
                     // Save to the list of stringer parameters
                     strMats.Add(Tuple.Create(strNum, ind, Kl, T));
+                    //DelimitedWriter.Write("D:/SPMTooldataS" + strNum + ".csv", K, ";");
                 }
             }
 
@@ -356,14 +346,6 @@ namespace SPMTool
                     // Global stifness matrix
                     var K = T.Transpose() * Kl * T;
 
-                    // Save to the XData
-                    pnlData[10] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, Kl.ToString());
-                    pnlData[11] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, K.ToString());
-
-                    // Save the new XData
-                    pnlRb = new ResultBuffer(pnlData);
-                    panel.XData = pnlRb;
-
                     // Get the positions in the global matrix
                     int i = 2 * nodeList.IndexOf(dof1),
                         j = 2 * nodeList.IndexOf(dof2),
@@ -410,6 +392,7 @@ namespace SPMTool
 
                     // Save to the list of panel parameters
                     pnlMats.Add(Tuple.Create(pnlNum, ind, Kl, T));
+                    //DelimitedWriter.Write("D:/SPMTooldataP" + pnlNum + ".csv", K, ";");
                 }
             }
 
