@@ -222,6 +222,9 @@ namespace SPMTool
                 // Save the new objects to the database
                 trans.Commit();
             }
+
+            // Turn the layer on
+            Auxiliary.LayerOn(Layers.pnlFLyr);
         }
 
         // Draw the stringer forces diagrams
@@ -436,6 +439,9 @@ namespace SPMTool
                 // Save the new objects to the database
                 trans.Commit();
             }
+
+            // Turn the layer on
+            Auxiliary.LayerOn(Layers.strFLyr);
         }
 
         // Draw the displaced model
@@ -443,6 +449,10 @@ namespace SPMTool
         {
             // Create the layer
             Auxiliary.CreateLayer(Layers.dispLyr, Colors.yellow1, 0);
+
+            // Erase all the displaced objects in the drawing
+            ObjectIdCollection dispObjs = Auxiliary.GetEntitiesOnLayer(Layers.dispLyr);
+            if (dispObjs.Count > 0) Auxiliary.EraseObjects(dispObjs);
 
             // Set a scale factor for displacements
             int scFctr = 100;
@@ -514,6 +524,9 @@ namespace SPMTool
                 // Commit changes
                 trans.Commit();
             }
+
+            // Turn the layer off
+            Auxiliary.LayerOff(Layers.dispLyr);
         }
 
         // Get the nodal displacements and save to XData
@@ -678,13 +691,13 @@ namespace SPMTool
                             {
                                 // Get the parameters
                                 string ndNum = data[2].Value.ToString(),
-                                       posX  = data[3].Value.ToString(),
-                                       posY  = data[4].Value.ToString(),
-                                       sup   = data[5].Value.ToString(),
-                                       fX    = data[6].Value.ToString(),
-                                       fY    = data[7].Value.ToString(),
-                                       ux    = data[8].Value.ToString(),
-                                       uy    = data[9].Value.ToString();
+                                       posX = data[3].Value.ToString(),
+                                       posY = data[4].Value.ToString(),
+                                       sup = data[5].Value.ToString(),
+                                       fX = data[6].Value.ToString(),
+                                       fY = data[7].Value.ToString(),
+                                       ux = data[8].Value.ToString(),
+                                       uy = data[9].Value.ToString();
 
                                 msgstr = "Node " + ndNum + "\n\n" +
                                          "Node position: (" + posX + ", " + posY + ")" + "\n" +
@@ -757,6 +770,27 @@ namespace SPMTool
                 }
                 else break;
             }
+        }
+
+        // Toggle view for stringer forces
+        [CommandMethod("ToogleStringerForces")]
+        public void ToogleStringerForces()
+        {
+            Auxiliary.ToogleLayer(Layers.strFLyr);
+        }
+
+        // Toggle view for panel forces
+        [CommandMethod("TooglePanelForces")]
+        public void TooglePanelForces()
+        {
+            Auxiliary.ToogleLayer(Layers.pnlFLyr);
+        }
+
+        // Toggle view for displacements
+        [CommandMethod("ToogleDisplacements")]
+        public void ToogleDisplacements()
+        {
+            Auxiliary.ToogleLayer(Layers.dispLyr);
         }
     }
 }

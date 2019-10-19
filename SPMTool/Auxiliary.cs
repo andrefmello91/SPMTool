@@ -78,6 +78,89 @@ namespace SPMTool
             }
         }
 
+        // Method to toogle view of a layer (on and off)
+        public static void ToogleLayer(string layerName)
+        {
+            // Start a transaction
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Layer table for read
+                LayerTable lyrTbl = trans.GetObject(AutoCAD.curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                if (lyrTbl.Has(layerName))
+                {
+                    using (LayerTableRecord lyrTblRec = trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite) as LayerTableRecord)
+                    {
+                        // Verify the state
+                        if (!lyrTblRec.IsOff)
+                        {
+                            lyrTblRec.IsOff = true;   // Turn it off
+                        }
+                        else
+                        {
+                            lyrTblRec.IsOff = false;  // Turn it on
+                        }
+                    }
+
+                    // Commit and dispose the transaction
+                    trans.Commit();
+                }
+            }
+        }
+
+        // Method to turn a layer Off
+        public static void LayerOff(string layerName)
+        {
+            // Start a transaction
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Layer table for read
+                LayerTable lyrTbl = trans.GetObject(AutoCAD.curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                if (lyrTbl.Has(layerName))
+                {
+                    using (LayerTableRecord lyrTblRec = trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite) as LayerTableRecord)
+                    {
+                        // Verify the state
+                        if (!lyrTblRec.IsOff)
+                        {
+                            lyrTblRec.IsOff = true;   // Turn it off
+                        }
+                    }
+
+                    // Commit and dispose the transaction
+                    trans.Commit();
+                }
+            }
+        }
+
+        // Method to turn a layer On
+        public static void LayerOn(string layerName)
+        {
+            // Start a transaction
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Layer table for read
+                LayerTable lyrTbl = trans.GetObject(AutoCAD.curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                if (lyrTbl.Has(layerName))
+                {
+                    using (LayerTableRecord lyrTblRec = trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite) as LayerTableRecord)
+                    {
+                        // Verify the state
+                        if (lyrTblRec.IsOff)
+                        {
+                            lyrTblRec.IsOff = false;   // Turn it on
+                        }
+                    }
+
+                    // Commit and dispose the transaction
+                    trans.Commit();
+                }
+            }
+        }
+
+
         // This method select all objects on a determined layer
         public static ObjectIdCollection GetEntitiesOnLayer(string layerName)
         {
