@@ -55,7 +55,7 @@ namespace SPMTool
                 // Calculate the stringer, panel forces and nodal displacements
                 Results.StringerForces(strs, strParams, u);
                 Results.PanelForces(pnls, pnlParams, u);
-                Results.NodalDisplacements(nds, ndList, u);
+                Results.NodalDisplacements(nds, strs, ndList, u);
 
                 // If all went OK, notify the user
                 //DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");

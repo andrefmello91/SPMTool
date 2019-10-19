@@ -438,9 +438,90 @@ namespace SPMTool
             }
         }
 
-        // Get the nodal displacements and save to XData
-        public static void NodalDisplacements(ObjectIdCollection nodes, List<Point3d> nodeList, Vector<double> u)
+        // Draw the displaced model
+        public static void DrawDisplacements(ObjectIdCollection stringers, List<Tuple<Point3d, double, double>> ndDisp)
         {
+            // Create the layer
+            Auxiliary.CreateLayer(Layers.dispLyr, Colors.yellow1, 0);
+
+            // Set a scale factor for displacements
+            int scFctr = 100;
+
+            // Start a transaction
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Open the Block table record Model space for write
+                BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                // Get the stringers stifness matrix and add to the global stifness matrix
+                foreach (ObjectId obj in stringers)
+                {
+                    // Read the object as a line
+                    Line str = trans.GetObject(obj, OpenMode.ForRead) as Line;
+
+                    // Initialize the displacements of the initial and end nodes
+                    double ux1 = 0,
+                           uy1 = 0,
+                           ux3 = 0,
+                           uy3 = 0;
+
+                    // Get the displacements on the list
+                    foreach (var disp in ndDisp) // Initial node
+                    {
+                        if (str.StartPoint == disp.Item1)
+                        {
+                            ux1 = disp.Item2 * scFctr;
+                            uy1 = disp.Item3 * scFctr;
+                            break;
+                        }
+                    }
+
+                    foreach (var disp in ndDisp) // End node
+                    {
+                        if (str.EndPoint == disp.Item1)
+                        {
+                            ux3 = disp.Item2 * scFctr;
+                            uy3 = disp.Item3 * scFctr;
+                            break;
+                        }
+                    }
+
+                    // Calculate the displaced nodes
+                    Point3d stPt = new Point3d(str.StartPoint.X + ux1, str.StartPoint.Y + uy1, 0),
+                            enPt = new Point3d(str.EndPoint.X + ux3, str.EndPoint.Y + uy3, 0),
+                            midPt = Auxiliary.MidPoint(stPt, enPt);
+
+                    // Draw the displaced stringer
+                    using (Line newStr = new Line(stPt, enPt))
+                    {
+                        // Set the layer to stringer
+                        newStr.Layer = Layers.dispLyr;
+
+                        // Add the line to the drawing
+                        blkTblRec.AppendEntity(newStr);
+                        trans.AddNewlyCreatedDBObject(newStr, true);
+                    }
+
+                    // Add the nodes
+                    Geometry.AddNode(stPt, Layers.dispLyr);
+                    Geometry.AddNode(enPt, Layers.dispLyr);
+                    Geometry.AddNode(midPt, Layers.dispLyr);
+                }
+
+                // Commit changes
+                trans.Commit();
+            }
+        }
+
+        // Get the nodal displacements and save to XData
+        public static void NodalDisplacements(ObjectIdCollection nodes, ObjectIdCollection stringers, List<Point3d> nodeList, Vector<double> u)
+        {
+            // Initialize a tuple list to store the node position and the displacements
+            List<Tuple<Point3d, double, double>> ndDisp = new List<Tuple<Point3d, double, double>>();
+
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
@@ -468,11 +549,18 @@ namespace SPMTool
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);
                     nd.XData = newRb;
+
+                    // Save only external nodes to the list
+                    if (nd.Layer == Layers.extNdLyr)
+                        ndDisp.Add(Tuple.Create(nd.Position, ux, uy));
                 }
 
                 // Commit changes
                 trans.Commit();
             }
+
+            // Draw the displacements
+            DrawDisplacements(stringers, ndDisp);
         }
 
         // Calculate panel forces
@@ -553,6 +641,7 @@ namespace SPMTool
             // Draw the stringer forces diagrams
             DrawStringerForces(stringers, strForces);
         }
+
         [CommandMethod("ViewElementData")]
         public void ViewElementData()
         {

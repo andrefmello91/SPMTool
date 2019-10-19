@@ -34,6 +34,7 @@ namespace SPMTool
     {
         public static short red = 1,
                             yellow = 2,
+                            yellow1 = 41,
                             cyan = 4,
                             blue1 = 5,
                             blue = 150,
@@ -52,7 +53,8 @@ namespace SPMTool
                              fLyr = "Force",
                              fTxtLyr = "ForceText",
                              strFLyr = "StringerForces",
-                             pnlFLyr = "PanelShear";
+                             pnlFLyr = "PanelShear",
+                             dispLyr = "Displacements";
     }
 
     // Block names
