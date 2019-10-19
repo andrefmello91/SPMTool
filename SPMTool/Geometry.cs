@@ -17,19 +17,19 @@ namespace SPMTool
         public static void AddStringer()
         {
             // Check if the layers already exists in the drawing. If it doesn't, then it's created:
-            AuxMethods.CreateLayer(Global.extNdLyr, Global.red, 0);
-            AuxMethods.CreateLayer(Global.intNdLyr, Global.blue, 0);
-            AuxMethods.CreateLayer(Global.strLyr, Global.cyan, 0);
+            Auxiliary.CreateLayer(Layers.extNdLyr, Colors.red, 0);
+            Auxiliary.CreateLayer(Layers.intNdLyr, Colors.blue, 0);
+            Auxiliary.CreateLayer(Layers.strLyr, Colors.cyan, 0);
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-            AuxMethods.RegisterApp();
+            Auxiliary.RegisterApp();
 
             // Enumerate the nodes
             UpdateNodes();
 
             // Prompt for the start point of stringer
             PromptPointOptions strStOp = new PromptPointOptions("\nEnter the start point: ");
-            PromptPointResult strStRes = Global.ed.GetPoint(strStOp);
+            PromptPointResult strStRes = AutoCAD.edtr.GetPoint(strStOp);
 
             // Exit if the user presses ESC or cancels the command
             if (strStRes.Status == PromptStatus.OK)
@@ -38,7 +38,7 @@ namespace SPMTool
                 for ( ; ; )
                 {
                     // Start a transaction
-                    using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+                    using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
                     {
                         // Create a point3d collection and add the stringer start point
                         Point3dCollection nds = new Point3dCollection();
@@ -46,18 +46,18 @@ namespace SPMTool
 
                         // Prompt for the end point and add to the collection
                         PromptPointOptions strEndOp = new PromptPointOptions("\nEnter the end point: ");
-                        PromptPointResult strEndRes = Global.ed.GetPoint(strEndOp);
+                        PromptPointResult strEndRes = AutoCAD.edtr.GetPoint(strEndOp);
                         nds.Add(strEndRes.Value);
 
                         if (strEndRes.Status == PromptStatus.OK)
                         {
                             // Get the points ordered in ascending Y and ascending X:
-                            List<Point3d> extNds = AuxMethods.OrderPoints(nds);
+                            List<Point3d> extNds = Auxiliary.OrderPoints(nds);
                             Point3d strSt = extNds[0];
                             Point3d strEnd = extNds[1];
 
                             // Open the Block table for read
-                            BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                            BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                             // Open the Block table record Model space for write
                             BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
@@ -66,7 +66,7 @@ namespace SPMTool
                             using (Line newStr = new Line(strSt, strEnd))
                             {
                                 // Set the layer to stringer
-                                newStr.Layer = Global.strLyr;
+                                newStr.Layer = Layers.strLyr;
 
                                 // Add the line to the drawing
                                 blkTblRec.AppendEntity(newStr);
@@ -74,12 +74,12 @@ namespace SPMTool
                             }
 
                             // Create the external nodes
-                            AddNode(strSt,  Global.extNdLyr);
-                            AddNode(strEnd, Global.extNdLyr);
+                            AddNode(strSt,  Layers.extNdLyr);
+                            AddNode(strEnd, Layers.extNdLyr);
 
                             // Get the midpoint and add the internal node
-                            Point3d midPt = AuxMethods.MidPoint(strSt, strEnd);
-                            AddNode(midPt, Global.intNdLyr);
+                            Point3d midPt = Auxiliary.MidPoint(strSt, strEnd);
+                            AddNode(midPt, Layers.intNdLyr);
 
                             // Set the start point of the new stringer
                             strStRes = strEndRes;
@@ -105,17 +105,17 @@ namespace SPMTool
         public static void AddPanel()
         {
             // Check if the layer panel already exists in the drawing. If it doesn't, then it's created:
-            AuxMethods.CreateLayer(Global.pnlLyr, Global.grey, 80);
+            Auxiliary.CreateLayer(Layers.pnlLyr, Colors.grey, 80);
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-            AuxMethods.RegisterApp();
+            Auxiliary.RegisterApp();
 
             // Create a loop for creating infinite panels
             for ( ; ; )
             {
                 // Prompt for user select 4 vertices of the panel
-                Global.ed.WriteMessage("\nSelect four nodes to be the vertices of the panel:");
-                PromptSelectionResult selRes = Global.ed.GetSelection();
+                AutoCAD.edtr.WriteMessage("\nSelect four nodes to be the vertices of the panel:");
+                PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
 
                 if (selRes.Status == PromptStatus.OK)
                 {
@@ -128,7 +128,7 @@ namespace SPMTool
                     Point3dCollection nds = new Point3dCollection();
 
                     // Start a transaction
-                    using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+                    using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
                     {
                         // Get the objects in the selection and add to the collection only the external nodes
                         foreach (SelectedObject obj in set)
@@ -137,7 +137,7 @@ namespace SPMTool
                             Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                             // Check if it is a external node
-                            if (ent.Layer == Global.extNdLyr) verts.Add(obj.ObjectId);
+                            if (ent.Layer == Layers.extNdLyr) verts.Add(obj.ObjectId);
                         }
 
                         // Check if there are four objects
@@ -151,10 +151,10 @@ namespace SPMTool
                             }
 
                             // Order the vertices in ascending Y and ascending X
-                            List<Point3d> vrts = AuxMethods.OrderPoints(nds);
+                            List<Point3d> vrts = Auxiliary.OrderPoints(nds);
 
                             // Open the Block table for read
-                            BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                            BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                             // Open the Block table record Model space for write
                             BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
@@ -163,7 +163,7 @@ namespace SPMTool
                             using (Solid newPnl = new Solid(vrts[0], vrts[1], vrts[2], vrts[3]))
                             {
                                 // Set the layer to Panel
-                                newPnl.Layer = Global.pnlLyr;
+                                newPnl.Layer = Layers.pnlLyr;
 
                                 // Add the panel to the drawing
                                 blkTblRec.AppendEntity(newPnl);
@@ -197,17 +197,17 @@ namespace SPMTool
         public static void DivideStringer()
         {
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Open the Block table record Model space for write
                 BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
                 // Prompt for select stringers
-                Global.ed.WriteMessage("\nSelect stringers to divide:");
-                PromptSelectionResult selRes = Global.ed.GetSelection();
+                AutoCAD.edtr.WriteMessage("\nSelect stringers to divide:");
+                PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
 
                 if (selRes.Status == PromptStatus.OK)
                 {
@@ -219,7 +219,7 @@ namespace SPMTool
                     };
 
                     // Get the number
-                    PromptIntegerResult strNumRes = Global.ed.GetInteger(strNumOp);
+                    PromptIntegerResult strNumRes = AutoCAD.edtr.GetInteger(strNumOp);
                     int strNum = strNumRes.Value;
 
                     // Get the selection set and analyse the elements
@@ -230,13 +230,13 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer == Global.strLyr)
+                        if (ent.Layer == Layers.strLyr)
                         {
                             // Read as a line
                             Line str = ent as Line;
 
                             // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
+                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
 
                             // Get the coordinates of the initial and end points
                             Point3d strSt = str.StartPoint;
@@ -250,10 +250,10 @@ namespace SPMTool
                             Point3d stPt = strSt;
 
                             // Get the midpoint
-                            Point3d midPt = AuxMethods.MidPoint(strSt, strEnd);
+                            Point3d midPt = Auxiliary.MidPoint(strSt, strEnd);
 
                             // Access the internal nodes in the model
-                            ObjectIdCollection intNds = AuxMethods.GetEntitiesOnLayer(Global.intNdLyr);
+                            ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
                             foreach (ObjectId intNd in intNds)
                             {
                                 // Read as point
@@ -281,7 +281,7 @@ namespace SPMTool
                                 {
                                     StartPoint = stPt,
                                     EndPoint = endPt,
-                                    Layer = Global.strLyr
+                                    Layer = Layers.strLyr
                                 };
 
                                 // Add the line to the drawing
@@ -292,12 +292,12 @@ namespace SPMTool
                                 newStr.XData = rb;
 
                                 // Create the external nodes
-                                AddNode(stPt, Global.extNdLyr);
-                                AddNode(endPt, Global.extNdLyr);
+                                AddNode(stPt,  Layers.extNdLyr);
+                                AddNode(endPt, Layers.extNdLyr);
 
                                 // Get the mid point and add the internal node
-                                midPt = AuxMethods.MidPoint(stPt, endPt);
-                                AddNode(midPt, Global.intNdLyr);
+                                midPt = Auxiliary.MidPoint(stPt, endPt);
+                                AddNode(midPt, Layers.intNdLyr);
 
                                 // Set the start point of the next stringer
                                 stPt = endPt;
@@ -323,17 +323,17 @@ namespace SPMTool
         public static void DividePanel()
         {
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Open the Block table record Model space for write
                 BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
                 // Prompt for select panels
-                Global.ed.WriteMessage("\nSelect panels to divide (panels must be rectangular):");
-                PromptSelectionResult selRes = Global.ed.GetSelection();
+                AutoCAD.edtr.WriteMessage("\nSelect panels to divide (panels must be rectangular):");
+                PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
 
                 if (selRes.Status == PromptStatus.OK)
                 {
@@ -345,7 +345,7 @@ namespace SPMTool
                     };
 
                     // Get the number
-                    PromptIntegerResult rowRes = Global.ed.GetInteger(rowOp);
+                    PromptIntegerResult rowRes = AutoCAD.edtr.GetInteger(rowOp);
                     int row = rowRes.Value;
 
                     // Prompt for the number of columns
@@ -356,7 +356,7 @@ namespace SPMTool
                     };
 
                     // Get the number
-                    PromptIntegerResult clmnRes = Global.ed.GetInteger(clmnOp);
+                    PromptIntegerResult clmnRes = AutoCAD.edtr.GetInteger(clmnOp);
                     int clmn = rowRes.Value;
 
                     // Get the selection set and analyse the elements
@@ -367,13 +367,13 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer == Global.pnlLyr)
+                        if (ent.Layer == Layers.pnlLyr)
                         {
                             // Read as a solid
                             Solid pnl = ent as Solid;
 
                             // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
+                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
 
                             // Get the coordinates of the grip points
                             Point3dCollection grpPts = new Point3dCollection();
@@ -401,7 +401,7 @@ namespace SPMTool
                                     // Create the panel
                                     Solid newPnl = new Solid(verts[0], verts[1], verts[2], verts[3])
                                     {
-                                        Layer = Global.pnlLyr
+                                        Layer = Layers.pnlLyr
                                     };
 
                                     // Add the line to the drawing
@@ -416,7 +416,7 @@ namespace SPMTool
                                     {
                                         // Position
                                         Point3d pt = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0);
-                                        AddNode(pt, Global.extNdLyr);
+                                        AddNode(pt, Layers.extNdLyr);
                                     }
 
                                     // Create the internal horizontal stringers
@@ -426,7 +426,7 @@ namespace SPMTool
                                         {
                                             StartPoint = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
                                             EndPoint = new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0),
-                                            Layer = Global.strLyr
+                                            Layer = Layers.strLyr
                                         };
 
                                         // Add the line to the drawing
@@ -434,8 +434,8 @@ namespace SPMTool
                                         trans.AddNewlyCreatedDBObject(strX, true);
 
                                         // Get the midpoint and add the internal node
-                                        Point3d midPt = AuxMethods.MidPoint(strX.StartPoint, strX.EndPoint);
-                                        AddNode(midPt, Global.intNdLyr);
+                                        Point3d midPt = Auxiliary.MidPoint(strX.StartPoint, strX.EndPoint);
+                                        AddNode(midPt, Layers.intNdLyr);
                                     }
 
                                     // Create the internal vertical stringers
@@ -445,7 +445,7 @@ namespace SPMTool
                                         {
                                             StartPoint = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
                                             EndPoint = new Point3d(stPt.X + j * distX, stPt.Y + (i + 1) * distY, 0),
-                                            Layer = Global.strLyr
+                                            Layer = Layers.strLyr
                                         };
 
                                         // Add the line to the drawing
@@ -453,8 +453,8 @@ namespace SPMTool
                                         trans.AddNewlyCreatedDBObject(strY, true);
 
                                         // Get the midpoint and add the internal node
-                                        Point3d midPt = AuxMethods.MidPoint(strY.StartPoint, strY.EndPoint);
-                                        AddNode(midPt, Global.intNdLyr);
+                                        Point3d midPt = Auxiliary.MidPoint(strY.StartPoint, strY.EndPoint);
+                                        AddNode(midPt, Layers.intNdLyr);
                                     }
 
                                 }
@@ -494,18 +494,18 @@ namespace SPMTool
             int numPnls = pnls.Count;
 
             // Display the number of updated elements
-            Global.ed.WriteMessage("\n" + numNds.ToString() + " nodes, " + numStrs.ToString() + " stringers and " + numPnls.ToString() + " panels updated.");
+            AutoCAD.edtr.WriteMessage("\n" + numNds.ToString() + " nodes, " + numStrs.ToString() + " stringers and " + numPnls.ToString() + " panels updated.");
         }
 
         [CommandMethod("SetStringerParameters")]
         public void SetStringerParameters()
         {
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Request objects to be selected in the drawing area
-                Global.ed.WriteMessage("\nSelect the stringers to assign properties (you can select other elements, the properties will be only applied to elements with 'Stringer' layer activated).");
-                PromptSelectionResult selRes = Global.ed.GetSelection();
+                AutoCAD.edtr.WriteMessage("\nSelect the stringers to assign properties (you can select other elements, the properties will be only applied to elements with 'Stringer' layer activated).");
+                PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
@@ -521,7 +521,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult strWRes = Global.ed.GetDouble(strWOp);
+                    PromptDoubleResult strWRes = AutoCAD.edtr.GetDouble(strWOp);
                     double strW = strWRes.Value;
 
                     // Ask the user to input the stringer height
@@ -533,7 +533,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult strHRes = Global.ed.GetDouble(strHOp);
+                    PromptDoubleResult strHRes = AutoCAD.edtr.GetDouble(strHOp);
                     double strH = strHRes.Value;
 
                     // Ask the user to input the reinforcement area
@@ -544,7 +544,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult AsRes = Global.ed.GetDouble(AsOp);
+                    PromptDoubleResult AsRes = AutoCAD.edtr.GetDouble(AsOp);
                     double As = AsRes.Value;
 
                     foreach (SelectedObject obj in set)
@@ -553,13 +553,13 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer == Global.strLyr)
+                        if (ent.Layer == Layers.strLyr)
                         {
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
 
                             // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
+                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
                             TypedValue[] data = rb.AsArray();
 
                             // Set the new geometry and reinforcement (line 7 to 9 of the array)
@@ -583,11 +583,11 @@ namespace SPMTool
         public void SetPanelParameters()
         {
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Request objects to be selected in the drawing area
-                Global.ed.WriteMessage("\nSelect the panels to assign properties (you can select other elements, the properties will be only applied to elements with 'Panel' layer activated).");
-                PromptSelectionResult selRes = Global.ed.GetSelection();
+                AutoCAD.edtr.WriteMessage("\nSelect the panels to assign properties (you can select other elements, the properties will be only applied to elements with 'Panel' layer activated).");
+                PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
@@ -604,7 +604,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult pnlWRes = Global.ed.GetDouble(pnlWOp);
+                    PromptDoubleResult pnlWRes = AutoCAD.edtr.GetDouble(pnlWOp);
                     double pnlW = pnlWRes.Value;
 
                     // Ask the user to input the reinforcement ratio in x direction
@@ -615,7 +615,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult psxRes = Global.ed.GetDouble(psxOp);
+                    PromptDoubleResult psxRes = AutoCAD.edtr.GetDouble(psxOp);
                     double psx = psxRes.Value;
 
                     // Ask the user to input the reinforcement ratio in y direction
@@ -626,7 +626,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult psyRes = Global.ed.GetDouble(psyOp);
+                    PromptDoubleResult psyRes = AutoCAD.edtr.GetDouble(psyOp);
                     double psy = psyRes.Value;
 
                     foreach (SelectedObject obj in set)
@@ -635,13 +635,13 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer == Global.pnlLyr)
+                        if (ent.Layer == Layers.pnlLyr)
                         {
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
 
                             // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
+                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
                             TypedValue[] data = rb.AsArray();
 
                             // Set the new geometry and reinforcement (line 7 to 9 of the array)
@@ -671,7 +671,7 @@ namespace SPMTool
             Point3dCollection ndPos = new Point3dCollection();
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 foreach (ObjectId ndObj in nds)
                 {
@@ -684,7 +684,7 @@ namespace SPMTool
                 if (!ndPos.Contains(position))
                 {
                     // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                     // Open the Block table record Model space for write
                     BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
@@ -714,10 +714,10 @@ namespace SPMTool
             ObjectIdCollection nds = AllNodes();
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Get the list of nodes ordered
                 List<Point3d> ndList = ListOfNodes("All");
@@ -729,9 +729,9 @@ namespace SPMTool
                     DBPoint nd = trans.GetObject(ndObj, OpenMode.ForWrite) as DBPoint;
 
                     // Initialize the node conditions
-                    double ndNum = 0;                                // Node number (to be set later)
-                    double xPosition = nd.Position.X;                  // X position
-                    double yPosition = nd.Position.Y;                  // Y position
+                    double ndNum = 0,                                  // Node number (to be set later)
+                           xPosition = Math.Round(nd.Position.X, 2),   // X position
+                           yPosition = Math.Round(nd.Position.Y, 2);   // Y position
                     string support = "Free";                           // Support condition
                     double xForce = 0,                                 // Force on X direction
                            yForce = 0,                                 // Force on Y direction
@@ -744,7 +744,7 @@ namespace SPMTool
                         // Define the Xdata to add to the node
                         using (ResultBuffer defRb = new ResultBuffer())
                         {
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
+                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));  // 0
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndNum));                  // 2
                             defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));              // 3
@@ -764,15 +764,15 @@ namespace SPMTool
                     ndNum = ndList.IndexOf(nd.Position) + 1;
 
                     // Get the result buffer as an array
-                    ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
+                    ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] data = rb.AsArray();
 
                     // Set the new node number (line 2)
                     data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
 
                     // Set the updated coordinates (in case of a node copy)
-                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, nd.Position.X);
-                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, nd.Position.Y);
+                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, xPosition);
+                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, yPosition);
 
                     // Add the new XData
                     ResultBuffer newRb = new ResultBuffer(data);
@@ -780,8 +780,8 @@ namespace SPMTool
                 }
 
                 // Set the style for all point objects in the drawing
-                Global.curDb.Pdmode = 32;
-                Global.curDb.Pdsize = 40;
+                AutoCAD.curDb.Pdmode = 32;
+                AutoCAD.curDb.Pdsize = 40;
 
                 // Commit and dispose the transaction
                 trans.Commit();
@@ -798,16 +798,16 @@ namespace SPMTool
             string xdataStr = "Stringer Data";
 
             // Create the stringer collection and initialize getting the elements on layer
-            ObjectIdCollection strs = AuxMethods.GetEntitiesOnLayer(Global.strLyr);
+            ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.strLyr);
 
             // Get all the nodes in the model
             ObjectIdCollection nds = AllNodes();
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Create a point collection
                 Point3dCollection midPts = new Point3dCollection();
@@ -819,12 +819,12 @@ namespace SPMTool
                     Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
 
                     // Get the midpoint and add to the collection
-                    Point3d midPt = AuxMethods.MidPoint(str.StartPoint, str.EndPoint);
+                    Point3d midPt = Auxiliary.MidPoint(str.StartPoint, str.EndPoint);
                     midPts.Add(midPt);
                 }
 
                 // Get the array of midpoints ordered
-                List<Point3d> midPtsList = AuxMethods.OrderPoints(midPts);
+                List<Point3d> midPtsList = Auxiliary.OrderPoints(midPts);
 
                 // Access the nodes on the document
                 foreach (ObjectId strObj in strs)
@@ -838,11 +838,11 @@ namespace SPMTool
                         strEnNd = 0;                             // End node
 
                     // Inicialization of stringer conditions
-                    double strNum = 0;                           // Stringer number (initially unassigned)
-                    double strLgt = str.Length;                  // Stringer lenght
-                    double strW = 1;                             // Width
-                    double strH = 1;                             // Height
-                    double As = 0;                               // Reinforcement Area
+                    double strNum = 0,                           // Stringer number (initially unassigned)
+                           strLgt = Math.Round(str.Length, 2),   // Stringer lenght
+                           strW = 1,                             // Width
+                           strH = 1,                             // Height
+                           As = 0;                               // Reinforcement Area
 
                     // If XData does not exist, create it
                     if (str.XData == null)
@@ -851,7 +851,7 @@ namespace SPMTool
                         // Define the Xdata to add to the node
                         using (ResultBuffer rb = new ResultBuffer())
                         {
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
+                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));   // 0
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strNum));                 // 2
                             rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStNd));                // 3
@@ -871,7 +871,7 @@ namespace SPMTool
                     }
 
                     // Get the coordinates of the midpoint of the stringer
-                    Point3d midPt = AuxMethods.MidPoint(str.StartPoint, str.EndPoint);
+                    Point3d midPt = Auxiliary.MidPoint(str.StartPoint, str.EndPoint);
 
                     // Get the stringer number
                     strNum = midPtsList.IndexOf(midPt) + 1;
@@ -882,7 +882,7 @@ namespace SPMTool
                     strEnNd = GetNodeNumber(str.EndPoint, nds);
 
                     // Access the XData as an array
-                    ResultBuffer strRb = str.GetXDataForApplication(Global.appName);
+                    ResultBuffer strRb = str.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] data = strRb.AsArray();
 
                     // Set the updated number and nodes in ascending number and length (line 2 to 6)
@@ -912,19 +912,19 @@ namespace SPMTool
             string xdataStr = "Panel Data";
 
             // Get the internal nodes of the model
-            ObjectIdCollection intNds = AuxMethods.GetEntitiesOnLayer(Global.intNdLyr);
+            ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
 
             // Create the panels collection and initialize getting the elements on node layer
-            ObjectIdCollection pnls = AuxMethods.GetEntitiesOnLayer(Global.pnlLyr);
+            ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.pnlLyr);
 
             // Create a point collection
             Point3dCollection cntrPts = new Point3dCollection();
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Add the centerpoint of each panel to the collection
                 foreach (ObjectId pnlObj in pnls)
@@ -937,12 +937,12 @@ namespace SPMTool
                     pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
 
                     // Get the approximate coordinates of the center point of the panel
-                    Point3d cntrPt = AuxMethods.MidPoint(pnlVerts[0], pnlVerts[3]);
+                    Point3d cntrPt = Auxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
                     cntrPts.Add(cntrPt);
                 }
 
                 // Get the list of center points ordered
-                List<Point3d> cntrPtsList = AuxMethods.OrderPoints(cntrPts);
+                List<Point3d> cntrPtsList = Auxiliary.OrderPoints(cntrPts);
 
                 // Access the panels on the document
                 foreach (ObjectId pnlObj in pnls)
@@ -962,7 +962,7 @@ namespace SPMTool
                     {
                         // Initialize a Result Buffer to add to the panel
                         ResultBuffer rb = new ResultBuffer();
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));   // 0
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));   // 0
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum));                 // 2
                         for (int i = 0; i < 4; i++)
@@ -986,14 +986,14 @@ namespace SPMTool
                     pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
 
                     // Get the approximate coordinates of the center point of the panel
-                    Point3d cntrPt = AuxMethods.MidPoint(pnlVerts[0], pnlVerts[3]);
+                    Point3d cntrPt = Auxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
 
                     // Get the coordinates of the panel DoFs in the necessary order
                     Point3dCollection pnlDofs = new Point3dCollection();
-                    pnlDofs.Add(AuxMethods.MidPoint(pnlVerts[0], pnlVerts[1]));
-                    pnlDofs.Add(AuxMethods.MidPoint(pnlVerts[1], pnlVerts[3]));
-                    pnlDofs.Add(AuxMethods.MidPoint(pnlVerts[3], pnlVerts[2]));
-                    pnlDofs.Add(AuxMethods.MidPoint(pnlVerts[2], pnlVerts[0]));
+                    pnlDofs.Add(Auxiliary.MidPoint(pnlVerts[0], pnlVerts[1]));
+                    pnlDofs.Add(Auxiliary.MidPoint(pnlVerts[1], pnlVerts[3]));
+                    pnlDofs.Add(Auxiliary.MidPoint(pnlVerts[3], pnlVerts[2]));
+                    pnlDofs.Add(Auxiliary.MidPoint(pnlVerts[2], pnlVerts[0]));
 
                     // Get the panel number
                     pnlNum = cntrPtsList.IndexOf(cntrPt) + 1;
@@ -1009,7 +1009,7 @@ namespace SPMTool
                     }
 
                     // Access the XData as an array
-                    ResultBuffer pnlRb = pnl.GetXDataForApplication(Global.appName);
+                    ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] data = pnlRb.AsArray();
 
                     // Set the updated panel number (line 2)
@@ -1045,14 +1045,14 @@ namespace SPMTool
 
             // Select the node type
             if (nodeType == "All") nds = AllNodes();
-            if (nodeType == "Int") nds = AuxMethods.GetEntitiesOnLayer(Global.intNdLyr);
-            if (nodeType == "Ext") nds = AuxMethods.GetEntitiesOnLayer(Global.extNdLyr);
+            if (nodeType == "Int") nds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
+            if (nodeType == "Ext") nds = Auxiliary.GetEntitiesOnLayer(Layers.extNdLyr);
 
             // Create a point collection
             Point3dCollection ndPos = new Point3dCollection();
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 foreach (ObjectId ndObj in nds)
                 {
@@ -1063,15 +1063,15 @@ namespace SPMTool
             }
 
             // Return the node list ordered
-            return AuxMethods.OrderPoints(ndPos);
+            return Auxiliary.OrderPoints(ndPos);
         }
 
         // Get the collection of all of the nodes
         public static ObjectIdCollection AllNodes()
         {
             // Create the nodes collection and initialize getting the elements on node layer
-            ObjectIdCollection extNds = AuxMethods.GetEntitiesOnLayer(Global.extNdLyr);
-            ObjectIdCollection intNds = AuxMethods.GetEntitiesOnLayer(Global.intNdLyr);
+            ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNdLyr);
+            ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
 
             // Create a unique collection for all the nodes
             ObjectIdCollection nds = new ObjectIdCollection();
@@ -1088,7 +1088,7 @@ namespace SPMTool
             int ndNum = 0;
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Compare to the nodes collection
                 foreach (ObjectId ndObj in nodes)
@@ -1101,7 +1101,7 @@ namespace SPMTool
                     {
                         // Get the node number
                         // Access the XData as an array
-                        ResultBuffer ndRb = nd.GetXDataForApplication(Global.appName);
+                        ResultBuffer ndRb = nd.GetXDataForApplication(AutoCAD.appName);
                         TypedValue[] dataNd = ndRb.AsArray();
 
                         // Get the node number (line 2)

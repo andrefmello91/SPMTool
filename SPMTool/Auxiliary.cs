@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
@@ -9,71 +8,23 @@ using Autodesk.AutoCAD.Colors;
 
 namespace SPMTool
 {
-    // Global variables
-    public static class Global
-    {
-        // Get the current document, database and editor
-        public static Document curDoc = Application.DocumentManager.MdiActiveDocument;
-        public static Database curDb = curDoc.Database;
-        public static Editor ed = curDoc.Editor;
-
-        // Get the coordinate system for transformations
-        public static Matrix3d curUCSMatrix = Global.ed.CurrentUserCoordinateSystem;
-        public static CoordinateSystem3d curUCS = curUCSMatrix.CoordinateSystem3d;
-
-        // Define the appName
-        public static string appName = "SPMTool";
-
-        // Layer names
-        public static string extNdLyr = "ExtNode",
-                             intNdLyr = "IntNode",
-                             strLyr = "Stringer",
-                             pnlLyr = "Panel",
-                             supLyr = "Support",
-                             fLyr = "Force",
-                             fTxtLyr = "ForceText",
-                             strFLyr = "StringerForces",
-                             pnlFLyr = "PanelShear";
-
-        // Block names
-        public static string supportX = "SupportX",
-                             supportY = "SupportY",
-                             supportXY = "SupportXY",
-                             forceBlock = "ForceBlock",
-                             shearBlock = "ShearBlock";
-
-        // Color codes
-        public static short red    = 1,
-                            yellow = 2,
-                            cyan   = 4,
-                            blue1  = 5,
-                            blue   = 150,
-                            green  = 92,
-                            grey   = 254;
-
-        // Constants
-        public static double pi = MathNet.Numerics.Constants.Pi,
-                             piOver2 = MathNet.Numerics.Constants.PiOver2,
-                             pi3Over2 = MathNet.Numerics.Constants.Pi3Over2;
-    }
-
     // Auxiliary Methods
-    public class AuxMethods
+    public class Auxiliary
     {
         // Add the app to the Registered Applications Record
         public static void RegisterApp()
         {
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Registered Applications table for read
-                RegAppTable regAppTbl = trans.GetObject(Global.curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-                if (!regAppTbl.Has(Global.appName))
+                RegAppTable regAppTbl = trans.GetObject(AutoCAD.curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+                if (!regAppTbl.Has(AutoCAD.appName))
                 {
                     using (RegAppTableRecord regAppTblRec = new RegAppTableRecord())
                     {
-                        regAppTblRec.Name = Global.appName;
-                        trans.GetObject(Global.curDb.RegAppTableId, OpenMode.ForWrite);
+                        regAppTblRec.Name = AutoCAD.appName;
+                        trans.GetObject(AutoCAD.curDb.RegAppTableId, OpenMode.ForWrite);
                         regAppTbl.Add(regAppTblRec);
                         trans.AddNewlyCreatedDBObject(regAppTblRec, true);
                     }
@@ -96,10 +47,10 @@ namespace SPMTool
         public static void CreateLayer(string layerName, short layerColor, int transparency)
         {
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(Global.curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+                LayerTable lyrTbl = trans.GetObject(AutoCAD.curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
 
                 if (!lyrTbl.Has(layerName))
                 {
@@ -110,7 +61,7 @@ namespace SPMTool
                         lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, layerColor);
 
                         // Upgrade the Layer table for write
-                        trans.GetObject(Global.curDb.LayerTableId, OpenMode.ForWrite);
+                        trans.GetObject(AutoCAD.curDb.LayerTableId, OpenMode.ForWrite);
 
                         // Append the new layer to the Layer table and the transaction
                         lyrTbl.Add(lyrTblRec);
@@ -139,7 +90,7 @@ namespace SPMTool
             SelectionFilter selFt = new SelectionFilter(tvs);
 
             // Get the entities on the layername
-            PromptSelectionResult selRes = Global.ed.SelectAll(selFt);
+            PromptSelectionResult selRes = AutoCAD.edtr.SelectAll(selFt);
 
             if (selRes.Status == PromptStatus.OK)
             {
@@ -184,7 +135,7 @@ namespace SPMTool
         public static void EraseObjects(ObjectIdCollection objects)
         {
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 foreach (ObjectId obj in objects)
                 {
@@ -205,11 +156,11 @@ namespace SPMTool
         {
             double l, m;
             // Calculate the cosine, return 0 if 90 or 270 degrees
-            if (angle == Global.piOver2 || angle == Global.pi3Over2) l = 0;
+            if (angle == Constants.piOver2 || angle == Constants.pi3Over2) l = 0;
             else l = MathNet.Numerics.Trig.Cos(angle);
 
             // Calculate the sine, return 0 if 0 or 180 degrees
-            if (angle == 0 || angle == Global.pi) m = 0;
+            if (angle == 0 || angle == Constants.pi) m = 0;
             else m = MathNet.Numerics.Trig.Sin(angle);
 
             return (l, m);

@@ -74,7 +74,7 @@ namespace SPMTool
             List<Tuple<int, int[], Matrix<double>, Matrix<double>>> strMats = new List<Tuple<int, int[], Matrix<double>, Matrix<double>>>();
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Get the stringers stifness matrix and add to the global stifness matrix
                 foreach (ObjectId obj in stringers)
@@ -87,10 +87,10 @@ namespace SPMTool
                     alpha = str.Angle;                          // angle with x coordinate
 
                     // Get the midpoint
-                    Point3d strMidPt = AuxMethods.MidPoint(str.StartPoint, str.EndPoint);
+                    Point3d strMidPt = Auxiliary.MidPoint(str.StartPoint, str.EndPoint);
 
                     // Read the XData and get the necessary data
-                    ResultBuffer strRb = str.GetXDataForApplication(Global.appName);
+                    ResultBuffer strRb = str.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] strData = strRb.AsArray();
                     int strNum = Convert.ToInt32(strData[2].Value);
                     double wd  = Convert.ToDouble(strData[7].Value),
@@ -100,7 +100,7 @@ namespace SPMTool
                     double A = wd * h;
 
                     // Get the direction cosines
-                    var (l, m) = AuxMethods.DirectionCosines(alpha);
+                    var (l, m) = Auxiliary.DirectionCosines(alpha);
 
                     // Obtain the transformation matrix
                     var T = Matrix<double>.Build.DenseOfArray(new double[,]
@@ -142,7 +142,7 @@ namespace SPMTool
                     {
                         // Line o
                         // Check if the row is composed of zeroes
-                        if (K.Row(o).Exists(AuxMethods.NotZero))
+                        if (K.Row(o).Exists(Auxiliary.NotZero))
                         {
                             Kg[n, i] = Kg[n, i] + K[o, 0];              Kg[n, i + 1] = Kg[n, i + 1] + K[o, 1];
                             Kg[n, j] = Kg[n, j] + K[o, 2];              Kg[n, j + 1] = Kg[n, j + 1] + K[o, 3];
@@ -154,7 +154,7 @@ namespace SPMTool
 
                         // Line o + 1
                         // Check if the row is composed of zeroes
-                        if (K.Row(o).Exists(AuxMethods.NotZero))
+                        if (K.Row(o).Exists(Auxiliary.NotZero))
                         {
                             Kg[n + 1, i] = Kg[n + 1, i] + K[o, 0];      Kg[n + 1, i + 1] = Kg[n + 1, i + 1] + K[o, 1];
                             Kg[n + 1, j] = Kg[n + 1, j] + K[o, 2];      Kg[n + 1, j + 1] = Kg[n + 1, j + 1] + K[o, 3];
@@ -183,7 +183,7 @@ namespace SPMTool
             List<Tuple<int, int[], Matrix<double>, Matrix<double>>> pnlMats = new List<Tuple<int, int[], Matrix<double>, Matrix<double>>>(panels.Count);
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Get the stringers stifness matrix and add to the global stifness matrix
                 foreach (ObjectId obj in panels)
@@ -202,13 +202,13 @@ namespace SPMTool
                             nd4 = pnlVerts[2];
 
                     // Get the dofs
-                    Point3d dof1 = AuxMethods.MidPoint(nd1, nd2),
-                            dof2 = AuxMethods.MidPoint(nd2, nd3),
-                            dof3 = AuxMethods.MidPoint(nd3, nd4),
-                            dof4 = AuxMethods.MidPoint(nd4, nd1);
+                    Point3d dof1 = Auxiliary.MidPoint(nd1, nd2),
+                            dof2 = Auxiliary.MidPoint(nd2, nd3),
+                            dof3 = Auxiliary.MidPoint(nd3, nd4),
+                            dof4 = Auxiliary.MidPoint(nd4, nd1);
 
                     // Read the XData and get the necessary data
-                    ResultBuffer pnlRb = panel.GetXDataForApplication(Global.appName);
+                    ResultBuffer pnlRb = panel.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] pnlData = pnlRb.AsArray();
 
                     // Get the panel number and width
@@ -229,7 +229,7 @@ namespace SPMTool
                     var Kl = Matrix<double>.Build.Dense(4, 4);
 
                     // If the panel is rectangular (ang2 and ang4 will be equal to 90 degrees)
-                    if (ang2.Equals(Global.piOver2) && ang4.Equals(Global.piOver2))
+                    if (ang2 == Constants.piOver2 && ang4 == Constants.piOver2)
                     {
                         // Get the dimensions
                         double a = ln1.Length,
@@ -329,10 +329,10 @@ namespace SPMTool
 
                     // Get the transformation matrix
                     // Direction cosines
-                    var (m1, n1) = AuxMethods.DirectionCosines(ln1.Angle);
-                    var (m2, n2) = AuxMethods.DirectionCosines(ln2.Angle);
-                    var (m3, n3) = AuxMethods.DirectionCosines(ln3.Angle);
-                    var (m4, n4) = AuxMethods.DirectionCosines(ln4.Angle);
+                    var (m1, n1) = Auxiliary.DirectionCosines(ln1.Angle);
+                    var (m2, n2) = Auxiliary.DirectionCosines(ln2.Angle);
+                    var (m3, n3) = Auxiliary.DirectionCosines(ln3.Angle);
+                    var (m4, n4) = Auxiliary.DirectionCosines(ln4.Angle);
 
                     // T matrix
                     var T = Matrix<double>.Build.DenseOfArray(new double[,]
@@ -366,7 +366,7 @@ namespace SPMTool
                     {
                         // Line o
                         // Check if the row is composed of zeroes
-                        if (K.Row(o).Exists(AuxMethods.NotZero))
+                        if (K.Row(o).Exists(Auxiliary.NotZero))
                         {
                             Kg[n, i] = Kg[n, i] + K[o, 0];              Kg[n, i + 1] = Kg[n, i + 1] + K[o, 1];
                             Kg[n, j] = Kg[n, j] + K[o, 2];              Kg[n, j + 1] = Kg[n, j + 1] + K[o, 3];
@@ -379,7 +379,7 @@ namespace SPMTool
 
                         // Line o + 1
                         // Check if the row is composed of zeroes
-                        if (K.Row(o).Exists(AuxMethods.NotZero))
+                        if (K.Row(o).Exists(Auxiliary.NotZero))
                         {
                             Kg[n + 1, i] = Kg[n + 1, i] + K[o, 0];      Kg[n + 1, i + 1] = Kg[n + 1, i + 1] + K[o, 1];
                             Kg[n + 1, j] = Kg[n + 1, j] + K[o, 2];      Kg[n + 1, j + 1] = Kg[n + 1, j + 1] + K[o, 3];
@@ -438,7 +438,7 @@ namespace SPMTool
                 int i = 2 * allNds.IndexOf(intNd);
 
                 // Verify what line of the matrix is composed of zeroes
-                if (!Kg.Row(i).Exists(AuxMethods.NotZero))
+                if (!Kg.Row(i).Exists(Auxiliary.NotZero))
                 {
                     // The row is composed of only zeroes, so the displacement must be zero
                     // Set the diagonal element to 1
@@ -448,7 +448,7 @@ namespace SPMTool
                     f[i] = 0;
                 }
 
-                if (!Kg.Row(i + 1).Exists(AuxMethods.NotZero))
+                if (!Kg.Row(i + 1).Exists(Auxiliary.NotZero))
                 {
                     // The row is composed of only zeroes, so the displacement must be zero
                     // Set the diagonal element to 1
@@ -469,22 +469,22 @@ namespace SPMTool
 
             // Request the object to be selected in the drawing area
             PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to print the stiffness matrix:");
-            PromptEntityResult entRes = Global.ed.GetEntity(entOp);
+            PromptEntityResult entRes = AutoCAD.edtr.GetEntity(entOp);
 
             // If the prompt status is OK, objects were selected
             if (entRes.Status == PromptStatus.OK)
             {
                 // Start a transaction
-                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
                 {
                     // Open the selected object for read
                     Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
 
                     // If it's a stringer
-                    if (ent.Layer == Global.strLyr)
+                    if (ent.Layer == Layers.strLyr)
                     {
                         // Get the extended data attached to each object for MY_APP
-                        ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
+                        ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
 
                         // Make sure the Xdata is not empty
                         if (rb != null)
@@ -508,10 +508,10 @@ namespace SPMTool
                     }
 
                     // If it's a panel
-                    if (ent.Layer == Global.pnlLyr)
+                    if (ent.Layer == Layers.pnlLyr)
                     {
                         // Get the extended data attached to each object for MY_APP
-                        ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
+                        ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
 
                         // Make sure the Xdata is not empty
                         if (rb != null)
@@ -536,7 +536,7 @@ namespace SPMTool
                     //else msgstr = "Object is not a stringer or panel.";
 
                     // Display the values returned
-                    Global.ed.WriteMessage("\n" + msgstr);
+                    AutoCAD.edtr.WriteMessage("\n" + msgstr);
                 }
             }
         }

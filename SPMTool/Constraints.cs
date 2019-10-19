@@ -18,7 +18,7 @@ namespace SPMTool
         public void AddConstraint()
         {
             // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-            AuxMethods.CreateLayer(Global.supLyr, Global.red, 0);
+            Auxiliary.CreateLayer(Layers.supLyr, Colors.red, 0);
 
             // Initialize variables
             PromptSelectionResult selRes;
@@ -28,22 +28,22 @@ namespace SPMTool
             CreateSupportBlocks();
 
             // Get all the supports in the model
-            ObjectIdCollection sprts = AuxMethods.GetEntitiesOnLayer(Global.supLyr);
+            ObjectIdCollection sprts = Auxiliary.GetEntitiesOnLayer(Layers.supLyr);
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Read the object Ids of the support blocks
-                ObjectId xBlock = blkTbl[Global.supportX];
-                ObjectId yBlock = blkTbl[Global.supportY];
-                ObjectId xyBlock = blkTbl[Global.supportXY];
+                ObjectId xBlock = blkTbl[Blocks.supportX];
+                ObjectId yBlock = blkTbl[Blocks.supportY];
+                ObjectId xyBlock = blkTbl[Blocks.supportXY];
 
                 // Request objects to be selected in the drawing area
-                Global.ed.WriteMessage("\nSelect nodes to add support conditions:");
-                selRes = Global.ed.GetSelection();
+                AutoCAD.edtr.WriteMessage("\nSelect nodes to add support conditions:");
+                selRes = AutoCAD.edtr.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
@@ -61,7 +61,7 @@ namespace SPMTool
                     supOp.AllowNone = false;
 
                     // Get the result
-                    PromptResult supRes = Global.ed.GetKeywords(supOp);
+                    PromptResult supRes = AutoCAD.edtr.GetKeywords(supOp);
                     if (supRes.Status == PromptStatus.Cancel) return;
 
                     // Set the support
@@ -73,7 +73,7 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer == Global.extNdLyr)
+                        if (ent.Layer == Layers.extNdLyr)
                         {
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
@@ -83,7 +83,7 @@ namespace SPMTool
                             Point3d ndPos = nd.Position;
 
                             // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
+                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
                             TypedValue[] data = rb.AsArray();
 
                             // Check if there is a support block at the node position
@@ -127,9 +127,9 @@ namespace SPMTool
                                 // Insert the block into the current space
                                 using (BlockReference blkRef = new BlockReference(insPt, supBlock))
                                 {
-                                    BlockTableRecord blkTblRec = trans.GetObject(Global.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    BlockTableRecord blkTblRec = trans.GetObject(AutoCAD.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = Global.supLyr;
+                                    blkRef.Layer = Layers.supLyr;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
                                 }
                             }
@@ -146,10 +146,10 @@ namespace SPMTool
         public static void CreateSupportBlocks()
         {
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
                 ObjectId xBlock = ObjectId.Null;
@@ -157,12 +157,12 @@ namespace SPMTool
                 ObjectId xyBlock = ObjectId.Null;
 
                 // Check if the support blocks already exist in the drawing
-                if (!blkTbl.Has(Global.supportX))
+                if (!blkTbl.Has(Blocks.supportX))
                 {
                     // Create the X block
                     using (BlockTableRecord blkTblRec = new BlockTableRecord())
                     {
-                        blkTblRec.Name = Global.supportX;
+                        blkTblRec.Name = Blocks.supportX;
 
                         // Add the block table record to the block table and to the transaction
                         blkTbl.UpgradeOpen();
@@ -215,7 +215,7 @@ namespace SPMTool
                     // Create the Y block
                     using (BlockTableRecord blkTblRec = new BlockTableRecord())
                     {
-                        blkTblRec.Name = Global.supportY;
+                        blkTblRec.Name = Blocks.supportY;
 
                         // Set the insertion point for the block
                         Point3d origin = new Point3d(0, 0, 0);
@@ -268,7 +268,7 @@ namespace SPMTool
                     // Create the XY block
                     using (BlockTableRecord blkTblRec = new BlockTableRecord())
                     {
-                        blkTblRec.Name = Global.supportXY;
+                        blkTblRec.Name = Blocks.supportXY;
 
                         // Add the block table record to the block table and to the transaction
                         blkTbl.UpgradeOpen();
@@ -351,7 +351,7 @@ namespace SPMTool
             var cons = Vector<double>.Build.Dense(2 * numDofs, 1);
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Read the nodes data
                 foreach (ObjectId ndObj in nds)
@@ -360,7 +360,7 @@ namespace SPMTool
                     DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
 
                     // Get the result buffer as an array
-                    ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
+                    ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] data = rb.AsArray();
 
                     // Read the node number
@@ -391,12 +391,12 @@ namespace SPMTool
             Point3dCollection supPos = new Point3dCollection();
 
             // Get the supports
-            ObjectIdCollection spts = AuxMethods.GetEntitiesOnLayer(Global.supLyr);
+            ObjectIdCollection spts = Auxiliary.GetEntitiesOnLayer(Layers.supLyr);
 
             if (spts.Count > 0)
             {
                 // Start a transaction
-                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
                 {
 
                     foreach (ObjectId obj in spts)
@@ -411,6 +411,5 @@ namespace SPMTool
             }
             return supPos;
         }
-
     }
 }

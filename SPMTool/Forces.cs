@@ -22,30 +22,30 @@ namespace SPMTool
             SelectionSet set;
 
             // Check if the layer Force and ForceText already exists in the drawing. If it doesn't, then it's created:
-            AuxMethods.CreateLayer(Global.fLyr, Global.yellow, 0);
-            AuxMethods.CreateLayer(Global.fTxtLyr, Global.yellow, 0);
+            Auxiliary.CreateLayer(Layers.fLyr, Colors.yellow, 0);
+            Auxiliary.CreateLayer(Layers.fTxtLyr, Colors.yellow, 0);
 
             // Check if the force block already exist. If not, create the blocks
             CreateForceBlock();
 
             // Get all the force blocks in the model
-            ObjectIdCollection fcs = AuxMethods.GetEntitiesOnLayer(Global.fLyr);
+            ObjectIdCollection fcs = Auxiliary.GetEntitiesOnLayer(Layers.fLyr);
 
             // Get all the force texts in the model
-            ObjectIdCollection fcTxts = AuxMethods.GetEntitiesOnLayer(Global.fTxtLyr);
+            ObjectIdCollection fcTxts = Auxiliary.GetEntitiesOnLayer(Layers.fTxtLyr);
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Read the force block
-                ObjectId ForceBlock = blkTbl[Global.forceBlock];
+                ObjectId ForceBlock = blkTbl[Blocks.forceBlock];
 
                 // Request objects to be selected in the drawing area
-                Global.ed.WriteMessage("\nSelect a node to add load:");
-                selRes = Global.ed.GetSelection();
+                AutoCAD.edtr.WriteMessage("\nSelect a node to add load:");
+                selRes = AutoCAD.edtr.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
@@ -60,7 +60,7 @@ namespace SPMTool
                     };
                     
                     // Get the result
-                    PromptDoubleResult xForceRes = Global.ed.GetDouble(xForceOp);
+                    PromptDoubleResult xForceRes = AutoCAD.edtr.GetDouble(xForceOp);
                     if (xForceRes.Status == PromptStatus.Cancel) return;
                     double xForce = xForceRes.Value;
 
@@ -71,7 +71,7 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult yForceRes = Global.ed.GetDouble(yForceOp);
+                    PromptDoubleResult yForceRes = AutoCAD.edtr.GetDouble(yForceOp);
                     if (yForceRes.Status == PromptStatus.Cancel) return;
                     double yForce = yForceRes.Value;
 
@@ -81,7 +81,7 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer == Global.extNdLyr)
+                        if (ent.Layer == Layers.extNdLyr)
                         {
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
@@ -95,7 +95,7 @@ namespace SPMTool
                             double yPos = ndPos.Y;
 
                             // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(Global.appName);
+                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
                             TypedValue[] data = rb.AsArray();
 
                             // Set the new forces (line 6 and 7 of the array)
@@ -136,7 +136,7 @@ namespace SPMTool
                                     Entity txtEnt = trans.GetObject(txtObj, OpenMode.ForRead) as Entity;
 
                                     // Access the XData as an array
-                                    ResultBuffer txtRb = txtEnt.GetXDataForApplication(Global.appName);
+                                    ResultBuffer txtRb = txtEnt.GetXDataForApplication(AutoCAD.appName);
                                     TypedValue[] txtData = txtRb.AsArray();
 
                                     // Get the position of the node of the text
@@ -161,9 +161,9 @@ namespace SPMTool
                                 using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
                                 {
                                     // Append the block to drawing
-                                    BlockTableRecord blkTblRec = trans.GetObject(Global.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    BlockTableRecord blkTblRec = trans.GetObject(AutoCAD.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = Global.fLyr;
+                                    blkRef.Layer = Layers.fLyr;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
 
                                     // Get the force absolute value
@@ -176,7 +176,7 @@ namespace SPMTool
                                     if (xForce > 0) // positive force in x
                                     {
                                         // Rotate 90 degress counterclockwise
-                                        rotAng = Global.piOver2;
+                                        rotAng = Constants.piOver2;
 
                                         // Set the text position
                                         txtPos = new Point3d(xPos - 400, yPos + 25, 0);
@@ -185,14 +185,14 @@ namespace SPMTool
                                     if (xForce < 0) // negative force in x
                                     {
                                         // Rotate 90 degress clockwise
-                                        rotAng = - Global.piOver2;
+                                        rotAng = -Constants.piOver2;
 
                                         // Set the text position
                                         txtPos = new Point3d(xPos + 150, yPos + 25, 0);
                                     }
 
                                     // Rotate the block
-                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, Global.curUCS.Zaxis, insPt));
+                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, AutoCAD.curUCS.Zaxis, insPt));
 
                                     // Define the force text
                                     DBText text = new DBText()
@@ -200,7 +200,7 @@ namespace SPMTool
                                         TextString = xForceAbs.ToString() + " kN",
                                         Position = txtPos,
                                         Height = 50,
-                                        Layer = Global.fTxtLyr
+                                        Layer = Layers.fTxtLyr
                                     };
 
                                     // Append the text to drawing
@@ -210,7 +210,7 @@ namespace SPMTool
                                     // Add the node position to the text XData
                                     using (ResultBuffer txtRb = new ResultBuffer())
                                     {
-                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));    // 0
+                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));    // 0
                                         txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Force at nodes")); // 1
                                         txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndPos.X));                 // 2
                                         txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndPos.Y));                 // 3
@@ -226,9 +226,9 @@ namespace SPMTool
                                 using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
                                 {
                                     // Append the block to drawing
-                                    BlockTableRecord blkTblRec = trans.GetObject(Global.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                                    BlockTableRecord blkTblRec = trans.GetObject(AutoCAD.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                                     blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = Global.fLyr;
+                                    blkRef.Layer = Layers.fLyr;
                                     trans.AddNewlyCreatedDBObject(blkRef, true);
 
                                     // Get the force absolute value
@@ -241,7 +241,7 @@ namespace SPMTool
                                     if (yForce > 0) // positive force in y
                                     {
                                         // Rotate 180 degress counterclockwise
-                                        rotAng = Global.pi;
+                                        rotAng = Constants.pi;
 
                                         // Set the text position
                                         txtPos = new Point3d(xPos + 25, yPos - 250, 0);
@@ -256,7 +256,7 @@ namespace SPMTool
                                     }
 
                                     // Rotate the block
-                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, Global.curUCS.Zaxis, insPt));
+                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, AutoCAD.curUCS.Zaxis, insPt));
 
                                     // Define the force text
                                     DBText text = new DBText()
@@ -264,7 +264,7 @@ namespace SPMTool
                                         TextString = yForceAbs.ToString() + " kN",
                                         Position = txtPos,
                                         Height = 50,
-                                        Layer = Global.fTxtLyr
+                                        Layer = Layers.fTxtLyr
                                     };
 
                                     // Append the text to drawing
@@ -274,7 +274,7 @@ namespace SPMTool
                                     // Add the node position to the text XData
                                     using (ResultBuffer txtRb = new ResultBuffer())
                                     {
-                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));    // 0
+                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));    // 0
                                         txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Force at nodes")); // 1
                                         txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndPos.X));                 // 2
                                         txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndPos.Y));                 // 3
@@ -296,21 +296,21 @@ namespace SPMTool
         // Method to create the force block
         public static void CreateForceBlock()
         {
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
                 ObjectId ForceBlock = ObjectId.Null;
 
                 // Check if the support blocks already exist in the drawing
-                if (!blkTbl.Has(Global.forceBlock))
+                if (!blkTbl.Has(Blocks.forceBlock))
                 {
                     // Create the X block
                     using (BlockTableRecord blkTblRec = new BlockTableRecord())
                     {
-                        blkTblRec.Name = Global.forceBlock;
+                        blkTblRec.Name = Blocks.forceBlock;
 
                         // Add the block table record to the block table and to the transaction
                         blkTbl.UpgradeOpen();
@@ -368,7 +368,7 @@ namespace SPMTool
             var f = Vector<double>.Build.Dense(numDofs * 2);
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Read the nodes data
                 foreach (ObjectId ndObj in nds)
@@ -377,7 +377,7 @@ namespace SPMTool
                     DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
 
                     // Get the result buffer as an array
-                    ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
+                    ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] data = rb.AsArray();
 
                     // Read the node number
@@ -406,12 +406,12 @@ namespace SPMTool
                               fcYPos = new Point3dCollection();
 
             // Get the supports
-            ObjectIdCollection fcs = AuxMethods.GetEntitiesOnLayer(Global.fLyr);
+            ObjectIdCollection fcs = Auxiliary.GetEntitiesOnLayer(Layers.fLyr);
 
             if (fcs.Count > 0)
             {
                 // Start a transaction
-                using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
                 {
                     foreach (ObjectId obj in fcs)
                     {
@@ -419,13 +419,13 @@ namespace SPMTool
                         BlockReference blkRef = trans.GetObject(obj, OpenMode.ForRead) as BlockReference;
 
                         // If the rotation of the block is 90 or -90 degrees, the direction is X
-                        if (blkRef.Rotation == Global.piOver2 || blkRef.Rotation == -Global.piOver2)
+                        if (blkRef.Rotation == Constants.piOver2 || blkRef.Rotation == -Constants.piOver2)
                         {
                             fcXPos.Add(blkRef.Position);
                         }
 
                         // If the rotation of the block is 0 or 180 degrees, the direction is Y
-                        if (blkRef.Rotation == 0 || blkRef.Rotation == Global.pi)
+                        if (blkRef.Rotation == 0 || blkRef.Rotation == Constants.pi)
                         {
                             fcYPos.Add(blkRef.Position);
                         }

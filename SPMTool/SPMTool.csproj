@@ -95,9 +95,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Forces.cs" />
+    <Compile Include="GlobalVariables.cs" />
     <Compile Include="Results.cs" />
     <Compile Include="Geometry.cs" />
-    <Compile Include="AuxiliaryAndGlobal.cs" />
+    <Compile Include="Auxiliary.cs" />
     <Compile Include="LinearAnalysis.cs" />
     <Compile Include="MaterialInput.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -18,10 +18,10 @@ namespace SPMTool
             string xdataStr = "Concrete data";
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-            AuxMethods.RegisterApp();
+            Auxiliary.RegisterApp();
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Ask the user to input the concrete compressive strength
                 PromptDoubleOptions fcOp = new PromptDoubleOptions("\nInput the concrete compressive strength (fc) in MPa:")
@@ -31,7 +31,7 @@ namespace SPMTool
                 };
 
                 // Get the result
-                PromptDoubleResult fcRes = Global.ed.GetDouble(fcOp);
+                PromptDoubleResult fcRes = AutoCAD.edtr.GetDouble(fcOp);
                 if (fcRes.Status == PromptStatus.OK)
                 {
                     double fc = fcRes.Value;
@@ -44,16 +44,16 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult EcRes = Global.ed.GetDouble(EcOp);
+                    PromptDoubleResult EcRes = AutoCAD.edtr.GetDouble(EcOp);
                     double Ec = EcRes.Value;
 
                     // Get the NOD in the database
-                    DBDictionary nod = (DBDictionary)trans.GetObject(Global.curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
+                    DBDictionary nod = (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
 
                     // Save the variables on the Xrecord
                     using (ResultBuffer rb = new ResultBuffer())
                     {
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));     // 0
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));     // 0
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));          // 1
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fc));                       // 2
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Ec));                       // 3
@@ -80,10 +80,10 @@ namespace SPMTool
             string xdataStr = "Steel data";
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-            AuxMethods.RegisterApp();
+            Auxiliary.RegisterApp();
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Ask the user to input the steel tensile strength
                 PromptDoubleOptions fyOp = new PromptDoubleOptions("\nInput the steel tensile strength (fy) in MPa:")
@@ -93,7 +93,7 @@ namespace SPMTool
                 };
 
                 // Get the result
-                PromptDoubleResult fyRes = Global.ed.GetDouble(fyOp);
+                PromptDoubleResult fyRes = AutoCAD.edtr.GetDouble(fyOp);
                 if (fyRes.Status == PromptStatus.OK)
                 {
                     double fy = fyRes.Value;
@@ -106,16 +106,16 @@ namespace SPMTool
                     };
 
                     // Get the result
-                    PromptDoubleResult EsRes = Global.ed.GetDouble(EsOp);
+                    PromptDoubleResult EsRes = AutoCAD.edtr.GetDouble(EsOp);
                     double Es = EsRes.Value;
 
                     // Get the NOD in the database
-                    DBDictionary nod = (DBDictionary)trans.GetObject(Global.curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
+                    DBDictionary nod = (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
 
                     // Save the variables on the Xrecord
                     using (ResultBuffer rb = new ResultBuffer())
                     {
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Global.appName));            // 0
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));            // 0
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));                 // 1   
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fy));                              // 2
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Es));                              // 3
@@ -211,7 +211,7 @@ namespace SPMTool
             //    }
 
             // Display the values returned
-            Application.ShowAlertDialog(Global.appName + "\n\n" + xData + "\n" + concmsg + "\n" + steelmsg);
+            Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + xData + "\n" + concmsg + "\n" + steelmsg);
         }
 
         // Read the concrete parameters
@@ -221,13 +221,13 @@ namespace SPMTool
             double fc = 0, Ec = 0;
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Get the NOD in the database
-                DBDictionary nod = (DBDictionary)trans.GetObject(Global.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
+                DBDictionary nod = (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
 
                 // Check if it exists
                 if (nod.Contains("ConcreteParams"))
@@ -257,13 +257,13 @@ namespace SPMTool
             double fy = 0, Ey = 0;
 
             // Start a transaction
-            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Global.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Get the NOD in the database
-                DBDictionary nod = (DBDictionary)trans.GetObject(Global.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
+                DBDictionary nod = (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
 
                 // Check if it exists
                 if (nod.Contains("SteelParams"))
