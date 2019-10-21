@@ -45,7 +45,11 @@ namespace SPMTool
                         nds.Add(strStRes.Value);
 
                         // Prompt for the end point and add to the collection
-                        PromptPointOptions strEndOp = new PromptPointOptions("\nEnter the end point: ");
+                        PromptPointOptions strEndOp = new PromptPointOptions("\nEnter the end point: ")
+                        {
+                            UseBasePoint = true,
+                            BasePoint = strStRes.Value
+                        };
                         PromptPointResult strEndRes = AutoCAD.edtr.GetPoint(strEndOp);
                         nds.Add(strEndRes.Value);
 
