@@ -200,40 +200,161 @@ namespace SPMTool
         [CommandMethod("DivideStringer")]
         public static void DivideStringer()
         {
-            // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            //// Start a transaction
+            //using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            //{
+            //    // Open the Block table for read
+            //    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+            //    // Open the Block table record Model space for write
+            //    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+            // Prompt for select stringers
+            AutoCAD.edtr.WriteMessage("\nSelect stringers to divide:");
+            PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
+
+            if (selRes.Status == PromptStatus.OK)
             {
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Open the Block table record Model space for write
-                BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                // Prompt for select stringers
-                AutoCAD.edtr.WriteMessage("\nSelect stringers to divide:");
-                PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
-
-                if (selRes.Status == PromptStatus.OK)
+                // Prompt for the number of segments
+                PromptIntegerOptions strNumOp = new PromptIntegerOptions("\nEnter the number of stringers:")
                 {
-                    // Prompt for the number of segments
-                    PromptIntegerOptions strNumOp = new PromptIntegerOptions("\nEnter the number of stringers:")
-                    {
-                        AllowNegative = false,
-                        AllowZero = false
-                    };
+                    AllowNegative = false,
+                    AllowZero = false
+                };
 
-                    // Get the number
-                    PromptIntegerResult strNumRes = AutoCAD.edtr.GetInteger(strNumOp);
-                    int strNum = strNumRes.Value;
+                // Get the number
+                PromptIntegerResult strNumRes = AutoCAD.edtr.GetInteger(strNumOp);
+                if (strNumRes.Status == PromptStatus.Cancel) return;
+                int strNum = strNumRes.Value;
 
-                    // Get the selection set and analyse the elements
-                    SelectionSet set = selRes.Value;
-                    foreach (SelectedObject obj in set)
+                // Get the selection set and analyse the elements
+                SelectionSet set = selRes.Value;
+
+                // Add to an object collection
+                ObjectIdCollection strs = new ObjectIdCollection();
+                foreach (SelectedObject obj in set) strs.Add(obj.ObjectId);
+
+                // Divide the stringers
+                StringerDivide(strs, strNum);
+
+                //{
+                //    strs.Add(obj.ObjectId);
+
+                //    // Open the selected object for read
+                //    Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                //    // Check if the selected object is a stringer
+                //    if (ent.Layer == Layers.strLyr)
+                //    {
+                //        // Read as a line
+                //        Line str = ent as Line;
+
+                //        // Access the XData as an array
+                //        ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
+
+                //        // Get the coordinates of the initial and end points
+                //        Point3d strSt = str.StartPoint;
+                //        Point3d strEnd = str.EndPoint;
+
+                //        // Calculate the distance of the points in X and Y
+                //        double distX = (strEnd.X - strSt.X) / strNum;
+                //        double distY = (strEnd.Y - strSt.Y) / strNum;
+
+                //        // Initialize the start point
+                //        Point3d stPt = strSt;
+
+                //        // Get the midpoint
+                //        Point3d midPt = Auxiliary.MidPoint(strSt, strEnd);
+
+                //        // Read the internal nodes
+                //        foreach (ObjectId intNd in intNds)
+                //        {
+                //            // Read as point
+                //            DBPoint nd = trans.GetObject(intNd, OpenMode.ForRead) as DBPoint;
+
+                //            // Erase the internal node
+                //            if (nd.Position == midPt)
+                //            {
+                //                nd.UpgradeOpen();
+                //                nd.Erase();
+                //                break;
+                //            }
+                //        }
+
+                //        // Create the new stringers
+                //        for (int i = 1; i <= strNum; i++)
+                //        {
+                //            // Get the coordinates of the other points
+                //            double xCrd = str.StartPoint.X + i * distX;
+                //            double yCrd = str.StartPoint.Y + i * distY;
+                //            Point3d endPt = new Point3d(xCrd, yCrd, 0);
+
+                //            // Create the stringer
+                //            Line newStr = new Line()
+                //            {
+                //                StartPoint = stPt,
+                //                EndPoint = endPt,
+                //                Layer = Layers.strLyr
+                //            };
+
+                //            // Add the line to the drawing
+                //            blkTblRec.AppendEntity(newStr);
+                //            trans.AddNewlyCreatedDBObject(newStr, true);
+
+                //            // Append the XData of the original stringer
+                //            newStr.XData = rb;
+
+                //            // Create the external nodes
+                //            AddNode(stPt,  Layers.extNdLyr);
+                //            AddNode(endPt, Layers.extNdLyr);
+
+                //            // Get the mid point and add the internal node
+                //            midPt = Auxiliary.MidPoint(stPt, endPt);
+                //            AddNode(midPt, Layers.intNdLyr);
+
+                //            // Set the start point of the next stringer
+                //            stPt = endPt;
+                //        }
+
+                //        // Erase the original stringer
+                //        ent.UpgradeOpen();
+                //        ent.Erase();
+                //    }
+                //}
+                //}
+
+                //    // Save the new object to the database
+                //    trans.Commit();
+            }
+
+            // Update nodes and stringers
+            UpdateNodes();
+            UpdateStringers();
+        }
+
+        // Method to divide stringers in a collection
+        public static void StringerDivide(ObjectIdCollection stringers, int divNumber)
+        {
+            if (stringers.Count > 0)
+            {
+                // Access the internal nodes in the model
+                ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
+
+                // Start a transaction
+                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+                {
+                    // Open the Block table for read
+                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                    // Open the Block table record Model space for write
+                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                    foreach (ObjectId obj in stringers)
                     {
                         // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+                        Entity ent = trans.GetObject(obj, OpenMode.ForRead) as Entity;
 
-                        // Check if the selected object is a node
+                        // Check if the selected object is a stringer
                         if (ent.Layer == Layers.strLyr)
                         {
                             // Read as a line
@@ -247,8 +368,8 @@ namespace SPMTool
                             Point3d strEnd = str.EndPoint;
 
                             // Calculate the distance of the points in X and Y
-                            double distX = (strEnd.X - strSt.X) / strNum;
-                            double distY = (strEnd.Y - strSt.Y) / strNum;
+                            double distX = (strEnd.X - strSt.X) / divNumber;
+                            double distY = (strEnd.Y - strSt.Y) / divNumber;
 
                             // Initialize the start point
                             Point3d stPt = strSt;
@@ -256,8 +377,7 @@ namespace SPMTool
                             // Get the midpoint
                             Point3d midPt = Auxiliary.MidPoint(strSt, strEnd);
 
-                            // Access the internal nodes in the model
-                            ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
+                            // Read the internal nodes
                             foreach (ObjectId intNd in intNds)
                             {
                                 // Read as point
@@ -273,7 +393,7 @@ namespace SPMTool
                             }
 
                             // Create the new stringers
-                            for (int i = 1; i <= strNum; i++)
+                            for (int i = 1; i <= divNumber; i++)
                             {
                                 // Get the coordinates of the other points
                                 double xCrd = str.StartPoint.X + i * distX;
@@ -296,7 +416,7 @@ namespace SPMTool
                                 newStr.XData = rb;
 
                                 // Create the external nodes
-                                AddNode(stPt,  Layers.extNdLyr);
+                                AddNode(stPt, Layers.extNdLyr);
                                 AddNode(endPt, Layers.extNdLyr);
 
                                 // Get the mid point and add the internal node
@@ -312,17 +432,14 @@ namespace SPMTool
                             ent.Erase();
                         }
                     }
+
+                    // Save the new object to the database
+                    trans.Commit();
                 }
-
-                // Save the new object to the database
-                trans.Commit();
             }
-
-            // Update nodes and stringers
-            UpdateNodes();
-            UpdateStringers();
         }
 
+        // Method to divide a panel and adjacent stringers
         [CommandMethod("DividePanel")]
         public static void DividePanel()
         {
@@ -338,7 +455,7 @@ namespace SPMTool
                 // Prompt for select panels
                 AutoCAD.edtr.WriteMessage("\nSelect panels to divide (panels must be rectangular):");
                 PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
-
+                
                 if (selRes.Status == PromptStatus.OK)
                 {
                     // Prompt for the number of rows
@@ -350,6 +467,7 @@ namespace SPMTool
 
                     // Get the number
                     PromptIntegerResult rowRes = AutoCAD.edtr.GetInteger(rowOp);
+                    if (rowRes.Status == PromptStatus.Cancel) return;
                     int row = rowRes.Value;
 
                     // Prompt for the number of columns
@@ -361,7 +479,11 @@ namespace SPMTool
 
                     // Get the number
                     PromptIntegerResult clmnRes = AutoCAD.edtr.GetInteger(clmnOp);
+                    if (clmnRes.Status == PromptStatus.Cancel) return;
                     int clmn = rowRes.Value;
+
+                    // Access the stringers in the model
+                    ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.strLyr);
 
                     // Get the selection set and analyse the elements
                     SelectionSet set = selRes.Value;
@@ -415,7 +537,7 @@ namespace SPMTool
                                     // Append the XData of the original panel
                                     newPnl.XData = rb;
 
-                                    // Create the internal nodes of the panel (external fo stringers)
+                                    // Create the internal nodes of the panel (external for stringers)
                                     if (i > 0 && j > 0)
                                     {
                                         // Position
@@ -460,10 +582,38 @@ namespace SPMTool
                                         Point3d midPt = Auxiliary.MidPoint(strY.StartPoint, strY.EndPoint);
                                         AddNode(midPt, Layers.intNdLyr);
                                     }
-
                                 }
-
                             }
+
+                            // Create object collections to adjacent stringers
+                            ObjectIdCollection xStrs = new ObjectIdCollection(),
+                                               yStrs = new ObjectIdCollection();
+
+                            // Divide the adjacent stringers
+                            foreach (ObjectId strObj in strs)
+                            {
+                                // Read as a line
+                                Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
+
+                                // Verify if the stringer starts and ends in a panel vertex
+                                if (grpPts.Contains(str.StartPoint) && grpPts.Contains(str.EndPoint))
+                                {
+                                    // Verify the angle of the stringer to add to the collection
+                                    if (str.Angle == 0 || str.Angle == Constants.pi)
+                                    {
+                                        xStrs.Add(strObj);
+                                    }
+
+                                    if (str.Angle == Constants.piOver2 || str.Angle == Constants.pi3Over2)
+                                    {
+                                        yStrs.Add(strObj);
+                                    }
+                                }
+                            }
+
+                            // Divide the stringers
+                            StringerDivide(xStrs, clmn);
+                            StringerDivide(yStrs, row);
 
                             // Erase the original panel
                             ent.UpgradeOpen();

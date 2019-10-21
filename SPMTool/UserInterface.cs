@@ -212,7 +212,7 @@ namespace SPMTool
             RibbonButton button7 = new RibbonButton()
             {
                 Text = "Divide panel",
-                ToolTip = "Divide a panel into smaller ones and creates internal nodes and stringers (surrounding stringers still need to be divided).",
+                ToolTip = "Divide a panel and surrounding stringers",
                 ShowText = true,
                 ShowImage = true,
                 Image = getBitmap(dividePanel),
@@ -227,8 +227,8 @@ namespace SPMTool
                 IsSplit = true,
                 IsSynchronizedWithCurrentItem = true
             };
-            rbSpBtn3.Items.Add(button6);
             rbSpBtn3.Items.Add(button7);
+            rbSpBtn3.Items.Add(button6);
 
             // Add to the sub panel and create a new ribbon row
             subPnl.Items.Add(rbSpBtn3);
