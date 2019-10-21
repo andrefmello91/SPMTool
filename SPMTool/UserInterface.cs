@@ -56,7 +56,8 @@ namespace SPMTool
                    setBmp, dvStrBmp, dvPnlBmp,
                    updtBmp, viewBmp,
                    cncrtBmp, stlBmp,
-                   suprtBmp, fcBmp;
+                   suprtBmp, fcBmp,
+                   linBMP, nlinBMP;
 
             // If the theme is dark (0), get the light icons
             if (theme == 0)
@@ -72,6 +73,8 @@ namespace SPMTool
                 stlBmp = Properties.Resources.steel_large_light;
                 suprtBmp = Properties.Resources.support_large_light;
                 fcBmp = Properties.Resources.force_large_light;
+                linBMP = Properties.Resources.linear_large_light;
+                nlinBMP = Properties.Resources.nonlinear_large_light;
             }
             else // If the theme is light
             {
@@ -86,6 +89,8 @@ namespace SPMTool
                 stlBmp = Properties.Resources.steel_large;
                 suprtBmp = Properties.Resources.support_large;
                 fcBmp = Properties.Resources.force_large;
+                linBMP = Properties.Resources.linear_large;
+                nlinBMP = Properties.Resources.nonlinear_large;
             }
 
             // Create the Ribbon Tab
@@ -100,6 +105,7 @@ namespace SPMTool
             GeometryPanel(Tab, strBmp, pnlBmp, setBmp, dvStrBmp, dvPnlBmp, updtBmp, viewBmp);
             MaterialPanel(Tab, cncrtBmp, stlBmp, viewBmp);
             ConditionsPanel(Tab, suprtBmp, fcBmp);
+            AnalysisPanel(Tab, linBMP, nlinBMP);
 
             // Activate tab
             Tab.IsActive = true;
@@ -370,6 +376,52 @@ namespace SPMTool
             pnlSrc.Items.Add(rbSpBtn1);
         }
 
+        // Create Analysis Panel
+        public static void AnalysisPanel(RibbonTab Tab, Bitmap linear, Bitmap nonlinear)
+        {
+            RibbonPanelSource pnlSrc = new RibbonPanelSource();
+            pnlSrc.Title = "Analysis";
+            RibbonPanel Panel = new RibbonPanel();
+            Panel.Source = pnlSrc;
+            Tab.Panels.Add(Panel);
+
+            RibbonButton button1 = new RibbonButton()
+            {
+                Text = "Linear analysis",
+                ToolTip = "Do an elastic analysis of the model",
+                ShowText = true,
+                ShowImage = true,
+                LargeImage = getBitmap(linear),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "DoLinearAnalysis"
+            };
+
+            RibbonButton button2 = new RibbonButton()
+            {
+                Text = "Nonlinear Analysis",
+                ToolTip = "Do nonlinear analysis of the model",
+                ShowText = true,
+                ShowImage = true,
+                LargeImage = getBitmap(nonlinear),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "DoNonlinearAnalysis"
+            };
+
+            // Create a split button for conditions
+            RibbonSplitButton rbSpBtn1 = new RibbonSplitButton()
+            {
+                ShowText = true,
+                IsSplit = true,
+                Size = RibbonItemSize.Large,
+                IsSynchronizedWithCurrentItem = true
+            };
+            rbSpBtn1.Items.Add(button1);
+            rbSpBtn1.Items.Add(button2);
+
+            // Add to the panel source
+            pnlSrc.Items.Add(rbSpBtn1);
+        }
+
         // Command Handler
         public class CmdHandler : System.Windows.Input.ICommand
         {
@@ -390,7 +442,6 @@ namespace SPMTool
                     {
                         //Make sure the command text either ends with ";", or a " "
                         string cmdText = ((string)button.CommandParameter).Trim();
-
                         if (!cmdText.EndsWith(";")) cmdText = cmdText + " ";
                         AutoCAD.curDoc.SendStringToExecute(cmdText, true, false, true);
                     }

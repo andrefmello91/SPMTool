@@ -143,6 +143,26 @@ namespace SPMTool.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap linear_large {
+            get {
+                object obj = ResourceManager.GetObject("linear_large", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap linear_large_light {
+            get {
+                object obj = ResourceManager.GetObject("linear_large_light", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap node_large {
             get {
                 object obj = ResourceManager.GetObject("node_large", resourceCulture);
@@ -156,6 +176,26 @@ namespace SPMTool.Properties {
         internal static System.Drawing.Bitmap node_large_light {
             get {
                 object obj = ResourceManager.GetObject("node_large_light", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap nonlinear_large {
+            get {
+                object obj = ResourceManager.GetObject("nonlinear_large", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap nonlinear_large_light {
+            get {
+                object obj = ResourceManager.GetObject("nonlinear_large_light", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

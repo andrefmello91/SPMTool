@@ -96,17 +96,17 @@
   <ItemGroup>
     <Compile Include="Forces.cs" />
     <Compile Include="GlobalVariables.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Results.cs" />
     <Compile Include="Geometry.cs" />
     <Compile Include="Auxiliary.cs" />
     <Compile Include="LinearAnalysis.cs" />
     <Compile Include="MaterialInput.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="Constraints.cs" />
     <Compile Include="UserInterface.cs" />
   </ItemGroup>
@@ -208,6 +208,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\view_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\linear_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\linear_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\nonlinear_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\nonlinear_large.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
