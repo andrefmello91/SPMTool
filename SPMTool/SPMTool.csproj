@@ -221,5 +221,23 @@
   <ItemGroup>
     <None Include="Resources\nonlinear_large.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringerforces_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\displacements_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\displacements_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelforces_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelforces_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringerforces_small.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

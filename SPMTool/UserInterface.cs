@@ -57,7 +57,8 @@ namespace SPMTool
                    updtBmp, viewBmp,
                    cncrtBmp, stlBmp,
                    suprtBmp, fcBmp,
-                   linBMP, nlinBMP;
+                   linBMP, nlinBMP,
+                   strFBMP, pnlFBMP, dispBMP;
 
             // If the theme is dark (0), get the light icons
             if (theme == 0)
@@ -75,6 +76,9 @@ namespace SPMTool
                 fcBmp = Properties.Resources.force_large_light;
                 linBMP = Properties.Resources.linear_large_light;
                 nlinBMP = Properties.Resources.nonlinear_large_light;
+                strFBMP = Properties.Resources.stringerforces_small_light;
+                pnlFBMP = Properties.Resources.panelforces_small_light;
+                dispBMP = Properties.Resources.displacements_small_light;
             }
             else // If the theme is light
             {
@@ -91,6 +95,9 @@ namespace SPMTool
                 fcBmp = Properties.Resources.force_large;
                 linBMP = Properties.Resources.linear_large;
                 nlinBMP = Properties.Resources.nonlinear_large;
+                strFBMP = Properties.Resources.stringerforces_small;
+                pnlFBMP = Properties.Resources.panelforces_small;
+                dispBMP = Properties.Resources.displacements_small;
             }
 
             // Create the Ribbon Tab
@@ -106,6 +113,7 @@ namespace SPMTool
             MaterialPanel(Tab, cncrtBmp, stlBmp, viewBmp);
             ConditionsPanel(Tab, suprtBmp, fcBmp);
             AnalysisPanel(Tab, linBMP, nlinBMP);
+            ResultsPanel(Tab, strFBMP, pnlFBMP, dispBMP);
 
             // Activate tab
             Tab.IsActive = true;
@@ -421,6 +429,68 @@ namespace SPMTool
             // Add to the panel source
             pnlSrc.Items.Add(rbSpBtn1);
         }
+
+        // Create Results Panel
+        public static void ResultsPanel(RibbonTab Tab, Bitmap stringerF, Bitmap panelF, Bitmap displacements)
+        {
+            RibbonPanelSource pnlSrc = new RibbonPanelSource();
+            pnlSrc.Title = "Results";
+            RibbonPanel Panel = new RibbonPanel();
+            Panel.Source = pnlSrc;
+            Tab.Panels.Add(Panel);
+
+            // Create a secondary panel
+            RibbonRowPanel subPnl = new RibbonRowPanel();
+
+            RibbonButton button1 = new RibbonButton()
+            {
+                Text = "Stringer forces",
+                ToolTip = "Toogle view for stringer forces",
+                ShowText = true,
+                ShowImage = true,
+                Image = getBitmap(stringerF),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "ToogleStringerForces"
+            };
+
+            // Add to the sub panel and create a new ribbon row
+            subPnl.Items.Add(button1);
+            subPnl.Items.Add(new RibbonRowBreak());
+
+            RibbonButton button2 = new RibbonButton()
+            {
+                Text = "Panel shear stresses",
+                ToolTip = "Toogle view for panel shear stresses",
+                ShowText = true,
+                ShowImage = true,
+                Image = getBitmap(panelF),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "TooglePanelForces"
+            };
+
+            // Add to the sub panel and create a new ribbon row
+            subPnl.Items.Add(button2);
+            subPnl.Items.Add(new RibbonRowBreak());
+
+            RibbonButton button3 = new RibbonButton()
+            {
+                Text = "Displacements",
+                ToolTip = "Toogle view for magnified displacements of the model",
+                ShowText = true,
+                ShowImage = true,
+                Image = getBitmap(displacements),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "ToogleDisplacements"
+            };
+
+            // Add to the sub panel and create a new ribbon row
+            subPnl.Items.Add(button3);
+            subPnl.Items.Add(new RibbonRowBreak());
+
+            // Add to the panel source
+            pnlSrc.Items.Add(subPnl);
+        }
+
 
         // Command Handler
         public class CmdHandler : System.Windows.Input.ICommand
