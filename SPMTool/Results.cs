@@ -185,7 +185,7 @@ namespace SPMTool
                     using (DBText tauTxt = new DBText())
                     {
                         // Set the alignment point
-                        Point3d algnPt = new Point3d(cntrPt.X, cntrPt.Y + 10 * scFctr, 0);
+                        Point3d algnPt = new Point3d(cntrPt.X, cntrPt.Y, 0);
 
                         // Set the parameters
                         tauTxt.Layer = Layers.pnlFLyr;
@@ -200,23 +200,23 @@ namespace SPMTool
                         trans.AddNewlyCreatedDBObject(tauTxt, true);
                     }
 
-                    using (DBText mpaTxt = new DBText())
-                    {
-                        // Set the alignment point
-                        Point3d algnPt = new Point3d(cntrPt.X, cntrPt.Y - 30 * scFctr, 0);
+                    //using (DBText mpaTxt = new DBText())
+                    //{
+                    //    // Set the alignment point
+                    //    Point3d algnPt = new Point3d(cntrPt.X, cntrPt.Y - 30 * scFctr, 0);
 
-                        // Set the parameters
-                        mpaTxt.Layer = Layers.pnlFLyr;
-                        mpaTxt.Height = 20 * scFctr;
-                        mpaTxt.TextString = "MPa";
-                        mpaTxt.Position = algnPt;
-                        mpaTxt.HorizontalMode = TextHorizontalMode.TextCenter;
-                        mpaTxt.AlignmentPoint = algnPt;
+                    //    // Set the parameters
+                    //    mpaTxt.Layer = Layers.pnlFLyr;
+                    //    mpaTxt.Height = 20 * scFctr;
+                    //    mpaTxt.TextString = "MPa";
+                    //    mpaTxt.Position = algnPt;
+                    //    mpaTxt.HorizontalMode = TextHorizontalMode.TextCenter;
+                    //    mpaTxt.AlignmentPoint = algnPt;
 
-                        // Add the text to the drawing
-                        blkTblRec.AppendEntity(mpaTxt);
-                        trans.AddNewlyCreatedDBObject(mpaTxt, true);
-                    }
+                    //    // Add the text to the drawing
+                    //    blkTblRec.AppendEntity(mpaTxt);
+                    //    trans.AddNewlyCreatedDBObject(mpaTxt, true);
+                    //}
                 }
 
                 // Save the new objects to the database
