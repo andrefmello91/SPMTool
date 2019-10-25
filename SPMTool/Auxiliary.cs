@@ -234,6 +234,59 @@ namespace SPMTool
             }
         }
 
+        // Method to erase duplicated stringers
+        public static void EraseDuplicatedStringers()
+        {
+            // Start a transaction
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            {
+                // Get all the stringers in the model collection
+                ObjectIdCollection strsUpdt = GetEntitiesOnLayer(Layers.strLyr);
+
+                // Create a collection to erase later
+                ObjectIdCollection strsToErase = new ObjectIdCollection();
+
+                // Create a list of the stringers objectId, start and endpoints
+                List<Tuple<ObjectId, Point3d, Point3d>> strList = new List<Tuple<ObjectId, Point3d, Point3d>>();
+                foreach (ObjectId strObj in strsUpdt)
+                {
+                    // Read as a line
+                    Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
+                    strList.Add(Tuple.Create(strObj, str.StartPoint, str.EndPoint));
+                }
+
+                // Initialize a new list
+                var otherStrList = strList;
+
+                // Verify if there are more than one stringer in the same position
+                for (int i = 0; i < strList.Count; i++)
+                {
+                    // Get the stringer
+                    var str = strList[i];
+
+                    // Create a new list without the selected element
+                    otherStrList.Remove(str);
+
+                    // Check if there are elements with the same start and end points
+                    foreach (var otherStr in otherStrList)
+                    {
+                        if (str.Item2 == otherStr.Item2 && str.Item3 == otherStr.Item3)
+                        {
+                            // Add to the list for erase
+                            strsToErase.Add(otherStr.Item1);
+                        }
+                    }
+                }
+
+                // Erase the stringers
+               if (strsToErase.Count > 0)
+                    EraseObjects(strsToErase);
+
+                // Commit changes
+                trans.Commit();
+            }
+        }
+
         // Get the direction cosines of a vector
         public static (double l, double m) DirectionCosines(double angle)
         {

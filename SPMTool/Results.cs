@@ -516,9 +516,9 @@ namespace SPMTool
                     }
 
                     // Add the nodes
-                    Geometry.AddNode(stPt, Layers.dispLyr);
-                    Geometry.AddNode(enPt, Layers.dispLyr);
-                    Geometry.AddNode(midPt, Layers.dispLyr);
+                    Geometry.AddNode(new List<Point3d>(), stPt, Layers.dispLyr);
+                    Geometry.AddNode(new List<Point3d>(), enPt, Layers.dispLyr);
+                    Geometry.AddNode(new List<Point3d>(), midPt, Layers.dispLyr);
                 }
 
                 // Commit changes

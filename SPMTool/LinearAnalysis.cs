@@ -189,11 +189,11 @@ namespace SPMTool
                 foreach (ObjectId obj in panels)
                 {
                     // Read as a solid
-                    Solid panel = trans.GetObject(obj, OpenMode.ForWrite) as Solid;
+                    Solid pnl = trans.GetObject(obj, OpenMode.ForWrite) as Solid;
 
                     // Get the vertices
                     Point3dCollection pnlVerts = new Point3dCollection();
-                    panel.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+                    pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
 
                     // Get the vertices in the order needed for calculations
                     Point3d nd1 = pnlVerts[0],
@@ -208,7 +208,7 @@ namespace SPMTool
                             dof4 = Auxiliary.MidPoint(nd4, nd1);
 
                     // Read the XData and get the necessary data
-                    ResultBuffer pnlRb = panel.GetXDataForApplication(AutoCAD.appName);
+                    ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] pnlData = pnlRb.AsArray();
 
                     // Get the panel number and width
