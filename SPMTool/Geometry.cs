@@ -31,6 +31,10 @@ namespace SPMTool
             // Get the list of start and endpoints
             var strList = ListOfStringers();
 
+            // Create lists of points for adding the nodes later
+            List<Point3d> newIntNds = new List<Point3d>(),
+                          newExtNds = new List<Point3d>();
+
             // Prompt for the start point of stringer
             PromptPointOptions strStOp = new PromptPointOptions("\nEnter the start point: ");
             PromptPointResult strStRes = AutoCAD.edtr.GetPoint(strStOp);
@@ -59,17 +63,23 @@ namespace SPMTool
                         // Get the points ordered in ascending Y and ascending X:
                         List<Point3d> extNds = Auxiliary.OrderPoints(nds);
 
-                        // Create the stringer
+                        // Create the stringer and add to drawing
                         Tuple<Point3d, Point3d> strPts = Tuple.Create(extNds[0], extNds[1]);
-                        Stringer(strList, strPts);
+                        Line str = Stringer(strList, strPts);
+                        Auxiliary.AddObject(str);
 
-                        // Create the external nodes
-                        AddNode(ndList, extNds[0], Layers.extNdLyr);
-                        AddNode(ndList, extNds[1], Layers.extNdLyr);
-
-                        // Get the midpoint and add the internal node
+                        // Get the midpoint
                         Point3d midPt = Auxiliary.MidPoint(extNds[0], extNds[1]);
-                        AddNode(ndList, midPt, Layers.intNdLyr);
+
+                        // Add the position of the nodes to the list
+                        if (!newExtNds.Contains(extNds[0]))
+                            newExtNds.Add(extNds[0]);
+
+                        if (!newExtNds.Contains(extNds[1]))
+                            newExtNds.Add(extNds[1]);
+
+                        if (!newIntNds.Contains(midPt))
+                            newIntNds.Add(midPt);
 
                         // Set the start point of the new stringer
                         strStRes = strEndRes;
@@ -83,6 +93,14 @@ namespace SPMTool
                 }
             }
 
+            // Create the external nodes
+            foreach (Point3d pt in newExtNds)
+                AddNode(ndList, pt, Layers.extNdLyr);
+
+            // Create the internal nodes
+            foreach (Point3d pt in newIntNds)
+                AddNode(ndList, pt, Layers.intNdLyr);
+
             // Update the nodes and stringers
             UpdateNodes();
             UpdateStringers();
@@ -91,39 +109,23 @@ namespace SPMTool
         // Create a stringer if it doesn't already exist
         public static Line Stringer(List<Tuple<Point3d, Point3d>> stringerList, Tuple<Point3d, Point3d> stringerPoints)
         {
+            // Initialize a line
+            Line str = new Line();
+
             // Check if a stringer already exist on that position. If not, create it
             if (!stringerList.Contains(stringerPoints))
             {
                 // Add to the list
                 stringerList.Add(stringerPoints);
 
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+                // Create the line in Model space
+                str = new Line(stringerPoints.Item1, stringerPoints.Item2)
                 {
-                    // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                    // Open the Block table record Model space for write
-                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                    // Create the line in Model space
-                    using (Line str = new Line(stringerPoints.Item1, stringerPoints.Item2))
-                    {
-                        // Set the layer to stringer
-                        str.Layer = Layers.strLyr;
-
-                        // Add the line to the drawing
-                        blkTblRec.AppendEntity(str);
-                        trans.AddNewlyCreatedDBObject(str, true);
-                        
-                        // Commit changes
-                        trans.Commit();
-                        return str;
-                    }
-                }
+                    Layer = Layers.strLyr
+                };
             }
 
-            else return null;
+            return str;
         }
 
         [CommandMethod("AddPanel")]
@@ -179,7 +181,8 @@ namespace SPMTool
 
                         // Create the panel if it doesn't exist
                         var pnlPts = Tuple.Create(vrts[0], vrts[1], vrts[2], vrts[3]);
-                        Panel(pnlList, pnlPts);
+                        Solid pnl = Panel(pnlList, pnlPts);
+                        Auxiliary.AddObject(pnl);
                     }
 
                     else
@@ -204,39 +207,24 @@ namespace SPMTool
         // Create a panel if it doesn't already exist
         public static Solid Panel(List<Tuple<Point3d, Point3d, Point3d, Point3d>> panelList, Tuple<Point3d, Point3d, Point3d, Point3d> vertices)
         {
+            // Initialize a solid
+            Solid pnl = new Solid();
+
             // Check if a panel already exist on that position. If not, create it
             if (!panelList.Contains(vertices))
             {
                 // Add to the list
                 panelList.Add(vertices);
 
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+                // Create the panel as a solid with 4 segments (4 points)
+                pnl = new Solid(vertices.Item1, vertices.Item2, vertices.Item3, vertices.Item4)
                 {
-                    // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                    // Open the Block table record Model space for write
-                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                    // Create the panel as a solid with 4 segments (4 points)
-                    using (Solid pnl = new Solid(vertices.Item1, vertices.Item2, vertices.Item3, vertices.Item4))
-                    {
-                        // Set the layer to Panel
-                        pnl.Layer = Layers.pnlLyr;
-
-                        // Add the panel to the drawing
-                        blkTblRec.AppendEntity(pnl);
-                        trans.AddNewlyCreatedDBObject(pnl, true);
-
-                        // Commit changes
-                        trans.Commit();
-                        return pnl;
-                    }
-                }
+                    // Set the layer to Panel
+                    Layer = Layers.pnlLyr
+                };
             }
 
-            else return null;
+            return pnl;
         }
 
 
@@ -249,7 +237,6 @@ namespace SPMTool
 
             if (selRes.Status == PromptStatus.OK)
             {
-
                 // Prompt for the number of segments
                 PromptIntegerOptions strNumOp = new PromptIntegerOptions("\nEnter the number of stringers:")
                 {
@@ -292,6 +279,10 @@ namespace SPMTool
                 // Get the list of nodes
                 var ndList = ListOfNodes("All");
 
+                // Create lists of points for adding the nodes later
+                List<Point3d> newIntNds = new List<Point3d>(),
+                              newExtNds = new List<Point3d>();
+
                 // Access the internal nodes in the model
                 ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
 
@@ -319,12 +310,12 @@ namespace SPMTool
                             ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
 
                             // Get the coordinates of the initial and end points
-                            Point3d strSt = str.StartPoint;
-                            Point3d strEnd = str.EndPoint;
+                            Point3d strSt  = str.StartPoint,
+                                    strEnd = str.EndPoint;
 
                             // Calculate the distance of the points in X and Y
-                            double distX = (strEnd.X - strSt.X) / divisionNumber;
-                            double distY = (strEnd.Y - strSt.Y) / divisionNumber;
+                            double distX = (strEnd.X - strSt.X) / divisionNumber,
+                                   distY = (strEnd.Y - strSt.Y) / divisionNumber;
 
                             // Initialize the start point
                             Point3d stPt = strSt;
@@ -338,11 +329,12 @@ namespace SPMTool
                                 // Read as point
                                 DBPoint nd = trans.GetObject(intNd, OpenMode.ForRead) as DBPoint;
 
-                                // Erase the internal node
+                                // Erase the internal node and remove from the list
                                 if (nd.Position == midPt)
                                 {
                                     nd.UpgradeOpen();
                                     nd.Erase();
+                                    ndList.Remove(midPt);
                                     break;
                                 }
                             }
@@ -358,21 +350,30 @@ namespace SPMTool
                                 // Create the stringer
                                 Tuple<Point3d, Point3d> strPts = Tuple.Create(stPt, endPt);
                                 Line newStr = Stringer(stringerList, strPts);
+                                Auxiliary.AddObject(newStr);
 
                                 if (newStr != null)
                                 {
-                                    // Append the XData of the original stringer
-                                    newStr.UpgradeOpen();
-                                    newStr.XData = rb;
-
-                                    // Create the external nodes
-                                    AddNode(ndList, stPt, Layers.extNdLyr);
-                                    AddNode(ndList, endPt, Layers.extNdLyr);
-
-                                    // Get the mid point and add the internal node
-                                    midPt = Auxiliary.MidPoint(stPt, endPt);
-                                    AddNode(ndList, midPt, Layers.intNdLyr);
+                                    // Add the panel to the drawing
+                                    blkTblRec.AppendEntity(newStr);
+                                    trans.AddNewlyCreatedDBObject(newStr, true);
                                 }
+
+                                // Append the XData of the original stringer
+                                newStr.XData = rb;
+
+                                // Get the mid point
+                                midPt = Auxiliary.MidPoint(stPt, endPt);
+
+                                // Add the position of the nodes to the list
+                                if (!newExtNds.Contains(stPt))
+                                    newExtNds.Add(stPt);
+
+                                if (!newExtNds.Contains(endPt))
+                                    newExtNds.Add(endPt);
+
+                                if (!newIntNds.Contains(midPt))
+                                    newIntNds.Add(midPt);
 
                                 // Set the start point of the next stringer
                                 stPt = endPt;
@@ -387,9 +388,17 @@ namespace SPMTool
                         }
                     }
 
-                    // Save the new object to the database
+                    // Commit changes
                     trans.Commit();
                 }
+
+                // Create the external nodes
+                foreach (Point3d pt in newExtNds)
+                    AddNode(ndList, pt, Layers.extNdLyr);
+
+                // Create the internal nodes
+                foreach (Point3d pt in newIntNds)
+                    AddNode(ndList, pt, Layers.intNdLyr);
             }
         }
 
@@ -406,47 +415,51 @@ namespace SPMTool
             // Get the list of panels
             var pnlList = ListOfPanels();
 
-            // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            // Create lists of points for adding the nodes later
+            List<Point3d> newIntNds = new List<Point3d>(),
+                          newExtNds = new List<Point3d>();
+
+            // Prompt for select panels
+            AutoCAD.edtr.WriteMessage("\nSelect panels to divide (panels must be rectangular):");
+            PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
+
+            if (selRes.Status == PromptStatus.OK)
             {
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Open the Block table record Model space for write
-                BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                // Prompt for select panels
-                AutoCAD.edtr.WriteMessage("\nSelect panels to divide (panels must be rectangular):");
-                PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
-                
-                if (selRes.Status == PromptStatus.OK)
+                // Prompt for the number of rows
+                PromptIntegerOptions rowOp = new PromptIntegerOptions("\nEnter the number of rows for adding panels:")
                 {
-                    // Prompt for the number of rows
-                    PromptIntegerOptions rowOp = new PromptIntegerOptions("\nEnter the number of rows for adding panels:")
-                    {
-                        AllowNegative = false,
-                        AllowZero = false
-                    };
+                    AllowNegative = false,
+                    AllowZero = false
+                };
 
-                    // Get the number
-                    PromptIntegerResult rowRes = AutoCAD.edtr.GetInteger(rowOp);
-                    if (rowRes.Status == PromptStatus.Cancel) return;
-                    int row = rowRes.Value;
+                // Get the number
+                PromptIntegerResult rowRes = AutoCAD.edtr.GetInteger(rowOp);
+                if (rowRes.Status == PromptStatus.Cancel) return;
+                int row = rowRes.Value;
 
-                    // Prompt for the number of columns
-                    PromptIntegerOptions clmnOp = new PromptIntegerOptions("\nEnter the number of columns for adding panels:")
-                    {
-                        AllowNegative = false,
-                        AllowZero = false
-                    };
+                // Prompt for the number of columns
+                PromptIntegerOptions clmnOp = new PromptIntegerOptions("\nEnter the number of columns for adding panels:")
+                {
+                    AllowNegative = false,
+                    AllowZero = false
+                };
 
-                    // Get the number
-                    PromptIntegerResult clmnRes = AutoCAD.edtr.GetInteger(clmnOp);
-                    if (clmnRes.Status == PromptStatus.Cancel) return;
-                    int clmn = clmnRes.Value;
+                // Get the number
+                PromptIntegerResult clmnRes = AutoCAD.edtr.GetInteger(clmnOp);
+                if (clmnRes.Status == PromptStatus.Cancel) return;
+                int clmn = clmnRes.Value;
 
-                    // Access the stringers in the model
-                    ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.strLyr);
+                // Access the stringers in the model
+                ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.strLyr);
+
+                // Start a transaction
+                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+                {
+                    // Open the Block table for read
+                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                    // Open the Block table record Model space for write
+                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
                     // Get the selection set and analyse the elements
                     SelectionSet set = selRes.Value;
@@ -471,7 +484,7 @@ namespace SPMTool
                             // Calculate the distance of the points in X and Y
                             double distX = (grpPts[1].X - grpPts[0].X) / clmn;
                             double distY = (grpPts[2].Y - grpPts[0].Y) / row;
-                            
+
                             // Initialize the start point
                             Point3d stPt = grpPts[0];
                             Point3dCollection verts = new Point3dCollection();
@@ -481,7 +494,7 @@ namespace SPMTool
                             {
                                 for (int j = 0; j < clmn; j++)
                                 {
-                                   // Get the vertices of the panel
+                                    // Get the vertices of the panel
                                     verts[0] = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0);
                                     verts[1] = new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0);
                                     verts[2] = new Point3d(stPt.X + j * distX, stPt.Y + (i + 1) * distY, 0);
@@ -490,39 +503,42 @@ namespace SPMTool
                                     // Create the panel
                                     var pnlPts = Tuple.Create(verts[0], verts[1], verts[2], verts[3]);
                                     Solid newPnl = Panel(pnlList, pnlPts);
+                                    Auxiliary.AddObject(newPnl);
 
                                     // Append the XData of the original panel
-                                    if (newPnl != null)
-                                    {
-                                        newPnl.UpgradeOpen();
-                                        newPnl.XData = rb;
-                                    }
+                                    newPnl.XData = rb;
 
                                     // Create the internal nodes of the panel (external for stringers)
                                     if (i > 0 && j > 0)
                                     {
                                         // Position
                                         Point3d pt = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0);
-                                        AddNode(ndList, pt, Layers.extNdLyr);
+
+                                        // Add the position of the nodes to the list
+                                        if (!newExtNds.Contains(pt))
+                                            newExtNds.Add(pt);
+                                        //AddNode(ndList, pt, Layers.extNdLyr);
                                     }
 
                                     // Create the internal horizontal stringers
                                     if (i > 0)
                                     {
                                         // Get the points
-                                        Point3d strSt  = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
+                                        Point3d strSt = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
                                                 strEnd = new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0);
 
                                         // Create the stringer
                                         Tuple<Point3d, Point3d> strPts = Tuple.Create(strSt, strEnd);
                                         Line strX = Stringer(strList, strPts);
+                                        Auxiliary.AddObject(strX);
 
                                         // Get the midpoint and add the internal node
-                                        if (strX != null)
-                                        {
-                                            Point3d midPt = Auxiliary.MidPoint(strX.StartPoint, strX.EndPoint);
-                                            AddNode(ndList, midPt, Layers.intNdLyr);
-                                        }
+                                        Point3d midPt = Auxiliary.MidPoint(strSt, strEnd);
+
+                                        // Add the position of the nodes to the list
+                                        if (!newIntNds.Contains(midPt))
+                                            newIntNds.Add(midPt);
+                                        //AddNode(ndList, midPt, Layers.intNdLyr);
                                     }
 
                                     // Create the internal vertical stringers
@@ -535,13 +551,15 @@ namespace SPMTool
                                         // Create the stringer
                                         Tuple<Point3d, Point3d> strPts = Tuple.Create(strSt, strEnd);
                                         Line strY = Stringer(strList, strPts);
+                                        Auxiliary.AddObject(strY);
 
                                         // Get the midpoint and add the internal node
-                                        if (strY != null)
-                                        {
-                                            Point3d midPt = Auxiliary.MidPoint(strY.StartPoint, strY.EndPoint);
-                                            AddNode(ndList, midPt, Layers.intNdLyr);
-                                        }
+                                        Point3d midPt = Auxiliary.MidPoint(strSt, strEnd);
+
+                                        // Add the position of the nodes to the list
+                                        if (!newIntNds.Contains(midPt))
+                                            newIntNds.Add(midPt);
+                                        //AddNode(ndList, midPt, Layers.intNdLyr);
                                     }
                                 }
                             }
@@ -584,10 +602,18 @@ namespace SPMTool
                             pnlList.Remove(Tuple.Create(grpPts[0], grpPts[1], grpPts[2], grpPts[3]));
                         }
                     }
+
+                    // Save the new object to the database
+                    trans.Commit();
                 }
 
-                // Save the new object to the database
-                trans.Commit();
+                // Create the external nodes
+                foreach (Point3d pt in newExtNds)
+                    AddNode(ndList, pt, Layers.extNdLyr);
+
+                // Create the internal nodes
+                foreach (Point3d pt in newIntNds)
+                    AddNode(ndList, pt, Layers.intNdLyr);
             }
 
             // Update the elements

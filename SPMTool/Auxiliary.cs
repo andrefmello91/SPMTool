@@ -214,6 +214,30 @@ namespace SPMTool
             return ptList;
         }
 
+        // Add objects to drawing
+        public static void AddObject(Entity entity)
+        {
+            if (entity != null)
+            {
+                // Start a transaction
+                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+                {
+                    // Open the Block table for read
+                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                    // Open the Block table record Model space for write
+                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                    // Add the object to the drawing
+                    blkTblRec.AppendEntity(entity);
+                    trans.AddNewlyCreatedDBObject(entity, true);
+
+                    // Commit changes
+                    trans.Commit();
+                }
+            }
+        }
+
         // Erase the objects in a collection
         public static void EraseObjects(ObjectIdCollection objects)
         {
