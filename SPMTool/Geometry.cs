@@ -256,13 +256,126 @@ namespace SPMTool
                     // Get the selection set and analyse the elements
                     SelectionSet set = selRes.Value;
 
-                    // Add to an object collection
-                    ObjectIdCollection strs = new ObjectIdCollection();
-                    foreach (SelectedObject obj in set)
-                        strs.Add(obj.ObjectId);
-
                     // Divide the stringers
-                    StringerDivision(strList, strs, strNum);
+                    if (set.Count > 0)
+                    {
+                        // Get the list of nodes
+                        var ndList = ListOfNodes("All");
+
+                        // Create lists of points for adding the nodes later
+                        List<Point3d> newIntNds = new List<Point3d>(),
+                                      newExtNds = new List<Point3d>();
+
+                        // Access the internal nodes in the model
+                        ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
+
+                        // Start a transaction
+                        using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+                        {
+                            // Open the Block table for read
+                            BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                            // Open the Block table record Model space for write
+                            BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                            foreach (SelectedObject obj in set)
+                            {
+                                // Open the selected object for read
+                                Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                                // Check if the selected object is a stringer
+                                if (ent.Layer == Layers.strLyr)
+                                {
+                                    // Read as a line
+                                    Line str = ent as Line;
+
+                                    // Access the XData as an array
+                                    ResultBuffer rb = str.GetXDataForApplication(AutoCAD.appName);
+
+                                    // Get the coordinates of the initial and end points
+                                    Point3d strSt = str.StartPoint,
+                                            strEnd = str.EndPoint;
+
+                                    // Calculate the distance of the points in X and Y
+                                    double distX = (strEnd.X - strSt.X) / strNum,
+                                           distY = (strEnd.Y - strSt.Y) / strNum;
+
+                                    // Initialize the start point
+                                    Point3d stPt = strSt;
+
+                                    // Get the midpoint
+                                    Point3d midPt = Auxiliary.MidPoint(strSt, strEnd);
+
+                                    // Read the internal nodes
+                                    foreach (ObjectId intNd in intNds)
+                                    {
+                                        // Read as point
+                                        DBPoint nd = trans.GetObject(intNd, OpenMode.ForRead) as DBPoint;
+
+                                        // Erase the internal node and remove from the list
+                                        if (nd.Position == midPt)
+                                        {
+                                            nd.UpgradeOpen();
+                                            nd.Erase();
+                                            ndList.Remove(midPt);
+                                            break;
+                                        }
+                                    }
+
+                                    // Create the new stringers
+                                    for (int i = 1; i <= strNum; i++)
+                                    {
+                                        // Get the coordinates of the other points
+                                        double xCrd = str.StartPoint.X + i * distX;
+                                        double yCrd = str.StartPoint.Y + i * distY;
+                                        Point3d endPt = new Point3d(xCrd, yCrd, 0);
+
+                                        // Create the stringer
+                                        Tuple<Point3d, Point3d> strPts = Tuple.Create(stPt, endPt);
+                                        Line newStr = Stringer(strList, strPts);
+                                        Auxiliary.AddObject(newStr);
+
+                                        // Append the XData of the original stringer
+                                        newStr.XData = rb;
+
+                                        // Get the mid point
+                                        midPt = Auxiliary.MidPoint(stPt, endPt);
+
+                                        // Add the position of the nodes to the list
+                                        if (!newExtNds.Contains(stPt))
+                                            newExtNds.Add(stPt);
+
+                                        if (!newExtNds.Contains(endPt))
+                                            newExtNds.Add(endPt);
+
+                                        if (!newIntNds.Contains(midPt))
+                                            newIntNds.Add(midPt);
+
+                                        // Set the start point of the next stringer
+                                        stPt = endPt;
+                                    }
+
+                                    // Erase the original stringer
+                                    str.UpgradeOpen();
+                                    str.Erase();
+
+                                    // Remove from the list
+                                    strList.Remove(Tuple.Create(strSt, strEnd));
+                                }
+                            }
+
+                            // Commit changes
+                            trans.Commit();
+                        }
+
+                        // Create the external nodes
+                        foreach (Point3d pt in newExtNds)
+                            AddNode(ndList, pt, Layers.extNdLyr);
+
+                        // Create the internal nodes
+                        foreach (Point3d pt in newIntNds)
+                            AddNode(ndList, pt, Layers.intNdLyr);
+                    }
                 }
             }
 
@@ -271,154 +384,10 @@ namespace SPMTool
             UpdateStringers();
         }
 
-        // Method to divide stringers in a collection
-        public static void StringerDivision(List<Tuple<Point3d, Point3d>> stringerList, ObjectIdCollection stringersToDivide, int divisionNumber)
-        {
-            if (stringersToDivide.Count > 0)
-            {
-                // Get the list of nodes
-                var ndList = ListOfNodes("All");
-
-                // Create lists of points for adding the nodes later
-                List<Point3d> newIntNds = new List<Point3d>(),
-                              newExtNds = new List<Point3d>();
-
-                // Access the internal nodes in the model
-                ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
-
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-                {
-                    // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                    // Open the Block table record Model space for write
-                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                    foreach (ObjectId obj in stringersToDivide)
-                    {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj, OpenMode.ForRead) as Entity;
-
-                        // Check if the selected object is a stringer
-                        if (ent.Layer == Layers.strLyr)
-                        {
-                            // Read as a line
-                            Line str = ent as Line;
-
-                            // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
-
-                            // Get the coordinates of the initial and end points
-                            Point3d strSt  = str.StartPoint,
-                                    strEnd = str.EndPoint;
-
-                            // Calculate the distance of the points in X and Y
-                            double distX = (strEnd.X - strSt.X) / divisionNumber,
-                                   distY = (strEnd.Y - strSt.Y) / divisionNumber;
-
-                            // Initialize the start point
-                            Point3d stPt = strSt;
-
-                            // Get the midpoint
-                            Point3d midPt = Auxiliary.MidPoint(strSt, strEnd);
-
-                            // Read the internal nodes
-                            foreach (ObjectId intNd in intNds)
-                            {
-                                // Read as point
-                                DBPoint nd = trans.GetObject(intNd, OpenMode.ForRead) as DBPoint;
-
-                                // Erase the internal node and remove from the list
-                                if (nd.Position == midPt)
-                                {
-                                    nd.UpgradeOpen();
-                                    nd.Erase();
-                                    ndList.Remove(midPt);
-                                    break;
-                                }
-                            }
-
-                            // Create the new stringers
-                            for (int i = 1; i <= divisionNumber; i++)
-                            {
-                                // Get the coordinates of the other points
-                                double xCrd = str.StartPoint.X + i * distX;
-                                double yCrd = str.StartPoint.Y + i * distY;
-                                Point3d endPt = new Point3d(xCrd, yCrd, 0);
-
-                                // Create the stringer
-                                Tuple<Point3d, Point3d> strPts = Tuple.Create(stPt, endPt);
-                                Line newStr = Stringer(stringerList, strPts);
-                                Auxiliary.AddObject(newStr);
-
-                                if (newStr != null)
-                                {
-                                    // Add the panel to the drawing
-                                    blkTblRec.AppendEntity(newStr);
-                                    trans.AddNewlyCreatedDBObject(newStr, true);
-                                }
-
-                                // Append the XData of the original stringer
-                                newStr.XData = rb;
-
-                                // Get the mid point
-                                midPt = Auxiliary.MidPoint(stPt, endPt);
-
-                                // Add the position of the nodes to the list
-                                if (!newExtNds.Contains(stPt))
-                                    newExtNds.Add(stPt);
-
-                                if (!newExtNds.Contains(endPt))
-                                    newExtNds.Add(endPt);
-
-                                if (!newIntNds.Contains(midPt))
-                                    newIntNds.Add(midPt);
-
-                                // Set the start point of the next stringer
-                                stPt = endPt;
-                            }
-
-                            // Erase the original stringer
-                            ent.UpgradeOpen();
-                            ent.Erase();
-
-                            // Remove from the list
-                            stringerList.Remove(Tuple.Create(strSt, strEnd));
-                        }
-                    }
-
-                    // Commit changes
-                    trans.Commit();
-                }
-
-                // Create the external nodes
-                foreach (Point3d pt in newExtNds)
-                    AddNode(ndList, pt, Layers.extNdLyr);
-
-                // Create the internal nodes
-                foreach (Point3d pt in newIntNds)
-                    AddNode(ndList, pt, Layers.intNdLyr);
-            }
-        }
-
         // Method to divide a panel and adjacent stringers
         [CommandMethod("DividePanel")]
         public static void DividePanel()
         {
-            // Get the list of nodes
-            var ndList = ListOfNodes("All");
-
-            // Get the list of start and endpoints
-            var strList = ListOfStringers();
-
-            // Get the list of panels
-            var pnlList = ListOfPanels();
-
-            // Create lists of points for adding the nodes later
-            List<Point3d> newIntNds = new List<Point3d>(),
-                          newExtNds = new List<Point3d>();
-
             // Prompt for select panels
             AutoCAD.edtr.WriteMessage("\nSelect panels to divide (panels must be rectangular):");
             PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
@@ -434,193 +403,227 @@ namespace SPMTool
 
                 // Get the number
                 PromptIntegerResult rowRes = AutoCAD.edtr.GetInteger(rowOp);
-                if (rowRes.Status == PromptStatus.Cancel) return;
-                int row = rowRes.Value;
-
-                // Prompt for the number of columns
-                PromptIntegerOptions clmnOp = new PromptIntegerOptions("\nEnter the number of columns for adding panels:")
+                if (rowRes.Status == PromptStatus.OK)
                 {
-                    AllowNegative = false,
-                    AllowZero = false
-                };
+                    int row = rowRes.Value;
 
-                // Get the number
-                PromptIntegerResult clmnRes = AutoCAD.edtr.GetInteger(clmnOp);
-                if (clmnRes.Status == PromptStatus.Cancel) return;
-                int clmn = clmnRes.Value;
-
-                // Access the stringers in the model
-                ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.strLyr);
-
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-                {
-                    // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                    // Open the Block table record Model space for write
-                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                    // Get the selection set and analyse the elements
-                    SelectionSet set = selRes.Value;
-                    foreach (SelectedObject obj in set)
+                    // Prompt for the number of columns
+                    PromptIntegerOptions clmnOp = new PromptIntegerOptions("\nEnter the number of columns for adding panels:")
                     {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+                        AllowNegative = false,
+                        AllowZero = false
+                    };
 
-                        // Check if the selected object is a node
-                        if (ent.Layer == Layers.pnlLyr)
+                    // Get the number
+                    PromptIntegerResult clmnRes = AutoCAD.edtr.GetInteger(clmnOp);
+                    if (clmnRes.Status == PromptStatus.OK)
+                    {
+                        int clmn = clmnRes.Value;
+
+                        // Get the list of nodes
+                        var ndList = ListOfNodes("All");
+
+                        // Get the list of start and endpoints
+                        var strList = ListOfStringers();
+
+                        // Get the list of panels
+                        var pnlList = ListOfPanels();
+
+                        // Create lists of points for adding the nodes later
+                        List<Point3d> newIntNds = new List<Point3d>(),
+                                      newExtNds = new List<Point3d>();
+
+                        // Create a list of start and end points for adding the stringers later
+                        var newStrList = new List<Tuple<Point3d, Point3d>>();
+
+                        // Access the stringers in the model
+                        ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.strLyr);
+
+                        // Access the internal nodes in the model
+                        ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
+
+                        // Start a transaction
+                        using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
                         {
-                            // Read as a solid
-                            Solid pnl = ent as Solid;
+                            // Open the Block table for read
+                            BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
-                            // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
+                            // Open the Block table record Model space for write
+                            BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
-                            // Get the coordinates of the grip points
-                            Point3dCollection grpPts = new Point3dCollection();
-                            pnl.GetGripPoints(grpPts, new IntegerCollection(), new IntegerCollection());
-
-                            // Calculate the distance of the points in X and Y
-                            double distX = (grpPts[1].X - grpPts[0].X) / clmn;
-                            double distY = (grpPts[2].Y - grpPts[0].Y) / row;
-
-                            // Initialize the start point
-                            Point3d stPt = grpPts[0];
-                            Point3dCollection verts = new Point3dCollection();
-
-                            // Create the new panels
-                            for (int i = 0; i < row; i++)
+                            // Get the selection set and analyse the elements
+                            SelectionSet set = selRes.Value;
+                            foreach (SelectedObject obj in set)
                             {
-                                for (int j = 0; j < clmn; j++)
+                                // Open the selected object for read
+                                Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                                // Check if the selected object is a node
+                                if (ent.Layer == Layers.pnlLyr)
                                 {
-                                    // Get the vertices of the panel
-                                    verts[0] = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0);
-                                    verts[1] = new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0);
-                                    verts[2] = new Point3d(stPt.X + j * distX, stPt.Y + (i + 1) * distY, 0);
-                                    verts[3] = new Point3d(stPt.X + (j + 1) * distX, stPt.Y + (i + 1) * distY, 0);
+                                    // Read as a solid
+                                    Solid pnl = ent as Solid;
 
-                                    // Create the panel
-                                    var pnlPts = Tuple.Create(verts[0], verts[1], verts[2], verts[3]);
-                                    Solid newPnl = Panel(pnlList, pnlPts);
-                                    Auxiliary.AddObject(newPnl);
+                                    // Access the XData as an array
+                                    ResultBuffer rb = pnl.GetXDataForApplication(AutoCAD.appName);
+                                    TypedValue[] data = rb.AsArray();
 
-                                    // Append the XData of the original panel
-                                    newPnl.XData = rb;
+                                    // Get the panel number
+                                    int pnlNum = Convert.ToInt32(data[2].Value);
 
-                                    // Create the internal nodes of the panel (external for stringers)
-                                    if (i > 0 && j > 0)
+                                    // Get the coordinates of the grip points
+                                    Point3dCollection grpPts = new Point3dCollection();
+                                    pnl.GetGripPoints(grpPts, new IntegerCollection(), new IntegerCollection());
+
+                                    // Create lines to measure the angles between the edges
+                                    Line ln1 = new Line(grpPts[0], grpPts[1]),
+                                         ln2 = new Line(grpPts[0], grpPts[2]),
+                                         ln3 = new Line(grpPts[2], grpPts[3]),
+                                         ln4 = new Line(grpPts[1], grpPts[3]);
+
+                                    // Get the angles
+                                    double ang1 = ln2.Angle - ln1.Angle;
+                                    double ang4 = ln4.Angle - ln3.Angle;
+
+                                    // Verify if the panel is rectangular
+                                    if (ang1 == Constants.piOver2 && ang4 == Constants.piOver2) // panel is rectangular
                                     {
-                                        // Position
-                                        Point3d pt = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0);
+                                        // Get the surrounding stringers to erase
+                                        foreach (ObjectId strObj in strs)
+                                        {
+                                            // Read as a line
+                                            Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
 
-                                        // Add the position of the nodes to the list
-                                        if (!newExtNds.Contains(pt))
-                                            newExtNds.Add(pt);
-                                        //AddNode(ndList, pt, Layers.extNdLyr);
+                                            // Verify if the stringer starts and ends in a panel vertex
+                                            if (grpPts.Contains(str.StartPoint) && grpPts.Contains(str.EndPoint))
+                                            {
+                                                // Get the midpoint
+                                                Point3d midPt = Auxiliary.MidPoint(str.StartPoint, str.EndPoint);
+
+                                                // Read the internal nodes
+                                                foreach (ObjectId intNd in intNds)
+                                                {
+                                                    // Read as point
+                                                    DBPoint nd = trans.GetObject(intNd, OpenMode.ForRead) as DBPoint;
+
+                                                    // Erase the internal node and remove from the list
+                                                    if (nd.Position == midPt)
+                                                    {
+                                                        nd.UpgradeOpen();
+                                                        nd.Erase();
+                                                        ndList.Remove(midPt);
+                                                        break;
+                                                    }
+                                                }
+
+                                                // Erase and remove from the list
+                                                strList.Remove(Tuple.Create(str.StartPoint, str.EndPoint));
+                                                str.UpgradeOpen();
+                                                str.Erase();
+                                            }
+                                        }
+
+                                        // Calculate the distance of the points in X and Y
+                                        double distX = (grpPts[1].X - grpPts[0].X) / clmn;
+                                        double distY = (grpPts[2].Y - grpPts[0].Y) / row;
+
+                                        // Initialize the start point
+                                        Point3d stPt = grpPts[0];
+
+                                        // Create the new panels
+                                        for (int i = 0; i < row; i++)
+                                        {
+                                            for (int j = 0; j < clmn; j++)
+                                            {
+                                                // Get the vertices of the panel and add to a list
+                                                var verts = new List<Point3d>();
+                                                verts.Add(new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0));
+                                                verts.Add(new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0));
+                                                verts.Add(new Point3d(stPt.X + j * distX, stPt.Y + (i + 1) * distY, 0));
+                                                verts.Add(new Point3d(stPt.X + (j + 1) * distX, stPt.Y + (i + 1) * distY, 0));
+
+                                                // Create the panel
+                                                var pnlPts = Tuple.Create(verts[0], verts[1], verts[2], verts[3]);
+                                                Solid newPnl = Panel(pnlList, pnlPts);
+                                                Auxiliary.AddObject(newPnl);
+
+                                                // Append the XData of the original panel
+                                                newPnl.XData = rb;
+
+                                                // Add the vertices to the list for creating external nodes
+                                                foreach (Point3d pt in verts)
+                                                {
+                                                    if (!newExtNds.Contains(pt))
+                                                        newExtNds.Add(pt);
+                                                }
+
+                                                // Create tuples to adding the stringers later
+                                                Tuple<Point3d, Point3d>[] strsToAdd = new Tuple<Point3d, Point3d>[]
+                                                {
+                                                    Tuple.Create(verts[0], verts[1]),
+                                                    Tuple.Create(verts[0], verts[2]),
+                                                    Tuple.Create(verts[2], verts[3]),
+                                                    Tuple.Create(verts[1], verts[3])
+                                                };
+
+                                                // Add to the list of new stringers
+                                                foreach (var pts in strsToAdd)
+                                                {
+                                                    if (!newStrList.Contains(pts))
+                                                        newStrList.Add(pts);
+                                                }
+                                            }
+                                        }
+
+                                        // Erase the original panel
+                                        pnl.UpgradeOpen();
+                                        pnl.Erase();
+
+                                        // Remove from the list
+                                        pnlList.Remove(Tuple.Create(grpPts[0], grpPts[1], grpPts[2], grpPts[3]));
                                     }
 
-                                    // Create the internal horizontal stringers
-                                    if (i > 0)
-                                    {
-                                        // Get the points
-                                        Point3d strSt = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
-                                                strEnd = new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0);
-
-                                        // Create the stringer
-                                        Tuple<Point3d, Point3d> strPts = Tuple.Create(strSt, strEnd);
-                                        Line strX = Stringer(strList, strPts);
-                                        Auxiliary.AddObject(strX);
-
-                                        // Get the midpoint and add the internal node
-                                        Point3d midPt = Auxiliary.MidPoint(strSt, strEnd);
-
-                                        // Add the position of the nodes to the list
-                                        if (!newIntNds.Contains(midPt))
-                                            newIntNds.Add(midPt);
-                                        //AddNode(ndList, midPt, Layers.intNdLyr);
-                                    }
-
-                                    // Create the internal vertical stringers
-                                    if (j > 0)
-                                    {
-                                        // Get the points
-                                        Point3d strSt = new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
-                                                strEnd = new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0);
-
-                                        // Create the stringer
-                                        Tuple<Point3d, Point3d> strPts = Tuple.Create(strSt, strEnd);
-                                        Line strY = Stringer(strList, strPts);
-                                        Auxiliary.AddObject(strY);
-
-                                        // Get the midpoint and add the internal node
-                                        Point3d midPt = Auxiliary.MidPoint(strSt, strEnd);
-
-                                        // Add the position of the nodes to the list
-                                        if (!newIntNds.Contains(midPt))
-                                            newIntNds.Add(midPt);
-                                        //AddNode(ndList, midPt, Layers.intNdLyr);
-                                    }
+                                    else // panel is not rectangular
+                                        AutoCAD.edtr.WriteMessage("\nPanel " + pnlNum.ToString() + " is not rectangular");
                                 }
                             }
 
-                            // Create object collections to adjacent stringers
-                            ObjectIdCollection xStrs = new ObjectIdCollection(),
-                                               yStrs = new ObjectIdCollection();
-
-                            // Divide the adjacent stringers
-                            foreach (ObjectId strObj in strs)
-                            {
-                                // Read as a line
-                                Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
-
-                                // Verify if the stringer starts and ends in a panel vertex
-                                if (grpPts.Contains(str.StartPoint) && grpPts.Contains(str.EndPoint))
-                                {
-                                    // Verify the angle of the stringer to add to the collection
-                                    if (str.Angle == 0 || str.Angle == Constants.pi)
-                                    {
-                                        xStrs.Add(strObj);
-                                    }
-
-                                    if (str.Angle == Constants.piOver2 || str.Angle == Constants.pi3Over2)
-                                    {
-                                        yStrs.Add(strObj);
-                                    }
-                                }
-                            }
-
-                            // Divide the stringers
-                            StringerDivision(strList, xStrs, clmn);
-                            StringerDivision(strList, yStrs, row);
-
-                            // Erase the original panel
-                            ent.UpgradeOpen();
-                            ent.Erase();
-
-                            // Remove from the list
-                            pnlList.Remove(Tuple.Create(grpPts[0], grpPts[1], grpPts[2], grpPts[3]));
+                            // Save the new object to the database
+                            trans.Commit();
                         }
+
+                        // Create the stringers
+                        foreach (var pts in newStrList)
+                        {
+                            Line str = Stringer(strList, pts);
+                            Auxiliary.AddObject(str);
+
+                            // Get the midpoint to add the external node
+                            Point3d midPt = Auxiliary.MidPoint(pts.Item1, pts.Item2);
+                            if (!newIntNds.Contains(midPt))
+                                newIntNds.Add(midPt);
+                        }
+
+                        // Create the external nodes
+                        foreach (Point3d pt in newExtNds)
+                            AddNode(ndList, pt, Layers.extNdLyr);
+
+                        // Create the internal nodes
+                        foreach (Point3d pt in newIntNds)
+                            AddNode(ndList, pt, Layers.intNdLyr);
+
+                        // Update the elements
+                        UpdateNodes();
+                        UpdateStringers();
+                        UpdatePanels();
+
+                        // Show an alert for editing stringers
+                        Application.ShowAlertDialog("Alert: stringers parameters must be set again.");
                     }
-
-                    // Save the new object to the database
-                    trans.Commit();
                 }
-
-                // Create the external nodes
-                foreach (Point3d pt in newExtNds)
-                    AddNode(ndList, pt, Layers.extNdLyr);
-
-                // Create the internal nodes
-                foreach (Point3d pt in newIntNds)
-                    AddNode(ndList, pt, Layers.intNdLyr);
             }
-
-            // Update the elements
-            UpdateNodes();
-            UpdateStringers();
-            UpdatePanels();
         }
+
 
         [CommandMethod("UpdateElements")]
         public void UpdateElements()
