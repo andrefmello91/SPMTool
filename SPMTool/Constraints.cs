@@ -62,75 +62,74 @@ namespace SPMTool
 
                     // Get the result
                     PromptResult supRes = AutoCAD.edtr.GetKeywords(supOp);
-                    if (supRes.Status == PromptStatus.Cancel) return;
+                    if (supRes.Status == PromptStatus.OK)
+                    { 
+                        // Set the support
+                        string support = supRes.StringResult;
 
-                    // Set the support
-                    string support = supRes.StringResult;
-
-                    foreach (SelectedObject obj in set)
-                    {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-
-                        // Check if the selected object is a node
-                        if (ent.Layer == Layers.extNdLyr)
+                        foreach (SelectedObject obj in set)
                         {
-                            // Upgrade the OpenMode
-                            ent.UpgradeOpen();
-                            
-                            // Read as a point and get the position
-                            DBPoint nd = ent as DBPoint;
-                            Point3d ndPos = nd.Position;
+                            // Open the selected object for read
+                            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
-                            // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
-                            TypedValue[] data = rb.AsArray();
-
-                            // Check if there is a support block at the node position
-                            if (sprts.Count > 0)
+                            // Check if the selected object is a node
+                            if (ent.Layer == Layers.extNdLyr)
                             {
-                                foreach (ObjectId spObj in sprts)
-                                {
-                                    // Read as a block reference
-                                    BlockReference spBlk = trans.GetObject(spObj, OpenMode.ForRead) as BlockReference;
+                                // Upgrade the OpenMode
+                                ent.UpgradeOpen();
 
-                                    // Check if the position is equal to the selected node
-                                    if (spBlk.Position == ndPos)
+                                // Read as a point and get the position
+                                DBPoint nd = ent as DBPoint;
+                                Point3d ndPos = nd.Position;
+
+                                // Access the XData as an array
+                                ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
+                                TypedValue[] data = rb.AsArray();
+
+                                // Check if there is a support block at the node position
+                                if (sprts.Count > 0)
+                                {
+                                    foreach (ObjectId spObj in sprts)
                                     {
-                                        // Erase the support
-                                        spBlk.UpgradeOpen();
-                                        spBlk.Erase();
-                                        break;
+                                        // Read as a block reference
+                                        BlockReference spBlk = trans.GetObject(spObj, OpenMode.ForRead) as BlockReference;
+
+                                        // Check if the position is equal to the selected node
+                                        if (spBlk.Position == ndPos)
+                                        {
+                                            // Erase the support
+                                            spBlk.UpgradeOpen();
+                                            spBlk.Erase();
+                                            break;
+                                        }
                                     }
                                 }
-                            }
 
-                            // Set the new support conditions (line 5 of the array)
-                            data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
+                                // Set the new support conditions (line 5 of the array)
+                                data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
 
-                            // Add the new XData
-                            ResultBuffer newRb = new ResultBuffer(data);
-                            ent.XData = newRb;
+                                // Add the new XData
+                                ResultBuffer newRb = new ResultBuffer(data);
+                                ent.XData = newRb;
 
-                            // If the node is not Free, add the support blocks
-                            if (support != "Free")
-                            {
-                                // Add the block to selected node at
-                                Point3d insPt = ndPos;
-
-                                // Choose the block to insert
-                                ObjectId supBlock = new ObjectId();
-                                if (support == "X" && xBlock != ObjectId.Null) supBlock = xBlock;
-                                if (support == "Y" && yBlock != ObjectId.Null) supBlock = yBlock;
-                                if (support == "XY" && xyBlock != ObjectId.Null) supBlock = xyBlock;
-
-                                // Insert the block into the current space
-                                using (BlockReference blkRef = new BlockReference(insPt, supBlock))
+                                // If the node is not Free, add the support blocks
+                                if (support != "Free")
                                 {
-                                    BlockTableRecord blkTblRec = trans.GetObject(AutoCAD.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                    blkTblRec.AppendEntity(blkRef);
-                                    blkRef.Layer = Layers.supLyr;
-                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+                                    // Add the block to selected node at
+                                    Point3d insPt = ndPos;
+
+                                    // Choose the block to insert
+                                    ObjectId supBlock = new ObjectId();
+                                    if (support == "X" && xBlock != ObjectId.Null) supBlock = xBlock;
+                                    if (support == "Y" && yBlock != ObjectId.Null) supBlock = yBlock;
+                                    if (support == "XY" && xyBlock != ObjectId.Null) supBlock = xyBlock;
+
+                                    // Insert the block into the current space
+                                    using (BlockReference blkRef = new BlockReference(insPt, supBlock))
+                                    {
+                                        blkRef.Layer = Layers.supLyr;
+                                        Auxiliary.AddObject(blkRef);
+                                    }
                                 }
                             }
                         }

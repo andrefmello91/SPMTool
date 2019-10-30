@@ -25,9 +25,6 @@ namespace SPMTool
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
             Auxiliary.RegisterApp();
 
-            // Get the list of nodes
-            var ndList = ListOfNodes("All");
-
             // Get the list of start and endpoints
             var strList = ListOfStringers();
 
@@ -46,7 +43,7 @@ namespace SPMTool
                 for ( ; ; )
                 {
                     // Create a point3d collection and add the stringer start point
-                    Point3dCollection nds = new Point3dCollection();
+                    List<Point3d> nds = new List<Point3d>();
                     nds.Add(strStRes.Value);
 
                     // Prompt for the end point and add to the collection
@@ -93,13 +90,9 @@ namespace SPMTool
                 }
             }
 
-            // Create the external nodes
-            foreach (Point3d pt in newExtNds)
-                AddNode(ndList, pt, Layers.extNdLyr);
-
-            // Create the internal nodes
-            foreach (Point3d pt in newIntNds)
-                AddNode(ndList, pt, Layers.intNdLyr);
+            // Create the nodes
+            Node(newExtNds, Layers.extNdLyr);
+            Node(newIntNds, Layers.intNdLyr);
 
             // Update the nodes and stringers
             UpdateNodes();
@@ -152,7 +145,7 @@ namespace SPMTool
                     SelectionSet set = selRes.Value;
 
                     // Create a point3d collection
-                    Point3dCollection nds = new Point3dCollection();
+                    List<Point3d> nds = new List<Point3d>();
 
                     // Start a transaction
                     using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -186,17 +179,12 @@ namespace SPMTool
                     }
 
                     else
-                    {
                         Application.ShowAlertDialog("Please select four external nodes.");
-                    }
-
                 }
 
-                else
-                {
+                else 
                     // Finish the command
                     break;
-                }
             }
 
             // Update nodes and panels
@@ -259,9 +247,6 @@ namespace SPMTool
                     // Divide the stringers
                     if (set.Count > 0)
                     {
-                        // Get the list of nodes
-                        var ndList = ListOfNodes("All");
-
                         // Create lists of points for adding the nodes later
                         List<Point3d> newIntNds = new List<Point3d>(),
                                       newExtNds = new List<Point3d>();
@@ -317,7 +302,6 @@ namespace SPMTool
                                         {
                                             nd.UpgradeOpen();
                                             nd.Erase();
-                                            ndList.Remove(midPt);
                                             break;
                                         }
                                     }
@@ -368,13 +352,9 @@ namespace SPMTool
                             trans.Commit();
                         }
 
-                        // Create the external nodes
-                        foreach (Point3d pt in newExtNds)
-                            AddNode(ndList, pt, Layers.extNdLyr);
-
-                        // Create the internal nodes
-                        foreach (Point3d pt in newIntNds)
-                            AddNode(ndList, pt, Layers.intNdLyr);
+                        // Create the nodes
+                        Node(newExtNds, Layers.extNdLyr);
+                        Node(newIntNds, Layers.intNdLyr);
                     }
                 }
             }
@@ -419,9 +399,6 @@ namespace SPMTool
                     if (clmnRes.Status == PromptStatus.OK)
                     {
                         int clmn = clmnRes.Value;
-
-                        // Get the list of nodes
-                        var ndList = ListOfNodes("All");
 
                         // Get the list of start and endpoints
                         var strList = ListOfStringers();
@@ -511,7 +488,6 @@ namespace SPMTool
                                                     {
                                                         nd.UpgradeOpen();
                                                         nd.Erase();
-                                                        ndList.Remove(midPt);
                                                         break;
                                                     }
                                                 }
@@ -604,13 +580,9 @@ namespace SPMTool
                                 newIntNds.Add(midPt);
                         }
 
-                        // Create the external nodes
-                        foreach (Point3d pt in newExtNds)
-                            AddNode(ndList, pt, Layers.extNdLyr);
-
-                        // Create the internal nodes
-                        foreach (Point3d pt in newIntNds)
-                            AddNode(ndList, pt, Layers.intNdLyr);
+                        // Create the nodes
+                        Node(newExtNds, Layers.extNdLyr);
+                        Node(newIntNds, Layers.intNdLyr);
 
                         // Update the elements
                         UpdateNodes();
@@ -808,35 +780,51 @@ namespace SPMTool
             }
         }
 
-        // Method to add a node given a point and a layer name
-        public static void AddNode(List<Point3d> nodeList, Point3d position, string layerName)
+        // Method to add nodes at a given position and a layer name
+        public static void Node(Point3d position, string layerName)
         {
+            // Get the list of nodes
+            var ndList = ListOfNodes("All");
+
             // Check if a node already exists at the position. If not, its created
-            if (!nodeList.Contains(position))
+            if (!ndList.Contains(position))
             {
                 // Add to the list
-                nodeList.Add(position);
+                ndList.Add(position);
 
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+                // Create the node and set the layer
+                DBPoint nd = new DBPoint(position)
                 {
-                    // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    Layer = layerName
+                };
 
-                    // Open the Block table record Model space for write
-                    BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                // Add the new object
+                Auxiliary.AddObject(nd);
+            }
+        }
 
-                    // Create the node in Model space
-                    // Create the node and set its layer to Node:
-                    DBPoint nd = new DBPoint(position);
-                    nd.Layer = layerName;
+        // Method to add nodes at a given list of positions and a layer name
+        public static void Node(List<Point3d> positions, string layerName)
+        {
+            // Get the list of nodes
+            var ndList = ListOfNodes("All");
 
-                    // Add the new object to the block table record and the transaction
-                    blkTblRec.AppendEntity(nd);
-                    trans.AddNewlyCreatedDBObject(nd, true);
+            foreach (Point3d pt in positions)
+            {
+                // Check if a node already exists at the position. If not, its created
+                if (!ndList.Contains(pt))
+                {
+                    // Add to the list
+                    ndList.Add(pt);
 
-                    // Save the new object to the database and dispose the transaction
-                    trans.Commit();
+                    // Create the node and set the layer
+                    DBPoint nd = new DBPoint(pt)
+                    {
+                        Layer = layerName
+                    };
+
+                    // Add the new object
+                    Auxiliary.AddObject(nd);
                 }
             }
         }
@@ -947,7 +935,7 @@ namespace SPMTool
                 BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Create a point collection
-                Point3dCollection midPts = new Point3dCollection();
+                List<Point3d> midPts = new List<Point3d>();
 
                 // Add the midpoint of each stringer to the collection
                 foreach (ObjectId strObj in strs)
@@ -1055,7 +1043,7 @@ namespace SPMTool
             ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.pnlLyr);
 
             // Create a point collection
-            Point3dCollection cntrPts = new Point3dCollection();
+            List<Point3d> cntrPts = new List<Point3d>();
 
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -1181,12 +1169,17 @@ namespace SPMTool
             ObjectIdCollection nds = new ObjectIdCollection();
 
             // Select the node type
-            if (nodeType == "All") nds = AllNodes();
-            if (nodeType == "Int") nds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
-            if (nodeType == "Ext") nds = Auxiliary.GetEntitiesOnLayer(Layers.extNdLyr);
+            if (nodeType == "All")
+                nds = AllNodes();
+
+            if (nodeType == "Int")
+                nds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
+
+            if (nodeType == "Ext")
+                nds = Auxiliary.GetEntitiesOnLayer(Layers.extNdLyr);
 
             // Create a point collection
-            Point3dCollection ndPos = new Point3dCollection();
+            List<Point3d> ndPos = new List<Point3d>();
 
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())

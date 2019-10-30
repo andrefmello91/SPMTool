@@ -199,19 +199,13 @@ namespace SPMTool
         }
 
         // This method order the elements in a collection in ascending yCoord, then ascending xCoord, returns the array of points ordered
-        public static List<Point3d> OrderPoints(Point3dCollection points)
+        public static List<Point3d> OrderPoints(List<Point3d> points)
         {
-            // Initialize the point list
-            List<Point3d> ptList = new List<Point3d>();
-
-            // Add the point collection to the list
-            foreach (Point3d pt in points) ptList.Add(pt);
-
             // Order the point list
-            ptList = ptList.OrderBy(pt => pt.Y).ThenBy(pt => pt.X).ToList();
+            points = points.OrderBy(pt => pt.Y).ThenBy(pt => pt.X).ToList();
 
             // Return the point list
-            return ptList;
+            return points;
         }
 
         // Add objects to drawing

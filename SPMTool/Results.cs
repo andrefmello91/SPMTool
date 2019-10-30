@@ -117,7 +117,6 @@ namespace SPMTool
             {
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-                BlockTableRecord blkTblRec = trans.GetObject(AutoCAD.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
 
                 // Read the object Ids of the support blocks
                 ObjectId shearBlock = blkTbl[Blocks.shearBlock];
@@ -167,9 +166,8 @@ namespace SPMTool
                     // Insert the block into the current space
                     using (BlockReference blkRef = new BlockReference(cntrPt, shearBlock))
                     {
-                        blkTblRec.AppendEntity(blkRef);
                         blkRef.Layer = Layers.pnlFLyr;
-                        trans.AddNewlyCreatedDBObject(blkRef, true);
+                        Auxiliary.AddObject(blkRef);
 
                         // Set the scale of the block
                         blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
@@ -196,27 +194,8 @@ namespace SPMTool
                         tauTxt.AlignmentPoint = algnPt;
 
                         // Add the text to the drawing
-                        blkTblRec.AppendEntity(tauTxt);
-                        trans.AddNewlyCreatedDBObject(tauTxt, true);
+                        Auxiliary.AddObject(tauTxt);
                     }
-
-                    //using (DBText mpaTxt = new DBText())
-                    //{
-                    //    // Set the alignment point
-                    //    Point3d algnPt = new Point3d(cntrPt.X, cntrPt.Y - 30 * scFctr, 0);
-
-                    //    // Set the parameters
-                    //    mpaTxt.Layer = Layers.pnlFLyr;
-                    //    mpaTxt.Height = 20 * scFctr;
-                    //    mpaTxt.TextString = "MPa";
-                    //    mpaTxt.Position = algnPt;
-                    //    mpaTxt.HorizontalMode = TextHorizontalMode.TextCenter;
-                    //    mpaTxt.AlignmentPoint = algnPt;
-
-                    //    // Add the text to the drawing
-                    //    blkTblRec.AppendEntity(mpaTxt);
-                    //    trans.AddNewlyCreatedDBObject(mpaTxt, true);
-                    //}
                 }
 
                 // Save the new objects to the database
@@ -272,12 +251,6 @@ namespace SPMTool
                         double h1 = 150 * f1 / fMax,
                                h3 = 150 * f3 / fMax;
 
-                        // Open the Block table for read
-                        BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                        // Open the Block table record Model space for write
-                        BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
                         // Check if the forces are in the same direction
                         if (f1 * f3 >= 0) // same direction
                         {
@@ -302,8 +275,7 @@ namespace SPMTool
                                 else dgrm.ColorIndex = Colors.red;
 
                                 // Add the diagram to the drawing
-                                blkTblRec.AppendEntity(dgrm);
-                                trans.AddNewlyCreatedDBObject(dgrm, true);
+                                Auxiliary.AddObject(dgrm);
 
                                 // Rotate the diagram
                                 dgrm.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, str.StartPoint));
@@ -343,8 +315,7 @@ namespace SPMTool
                                 else dgrm1.ColorIndex = Colors.red;
 
                                 // Add the diagram to the drawing
-                                blkTblRec.AppendEntity(dgrm1);
-                                trans.AddNewlyCreatedDBObject(dgrm1, true);
+                                Auxiliary.AddObject(dgrm1);
 
                                 // Rotate the diagram
                                 dgrm1.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, str.StartPoint));
@@ -361,8 +332,7 @@ namespace SPMTool
                                 else dgrm3.ColorIndex = Colors.red;
 
                                 // Add the diagram to the drawing
-                                blkTblRec.AppendEntity(dgrm3);
-                                trans.AddNewlyCreatedDBObject(dgrm3, true);
+                                Auxiliary.AddObject(dgrm3);
 
                                 // Rotate the diagram
                                 dgrm3.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, str.StartPoint));
@@ -392,8 +362,7 @@ namespace SPMTool
                                 }
 
                                 // Add the text to the drawing
-                                blkTblRec.AppendEntity(txt1);
-                                trans.AddNewlyCreatedDBObject(txt1, true);
+                                Auxiliary.AddObject(txt1);
 
                                 // Rotate the text
                                 txt1.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, str.StartPoint));
@@ -426,8 +395,7 @@ namespace SPMTool
                                 txt3.AlignmentPoint = txt3.Position;
 
                                 // Add the text to the drawing
-                                blkTblRec.AppendEntity(txt3);
-                                trans.AddNewlyCreatedDBObject(txt3, true);
+                                Auxiliary.AddObject(txt3);
 
                                 // Rotate the text
                                 txt3.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, str.StartPoint));
@@ -457,15 +425,12 @@ namespace SPMTool
             // Set a scale factor for displacements
             int scFctr = 100;
 
+            // Create lists of points for adding the nodes later
+            List<Point3d> dispNds = new List<Point3d>();
+
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Open the Block table record Model space for write
-                BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
                 // Get the stringers stifness matrix and add to the global stifness matrix
                 foreach (ObjectId obj in stringers)
                 {
@@ -511,19 +476,26 @@ namespace SPMTool
                         newStr.Layer = Layers.dispLyr;
 
                         // Add the line to the drawing
-                        blkTblRec.AppendEntity(newStr);
-                        trans.AddNewlyCreatedDBObject(newStr, true);
+                        Auxiliary.AddObject(newStr);
                     }
 
-                    // Add the nodes
-                    Geometry.AddNode(new List<Point3d>(), stPt, Layers.dispLyr);
-                    Geometry.AddNode(new List<Point3d>(), enPt, Layers.dispLyr);
-                    Geometry.AddNode(new List<Point3d>(), midPt, Layers.dispLyr);
+                    // Add the position of the nodes to the list
+                    if (!dispNds.Contains(stPt))
+                        dispNds.Add(stPt);
+
+                    if (!dispNds.Contains(enPt))
+                        dispNds.Add(enPt);
+
+                    if (!dispNds.Contains(midPt))
+                        dispNds.Add(midPt);
                 }
 
                 // Commit changes
                 trans.Commit();
             }
+
+            // Add the nodes
+            Geometry.Node(dispNds, Layers.dispLyr);
 
             // Turn the layer off
             Auxiliary.LayerOff(Layers.dispLyr);

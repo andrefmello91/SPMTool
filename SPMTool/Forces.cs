@@ -161,10 +161,8 @@ namespace SPMTool
                                 using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
                                 {
                                     // Append the block to drawing
-                                    BlockTableRecord blkTblRec = trans.GetObject(AutoCAD.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                    blkTblRec.AppendEntity(blkRef);
                                     blkRef.Layer = Layers.fLyr;
-                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+                                    Auxiliary.AddObject(blkRef);
 
                                     // Get the force absolute value
                                     double xForceAbs = Math.Abs(xForce);
@@ -204,8 +202,7 @@ namespace SPMTool
                                     };
 
                                     // Append the text to drawing
-                                    blkTblRec.AppendEntity(text);
-                                    trans.AddNewlyCreatedDBObject(text, true);
+                                    Auxiliary.AddObject(text);
 
                                     // Add the node position to the text XData
                                     using (ResultBuffer txtRb = new ResultBuffer())
@@ -226,10 +223,8 @@ namespace SPMTool
                                 using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
                                 {
                                     // Append the block to drawing
-                                    BlockTableRecord blkTblRec = trans.GetObject(AutoCAD.curDb.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                                    blkTblRec.AppendEntity(blkRef);
                                     blkRef.Layer = Layers.fLyr;
-                                    trans.AddNewlyCreatedDBObject(blkRef, true);
+                                    Auxiliary.AddObject(blkRef);
 
                                     // Get the force absolute value
                                     double yForceAbs = Math.Abs(yForce);
@@ -268,8 +263,7 @@ namespace SPMTool
                                     };
 
                                     // Append the text to drawing
-                                    blkTblRec.AppendEntity(text);
-                                    trans.AddNewlyCreatedDBObject(text, true);
+                                    Auxiliary.AddObject(text);
 
                                     // Add the node position to the text XData
                                     using (ResultBuffer txtRb = new ResultBuffer())
