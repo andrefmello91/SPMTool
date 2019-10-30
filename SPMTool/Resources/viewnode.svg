@@ -13,10 +13,10 @@
    class="feather feather-trending-up"
    version="1.1"
    id="svg6"
-   sodipodi:docname="stringerforces.svg"
+   sodipodi:docname="viewnode.svg"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
    style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"
-   inkscape:export-filename="D:\André\OneDrive\source\repos\andrefmello91\SPMTool\SPMTool\Resources\stringerforces_large.png"
+   inkscape:export-filename="D:\André\OneDrive\source\repos\andrefmello91\SPMTool\SPMTool\Resources\viewnode_large.png"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96">
   <metadata
@@ -46,22 +46,6 @@
          style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1.00000003pt;stroke-opacity:1"
          d="M 5.77,0 -2.88,5 V -5 Z"
          id="path2296"
-         inkscape:connector-curvature="0" />
-    </marker>
-    <marker
-       inkscape:stockid="TriangleOutS"
-       orient="auto"
-       refY="0"
-       refX="0"
-       id="TriangleOutS"
-       style="overflow:visible"
-       inkscape:isstock="true"
-       inkscape:collect="always">
-      <path
-         id="path4672"
-         d="M 5.77,0 -2.88,5 V -5 Z"
-         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1.00000003pt;stroke-opacity:1"
-         transform="scale(0.2)"
          inkscape:connector-curvature="0" />
     </marker>
     <marker
@@ -138,48 +122,59 @@
      inkscape:window-height="1017"
      id="namedview8"
      showgrid="false"
-     inkscape:zoom="39.333332"
-     inkscape:cx="8.6008135"
-     inkscape:cy="12.749414"
+     inkscape:zoom="35.416667"
+     inkscape:cx="12"
+     inkscape:cy="12"
      inkscape:window-x="-8"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg6"
      showguides="false" />
+  <g
+     id="g970"
+     transform="translate(0,2.239312)">
+    <ellipse
+       ry="1.6733681"
+       rx="1.6730902"
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.37289488;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="ellipse892"
+       cy="18.345621"
+       cx="20.772591" />
+    <ellipse
+       cx="3.3600862"
+       cy="18.345621"
+       id="ellipse894"
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.37289488;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       rx="1.6730902"
+       ry="1.6733681" />
+  </g>
   <path
-     style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.80000901;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleOutS)"
-     d="m 19.143763,11.960049 h 2.451126"
-     id="path3717"
      inkscape:connector-curvature="0"
-     sodipodi:nodetypes="cc"
-     inkscape:export-xdpi="96"
-     inkscape:export-ydpi="96" />
-  <path
-     style="fill:none;stroke:#000000;stroke-width:1.80000901;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-     d="m 9.358185,11.960049 h 5.219688"
-     id="path1671"
-     inkscape:connector-curvature="0"
-     sodipodi:nodetypes="cc" />
-  <path
-     inkscape:export-ydpi="96"
-     inkscape:export-xdpi="96"
-     sodipodi:nodetypes="cc"
-     inkscape:connector-curvature="0"
-     id="path2294"
-     d="M 4.8615393,11.960049 H 2.4104129"
-     style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.80000901;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker2298)" />
-  <ellipse
-     cx="8.1976452"
-     cy="11.955215"
-     id="ellipse890"
-     style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.37289488;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-     rx="1.6730902"
-     ry="1.6733681" />
-  <ellipse
-     ry="1.6733681"
-     rx="1.6730902"
-     style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.37289488;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-     id="ellipse909"
-     cy="11.955215"
-     cx="15.766085" />
+     d="m 8.1041739,11.514475 c 0,0 1.416664,-2.8333286 3.8958261,-2.8333286 2.479162,0 3.895826,2.8333286 3.895826,2.8333286 0,0 -1.416664,2.833328 -3.895826,2.833328 -2.4791621,0 -3.8958261,-2.833328 -3.8958261,-2.833328 z"
+     id="path2"
+     style="stroke-width:0.70833212" />
+  <circle
+     cx="12"
+     cy="11.514475"
+     id="circle4"
+     r="1.0624981"
+     style="stroke-width:0.70833212" />
+  <g
+     transform="translate(0,-14.775445)"
+     id="g911">
+    <ellipse
+       cx="20.772591"
+       cy="18.345621"
+       id="ellipse907"
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.37289488;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       rx="1.6730902"
+       ry="1.6733681" />
+    <ellipse
+       ry="1.6733681"
+       rx="1.6730902"
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.37289488;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="ellipse909"
+       cy="18.345621"
+       cx="3.3600862" />
+  </g>
 </svg>

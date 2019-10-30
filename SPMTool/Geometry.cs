@@ -1303,5 +1303,27 @@ namespace SPMTool
 
             return ndNum;
         }
+
+        // Toggle view for nodes
+        [CommandMethod("ToogleNodes")]
+        public void ToogleNodes()
+        {
+            Auxiliary.ToogleLayer(Layers.extNdLyr);
+            Auxiliary.ToogleLayer(Layers.intNdLyr);
+        }
+
+        // Toggle view for stringers
+        [CommandMethod("ToogleStringers")]
+        public void ToogleStringers()
+        {
+            Auxiliary.ToogleLayer(Layers.strLyr);
+        }
+
+        // Toggle view for panels
+        [CommandMethod("TooglePanels")]
+        public void TooglePanels()
+        {
+            Auxiliary.ToogleLayer(Layers.pnlLyr);
+        }
     }
 }

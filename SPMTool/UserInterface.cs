@@ -52,12 +52,12 @@ namespace SPMTool
             short theme = (short)Application.GetSystemVariable("COLORTHEME");
 
             // Initialize the icons
-            Bitmap strBmp, pnlBmp,
-                   setBmp, dvStrBmp, dvPnlBmp,
-                   updtBmp, viewBmp,
+            Bitmap strBmp, pnlBmp, setBmp,
+                   dvStrBmp, dvPnlBmp, updtBmp,
                    cncrtBmp, stlBmp,
                    suprtBmp, fcBmp,
                    linBMP, nlinBMP,
+                   viewNdBmp, viewStrBmp, viewPnlBmp, viewDtBmp,
                    strFBMP, pnlFBMP, dispBMP;
 
             // If the theme is dark (0), get the light icons
@@ -69,16 +69,19 @@ namespace SPMTool
                 dvStrBmp = Properties.Resources.divstr_small_light;
                 dvPnlBmp = Properties.Resources.divpnl_small_light;
                 updtBmp = Properties.Resources.update_small_light;
-                viewBmp = Properties.Resources.view_small_light;
+                viewDtBmp = Properties.Resources.elementdata_large_light;
                 cncrtBmp = Properties.Resources.concrete_large_light;
                 stlBmp = Properties.Resources.steel_large_light;
                 suprtBmp = Properties.Resources.support_large_light;
                 fcBmp = Properties.Resources.force_large_light;
                 linBMP = Properties.Resources.linear_large_light;
                 nlinBMP = Properties.Resources.nonlinear_large_light;
-                strFBMP = Properties.Resources.stringerforces_small_light;
-                pnlFBMP = Properties.Resources.panelforces_small_light;
-                dispBMP = Properties.Resources.displacements_small_light;
+                viewNdBmp = Properties.Resources.viewnode_large_light;
+                viewStrBmp = Properties.Resources.viewstringer_large_light;
+                viewPnlBmp = Properties.Resources.viewpanel_large_light;
+                strFBMP = Properties.Resources.stringerforces_large_light;
+                pnlFBMP = Properties.Resources.panelforces_large_light;
+                dispBMP = Properties.Resources.displacements_large_light;
             }
             else // If the theme is light
             {
@@ -88,16 +91,19 @@ namespace SPMTool
                 dvStrBmp = Properties.Resources.divstr_small;
                 dvPnlBmp = Properties.Resources.divpnl_small;
                 updtBmp = Properties.Resources.update_small;
-                viewBmp = Properties.Resources.view_small;
+                viewDtBmp = Properties.Resources.elementdata_large;
                 cncrtBmp = Properties.Resources.concrete_large;
                 stlBmp = Properties.Resources.steel_large;
                 suprtBmp = Properties.Resources.support_large;
                 fcBmp = Properties.Resources.force_large;
                 linBMP = Properties.Resources.linear_large;
                 nlinBMP = Properties.Resources.nonlinear_large;
-                strFBMP = Properties.Resources.stringerforces_small;
-                pnlFBMP = Properties.Resources.panelforces_small;
-                dispBMP = Properties.Resources.displacements_small;
+                viewNdBmp = Properties.Resources.viewnode_large;
+                viewStrBmp = Properties.Resources.viewstringer_large;
+                viewPnlBmp = Properties.Resources.viewpanel_large;
+                strFBMP = Properties.Resources.stringerforces_large;
+                pnlFBMP = Properties.Resources.panelforces_large;
+                dispBMP = Properties.Resources.displacements_large;
             }
 
             // Create the Ribbon Tab
@@ -109,10 +115,11 @@ namespace SPMTool
             ribbonControl.Tabs.Add(Tab);
 
             // Create the Ribbon panels
-            GeometryPanel(Tab, strBmp, pnlBmp, setBmp, dvStrBmp, dvPnlBmp, updtBmp, viewBmp);
-            MaterialPanel(Tab, cncrtBmp, stlBmp, viewBmp);
+            GeometryPanel(Tab, strBmp, pnlBmp, setBmp, dvStrBmp, dvPnlBmp, updtBmp, viewDtBmp);
+            MaterialPanel(Tab, cncrtBmp, stlBmp, viewDtBmp);
             ConditionsPanel(Tab, suprtBmp, fcBmp);
             AnalysisPanel(Tab, linBMP, nlinBMP);
+            ViewPanel(Tab, viewNdBmp, viewStrBmp, viewPnlBmp, viewDtBmp);
             ResultsPanel(Tab, strFBMP, pnlFBMP, dispBMP);
 
             // Activate tab
@@ -257,22 +264,6 @@ namespace SPMTool
             
             // Add the sub panel to the panel source
             pnlSrc.Items.Add(subPnl);
-
-            // Create a dropdown menu to secondary commands
-            pnlSrc.Items.Add(new RibbonPanelBreak());
-
-            // View element data button
-            RibbonButton button9 = new RibbonButton()
-            {
-                Text = "View element data",
-                ToolTip = "View information stored in a determined element",
-                ShowText = true,
-                ShowImage = true,
-                Image = getBitmap(view),
-                CommandHandler = new CmdHandler(),
-                CommandParameter = "ViewElementData"
-            };
-            pnlSrc.Items.Add(button9);
         }
 
         // Create Material Panel
@@ -430,6 +421,78 @@ namespace SPMTool
             pnlSrc.Items.Add(rbSpBtn1);
         }
 
+        // Create View Panel
+        public static void ViewPanel(RibbonTab Tab, Bitmap viewNode, Bitmap viewStringer, Bitmap viewPanel, Bitmap viewData)
+        {
+            RibbonPanelSource pnlSrc = new RibbonPanelSource();
+            pnlSrc.Title = "View";
+            RibbonPanel Panel = new RibbonPanel();
+            Panel.Source = pnlSrc;
+            Tab.Panels.Add(Panel);
+
+            RibbonButton button1 = new RibbonButton()
+            {
+                Text = "Nodes",
+                ToolTip = "Toogle view for nodes",
+                ShowText = true,
+                ShowImage = true,
+                LargeImage = getBitmap(viewNode),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "ToogleNodes"
+            };
+
+            RibbonButton button2 = new RibbonButton()
+            {
+                Text = "Stringers",
+                ToolTip = "Toogle view for stringers",
+                ShowText = true,
+                ShowImage = true,
+                LargeImage = getBitmap(viewStringer),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "ToogleStringers"
+            };
+
+            RibbonButton button3 = new RibbonButton()
+            {
+                Text = "Panels",
+                ToolTip = "Toogle view for panels",
+                ShowText = true,
+                ShowImage = true,
+                LargeImage = getBitmap(viewPanel),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "TooglePanels"
+            };
+
+            // View element data button
+            RibbonButton button4 = new RibbonButton()
+            {
+                Text = "Element data",
+                ToolTip = "View data stored in a selected element",
+                ShowText = true,
+                ShowImage = true,
+                LargeImage = getBitmap(viewData),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "ViewElementData"
+            };
+
+            // Create a split button
+            RibbonSplitButton rbSpBtn1 = new RibbonSplitButton()
+            {
+                ShowText = true,
+                IsSplit = true,
+                Size = RibbonItemSize.Large,
+                IsSynchronizedWithCurrentItem = true
+            };
+            rbSpBtn1.Items.Add(button1);
+            rbSpBtn1.Items.Add(button2);
+            rbSpBtn1.Items.Add(button3);
+            rbSpBtn1.Items.Add(button4);
+
+            // Add to the panel source
+            pnlSrc.Items.Add(rbSpBtn1);
+        }
+
+
         // Create Results Panel
         public static void ResultsPanel(RibbonTab Tab, Bitmap stringerF, Bitmap panelF, Bitmap displacements)
         {
@@ -439,23 +502,16 @@ namespace SPMTool
             Panel.Source = pnlSrc;
             Tab.Panels.Add(Panel);
 
-            // Create a secondary panel
-            RibbonRowPanel subPnl = new RibbonRowPanel();
-
             RibbonButton button1 = new RibbonButton()
             {
                 Text = "Stringer forces",
                 ToolTip = "Toogle view for stringer forces",
                 ShowText = true,
                 ShowImage = true,
-                Image = getBitmap(stringerF),
+                LargeImage = getBitmap(stringerF),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "ToogleStringerForces"
             };
-
-            // Add to the sub panel and create a new ribbon row
-            subPnl.Items.Add(button1);
-            subPnl.Items.Add(new RibbonRowBreak());
 
             RibbonButton button2 = new RibbonButton()
             {
@@ -463,14 +519,10 @@ namespace SPMTool
                 ToolTip = "Toogle view for panel shear stresses",
                 ShowText = true,
                 ShowImage = true,
-                Image = getBitmap(panelF),
+                LargeImage = getBitmap(panelF),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "TooglePanelForces"
             };
-
-            // Add to the sub panel and create a new ribbon row
-            subPnl.Items.Add(button2);
-            subPnl.Items.Add(new RibbonRowBreak());
 
             RibbonButton button3 = new RibbonButton()
             {
@@ -478,17 +530,25 @@ namespace SPMTool
                 ToolTip = "Toogle view for magnified displacements of the model",
                 ShowText = true,
                 ShowImage = true,
-                Image = getBitmap(displacements),
+                LargeImage = getBitmap(displacements),
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "ToogleDisplacements"
             };
 
-            // Add to the sub panel and create a new ribbon row
-            subPnl.Items.Add(button3);
-            subPnl.Items.Add(new RibbonRowBreak());
+            // Create a split button
+            RibbonSplitButton rbSpBtn1 = new RibbonSplitButton()
+            {
+                ShowText = true,
+                IsSplit = true,
+                Size = RibbonItemSize.Large,
+                IsSynchronizedWithCurrentItem = true
+            };
+            rbSpBtn1.Items.Add(button1);
+            rbSpBtn1.Items.Add(button2);
+            rbSpBtn1.Items.Add(button3);
 
             // Add to the panel source
-            pnlSrc.Items.Add(subPnl);
+            pnlSrc.Items.Add(rbSpBtn1);
         }
 
 

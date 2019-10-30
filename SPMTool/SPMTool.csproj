@@ -239,5 +239,50 @@
   <ItemGroup>
     <None Include="Resources\stringerforces_small.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewpanel_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewstringer_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewstringer_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\displacements_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\displacements_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelforces_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelforces_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringerforces.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringerforces_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewnode_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewnode_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewpanel_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringerforces_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\elementdata_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\elementdata_large.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
