@@ -195,7 +195,7 @@ namespace SPMTool
                                     // Define the force text
                                     DBText text = new DBText()
                                     {
-                                        TextString = xForceAbs.ToString() + " kN",
+                                        TextString = xForceAbs.ToString(),
                                         Position = txtPos,
                                         Height = 50,
                                         Layer = Layers.fTxtLyr
@@ -256,7 +256,7 @@ namespace SPMTool
                                     // Define the force text
                                     DBText text = new DBText()
                                     {
-                                        TextString = yForceAbs.ToString() + " kN",
+                                        TextString = yForceAbs.ToString(),
                                         Position = txtPos,
                                         Height = 50,
                                         Layer = Layers.fTxtLyr

@@ -182,13 +182,13 @@ namespace SPMTool
                             Point3d[] blkPts =
                             {
                                 origin,
-                                new Point3d(-200, 115, 0),
+                                new Point3d(-100, 57.5,  0),
                                 origin,
-                                new Point3d(-200, -115, 0),
-                                new Point3d(-200, 150, 0),
-                                new Point3d(-200, -150, 0),
-                                new Point3d(-250, 150, 0),
-                                new Point3d(-250, -150, 0)
+                                new Point3d(-100,  57.5, 0),
+                                new Point3d(-100,  75,   0),
+                                new Point3d(-100, -75,   0),
+                                new Point3d(-125,  75,   0),
+                                new Point3d(-125, -75,   0)
                             };
 
                             // Define the lines and add to the collection
@@ -235,13 +235,13 @@ namespace SPMTool
                             Point3d[] blkPts =
                             {
                                 origin,
-                                new Point3d(-115, -200, 0),
+                                new Point3d(-57.5, -100, 0),
                                 origin,
-                                new Point3d(115, -200, 0),
-                                new Point3d(-150, -200, 0),
-                                new Point3d(150, -200, 0),
-                                new Point3d(-150, -250, 0),
-                                new Point3d(+150, -250, 0)
+                                new Point3d( 57.5, -100, 0),
+                                new Point3d(-75,   -100, 0),
+                                new Point3d( 75,   -100, 0),
+                                new Point3d(-75,   -125, 0),
+                                new Point3d( 75,   -125, 0)
                             };
 
                             // Define the lines and add to the collection
@@ -288,11 +288,11 @@ namespace SPMTool
                             Point3d[] blkPts =
                             {
                                 origin,
-                                new Point3d(-115, -200, 0),
+                                new Point3d(-57.5, -100, 0),
                                 origin,
-                                new Point3d(115, -200, 0),
-                                new Point3d(-150, -200, 0),
-                                new Point3d(150, -200, 0)
+                                new Point3d( 57.5, -100, 0),
+                                new Point3d(-75,   -100, 0),
+                                new Point3d( 75,   -100, 0)
                             };
 
                             // Define the lines and add to the collection
@@ -309,12 +309,12 @@ namespace SPMTool
                             // Create the diagonal lines
                             for (int i = 0; i < 6; i++)
                             {
-                                int xInc = 46 * i; // distance between the lines
+                                int xInc = 23 * i; // distance between the lines
 
                                 Line diagLine = new Line()
                                 {
-                                    StartPoint = new Point3d(-115 + xInc, -200, 0),
-                                    EndPoint = new Point3d(-140 + xInc, -245, 0)
+                                    StartPoint = new Point3d(-57.5 + xInc, -100,   0),
+                                    EndPoint =   new Point3d(-70   + xInc, -122.5, 0)
                                 };
 
                                 // Add to the collection
