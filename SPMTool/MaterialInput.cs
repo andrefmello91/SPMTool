@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -24,7 +25,7 @@ namespace SPMTool
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Ask the user to input the concrete compressive strength
-                PromptDoubleOptions fcOp = new PromptDoubleOptions("\nInput the concrete compressive strength (fc) in MPa:")
+                PromptDoubleOptions fcOp = new PromptDoubleOptions("\nInput the concrete mean compressive strength (fcm) in MPa:")
                 {
                     AllowZero = false,
                     AllowNegative = false
@@ -36,16 +37,39 @@ namespace SPMTool
                 {
                     double fc = fcRes.Value;
 
-                    // Ask the user to input the concrete Elastic Module
-                    PromptDoubleOptions EcOp = new PromptDoubleOptions("\nInput the concrete Elastic Module (Ec) in MPa:")
-                    {
-                        AllowZero = false,
-                        AllowNegative = false
-                    };
+                    // Ask the user choose the type of the agregate
+                    PromptKeywordOptions agOp = new PromptKeywordOptions("\nChoose the type of the aggregate");
+                    agOp.Keywords.Add("Basalt");
+                    agOp.Keywords.Add("Quartzite");
+                    agOp.Keywords.Add("Limestone");
+                    agOp.Keywords.Add("Sandstone");
+                    agOp.Keywords.Default = "Quartzite";
+                    agOp.AllowNone = false;
 
                     // Get the result
-                    PromptDoubleResult EcRes = AutoCAD.edtr.GetDouble(EcOp);
-                    double Ec = EcRes.Value;
+                    PromptResult agRes = AutoCAD.edtr.GetKeywords(agOp);
+                    string agrgt = agRes.StringResult;
+
+                    // Get the value of aE
+                    double aE = 1;
+                    switch (agrgt)
+                    {
+                        case "Basalt":
+                            aE = 1.2;
+                            break;
+
+                        case "Quartzite":
+                            // aE = 1 already
+                            break;
+
+                        case "Limestone":
+                            aE = 0.9;
+                            break;
+
+                        case "Sandstone":
+                            aE = 0.9;
+                            break;
+                    }
 
                     // Get the NOD in the database
                     DBDictionary nod = (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
@@ -56,7 +80,7 @@ namespace SPMTool
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));     // 0
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));          // 1
                         rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fc));                       // 2
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Ec));                       // 3
+                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, aE));                       // 3
 
                         // Create and add data to an Xrecord
                         Xrecord xRec = new Xrecord();
@@ -144,16 +168,18 @@ namespace SPMTool
             string steelmsg = "";
 
             // Get the values
-            var (fc, Ec) = ConcreteParams();
-            var (fy, Ey) = SteelParams();
+            var concParams = ConcreteParams();
+            var steelParams = SteelParams();
 
             // Write the concrete parameters
-            if (fc > 0 && Ec > 0)
+            if (concParams != null)
             {
                 // Get the parameters
                 concmsg = "\nConcrete Parameters" +
-                          "\nfc = " + fc.ToString() + " MPa" +
-                          "\nEc = " + Ec.ToString() + " MPa";
+                          "\nfcm = " + concParams[0].ToString() + " MPa" +
+                          "\nfctm = " + Math.Round(concParams[1],2).ToString() + " MPa" +
+                          "\nEci = " + Math.Round(concParams[2],2).ToString() + " MPa" +
+                          "\nεc1 = " + Math.Round(1000*concParams[4],2).ToString() + " E-03";
             }
             else
             {
@@ -161,64 +187,29 @@ namespace SPMTool
             }
 
             // Write the steel parameters
-            if (fy > 0 && Ey > 0)
+            if (steelParams != null)
             {
                 // Get the parameters
                 steelmsg = "\nSteel Parameters" +
-                           "\nfy = " + fy.ToString() + " MPa" +
-                           "\nEs = " + Ey.ToString() + " MPa";
+                           "\nfy = " + steelParams[0].ToString() + " MPa" +
+                           "\nEs = " + steelParams[1].ToString() + " MPa" +
+                           "\nεs = " + Math.Round(1000 * steelParams[2], 2).ToString() + " E-03";
+
             }
             else
             {
                 steelmsg = "\nSteel Parameters NOT SET";
             }
-            //// Start a transaction
-            //using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
-            //{
-            //    // Get the NOD in the database
-            //    DBDictionary nod = (DBDictionary)trans.GetObject(Global.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
-
-            //    // Read the materials Xrecords
-            //    ObjectId concPar = nod.GetAt("ConcreteParams");
-            //    ObjectId steelPar = nod.GetAt("SteelParams");
-
-            //    if (concPar != null && steelPar != null)
-            //    {
-            //        // Read the Concrete Xrecord
-            //        Xrecord concXrec = (Xrecord)trans.GetObject(concPar, OpenMode.ForRead);
-            //        ResultBuffer rb = concXrec.Data;
-            //        TypedValue[] data = rb.AsArray();
-
-            //        // Get the parameters
-            //        concmsg = "\nConcrete Parameters" +
-            //                  "\nfc = " + data[2].Value.ToString() + " MPa" +
-            //                  "\nEc = " + data[3].Value.ToString() + " MPa";
-
-            //        // Read the Steel Xrecord
-            //        Xrecord steelXrec = (Xrecord)trans.GetObject(steelPar, OpenMode.ForRead);
-            //        ResultBuffer rb2 = steelXrec.Data;
-            //        TypedValue[] data2 = rb.AsArray();
-
-            //        // Get the parameters
-            //        steelmsg = "\nSteel Parameters" +
-            //                   "\nfy = " + data2[2].Value.ToString() + " MPa" +
-            //                   "\nEs = " + data2[3].Value.ToString() + " MPa";
-            //    }
-            //    else
-            //    {
-            //        concmsg = "\nMaterial Parameters NOT SET";
-            //        steelmsg = "";
-            //    }
 
             // Display the values returned
             Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + xData + "\n" + concmsg + "\n" + steelmsg);
         }
 
         // Read the concrete parameters
-        public static (double fc, double Ec) ConcreteParams()
+        public static List<double> ConcreteParams()
         {
-            // Initialize the parameters needed
-            double fc = 0, Ec = 0;
+            // Initialize a list
+            var concParams = new List<double>();
 
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -239,22 +230,44 @@ namespace SPMTool
                     TypedValue[] concData = concRb.AsArray();
 
                     // Get the parameters
-                    fc = Convert.ToDouble(concData[2].Value);
-                    Ec = Convert.ToDouble(concData[3].Value);
+                    double fcm = Convert.ToDouble(concData[2].Value),
+                           aE = Convert.ToDouble(concData[3].Value);
+
+                    // Calculate the parameters according do FIB MC2010
+                    double fctm, Eci, Ec1, ec1, k;
+
+                    // fctm (dependant on fcm value)
+                    if (fcm <= 50)
+                        fctm = 0.3 * Math.Pow(fcm, 0.66666667);
+                    else
+                        fctm = 2.12 * Math.Log(1 + 0.1 * fcm);
+
+                    Eci = 21500 * aE * Math.Pow(fcm / 10, 0.33333333);
+                    ec1 = -1.6 / 1000 * Math.Pow(fcm / 10, 0.25);
+                    Ec1 = fcm / ec1;
+                    k = Eci / Ec1;
+
+                    // Add the values to the list
+                    concParams.Add(fcm);
+                    concParams.Add(fctm);
+                    concParams.Add(Eci);
+                    concParams.Add(Ec1);
+                    concParams.Add(ec1);
+                    concParams.Add(k);
                 }
                 else
                 {
                     Application.ShowAlertDialog("Please set concrete parameters.");
                 }
             }
-            return (fc, Ec);
+            return concParams;
         }
 
         // Read the steel parameters
-        public static (double fy, double Ey) SteelParams()
+        public static List<double> SteelParams()
         {
-            // Initialize the parameters needed
-            double fy = 0, Ey = 0;
+            // Initialize a list
+            var steelParams = new List<double>();
 
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -275,15 +288,21 @@ namespace SPMTool
                     TypedValue[] steelData = steelRb.AsArray();
 
                     // Get the parameters
-                    fy = Convert.ToDouble(steelData[2].Value);
-                    Ey = Convert.ToDouble(steelData[3].Value);
+                    double fy = Convert.ToDouble(steelData[2].Value),
+                           Es = Convert.ToDouble(steelData[3].Value),
+                           ey = fy / Es;
+
+                    // Add to the list
+                    steelParams.Add(fy);
+                    steelParams.Add(Es);
+                    steelParams.Add(ey);
                 }
                 else
                 {
                     Application.ShowAlertDialog("Please set steel parameters.");
                 }
             }
-            return (fy, Ey);
+            return steelParams;
         }
     }
 }

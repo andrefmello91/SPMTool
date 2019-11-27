@@ -96,6 +96,7 @@
   <ItemGroup>
     <Compile Include="Forces.cs" />
     <Compile Include="GlobalVariables.cs" />
+    <Compile Include="NonLinearAnalysis.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
