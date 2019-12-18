@@ -105,12 +105,11 @@ namespace SPMTool
                                     }
                                 }
 
-                                // Set the new support conditions (line 5 of the array)
-                                data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
+                                // Set the new support conditions
+                                data[NodeXDataIndex.support] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
 
                                 // Add the new XData
-                                ResultBuffer newRb = new ResultBuffer(data);
-                                ent.XData = newRb;
+                                ent.XData = new ResultBuffer(data);
 
                                 // If the node is not Free, add the support blocks
                                 if (support != "Free")
@@ -363,10 +362,10 @@ namespace SPMTool
                     TypedValue[] data = rb.AsArray();
 
                     // Read the node number
-                    int ndNum = Convert.ToInt32(data[2].Value);
+                    int ndNum = Convert.ToInt32(data[NodeXDataIndex.ndNum].Value);
 
                     // Read the support condition
-                    string sup = data[5].Value.ToString();
+                    string sup = data[NodeXDataIndex.support].Value.ToString();
 
                     // Get the position in the vector
                     int i = 2 * ndNum - 2;

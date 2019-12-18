@@ -145,8 +145,8 @@ namespace SPMTool
                     // Read the XData and get the panel number and width
                     ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] pnlData = pnlRb.AsArray();
-                    int pnlNum = Convert.ToInt32(pnlData[2].Value);
-                    double wd = Convert.ToDouble(pnlData[7].Value);
+                    int pnlNum = Convert.ToInt32(pnlData[PanelXDataIndex.pnlNum].Value);
+                    double wd = Convert.ToDouble(pnlData[PanelXDataIndex.pnlW].Value);
 
                     // Get the forces in the list
                     var f = panelForces[pnlNum - 1].Item2;
@@ -237,7 +237,7 @@ namespace SPMTool
                     // Read the XData and get the stringer number
                     ResultBuffer strRb = str.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] strData = strRb.AsArray();
-                    int strNum = Convert.ToInt32(strData[2].Value);
+                    int strNum = Convert.ToInt32(strData[StringerXDataIndex.strNum].Value);
 
                     // Get the forces in the list
                     var f = stringerForces[strNum - 1].Item2;
@@ -528,12 +528,11 @@ namespace SPMTool
                     TypedValue[] data = rb.AsArray();
 
                     // Save the displacements on the XData
-                    data[8] = new TypedValue((int)DxfCode.ExtendedDataReal, ux);
-                    data[9] = new TypedValue((int)DxfCode.ExtendedDataReal, uy);
+                    data[NodeXDataIndex.ux] = new TypedValue((int)DxfCode.ExtendedDataReal, ux);
+                    data[NodeXDataIndex.uy] = new TypedValue((int)DxfCode.ExtendedDataReal, uy);
 
                     // Add the new XData
-                    ResultBuffer newRb = new ResultBuffer(data);
-                    nd.XData = newRb;
+                    nd.XData = new ResultBuffer(data);
 
                     // Save only external nodes to the list
                     if (nd.Layer == Layers.extNdLyr)
@@ -661,18 +660,23 @@ namespace SPMTool
                             // If it's a node
                             if (ent.Layer == Layers.extNdLyr || ent.Layer == Layers.intNdLyr)
                             {
+                                // Read as a DBpoint
+                                DBPoint nd = ent as DBPoint;
+
+                                // Get the position
+                                double xPos = Math.Round(nd.Position.X, 2),
+                                       yPos = Math.Round(nd.Position.Y, 2);
+
                                 // Get the parameters
-                                string ndNum = data[2].Value.ToString(),
-                                       posX = data[3].Value.ToString(),
-                                       posY = data[4].Value.ToString(),
-                                       sup = data[5].Value.ToString(),
-                                       fX = data[6].Value.ToString(),
-                                       fY = data[7].Value.ToString(),
-                                       ux = data[8].Value.ToString(),
-                                       uy = data[9].Value.ToString();
+                                string ndNum = data[NodeXDataIndex.ndNum].Value.ToString(),
+                                       sup = data[NodeXDataIndex.support].Value.ToString(),
+                                       fX = data[NodeXDataIndex.xForce].Value.ToString(),
+                                       fY = data[NodeXDataIndex.yForce].Value.ToString(),
+                                       ux = data[NodeXDataIndex.ux].Value.ToString(),
+                                       uy = data[NodeXDataIndex.uy].Value.ToString();
 
                                 msgstr = "Node " + ndNum + "\n\n" +
-                                         "Node position: (" + posX + ", " + posY + ")" + "\n" +
+                                         "Node position: (" + xPos.ToString() + ", " + yPos.ToString() + ")" + "\n" +
                                          "Support conditions: " + sup + "\n" +
                                          "Fx = " + fX + " kN" + "\n" +
                                          "Fy = " + fY + " kN" + "\n" +
@@ -683,42 +687,58 @@ namespace SPMTool
                             // If it's a stringer
                             if (ent.Layer == Layers.strLyr)
                             {
+                                // Read as a line
+                                Line str = ent as Line;
+
+                                // Get the lenght
+                                double lgt = Math.Round(str.Length, 2);
+
                                 // Get the parameters
-                                string strNum = data[2].Value.ToString(),
-                                       strtNd = data[3].Value.ToString(),
-                                       midNd = data[4].Value.ToString(),
-                                       endNd = data[5].Value.ToString(),
-                                       lgt = data[6].Value.ToString(),
-                                       wdt = data[7].Value.ToString(),
-                                       hgt = data[8].Value.ToString(),
-                                       As = data[9].Value.ToString();
+                                string strNum = data[StringerXDataIndex.strNum].Value.ToString(),
+                                       strtNd = data[StringerXDataIndex.strStNd].Value.ToString(),
+                                       midNd = data[StringerXDataIndex.strMidNd].Value.ToString(),
+                                       endNd = data[StringerXDataIndex.strEnNd].Value.ToString(),
+                                       wdt = data[StringerXDataIndex.strW].Value.ToString(),
+                                       hgt = data[StringerXDataIndex.strH].Value.ToString();
+
+                                // Get the reinforcement
+                                double nBars = Convert.ToDouble(data[StringerXDataIndex.nBars].Value),
+                                       dBars = Convert.ToDouble(data[StringerXDataIndex.dBars].Value);
+
+                                // Calculate the reinforcement area
+                                double As = Math.Round(Reinforcement.StringerReinforcement(nBars, dBars), 2);
 
                                 msgstr = "Stringer " + strNum + "\n\n" +
                                          "DoFs: (" + strtNd + " - " + midNd + " - " + endNd + ")" + "\n" +
-                                         "Lenght = " + lgt + " mm" + "\n" +
+                                         "Lenght = " + lgt.ToString() + " mm" + "\n" +
                                          "Width = " + wdt + " mm" + "\n" +
                                          "Height = " + hgt + " mm" + "\n" +
-                                         "Reinforcement = " + As + " mm2";
+                                         "Reinforcement = " + nBars.ToString() + " Ø " + dBars.ToString() + " mm (" + As.ToString() + " mm2)";
                             }
 
                             // If it's a panel
                             if (ent.Layer == Layers.pnlLyr)
                             {
                                 // Get the parameters
-                                string pnlNum = data[2].Value.ToString();
-                                string[] pnlNds = { data[3].Value.ToString(),
-                                                    data[4].Value.ToString(),
-                                                    data[5].Value.ToString(),
-                                                    data[6].Value.ToString() };
-                                string pnlW = data[7].Value.ToString(),
-                                       psx = data[8].Value.ToString(),
-                                       psy = data[9].Value.ToString();
+                                string pnlNum = data[PanelXDataIndex.pnlNum].Value.ToString();
+                                string[] pnlNds =
+                                    {
+                                        data[PanelXDataIndex.grip1].Value.ToString(),
+                                        data[PanelXDataIndex.grip2].Value.ToString(),
+                                        data[PanelXDataIndex.grip3].Value.ToString(),
+                                        data[PanelXDataIndex.grip4].Value.ToString()
+                                    };
+                                string pnlW = data[PanelXDataIndex.pnlW].Value.ToString(),
+                                       dBarsX = data[PanelXDataIndex.dBarsX].Value.ToString(),
+                                       sx = data[PanelXDataIndex.sx].Value.ToString(),
+                                       dBarsY = data[PanelXDataIndex.dBarsY].Value.ToString(),
+                                       sy = data[PanelXDataIndex.sy].Value.ToString();
 
                                 msgstr = "Panel " + pnlNum + "\n\n" +
                                          "DoFs: (" + pnlNds[0] + " - " + pnlNds[1] + " - " + pnlNds[2] + " - " + pnlNds[3] + ")" + "\n" +
                                          "Width = " + pnlW + " mm" + "\n" +
-                                         "Reinforcement ratio (x) = " + psx + "\n" +
-                                         "Reinforcement ratio (y) = " + psy;
+                                         "Reinforcement (x) = Ø " + dBarsX + " mm, s = " + sx +  " mm\n" +
+                                         "Reinforcement (y) = Ø " + dBarsY + " mm, s = " + sy + " mm";
                             }
 
                             // If it's a force text

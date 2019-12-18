@@ -1,4 +1,5 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
+﻿using System.Collections.Generic;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
@@ -65,5 +66,60 @@ namespace SPMTool
                              supportXY = "SupportXY",
                              forceBlock = "ForceBlock",
                              shearBlock = "ShearBlock";
+    }
+
+    // XData indexers
+    // Node indexers
+    public class NodeXDataIndex
+    {
+        public static int appName  = 0,
+                          xdataStr = 1,
+                          ndNum    = 2,
+                          support  = 3,
+                          xForce   = 4,
+                          yForce   = 5,
+                          ux       = 6,
+                          uy       = 7;
+
+        // Size of XData
+        public static int size = 8;
+    }
+
+    // Stringer indexers
+    public class StringerXDataIndex
+    {
+        public static int appName = 0,
+                          xdataStr = 1,
+                          strNum = 2,
+                          strStNd = 3,
+                          strMidNd = 4,
+                          strEnNd = 5,
+                          strW = 6,
+                          strH = 7,
+                          nBars = 8,
+                          dBars = 9;
+
+        // Size of XData
+        public static int size = 10;
+    }
+
+    // Panel indexers
+    public class PanelXDataIndex
+    {
+        public static int appName = 0,
+                          xdataStr = 1,
+                          pnlNum = 2,
+                          grip1 = 3,
+                          grip2 = 4,
+                          grip3 = 5,
+                          grip4 = 6,
+                          pnlW = 7,
+                          dBarsX = 8,
+                          sx = 9,
+                          dBarsY = 10,
+                          sy = 11;
+
+        // Size of XData
+        public static int size = 12;
     }
 }

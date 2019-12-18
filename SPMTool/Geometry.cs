@@ -446,7 +446,7 @@ namespace SPMTool
                                     TypedValue[] data = rb.AsArray();
 
                                     // Get the panel number
-                                    int pnlNum = Convert.ToInt32(data[2].Value);
+                                    int pnlNum = Convert.ToInt32(data[PanelXDataIndex.pnlNum].Value);
 
                                     // Get the coordinates of the grip points
                                     Point3dCollection grpPts = new Point3dCollection();
@@ -616,8 +616,8 @@ namespace SPMTool
             AutoCAD.edtr.WriteMessage("\n" + numNds.ToString() + " nodes, " + numStrs.ToString() + " stringers and " + numPnls.ToString() + " panels updated.");
         }
 
-        [CommandMethod("SetStringerParameters")]
-        public void SetStringerParameters()
+        [CommandMethod("SetStringerGeometry")]
+        public void SetStringerGeometry()
         {
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -641,65 +641,60 @@ namespace SPMTool
 
                     // Get the result
                     PromptDoubleResult strWRes = AutoCAD.edtr.GetDouble(strWOp);
-                    double strW = strWRes.Value;
 
-                    // Ask the user to input the stringer height
-                    PromptDoubleOptions strHOp = new PromptDoubleOptions("\nInput the height (in mm) for the selected stringers:")
+                    if (strWRes.Status == PromptStatus.OK)
                     {
-                        DefaultValue = 1,
-                        AllowZero = false,
-                        AllowNegative = false
-                    };
+                        double strW = strWRes.Value;
 
-                    // Get the result
-                    PromptDoubleResult strHRes = AutoCAD.edtr.GetDouble(strHOp);
-                    double strH = strHRes.Value;
-
-                    // Ask the user to input the reinforcement area
-                    PromptDoubleOptions AsOp = new PromptDoubleOptions("\nInput the reinforcement area for the selected stringers (only needed in non-linear analysis):")
-                    {
-                        DefaultValue = 0,
-                        AllowNegative = false
-                    };
-
-                    // Get the result
-                    PromptDoubleResult AsRes = AutoCAD.edtr.GetDouble(AsOp);
-                    double As = AsRes.Value;
-
-                    foreach (SelectedObject obj in set)
-                    {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-
-                        // Check if the selected object is a node
-                        if (ent.Layer == Layers.strLyr)
+                        // Ask the user to input the stringer height
+                        PromptDoubleOptions strHOp = new PromptDoubleOptions("\nInput the height (in mm) for the selected stringers:")
                         {
-                            // Upgrade the OpenMode
-                            ent.UpgradeOpen();
+                            DefaultValue = 1,
+                            AllowZero = false,
+                            AllowNegative = false
+                        };
 
-                            // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
-                            TypedValue[] data = rb.AsArray();
+                        // Get the result
+                        PromptDoubleResult strHRes = AutoCAD.edtr.GetDouble(strHOp);
 
-                            // Set the new geometry and reinforcement (line 7 to 9 of the array)
-                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
-                            data[8] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
-                            data[9] = new TypedValue((int)DxfCode.ExtendedDataReal, As);
+                        if (strHRes.Status == PromptStatus.OK)
+                        {
+                            double strH = strHRes.Value;
 
-                            // Add the new XData
-                            ResultBuffer newRb = new ResultBuffer(data);
-                            ent.XData = newRb;
+                            foreach (SelectedObject obj in set)
+                            {
+                                // Open the selected object for read
+                                Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+                                // Check if the selected object is a node
+                                if (ent.Layer == Layers.strLyr)
+                                {
+                                    // Upgrade the OpenMode
+                                    ent.UpgradeOpen();
+
+                                    // Access the XData as an array
+                                    ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
+                                    TypedValue[] data = rb.AsArray();
+
+                                    // Set the new geometry and reinforcement (line 7 to 9 of the array)
+                                    data[StringerXDataIndex.strW] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
+                                    data[StringerXDataIndex.strH] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
+
+                                    // Add the new XData
+                                    ent.XData = new ResultBuffer(data);
+                                }
+                            }
+
+                            // Save the new object to the database
+                            trans.Commit();
                         }
                     }
                 }
-
-                // Save the new object to the database
-                trans.Commit();
             }
         }
 
-        [CommandMethod("SetPanelParameters")]
-        public void SetPanelParameters()
+        [CommandMethod("SetPanelGeometry")]
+        public void SetPanelGeometry()
         {
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -724,59 +719,38 @@ namespace SPMTool
 
                     // Get the result
                     PromptDoubleResult pnlWRes = AutoCAD.edtr.GetDouble(pnlWOp);
-                    double pnlW = pnlWRes.Value;
 
-                    // Ask the user to input the reinforcement ratio in x direction
-                    PromptDoubleOptions psxOp = new PromptDoubleOptions("\nInput the reinforcement ratio in x direction for selected panels (only needed in non-linear analysis):")
+                    if (pnlWRes.Status == PromptStatus.OK)
                     {
-                        DefaultValue = 0,
-                        AllowNegative = false
-                    };
+                        double pnlW = pnlWRes.Value;
 
-                    // Get the result
-                    PromptDoubleResult psxRes = AutoCAD.edtr.GetDouble(psxOp);
-                    double psx = psxRes.Value;
-
-                    // Ask the user to input the reinforcement ratio in y direction
-                    PromptDoubleOptions psyOp = new PromptDoubleOptions("\nInput the reinforcement ratio in y direction for selected panels (only needed in non-linear analysis):")
-                    {
-                        DefaultValue = 0,
-                        AllowNegative = false
-                    };
-
-                    // Get the result
-                    PromptDoubleResult psyRes = AutoCAD.edtr.GetDouble(psyOp);
-                    double psy = psyRes.Value;
-
-                    foreach (SelectedObject obj in set)
-                    {
-                        // Open the selected object for read
-                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-
-                        // Check if the selected object is a node
-                        if (ent.Layer == Layers.pnlLyr)
+                        foreach (SelectedObject obj in set)
                         {
-                            // Upgrade the OpenMode
-                            ent.UpgradeOpen();
+                            // Open the selected object for read
+                            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
-                            // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
-                            TypedValue[] data = rb.AsArray();
+                            // Check if the selected object is a node
+                            if (ent.Layer == Layers.pnlLyr)
+                            {
+                                // Upgrade the OpenMode
+                                ent.UpgradeOpen();
 
-                            // Set the new geometry and reinforcement (line 7 to 9 of the array)
-                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlW);
-                            data[8] = new TypedValue((int)DxfCode.ExtendedDataReal, psx);
-                            data[9] = new TypedValue((int)DxfCode.ExtendedDataReal, psy);
+                                // Access the XData as an array
+                                ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
+                                TypedValue[] data = rb.AsArray();
 
-                            // Add the new XData
-                            ResultBuffer newRb = new ResultBuffer(data);
-                            ent.XData = newRb;
+                                // Set the new geometry and reinforcement (line 7 to 9 of the array)
+                                data[PanelXDataIndex.pnlW] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlW);
+
+                                // Add the new XData
+                                ent.XData = new ResultBuffer(data);
+                            }
                         }
+
+                        // Save the new object to the database
+                        trans.Commit();
                     }
                 }
-
-                // Save the new object to the database
-                trans.Commit();
             }
         }
 
@@ -853,55 +827,58 @@ namespace SPMTool
                     // Read the object as a point
                     DBPoint nd = trans.GetObject(ndObj, OpenMode.ForWrite) as DBPoint;
 
-                    // Initialize the node conditions
-                    double ndNum = 0,                                  // Node number (to be set later)
-                           xPosition = Math.Round(nd.Position.X, 2),   // X position
-                           yPosition = Math.Round(nd.Position.Y, 2);   // Y position
-                    string support = "Free";                           // Support condition
-                    double xForce = 0,                                 // Force on X direction
-                           yForce = 0,                                 // Force on Y direction
-                           ux = 0,                                     // Displacment on X direction
-                           uy = 0;                                     // Displacment on X direction
+                    // Get the node number on the list
+                    double ndNum = ndList.IndexOf(nd.Position) + 1;
+
+                    // Initialize the array of typed values for XData
+                    TypedValue[] data;
 
                     // If the Extended data does not exist, create it
                     if (nd.XData == null)
                     {
-                        // Define the Xdata to add to the node
-                        using (ResultBuffer defRb = new ResultBuffer())
-                        {
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));  // 0
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndNum));                  // 2
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));              // 3
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));              // 4
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));         // 5
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xForce));                 // 6
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yForce));                 // 7
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ux));                     // 8
-                            defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, uy));                     // 9
+                        // Get the Xdata size
+                        data = new TypedValue[NodeXDataIndex.size];
 
-                            // Append the extended data to each object
-                            nd.XData = defRb;
-                        }
+                        // Set the initial parameters
+                        data[NodeXDataIndex.appName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
+                        data[NodeXDataIndex.xdataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+                        data[NodeXDataIndex.support]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Free");
+                        data[NodeXDataIndex.xForce]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                        data[NodeXDataIndex.yForce]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                        data[NodeXDataIndex.ux]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                        data[NodeXDataIndex.uy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                     }
 
-                    // Get the node number on the list
-                    ndNum = ndList.IndexOf(nd.Position) + 1;
+                    else // Xdata exists
+                    {
+                        // Get the result buffer as an array
+                        ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
+                        data = rb.AsArray();
+                    }
 
-                    // Get the result buffer as an array
-                    ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
-                    TypedValue[] data = rb.AsArray();
+                    //// Define the Xdata to add to the node
+                    //using (ResultBuffer defRb = new ResultBuffer())
+                    //    {
+                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));  // 0
+                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
+                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndNum));                  // 2
+                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));              // 3
+                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));              // 4
+                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));         // 5
+                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xForce));                 // 6
+                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yForce));                 // 7
+                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ux));                     // 8
+                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, uy));                     // 9
 
-                    // Set the new node number (line 2)
-                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
+                    //        // Append the extended data to each object
+                    //        nd.XData = defRb;
+                    //    }
 
-                    // Set the updated coordinates (in case of a node copy)
-                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, xPosition);
-                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, yPosition);
+                    // Set the updated number
+                    data[NodeXDataIndex.ndNum] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
 
                     // Add the new XData
-                    ResultBuffer newRb = new ResultBuffer(data);
-                    nd.XData = newRb;
+                    nd.XData = new ResultBuffer(data);
                 }
 
                 // Set the style for all point objects in the drawing
@@ -951,75 +928,77 @@ namespace SPMTool
                 // Get the array of midpoints ordered
                 List<Point3d> midPtsList = Auxiliary.OrderPoints(midPts);
 
-                // Access the nodes on the document
+                // Access the stringers on the document
                 foreach (ObjectId strObj in strs)
                 {
                     // Open the selected object as a line for write
                     Line str = trans.GetObject(strObj, OpenMode.ForWrite) as Line;
 
-                    // Initialize the variables
-                    int strStNd = 0,                             // Start node
-                        strMidNd = 0,                            // Mid node
-                        strEnNd = 0;                             // End node
-
-                    // Inicialization of stringer conditions
-                    double strNum = 0,                           // Stringer number (initially unassigned)
-                           strLgt = Math.Round(str.Length, 2),   // Stringer lenght
-                           strW = 1,                             // Width
-                           strH = 1,                             // Height
-                           As = 0;                               // Reinforcement Area
+                    // Initialize the array of typed values for XData
+                    TypedValue[] data;
 
                     // If XData does not exist, create it
                     if (str.XData == null)
                     {
+                        // Get the Xdata size
+                        data = new TypedValue[StringerXDataIndex.size];
 
-                        // Define the Xdata to add to the node
-                        using (ResultBuffer rb = new ResultBuffer())
-                        {
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));   // 0
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strNum));                 // 2
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStNd));                // 3
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd));               // 4
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd));                // 5
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strLgt));                 // 6
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));                   // 7
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));                   // 8
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));                     // 9
-
-                            // Open the stringer for write
-                            Entity ent = trans.GetObject(str.ObjectId, OpenMode.ForWrite) as Entity;
-
-                            // Append the extended data to each object
-                            ent.XData = rb;
-                        }
+                        // Set the initial parameters
+                        data[StringerXDataIndex.appName] = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
+                        data[StringerXDataIndex.xdataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+                        data[StringerXDataIndex.strW] = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                        data[StringerXDataIndex.strH] = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                        data[StringerXDataIndex.nBars] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                        data[StringerXDataIndex.dBars] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                     }
+
+                    else // Xdata exists
+                    {
+                        // Get the result buffer as an array
+                        ResultBuffer rb = str.GetXDataForApplication(AutoCAD.appName);
+                        data = rb.AsArray();
+                    }
+
+                    //// Define the Xdata to add to the node
+                    //using (ResultBuffer rb = new ResultBuffer())
+                    //    {
+                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));   // 0
+                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
+                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strNum));                 // 2
+                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStNd));                // 3
+                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd));               // 4
+                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd));                // 5
+                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strLgt));                 // 6
+                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));                   // 7
+                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));                   // 8
+                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));                     // 9
+
+                    //        // Open the stringer for write
+                    //        Entity ent = trans.GetObject(str.ObjectId, OpenMode.ForWrite) as Entity;
+
+                    //        // Append the extended data to each object
+                    //        ent.XData = rb;
+                    //    }
 
                     // Get the coordinates of the midpoint of the stringer
                     Point3d midPt = Auxiliary.MidPoint(str.StartPoint, str.EndPoint);
 
                     // Get the stringer number
-                    strNum = midPtsList.IndexOf(midPt) + 1;
+                    int strNum = midPtsList.IndexOf(midPt) + 1;
 
                     // Get the start, mid and end nodes
-                    strStNd = GetNodeNumber(str.StartPoint, nds);
-                    strMidNd = GetNodeNumber(midPt, nds);
-                    strEnNd = GetNodeNumber(str.EndPoint, nds);
-
-                    // Access the XData as an array
-                    ResultBuffer strRb = str.GetXDataForApplication(AutoCAD.appName);
-                    TypedValue[] data = strRb.AsArray();
+                    int strStNd  = GetNodeNumber(str.StartPoint, nds),
+                        strMidNd = GetNodeNumber(midPt, nds),
+                        strEnNd  = GetNodeNumber(str.EndPoint, nds);
 
                     // Set the updated number and nodes in ascending number and length (line 2 to 6)
-                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
-                    data[3] = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
-                    data[4] = new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd);
-                    data[5] = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
-                    data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, str.Length);
+                    data[StringerXDataIndex.strNum]   = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
+                    data[StringerXDataIndex.strStNd]  = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
+                    data[StringerXDataIndex.strMidNd] = new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd);
+                    data[StringerXDataIndex.strEnNd]  = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
 
                     // Add the new XData
-                    ResultBuffer newRb = new ResultBuffer(data);
-                    str.XData = newRb;
+                    str.XData = new ResultBuffer(data);
                 }
 
                 // Commit and dispose the transaction
@@ -1075,36 +1054,47 @@ namespace SPMTool
                     // Open the selected object as a solid for write
                     Solid pnl = trans.GetObject(pnlObj, OpenMode.ForWrite) as Solid;
 
-                    // Initialize the panel parameters
-                    double pnlNum = 0;                            // Panel number (initially unassigned)
-                    int[] dofs = { 0, 0, 0, 0 };                  // Panel DoFs (initially unassigned)
-                    double pnlW = 1;                              // width
-                    double psx = 0;                               // reinforcement ratio (X)
-                    double psy = 0;                               // reinforcement ratio (Y)
+                    // Initialize the array of typed values for XData
+                    TypedValue[] data;
 
                     // Check if the XData already exist. If not, create it
                     if (pnl.XData == null)
                     {
-                        // Initialize a Result Buffer to add to the panel
-                        ResultBuffer rb = new ResultBuffer();
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));   // 0
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum));                 // 2
-                        for (int i = 0; i < 4; i++)
-                        {
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, dofs[i]));            // 3, 4, 5, 6
-                        }
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));                   // 7
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));                    // 8
-                        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));                    // 9
+                        // Get the Xdata size
+                        data = new TypedValue[PanelXDataIndex.size];
 
-                        // Append the extended data to the object
-                        pnl.XData = rb;
+                        // Set the initial parameters
+                        data[PanelXDataIndex.appName] = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
+                        data[PanelXDataIndex.xdataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+                        data[PanelXDataIndex.pnlW] = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                        data[PanelXDataIndex.dBarsX] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                        data[PanelXDataIndex.sx] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                        data[PanelXDataIndex.dBarsY] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                        data[PanelXDataIndex.sy] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                     }
 
-                    // Read it as a block and get the draw order table
-                    BlockTableRecord blck = trans.GetObject(pnl.BlockId, OpenMode.ForRead) as BlockTableRecord;
-                    DrawOrderTable drawOrder = trans.GetObject(blck.DrawOrderTableId, OpenMode.ForWrite) as DrawOrderTable;
+                    else // Xdata exists
+                    {
+                        // Get the result buffer as an array
+                        ResultBuffer rb = pnl.GetXDataForApplication(AutoCAD.appName);
+                        data = rb.AsArray();
+                    }
+
+                    //// Initialize a Result Buffer to add to the panel
+                    //ResultBuffer rb = new ResultBuffer();
+                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));  // 0
+                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
+                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum));                 // 2
+                    //for (int i = 0; i < 4; i++)
+                    //{
+                    //    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, grips[i]));           // 3, 4, 5, 6
+                    //}
+                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));                   // 7
+                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));                    // 8
+                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));                    // 9
+
+                    //// Append the extended data to the object
+                    //pnl.XData = rb;
 
                     // Get the vertices
                     Point3dCollection pnlVerts = new Point3dCollection();
@@ -1114,41 +1104,43 @@ namespace SPMTool
                     Point3d cntrPt = Auxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
 
                     // Get the coordinates of the panel DoFs in the necessary order
-                    Point3dCollection pnlDofs = new Point3dCollection();
-                    pnlDofs.Add(Auxiliary.MidPoint(pnlVerts[0], pnlVerts[1]));
-                    pnlDofs.Add(Auxiliary.MidPoint(pnlVerts[1], pnlVerts[3]));
-                    pnlDofs.Add(Auxiliary.MidPoint(pnlVerts[3], pnlVerts[2]));
-                    pnlDofs.Add(Auxiliary.MidPoint(pnlVerts[2], pnlVerts[0]));
+                    Point3dCollection pnlGrips = new Point3dCollection();
+                    pnlGrips.Add(Auxiliary.MidPoint(pnlVerts[0], pnlVerts[1]));
+                    pnlGrips.Add(Auxiliary.MidPoint(pnlVerts[1], pnlVerts[3]));
+                    pnlGrips.Add(Auxiliary.MidPoint(pnlVerts[3], pnlVerts[2]));
+                    pnlGrips.Add(Auxiliary.MidPoint(pnlVerts[2], pnlVerts[0]));
 
                     // Get the panel number
-                    pnlNum = cntrPtsList.IndexOf(cntrPt) + 1;
+                    int pnlNum = cntrPtsList.IndexOf(cntrPt) + 1;
+
+                    // Initialize an int array of grip numbers
+                    int[] grips = new int[4];
 
                     // Compare the node position to the panel vertices
-                    foreach (Point3d dof in pnlDofs)
+                    foreach (Point3d grip in pnlGrips)
                     {
                         // Get the position of the vertex in the array
-                        int i = pnlDofs.IndexOf(dof);
+                        int i = pnlGrips.IndexOf(grip);
 
                         // Get the node number
-                        dofs[i] = GetNodeNumber(dof, intNds);
+                        grips[i] = GetNodeNumber(grip, intNds);
                     }
 
-                    // Access the XData as an array
-                    ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.appName);
-                    TypedValue[] data = pnlRb.AsArray();
+                    // Set the updated panel number
+                    data[PanelXDataIndex.pnlNum] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
 
-                    // Set the updated panel number (line 2)
-                    data[2] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
-
-                    // Set the updated node numbers in the necessary order (line 3 to 6 of the array)
-                    for (int i = 3; i <= 6; i++)
-                    {
-                        data[i] = new TypedValue((int)DxfCode.ExtendedDataReal, dofs[i - 3]);
-                    }
+                    // Set the updated node numbers in the necessary order
+                    data[PanelXDataIndex.grip1] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[0]);
+                    data[PanelXDataIndex.grip2] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[1]);
+                    data[PanelXDataIndex.grip3] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[2]);
+                    data[PanelXDataIndex.grip4] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[3]);
 
                     // Add the new XData
-                    ResultBuffer newRb = new ResultBuffer(data);
-                    pnl.XData = newRb;
+                    pnl.XData = new ResultBuffer(data);
+
+                    // Read it as a block and get the draw order table
+                    BlockTableRecord blck = trans.GetObject(pnl.BlockId, OpenMode.ForRead) as BlockTableRecord;
+                    DrawOrderTable drawOrder = trans.GetObject(blck.DrawOrderTableId, OpenMode.ForWrite) as DrawOrderTable;
 
                     // Move the panels to bottom
                     drawOrder.MoveToBottom(pnls);
@@ -1296,7 +1288,7 @@ namespace SPMTool
                         TypedValue[] dataNd = ndRb.AsArray();
 
                         // Get the node number (line 2)
-                        ndNum = Convert.ToInt32(dataNd[2].Value);
+                        ndNum = Convert.ToInt32(dataNd[NodeXDataIndex.ndNum].Value);
                     }
                 }
             }

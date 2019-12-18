@@ -95,9 +95,9 @@ namespace SPMTool
                     // Read the XData and get the necessary data
                     ResultBuffer strRb = str.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] strData = strRb.AsArray();
-                    int strNum = Convert.ToInt32(strData[2].Value);
-                    double wd  = Convert.ToDouble(strData[7].Value),
-                           h   = Convert.ToDouble(strData[8].Value);
+                    int strNum = Convert.ToInt32(strData[StringerXDataIndex.strNum].Value);
+                    double wd  = Convert.ToDouble(strData[StringerXDataIndex.strW].Value),
+                           h   = Convert.ToDouble(strData[StringerXDataIndex.strH].Value);
 
                     // Calculate the cross sectional area
                     double A = wd * h;
@@ -215,8 +215,8 @@ namespace SPMTool
                     TypedValue[] pnlData = pnlRb.AsArray();
 
                     // Get the panel number and width
-                    int pnlNum = Convert.ToInt32(pnlData[2].Value);
-                    double t   = Convert.ToDouble(pnlData[7].Value);
+                    int pnlNum = Convert.ToInt32(pnlData[PanelXDataIndex.pnlNum].Value);
+                    double t   = Convert.ToDouble(pnlData[PanelXDataIndex.pnlW].Value);
 
                     // Create lines to measure the angles between the edges
                     Line ln1 = new Line(nd1, nd2),
@@ -464,84 +464,84 @@ namespace SPMTool
             }
         }
 
-        [CommandMethod("ViewElasticStifness")]
-        public void ViewElasticStifness()
-        {
-            // Initialize the message to display
-            string msgstr = "";
+        //[CommandMethod("ViewElasticStifness")]
+        //public void ViewElasticStifness()
+        //{
+        //    // Initialize the message to display
+        //    string msgstr = "";
 
-            // Request the object to be selected in the drawing area
-            PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to print the stiffness matrix:");
-            PromptEntityResult entRes = AutoCAD.edtr.GetEntity(entOp);
+        //    // Request the object to be selected in the drawing area
+        //    PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to print the stiffness matrix:");
+        //    PromptEntityResult entRes = AutoCAD.edtr.GetEntity(entOp);
 
-            // If the prompt status is OK, objects were selected
-            if (entRes.Status == PromptStatus.OK)
-            {
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-                {
-                    // Open the selected object for read
-                    Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
+        //    // If the prompt status is OK, objects were selected
+        //    if (entRes.Status == PromptStatus.OK)
+        //    {
+        //        // Start a transaction
+        //        using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+        //        {
+        //            // Open the selected object for read
+        //            Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
 
-                    // If it's a stringer
-                    if (ent.Layer == Layers.strLyr)
-                    {
-                        // Get the extended data attached to each object for MY_APP
-                        ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
+        //            // If it's a stringer
+        //            if (ent.Layer == Layers.strLyr)
+        //            {
+        //                // Get the extended data attached to each object for MY_APP
+        //                ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
 
-                        // Make sure the Xdata is not empty
-                        if (rb != null)
-                        {
-                            // Get the XData as an array
-                            TypedValue[] data = rb.AsArray();
+        //                // Make sure the Xdata is not empty
+        //                if (rb != null)
+        //                {
+        //                    // Get the XData as an array
+        //                    TypedValue[] data = rb.AsArray();
 
-                            // Get the parameters
-                            string strNum = data[2 ].Value.ToString(),
-                                   kl     = data[10].Value.ToString(),
-                                   k      = data[11].Value.ToString();
+        //                    // Get the parameters
+        //                    string strNum = data[StringerXDataIndex.strNum].Value.ToString(),
+        //                           kl     = data[10].Value.ToString(),
+        //                           k      = data[11].Value.ToString();
 
-                            msgstr = "Stringer " + strNum + "\n\n" +
-                                     "Local Stifness Matrix: \n" +
-                                     kl + "\n\n" +
-                                     "Transformated Stifness Matrix: \n" +
-                                     k;
-                        }
+        //                    msgstr = "Stringer " + strNum + "\n\n" +
+        //                             "Local Stifness Matrix: \n" +
+        //                             kl + "\n\n" +
+        //                             "Transformated Stifness Matrix: \n" +
+        //                             k;
+        //                }
 
-                        else msgstr = "NONE";
-                    }
+        //                else msgstr = "NONE";
+        //            }
 
-                    // If it's a panel
-                    if (ent.Layer == Layers.pnlLyr)
-                    {
-                        // Get the extended data attached to each object for MY_APP
-                        ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
+        //            // If it's a panel
+        //            if (ent.Layer == Layers.pnlLyr)
+        //            {
+        //                // Get the extended data attached to each object for MY_APP
+        //                ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
 
-                        // Make sure the Xdata is not empty
-                        if (rb != null)
-                        {
-                            // Get the XData as an array
-                            TypedValue[] data = rb.AsArray();
+        //                // Make sure the Xdata is not empty
+        //                if (rb != null)
+        //                {
+        //                    // Get the XData as an array
+        //                    TypedValue[] data = rb.AsArray();
 
-                            // Get the parameters
-                            string pnlNum = data[2].Value.ToString(),
-                                   Kl     = data[10].Value.ToString(),
-                                   K      = data[11].Value.ToString();
+        //                    // Get the parameters
+        //                    string pnlNum = data[2].Value.ToString(),
+        //                           Kl     = data[10].Value.ToString(),
+        //                           K      = data[11].Value.ToString();
 
-                            msgstr = "Panel " + pnlNum + "\n\n" +
-                                     "Local Stifness Matrix:\n" + Kl + "\n" +
-                                     "Global Stifness Matrix:\n" + K;
+        //                    msgstr = "Panel " + pnlNum + "\n\n" +
+        //                             "Local Stifness Matrix:\n" + Kl + "\n" +
+        //                             "Global Stifness Matrix:\n" + K;
 
-                        }
+        //                }
 
-                        else msgstr = "NONE";
-                    }
+        //                else msgstr = "NONE";
+        //            }
 
-                    //else msgstr = "Object is not a stringer or panel.";
+        //            //else msgstr = "Object is not a stringer or panel.";
 
-                    // Display the values returned
-                    AutoCAD.edtr.WriteMessage("\n" + msgstr);
-                }
-            }
-        }
+        //            // Display the values returned
+        //            AutoCAD.edtr.WriteMessage("\n" + msgstr);
+        //        }
+        //    }
+        //}
     }
 }

@@ -178,23 +178,23 @@ namespace SPMTool
             RibbonButton button4 = new RibbonButton()
             {
                 Text = "Stringer parameters",
-                ToolTip = "Set the geometry and steel reinforcement to a selection of stringers",
+                ToolTip = "Set the geometry to a selection of stringers",
                 ShowText = true,
                 ShowImage = true,
                 Image = getBitmap(set),
                 CommandHandler = new CmdHandler(),
-                CommandParameter = "SetStringerParameters"
+                CommandParameter = "SetStringerGeometry"
             };
 
             RibbonButton button5 = new RibbonButton()
             {
                 Text = "Panel parameters",
-                ToolTip = "Set the geometry and steel reinforcement to a selection of panels",
+                ToolTip = "Set the geometry to a selection of panels",
                 ShowText = true,
                 ShowImage = true,
                 Image = getBitmap(set),
                 CommandHandler = new CmdHandler(),
-                CommandParameter = "SetPanelParameters"
+                CommandParameter = "SetPanelGeometry"
             };
 
             // Create a split button for Element parameters

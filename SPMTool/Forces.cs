@@ -99,12 +99,11 @@ namespace SPMTool
                             TypedValue[] data = rb.AsArray();
 
                             // Set the new forces (line 6 and 7 of the array)
-                            data[6] = new TypedValue((int)DxfCode.ExtendedDataReal, xForce);
-                            data[7] = new TypedValue((int)DxfCode.ExtendedDataReal, yForce);
+                            data[NodeXDataIndex.xForce] = new TypedValue((int)DxfCode.ExtendedDataReal, xForce);
+                            data[NodeXDataIndex.yForce] = new TypedValue((int)DxfCode.ExtendedDataReal, yForce);
 
                             // Add the new XData
-                            ResultBuffer newRb = new ResultBuffer(data);
-                            ent.XData = newRb;
+                            ent.XData = new ResultBuffer(data);
 
                             // Add the block to selected node at
                             Point3d insPt = ndPos;
@@ -375,11 +374,11 @@ namespace SPMTool
                     TypedValue[] data = rb.AsArray();
 
                     // Read the node number
-                    int ndNum = Convert.ToInt32(data[2].Value);
+                    int ndNum = Convert.ToInt32(data[NodeXDataIndex.ndNum].Value);
 
                     // Read the forces in x and y (transform in N)
-                    double Fx = Convert.ToDouble(data[6].Value) * 1000,
-                           Fy = Convert.ToDouble(data[7].Value) * 1000;
+                    double Fx = Convert.ToDouble(data[NodeXDataIndex.xForce].Value) * 1000,
+                           Fy = Convert.ToDouble(data[NodeXDataIndex.yForce].Value) * 1000;
 
                     // Get the position in the vector from the DoF list
                     int i = 2 * ndNum - 2;
