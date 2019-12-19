@@ -172,6 +172,12 @@
   <data name="panelforces_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panelforces_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="panelreinforcement_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\panelreinforcement_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="panelreinforcement_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\panelreinforcement_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="panel_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panel_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -198,6 +204,12 @@
   </data>
   <data name="stringerforces_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\stringerforces_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="stringerreinforcement_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\stringerreinforcement_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="stringerreinforcement_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\stringerreinforcement_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="stringer_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\stringer_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

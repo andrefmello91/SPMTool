@@ -286,5 +286,17 @@
   <ItemGroup>
     <None Include="Resources\elementdata_large.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringerreinforcement_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringerreinforcement_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelreinforcement_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelreinforcement_large_light.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

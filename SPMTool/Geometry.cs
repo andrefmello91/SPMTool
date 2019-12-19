@@ -446,7 +446,7 @@ namespace SPMTool
                                     TypedValue[] data = rb.AsArray();
 
                                     // Get the panel number
-                                    int pnlNum = Convert.ToInt32(data[PanelXDataIndex.pnlNum].Value);
+                                    int pnlNum = Convert.ToInt32(data[PanelXDataIndex.num].Value);
 
                                     // Get the coordinates of the grip points
                                     Point3dCollection grpPts = new Point3dCollection();
@@ -560,7 +560,7 @@ namespace SPMTool
                                     }
 
                                     else // panel is not rectangular
-                                        AutoCAD.edtr.WriteMessage("\nPanel " + pnlNum.ToString() + " is not rectangular");
+                                        AutoCAD.edtr.WriteMessage("\nPanel " + pnlNum + " is not rectangular");
                                 }
                             }
 
@@ -677,8 +677,8 @@ namespace SPMTool
                                     TypedValue[] data = rb.AsArray();
 
                                     // Set the new geometry and reinforcement (line 7 to 9 of the array)
-                                    data[StringerXDataIndex.strW] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
-                                    data[StringerXDataIndex.strH] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
+                                    data[StringerXDataIndex.w] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
+                                    data[StringerXDataIndex.h] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
 
                                     // Add the new XData
                                     ent.XData = new ResultBuffer(data);
@@ -740,7 +740,7 @@ namespace SPMTool
                                 TypedValue[] data = rb.AsArray();
 
                                 // Set the new geometry and reinforcement (line 7 to 9 of the array)
-                                data[PanelXDataIndex.pnlW] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlW);
+                                data[PanelXDataIndex.w] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlW);
 
                                 // Add the new XData
                                 ent.XData = new ResultBuffer(data);
@@ -843,8 +843,8 @@ namespace SPMTool
                         data[NodeXDataIndex.appName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
                         data[NodeXDataIndex.xdataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
                         data[NodeXDataIndex.support]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Free");
-                        data[NodeXDataIndex.xForce]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                        data[NodeXDataIndex.yForce]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                        data[NodeXDataIndex.Fx]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                        data[NodeXDataIndex.Fy]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                         data[NodeXDataIndex.ux]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                         data[NodeXDataIndex.uy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                     }
@@ -875,7 +875,7 @@ namespace SPMTool
                     //    }
 
                     // Set the updated number
-                    data[NodeXDataIndex.ndNum] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
+                    data[NodeXDataIndex.num] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
 
                     // Add the new XData
                     nd.XData = new ResultBuffer(data);
@@ -946,10 +946,10 @@ namespace SPMTool
                         // Set the initial parameters
                         data[StringerXDataIndex.appName] = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
                         data[StringerXDataIndex.xdataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-                        data[StringerXDataIndex.strW] = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
-                        data[StringerXDataIndex.strH] = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                        data[StringerXDataIndex.w] = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                        data[StringerXDataIndex.h] = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
                         data[StringerXDataIndex.nBars] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                        data[StringerXDataIndex.dBars] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                        data[StringerXDataIndex.phi] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                     }
 
                     else // Xdata exists
@@ -992,10 +992,10 @@ namespace SPMTool
                         strEnNd  = GetNodeNumber(str.EndPoint, nds);
 
                     // Set the updated number and nodes in ascending number and length (line 2 to 6)
-                    data[StringerXDataIndex.strNum]   = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
-                    data[StringerXDataIndex.strStNd]  = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
-                    data[StringerXDataIndex.strMidNd] = new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd);
-                    data[StringerXDataIndex.strEnNd]  = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
+                    data[StringerXDataIndex.num]   = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
+                    data[StringerXDataIndex.StNd]  = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
+                    data[StringerXDataIndex.MidNd] = new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd);
+                    data[StringerXDataIndex.EndNd]  = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
 
                     // Add the new XData
                     str.XData = new ResultBuffer(data);
@@ -1066,10 +1066,10 @@ namespace SPMTool
                         // Set the initial parameters
                         data[PanelXDataIndex.appName] = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
                         data[PanelXDataIndex.xdataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-                        data[PanelXDataIndex.pnlW] = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
-                        data[PanelXDataIndex.dBarsX] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                        data[PanelXDataIndex.w] = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                        data[PanelXDataIndex.phiX] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                         data[PanelXDataIndex.sx] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                        data[PanelXDataIndex.dBarsY] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                        data[PanelXDataIndex.phiY] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                         data[PanelXDataIndex.sy] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                     }
 
@@ -1127,7 +1127,7 @@ namespace SPMTool
                     }
 
                     // Set the updated panel number
-                    data[PanelXDataIndex.pnlNum] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
+                    data[PanelXDataIndex.num] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
 
                     // Set the updated node numbers in the necessary order
                     data[PanelXDataIndex.grip1] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[0]);
@@ -1288,7 +1288,7 @@ namespace SPMTool
                         TypedValue[] dataNd = ndRb.AsArray();
 
                         // Get the node number (line 2)
-                        ndNum = Convert.ToInt32(dataNd[NodeXDataIndex.ndNum].Value);
+                        ndNum = Convert.ToInt32(dataNd[NodeXDataIndex.num].Value);
                     }
                 }
             }

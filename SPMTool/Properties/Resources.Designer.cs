@@ -263,6 +263,26 @@ namespace SPMTool.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap panelreinforcement_large {
+            get {
+                object obj = ResourceManager.GetObject("panelreinforcement_large", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap panelreinforcement_large_light {
+            get {
+                object obj = ResourceManager.GetObject("panelreinforcement_large_light", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap set_small {
             get {
                 object obj = ResourceManager.GetObject("set_small", resourceCulture);
@@ -346,6 +366,26 @@ namespace SPMTool.Properties {
         internal static System.Drawing.Bitmap stringerforces_large_light {
             get {
                 object obj = ResourceManager.GetObject("stringerforces_large_light", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap stringerreinforcement_large {
+            get {
+                object obj = ResourceManager.GetObject("stringerreinforcement_large", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap stringerreinforcement_large_light {
+            get {
+                object obj = ResourceManager.GetObject("stringerreinforcement_large_light", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

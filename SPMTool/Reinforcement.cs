@@ -43,18 +43,18 @@ namespace SPMTool
                         double nBars = nBarsRes.Value;
 
                         // Ask the user to input the stringer height
-                        PromptDoubleOptions dBarOp = new PromptDoubleOptions("\nInput the diameter (in mm) of stringer reinforcement bars:")
+                        PromptDoubleOptions phiOp = new PromptDoubleOptions("\nInput the diameter (in mm) of stringer reinforcement bars:")
                         {
                             DefaultValue = 0,
                             AllowNegative = false
                         };
 
                         // Get the result
-                        PromptDoubleResult dBarRes = AutoCAD.edtr.GetDouble(dBarOp);
+                        PromptDoubleResult phiRes = AutoCAD.edtr.GetDouble(phiOp);
 
-                        if (dBarRes.Status == PromptStatus.OK)
+                        if (phiRes.Status == PromptStatus.OK)
                         {
-                            double dBar = dBarRes.Value;
+                            double phi = phiRes.Value;
 
                             foreach (SelectedObject obj in set)
                             {
@@ -73,7 +73,7 @@ namespace SPMTool
 
                                     // Set the new reinforcement
                                     data[StringerXDataIndex.nBars] = new TypedValue((int)DxfCode.ExtendedDataReal, nBars);
-                                    data[StringerXDataIndex.dBars] = new TypedValue((int)DxfCode.ExtendedDataReal, dBar);
+                                    data[StringerXDataIndex.phi]   = new TypedValue((int)DxfCode.ExtendedDataReal, phi);
 
                                     // Add the new XData
                                     ent.XData = new ResultBuffer(data);
@@ -105,18 +105,18 @@ namespace SPMTool
                     SelectionSet set = selRes.Value;
 
                     // Ask the user to input the diameter of bars
-                    PromptDoubleOptions dBarXOp = new PromptDoubleOptions("\nInput the reinforcement bar diameter (in mm) for the X direction for selected panels (only needed for nonlinear analysis):")
+                    PromptDoubleOptions phiXOp = new PromptDoubleOptions("\nInput the reinforcement bar diameter (in mm) for the X direction for selected panels (only needed for nonlinear analysis):")
                     {
                         DefaultValue = 0,
                         AllowNegative = false
                     };
 
                     // Get the result
-                    PromptDoubleResult dBarXRes = AutoCAD.edtr.GetDouble(dBarXOp);
+                    PromptDoubleResult phiXRes = AutoCAD.edtr.GetDouble(phiXOp);
 
-                    if (dBarXRes.Status == PromptStatus.OK)
+                    if (phiXRes.Status == PromptStatus.OK)
                     {
-                        double dBarX = dBarXRes.Value;
+                        double phiX = phiXRes.Value;
 
                         // Ask the user to input the bar spacing
                         PromptDoubleOptions sxOp = new PromptDoubleOptions("\nInput the bar spacing (in mm) for the X direction:")
@@ -133,18 +133,18 @@ namespace SPMTool
                             double sx = sxRes.Value;
 
                             // Ask the user to input the diameter of bars
-                            PromptDoubleOptions dBarYOp = new PromptDoubleOptions("\nInput the reinforcement bar diameter (in mm) for the Y direction for selected panels (only needed for nonlinear analysis):")
+                            PromptDoubleOptions phiYOp = new PromptDoubleOptions("\nInput the reinforcement bar diameter (in mm) for the Y direction for selected panels (only needed for nonlinear analysis):")
                             {
                                 DefaultValue = 0,
                                 AllowNegative = false
                             };
 
                             // Get the result
-                            PromptDoubleResult dBarYRes = AutoCAD.edtr.GetDouble(dBarYOp);
+                            PromptDoubleResult phiYRes = AutoCAD.edtr.GetDouble(phiYOp);
 
-                            if (dBarYRes.Status == PromptStatus.OK)
+                            if (phiYRes.Status == PromptStatus.OK)
                             {
-                                double dBarY = dBarYRes.Value;
+                                double phiY = phiYRes.Value;
 
                                 // Ask the user to input the bar spacing
                                 PromptDoubleOptions syOp = new PromptDoubleOptions("\nInput the bar spacing (in mm) for the Y direction:")
@@ -176,10 +176,10 @@ namespace SPMTool
                                             TypedValue[] data = rb.AsArray();
 
                                             // Set the new geometry and reinforcement (line 7 to 9 of the array)
-                                            data[PanelXDataIndex.dBarsX] = new TypedValue((int)DxfCode.ExtendedDataReal, dBarX);
-                                            data[PanelXDataIndex.sx]     = new TypedValue((int)DxfCode.ExtendedDataReal, sx);
-                                            data[PanelXDataIndex.dBarsY] = new TypedValue((int)DxfCode.ExtendedDataReal, dBarY);
-                                            data[PanelXDataIndex.sy]     = new TypedValue((int)DxfCode.ExtendedDataReal, sy);
+                                            data[PanelXDataIndex.phiX] = new TypedValue((int)DxfCode.ExtendedDataReal, phiX);
+                                            data[PanelXDataIndex.sx]   = new TypedValue((int)DxfCode.ExtendedDataReal, sx);
+                                            data[PanelXDataIndex.phiY] = new TypedValue((int)DxfCode.ExtendedDataReal, phiY);
+                                            data[PanelXDataIndex.sy]   = new TypedValue((int)DxfCode.ExtendedDataReal, sy);
 
                                             // Add the new XData
                                             ent.XData = new ResultBuffer(data);
@@ -197,10 +197,31 @@ namespace SPMTool
         }
 
         // Calculate the stringer reinforcement area
-        public static double StringerReinforcement(double nBars, double dBars)
+        public static double StringerReinforcement(double nBars, double phi)
         {
-            double As = nBars * Constants.pi * dBars * dBars / 4;
+            // Initialize As
+            double As = 0;
+
+            if (nBars > 0 && phi > 0)
+                As = nBars * Constants.pi * phi * phi / 4;
+
             return As;
+        }
+
+        // Calculate the panel reinforcement ratio
+        public static (double, double) PanelReinforcement(double phiX, double sx, double phiY, double sy, double w)
+        {
+            // Initialize psx and psy
+            double psx = 0,
+                   psy = 0;
+
+            if (phiX > 0 && sx > 0)
+                psx = Constants.pi * phiX * phiX / (2 * sx * w);
+
+            if (phiY > 0 && sy > 0)
+                psy = Constants.pi * phiY * phiY / (2 * sy * w);
+
+            return (psx, psy);
         }
     }
 }

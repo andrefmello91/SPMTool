@@ -145,8 +145,8 @@ namespace SPMTool
                     // Read the XData and get the panel number and width
                     ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] pnlData = pnlRb.AsArray();
-                    int pnlNum = Convert.ToInt32(pnlData[PanelXDataIndex.pnlNum].Value);
-                    double wd = Convert.ToDouble(pnlData[PanelXDataIndex.pnlW].Value);
+                    int pnlNum = Convert.ToInt32(pnlData[PanelXDataIndex.num].Value);
+                    double wd = Convert.ToDouble(pnlData[PanelXDataIndex.w].Value);
 
                     // Get the forces in the list
                     var f = panelForces[pnlNum - 1].Item2;
@@ -237,7 +237,7 @@ namespace SPMTool
                     // Read the XData and get the stringer number
                     ResultBuffer strRb = str.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] strData = strRb.AsArray();
-                    int strNum = Convert.ToInt32(strData[StringerXDataIndex.strNum].Value);
+                    int strNum = Convert.ToInt32(strData[StringerXDataIndex.num].Value);
 
                     // Get the forces in the list
                     var f = stringerForces[strNum - 1].Item2;
@@ -633,7 +633,7 @@ namespace SPMTool
             string msgstr = "";
 
             // Start a loop for viewing continuous elements
-            for (; ; )
+            for ( ; ; )
             {
                 // Request the object to be selected in the drawing area
                 PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to view data:");
@@ -668,15 +668,15 @@ namespace SPMTool
                                        yPos = Math.Round(nd.Position.Y, 2);
 
                                 // Get the parameters
-                                string ndNum = data[NodeXDataIndex.ndNum].Value.ToString(),
-                                       sup = data[NodeXDataIndex.support].Value.ToString(),
-                                       fX = data[NodeXDataIndex.xForce].Value.ToString(),
-                                       fY = data[NodeXDataIndex.yForce].Value.ToString(),
-                                       ux = data[NodeXDataIndex.ux].Value.ToString(),
-                                       uy = data[NodeXDataIndex.uy].Value.ToString();
+                                string ndNum = data[NodeXDataIndex.num].Value.ToString(),
+                                       sup   = data[NodeXDataIndex.support].Value.ToString(),
+                                       fX    = data[NodeXDataIndex.Fx].Value.ToString(),
+                                       fY    = data[NodeXDataIndex.Fy].Value.ToString(),
+                                       ux    = data[NodeXDataIndex.ux].Value.ToString(),
+                                       uy    = data[NodeXDataIndex.uy].Value.ToString();
 
                                 msgstr = "Node " + ndNum + "\n\n" +
-                                         "Node position: (" + xPos.ToString() + ", " + yPos.ToString() + ")" + "\n" +
+                                         "Node position: (" + xPos + ", " + yPos + ")" + "\n" +
                                          "Support conditions: " + sup + "\n" +
                                          "Fx = " + fX + " kN" + "\n" +
                                          "Fy = " + fY + " kN" + "\n" +
@@ -694,58 +694,66 @@ namespace SPMTool
                                 double lgt = Math.Round(str.Length, 2);
 
                                 // Get the parameters
-                                string strNum = data[StringerXDataIndex.strNum].Value.ToString(),
-                                       strtNd = data[StringerXDataIndex.strStNd].Value.ToString(),
-                                       midNd = data[StringerXDataIndex.strMidNd].Value.ToString(),
-                                       endNd = data[StringerXDataIndex.strEnNd].Value.ToString(),
-                                       wdt = data[StringerXDataIndex.strW].Value.ToString(),
-                                       hgt = data[StringerXDataIndex.strH].Value.ToString();
+                                string strNum = data[StringerXDataIndex.num].Value.ToString(),
+                                       strtNd = data[StringerXDataIndex.StNd].Value.ToString(),
+                                       midNd  = data[StringerXDataIndex.MidNd].Value.ToString(),
+                                       endNd  = data[StringerXDataIndex.EndNd].Value.ToString(),
+                                       wdt    = data[StringerXDataIndex.w].Value.ToString(),
+                                       hgt    = data[StringerXDataIndex.h].Value.ToString();
 
                                 // Get the reinforcement
                                 double nBars = Convert.ToDouble(data[StringerXDataIndex.nBars].Value),
-                                       dBars = Convert.ToDouble(data[StringerXDataIndex.dBars].Value);
+                                       phi   = Convert.ToDouble(data[StringerXDataIndex.phi].Value);
 
                                 // Calculate the reinforcement area
-                                double As = Math.Round(Reinforcement.StringerReinforcement(nBars, dBars), 2);
+                                double As = Math.Round(Reinforcement.StringerReinforcement(nBars, phi), 2);
 
                                 msgstr = "Stringer " + strNum + "\n\n" +
-                                         "DoFs: (" + strtNd + " - " + midNd + " - " + endNd + ")" + "\n" +
-                                         "Lenght = " + lgt.ToString() + " mm" + "\n" +
+                                         "Grips: (" + strtNd + " - " + midNd + " - " + endNd + ")" + "\n" +
+                                         "Lenght = " + lgt + " mm" + "\n" +
                                          "Width = " + wdt + " mm" + "\n" +
                                          "Height = " + hgt + " mm" + "\n" +
-                                         "Reinforcement = " + nBars.ToString() + " Ø " + dBars.ToString() + " mm (" + As.ToString() + " mm2)";
+                                         "Reinforcement = " + nBars + " Ø " + phi + " mm (" + As + " mm2)";
                             }
 
                             // If it's a panel
                             if (ent.Layer == Layers.pnlLyr)
                             {
                                 // Get the parameters
-                                string pnlNum = data[PanelXDataIndex.pnlNum].Value.ToString();
-                                string[] pnlNds =
+                                string pnlNum = data[PanelXDataIndex.num].Value.ToString();
+
+                                string[] pnlGps =
                                     {
                                         data[PanelXDataIndex.grip1].Value.ToString(),
                                         data[PanelXDataIndex.grip2].Value.ToString(),
                                         data[PanelXDataIndex.grip3].Value.ToString(),
                                         data[PanelXDataIndex.grip4].Value.ToString()
                                     };
-                                string pnlW = data[PanelXDataIndex.pnlW].Value.ToString(),
-                                       dBarsX = data[PanelXDataIndex.dBarsX].Value.ToString(),
-                                       sx = data[PanelXDataIndex.sx].Value.ToString(),
-                                       dBarsY = data[PanelXDataIndex.dBarsY].Value.ToString(),
-                                       sy = data[PanelXDataIndex.sy].Value.ToString();
+
+                                double w    = Convert.ToDouble(data[PanelXDataIndex.w].Value),
+                                       phiX = Convert.ToDouble(data[PanelXDataIndex.phiX].Value),
+                                       sx   = Convert.ToDouble(data[PanelXDataIndex.sx].Value),
+                                       phiY = Convert.ToDouble(data[PanelXDataIndex.phiY].Value),
+                                       sy   = Convert.ToDouble(data[PanelXDataIndex.sy].Value);
+
+                                // Calculate the reinforcement ratio
+                                var (psx, psy) = Reinforcement.PanelReinforcement(phiX, sx, phiY, sy, w);
+                                psx = Math.Round(psx, 5);
+                                psy = Math.Round(psy, 5);
 
                                 msgstr = "Panel " + pnlNum + "\n\n" +
-                                         "DoFs: (" + pnlNds[0] + " - " + pnlNds[1] + " - " + pnlNds[2] + " - " + pnlNds[3] + ")" + "\n" +
-                                         "Width = " + pnlW + " mm" + "\n" +
-                                         "Reinforcement (x) = Ø " + dBarsX + " mm, s = " + sx +  " mm\n" +
-                                         "Reinforcement (y) = Ø " + dBarsY + " mm, s = " + sy + " mm";
+                                         "Grips: (" + pnlGps[0] + " - " + pnlGps[1] + " - " + pnlGps[2] + " - " + pnlGps[3] + ")" + "\n" +
+                                         "Width = " + w + " mm" + "\n" +
+                                         "Reinforcement (x) = Ø " + phiX + " mm, s = " + sx + " mm (ρsx = " + psx + ")\n" +
+                                         "Reinforcement (y) = Ø " + phiY + " mm, s = " + sy + " mm (ρsy = " + psy + ")";
                             }
 
                             // If it's a force text
                             if (ent.Layer == Layers.fTxtLyr)
                             {
                                 // Get the parameters
-                                string posX = data[2].Value.ToString(), posY = data[3].Value.ToString();
+                                string posX = data[2].Value.ToString(),
+                                       posY = data[3].Value.ToString();
 
                                 msgstr = "Force at position  (" + posX + ", " + posY + ")";
                             }

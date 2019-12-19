@@ -25,7 +25,7 @@ namespace SPMTool
             if (concParams != null)
             {
                 // Get the elastic modulus
-                double Ec = concParams[1];
+                double Ec = concParams[2];
 
                 // Calculate the aproximated shear modulus (elastic material)
                 double Gc = Ec / 2.4;
@@ -95,9 +95,9 @@ namespace SPMTool
                     // Read the XData and get the necessary data
                     ResultBuffer strRb = str.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] strData = strRb.AsArray();
-                    int strNum = Convert.ToInt32(strData[StringerXDataIndex.strNum].Value);
-                    double wd  = Convert.ToDouble(strData[StringerXDataIndex.strW].Value),
-                           h   = Convert.ToDouble(strData[StringerXDataIndex.strH].Value);
+                    int strNum = Convert.ToInt32(strData[StringerXDataIndex.num].Value);
+                    double wd  = Convert.ToDouble(strData[StringerXDataIndex.w].Value),
+                           h   = Convert.ToDouble(strData[StringerXDataIndex.h].Value);
 
                     // Calculate the cross sectional area
                     double A = wd * h;
@@ -205,18 +205,18 @@ namespace SPMTool
                             nd4 = pnlVerts[2];
 
                     // Get the dofs
-                    Point3d dof1 = Auxiliary.MidPoint(nd1, nd2),
-                            dof2 = Auxiliary.MidPoint(nd2, nd3),
-                            dof3 = Auxiliary.MidPoint(nd3, nd4),
-                            dof4 = Auxiliary.MidPoint(nd4, nd1);
+                    Point3d grip1 = Auxiliary.MidPoint(nd1, nd2),
+                            grip2 = Auxiliary.MidPoint(nd2, nd3),
+                            grip3 = Auxiliary.MidPoint(nd3, nd4),
+                            grip4 = Auxiliary.MidPoint(nd4, nd1);
 
                     // Read the XData and get the necessary data
                     ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] pnlData = pnlRb.AsArray();
 
                     // Get the panel number and width
-                    int pnlNum = Convert.ToInt32(pnlData[PanelXDataIndex.pnlNum].Value);
-                    double t   = Convert.ToDouble(pnlData[PanelXDataIndex.pnlW].Value);
+                    int pnlNum = Convert.ToInt32(pnlData[PanelXDataIndex.num].Value);
+                    double t   = Convert.ToDouble(pnlData[PanelXDataIndex.w].Value);
 
                     // Create lines to measure the angles between the edges
                     Line ln1 = new Line(nd1, nd2),
@@ -351,10 +351,10 @@ namespace SPMTool
                     var K = T.Transpose() * Kl * T;
 
                     // Get the positions in the global matrix
-                    int i = 2 * nodeList.IndexOf(dof1),
-                        j = 2 * nodeList.IndexOf(dof2),
-                        k = 2 * nodeList.IndexOf(dof3),
-                        l = 2 * nodeList.IndexOf(dof4);
+                    int i = 2 * nodeList.IndexOf(grip1),
+                        j = 2 * nodeList.IndexOf(grip2),
+                        k = 2 * nodeList.IndexOf(grip3),
+                        l = 2 * nodeList.IndexOf(grip4);
 
                     // Get the indexes as an array
                     int[] ind = { i, j, k, l };

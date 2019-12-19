@@ -54,6 +54,7 @@ namespace SPMTool
             // Initialize the icons
             Bitmap strBmp, pnlBmp, setBmp,
                    dvStrBmp, dvPnlBmp, updtBmp,
+                   strRefBmp, pnlRefBmp,
                    cncrtBmp, stlBmp,
                    suprtBmp, fcBmp,
                    linBMP, nlinBMP,
@@ -70,6 +71,8 @@ namespace SPMTool
                 dvPnlBmp = Properties.Resources.divpnl_small_light;
                 updtBmp = Properties.Resources.update_small_light;
                 viewDtBmp = Properties.Resources.elementdata_large_light;
+                strRefBmp = Properties.Resources.stringerreinforcement_large_light;
+                pnlRefBmp = Properties.Resources.panelreinforcement_large_light;
                 cncrtBmp = Properties.Resources.concrete_large_light;
                 stlBmp = Properties.Resources.steel_large_light;
                 suprtBmp = Properties.Resources.support_large_light;
@@ -92,6 +95,8 @@ namespace SPMTool
                 dvPnlBmp = Properties.Resources.divpnl_small;
                 updtBmp = Properties.Resources.update_small;
                 viewDtBmp = Properties.Resources.elementdata_large;
+                strRefBmp = Properties.Resources.stringerreinforcement_large;
+                pnlRefBmp = Properties.Resources.panelreinforcement_large;
                 cncrtBmp = Properties.Resources.concrete_large;
                 stlBmp = Properties.Resources.steel_large;
                 suprtBmp = Properties.Resources.support_large;
@@ -116,6 +121,7 @@ namespace SPMTool
 
             // Create the Ribbon panels
             GeometryPanel(Tab, strBmp, pnlBmp, setBmp, dvStrBmp, dvPnlBmp, updtBmp, viewDtBmp);
+            ReinforcementPanel(Tab, strRefBmp, pnlRefBmp);
             MaterialPanel(Tab, cncrtBmp, stlBmp, viewDtBmp);
             ConditionsPanel(Tab, suprtBmp, fcBmp);
             AnalysisPanel(Tab, linBMP, nlinBMP);
@@ -177,7 +183,7 @@ namespace SPMTool
             // Element parameters buttons
             RibbonButton button4 = new RibbonButton()
             {
-                Text = "Stringer parameters",
+                Text = "Stringer geometry",
                 ToolTip = "Set the geometry to a selection of stringers",
                 ShowText = true,
                 ShowImage = true,
@@ -188,7 +194,7 @@ namespace SPMTool
 
             RibbonButton button5 = new RibbonButton()
             {
-                Text = "Panel parameters",
+                Text = "Panel geometry",
                 ToolTip = "Set the geometry to a selection of panels",
                 ShowText = true,
                 ShowImage = true,
@@ -264,6 +270,52 @@ namespace SPMTool
             
             // Add the sub panel to the panel source
             pnlSrc.Items.Add(subPnl);
+        }
+
+        // Create Reinforcement Panel
+        public static void ReinforcementPanel(RibbonTab Tab, Bitmap stringerRef, Bitmap panelRef)
+        {
+            RibbonPanelSource pnlSrc = new RibbonPanelSource();
+            pnlSrc.Title = "Reinforcement";
+            RibbonPanel Panel = new RibbonPanel();
+            Panel.Source = pnlSrc;
+            Tab.Panels.Add(Panel);
+
+            RibbonButton button1 = new RibbonButton()
+            {
+                Text = "Stringer",
+                ToolTip = "Set reinforcement to a selection of stringers",
+                ShowText = true,
+                ShowImage = true,
+                LargeImage = getBitmap(stringerRef),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "SetStringerReinforcement"
+            };
+
+            RibbonButton button2 = new RibbonButton()
+            {
+                Text = "Panel",
+                ToolTip = "Set reinforcement to a selection of panels",
+                ShowText = true,
+                ShowImage = true,
+                LargeImage = getBitmap(panelRef),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "SetPanelReinforcement"
+            };
+
+            // Create a split button for conditions
+            RibbonSplitButton rbSpBtn1 = new RibbonSplitButton()
+            {
+                ShowText = true,
+                IsSplit = true,
+                Size = RibbonItemSize.Large,
+                IsSynchronizedWithCurrentItem = true
+            };
+            rbSpBtn1.Items.Add(button1);
+            rbSpBtn1.Items.Add(button2);
+
+            // Add to the panel source
+            pnlSrc.Items.Add(rbSpBtn1);
         }
 
         // Create Material Panel

@@ -362,7 +362,7 @@ namespace SPMTool
                     TypedValue[] data = rb.AsArray();
 
                     // Read the node number
-                    int ndNum = Convert.ToInt32(data[NodeXDataIndex.ndNum].Value);
+                    int ndNum = Convert.ToInt32(data[NodeXDataIndex.num].Value);
 
                     // Read the support condition
                     string sup = data[NodeXDataIndex.support].Value.ToString();
