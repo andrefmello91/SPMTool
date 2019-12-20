@@ -119,8 +119,12 @@ namespace SPMTool
                                     // Check if the position is equal to the selected node
                                     if (fcBlk.Position == ndPos)
                                     {
-                                        // Erase the force block
                                         fcBlk.UpgradeOpen();
+
+                                        // Remove the event handler
+                                        fcBlk.Erased -= new ObjectErasedEventHandler(ForceErased);
+
+                                        // Erase the force block
                                         fcBlk.Erase();
                                     }
                                 }
@@ -191,6 +195,9 @@ namespace SPMTool
                                     // Rotate the block
                                     blkRef.TransformBy(Matrix3d.Rotation(rotAng, AutoCAD.curUCS.Zaxis, insPt));
 
+                                    // Set the event handler for watching erasing
+                                    blkRef.Erased += new ObjectErasedEventHandler(ForceErased);
+
                                     // Define the force text
                                     DBText text = new DBText()
                                     {
@@ -251,6 +258,9 @@ namespace SPMTool
 
                                     // Rotate the block
                                     blkRef.TransformBy(Matrix3d.Rotation(rotAng, AutoCAD.curUCS.Zaxis, insPt));
+
+                                    // Set the event handler for watching erasing
+                                    blkRef.Erased += new ObjectErasedEventHandler(ForceErased);
 
                                     // Define the force text
                                     DBText text = new DBText()
@@ -426,6 +436,55 @@ namespace SPMTool
                 }
             }
             return (fcXPos, fcYPos);
+        }
+
+        // Event for remove constraint condition from a node if the block is erased by user
+        public void ForceErased(object senderObj, ObjectErasedEventArgs evtArgs)
+        {
+            if (evtArgs.Erased)
+            {
+                // Read the block
+                BlockReference blkRef = evtArgs.DBObject as BlockReference;
+
+                // Get the external nodes in the model
+                ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNdLyr);
+
+                // Start a transaction
+                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+                {
+                    // Access the node
+                    foreach (ObjectId ndObj in extNds)
+                    {
+                        // Read as a DBPoint
+                        DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+
+                        // Check the position
+                        if (nd.Position == blkRef.Position)
+                        {
+                            // Access the XData as an array
+                            ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
+                            TypedValue[] data = rb.AsArray();
+
+                            // Verify the rotation of the block
+                            // Force in Y
+                            if (blkRef.Rotation == 0 || blkRef.Rotation == Constants.pi)
+                                data[NodeXDataIndex.Fy] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+
+                            // Force in X
+                            else
+                                data[NodeXDataIndex.Fx] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+
+                            // Save the XData
+                            nd.UpgradeOpen();
+                            nd.XData = new ResultBuffer(data);
+                        }
+                    }
+
+                    // Commit changes
+                    trans.Commit();
+                }
+
+            }
         }
     }
 }

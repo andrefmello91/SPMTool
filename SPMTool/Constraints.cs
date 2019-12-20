@@ -97,8 +97,12 @@ namespace SPMTool
                                         // Check if the position is equal to the selected node
                                         if (spBlk.Position == ndPos)
                                         {
-                                            // Erase the support
                                             spBlk.UpgradeOpen();
+
+                                            // Remove the event handler
+                                            spBlk.Erased -= new ObjectErasedEventHandler(ConstraintErased);
+
+                                            // Erase the support
                                             spBlk.Erase();
                                             break;
                                         }
@@ -128,6 +132,9 @@ namespace SPMTool
                                     {
                                         blkRef.Layer = Layers.supLyr;
                                         Auxiliary.AddObject(blkRef);
+
+                                        // Set the event handler for watching erasing
+                                        blkRef.Erased += new ObjectErasedEventHandler(ConstraintErased);
                                     }
                                 }
                             }
@@ -183,7 +190,7 @@ namespace SPMTool
                                 origin,
                                 new Point3d(-100, 57.5,  0),
                                 origin,
-                                new Point3d(-100,  57.5, 0),
+                                new Point3d(-100, -57.5, 0),
                                 new Point3d(-100,  75,   0),
                                 new Point3d(-100, -75,   0),
                                 new Point3d(-125,  75,   0),
@@ -408,6 +415,48 @@ namespace SPMTool
                 }
             }
             return supPos;
+        }
+
+        // Event for remove constraint condition from a node if the block is erased by user
+        public void ConstraintErased(object senderObj, ObjectErasedEventArgs evtArgs)
+        {
+            if (evtArgs.Erased)
+            {
+                // Read the block
+                BlockReference blkRef = evtArgs.DBObject as BlockReference;
+
+                // Get the external nodes in the model
+                ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNdLyr);
+
+                // Start a transaction
+                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+                {
+                    // Access the node
+                    foreach (ObjectId ndObj in extNds)
+                    {
+                        // Read as a DBPoint
+                        DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+
+                        // Check the position
+                        if (nd.Position == blkRef.Position)
+                        {
+                            // Access the XData as an array
+                            ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
+                            TypedValue[] data = rb.AsArray();
+
+                            // Set the support condition to FREE
+                            data[NodeXDataIndex.support] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Free");
+
+                            // Save the XData
+                            nd.UpgradeOpen();
+                            nd.XData = new ResultBuffer(data);
+                        }
+                    }
+
+                    // Commit changes
+                    trans.Commit();
+                }
+            }
         }
     }
 }
