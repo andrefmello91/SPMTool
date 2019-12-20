@@ -17,6 +17,8 @@ namespace SPMTool
         {
             Autodesk.AutoCAD.ApplicationServices.Application.Idle +=
             new EventHandler(on_ApplicationIdle);
+
+            AddAppEvent();
         }
 
         public void on_ApplicationIdle(object sender, EventArgs e)
@@ -27,7 +29,36 @@ namespace SPMTool
 
         public void Terminate()
         {
+            RemoveAppEvent();
+        }
 
+        // Event handler for changing colortheme
+        public void AddAppEvent()
+        {
+            Application.SystemVariableChanged +=
+                new Autodesk.AutoCAD.ApplicationServices.
+                    SystemVariableChangedEventHandler(appSysVarChanged);
+        }
+
+        public void RemoveAppEvent()
+        {
+            Application.SystemVariableChanged -=
+                new Autodesk.AutoCAD.ApplicationServices.
+                    SystemVariableChangedEventHandler(appSysVarChanged);
+        }
+
+        public void appSysVarChanged(object senderObj,
+                                     Autodesk.AutoCAD.ApplicationServices.
+                                     SystemVariableChangedEventArgs sysVarChEvtArgs)
+        {
+            //object oVal = Application.GetSystemVariable(sysVarChEvtArgs.Name);
+
+            // Check if it's a theme change
+            if (sysVarChEvtArgs.Name == "COLORTHEME")
+            {
+                // Reinitialize the ribbon buttons
+                UserInterface.RibbonButtons();
+            }
         }
     }
 
@@ -46,7 +77,16 @@ namespace SPMTool
 
         public static void RibbonButtons()
         {
-            Autodesk.Windows.RibbonControl ribbonControl = Autodesk.Windows.ComponentManager.Ribbon;
+            RibbonControl ribbonControl = ComponentManager.Ribbon;
+
+            // Check if the tab already exists
+            RibbonTab tab = ribbonControl.FindTab(AutoCAD.appName);
+
+            if (tab != null)
+            {
+                // Remove it
+                ribbonControl.Tabs.Remove(tab);
+            }
 
             // Check the current theme
             short theme = (short)Application.GetSystemVariable("COLORTHEME");
@@ -115,7 +155,7 @@ namespace SPMTool
             RibbonTab Tab = new RibbonTab()
             {
                 Title = AutoCAD.appName,
-                Id = "ApplicationTab"
+                Id = AutoCAD.appName
             };
             ribbonControl.Tabs.Add(Tab);
 

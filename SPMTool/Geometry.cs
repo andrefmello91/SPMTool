@@ -53,10 +53,11 @@ namespace SPMTool
                         BasePoint = strStRes.Value
                     };
                     PromptPointResult strEndRes = AutoCAD.edtr.GetPoint(strEndOp);
-                    nds.Add(strEndRes.Value);
 
                     if (strEndRes.Status == PromptStatus.OK)
                     {
+                        nds.Add(strEndRes.Value);
+
                         // Get the points ordered in ascending Y and ascending X:
                         List<Point3d> extNds = Auxiliary.OrderPoints(nds);
 

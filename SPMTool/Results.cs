@@ -763,7 +763,7 @@ namespace SPMTool
                         {
                             msgstr = "NONE";
                         }
-
+                        
                         // Display the values returned
                         Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + msgstr);
                     }
