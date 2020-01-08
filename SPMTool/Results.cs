@@ -100,7 +100,7 @@ namespace SPMTool
         }
 
         // Draw the panel shear blocks
-        public static void DrawPanelForces(ObjectIdCollection panels, List<Tuple<int, Vector<double>>> panelForces)
+        public static void DrawPanelForces(ObjectIdCollection panels, Vector<double>[] panelForces)
         {
             // Check if the layer already exists in the drawing. If it doesn't, then it's created:
             Auxiliary.CreateLayer(Layers.pnlFLyr, Colors.green, 0);
@@ -149,7 +149,7 @@ namespace SPMTool
                     double wd = Convert.ToDouble(pnlData[PanelXDataIndex.w].Value);
 
                     // Get the forces in the list
-                    var f = panelForces[pnlNum - 1].Item2;
+                    var f = panelForces[pnlNum - 1];
 
                     // Get the dimensions as a vector
                     var lsV = Vector<double>.Build.DenseOfEnumerable(ls.AsEnumerable());
@@ -207,7 +207,7 @@ namespace SPMTool
         }
 
         // Draw the stringer forces diagrams
-        public static void DrawStringerForces(ObjectIdCollection stringers, List<Tuple<int, Vector<double>>> stringerForces)
+        public static void DrawStringerForces(ObjectIdCollection stringers, Vector<double>[] stringerForces)
         {
             // Check if the layer already exists in the drawing. If it doesn't, then it's created:
             Auxiliary.CreateLayer(Layers.strFLyr, Colors.grey, 0);
@@ -218,7 +218,7 @@ namespace SPMTool
 
             // Verify the maximum stringer force in the model to draw in an uniform scale
             List<double> maxForces = new List<double>();
-            foreach (var strF in stringerForces) maxForces.Add(strF.Item2.AbsoluteMaximum());
+            foreach (var strF in stringerForces) maxForces.Add(strF.AbsoluteMaximum());
             double fMax = maxForces.Max();
 
             // Start a transaction
@@ -240,7 +240,7 @@ namespace SPMTool
                     int strNum = Convert.ToInt32(strData[StringerXDataIndex.num].Value);
 
                     // Get the forces in the list
-                    var f = stringerForces[strNum - 1].Item2;
+                    var f = stringerForces[strNum - 1];
                     double f1 = Math.Round(f[0], 2),
                            f3 = -Math.Round(f[2], 2);
 
@@ -548,18 +548,21 @@ namespace SPMTool
         }
 
         // Calculate panel forces
-        public static void PanelForces(ObjectIdCollection panels, List<Tuple<int, int[], Matrix<double>, Matrix<double>>> pnlParams, Vector<double> u)
+        public static void PanelForces(ObjectIdCollection panels, Tuple<int[], Matrix<double>, Matrix<double>>[] pnlParams, Vector<double> u)
         {
             // Create a list to store the panel forces
-            List<Tuple<int, Vector<double>>> pnlForces = new List<Tuple<int, Vector<double>>>();
+            var pnlForces = new Vector<double>[panels.Count];
 
-            foreach (var pnlParam in pnlParams)
+            // Create empty elements to the list
+            //for (int i = 0; i < panels.Count; i++)
+            //    pnlForces.Add(Vector<double>.Build.Dense(2));
+
+            for (int i = 0; i < panels.Count; i++)
             {
                 // Get the parameters
-                int pnlNum = pnlParam.Item1;
-                int[] ind = pnlParam.Item2;
-                var Kl = pnlParam.Item3;
-                var T = pnlParam.Item4;
+                int[] ind = pnlParams[i].Item1;
+                var   Kl  = pnlParams[i].Item2;
+                var   T   = pnlParams[i].Item3;
 
                 // Get the displacements
                 var uStr = Vector<double>.Build.DenseOfArray(new double[]
@@ -574,29 +577,29 @@ namespace SPMTool
                 var fl = Kl * ul;
 
                 // Save to the list of stringer forces
-                pnlForces.Add(Tuple.Create(pnlNum, fl));
+                pnlForces[i] = fl;
             }
-
-            // Order the list
-            pnlForces = pnlForces.OrderBy(tuple => tuple.Item1).ToList();
 
             // Draw the panel shear blocks
             DrawPanelForces(panels, pnlForces);
         }
 
         // Calculate stringer forces
-        public static void StringerForces(ObjectIdCollection stringers, List<Tuple<int, int[], Matrix<double>, Matrix<double>>> strParams, Vector<double> u)
+        public static void StringerForces(ObjectIdCollection stringers, Tuple<int[], Matrix<double>, Matrix<double>>[] strParams, Vector<double> u)
         {
             // Create a list to store the stringer forces
-            List<Tuple<int, Vector<double>>> strForces = new List<Tuple<int, Vector<double>>>();
+            var strForces = new Vector<double>[stringers.Count];
 
-            foreach (var strParam in strParams)
+            // Create empty elements to the list
+            //for (int i = 0; i < stringers.Count; i++)
+            //    strForces.Add(Vector<double>.Build.Dense(2));
+
+            for (int i = 0; i < stringers.Count; i++)
             {
                 // Get the parameters
-                int strNum = strParam.Item1;
-                int[] ind = strParam.Item2;
-                var Kl = strParam.Item3;
-                var T = strParam.Item4;
+                int[] ind = strParams[i].Item1;
+                var   Kl  = strParams[i].Item2;
+                var   T   = strParams[i].Item3;
 
                 // Get the displacements
                 var uStr = Vector<double>.Build.DenseOfArray(new double[]
@@ -614,13 +617,10 @@ namespace SPMTool
                 fl.CoerceZero(0.000001);
 
                 // Save to the list of stringer forces
-                strForces.Add(Tuple.Create(strNum, fl));
+                strForces[i] = fl;
 
                 //Global.ed.WriteMessage("\nStringer " + strNum.ToString() + ":\n" + fl.ToString());
             }
-
-            // Order the list
-            strForces = strForces.OrderBy(tuple => tuple.Item1).ToList();
 
             // Draw the stringer forces diagrams
             DrawStringerForces(stringers, strForces);
@@ -694,12 +694,12 @@ namespace SPMTool
                                 double lgt = Math.Round(str.Length, 2);
 
                                 // Get the parameters
-                                string strNum = data[StringerXDataIndex.num].Value.ToString(),
-                                       strtNd = data[StringerXDataIndex.StNd].Value.ToString(),
-                                       midNd  = data[StringerXDataIndex.MidNd].Value.ToString(),
-                                       endNd  = data[StringerXDataIndex.EndNd].Value.ToString(),
-                                       wdt    = data[StringerXDataIndex.w].Value.ToString(),
-                                       hgt    = data[StringerXDataIndex.h].Value.ToString();
+                                string grip1 = data[StringerXDataIndex.num].Value.ToString(),
+                                       grip2 = data[StringerXDataIndex.grip1].Value.ToString(),
+                                       grip3 = data[StringerXDataIndex.grip2].Value.ToString(),
+                                       endNd = data[StringerXDataIndex.grip3].Value.ToString(),
+                                       wdt   = data[StringerXDataIndex.w].Value.ToString(),
+                                       hgt   = data[StringerXDataIndex.h].Value.ToString();
 
                                 // Get the reinforcement
                                 double nBars = Convert.ToDouble(data[StringerXDataIndex.nBars].Value),
@@ -708,8 +708,8 @@ namespace SPMTool
                                 // Calculate the reinforcement area
                                 double As = Math.Round(Reinforcement.StringerReinforcement(nBars, phi), 2);
 
-                                msgstr = "Stringer " + strNum + "\n\n" +
-                                         "Grips: (" + strtNd + " - " + midNd + " - " + endNd + ")" + "\n" +
+                                msgstr = "Stringer " + grip1 + "\n\n" +
+                                         "Grips: (" + grip2 + " - " + grip3 + " - " + endNd + ")" + "\n" +
                                          "Lenght = " + lgt + " mm" + "\n" +
                                          "Width = " + wdt + " mm" + "\n" +
                                          "Height = " + hgt + " mm" + "\n" +

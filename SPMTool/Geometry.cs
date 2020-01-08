@@ -857,24 +857,6 @@ namespace SPMTool
                         data = rb.AsArray();
                     }
 
-                    //// Define the Xdata to add to the node
-                    //using (ResultBuffer defRb = new ResultBuffer())
-                    //    {
-                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));  // 0
-                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
-                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndNum));                  // 2
-                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xPosition));              // 3
-                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yPosition));              // 4
-                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, support));         // 5
-                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, xForce));                 // 6
-                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, yForce));                 // 7
-                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ux));                     // 8
-                    //        defRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, uy));                     // 9
-
-                    //        // Append the extended data to each object
-                    //        nd.XData = defRb;
-                    //    }
-
                     // Set the updated number
                     data[NodeXDataIndex.num] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
 
@@ -960,27 +942,6 @@ namespace SPMTool
                         data = rb.AsArray();
                     }
 
-                    //// Define the Xdata to add to the node
-                    //using (ResultBuffer rb = new ResultBuffer())
-                    //    {
-                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));   // 0
-                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
-                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strNum));                 // 2
-                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strStNd));                // 3
-                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd));               // 4
-                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd));                // 5
-                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strLgt));                 // 6
-                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strW));                   // 7
-                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, strH));                   // 8
-                    //        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, As));                     // 9
-
-                    //        // Open the stringer for write
-                    //        Entity ent = trans.GetObject(str.ObjectId, OpenMode.ForWrite) as Entity;
-
-                    //        // Append the extended data to each object
-                    //        ent.XData = rb;
-                    //    }
-
                     // Get the coordinates of the midpoint of the stringer
                     Point3d midPt = Auxiliary.MidPoint(str.StartPoint, str.EndPoint);
 
@@ -994,9 +955,9 @@ namespace SPMTool
 
                     // Set the updated number and nodes in ascending number and length (line 2 to 6)
                     data[StringerXDataIndex.num]   = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
-                    data[StringerXDataIndex.StNd]  = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
-                    data[StringerXDataIndex.MidNd] = new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd);
-                    data[StringerXDataIndex.EndNd]  = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
+                    data[StringerXDataIndex.grip1]  = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
+                    data[StringerXDataIndex.grip2] = new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd);
+                    data[StringerXDataIndex.grip3]  = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
 
                     // Add the new XData
                     str.XData = new ResultBuffer(data);
@@ -1080,22 +1041,6 @@ namespace SPMTool
                         ResultBuffer rb = pnl.GetXDataForApplication(AutoCAD.appName);
                         data = rb.AsArray();
                     }
-
-                    //// Initialize a Result Buffer to add to the panel
-                    //ResultBuffer rb = new ResultBuffer();
-                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));  // 0
-                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));        // 1
-                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum));                 // 2
-                    //for (int i = 0; i < 4; i++)
-                    //{
-                    //    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, grips[i]));           // 3, 4, 5, 6
-                    //}
-                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, pnlW));                   // 7
-                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psx));                    // 8
-                    //rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, psy));                    // 9
-
-                    //// Append the extended data to the object
-                    //pnl.XData = rb;
 
                     // Get the vertices
                     Point3dCollection pnlVerts = new Point3dCollection();
