@@ -16,7 +16,7 @@ namespace SPMTool
     public partial class Analysis
     {
         // Read the parameters of a stringer
-        public static Tuple<int, List<int>, double, double, double, double> StringerParams(ObjectId stringer)
+        public static Tuple<int, int[], double, double, double, double> StringerParams(ObjectId stringer)
         {
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -36,10 +36,12 @@ namespace SPMTool
                 int num = Convert.ToInt32(data[StringerXDataIndex.num].Value);
 
                 // Create the list of grips
-                var grips = new List<int>();
-                grips.Add(Convert.ToInt32(data[StringerXDataIndex.grip1].Value));
-                grips.Add(Convert.ToInt32(data[StringerXDataIndex.grip2].Value));
-                grips.Add(Convert.ToInt32(data[StringerXDataIndex.grip3].Value));
+                int[] grips =
+                {
+                    Convert.ToInt32(data[StringerXDataIndex.grip1].Value),
+                    Convert.ToInt32(data[StringerXDataIndex.grip2].Value),
+                    Convert.ToInt32(data[StringerXDataIndex.grip3].Value)
+                };
 
                 double w     = Convert.ToDouble(data[StringerXDataIndex.w].Value),
                        h     = Convert.ToDouble(data[StringerXDataIndex.h].Value),
@@ -62,7 +64,7 @@ namespace SPMTool
         }
 
         // Read the parameters of a panel
-        public static Tuple<int, List<Point3d>, List<int>, List<double>, List<double>, double, List<double>> PanelParams(ObjectId panel)
+        public static Tuple<int, Point3d[], int[], double[], double[], double, double[]> PanelParams(ObjectId panel)
         {
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -95,11 +97,13 @@ namespace SPMTool
                        sy   = Convert.ToDouble(pnlData[PanelXDataIndex.sy].Value);
 
                 // Create the list of grips
-                var grips = new List<int>();
-                grips.Add(Convert.ToInt32(pnlData[PanelXDataIndex.grip1].Value));
-                grips.Add(Convert.ToInt32(pnlData[PanelXDataIndex.grip2].Value));
-                grips.Add(Convert.ToInt32(pnlData[PanelXDataIndex.grip3].Value));
-                grips.Add(Convert.ToInt32(pnlData[PanelXDataIndex.grip4].Value));
+                int[] grips =
+                {
+                    Convert.ToInt32(pnlData[PanelXDataIndex.grip1].Value),
+                    Convert.ToInt32(pnlData[PanelXDataIndex.grip2].Value),
+                    Convert.ToInt32(pnlData[PanelXDataIndex.grip3].Value),
+                    Convert.ToInt32(pnlData[PanelXDataIndex.grip4].Value)
+                };
 
                 // Create lines to measure the angles between the edges and dimensions
                 Line ln1 = new Line(nd1, nd2),
@@ -108,35 +112,135 @@ namespace SPMTool
                      ln4 = new Line(nd4, nd1);
 
                 // Create the list of vertices
-                var verts = new List<Point3d>();
-                verts.Add(nd1);
-                verts.Add(nd2);
-                verts.Add(nd3);
-                verts.Add(nd4);
+                Point3d[] verts =
+                {
+                    nd1, nd2, nd3, nd4
+                };
 
                 // Create the list of dimensions
-                var dims = new List<double>();
-                dims.Add(ln1.Length);
-                dims.Add(ln2.Length);
-                dims.Add(ln3.Length);
-                dims.Add(ln4.Length);
+                double[] dims =
+                {
+                    ln1.Length,
+                    ln2.Length,
+                    ln3.Length,
+                    ln4.Length,
+                };
 
                 // Create the list of angles
-                var angs = new List<double>();
-                angs.Add(ln1.Angle);
-                angs.Add(ln2.Angle);
-                angs.Add(ln3.Angle);
-                angs.Add(ln4.Angle);
+                double[] angs =
+                {
+                    ln1.Angle,
+                    ln2.Angle,
+                    ln3.Angle,
+                    ln4.Angle,
+                };
 
                 // Calculate the reinforcement ratio and add to a list
-                var (psx, psy) = Reinforcement.PanelReinforcement(phiX, sx, phiY, sy, t);
-                var ps = new List<double>();
-                ps.Add(psx);
-                ps.Add(psy);
+                double[] ps = Reinforcement.PanelReinforcement(phiX, sx, phiY, sy, t);
 
                 // Add to the list of stringer parameters in the index
                 // Num || vertices || grips || dimensions || angles || t || ps ||
                 return Tuple.Create(num, verts, grips, dims, angs, t, ps);
+            }
+        }
+
+        // Get the indexes of an element grips in the global matrix
+        public static int[] GlobalIndexes(int[] grips)
+        {
+            // Initialize the array
+            int[] ind = new int[grips.Length];
+
+            // Get the indexes
+            for (int i = 0; i < grips.Length; i++)
+                ind[i] = 2 * (grips[i] - 1);
+
+            return ind;
+        }
+
+        // Add the stringer stiffness to the global matrix
+        public static void StringerGlobalStiffness(int[] index, Matrix<double> K, Matrix<double> Kg)
+        {
+            // Get the positions in the global matrix
+            int i = index[0],
+                j = index[1],
+                k = index[2];
+
+            // Initialize an index for lines of the local matrix
+            int o = 0;
+
+            // Add the local matrix to the global at the DoFs positions
+            // n = index of the node in global matrix
+            // o = index of the line in the local matrix
+            foreach (int n in index)
+            {
+                // Line o
+                // Check if the row is composed of zeroes
+                if (K.Row(o).Exists(Auxiliary.NotZero))
+                {
+                    Kg[n, i] += K[o, 0]; Kg[n, i + 1] += K[o, 1];
+                    Kg[n, j] += K[o, 2]; Kg[n, j + 1] += K[o, 3];
+                    Kg[n, k] += K[o, 4]; Kg[n, k + 1] += K[o, 5];
+                }
+
+                // Increment the line index
+                o++;
+
+                // Line o + 1
+                // Check if the row is composed of zeroes
+                if (K.Row(o).Exists(Auxiliary.NotZero))
+                {
+                    Kg[n + 1, i] += K[o, 0]; Kg[n + 1, i + 1] += K[o, 1];
+                    Kg[n + 1, j] += K[o, 2]; Kg[n + 1, j + 1] += K[o, 3];
+                    Kg[n + 1, k] += K[o, 4]; Kg[n + 1, k + 1] += K[o, 5];
+                }
+
+                // Increment the line index
+                o++;
+            }
+        }
+
+        // Add the panel stiffness to the global matrix
+        public static void PanelGlobalStiffness(int[] index, Matrix<double> K, Matrix<double> Kg)
+        {
+            // Get the positions in the global matrix
+            int i = index[0],
+                j = index[1],
+                k = index[2],
+                l = index[3];
+
+            // Initialize an index for lines of the local matrix
+            int o = 0;
+
+            // Add the local matrix to the global at the DoFs positions
+            // i = index of the node in global matrix
+            // o = index of the line in the local matrix
+            foreach (int n in index)
+            {
+                // Line o
+                // Check if the row is composed of zeroes
+                if (K.Row(o).Exists(Auxiliary.NotZero))
+                {
+                    Kg[n, i] += K[o, 0]; Kg[n, i + 1] += K[o, 1];
+                    Kg[n, j] += K[o, 2]; Kg[n, j + 1] += K[o, 3];
+                    Kg[n, k] += K[o, 4]; Kg[n, k + 1] += K[o, 5];
+                    Kg[n, l] += K[o, 6]; Kg[n, l + 1] += K[o, 7];
+                }
+
+                // Increment the line index
+                o++;
+
+                // Line o + 1
+                // Check if the row is composed of zeroes
+                if (K.Row(o).Exists(Auxiliary.NotZero))
+                {
+                    Kg[n + 1, i] += K[o, 0]; Kg[n + 1, i + 1] += K[o, 1];
+                    Kg[n + 1, j] += K[o, 2]; Kg[n + 1, j + 1] += K[o, 3];
+                    Kg[n + 1, k] += K[o, 4]; Kg[n + 1, k + 1] += K[o, 5];
+                    Kg[n + 1, l] += K[o, 6]; Kg[n + 1, l + 1] += K[o, 7];
+                }
+
+                // Increment the line index
+                o++;
             }
         }
     }

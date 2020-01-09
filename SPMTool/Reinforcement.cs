@@ -209,7 +209,7 @@ namespace SPMTool
         }
 
         // Calculate the panel reinforcement ratio
-        public static (double, double) PanelReinforcement(double phiX, double sx, double phiY, double sy, double w)
+        public static double[] PanelReinforcement(double phiX, double sx, double phiY, double sy, double w)
         {
             // Initialize psx and psy
             double psx = 0,
@@ -221,7 +221,7 @@ namespace SPMTool
             if (phiY > 0 && sy > 0)
                 psy = Constants.pi * phiY * phiY / (2 * sy * w);
 
-            return (psx, psy);
+            return new double[]{psx, psy};
         }
     }
 }

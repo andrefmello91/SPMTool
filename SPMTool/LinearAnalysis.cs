@@ -45,8 +45,8 @@ namespace SPMTool
                     var Kg = Matrix<double>.Build.Dense(2 * nds.Count, 2 * nds.Count);
 
                     // Calculate the stifness of each stringer and panel, add to the global stiffness and get the matrices of the stiffness of elements
-                    var strParams = StringersStifness(strs, ndList, Ec, Kg);
-                    var pnlParams = PanelsStiffness(pnls, ndList, Gc, Kg);
+                    var strMats = StringersStifness(strs, Ec, Kg);
+                    var pnlMats = PanelsStiffness(pnls, Gc, Kg);
 
                     // Get the force vector and the constraints vector
                     var f = Forces.ForceVector();
@@ -59,13 +59,14 @@ namespace SPMTool
                     var u = Kg.Solve(f);
 
                     // Calculate the stringer, panel forces and nodal displacements
-                    Results.StringerForces(strs, strParams, u);
-                    Results.PanelForces(pnls, pnlParams, u);
+                    Results.StringerForces(strs, strMats, u);
+                    Results.PanelForces(pnls, pnlMats, u);
                     Results.NodalDisplacements(nds, strs, ndList, u);
 
-                    // If all went OK, notify the user
-                    //DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
-                    //DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
+                    // Write in a csv file (debug)
+                    DelimitedWriter.Write("D:/SPMTooldataF.csv", f.ToColumnMatrix(), ";");
+                    DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
+                    DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
                 }
                 else
                 {
@@ -74,14 +75,10 @@ namespace SPMTool
             }
 
             // Calculate the stifness matrix stringers, save to XData and add to global stifness matrix, returns the all the matrices in an numbered list
-            public Tuple<int[], Matrix<double>, Matrix<double>>[] StringersStifness(ObjectIdCollection stringers, List<Point3d> nodeList, double Ec, Matrix<double> Kg)
+            public Tuple<int[], Matrix<double>, Matrix<double>>[] StringersStifness(ObjectIdCollection stringers, double Ec, Matrix<double> Kg)
             {
                 // Initialize a list to store the matrices of stringers
                 var strMats = new Tuple<int[], Matrix<double>, Matrix<double>>[stringers.Count];
-
-                // Create empty elements to the list
-                //for (int i = 0; i < stringers.Count; i++)
-                //    strMats.Add(Tuple.Create(new int[3], Matrix<double>.Build.Dense(2,2), Matrix<double>.Build.Dense(2, 2)));
 
                 // Get the stringers stifness matrix and add to the global stifness matrix
                 foreach (ObjectId obj in stringers)
@@ -119,52 +116,16 @@ namespace SPMTool
                     // Calculate the transformated stiffness matrix
                     var K = T.Transpose() * Kl * T;
 
-                    // Get the positions in the global matrix
-                    int i = 2 * (grips[0] - 1),              // Grip 1
-                        j = 2 * (grips[1] - 1),              // Grip 2
-                        k = 2 * (grips[2] - 1);              // Grip 3
-
                     // Get the indexes as an array
-                    int[] ind = { i, j, k };
+                    int[] ind = GlobalIndexes(grips);
 
-                    // Initialize an index for lines of the local matrix
-                    int o = 0;
-
-                    // Add the local matrix to the global at the DoFs positions
-                    // n = index of the node in global matrix
-                    // o = index of the line in the local matrix
-                    foreach (int n in ind)
-                    {
-                        // Line o
-                        // Check if the row is composed of zeroes
-                        if (K.Row(o).Exists(Auxiliary.NotZero))
-                        {
-                            Kg[n, i] += K[o, 0]; Kg[n, i + 1] += K[o, 1];
-                            Kg[n, j] += K[o, 2]; Kg[n, j + 1] += K[o, 3];
-                            Kg[n, k] += K[o, 4]; Kg[n, k + 1] += K[o, 5];
-                        }
-
-                        // Increment the line index
-                        o++;
-
-                        // Line o + 1
-                        // Check if the row is composed of zeroes
-                        if (K.Row(o).Exists(Auxiliary.NotZero))
-                        {
-                            Kg[n + 1, i] += K[o, 0]; Kg[n + 1, i + 1] += K[o, 1];
-                            Kg[n + 1, j] += K[o, 2]; Kg[n + 1, j + 1] += K[o, 3];
-                            Kg[n + 1, k] += K[o, 4]; Kg[n + 1, k + 1] += K[o, 5];
-                        }
-
-                        // Increment the line index
-                        o++;
-                    }
+                    // Add to the global matrix
+                    StringerGlobalStiffness(ind, K, Kg);
 
                     // Save to the list of stringer parameters
                     strMats[num - 1] = Tuple.Create(ind, Kl, T);
 
-                    //strMats[num - 1] = Tuple.Create(ind, Kl, T);
-                    //DelimitedWriter.Write("D:/SPMTooldataS" + strNum + ".csv", K, ";");
+                    DelimitedWriter.Write("D:/SPMTooldataS" + num + ".csv", K, ";");
                 }
 
                 // Return the list
@@ -172,14 +133,10 @@ namespace SPMTool
             }
 
             // Calculate the stifness matrix of a panel, get the dofs and save to XData, returns the all the matrices in an ordered list
-            public Tuple<int[], Matrix<double>, Matrix<double>>[] PanelsStiffness(ObjectIdCollection panels, List<Point3d> nodeList, double Gc, Matrix<double> Kg)
+            public Tuple<int[], Matrix<double>, Matrix<double>>[] PanelsStiffness(ObjectIdCollection panels, double Gc, Matrix<double> Kg)
             {
                 // Initialize a tuple list to store the matrices of stringers
                 var pnlMats = new Tuple<int[], Matrix<double>, Matrix<double>>[panels.Count];
-
-                // Create empty elements to the list
-                //for (int i = 0; i < panels.Count; i++)
-                //    pnlMats.Add(Tuple.Create(new int[3], Matrix<double>.Build.Dense(2, 2), Matrix<double>.Build.Dense(2, 2)));
 
                 // Get the stringers stifness matrix and add to the global stifness matrix
                 foreach (ObjectId obj in panels)
@@ -325,58 +282,19 @@ namespace SPMTool
                     // Global stifness matrix
                     var K = T.Transpose() * Kl * T;
 
-                    // Get the positions in the global matrix
-                    int i = 2 * (grips[0] - 1),
-                        j = 2 * (grips[1] - 1),
-                        k = 2 * (grips[2] - 1),
-                        l = 2 * (grips[3] - 1);
-
                     // Get the indexes as an array
-                    int[] ind = { i, j, k, l };
+                    int[] ind = GlobalIndexes(grips);
 
-                    // Initialize an index for lines of the local matrix
-                    int o = 0;
-
-                    // Add the local matrix to the global at the DoFs positions
-                    // i = index of the node in global matrix
-                    // o = index of the line in the local matrix
-                    foreach (int n in ind)
-                    {
-                        // Line o
-                        // Check if the row is composed of zeroes
-                        if (K.Row(o).Exists(Auxiliary.NotZero))
-                        {
-                            Kg[n, i] += K[o, 0]; Kg[n, i + 1] += K[o, 1];
-                            Kg[n, j] += K[o, 2]; Kg[n, j + 1] += K[o, 3];
-                            Kg[n, k] += K[o, 4]; Kg[n, k + 1] += K[o, 5];
-                            Kg[n, l] += K[o, 6]; Kg[n, l + 1] += K[o, 7];
-                        }
-
-                        // Increment the line index
-                        o++;
-
-                        // Line o + 1
-                        // Check if the row is composed of zeroes
-                        if (K.Row(o).Exists(Auxiliary.NotZero))
-                        {
-                            Kg[n + 1, i] += K[o, 0]; Kg[n + 1, i + 1] += K[o, 1];
-                            Kg[n + 1, j] += K[o, 2]; Kg[n + 1, j + 1] += K[o, 3];
-                            Kg[n + 1, k] += K[o, 4]; Kg[n + 1, k + 1] += K[o, 5];
-                            Kg[n + 1, l] += K[o, 6]; Kg[n + 1, l + 1] += K[o, 7];
-                        }
-
-                        // Increment the line index
-                        o++;
-                    }
+                    // Add to the global matrix
+                    PanelGlobalStiffness(ind, K, Kg);
 
                     // Save to the list of panel parameters
                     pnlMats[num - 1] = Tuple.Create(ind, Kl, T);
 
-                    //DelimitedWriter.Write("D:/SPMTooldataP" + pnlNum + ".csv", K, ";");
+                    DelimitedWriter.Write("D:/SPMTooldataP" + num + ".csv", K, ";");
                 }
 
                 // Return the list
-                //pnlMats.OrderBy(tuple => tuple.Item1);
                 return pnlMats;
             }
 

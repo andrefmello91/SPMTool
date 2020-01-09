@@ -7,6 +7,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.Statistics;
 
 [assembly: CommandClass(typeof(SPMTool.Results))]
 
@@ -100,7 +101,7 @@ namespace SPMTool
         }
 
         // Draw the panel shear blocks
-        public static void DrawPanelForces(ObjectIdCollection panels, Vector<double>[] panelForces)
+        public static void DrawPanelForces(ObjectIdCollection panels, Matrix<double> panelForces)
         {
             // Check if the layer already exists in the drawing. If it doesn't, then it's created:
             Auxiliary.CreateLayer(Layers.pnlFLyr, Colors.green, 0);
@@ -148,8 +149,8 @@ namespace SPMTool
                     int pnlNum = Convert.ToInt32(pnlData[PanelXDataIndex.num].Value);
                     double wd = Convert.ToDouble(pnlData[PanelXDataIndex.w].Value);
 
-                    // Get the forces in the list
-                    var f = panelForces[pnlNum - 1];
+                    // Get the forces in the matrix
+                    var f = panelForces.Row(pnlNum - 1);
 
                     // Get the dimensions as a vector
                     var lsV = Vector<double>.Build.DenseOfEnumerable(ls.AsEnumerable());
@@ -207,7 +208,7 @@ namespace SPMTool
         }
 
         // Draw the stringer forces diagrams
-        public static void DrawStringerForces(ObjectIdCollection stringers, Vector<double>[] stringerForces)
+        public static void DrawStringerForces(ObjectIdCollection stringers, Matrix<double> stringerForces)
         {
             // Check if the layer already exists in the drawing. If it doesn't, then it's created:
             Auxiliary.CreateLayer(Layers.strFLyr, Colors.grey, 0);
@@ -217,9 +218,7 @@ namespace SPMTool
             if (strFs.Count > 0) Auxiliary.EraseObjects(strFs);
 
             // Verify the maximum stringer force in the model to draw in an uniform scale
-            List<double> maxForces = new List<double>();
-            foreach (var strF in stringerForces) maxForces.Add(strF.AbsoluteMaximum());
-            double fMax = maxForces.Max();
+            double fMax = stringerForces.Enumerate().MaximumAbsolute();
 
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -240,8 +239,8 @@ namespace SPMTool
                     int strNum = Convert.ToInt32(strData[StringerXDataIndex.num].Value);
 
                     // Get the forces in the list
-                    var f = stringerForces[strNum - 1];
-                    double f1 = Math.Round(f[0], 2),
+                    var f = stringerForces.Row(strNum - 1);
+                    double f1 =  Math.Round(f[0], 2),
                            f3 = -Math.Round(f[2], 2);
 
                     // Check if at least one force is not zero
@@ -548,10 +547,10 @@ namespace SPMTool
         }
 
         // Calculate panel forces
-        public static void PanelForces(ObjectIdCollection panels, Tuple<int[], Matrix<double>, Matrix<double>>[] pnlParams, Vector<double> u)
+        public static void PanelForces(ObjectIdCollection panels, Tuple<int[], Matrix<double>, Matrix<double>>[] pnlMats, Vector<double> u)
         {
             // Create a list to store the panel forces
-            var pnlForces = new Vector<double>[panels.Count];
+            var pnlForces = Matrix<double>.Build.Dense(panels.Count, 4);
 
             // Create empty elements to the list
             //for (int i = 0; i < panels.Count; i++)
@@ -560,9 +559,9 @@ namespace SPMTool
             for (int i = 0; i < panels.Count; i++)
             {
                 // Get the parameters
-                int[] ind = pnlParams[i].Item1;
-                var   Kl  = pnlParams[i].Item2;
-                var   T   = pnlParams[i].Item3;
+                int[] ind = pnlMats[i].Item1;
+                var   Kl  = pnlMats[i].Item2;
+                var   T   = pnlMats[i].Item3;
 
                 // Get the displacements
                 var uStr = Vector<double>.Build.DenseOfArray(new double[]
@@ -577,7 +576,7 @@ namespace SPMTool
                 var fl = Kl * ul;
 
                 // Save to the list of stringer forces
-                pnlForces[i] = fl;
+                pnlForces.SetRow(i, fl);
             }
 
             // Draw the panel shear blocks
@@ -585,10 +584,10 @@ namespace SPMTool
         }
 
         // Calculate stringer forces
-        public static void StringerForces(ObjectIdCollection stringers, Tuple<int[], Matrix<double>, Matrix<double>>[] strParams, Vector<double> u)
+        public static void StringerForces(ObjectIdCollection stringers, Tuple<int[], Matrix<double>, Matrix<double>>[] strMats, Vector<double> u)
         {
             // Create a list to store the stringer forces
-            var strForces = new Vector<double>[stringers.Count];
+            var strForces = Matrix<double>.Build.Dense(stringers.Count,3);
 
             // Create empty elements to the list
             //for (int i = 0; i < stringers.Count; i++)
@@ -597,9 +596,9 @@ namespace SPMTool
             for (int i = 0; i < stringers.Count; i++)
             {
                 // Get the parameters
-                int[] ind = strParams[i].Item1;
-                var   Kl  = strParams[i].Item2;
-                var   T   = strParams[i].Item3;
+                int[] ind = strMats[i].Item1;
+                var   Kl  = strMats[i].Item2;
+                var   T   = strMats[i].Item3;
 
                 // Get the displacements
                 var uStr = Vector<double>.Build.DenseOfArray(new double[]
@@ -616,8 +615,8 @@ namespace SPMTool
                 // Aproximate small values to zero
                 fl.CoerceZero(0.000001);
 
-                // Save to the list of stringer forces
-                strForces[i] = fl;
+                // Save to the matrix of stringer forces
+                strForces.SetRow(i, fl);
 
                 //Global.ed.WriteMessage("\nStringer " + strNum.ToString() + ":\n" + fl.ToString());
             }
@@ -737,9 +736,9 @@ namespace SPMTool
                                        sy   = Convert.ToDouble(data[PanelXDataIndex.sy].Value);
 
                                 // Calculate the reinforcement ratio
-                                var (psx, psy) = Reinforcement.PanelReinforcement(phiX, sx, phiY, sy, w);
-                                psx = Math.Round(psx, 5);
-                                psy = Math.Round(psy, 5);
+                                double[] ps = Reinforcement.PanelReinforcement(phiX, sx, phiY, sy, w);
+                                double psx = Math.Round(ps[0], 5),
+                                       psy = Math.Round(ps[1], 5);
 
                                 msgstr = "Panel " + pnlNum + "\n\n" +
                                          "Grips: (" + pnlGps[0] + " - " + pnlGps[1] + " - " + pnlGps[2] + " - " + pnlGps[3] + ")" + "\n" +
