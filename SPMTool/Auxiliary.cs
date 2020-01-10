@@ -306,7 +306,7 @@ namespace SPMTool
         }
 
         // Get the direction cosines of a vector
-        public static (double l, double m) DirectionCosines(double angle)
+        public static double[] DirectionCosines(double angle)
         {
             double l, m;
             // Calculate the cosine, return 0 if 90 or 270 degrees
@@ -317,7 +317,7 @@ namespace SPMTool
             if (angle == 0 || angle == Constants.pi) m = 0;
             else m = MathNet.Numerics.Trig.Sin(angle);
 
-            return (l, m);
+            return new double[] { l, m };
         }
 
         // Function to verify if a number is not zero

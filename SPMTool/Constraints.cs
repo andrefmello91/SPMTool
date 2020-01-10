@@ -346,7 +346,7 @@ namespace SPMTool
         public static IEnumerable<Tuple<int, double>> ConstraintList()
         {
             // Access the nodes in the model
-            ObjectIdCollection nds = Geometry.AllNodes();
+            ObjectIdCollection nds = Geometry.Node.AllNodes();
 
             // Get the number of DoFs
             int numDofs = nds.Count;

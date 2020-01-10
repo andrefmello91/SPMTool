@@ -144,8 +144,138 @@ namespace SPMTool
             }
         }
 
-        // Get the indexes of an element grips in the global matrix
-        public static int[] GlobalIndexes(int[] grips)
+        // View the continued stringers
+        [CommandMethod("ViewContinuedStringers")]
+        public void ViewContinuedStringers()
+        {
+            // Update and get the elements collection
+            ObjectIdCollection nds = Geometry.Node.UpdateNodes(),
+                               strs = Geometry.Stringer.UpdateStringers();
+
+            // Get the list of continued stringers
+            var contStrs = ContinuedStringers(strs);
+
+            // Initialize a message to show
+            string msg = "Continued stringers: ";
+
+            // If there is none
+            if (contStrs.Count == 0)
+                msg += "None.";
+
+            // Write all the continued stringers
+            else
+            {
+                foreach (var contStr in contStrs)
+                {
+                    msg += contStr.Item1 + " - " + contStr.Item2 + ", ";
+                }
+            }
+
+            // Write the message in the editor
+            AutoCAD.edtr.WriteMessage(msg);
+        }
+
+        // Get the list of continued stringers
+        public static List<Tuple<int, int>> ContinuedStringers(ObjectIdCollection stringers)
+        {
+            // Initialize a Tuple to store the continued stringers
+            var contStrs = new List<Tuple<int, int>>();
+            
+            // Initialize a Tuple to store the stringer number, initial and end node and direction cosines
+            var strs = new Tuple<int, int[], double[]>[stringers.Count];
+
+            // Calculate the parameter of continuity
+            double par = Math.Sqrt(2) / 2;
+
+            // Get the stringers stiffness matrix and add to the global stiffness matrix
+            foreach (ObjectId obj in stringers)
+            {
+                // Read the parameters
+                var strPrms = StringerParams(obj);
+                int num = strPrms.Item1;
+                var grips = strPrms.Item2;
+                double alpha = strPrms.Item4;
+
+                // Get the initial and end node
+                int[] nds = new int[] { grips[0], grips[2] };
+
+                // Get the direction cosines
+                double[] dirCos = Auxiliary.DirectionCosines(alpha);
+
+                // Add to the stringers list
+                strs[num - 1] = Tuple.Create(num, nds, dirCos);
+            }
+
+            // Verify in the list what stringers are continuous
+            foreach (var str1 in strs)
+            {
+                // Access the number
+                int num1 = str1.Item1;
+
+                foreach (var str2 in strs)
+                {
+                    // Access the number
+                    int num2 = str2.Item1;
+
+                    // Verify if it's other stringer
+                    if (num1 != num2)
+                    {
+                        // Create a tuple with the minimum stringer number first
+                        var contStr = Tuple.Create(Math.Min(num1, num2), Math.Max(num1, num2));
+
+                        // Verify if it's already on the list
+                        if (!contStrs.Contains(contStr))
+                        {
+                            // Verify the cases
+                            // Case 1: stringers initiate or end at the same node
+                            if (str1.Item2[0] == str2.Item2[0] || str1.Item2[1] == str2.Item2[1])
+                            {
+                                // Get the direction cosines
+                                double l1 = str1.Item3[0], m1 = str1.Item3[1],
+                                       l2 = str2.Item3[0], m2 = str2.Item3[1];
+
+                                // Calculate the condition of continuity
+                                double cont = l1 * l2 + m1 * m2;
+
+                                // Verify the condition
+                                if (cont < -par) // continued stringer
+                                {
+                                    // Add to the list
+                                    contStrs.Add(contStr);
+                                }
+                            }
+
+                            // Case 2: a stringer initiate and the other end at the same node
+                            if (str1.Item2[0] == str2.Item2[1] || str1.Item2[1] == str2.Item2[0])
+                            {
+                                // Get the direction cosines
+                                double l1 = str1.Item3[0], m1 = str1.Item3[1],
+                                       l2 = str2.Item3[0], m2 = str2.Item3[1];
+
+                                // Calculate the condition of continuity
+                                double cont = l1 * l2 + m1 * m2;
+
+                                // Verify the condition
+                                if (cont > par) // continued stringer
+                                {
+                                    // Add to the list
+                                    contStrs.Add(contStr);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Order the list
+            contStrs = contStrs.OrderBy(str => str.Item2).ThenBy(str => str.Item1).ToList();
+
+            // Return the list
+            return contStrs;
+        }
+
+            // Get the indexes of an element grips in the global matrix
+            public static int[] GlobalIndexes(int[] grips)
         {
             // Initialize the array
             int[] ind = new int[grips.Length];

@@ -34,12 +34,12 @@ namespace SPMTool
                     double Gc = Ec / 2.4;
 
                     // Update and get the elements collection
-                    ObjectIdCollection nds  = Geometry.UpdateNodes(),
-                                       strs = Geometry.UpdateStringers(),
-                                       pnls = Geometry.UpdatePanels();
+                    ObjectIdCollection nds  = Geometry.Node.UpdateNodes(),
+                                       strs = Geometry.Stringer.UpdateStringers(),
+                                       pnls = Geometry.Panel.UpdatePanels();
 
                     // Get the list of node positions
-                    List<Point3d> ndList = Geometry.ListOfNodes("All");
+                    List<Point3d> ndList = Geometry.Node.ListOfNodes("All");
 
                     // Initialize the global stiffness matrix
                     var Kg = Matrix<double>.Build.Dense(2 * nds.Count, 2 * nds.Count);
@@ -64,9 +64,9 @@ namespace SPMTool
                     Results.NodalDisplacements(nds, strs, ndList, u);
 
                     // Write in a csv file (debug)
-                    DelimitedWriter.Write("D:/SPMTooldataF.csv", f.ToColumnMatrix(), ";");
-                    DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
-                    DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
+                    //DelimitedWriter.Write("D:/SPMTooldataF.csv", f.ToColumnMatrix(), ";");
+                    //DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
+                    //DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
                 }
                 else
                 {
@@ -92,7 +92,9 @@ namespace SPMTool
                            Ac      = strPrms.Item5;
 
                     // Get the direction cosines
-                    var (l, m) = Auxiliary.DirectionCosines(alpha);
+                    double[] dirCos = Auxiliary.DirectionCosines(alpha);
+                    double l = dirCos[0],
+                           m = dirCos[1];
 
                     // Obtain the transformation matrix
                     var T = Matrix<double>.Build.DenseOfArray(new double[,]
@@ -125,7 +127,7 @@ namespace SPMTool
                     // Save to the list of stringer parameters
                     strMats[num - 1] = Tuple.Create(ind, Kl, T);
 
-                    DelimitedWriter.Write("D:/SPMTooldataS" + num + ".csv", K, ";");
+                    //DelimitedWriter.Write("D:/SPMTooldataS" + num + ".csv", K, ";");
                 }
 
                 // Return the list
@@ -264,10 +266,15 @@ namespace SPMTool
 
                     // Get the transformation matrix
                     // Direction cosines
-                    var (m1, n1) = Auxiliary.DirectionCosines(alpha[0]);
-                    var (m2, n2) = Auxiliary.DirectionCosines(alpha[1]);
-                    var (m3, n3) = Auxiliary.DirectionCosines(alpha[2]);
-                    var (m4, n4) = Auxiliary.DirectionCosines(alpha[3]);
+                    double[] dirCos1 = Auxiliary.DirectionCosines(alpha[0]),
+                             dirCos2 = Auxiliary.DirectionCosines(alpha[1]),
+                             dirCos3 = Auxiliary.DirectionCosines(alpha[2]),
+                             dirCos4 = Auxiliary.DirectionCosines(alpha[3]);
+
+                    double m1 = dirCos1[0], n1 = dirCos1[1],
+                           m2 = dirCos2[0], n2 = dirCos2[1],
+                           m3 = dirCos3[0], n3 = dirCos3[1],
+                           m4 = dirCos4[0], n4 = dirCos4[1];
 
                     // T matrix
                     var T = Matrix<double>.Build.DenseOfArray(new double[,]
@@ -291,7 +298,7 @@ namespace SPMTool
                     // Save to the list of panel parameters
                     pnlMats[num - 1] = Tuple.Create(ind, Kl, T);
 
-                    DelimitedWriter.Write("D:/SPMTooldataP" + num + ".csv", K, ";");
+                    //DelimitedWriter.Write("D:/SPMTooldataP" + num + ".csv", K, ";");
                 }
 
                 // Return the list
@@ -302,7 +309,7 @@ namespace SPMTool
             public void SimplifyStiffnessMatrix(Matrix<double> Kg, Vector<double> f, List<Point3d> allNds, IEnumerable<Tuple<int, double>> constraints)
             {
                 // Get the list of internal nodes
-                List<Point3d> intNds = Geometry.ListOfNodes("Int");
+                List<Point3d> intNds = Geometry.Node.ListOfNodes("Int");
 
                 // Simplify the matrices removing the rows that have constraints
                 foreach (Tuple<int, double> con in constraints)

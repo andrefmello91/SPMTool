@@ -494,7 +494,7 @@ namespace SPMTool
             }
 
             // Add the nodes
-            Geometry.Node(dispNds, Layers.dispLyr);
+            Geometry.Node.NewNode(dispNds, Layers.dispLyr);
 
             // Turn the layer off
             Auxiliary.LayerOff(Layers.dispLyr);

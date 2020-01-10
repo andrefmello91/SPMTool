@@ -196,9 +196,9 @@ namespace SPMTool
                 }
 
                 // Calculate the stringer stiffness
-                public static Matrix<double> StringerStiffness(double L, double N1, double N3, double Ac, double As)
+                public static Matrix<double> StringerStiffness(double L, double N1, double N3, double Ac, double As, double ec, double ey)
                 {
-                    // Calculate the required strains
+                    // Calculate the approximated strains
                     double eps1 = StringerStrain(N1, Ac, As),
                            eps2 = StringerStrain(2 / 3 * N1 + N3 / 3, Ac, As),
                            eps3 = StringerStrain(N1 / 3 + 2 / 3 * N3, Ac, As),
@@ -227,6 +227,23 @@ namespace SPMTool
                     var Kl = B.Transpose() * F.Inverse() * B;
 
                     return Kl;
+                }
+
+                // Calculate the total plastic generalized strain in a stringer
+                public static double StringerPlasticStrain(double eps, double ec, double ey, double L)
+                {
+                    // Initialize the plastic strain
+                    double ep = 0;
+
+                    // Case of tension
+                    if (eps > ey)
+                        ep = L / 8 * (eps - ey);
+
+                    // Case of compression
+                    if (eps < ec)
+                        ep = L / 8 * (eps - ec);
+
+                    return ep;
                 }
             }
         }
