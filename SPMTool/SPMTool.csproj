@@ -95,10 +95,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Analysis.cs" />
+    <Compile Include="StringerAnalysis.cs" />
+    <Compile Include="PanelAnalysis.cs" />
     <Compile Include="Forces.cs" />
     <Compile Include="GlobalVariables.cs" />
-    <Compile Include="NonLinearAnalysis.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -108,7 +108,7 @@
     <Compile Include="Results.cs" />
     <Compile Include="Geometry.cs" />
     <Compile Include="Auxiliary.cs" />
-    <Compile Include="LinearAnalysis.cs" />
+    <Compile Include="Analysis.cs" />
     <Compile Include="MaterialInput.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Constraints.cs" />
