@@ -143,6 +143,17 @@ namespace SPMTool
                 }
             }
 
+            // Calculate the necessary dimensions of a panel
+            public static double[] Dimensions(Point3d[] verts)
+            {
+                double a = (verts[1].X + verts[2].X) / 2 - (verts[0].X + verts[3].X) / 2,
+                       b = (verts[2].Y + verts[3].Y) / 2 - (verts[0].Y + verts[1].Y) / 2,
+                       c = (verts[2].X + verts[3].X) / 2 - (verts[0].X + verts[1].X) / 2,
+                       d = (verts[1].Y + verts[2].Y) / 2 - (verts[0].Y + verts[3].Y) / 2;
+
+                return new double[] {a, b, c, d};
+            }
+
             public class Linear
             {
                 // Calculate the stiffness matrix of a panel, get the dofs and save to XData, returns the all the matrices in an ordered list
@@ -202,26 +213,26 @@ namespace SPMTool
 
                             // Get the dimensions
                             double l1 = L[0],
-                                l2 = L[1],
-                                l3 = L[2],
-                                l4 = L[3];
+                                   l2 = L[1],
+                                   l3 = L[2],
+                                   l4 = L[3];
 
                             // Equilibrium parameters
                             double c1 = nd2.X - nd1.X, c2 = nd3.X - nd2.X, c3 = nd4.X - nd3.X, c4 = nd1.X - nd4.X,
-                                s1 = nd2.Y - nd1.Y, s2 = nd3.Y - nd2.Y, s3 = nd4.Y - nd3.Y, s4 = nd1.Y - nd4.Y,
-                                r1 = nd1.X * nd2.Y - nd2.X * nd1.Y, r2 = nd2.X * nd3.Y - nd3.X * nd2.Y,
-                                r3 = nd3.X * nd4.Y - nd4.X * nd3.Y, r4 = nd4.X * nd1.Y - nd1.X * nd4.Y;
-
+                                   s1 = nd2.Y - nd1.Y, s2 = nd3.Y - nd2.Y, s3 = nd4.Y - nd3.Y, s4 = nd1.Y - nd4.Y,
+                                   r1 = nd1.X * nd2.Y - nd2.X * nd1.Y, r2 = nd2.X * nd3.Y - nd3.X * nd2.Y,
+                                   r3 = nd3.X * nd4.Y - nd4.X * nd3.Y, r4 = nd4.X * nd1.Y - nd1.X * nd4.Y;
+                              
                             // Kinematic parameters
                             double a = (c1 - c3) / 2,
-                                b = (s2 - s4) / 2,
-                                c = (c2 - c4) / 2,
-                                d = (s1 - s3) / 2;
+                                   b = (s2 - s4) / 2,
+                                   c = (c2 - c4) / 2,
+                                   d = (s1 - s3) / 2;
 
                             double t1 = -b * c1 - c * s1,
-                                t2 = a * s2 + d * c2,
-                                t3 = b * c3 + c * s3,
-                                t4 = -a * s4 - d * c4;
+                                   t2 = a * s2 + d * c2,
+                                   t3 = b * c3 + c * s3,
+                                   t4 = -a * s4 - d * c4;
 
                             // Matrices to calculate the determinants
                             var km1 = Matrix<double>.Build.DenseOfArray(new double[,]
@@ -314,6 +325,46 @@ namespace SPMTool
 
                     // Return the list
                     return pnlMats;
+                }
+            }
+
+            public class NonLinear
+            {
+                // Calculate the generalized strains
+                public static Matrix<double> MatrixA(double[] dimensions)
+                {
+                    // Get the dimensions
+                    double a = dimensions[0],
+                           b = dimensions[1],
+                           c = dimensions[2],
+                           d = dimensions[3];
+
+                    // Calculate t1, t2 and t3
+                    double t1 = a * b - c * d,
+                           t2 = 0.5 * (a * a - c * c) + b * b - d * d,
+                           t3 = 0.5 * (b * b - d * d) + a * a - c * c;
+
+                    // Calculate the components of the matrix
+                    double  at1 = a / t1,
+                            bt1 = b / t1,
+                            ct1 = c / t1,
+                            dt1 = d / t1,
+                            at2 = a / t2,
+                            bt3 = b / t3,
+                            a2t1 = at1 / 2,
+                            b2t1 = bt1 / 2,
+                            c2t1 = ct1 / 2,
+                            d2t1 = dt1 / 2;
+
+                    // Create the matrix
+                    return Matrix<double>.Build.DenseOfArray(new double[,]
+                    {
+                        {  dt1,    0,   bt1,    0, -dt1,     0, -bt1,     0 },
+                        {    0, -at1,     0, -ct1,    0,   at1,    0,   ct1 },
+                        {-a2t1, d2t1, -c2t1, b2t1, a2t1, -d2t1, c2t1, -b2t1 },
+                        { -at2,    0,   at2,    0, -at2,     0,  at2,     0 },
+                        {    0,  bt3,     0, -bt3,    0,   bt3,    0,  -bt3 }
+                    });
                 }
             }
         }
