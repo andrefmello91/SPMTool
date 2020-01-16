@@ -159,6 +159,19 @@ namespace SPMTool
                 }
                 return concParams;
             }
+
+            // Calculate concrete parameters for MCFT
+            public static double[] MCFTParams(double fc)
+            {
+                // Calculate the parameters
+                double ec = 0.002,
+                       Ec = 2 * fc / ec,
+                       ft = 0.33 * Math.Sqrt(fc),
+                       ecr = ft / Ec;
+
+                // Return in the order ec || Ec || ft || ecr
+                return new double[] {ec, Ec, ft, ecr};
+            }
         }
 
         // Steel

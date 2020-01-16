@@ -209,8 +209,14 @@ namespace SPMTool
         }
 
         // Calculate the panel reinforcement ratio
-        public static double[] PanelReinforcement(double phiX, double sx, double phiY, double sy, double w)
+        public static double[] PanelReinforcement(double[] phi, double[] s, double w)
         {
+            // Get the values for each direction
+            double phiX = phi[0],
+                   phiY = phi[1],
+                   sx = s[0],
+                   sy = s[1];
+
             // Initialize psx and psy
             double psx = 0,
                    psy = 0;

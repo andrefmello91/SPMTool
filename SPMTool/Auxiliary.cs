@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Colors;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace SPMTool
 {
@@ -326,6 +327,23 @@ namespace SPMTool
             if (num != 0) return true;
             else return false;
         };
+
+        // Calculate principal strains by Mohr's Circle
+        public static double[] PrincipalStrains(Vector<double> epsilon)
+        {
+            // Get the strains
+            double ex = epsilon[0],
+                ey = epsilon[1],
+                yxy = epsilon[2];
+
+            double rad = Math.Sqrt(((ey - ex) * (ey - ex) + yxy * yxy) / 2),   // Radius
+                cen = Math.Sqrt((ex + ey) / 2),                                // Center
+                e1 = rad + cen,                                                // Tension principal strain
+                e2 = cen - rad;                                                // Compression principal strain
+
+            return new double[] {e1, e2};
+        }
+
 
         // In case a support or force is erased
         //public static void BlockErased(object sender, ObjectEventArgs eventArgs)

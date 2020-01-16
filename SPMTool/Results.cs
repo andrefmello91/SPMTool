@@ -729,22 +729,30 @@ namespace SPMTool
                                         data[PanelXDataIndex.grip4].Value.ToString()
                                     };
 
-                                double w    = Convert.ToDouble(data[PanelXDataIndex.w].Value),
-                                       phiX = Convert.ToDouble(data[PanelXDataIndex.phiX].Value),
-                                       sx   = Convert.ToDouble(data[PanelXDataIndex.sx].Value),
-                                       phiY = Convert.ToDouble(data[PanelXDataIndex.phiY].Value),
-                                       sy   = Convert.ToDouble(data[PanelXDataIndex.sy].Value);
+                                double w = Convert.ToDouble(data[PanelXDataIndex.w].Value);
+
+                                double[] phi = new double[]
+                                {
+                                    Convert.ToDouble(data[PanelXDataIndex.phiX].Value),
+                                    Convert.ToDouble(data[PanelXDataIndex.phiY].Value)
+                                };
+
+                                double[] s = new double[]
+                                {
+                                    Convert.ToDouble(data[PanelXDataIndex.sx].Value),
+                                    Convert.ToDouble(data[PanelXDataIndex.sy].Value)
+                                };
 
                                 // Calculate the reinforcement ratio
-                                double[] ps = Reinforcement.PanelReinforcement(phiX, sx, phiY, sy, w);
+                                double[] ps = Reinforcement.PanelReinforcement(phi, s, w);
                                 double psx = Math.Round(ps[0], 5),
                                        psy = Math.Round(ps[1], 5);
 
                                 msgstr = "Panel " + pnlNum + "\n\n" +
                                          "Grips: (" + pnlGps[0] + " - " + pnlGps[1] + " - " + pnlGps[2] + " - " + pnlGps[3] + ")" + "\n" +
                                          "Width = " + w + " mm" + "\n" +
-                                         "Reinforcement (x) = Ø " + phiX + " mm, s = " + sx + " mm (ρsx = " + psx + ")\n" +
-                                         "Reinforcement (y) = Ø " + phiY + " mm, s = " + sy + " mm (ρsy = " + psy + ")";
+                                         "Reinforcement (x) = Ø " + phi[0] + " mm, s = " + s[0] + " mm (ρsx = " + psx + ")\n" +
+                                         "Reinforcement (y) = Ø " + phi[1] + " mm, s = " + s[1] + " mm (ρsy = " + psy + ")";
                             }
 
                             // If it's a force text
