@@ -170,7 +170,7 @@ namespace SPMTool
                        ecr = ft / Ec;
 
                 // Return in the order ec || Ec || ft || ecr
-                return new double[] {ec, Ec, ft, ecr};
+                return new double[] {fc, ec, Ec, ft, ecr};
             }
         }
 

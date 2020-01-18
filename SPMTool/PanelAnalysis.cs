@@ -442,13 +442,14 @@ namespace SPMTool
                 }
 
                 // Calculate the stresses in concrete and steel by MCFT
-                public static void MCFT(double[] concPars, double phiAg, double[] fy, double[] Es, double[] phi, double[] s, Vector<double> sigma, double t)
+                public static void MCFT(double[] concPars, double phiAg, double[] fy, double[] Es, double[] phi, double[] s, Vector<double> f, double t)
                 {
                     // Get the concrete parameters
-                    double ec = concPars[0],
-                           Ec = concPars[1],
-                           ft = concPars[2],
-                           ecr = concPars[3];
+                    double fc = concPars[0],
+                           ec = concPars[1],
+                           Ec = concPars[2],
+                           fcr = concPars[3],
+                           ecr = concPars[4];
 
                     // Get the steel parameters
                     double fyx  = fy[0],
@@ -464,13 +465,8 @@ namespace SPMTool
 
                     // Calculate the reinforcement ratio
                     double[] ps = Reinforcement.PanelReinforcement(phi, s, t);
-                    double psx = ps[0],
-                           psy = ps[1];
-
-                    // Get the stresses
-                    double sigX = sigma[0],
-                           sigY = sigma[1],
-                           tauXY = sigma[2];
+                    double   psx = ps[0],
+                             psy = ps[1];
 
                     // Calculate the crack spacings
                     double smx = 2 / 3 * phiX / (3.6 * psx),
@@ -491,15 +487,15 @@ namespace SPMTool
                     {
                         // Get the strains and stresses
                         double ex = em[0],
-                            ey = em[1],
-                            yxy = em[2],
-                            f1g = f1,
-                            f2g = f2;
+                               ey = em[1],
+                               yxy = em[2],
+                               f1g = f1,
+                               f2g = f2;
 
                         // Calculate principal strains by Mohr's Circle
-                        double[] ep = Auxiliary.PrincipalStrains(em);
-                        double e1a = ep[0],
-                            e2a = ep[1];
+                        double[] ep  = Auxiliary.PrincipalStrains(em);
+                        double   e1a = ep[0],
+                                 e2a = ep[1];
 
                         // Calculate the angle of compression principal strain
                         double thetaA = Math.Atan(0.5 * yxy / (ey - ex));
@@ -522,21 +518,21 @@ namespace SPMTool
                         // Concrete stiffness matrix
                         var Dc = Matrix<double>.Build.DenseOfArray(new double[,]
                         {
-                            {Ec1, 0, 0},
-                            {0, Ec2, 0},
-                            {0, 0, Gc12}
+                            {Ec1,   0,    0},
+                            {  0, Ec2,    0},
+                            {  0,   0, Gc12}
                         });
 
                         // Components of steel stiffness matrix
                         double Esx = Math.Min(Esxi, fyx / ex),
-                            Esy = Math.Min(Esyi, fyy / ey);
+                               Esy = Math.Min(Esyi, fyy / ey);
 
                         // Steel stiffness matrix
                         var Ds = Matrix<double>.Build.DenseOfArray(new double[,]
                         {
-                            {psx * Esx, 0, 0},
-                            {0, psy * Esy, 0},
-                            {0, 0, 0}
+                            {psx * Esx,         0, 0},
+                            {        0, psy * Esy, 0},
+                            {        0,         0, 0}
                         });
 
                         // Components of concrete transformation matrix
@@ -549,29 +545,87 @@ namespace SPMTool
                         // Concrete transformation matrix
                         var T = Matrix<double>.Build.DenseOfArray(new double[,]
                         {
-                            {cos2, sin2, cos2Tsin2},
-                            {sin2, cos2, -cos2Tsin2},
-                            {-2 * cos2Tsin2, 2 * cos2Tsin2, cos2Msin2}
+                            {          cos2,          sin2,  cos2Tsin2},
+                            {          sin2,          cos2, -cos2Tsin2},
+                            {-2 * cos2Tsin2, 2 * cos2Tsin2,  cos2Msin2}
                         });
 
                         // Complete stiffness matrix
                         var D = T.Transpose() * Dc * T + Ds;
 
                         // Calculate new strains
-                        em = D.Inverse() * sigma;
+                        em = D.Inverse() * f;
 
                         // Get the strains
-                        double exm = em[0],
-                            eym = em[1],
-                            yxym = em[2];
+                        double exm  = em[0],
+                               eym  = em[1],
+                               yxym = em[2];
 
                         // Calculate principal strains by Mohr's Circle
                         ep = Auxiliary.PrincipalStrains(em);
                         double e1 = ep[0],
-                            e2 = ep[1];
+                               e2 = ep[1];
 
                         // Calculate the new angle of compression principal strain
-                        double theta = Math.Atan(0.5 * yxy / (ey - ex));
+                        double theta     = Math.Atan(0.5 * yxym / (eym - exm)),
+                               sinTheta  = Math.Sin(theta),
+                               cosTheta  = Math.Cos(theta),
+                               tanTheta  = Math.Tan(theta),
+                               sin2Theta = Math.Sin(2 * theta),
+                               cos2Theta = Math.Cos(2 * theta);
+
+                        // Calculate the new reinforcement stresses
+                        double fsx = Math.Min(Esx * exm, fyx),
+                               fsy = Math.Min(Esy * eym, fyy);
+
+                        // Calculate the maximum concrete compressive stress
+                        double f2maxA = fc / (0.8 + 170 * e1),
+                               f2max  = Math.Min(f2maxA, fc);
+
+                        // Calculate the principal compressive stress in concrete
+                        f2 = f2max * (2 * e2 / ec - e2 / ec * e2 / ec);
+
+                        // Calculate the principal tensile stress in concrete
+                        double f1a;
+                        if (e1 <= ecr)
+                            f1a = e1 * Ec;
+                        else
+                            f1a = fcr / (1 + Math.Sqrt(500 * e1));
+
+                        // Limit the principal tensile stress by crack check procedure
+                        double smTetha = 1 / (sinTheta / smx + cosTheta / smy),                     // Crack spacing
+                               w       = e1 * smTetha,                                              // Crack opening
+                               f1cx    = psx * (fyx - fsx),                                         // X reinforcement capacity reserve
+                               f1cy    = psy * (fyy - fsy),                                         // Y reinforcement capacity reserve
+                               vcimaxA = 0.18 * Math.Sqrt(fc) / (0.31 + 24 * w / (phiAg + 16)),     // Maximum possible shear on crack interface
+                               vcimaxB = Math.Abs(f1cx - f1cy) * sinTheta * cosTheta,               // Maximum possible shear for biaxial yielding
+                               vcimax  = Math.Min(vcimaxA, vcimaxB),                                // Maximum shear on crack
+                               f1b     = f1cx * sinTheta * sinTheta + f1cy * cosTheta * cosTheta,   // Biaxial yielding condition
+                               f1c     = f1cx + vcimax * tanTheta,                                  // Maximum tensile stress for equilibrium in X
+                               f1d     = f1cy + vcimax * tanTheta;                                  // Maximum tensile stress for equilibrium in Y
+
+                        // Calculate the final tensile stress
+                        var f1List = new[] {f1a, f1b, f1c, f1d};
+                        f1 = f1List.Min();
+
+                        // Final stresses
+                        double rads = (f1 - f2) / 2,
+                               cens = (f1 + f2) / 2;
+
+                        // Vector of final stresses
+                        var fNew = Vector<double>.Build.DenseOfArray(new double[]
+                        {
+                            cens - rads * cos2Theta + psx * fsx,
+                            cens - rads * cos2Theta + psy * fsy,
+                            rads * sin2Theta
+                        });
+
+                        // Verify the tolerance
+                        var TolVec = f - fNew;
+                        Tol = TolVec.AbsoluteMaximum();
+
+                        // If convergence is not reached, start a new loop with the calculated
+                        // displacements (em) and principal stresses (f1 and f2)
 
                     } while (Tol > 0.00001);
                 }
