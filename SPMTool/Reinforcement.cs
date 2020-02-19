@@ -62,7 +62,7 @@ namespace SPMTool
                                 Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                                 // Check if the selected object is a node
-                                if (ent.Layer == Layers.strLyr)
+                                if (ent.Layer == Layers.stringer)
                                 {
                                     // Upgrade the OpenMode
                                     ent.UpgradeOpen();
@@ -72,8 +72,8 @@ namespace SPMTool
                                     TypedValue[] data = rb.AsArray();
 
                                     // Set the new reinforcement
-                                    data[StringerXDataIndex.nBars] = new TypedValue((int)DxfCode.ExtendedDataReal, nBars);
-                                    data[StringerXDataIndex.phi]   = new TypedValue((int)DxfCode.ExtendedDataReal, phi);
+                                    data[(int)XData.Stringer.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataReal, nBars);
+                                    data[(int)XData.Stringer.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal, phi);
 
                                     // Add the new XData
                                     ent.XData = new ResultBuffer(data);
@@ -166,7 +166,7 @@ namespace SPMTool
                                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                                         // Check if the selected object is a node
-                                        if (ent.Layer == Layers.pnlLyr)
+                                        if (ent.Layer == Layers.panel)
                                         {
                                             // Upgrade the OpenMode
                                             ent.UpgradeOpen();
@@ -176,10 +176,10 @@ namespace SPMTool
                                             TypedValue[] data = rb.AsArray();
 
                                             // Set the new geometry and reinforcement (line 7 to 9 of the array)
-                                            data[PanelXDataIndex.phiX] = new TypedValue((int)DxfCode.ExtendedDataReal, phiX);
-                                            data[PanelXDataIndex.sx]   = new TypedValue((int)DxfCode.ExtendedDataReal, sx);
-                                            data[PanelXDataIndex.phiY] = new TypedValue((int)DxfCode.ExtendedDataReal, phiY);
-                                            data[PanelXDataIndex.sy]   = new TypedValue((int)DxfCode.ExtendedDataReal, sy);
+                                            data[(int)XData.Panel.XDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, phiX);
+                                            data[(int)XData.Panel.Sx]   = new TypedValue((int)DxfCode.ExtendedDataReal, sx);
+                                            data[(int)XData.Panel.YDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, phiY);
+                                            data[(int)XData.Panel.Sy]   = new TypedValue((int)DxfCode.ExtendedDataReal, sy);
 
                                             // Add the new XData
                                             ent.XData = new ResultBuffer(data);

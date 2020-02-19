@@ -35,20 +35,20 @@ namespace SPMTool
                     TypedValue[] data = rb.AsArray();
 
                     // Get the stringer number
-                    int num = Convert.ToInt32(data[StringerXDataIndex.num].Value);
+                    int num = Convert.ToInt32(data[(int)XData.Stringer.Number].Value);
 
                     // Create the list of grips
                     int[] grips =
                     {
-                        Convert.ToInt32(data[StringerXDataIndex.grip1].Value),
-                        Convert.ToInt32(data[StringerXDataIndex.grip2].Value),
-                        Convert.ToInt32(data[StringerXDataIndex.grip3].Value)
+                        Convert.ToInt32(data[(int)XData.Stringer.Grip1].Value),
+                        Convert.ToInt32(data[(int)XData.Stringer.Grip2].Value),
+                        Convert.ToInt32(data[(int)XData.Stringer.Grip3].Value)
                     };
 
-                    double w     = Convert.ToDouble(data[StringerXDataIndex.w].Value),
-                        h     = Convert.ToDouble(data[StringerXDataIndex.h].Value),
-                        nBars = Convert.ToDouble(data[StringerXDataIndex.nBars].Value),
-                        phi   = Convert.ToDouble(data[StringerXDataIndex.phi].Value);
+                    double w     = Convert.ToDouble(data[(int)XData.Stringer.Width].Value),
+                        h     = Convert.ToDouble(data[(int)XData.Stringer.Height].Value),
+                        nBars = Convert.ToDouble(data[(int)XData.Stringer.NumOfBars].Value),
+                        phi   = Convert.ToDouble(data[(int)XData.Stringer.BarDiam].Value);
 
                     // Calculate the cross sectional area
                     double A = w * h;

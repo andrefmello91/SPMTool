@@ -260,7 +260,7 @@ namespace SPMTool
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Get all the stringers in the model collection
-                ObjectIdCollection strsUpdt = GetEntitiesOnLayer(Layers.strLyr);
+                ObjectIdCollection strsUpdt = GetEntitiesOnLayer(Layers.stringer);
 
                 // Create a collection to erase later
                 ObjectIdCollection strsToErase = new ObjectIdCollection();

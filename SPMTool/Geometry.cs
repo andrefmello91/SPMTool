@@ -103,16 +103,17 @@ namespace SPMTool
                         if (nd.XData == null)
                         {
                             // Get the Xdata size
-                            data = new TypedValue[NodeXDataIndex.size];
+                            int size = Enum.GetNames(typeof(XData.Node)).Length;
+                            data = new TypedValue[size];
 
                             // Set the initial parameters
-                            data[NodeXDataIndex.appName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
-                            data[NodeXDataIndex.xdataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-                            data[NodeXDataIndex.support]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Free");
-                            data[NodeXDataIndex.Fx]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[NodeXDataIndex.Fy]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[NodeXDataIndex.ux]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[NodeXDataIndex.uy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            data[(int)XData.Node.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
+                            data[(int)XData.Node.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+                            data[(int)XData.Node.Support]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Free");
+                            data[(int)XData.Node.Fx]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            data[(int)XData.Node.Fy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            data[(int)XData.Node.Ux]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            data[(int)XData.Node.Uy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                         }
 
                         else // Xdata exists
@@ -123,7 +124,7 @@ namespace SPMTool
                         }
 
                         // Set the updated number
-                        data[NodeXDataIndex.num] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
+                        data[(int)XData.Node.Number] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
 
                         // Add the new XData
                         nd.XData = new ResultBuffer(data);
@@ -152,10 +153,10 @@ namespace SPMTool
                     nds = AllNodes();
 
                 if (nodeType == "Int")
-                    nds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
+                    nds = Auxiliary.GetEntitiesOnLayer(Layers.intNode);
 
                 if (nodeType == "Ext")
-                    nds = Auxiliary.GetEntitiesOnLayer(Layers.extNdLyr);
+                    nds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
 
                 // Create a point collection
                 List<Point3d> ndPos = new List<Point3d>();
@@ -179,8 +180,8 @@ namespace SPMTool
             public static ObjectIdCollection AllNodes()
             {
                 // Create the nodes collection and initialize getting the elements on node layer
-                ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNdLyr);
-                ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
+                ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
+                ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNode);
 
                 // Create a unique collection for all the nodes
                 ObjectIdCollection nds = new ObjectIdCollection();
@@ -214,7 +215,7 @@ namespace SPMTool
                             TypedValue[] dataNd = ndRb.AsArray();
 
                             // Get the node number (line 2)
-                            ndNum = Convert.ToInt32(dataNd[NodeXDataIndex.num].Value);
+                            ndNum = Convert.ToInt32(dataNd[(int)XData.Node.Number].Value);
                         }
                     }
                 }
@@ -230,9 +231,9 @@ namespace SPMTool
             public static void AddStringer()
             {
                 // Check if the layers already exists in the drawing. If it doesn't, then it's created:
-                Auxiliary.CreateLayer(Layers.extNdLyr, Colors.red, 0);
-                Auxiliary.CreateLayer(Layers.intNdLyr, Colors.blue, 0);
-                Auxiliary.CreateLayer(Layers.strLyr, Colors.cyan, 0);
+                Auxiliary.CreateLayer(Layers.extNode, (short)AutoCAD.Colors.Red, 0);
+                Auxiliary.CreateLayer(Layers.intNode, (short)AutoCAD.Colors.Blue, 0);
+                Auxiliary.CreateLayer(Layers.stringer, (short)AutoCAD.Colors.Cyan, 0);
 
                 // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
                 Auxiliary.RegisterApp();
@@ -304,8 +305,8 @@ namespace SPMTool
                 }
 
                 // Create the nodes
-                Node.NewNode(newExtNds, Layers.extNdLyr);
-                Node.NewNode(newIntNds, Layers.intNdLyr);
+                Node.NewNode(newExtNds, Layers.extNode);
+                Node.NewNode(newIntNds, Layers.intNode);
 
                 // Update the nodes and stringers
                 Node.UpdateNodes();
@@ -327,7 +328,7 @@ namespace SPMTool
                     // Create the line in Model space
                     str = new Line(stringerPoints.Item1, stringerPoints.Item2)
                     {
-                        Layer = Layers.strLyr
+                        Layer = Layers.stringer
                     };
                 }
 
@@ -370,7 +371,7 @@ namespace SPMTool
                                 newExtNds = new List<Point3d>();
 
                             // Access the internal nodes in the model
-                            ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
+                            ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNode);
 
                             // Start a transaction
                             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -387,7 +388,7 @@ namespace SPMTool
                                     Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                                     // Check if the selected object is a stringer
-                                    if (ent.Layer == Layers.strLyr)
+                                    if (ent.Layer == Layers.stringer)
                                     {
                                         // Read as a line
                                         Line str = ent as Line;
@@ -471,8 +472,8 @@ namespace SPMTool
                             }
 
                             // Create the nodes
-                            Node.NewNode(newExtNds, Layers.extNdLyr);
-                            Node.NewNode(newIntNds, Layers.intNdLyr);
+                            Node.NewNode(newExtNds, Layers.extNode);
+                            Node.NewNode(newIntNds, Layers.intNode);
                         }
                     }
                 }
@@ -489,7 +490,7 @@ namespace SPMTool
                 string xdataStr = "Stringer Data";
 
                 // Create the stringer collection and initialize getting the elements on layer
-                ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.strLyr);
+                ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.stringer);
 
                 // Get all the nodes in the model
                 ObjectIdCollection nds = Node.AllNodes();
@@ -530,15 +531,16 @@ namespace SPMTool
                         if (str.XData == null)
                         {
                             // Get the Xdata size
-                            data = new TypedValue[StringerXDataIndex.size];
+                            int size = Enum.GetNames(typeof(XData.Stringer)).Length;
+                            data = new TypedValue[size];
 
                             // Set the initial parameters
-                            data[StringerXDataIndex.appName] = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
-                            data[StringerXDataIndex.xdataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-                            data[StringerXDataIndex.w] = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
-                            data[StringerXDataIndex.h] = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
-                            data[StringerXDataIndex.nBars] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[StringerXDataIndex.phi] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            data[(int)XData.Stringer.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
+                            data[(int)XData.Stringer.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+                            data[(int)XData.Stringer.Width]     = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                            data[(int)XData.Stringer.Height]    = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                            data[(int)XData.Stringer.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            data[(int)XData.Stringer.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                         }
 
                         else // Xdata exists
@@ -560,10 +562,10 @@ namespace SPMTool
                             strEnNd  = Node.GetNodeNumber(str.EndPoint, nds);
 
                         // Set the updated number and nodes in ascending number and length (line 2 to 6)
-                        data[StringerXDataIndex.num]   = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
-                        data[StringerXDataIndex.grip1]  = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
-                        data[StringerXDataIndex.grip2] = new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd);
-                        data[StringerXDataIndex.grip3]  = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
+                        data[(int)XData.Stringer.Number]   = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
+                        data[(int)XData.Stringer.Grip1]  = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
+                        data[(int)XData.Stringer.Grip2] = new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd);
+                        data[(int)XData.Stringer.Grip3]  = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
 
                         // Add the new XData
                         str.XData = new ResultBuffer(data);
@@ -581,7 +583,7 @@ namespace SPMTool
             public static List<Tuple<Point3d, Point3d>> ListOfStringers()
             {
                 // Get the stringers in the model
-                ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.strLyr);
+                ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.stringer);
 
                 // Initialize a list
                 List<Tuple<Point3d, Point3d>> strList = new List<Tuple<Point3d, Point3d>>();
@@ -656,7 +658,7 @@ namespace SPMTool
                                     Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                                     // Check if the selected object is a node
-                                    if (ent.Layer == Layers.strLyr)
+                                    if (ent.Layer == Layers.stringer)
                                     {
                                         // Upgrade the OpenMode
                                         ent.UpgradeOpen();
@@ -666,8 +668,8 @@ namespace SPMTool
                                         TypedValue[] data = rb.AsArray();
 
                                         // Set the new geometry and reinforcement (line 7 to 9 of the array)
-                                        data[StringerXDataIndex.w] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
-                                        data[StringerXDataIndex.h] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
+                                        data[(int)XData.Stringer.Width] = new TypedValue((int)DxfCode.ExtendedDataReal, strW);
+                                        data[(int)XData.Stringer.Height] = new TypedValue((int)DxfCode.ExtendedDataReal, strH);
 
                                         // Add the new XData
                                         ent.XData = new ResultBuffer(data);
@@ -690,7 +692,7 @@ namespace SPMTool
             public static void AddPanel()
             {
                 // Check if the layer panel already exists in the drawing. If it doesn't, then it's created:
-                Auxiliary.CreateLayer(Layers.pnlLyr, Colors.grey, 80);
+                Auxiliary.CreateLayer(Layers.panel, (short)AutoCAD.Colors.Grey, 80);
 
                 // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
                 Auxiliary.RegisterApp();
@@ -722,7 +724,7 @@ namespace SPMTool
                                 Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                                 // Check if it is a external node
-                                if (ent.Layer == Layers.extNdLyr)
+                                if (ent.Layer == Layers.extNode)
                                 {
                                     // Read as a DBPoint and add to the collection
                                     DBPoint nd = ent as DBPoint;
@@ -773,7 +775,7 @@ namespace SPMTool
                     pnl = new Solid(vertices.Item1, vertices.Item2, vertices.Item3, vertices.Item4)
                     {
                         // Set the layer to Panel
-                        Layer = Layers.pnlLyr
+                        Layer = Layers.panel
                     };
                 }
 
@@ -830,10 +832,10 @@ namespace SPMTool
                             var newStrList = new List<Tuple<Point3d, Point3d>>();
 
                             // Access the stringers in the model
-                            ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.strLyr);
+                            ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.stringer);
 
                             // Access the internal nodes in the model
-                            ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
+                            ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNode);
 
                             // Start a transaction
                             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -852,7 +854,7 @@ namespace SPMTool
                                     Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                                     // Check if the selected object is a node
-                                    if (ent.Layer == Layers.pnlLyr)
+                                    if (ent.Layer == Layers.panel)
                                     {
                                         // Read as a solid
                                         Solid pnl = ent as Solid;
@@ -862,7 +864,7 @@ namespace SPMTool
                                         TypedValue[] data = rb.AsArray();
 
                                         // Get the panel number
-                                        int pnlNum = Convert.ToInt32(data[PanelXDataIndex.num].Value);
+                                        int pnlNum = Convert.ToInt32(data[(int)XData.Panel.Number].Value);
 
                                         // Get the coordinates of the grip points
                                         Point3dCollection grpPts = new Point3dCollection();
@@ -997,8 +999,8 @@ namespace SPMTool
                             }
 
                             // Create the nodes
-                            Node.NewNode(newExtNds, Layers.extNdLyr);
-                            Node.NewNode(newIntNds, Layers.intNdLyr);
+                            Node.NewNode(newExtNds, Layers.extNode);
+                            Node.NewNode(newIntNds, Layers.intNode);
 
                             // Update the elements
                             Node.UpdateNodes();
@@ -1049,7 +1051,7 @@ namespace SPMTool
                                 Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                                 // Check if the selected object is a node
-                                if (ent.Layer == Layers.pnlLyr)
+                                if (ent.Layer == Layers.panel)
                                 {
                                     // Upgrade the OpenMode
                                     ent.UpgradeOpen();
@@ -1059,7 +1061,7 @@ namespace SPMTool
                                     TypedValue[] data = rb.AsArray();
 
                                     // Set the new geometry and reinforcement (line 7 to 9 of the array)
-                                    data[PanelXDataIndex.w] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlW);
+                                    data[(int)XData.Panel.Width] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlW);
 
                                     // Add the new XData
                                     ent.XData = new ResultBuffer(data);
@@ -1080,10 +1082,10 @@ namespace SPMTool
                 string xdataStr = "Panel Data";
 
                 // Get the internal nodes of the model
-                ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNdLyr);
+                ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNode);
 
                 // Create the panels collection and initialize getting the elements on node layer
-                ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.pnlLyr);
+                ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.panel);
 
                 // Create a point collection
                 List<Point3d> cntrPts = new List<Point3d>();
@@ -1125,16 +1127,17 @@ namespace SPMTool
                         if (pnl.XData == null)
                         {
                             // Get the Xdata size
-                            data = new TypedValue[PanelXDataIndex.size];
+                            int size = Enum.GetNames(typeof(XData.Panel)).Length;
+                            data = new TypedValue[size];
 
                             // Set the initial parameters
-                            data[PanelXDataIndex.appName] = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
-                            data[PanelXDataIndex.xdataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-                            data[PanelXDataIndex.w] = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
-                            data[PanelXDataIndex.phiX] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[PanelXDataIndex.sx] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[PanelXDataIndex.phiY] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[PanelXDataIndex.sy] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            data[(int)XData.Panel.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
+                            data[(int)XData.Panel.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+                            data[(int)XData.Panel.Width]    = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                            data[(int)XData.Panel.XDiam]    = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            data[(int)XData.Panel.Sx]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            data[(int)XData.Panel.YDiam]    = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            data[(int)XData.Panel.Sy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                         }
 
                         else // Xdata exists
@@ -1175,13 +1178,13 @@ namespace SPMTool
                         }
 
                         // Set the updated panel number
-                        data[PanelXDataIndex.num] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
+                        data[(int)XData.Panel.Number] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
 
                         // Set the updated node numbers in the necessary order
-                        data[PanelXDataIndex.grip1] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[0]);
-                        data[PanelXDataIndex.grip2] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[1]);
-                        data[PanelXDataIndex.grip3] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[2]);
-                        data[PanelXDataIndex.grip4] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[3]);
+                        data[(int)XData.Panel.Grip1] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[0]);
+                        data[(int)XData.Panel.Grip2] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[1]);
+                        data[(int)XData.Panel.Grip3] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[2]);
+                        data[(int)XData.Panel.Grip4] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[3]);
 
                         // Add the new XData
                         pnl.XData = new ResultBuffer(data);
@@ -1206,7 +1209,7 @@ namespace SPMTool
             public static List<Tuple<Point3d, Point3d, Point3d, Point3d>> ListOfPanels()
             {
                 // Get the stringers in the model
-                ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.pnlLyr);
+                ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.panel);
 
                 // Initialize a list
                 var pnlList = new List<Tuple<Point3d, Point3d, Point3d, Point3d>>();
@@ -1259,22 +1262,22 @@ namespace SPMTool
         [CommandMethod("ToogleNodes")]
         public void ToogleNodes()
         {
-            Auxiliary.ToogleLayer(Layers.extNdLyr);
-            Auxiliary.ToogleLayer(Layers.intNdLyr);
+            Auxiliary.ToogleLayer(Layers.extNode);
+            Auxiliary.ToogleLayer(Layers.intNode);
         }
 
         // Toggle view for stringers
         [CommandMethod("ToogleStringers")]
         public void ToogleStringers()
         {
-            Auxiliary.ToogleLayer(Layers.strLyr);
+            Auxiliary.ToogleLayer(Layers.stringer);
         }
 
         // Toggle view for panels
         [CommandMethod("TooglePanels")]
         public void TooglePanels()
         {
-            Auxiliary.ToogleLayer(Layers.pnlLyr);
+            Auxiliary.ToogleLayer(Layers.panel);
         }
     }
 }

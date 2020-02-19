@@ -18,7 +18,7 @@ namespace SPMTool
         public void AddConstraint()
         {
             // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-            Auxiliary.CreateLayer(Layers.supLyr, Colors.red, 0);
+            Auxiliary.CreateLayer(Layers.support, (short)AutoCAD.Colors.Red, 0);
 
             // Initialize variables
             PromptSelectionResult selRes;
@@ -28,7 +28,7 @@ namespace SPMTool
             CreateSupportBlocks();
 
             // Get all the supports in the model
-            ObjectIdCollection sprts = Auxiliary.GetEntitiesOnLayer(Layers.supLyr);
+            ObjectIdCollection sprts = Auxiliary.GetEntitiesOnLayer(Layers.support);
 
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -73,7 +73,7 @@ namespace SPMTool
                             Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                             // Check if the selected object is a node
-                            if (ent.Layer == Layers.extNdLyr)
+                            if (ent.Layer == Layers.extNode)
                             {
                                 // Upgrade the OpenMode
                                 ent.UpgradeOpen();
@@ -110,7 +110,7 @@ namespace SPMTool
                                 }
 
                                 // Set the new support conditions
-                                data[NodeXDataIndex.support] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
+                                data[(int)XData.Node.Support] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
 
                                 // Add the new XData
                                 ent.XData = new ResultBuffer(data);
@@ -130,7 +130,7 @@ namespace SPMTool
                                     // Insert the block into the current space
                                     using (BlockReference blkRef = new BlockReference(insPt, supBlock))
                                     {
-                                        blkRef.Layer = Layers.supLyr;
+                                        blkRef.Layer = Layers.support;
                                         Auxiliary.AddObject(blkRef);
 
                                         // Set the event handler for watching erasing
@@ -369,10 +369,10 @@ namespace SPMTool
                     TypedValue[] data = rb.AsArray();
 
                     // Read the node number
-                    int ndNum = Convert.ToInt32(data[NodeXDataIndex.num].Value);
+                    int ndNum = Convert.ToInt32(data[(int)XData.Node.Number].Value);
 
                     // Read the support condition
-                    string sup = data[NodeXDataIndex.support].Value.ToString();
+                    string sup = data[(int)XData.Node.Support].Value.ToString();
 
                     // Get the position in the vector
                     int i = 2 * ndNum - 2;
@@ -396,7 +396,7 @@ namespace SPMTool
             Point3dCollection supPos = new Point3dCollection();
 
             // Get the supports
-            ObjectIdCollection spts = Auxiliary.GetEntitiesOnLayer(Layers.supLyr);
+            ObjectIdCollection spts = Auxiliary.GetEntitiesOnLayer(Layers.support);
 
             if (spts.Count > 0)
             {
@@ -426,7 +426,7 @@ namespace SPMTool
                 BlockReference blkRef = evtArgs.DBObject as BlockReference;
 
                 // Get the external nodes in the model
-                ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNdLyr);
+                ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
 
                 // Start a transaction
                 using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -445,7 +445,7 @@ namespace SPMTool
                             TypedValue[] data = rb.AsArray();
 
                             // Set the support condition to FREE
-                            data[NodeXDataIndex.support] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Free");
+                            data[(int)XData.Node.Support] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Free");
 
                             // Save the XData
                             nd.UpgradeOpen();

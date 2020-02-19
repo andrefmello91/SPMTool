@@ -41,23 +41,23 @@ namespace SPMTool
                     TypedValue[] pnlData = pnlRb.AsArray();
 
                     // Get the panel number and width
-                    int num  = Convert.ToInt32(pnlData[PanelXDataIndex.num].Value);
-                    double t = Convert.ToDouble(pnlData[PanelXDataIndex.w].Value);
+                    int num  = Convert.ToInt32(pnlData[(int)XData.Panel.Number].Value);
+                    double t = Convert.ToDouble(pnlData[(int)XData.Panel.Width].Value);
 
                     // Get the reinforcement diameter and spacing
                     double[,] reinf = new double[,]
                     {
-                        { Convert.ToDouble(pnlData[PanelXDataIndex.phiX].Value), Convert.ToDouble(pnlData[PanelXDataIndex.sx].Value) },
-                        { Convert.ToDouble(pnlData[PanelXDataIndex.phiY].Value), Convert.ToDouble(pnlData[PanelXDataIndex.sy].Value) }
+                        { Convert.ToDouble(pnlData[(int)XData.Panel.XDiam].Value), Convert.ToDouble(pnlData[(int)XData.Panel.Sx].Value) },
+                        { Convert.ToDouble(pnlData[(int)XData.Panel.YDiam].Value), Convert.ToDouble(pnlData[(int)XData.Panel.Sy].Value) }
                     };
 
                     // Create the list of grips
                     int[] grips =
                     {
-                        Convert.ToInt32(pnlData[PanelXDataIndex.grip1].Value),
-                        Convert.ToInt32(pnlData[PanelXDataIndex.grip2].Value),
-                        Convert.ToInt32(pnlData[PanelXDataIndex.grip3].Value),
-                        Convert.ToInt32(pnlData[PanelXDataIndex.grip4].Value)
+                        Convert.ToInt32(pnlData[(int)XData.Panel.Grip1].Value),
+                        Convert.ToInt32(pnlData[(int)XData.Panel.Grip2].Value),
+                        Convert.ToInt32(pnlData[(int)XData.Panel.Grip3].Value),
+                        Convert.ToInt32(pnlData[(int)XData.Panel.Grip4].Value)
                     };
 
                     // Create the list of vertices

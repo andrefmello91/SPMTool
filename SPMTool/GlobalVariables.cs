@@ -19,106 +19,103 @@ namespace SPMTool
 
         // Define the appName
         public static string appName = "SPMTool";
+
+        // Color codes
+        public enum Colors : short
+        {
+            Red      = 1,
+            Yellow   = 2,
+            Yellow1  = 41,
+            Cyan     = 4,
+            Blue1    = 5,
+            Blue     = 150,
+            Green    = 92,
+            Grey     = 254
+        }
     }
 
     // Constants
     public class Constants
     {
-        public static double pi = MathNet.Numerics.Constants.Pi,
-                             piOver2 = MathNet.Numerics.Constants.PiOver2,
-                             pi3Over2 = MathNet.Numerics.Constants.Pi3Over2;
-    }
-
-    // Color codes
-    public class Colors
-    {
-        public static short red = 1,
-                            yellow = 2,
-                            yellow1 = 41,
-                            cyan = 4,
-                            blue1 = 5,
-                            blue = 150,
-                            green = 92,
-                            grey = 254;
+        public static double
+            pi       = MathNet.Numerics.Constants.Pi,
+            piOver2  = MathNet.Numerics.Constants.PiOver2,
+            pi3Over2 = MathNet.Numerics.Constants.Pi3Over2;
     }
 
     // Layer names
     public class Layers
     {
-        public static string extNdLyr = "ExtNode",
-                             intNdLyr = "IntNode",
-                             strLyr = "Stringer",
-                             pnlLyr = "Panel",
-                             supLyr = "Support",
-                             fLyr = "Force",
-                             fTxtLyr = "ForceText",
-                             strFLyr = "StringerForces",
-                             pnlFLyr = "PanelShear",
-                             dispLyr = "Displacements";
+        public static string
+            extNode        = "ExtNode",
+            intNode        = "IntNode",
+            stringer       = "Stringer",
+            panel          = "Panel",
+            support        = "Support",
+            force          = "Force",
+            forceText      = "ForceText",
+            stringerForce  = "StringerForces",
+            panelForce     = "PanelShear",
+            displacements  = "Displacements";
     }
 
     // Block names
     public class Blocks
     {
-        public static string supportX = "SupportX",
-                             supportY = "SupportY",
-                             supportXY = "SupportXY",
-                             forceBlock = "ForceBlock",
-                             shearBlock = "ShearBlock";
+        public static string
+            supportX = "SupportX",
+            supportY = "SupportY",
+            supportXY = "SupportXY",
+            forceBlock = "ForceBlock",
+            shearBlock = "ShearBlock";
     }
 
     // XData indexers
-    // Node indexers
-    public class NodeXDataIndex
+    public class XData
     {
-        public static int appName  = 0,
-                          xdataStr = 1,
-                          num      = 2,
-                          support  = 3,
-                          Fx       = 4,
-                          Fy       = 5,
-                          ux       = 6,
-                          uy       = 7;
+        // Node indexers
+        public enum Node
+        {
+            AppName  = 0,
+            XDataStr = 1,
+            Number   = 2,
+            Support  = 3,
+            Fx       = 4,
+            Fy       = 5,
+            Ux       = 6,
+            Uy       = 7
+        }
 
-        // Size of XData
-        public static int size = 8;
-    }
+        // Stringer indexers
+        public enum Stringer
+        {
+            AppName   = 0,
+            XDataStr  = 1,
+            Number    = 2,
+            Grip1     = 3,
+            Grip2     = 4,
+            Grip3     = 5,
+            Width     = 6,
+            Height    = 7,
+            NumOfBars = 8,
+            BarDiam   = 9
+        }
 
-    // Stringer indexers
-    public class StringerXDataIndex
-    {
-        public static int appName  = 0,
-                          xdataStr = 1,
-                          num      = 2,
-                          grip1    = 3,
-                          grip2    = 4,
-                          grip3    = 5,
-                          w        = 6,
-                          h        = 7,
-                          nBars    = 8,
-                          phi      = 9;
-
-        // Size of XData
-        public static int size = 10;
-    }
-
-    // Panel indexers
-    public class PanelXDataIndex
-    {
-        public static int appName  = 0,
-                          xdataStr = 1,
-                          num      = 2,
-                          grip1    = 3,
-                          grip2    = 4,
-                          grip3    = 5,
-                          grip4    = 6,
-                          w        = 7,
-                          phiX     = 8,
-                          sx       = 9,
-                          phiY     = 10,
-                          sy       = 11;
-
-        // Size of XData
-        public static int size = 12;
+        // Panel indexers
+        public enum Panel
+        {
+            AppName  = 0,
+            XDataStr = 1,
+            Number   = 2,
+            Grip1    = 3,
+            Grip2    = 4,
+            Grip3    = 5,
+            Grip4    = 6,
+            Width    = 7,
+            XDiam    = 8,
+            Sx       = 9,
+            YDiam    = 10,
+            Sy       = 11
+        }
     }
 }

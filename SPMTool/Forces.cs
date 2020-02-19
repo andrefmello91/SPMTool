@@ -22,17 +22,17 @@ namespace SPMTool
             SelectionSet set;
 
             // Check if the layer Force and ForceText already exists in the drawing. If it doesn't, then it's created:
-            Auxiliary.CreateLayer(Layers.fLyr, Colors.yellow, 0);
-            Auxiliary.CreateLayer(Layers.fTxtLyr, Colors.yellow, 0);
+            Auxiliary.CreateLayer(Layers.force, (short)AutoCAD.Colors.Yellow, 0);
+            Auxiliary.CreateLayer(Layers.forceText, (short)AutoCAD.Colors.Yellow, 0);
 
             // Check if the force block already exist. If not, create the blocks
             CreateForceBlock();
 
             // Get all the force blocks in the model
-            ObjectIdCollection fcs = Auxiliary.GetEntitiesOnLayer(Layers.fLyr);
+            ObjectIdCollection fcs = Auxiliary.GetEntitiesOnLayer(Layers.force);
 
             // Get all the force texts in the model
-            ObjectIdCollection fcTxts = Auxiliary.GetEntitiesOnLayer(Layers.fTxtLyr);
+            ObjectIdCollection fcTxts = Auxiliary.GetEntitiesOnLayer(Layers.forceText);
 
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -81,7 +81,7 @@ namespace SPMTool
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer == Layers.extNdLyr)
+                        if (ent.Layer == Layers.extNode)
                         {
                             // Upgrade the OpenMode
                             ent.UpgradeOpen();
@@ -99,8 +99,8 @@ namespace SPMTool
                             TypedValue[] data = rb.AsArray();
 
                             // Set the new forces (line 6 and 7 of the array)
-                            data[NodeXDataIndex.Fx] = new TypedValue((int)DxfCode.ExtendedDataReal, xForce);
-                            data[NodeXDataIndex.Fy] = new TypedValue((int)DxfCode.ExtendedDataReal, yForce);
+                            data[(int)XData.Node.Fx] = new TypedValue((int)DxfCode.ExtendedDataReal, xForce);
+                            data[(int)XData.Node.Fy] = new TypedValue((int)DxfCode.ExtendedDataReal, yForce);
 
                             // Add the new XData
                             ent.XData = new ResultBuffer(data);
@@ -164,7 +164,7 @@ namespace SPMTool
                                 using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
                                 {
                                     // Append the block to drawing
-                                    blkRef.Layer = Layers.fLyr;
+                                    blkRef.Layer = Layers.force;
                                     Auxiliary.AddObject(blkRef);
 
                                     // Get the force absolute value
@@ -204,7 +204,7 @@ namespace SPMTool
                                         TextString = xForceAbs.ToString(),
                                         Position = txtPos,
                                         Height = 50,
-                                        Layer = Layers.fTxtLyr
+                                        Layer = Layers.forceText
                                     };
 
                                     // Append the text to drawing
@@ -229,7 +229,7 @@ namespace SPMTool
                                 using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
                                 {
                                     // Append the block to drawing
-                                    blkRef.Layer = Layers.fLyr;
+                                    blkRef.Layer = Layers.force;
                                     Auxiliary.AddObject(blkRef);
 
                                     // Get the force absolute value
@@ -268,7 +268,7 @@ namespace SPMTool
                                         TextString = yForceAbs.ToString(),
                                         Position = txtPos,
                                         Height = 50,
-                                        Layer = Layers.fTxtLyr
+                                        Layer = Layers.forceText
                                     };
 
                                     // Append the text to drawing
@@ -384,11 +384,11 @@ namespace SPMTool
                     TypedValue[] data = rb.AsArray();
 
                     // Read the node number
-                    int ndNum = Convert.ToInt32(data[NodeXDataIndex.num].Value);
+                    int ndNum = Convert.ToInt32(data[(int)XData.Node.Number].Value);
 
                     // Read the forces in x and y (transform in N)
-                    double Fx = Convert.ToDouble(data[NodeXDataIndex.Fx].Value) * 1000,
-                           Fy = Convert.ToDouble(data[NodeXDataIndex.Fy].Value) * 1000;
+                    double Fx = Convert.ToDouble(data[(int)XData.Node.Fx].Value) * 1000,
+                           Fy = Convert.ToDouble(data[(int)XData.Node.Fy].Value) * 1000;
 
                     // Get the position in the vector from the DoF list
                     int i = 2 * ndNum - 2;
@@ -409,7 +409,7 @@ namespace SPMTool
                               fcYPos = new Point3dCollection();
 
             // Get the supports
-            ObjectIdCollection fcs = Auxiliary.GetEntitiesOnLayer(Layers.fLyr);
+            ObjectIdCollection fcs = Auxiliary.GetEntitiesOnLayer(Layers.force);
 
             if (fcs.Count > 0)
             {
@@ -447,7 +447,7 @@ namespace SPMTool
                 BlockReference blkRef = evtArgs.DBObject as BlockReference;
 
                 // Get the external nodes in the model
-                ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNdLyr);
+                ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
 
                 // Start a transaction
                 using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -468,11 +468,11 @@ namespace SPMTool
                             // Verify the rotation of the block
                             // Force in Y
                             if (blkRef.Rotation == 0 || blkRef.Rotation == Constants.pi)
-                                data[NodeXDataIndex.Fy] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                                data[(int)XData.Node.Fy] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
 
                             // Force in X
                             else
-                                data[NodeXDataIndex.Fx] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                                data[(int)XData.Node.Fx] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
 
                             // Save the XData
                             nd.UpgradeOpen();

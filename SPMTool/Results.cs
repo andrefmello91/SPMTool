@@ -104,13 +104,13 @@ namespace SPMTool
         public static void DrawPanelForces(ObjectIdCollection panels, Matrix<double> panelForces)
         {
             // Check if the layer already exists in the drawing. If it doesn't, then it's created:
-            Auxiliary.CreateLayer(Layers.pnlFLyr, Colors.green, 0);
+            Auxiliary.CreateLayer(Layers.panelForce, (short)AutoCAD.Colors.Green, 0);
 
             // Check if the shear blocks already exist. If not, create the blocks
             CreatePanelShearBlock();
 
             // Erase all the panel forces in the drawing
-            ObjectIdCollection pnlFs = Auxiliary.GetEntitiesOnLayer(Layers.pnlFLyr);
+            ObjectIdCollection pnlFs = Auxiliary.GetEntitiesOnLayer(Layers.panelForce);
             if (pnlFs.Count > 0) Auxiliary.EraseObjects(pnlFs);
 
             // Start a transaction
@@ -146,8 +146,8 @@ namespace SPMTool
                     // Read the XData and get the panel number and width
                     ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] pnlData = pnlRb.AsArray();
-                    int pnlNum = Convert.ToInt32(pnlData[PanelXDataIndex.num].Value);
-                    double wd = Convert.ToDouble(pnlData[PanelXDataIndex.w].Value);
+                    int pnlNum = Convert.ToInt32(pnlData[(int)XData.Panel.Number].Value);
+                    double wd = Convert.ToDouble(pnlData[(int)XData.Panel.Width].Value);
 
                     // Get the forces in the matrix
                     var f = panelForces.Row(pnlNum - 1);
@@ -167,7 +167,7 @@ namespace SPMTool
                     // Insert the block into the current space
                     using (BlockReference blkRef = new BlockReference(cntrPt, shearBlock))
                     {
-                        blkRef.Layer = Layers.pnlFLyr;
+                        blkRef.Layer = Layers.panelForce;
                         Auxiliary.AddObject(blkRef);
 
                         // Set the scale of the block
@@ -187,7 +187,7 @@ namespace SPMTool
                         Point3d algnPt = new Point3d(cntrPt.X, cntrPt.Y, 0);
 
                         // Set the parameters
-                        tauTxt.Layer = Layers.pnlFLyr;
+                        tauTxt.Layer = Layers.panelForce;
                         tauTxt.Height = 30 * scFctr;
                         tauTxt.TextString = Math.Abs(tauAvg).ToString();
                         tauTxt.Position = algnPt;
@@ -204,17 +204,17 @@ namespace SPMTool
             }
 
             // Turn the layer on
-            Auxiliary.LayerOn(Layers.pnlFLyr);
+            Auxiliary.LayerOn(Layers.panelForce);
         }
 
         // Draw the stringer forces diagrams
         public static void DrawStringerForces(ObjectIdCollection stringers, Matrix<double> stringerForces)
         {
             // Check if the layer already exists in the drawing. If it doesn't, then it's created:
-            Auxiliary.CreateLayer(Layers.strFLyr, Colors.grey, 0);
+            Auxiliary.CreateLayer(Layers.stringerForce, (short)AutoCAD.Colors.Grey, 0);
 
             // Erase all the stringer forces in the drawing
-            ObjectIdCollection strFs = Auxiliary.GetEntitiesOnLayer(Layers.strFLyr);
+            ObjectIdCollection strFs = Auxiliary.GetEntitiesOnLayer(Layers.stringerForce);
             if (strFs.Count > 0) Auxiliary.EraseObjects(strFs);
 
             // Verify the maximum stringer force in the model to draw in an uniform scale
@@ -236,7 +236,7 @@ namespace SPMTool
                     // Read the XData and get the stringer number
                     ResultBuffer strRb = str.GetXDataForApplication(AutoCAD.appName);
                     TypedValue[] strData = strRb.AsArray();
-                    int strNum = Convert.ToInt32(strData[StringerXDataIndex.num].Value);
+                    int strNum = Convert.ToInt32(strData[(int)XData.Stringer.Number].Value);
 
                     // Get the forces in the list
                     var f = stringerForces.Row(strNum - 1);
@@ -266,12 +266,12 @@ namespace SPMTool
                             using (Solid dgrm = new Solid(vrts[0], vrts[1], vrts[2], vrts[3]))
                             {
                                 // Set the layer and transparency
-                                dgrm.Layer = Layers.strFLyr;
+                                dgrm.Layer = Layers.stringerForce;
                                 dgrm.Transparency = Auxiliary.Transparency(80);
 
                                 // Set the color (blue to compression and red to tension)
-                                if (Math.Max(f1, f3) > 0) dgrm.ColorIndex = Colors.blue1;
-                                else dgrm.ColorIndex = Colors.red;
+                                if (Math.Max(f1, f3) > 0) dgrm.ColorIndex = (short)AutoCAD.Colors.Blue1;
+                                else dgrm.ColorIndex = (short)AutoCAD.Colors.Red;
 
                                 // Add the diagram to the drawing
                                 Auxiliary.AddObject(dgrm);
@@ -306,12 +306,12 @@ namespace SPMTool
                             using (Solid dgrm1 = new Solid(vrts1[0], vrts1[1], vrts1[2]))
                             {
                                 // Set the layer and transparency
-                                dgrm1.Layer = Layers.strFLyr;
+                                dgrm1.Layer = Layers.stringerForce;
                                 dgrm1.Transparency = Auxiliary.Transparency(80);
 
                                 // Set the color (blue to compression and red to tension)
-                                if (f1 > 0) dgrm1.ColorIndex = Colors.blue1;
-                                else dgrm1.ColorIndex = Colors.red;
+                                if (f1 > 0) dgrm1.ColorIndex = (short)AutoCAD.Colors.Blue1;
+                                else dgrm1.ColorIndex = (short)AutoCAD.Colors.Red;
 
                                 // Add the diagram to the drawing
                                 Auxiliary.AddObject(dgrm1);
@@ -323,12 +323,12 @@ namespace SPMTool
                             using (Solid dgrm3 = new Solid(vrts3[0], vrts3[1], vrts3[2]))
                             {
                                 // Set the layer and transparency
-                                dgrm3.Layer = Layers.strFLyr;
+                                dgrm3.Layer = Layers.stringerForce;
                                 dgrm3.Transparency = Auxiliary.Transparency(80);
 
                                 // Set the color (blue to compression and red to tension)
-                                if (f3 > 0) dgrm3.ColorIndex = Colors.blue1;
-                                else dgrm3.ColorIndex = Colors.red;
+                                if (f3 > 0) dgrm3.ColorIndex = (short)AutoCAD.Colors.Blue1;
+                                else dgrm3.ColorIndex = (short)AutoCAD.Colors.Red;
 
                                 // Add the diagram to the drawing
                                 Auxiliary.AddObject(dgrm3);
@@ -344,19 +344,19 @@ namespace SPMTool
                             using (DBText txt1 = new DBText())
                             {
                                 // Set the parameters
-                                txt1.Layer = Layers.strFLyr;
+                                txt1.Layer = Layers.stringerForce;
                                 txt1.Height = 30;
                                 txt1.TextString = Math.Abs(f1).ToString();
 
                                 // Set the color (blue to compression and red to tension) and position
                                 if (f1 > 0)
                                 {
-                                    txt1.ColorIndex = Colors.blue1;
+                                    txt1.ColorIndex = (short)AutoCAD.Colors.Blue1;
                                     txt1.Position = new Point3d(str.StartPoint.X + 10, str.StartPoint.Y + h1 + 20, 0);
                                 }
                                 else
                                 {
-                                    txt1.ColorIndex = Colors.red;
+                                    txt1.ColorIndex = (short)AutoCAD.Colors.Red;
                                     txt1.Position = new Point3d(str.StartPoint.X + 10, str.StartPoint.Y + h1 - 50, 0);
                                 }
 
@@ -373,19 +373,19 @@ namespace SPMTool
                             using (DBText txt3 = new DBText())
                             {
                                 // Set the parameters
-                                txt3.Layer = Layers.strFLyr;
+                                txt3.Layer = Layers.stringerForce;
                                 txt3.Height = 30;
                                 txt3.TextString = Math.Abs(f3).ToString();
 
                                 // Set the color (blue to compression and red to tension) and position
                                 if (f3 > 0)
                                 {
-                                    txt3.ColorIndex = Colors.blue1;
+                                    txt3.ColorIndex = (short)AutoCAD.Colors.Blue1;
                                     txt3.Position = new Point3d(str.StartPoint.X + l - 10, str.StartPoint.Y + h3 + 20, 0);
                                 }
                                 else
                                 {
-                                    txt3.ColorIndex = Colors.red;
+                                    txt3.ColorIndex = (short)AutoCAD.Colors.Red;
                                     txt3.Position = new Point3d(str.StartPoint.X + l - 10, str.StartPoint.Y + h3 - 50, 0);
                                 }
 
@@ -408,17 +408,17 @@ namespace SPMTool
             }
 
             // Turn the layer on
-            Auxiliary.LayerOn(Layers.strFLyr);
+            Auxiliary.LayerOn(Layers.stringerForce);
         }
 
         // Draw the displaced model
         public static void DrawDisplacements(ObjectIdCollection stringers, List<Tuple<Point3d, double, double>> ndDisp)
         {
             // Create the layer
-            Auxiliary.CreateLayer(Layers.dispLyr, Colors.yellow1, 0);
+            Auxiliary.CreateLayer(Layers.displacements, (short)AutoCAD.Colors.Yellow1, 0);
 
             // Erase all the displaced objects in the drawing
-            ObjectIdCollection dispObjs = Auxiliary.GetEntitiesOnLayer(Layers.dispLyr);
+            ObjectIdCollection dispObjs = Auxiliary.GetEntitiesOnLayer(Layers.displacements);
             if (dispObjs.Count > 0) Auxiliary.EraseObjects(dispObjs);
 
             // Set a scale factor for displacements
@@ -472,7 +472,7 @@ namespace SPMTool
                     using (Line newStr = new Line(stPt, enPt))
                     {
                         // Set the layer to stringer
-                        newStr.Layer = Layers.dispLyr;
+                        newStr.Layer = Layers.displacements;
 
                         // Add the line to the drawing
                         Auxiliary.AddObject(newStr);
@@ -494,10 +494,10 @@ namespace SPMTool
             }
 
             // Add the nodes
-            Geometry.Node.NewNode(dispNds, Layers.dispLyr);
+            Geometry.Node.NewNode(dispNds, Layers.displacements);
 
             // Turn the layer off
-            Auxiliary.LayerOff(Layers.dispLyr);
+            Auxiliary.LayerOff(Layers.displacements);
         }
 
         // Get the nodal displacements and save to XData
@@ -527,14 +527,14 @@ namespace SPMTool
                     TypedValue[] data = rb.AsArray();
 
                     // Save the displacements on the XData
-                    data[NodeXDataIndex.ux] = new TypedValue((int)DxfCode.ExtendedDataReal, ux);
-                    data[NodeXDataIndex.uy] = new TypedValue((int)DxfCode.ExtendedDataReal, uy);
+                    data[(int)XData.Node.Ux] = new TypedValue((int)DxfCode.ExtendedDataReal, ux);
+                    data[(int)XData.Node.Uy] = new TypedValue((int)DxfCode.ExtendedDataReal, uy);
 
                     // Add the new XData
                     nd.XData = new ResultBuffer(data);
 
                     // Save only external nodes to the list
-                    if (nd.Layer == Layers.extNdLyr)
+                    if (nd.Layer == Layers.extNode)
                         ndDisp.Add(Tuple.Create(nd.Position, ux, uy));
                 }
 
@@ -657,7 +657,7 @@ namespace SPMTool
                             TypedValue[] data = rb.AsArray();
 
                             // If it's a node
-                            if (ent.Layer == Layers.extNdLyr || ent.Layer == Layers.intNdLyr)
+                            if (ent.Layer == Layers.extNode || ent.Layer == Layers.intNode)
                             {
                                 // Read as a DBpoint
                                 DBPoint nd = ent as DBPoint;
@@ -667,12 +667,12 @@ namespace SPMTool
                                        yPos = Math.Round(nd.Position.Y, 2);
 
                                 // Get the parameters
-                                string ndNum = data[NodeXDataIndex.num].Value.ToString(),
-                                       sup   = data[NodeXDataIndex.support].Value.ToString(),
-                                       fX    = data[NodeXDataIndex.Fx].Value.ToString(),
-                                       fY    = data[NodeXDataIndex.Fy].Value.ToString(),
-                                       ux    = data[NodeXDataIndex.ux].Value.ToString(),
-                                       uy    = data[NodeXDataIndex.uy].Value.ToString();
+                                string ndNum = data[(int)XData.Node.Number].Value.ToString(),
+                                       sup   = data[(int)XData.Node.Support].Value.ToString(),
+                                       fX    = data[(int)XData.Node.Fx].Value.ToString(),
+                                       fY    = data[(int)XData.Node.Fy].Value.ToString(),
+                                       ux    = data[(int)XData.Node.Ux].Value.ToString(),
+                                       uy    = data[(int)XData.Node.Uy].Value.ToString();
 
                                 msgstr = "Node " + ndNum + "\n\n" +
                                          "Node position: (" + xPos + ", " + yPos + ")" + "\n" +
@@ -684,7 +684,7 @@ namespace SPMTool
                             }
 
                             // If it's a stringer
-                            if (ent.Layer == Layers.strLyr)
+                            if (ent.Layer == Layers.stringer)
                             {
                                 // Read as a line
                                 Line str = ent as Line;
@@ -693,16 +693,16 @@ namespace SPMTool
                                 double lgt = Math.Round(str.Length, 2);
 
                                 // Get the parameters
-                                string grip1 = data[StringerXDataIndex.num].Value.ToString(),
-                                       grip2 = data[StringerXDataIndex.grip1].Value.ToString(),
-                                       grip3 = data[StringerXDataIndex.grip2].Value.ToString(),
-                                       endNd = data[StringerXDataIndex.grip3].Value.ToString(),
-                                       wdt   = data[StringerXDataIndex.w].Value.ToString(),
-                                       hgt   = data[StringerXDataIndex.h].Value.ToString();
+                                string grip1 = data[(int)XData.Stringer.Number].Value.ToString(),
+                                       grip2 = data[(int)XData.Stringer.Grip1].Value.ToString(),
+                                       grip3 = data[(int)XData.Stringer.Grip2].Value.ToString(),
+                                       endNd = data[(int)XData.Stringer.Grip3].Value.ToString(),
+                                       wdt   = data[(int)XData.Stringer.Width].Value.ToString(),
+                                       hgt   = data[(int)XData.Stringer.Height].Value.ToString();
 
                                 // Get the reinforcement
-                                double nBars = Convert.ToDouble(data[StringerXDataIndex.nBars].Value),
-                                       phi   = Convert.ToDouble(data[StringerXDataIndex.phi].Value);
+                                double nBars = Convert.ToDouble(data[(int)XData.Stringer.NumOfBars].Value),
+                                       phi   = Convert.ToDouble(data[(int)XData.Stringer.BarDiam].Value);
 
                                 // Calculate the reinforcement area
                                 double As = Math.Round(Reinforcement.StringerReinforcement(nBars, phi), 2);
@@ -716,31 +716,31 @@ namespace SPMTool
                             }
 
                             // If it's a panel
-                            if (ent.Layer == Layers.pnlLyr)
+                            if (ent.Layer == Layers.panel)
                             {
                                 // Get the parameters
-                                string pnlNum = data[PanelXDataIndex.num].Value.ToString();
+                                string pnlNum = data[(int)XData.Panel.Number].Value.ToString();
 
                                 string[] pnlGps =
                                     {
-                                        data[PanelXDataIndex.grip1].Value.ToString(),
-                                        data[PanelXDataIndex.grip2].Value.ToString(),
-                                        data[PanelXDataIndex.grip3].Value.ToString(),
-                                        data[PanelXDataIndex.grip4].Value.ToString()
+                                        data[(int)XData.Panel.Grip1].Value.ToString(),
+                                        data[(int)XData.Panel.Grip2].Value.ToString(),
+                                        data[(int)XData.Panel.Grip3].Value.ToString(),
+                                        data[(int)XData.Panel.Grip4].Value.ToString()
                                     };
 
-                                double w = Convert.ToDouble(data[PanelXDataIndex.w].Value);
+                                double w = Convert.ToDouble(data[(int)XData.Panel.Width].Value);
 
                                 double[] phi = new double[]
                                 {
-                                    Convert.ToDouble(data[PanelXDataIndex.phiX].Value),
-                                    Convert.ToDouble(data[PanelXDataIndex.phiY].Value)
+                                    Convert.ToDouble(data[(int)XData.Panel.XDiam].Value),
+                                    Convert.ToDouble(data[(int)XData.Panel.YDiam].Value)
                                 };
 
                                 double[] s = new double[]
                                 {
-                                    Convert.ToDouble(data[PanelXDataIndex.sx].Value),
-                                    Convert.ToDouble(data[PanelXDataIndex.sy].Value)
+                                    Convert.ToDouble(data[(int)XData.Panel.Sx].Value),
+                                    Convert.ToDouble(data[(int)XData.Panel.Sy].Value)
                                 };
 
                                 // Calculate the reinforcement ratio
@@ -756,7 +756,7 @@ namespace SPMTool
                             }
 
                             // If it's a force text
-                            if (ent.Layer == Layers.fTxtLyr)
+                            if (ent.Layer == Layers.forceText)
                             {
                                 // Get the parameters
                                 string posX = data[2].Value.ToString(),
@@ -783,21 +783,21 @@ namespace SPMTool
         [CommandMethod("ToogleStringerForces")]
         public void ToogleStringerForces()
         {
-            Auxiliary.ToogleLayer(Layers.strFLyr);
+            Auxiliary.ToogleLayer(Layers.stringerForce);
         }
 
         // Toggle view for panel forces
         [CommandMethod("TooglePanelForces")]
         public void TooglePanelForces()
         {
-            Auxiliary.ToogleLayer(Layers.pnlFLyr);
+            Auxiliary.ToogleLayer(Layers.panelForce);
         }
 
         // Toggle view for displacements
         [CommandMethod("ToogleDisplacements")]
         public void ToogleDisplacements()
         {
-            Auxiliary.ToogleLayer(Layers.dispLyr);
+            Auxiliary.ToogleLayer(Layers.displacements);
         }
     }
 }
