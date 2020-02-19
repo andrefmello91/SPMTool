@@ -95,13 +95,13 @@ namespace SPMTool
             public static void DoLinearAnalysis()
             {
                 // Get the concrete parameters
-                var concParams = Material.Concrete.ConcreteParams();
+                var concrete = Material.Concrete.ConcreteParams();
 
                 // Verify if concrete parameters were set
-                if (concParams != null)
+                if (concrete != null)
                 {
                     // Get the elastic modulus
-                    double Ec = concParams[2];
+                    double Ec = concrete.Eci;
 
                     // Calculate the approximated shear modulus (elastic material)
                     double Gc = Ec / 2.4;

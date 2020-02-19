@@ -17,6 +17,25 @@ namespace SPMTool
         // Concrete
         public class Concrete
         {
+            // Concrete parameters
+            public double fcm { get; set; }
+            public double fctm { get; set; }
+            public double Eci { get; set; }
+            public double Ec1 { get; set; }
+            public double ec1 { get; set; }
+            public double k { get; set; }
+
+            // Concrete constructor
+            public Concrete()
+            {
+                fcm = fcm;
+                fctm = fctm;
+                Eci = Eci;
+                Ec1 = Ec1;
+                ec1 = ec1;
+                k = k;
+            }
+
             [CommandMethod("SetConcreteParameters")]
             public static void SetConcreteParameters()
             {
@@ -103,10 +122,10 @@ namespace SPMTool
             }
 
             // Read the concrete parameters
-            public static List<double> ConcreteParams()
+            public static Concrete ConcreteParams()
             {
-                // Initialize a list
-                var concParams = new List<double>();
+                // Initialize concrete
+                var concrete = new Concrete();
 
                 // Start a transaction
                 using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -126,9 +145,11 @@ namespace SPMTool
                         ResultBuffer concRb = concXrec.Data;
                         TypedValue[] concData = concRb.AsArray();
 
-                        // Get the parameters
-                        double fcm = Convert.ToDouble(concData[2].Value),
+                        // Get the parameters from XData
+                        double 
+                            fcm = Convert.ToDouble(concData[2].Value),
                             aE = Convert.ToDouble(concData[3].Value);
+
 
                         // Calculate the parameters according do FIB MC2010
                         double fctm, Eci, Ec1, ec1, k;
@@ -144,20 +165,21 @@ namespace SPMTool
                         Ec1 = fcm / ec1;
                         k = Eci / Ec1;
 
-                        // Add the values to the list
-                        concParams.Add(fcm);
-                        concParams.Add(fctm);
-                        concParams.Add(Eci);
-                        concParams.Add(Ec1);
-                        concParams.Add(ec1);
-                        concParams.Add(k);
+                        // Set to Concrete
+                        concrete.fcm = fcm;
+                        concrete.fctm = fctm;
+                        concrete.Eci = Eci;
+                        concrete.Ec1 = Ec1;
+                        concrete.ec1 = ec1;
+                        concrete.k = k;
                     }
                     else
                     {
                         Application.ShowAlertDialog("Please set concrete parameters.");
                     }
                 }
-                return concParams;
+
+                return concrete;
             }
 
             // Calculate concrete parameters for MCFT
@@ -177,8 +199,20 @@ namespace SPMTool
         // Steel
         public class Steel
         {
-            // Maximum plastic strain on steel
-            public static double esu = 0.01;
+            // Steel parameters
+            public double fy { get; set; }
+            public double Es { get; set; }
+            public double ey { get; set; }
+            public double esu { get; set; }
+
+            // Steel constructor
+            public Steel()
+            {
+                fy = fy;
+                Es = Es;
+                ey = ey;
+                esu = esu;
+            }
 
             [CommandMethod("SetSteelParameters")]
             public static void SetSteelParameters()
@@ -243,10 +277,10 @@ namespace SPMTool
             }
 
             // Read the steel parameters
-            public static List<double> SteelParams()
+            public static Steel SteelParams()
             {
                 // Initialize a list
-                var steelParams = new List<double>();
+                var steel = new Steel();
 
                 // Start a transaction
                 using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -255,33 +289,40 @@ namespace SPMTool
                     BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                     // Get the NOD in the database
-                    DBDictionary nod = (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
+                    DBDictionary nod =
+                        (DBDictionary) trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
 
                     // Check if it exists
                     if (nod.Contains("SteelParams"))
                     {
                         // Read the Steel Xrecord
                         ObjectId steelPar = nod.GetAt("SteelParams");
-                        Xrecord steelXrec = (Xrecord)trans.GetObject(steelPar, OpenMode.ForRead);
+                        Xrecord steelXrec = (Xrecord) trans.GetObject(steelPar, OpenMode.ForRead);
                         ResultBuffer steelRb = steelXrec.Data;
                         TypedValue[] steelData = steelRb.AsArray();
 
                         // Get the parameters
-                        double fy = Convert.ToDouble(steelData[2].Value),
+                        double
+                            fy = Convert.ToDouble(steelData[2].Value),
                             Es = Convert.ToDouble(steelData[3].Value),
                             ey = fy / Es;
 
-                        // Add to the list
-                        steelParams.Add(fy);
-                        steelParams.Add(Es);
-                        steelParams.Add(ey);
+                        // Maximum plastic strain on steel
+                        double esu = 0.01;
+
+                        // Set to steel
+                        steel.fy = fy;
+                        steel.Es = Es;
+                        steel.ey = ey;
+                        steel.esu = esu;
                     }
                     else
                     {
                         Application.ShowAlertDialog("Please set steel parameters.");
                     }
                 }
-                return steelParams;
+
+                return steel;
             }
         }
 
@@ -290,22 +331,22 @@ namespace SPMTool
         {
             // Definition for the XData
             string xData = "Material Parameters";
-            string concmsg = "";
-            string steelmsg = "";
+            string concmsg;
+            string steelmsg;
 
             // Get the values
-            var concParams = Concrete.ConcreteParams();
-            var steelParams = Steel.SteelParams();
+            var concrete = Concrete.ConcreteParams();
+            var steel = Steel.SteelParams();
 
             // Write the concrete parameters
-            if (concParams != null)
+            if (concrete != null)
             {
                 // Get the parameters
                 concmsg = "\nConcrete Parameters" +
-                          "\nfcm = " + concParams[0].ToString() + " MPa" +
-                          "\nfctm = " + Math.Round(concParams[1],2).ToString() + " MPa" +
-                          "\nEci = " + Math.Round(concParams[2],2).ToString() + " MPa" +
-                          "\nεc1 = " + Math.Round(1000*concParams[4],2).ToString() + " E-03";
+                          "\nfcm = " + concrete.fcm + " MPa" +
+                          "\nfctm = " + Math.Round(concrete.fctm, 2) + " MPa" +
+                          "\nEci = " + Math.Round(concrete.Eci, 2) + " MPa" +
+                          "\nεc1 = " + Math.Round(1000 * concrete.ec1,2) + " E-03";
             }
             else
             {
@@ -313,13 +354,13 @@ namespace SPMTool
             }
 
             // Write the steel parameters
-            if (steelParams != null)
+            if (steel != null)
             {
                 // Get the parameters
                 steelmsg = "\nSteel Parameters" +
-                           "\nfy = " + steelParams[0].ToString() + " MPa" +
-                           "\nEs = " + steelParams[1].ToString() + " MPa" +
-                           "\nεs = " + Math.Round(1000 * steelParams[2], 2).ToString() + " E-03";
+                           "\nfy = " + steel.fy + " MPa" +
+                           "\nEs = " + steel.Es + " MPa" +
+                           "\nεy = " + Math.Round(1000 * steel.ey, 2) + " E-03";
 
             }
             else

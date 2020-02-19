@@ -324,8 +324,10 @@ namespace SPMTool
         // Function to verify if a number is not zero
         public static Func<double, bool> NotZero = delegate (double num)
         {
-            if (num != 0) return true;
-            else return false;
+            if (num != 0) 
+                return true;
+            else 
+                return false;
         };
 
         // Calculate principal strains by Mohr's Circle

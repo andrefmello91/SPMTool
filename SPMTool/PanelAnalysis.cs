@@ -429,10 +429,10 @@ namespace SPMTool
                         int[] ind = GlobalIndexes(grips);
 
                         // Add to the global matrix
-                        Panel.GlobalStiffness(ind, K, Kg);
+                        //Panel.GlobalStiffness(ind, K, Kg);
 
                         // Save to the list of panel parameters
-                        pnlMats[num - 1] = Tuple.Create(ind, Kl, T);
+                        //pnlMats[num - 1] = Tuple.Create(ind, Kl, T);
 
                         //DelimitedWriter.Write("D:/SPMTooldataP" + num + ".csv", K, ";");
                     }
