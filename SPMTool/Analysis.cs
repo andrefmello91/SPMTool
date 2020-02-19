@@ -33,7 +33,7 @@ namespace SPMTool
         public static void SimplifyStiffnessMatrix(Matrix<double> Kg, Vector<double> f, List<Point3d> allNds, IEnumerable<Tuple<int, double>> constraints)
         {
             // Get the list of internal nodes
-            List<Point3d> intNds = Geometry.Node.ListOfNodes("Int");
+            List<Point3d> intNds = Geometry.Node.ListOfNodes((int)Geometry.Node.NodeType.Internal);
 
             // Simplify the matrices removing the rows that have constraints
             foreach (Tuple<int, double> con in constraints)
@@ -112,7 +112,7 @@ namespace SPMTool
                                        pnls = Geometry.Panel.UpdatePanels();
 
                     // Get the list of node positions
-                    List<Point3d> ndList = Geometry.Node.ListOfNodes("All");
+                    List<Point3d> ndList = Geometry.Node.ListOfNodes((int)Geometry.Node.NodeType.All);
 
                     // Initialize the global stiffness matrix
                     var Kg = Matrix<double>.Build.Dense(2 * nds.Count, 2 * nds.Count);

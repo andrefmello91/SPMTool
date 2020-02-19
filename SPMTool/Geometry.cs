@@ -20,11 +20,19 @@ namespace SPMTool
         // Node methods
         public class Node
         {
+            // Node types
+            public enum NodeType
+            {
+                All      = 0,
+                External = 1,
+                Internal = 2
+            }
+
             // Method to add nodes at a given position and a layer name
             public static void NewNode(Point3d position, string layerName)
             {
                 // Get the list of nodes
-                var ndList = ListOfNodes("All");
+                var ndList = ListOfNodes((int)NodeType.All);
 
                 // Check if a node already exists at the position. If not, its created
                 if (!ndList.Contains(position))
@@ -47,7 +55,7 @@ namespace SPMTool
             public static void NewNode(List<Point3d> positions, string layerName)
             {
                 // Get the list of nodes
-                var ndList = ListOfNodes("All");
+                var ndList = ListOfNodes((int)NodeType.All);
 
                 foreach (Point3d pt in positions)
                 {
@@ -85,7 +93,7 @@ namespace SPMTool
                     BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                     // Get the list of nodes ordered
-                    List<Point3d> ndList = ListOfNodes("All");
+                    List<Point3d> ndList = ListOfNodes((int)NodeType.All);
 
                     // Access the nodes on the document
                     foreach (ObjectId ndObj in nds)
@@ -143,19 +151,19 @@ namespace SPMTool
             }
 
             // Get the list of node positions ordered
-            public static List<Point3d> ListOfNodes(string nodeType)
+            public static List<Point3d> ListOfNodes(int nodeType)
             {
                 // Initialize an object collection
                 ObjectIdCollection nds = new ObjectIdCollection();
 
                 // Select the node type
-                if (nodeType == "All")
+                if (nodeType == (int)NodeType.All)
                     nds = AllNodes();
 
-                if (nodeType == "Int")
+                if (nodeType == (int)NodeType.Internal)
                     nds = Auxiliary.GetEntitiesOnLayer(Layers.intNode);
 
-                if (nodeType == "Ext")
+                if (nodeType == (int)NodeType.External)
                     nds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
 
                 // Create a point collection
