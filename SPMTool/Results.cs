@@ -101,7 +101,7 @@ namespace SPMTool
         }
 
         // Draw the panel shear blocks
-        public static void DrawPanelForces(ObjectIdCollection panels, Matrix<double> panelForces)
+        public static void DrawPanelForces(Analysis.Panel[] panels)
         {
             // Check if the layer already exists in the drawing. If it doesn't, then it's created:
             Auxiliary.CreateLayer(Layers.panelForce, (short)AutoCAD.Colors.Green, 0);
@@ -123,43 +123,19 @@ namespace SPMTool
                 ObjectId shearBlock = blkTbl[Blocks.shearBlock];
 
                 // Get the stringers stifness matrix and add to the global stifness matrix
-                foreach (ObjectId obj in panels)
+                foreach (var pnl in panels)
                 {
-                    // Read the object as a solid
-                    Solid pnl = trans.GetObject(obj, OpenMode.ForWrite) as Solid;
-
-                    // Get the vertices
-                    Point3dCollection pnlVerts = new Point3dCollection();
-                    pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
-
-                    // Get the approximate coordinates of the center point of the panel
-                    Point3d cntrPt = Auxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
+                    // Get panel data
+                    int    num = pnl.Number;
+                    double w   = pnl.Width;
+                    var l = pnl.EdgeLengths;
+                    var cntrPt = pnl.CenterPoint;
 
                     // Get the maximum lenght of the panel
-                    List<double> ls = new List<double>();
-                    ls.Add(Math.Abs(pnlVerts[0].DistanceTo(pnlVerts[1])));
-                    ls.Add(Math.Abs(pnlVerts[1].DistanceTo(pnlVerts[3])));
-                    ls.Add(Math.Abs(pnlVerts[3].DistanceTo(pnlVerts[2])));
-                    ls.Add(Math.Abs(pnlVerts[2].DistanceTo(pnlVerts[0])));
-                    double lMax = ls.Max();
-
-                    // Read the XData and get the panel number and width
-                    ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.appName);
-                    TypedValue[] pnlData = pnlRb.AsArray();
-                    int pnlNum = Convert.ToInt32(pnlData[(int)XData.Panel.Number].Value);
-                    double wd = Convert.ToDouble(pnlData[(int)XData.Panel.Width].Value);
-
-                    // Get the forces in the matrix
-                    var f = panelForces.Row(pnlNum - 1);
-
-                    // Get the dimensions as a vector
-                    var lsV = Vector<double>.Build.DenseOfEnumerable(ls.AsEnumerable());
-
-                    // Calculate the shear stresses
-                    var tau = f / (lsV * wd);
+                    double lMax = l.Max();
 
                     // Calculate the average stress
-                    double tauAvg = Math.Round((-tau[0] + tau[1] - tau[2] + tau[3]) / 4, 2);
+                    double tauAvg = Analysis.Panel.Linear.ShearStress(pnl);
 
                     // Calculate the scale factor for the block and text
                     double scFctr = lMax / 1000;
@@ -208,7 +184,7 @@ namespace SPMTool
         }
 
         // Draw the stringer forces diagrams
-        public static void DrawStringerForces(ObjectIdCollection stringers, Matrix<double> stringerForces)
+        public static void DrawStringerForces(Analysis.Stringer[] stringers, double maxForce)
         {
             // Check if the layer already exists in the drawing. If it doesn't, then it's created:
             Auxiliary.CreateLayer(Layers.stringerForce, (short)AutoCAD.Colors.Grey, 0);
@@ -217,49 +193,46 @@ namespace SPMTool
             ObjectIdCollection strFs = Auxiliary.GetEntitiesOnLayer(Layers.stringerForce);
             if (strFs.Count > 0) Auxiliary.EraseObjects(strFs);
 
-            // Verify the maximum stringer force in the model to draw in an uniform scale
-            double fMax = stringerForces.Enumerate().MaximumAbsolute();
-
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
                 // Get the stringers stifness matrix and add to the global stifness matrix
-                foreach (ObjectId obj in stringers)
+                foreach (var str in stringers)
                 {
-                    // Read the object as a line
-                    Line str = trans.GetObject(obj, OpenMode.ForWrite) as Line;
-
                     // Get the parameters of the stringer
-                    double l = str.Length,
-                           ang = str.Angle;
+                    double
+                        l = str.Length,
+                        ang = str.Angle;
 
-                    // Read the XData and get the stringer number
-                    ResultBuffer strRb = str.GetXDataForApplication(AutoCAD.appName);
-                    TypedValue[] strData = strRb.AsArray();
-                    int strNum = Convert.ToInt32(strData[(int)XData.Stringer.Number].Value);
+                    // Get the start point
+                    var stPt = str.PointsConnected[0];
+
+                    // Get the stringer number
+                    int num = str.Number;
 
                     // Get the forces in the list
-                    var f = stringerForces.Row(strNum - 1);
-                    double f1 =  Math.Round(f[0], 2),
-                           f3 = -Math.Round(f[2], 2);
+                    var f = str.Forces;
+                    double
+                        f1 =  Math.Round(f[0], 2),
+                        f3 = -Math.Round(f[2], 2);
 
                     // Check if at least one force is not zero
                     if (f1 != 0 || f3 != 0)
                     {
                         // Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
-                        double h1 = 150 * f1 / fMax,
-                               h3 = 150 * f3 / fMax;
+                        double h1 = 150 * f1 / maxForce,
+                               h3 = 150 * f3 / maxForce;
 
                         // Check if the forces are in the same direction
                         if (f1 * f3 >= 0) // same direction
                         {
                             // Calculate the points (the solid will be rotated later)
-                            Point3d[] vrts = new Point3d[]
+                            Point3d[] vrts =
                             {
-                            str.StartPoint,
-                            new Point3d(str.StartPoint.X + l, str.StartPoint.Y,      0),
-                            new Point3d(str.StartPoint.X,     str.StartPoint.Y + h1, 0),
-                            new Point3d(str.StartPoint.X + l, str.StartPoint.Y + h3, 0),
+                                stPt,
+                                new Point3d(stPt.X + l,        stPt.Y, 0),
+                                new Point3d(      stPt.X, stPt.Y + h1, 0),
+                                new Point3d(stPt.X + l, stPt.Y + h3, 0)
                             };
 
                             // Create the diagram as a solid with 4 segments (4 points)
@@ -277,7 +250,7 @@ namespace SPMTool
                                 Auxiliary.AddObject(dgrm);
 
                                 // Rotate the diagram
-                                dgrm.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, str.StartPoint));
+                                dgrm.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
                             }
                         }
 
@@ -285,21 +258,21 @@ namespace SPMTool
                         {
                             // Calculate the point where the stringer force will be zero
                             double x = Math.Abs(h1) * l / (Math.Abs(h1) + Math.Abs(h3));
-                            Point3d invPt = new Point3d(str.StartPoint.X + x, str.StartPoint.Y, 0);
+                            Point3d invPt = new Point3d(stPt.X + x, stPt.Y, 0);
 
                             // Calculate the points (the solid will be rotated later)
                             Point3d[] vrts1 = new Point3d[]
                             {
-                                str.StartPoint,
+                                stPt,
                                 invPt,
-                                new Point3d(str.StartPoint.X,     str.StartPoint.Y + h1, 0),
+                                new Point3d(stPt.X, stPt.Y + h1, 0),
                             };
 
                             Point3d[] vrts3 = new Point3d[]
                             {
                                 invPt,
-                                new Point3d(str.StartPoint.X + l, str.StartPoint.Y,      0),
-                                new Point3d(str.StartPoint.X + l, str.StartPoint.Y + h3, 0),
+                                new Point3d(stPt.X + l, stPt.Y,      0),
+                                new Point3d(stPt.X + l, stPt.Y + h3, 0),
                             };
 
                             // Create the diagrams as solids with 3 segments (3 points)
@@ -317,7 +290,7 @@ namespace SPMTool
                                 Auxiliary.AddObject(dgrm1);
 
                                 // Rotate the diagram
-                                dgrm1.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, str.StartPoint));
+                                dgrm1.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
                             }
 
                             using (Solid dgrm3 = new Solid(vrts3[0], vrts3[1], vrts3[2]))
@@ -334,7 +307,7 @@ namespace SPMTool
                                 Auxiliary.AddObject(dgrm3);
 
                                 // Rotate the diagram
-                                dgrm3.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, str.StartPoint));
+                                dgrm3.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
                             }
                         }
 
@@ -352,19 +325,19 @@ namespace SPMTool
                                 if (f1 > 0)
                                 {
                                     txt1.ColorIndex = (short)AutoCAD.Colors.Blue1;
-                                    txt1.Position = new Point3d(str.StartPoint.X + 10, str.StartPoint.Y + h1 + 20, 0);
+                                    txt1.Position = new Point3d(stPt.X + 10, stPt.Y + h1 + 20, 0);
                                 }
                                 else
                                 {
                                     txt1.ColorIndex = (short)AutoCAD.Colors.Red;
-                                    txt1.Position = new Point3d(str.StartPoint.X + 10, str.StartPoint.Y + h1 - 50, 0);
+                                    txt1.Position = new Point3d(stPt.X + 10, stPt.Y + h1 - 50, 0);
                                 }
 
                                 // Add the text to the drawing
                                 Auxiliary.AddObject(txt1);
 
                                 // Rotate the text
-                                txt1.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, str.StartPoint));
+                                txt1.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
                             }
                         }
 
@@ -381,12 +354,12 @@ namespace SPMTool
                                 if (f3 > 0)
                                 {
                                     txt3.ColorIndex = (short)AutoCAD.Colors.Blue1;
-                                    txt3.Position = new Point3d(str.StartPoint.X + l - 10, str.StartPoint.Y + h3 + 20, 0);
+                                    txt3.Position = new Point3d(stPt.X + l - 10, stPt.Y + h3 + 20, 0);
                                 }
                                 else
                                 {
                                     txt3.ColorIndex = (short)AutoCAD.Colors.Red;
-                                    txt3.Position = new Point3d(str.StartPoint.X + l - 10, str.StartPoint.Y + h3 - 50, 0);
+                                    txt3.Position = new Point3d(stPt.X + l - 10, stPt.Y + h3 - 50, 0);
                                 }
 
                                 // Adjust the alignment
@@ -397,7 +370,7 @@ namespace SPMTool
                                 Auxiliary.AddObject(txt3);
 
                                 // Rotate the text
-                                txt3.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, str.StartPoint));
+                                txt3.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
                             }
                         }
                     }
@@ -544,85 +517,6 @@ namespace SPMTool
 
             // Draw the displacements
             DrawDisplacements(stringers, ndDisp);
-        }
-
-        // Calculate panel forces
-        public static void PanelForces(ObjectIdCollection panels, Analysis.Panel[] pnls, Vector<double> u)
-        {
-            // Create a list to store the panel forces
-            var pnlForces = Matrix<double>.Build.Dense(panels.Count, 4);
-
-            // Create empty elements to the list
-            //for (int i = 0; i < panels.Count; i++)
-            //    pnlForces.Add(Vector<double>.Build.Dense(2));
-
-            for (int i = 0; i < panels.Count; i++)
-            {
-                // Get the parameters
-                int[] ind = pnls[i].Index;
-                var   Kl  = pnls[i].LocalStiffness;
-                var   T   = pnls[i].TransMatrix;
-
-                // Get the displacements
-                var uStr = Vector<double>.Build.DenseOfArray(new double[]
-                {
-                    u[ind[0]] , u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1], u[ind[3]] , u[ind[3] + 1]
-                });
-
-                // Get the displacements in the direction of the stringer
-                var ul = T * uStr;
-
-                // Calculate the vector of forces
-                var fl = Kl * ul;
-
-                // Save to the list of stringer forces
-                pnlForces.SetRow(i, fl);
-            }
-
-            // Draw the panel shear blocks
-            DrawPanelForces(panels, pnlForces);
-        }
-
-        // Calculate stringer forces
-        public static void StringerForces(ObjectIdCollection stringers, Analysis.Stringer[] strs, Vector<double> u)
-        {
-            // Create a list to store the stringer forces
-            var strForces = Matrix<double>.Build.Dense(stringers.Count,3);
-
-            // Create empty elements to the list
-            //for (int i = 0; i < stringers.Count; i++)
-            //    strForces.Add(Vector<double>.Build.Dense(2));
-
-            for (int i = 0; i < stringers.Count; i++)
-            {
-                // Get the parameters
-                int[] ind = strs[i].Index;
-                var   Kl  = strs[i].LocalStiffness;
-                var   T   = strs[i].TransMatrix;
-
-                // Get the displacements
-                var uStr = Vector<double>.Build.DenseOfArray(new double[]
-                {
-                    u[ind[0]] , u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1]
-                });
-
-                // Get the displacements in the direction of the stringer
-                var ul = T * uStr;
-
-                // Calculate the vector of normal forces (in kN)
-                var fl = 0.001 * Kl * ul;
-
-                // Aproximate small values to zero
-                fl.CoerceZero(0.000001);
-
-                // Save to the matrix of stringer forces
-                strForces.SetRow(i, fl);
-
-                //Global.ed.WriteMessage("\nStringer " + strNum.ToString() + ":\n" + fl.ToString());
-            }
-
-            // Draw the stringer forces diagrams
-            DrawStringerForces(stringers, strForces);
         }
 
         [CommandMethod("ViewElementData")]

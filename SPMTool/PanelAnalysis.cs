@@ -23,6 +23,7 @@ namespace SPMTool
             public int[] Grips { get; set; }
             public int[] Index { get; set; }
             private Point3d[] Vertices { get; set; }
+            public Point3d CenterPoint { get; set; }
             public double[] EdgeLengths { get; set; }
             public double[] EdgeAngles { get; set; }
             public double Width { get; set; }
@@ -34,6 +35,8 @@ namespace SPMTool
             public double YReinforcementRatio { get; set; }
             public Matrix<double> TransMatrix { get; set; }
             public Matrix<double> LocalStiffness { get; set; }
+            public Vector<double> Forces { get; set; }
+            public double ShearStress { get; set; }
 
             // Constructor
             public Panel()
@@ -43,6 +46,7 @@ namespace SPMTool
                 Grips = Grips;
                 Index = Index;
                 Vertices = Vertices;
+                CenterPoint = CenterPoint;
                 EdgeLengths = EdgeLengths;
                 EdgeAngles = EdgeAngles;
                 Width = Width;
@@ -54,6 +58,8 @@ namespace SPMTool
                 YReinforcementRatio = YReinforcementRatio;
                 TransMatrix = TransMatrix;
                 LocalStiffness = LocalStiffness;
+                Forces = Forces;
+                ShearStress = ShearStress;
             }
 
             // Read the parameters of a panel
@@ -79,6 +85,11 @@ namespace SPMTool
                             nd2 = pnlVerts[1],
                             nd3 = pnlVerts[3],
                             nd4 = pnlVerts[2];
+
+                        // Calculate the approximated center point
+                        var Pt1    = Auxiliary.MidPoint(nd1, nd3);
+                        var Pt2    = Auxiliary.MidPoint(nd2, nd4);
+                        var cntrPt = Auxiliary.MidPoint(Pt1, Pt2);
 
                         // Read the XData and get the necessary data
                         ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.appName);
@@ -153,6 +164,7 @@ namespace SPMTool
                             Grips = grips,
                             Index = ind,
                             Vertices = verts,
+                            CenterPoint = cntrPt,
                             EdgeLengths = dims,
                             EdgeAngles = angs,
                             Width = w,
@@ -212,6 +224,36 @@ namespace SPMTool
                     // Increment the line index
                     o++;
                 }
+            }
+
+            // Calculate panel forces
+            public static void PanelForces(Analysis.Panel[] pnls, Vector<double> u)
+            {
+                foreach (var pnl in pnls)
+                {
+                    // Get the parameters
+                    int[] ind = pnl.Index;
+                    var Kl = pnl.LocalStiffness;
+                    var T = pnl.TransMatrix;
+
+                    // Get the displacements
+                    var uStr = Vector<double>.Build.DenseOfArray(new double[]
+                    {
+                        u[ind[0]] , u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1], u[ind[3]] , u[ind[3] + 1]
+                    });
+
+                    // Get the displacements in the direction of the stringer
+                    var ul = T * uStr;
+
+                    // Calculate the vector of forces
+                    var fl = Kl * ul;
+
+                    // Save the forces to panel
+                    pnl.Forces = fl;
+                }
+
+                // Draw the panel shear blocks
+                Results.DrawPanelForces(pnls);
             }
 
             public class Linear
@@ -429,6 +471,24 @@ namespace SPMTool
                     else
                         return false;
                 };
+
+                // Calculate shear stress
+                public static double ShearStress(Panel panel)
+                {
+                    // Get the dimensions as a vector
+                    var lsV = Vector<double>.Build.DenseOfArray(panel.EdgeLengths);
+
+                    // Calculate the shear stresses
+                    var tau = panel.Forces / (lsV * panel.Width);
+
+                    // Calculate the average stress
+                    double tauAvg = Math.Round((-tau[0] + tau[1] - tau[2] + tau[3]) / 4, 2);
+
+                    // Set
+                    panel.ShearStress = tauAvg;
+
+                    return tauAvg;
+                }
             }
 
             public class NonLinear

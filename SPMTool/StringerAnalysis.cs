@@ -8,6 +8,7 @@ using Autodesk.AutoCAD.EditorInput;
 using MathNet.Numerics.LinearAlgebra;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.Data.Text;
+using MathNet.Numerics.Statistics;
 
 [assembly: CommandClass(typeof(SPMTool.Analysis.Stringer))]
 
@@ -33,6 +34,7 @@ namespace SPMTool
             public double SteelArea { get; set; }
             public Matrix<double> TransMatrix { get; set; }
             public Matrix<double> LocalStiffness { get; set; }
+            public Vector<double> Forces { get; set; }
 
             // Constructor
             public Stringer()
@@ -50,6 +52,7 @@ namespace SPMTool
                 BarDiameter = BarDiameter;
                 ConcreteArea = ConcreteArea;
                 SteelArea = SteelArea;
+                Forces = Forces;
                 TransMatrix = TransMatrix;
                 LocalStiffness = LocalStiffness;
             }
@@ -321,6 +324,55 @@ namespace SPMTool
                 });
 
                 return T;
+            }
+
+            // Calculate stringer forces
+            public static void StringerForces(Analysis.Stringer[] stringers, Vector<double> u)
+            {
+                // Create a matrix to store the stringer forces
+                var strForces = Matrix<double>.Build.Dense(stringers.Length, 3);
+
+                // Create empty elements to the list
+                //for (int i = 0; i < stringers.Count; i++)
+                //    strForces.Add(Vector<double>.Build.Dense(2));
+
+                foreach (var str in stringers)
+                {
+                    // Get the parameters
+                    int[] ind = str.Index;
+                    var Kl = str.LocalStiffness;
+                    var T = str.TransMatrix;
+
+                    // Get the displacements
+                    var uStr = Vector<double>.Build.DenseOfArray(new double[]
+                    {
+                        u[ind[0]] , u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1]
+                    });
+
+                    // Get the displacements in the direction of the stringer
+                    var ul = T * uStr;
+
+                    // Calculate the vector of normal forces (in kN)
+                    var fl = 0.001 * Kl * ul;
+
+                    // Aproximate small values to zero
+                    fl.CoerceZero(0.000001);
+
+                    // Save to the stringer
+                    str.Forces = fl;
+
+                    // Set to the matrix of forces
+                    int i = str.Number - 1;
+                    strForces.SetRow(i, fl);
+
+                    //Global.ed.WriteMessage("\nStringer " + strNum.ToString() + ":\n" + fl.ToString());
+                }
+
+                // Verify the maximum stringer force in the model to draw in an uniform scale
+                double fMax = strForces.Enumerate().MaximumAbsolute();
+
+                // Draw the stringer forces diagrams
+                Results.DrawStringerForces(stringers, fMax);
             }
 
             public class Linear

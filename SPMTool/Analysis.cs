@@ -137,8 +137,8 @@ namespace SPMTool
                     var u = Kg.Solve(f);
 
                     // Calculate the stringer, panel forces and nodal displacements
-                    Results.StringerForces(strObjs, strs, u);
-                    Results.PanelForces(pnlObjs, pnls, u);
+                    Stringer.StringerForces(strs, u);
+                    Panel.PanelForces(pnls, u);
                     Results.NodalDisplacements(ndObjs, strObjs, ndList, u);
 
                     // Write in a csv file (debug)
