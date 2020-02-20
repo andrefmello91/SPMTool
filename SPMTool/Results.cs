@@ -547,7 +547,7 @@ namespace SPMTool
         }
 
         // Calculate panel forces
-        public static void PanelForces(ObjectIdCollection panels, Tuple<int[], Matrix<double>, Matrix<double>>[] pnlMats, Vector<double> u)
+        public static void PanelForces(ObjectIdCollection panels, Analysis.Panel[] pnls, Vector<double> u)
         {
             // Create a list to store the panel forces
             var pnlForces = Matrix<double>.Build.Dense(panels.Count, 4);
@@ -559,9 +559,9 @@ namespace SPMTool
             for (int i = 0; i < panels.Count; i++)
             {
                 // Get the parameters
-                int[] ind = pnlMats[i].Item1;
-                var   Kl  = pnlMats[i].Item2;
-                var   T   = pnlMats[i].Item3;
+                int[] ind = pnls[i].Index;
+                var   Kl  = pnls[i].LocalStiffness;
+                var   T   = pnls[i].TransMatrix;
 
                 // Get the displacements
                 var uStr = Vector<double>.Build.DenseOfArray(new double[]
@@ -584,7 +584,7 @@ namespace SPMTool
         }
 
         // Calculate stringer forces
-        public static void StringerForces(ObjectIdCollection stringers, Tuple<int[], Matrix<double>, Matrix<double>>[] strMats, Vector<double> u)
+        public static void StringerForces(ObjectIdCollection stringers, Analysis.Stringer[] strs, Vector<double> u)
         {
             // Create a list to store the stringer forces
             var strForces = Matrix<double>.Build.Dense(stringers.Count,3);
@@ -596,9 +596,9 @@ namespace SPMTool
             for (int i = 0; i < stringers.Count; i++)
             {
                 // Get the parameters
-                int[] ind = strMats[i].Item1;
-                var   Kl  = strMats[i].Item2;
-                var   T   = strMats[i].Item3;
+                int[] ind = strs[i].Index;
+                var   Kl  = strs[i].LocalStiffness;
+                var   T   = strs[i].TransMatrix;
 
                 // Get the displacements
                 var uStr = Vector<double>.Build.DenseOfArray(new double[]

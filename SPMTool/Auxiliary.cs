@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Colors;
+using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
 
 namespace SPMTool
@@ -309,14 +310,9 @@ namespace SPMTool
         // Get the direction cosines of a vector
         public static double[] DirectionCosines(double angle)
         {
-            double l, m;
-            // Calculate the cosine, return 0 if 90 or 270 degrees
-            if (angle == Constants.piOver2 || angle == Constants.pi3Over2) l = 0;
-            else l = MathNet.Numerics.Trig.Cos(angle);
-
-            // Calculate the sine, return 0 if 0 or 180 degrees
-            if (angle == 0 || angle == Constants.pi) m = 0;
-            else m = MathNet.Numerics.Trig.Sin(angle);
+            double 
+                l = Trig.Cos(angle).CoerceZero(1E-6), 
+                m = Trig.Sin(angle).CoerceZero(1E-6);
 
             return new double[] { l, m };
         }

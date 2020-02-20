@@ -107,19 +107,24 @@ namespace SPMTool
                     double Gc = Ec / 2.4;
 
                     // Update and get the elements collection
-                    ObjectIdCollection nds  = Geometry.Node.UpdateNodes(),
-                                       strs = Geometry.Stringer.UpdateStringers(),
-                                       pnls = Geometry.Panel.UpdatePanels();
+                    ObjectIdCollection
+                        ndObjs  = Geometry.Node.UpdateNodes(),
+                        strObjs = Geometry.Stringer.UpdateStringers(),
+                        pnlObjs = Geometry.Panel.UpdatePanels();
+
+                    // Get the initial element parameters
+                    var strs = Stringer.Parameters(strObjs);
+                    var pnls = Panel.Parameters(pnlObjs);
 
                     // Get the list of node positions
                     List<Point3d> ndList = Geometry.Node.ListOfNodes((int)Geometry.Node.NodeType.All);
 
                     // Initialize the global stiffness matrix
-                    var Kg = Matrix<double>.Build.Dense(2 * nds.Count, 2 * nds.Count);
+                    var Kg = Matrix<double>.Build.Dense(2 * ndObjs.Count, 2 * ndObjs.Count);
 
                     // Calculate the stiffness of each stringer and panel, add to the global stiffness and get the matrices of the stiffness of elements
-                    var strMats = Stringer.Linear.StringersStifness(strs, Ec, Kg);
-                    var pnlMats = Panel.Linear.PanelsStiffness(pnls, Gc, Kg);
+                    Stringer.Linear.StringersStiffness(strs, Ec, Kg);
+                    Panel.Linear.PanelsStiffness(pnls, Gc, Kg);
 
                     // Get the force vector and the constraints vector
                     var f = Forces.ForceVector();
@@ -132,9 +137,9 @@ namespace SPMTool
                     var u = Kg.Solve(f);
 
                     // Calculate the stringer, panel forces and nodal displacements
-                    Results.StringerForces(strs, strMats, u);
-                    Results.PanelForces(pnls, pnlMats, u);
-                    Results.NodalDisplacements(nds, strs, ndList, u);
+                    Results.StringerForces(strObjs, strs, u);
+                    Results.PanelForces(pnlObjs, pnls, u);
+                    Results.NodalDisplacements(ndObjs, strObjs, ndList, u);
 
                     // Write in a csv file (debug)
                     //DelimitedWriter.Write("D:/SPMTooldataF.csv", f.ToColumnMatrix(), ";");

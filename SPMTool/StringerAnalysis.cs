@@ -17,95 +17,144 @@ namespace SPMTool
     {
         public class Stringer
         {
-            // Read the parameters of a stringer
-            public static Tuple<int, int[], double, double, double, double> Parameters(ObjectId stringer)
+            // Stringer parameters
+            public ObjectId ObjectId { get; set; }
+            public int Number { get; set; }
+            public int[] Grips { get; set; }
+            public int[] Index { get; set; }
+            public Point3d[] PointsConnected { get; set; }
+            public int NumberOfBars { get; set; }
+            public double Length { get; set; }
+            public double Angle { get; set; }
+            public double Width { get; set; }
+            public double Height { get; set; }
+            public double BarDiameter { get; set; }
+            public double ConcreteArea { get; set; }
+            public double SteelArea { get; set; }
+            public Matrix<double> TransMatrix { get; set; }
+            public Matrix<double> LocalStiffness { get; set; }
+
+            // Constructor
+            public Stringer()
             {
+                ObjectId = ObjectId;
+                Number = Number;
+                Grips = Grips;
+                Index = Index;
+                PointsConnected = PointsConnected;
+                NumberOfBars = NumberOfBars;
+                Length = Length;
+                Angle = Angle;
+                Width = Width;
+                Height = Height;
+                BarDiameter = BarDiameter;
+                ConcreteArea = ConcreteArea;
+                SteelArea = SteelArea;
+                TransMatrix = TransMatrix;
+                LocalStiffness = LocalStiffness;
+            }
+            
+            // Read the parameters of a stringer
+            public static Stringer[] Parameters(ObjectIdCollection stringerObjects)
+            {
+                Stringer[] stringers = new Stringer[stringerObjects.Count];
+
                 // Start a transaction
                 using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
                 {
-                    // Read the object as a line
-                    Line str = trans.GetObject(stringer, OpenMode.ForRead) as Line;
-
-                    // Get the length and angles
-                    double L = str.Length,
-                        alpha = str.Angle;                          // angle with x coordinate
-
-                    // Read the XData and get the necessary data
-                    ResultBuffer rb = str.GetXDataForApplication(AutoCAD.appName);
-                    TypedValue[] data = rb.AsArray();
-
-                    // Get the stringer number
-                    int num = Convert.ToInt32(data[(int)XData.Stringer.Number].Value);
-
-                    // Create the list of grips
-                    int[] grips =
+                    foreach (ObjectId strObj in stringerObjects)
                     {
-                        Convert.ToInt32(data[(int)XData.Stringer.Grip1].Value),
-                        Convert.ToInt32(data[(int)XData.Stringer.Grip2].Value),
-                        Convert.ToInt32(data[(int)XData.Stringer.Grip3].Value)
-                    };
+                        // Read the object as a line
+                        Line strLine = trans.GetObject(strObj, OpenMode.ForRead) as Line;
 
-                    double w     = Convert.ToDouble(data[(int)XData.Stringer.Width].Value),
-                        h     = Convert.ToDouble(data[(int)XData.Stringer.Height].Value),
-                        nBars = Convert.ToDouble(data[(int)XData.Stringer.NumOfBars].Value),
-                        phi   = Convert.ToDouble(data[(int)XData.Stringer.BarDiam].Value);
+                        // Get the length and angles
+                        double
+                            L = strLine.Length,
+                            alpha = strLine.Angle;
 
-                    // Calculate the cross sectional area
-                    double A = w * h;
+                        // Calculate midpoint
+                        var midPt = Auxiliary.MidPoint(strLine.StartPoint, strLine.EndPoint);
 
-                    // Calculate the reinforcement area
-                    double As = Reinforcement.StringerReinforcement(nBars, phi);
+                        // Read the XData and get the necessary data
+                        ResultBuffer rb = strLine.GetXDataForApplication(AutoCAD.appName);
+                        TypedValue[] data = rb.AsArray();
 
-                    // Calculate the concrete area
-                    double Ac = A - As;
+                        // Get the stringer number
+                        int
+                            num   = Convert.ToInt32(data[(int) XData.Stringer.Number].Value),
+                            nBars = Convert.ToInt32(data[(int) XData.Stringer.NumOfBars].Value);
 
-                    // Return the parameters in the order
-                    // strNum || grips || L || alpha || Ac || As ||
-                    return Tuple.Create(num, grips, L, alpha, Ac, As);
+                        // Create the list of grips
+                        int[] grips =
+                        {
+                            Convert.ToInt32(data[(int) XData.Stringer.Grip1].Value),
+                            Convert.ToInt32(data[(int) XData.Stringer.Grip2].Value),
+                            Convert.ToInt32(data[(int) XData.Stringer.Grip3].Value)
+                        };
+
+                        double
+                            w = Convert.ToDouble(data[(int) XData.Stringer.Width].Value),
+                            h = Convert.ToDouble(data[(int) XData.Stringer.Height].Value),
+                            phi = Convert.ToDouble(data[(int) XData.Stringer.BarDiam].Value);
+
+                        // Calculate the cross sectional area
+                        double A = w * h;
+
+                        // Calculate the reinforcement area
+                        double As = Reinforcement.StringerReinforcement(nBars, phi);
+
+                        // Calculate the concrete area
+                        double Ac = A - As;
+
+                        // Get the index
+                        int i = num - 1;
+
+                        // Get the global indexes as an array
+                        int[] ind = GlobalIndexes(grips);
+
+                        // Set the values
+                        stringers[i] = new Stringer
+                        {
+                            ObjectId = strObj,
+                            Number = num,
+                            Grips = grips,
+                            Index = ind,
+                            PointsConnected = new []{ strLine.StartPoint, midPt, strLine.EndPoint },
+                            NumberOfBars = nBars,
+                            Length = L,
+                            Angle = alpha,
+                            Width = w,
+                            Height = h,
+                            BarDiameter = phi,
+                            ConcreteArea = Ac,
+                            SteelArea = As
+                        };
+                    }
+
+                    // Return the parameters
+                    return stringers;
                 }
             }
 
             // Get the list of continued stringers
-            public static List<Tuple<int, int>> ContinuedStringers(ObjectIdCollection stringers)
+            public static List<Tuple<int, int>> ContinuedStringers(Stringer[] stringers)
             {
                 // Initialize a Tuple to store the continued stringers
                 var contStrs = new List<Tuple<int, int>>();
             
-                // Initialize a Tuple to store the stringer number, initial and end node and direction cosines
-                var strs = new Tuple<int, int[], double[]>[stringers.Count];
-
                 // Calculate the parameter of continuity
                 double par = Math.Sqrt(2) / 2;
 
-                // Get the stringers stiffness matrix and add to the global stiffness matrix
-                foreach (ObjectId obj in stringers)
-                {
-                    // Read the parameters
-                    var strPrms = Parameters(obj);
-                    int num = strPrms.Item1;
-                    var grips = strPrms.Item2;
-                    double alpha = strPrms.Item4;
-
-                    // Get the initial and end node
-                    int[] nds = new int[] { grips[0], grips[2] };
-
-                    // Get the direction cosines
-                    double[] dirCos = Auxiliary.DirectionCosines(alpha);
-
-                    // Add to the stringers list
-                    strs[num - 1] = Tuple.Create(num, nds, dirCos);
-                }
-
                 // Verify in the list what stringers are continuous
-                foreach (var str1 in strs)
+                foreach (var str1 in stringers)
                 {
                     // Access the number
-                    int num1 = str1.Item1;
+                    int num1 = str1.Number;
 
-                    foreach (var str2 in strs)
+                    foreach (var str2 in stringers)
                     {
                         // Access the number
-                        int num2 = str2.Item1;
+                        int num2 = str2.Number;
 
                         // Verify if it's other stringer
                         if (num1 != num2)
@@ -118,11 +167,17 @@ namespace SPMTool
                             {
                                 // Verify the cases
                                 // Case 1: stringers initiate or end at the same node
-                                if (str1.Item2[0] == str2.Item2[0] || str1.Item2[1] == str2.Item2[1])
+                                if (str1.Grips[0] == str2.Grips[0] || str1.Grips[2] == str2.Grips[2])
                                 {
                                     // Get the direction cosines
-                                    double l1 = str1.Item3[0], m1 = str1.Item3[1],
-                                        l2 = str2.Item3[0], m2 = str2.Item3[1];
+                                    double[]
+                                        dir1 = Auxiliary.DirectionCosines(str1.Angle),
+                                        dir2 = Auxiliary.DirectionCosines(str2.Angle);
+                                    double 
+                                        l1 = dir1[0], 
+                                        m1 = dir1[1],
+                                        l2 = dir2[0], 
+                                        m2 = dir2[1];
 
                                     // Calculate the condition of continuity
                                     double cont = l1 * l2 + m1 * m2;
@@ -136,11 +191,17 @@ namespace SPMTool
                                 }
 
                                 // Case 2: a stringer initiate and the other end at the same node
-                                if (str1.Item2[0] == str2.Item2[1] || str1.Item2[1] == str2.Item2[0])
+                                if (str1.Grips[0] == str2.Grips[2] || str1.Grips[2] == str2.Grips[0])
                                 {
                                     // Get the direction cosines
-                                    double l1 = str1.Item3[0], m1 = str1.Item3[1],
-                                        l2 = str2.Item3[0], m2 = str2.Item3[1];
+                                    double[]
+                                        dir1 = Auxiliary.DirectionCosines(str1.Angle),
+                                        dir2 = Auxiliary.DirectionCosines(str2.Angle);
+                                    double
+                                        l1 = dir1[0],
+                                        m1 = dir1[1],
+                                        l2 = dir2[0],
+                                        m2 = dir2[1];
 
                                     // Calculate the condition of continuity
                                     double cont = l1 * l2 + m1 * m2;
@@ -169,11 +230,15 @@ namespace SPMTool
             public static void ViewContinuedStringers()
             {
                 // Update and get the elements collection
-                ObjectIdCollection nds = Geometry.Node.UpdateNodes(),
+                ObjectIdCollection 
+                    nds = Geometry.Node.UpdateNodes(),
                     strs = Geometry.Stringer.UpdateStringers();
 
+                // Get the parameters
+                var stringers = Parameters(strs);
+
                 // Get the list of continued stringers
-                var contStrs = Stringer.ContinuedStringers(strs);
+                var contStrs = Stringer.ContinuedStringers(stringers);
 
                 // Initialize a message to show
                 string msg = "Continued stringers: ";
@@ -196,9 +261,10 @@ namespace SPMTool
             }
 
             // Add the stringer stiffness to the global matrix
-            public static void GlobalStiffness(int[] index, Matrix<double> K, Matrix<double> Kg)
+            public static void GlobalStiffness(Stringer stringer, Matrix<double> K, Matrix<double> Kg)
             {
                 // Get the positions in the global matrix
+                var index = stringer.Index;
                 int i = index[0],
                     j = index[1],
                     k = index[2];
@@ -237,37 +303,41 @@ namespace SPMTool
                 }
             }
 
+            // Calculate the transformation matrix
+            public static Matrix<double> TransformationMatrix(Stringer stringer)
+            {
+                // Get the direction cosines
+                double[] dirCos = Auxiliary.DirectionCosines(stringer.Angle);
+                double
+                    l = dirCos[0],
+                    m = dirCos[1];
+
+                // Obtain the transformation matrix
+                var T = Matrix<double>.Build.DenseOfArray(new double[,]
+                {
+                    {l, m, 0, 0, 0, 0 },
+                    {0, 0, l, m, 0, 0 },
+                    {0, 0, 0, 0, l, m }
+                });
+
+                return T;
+            }
+
             public class Linear
             {
-                // Calculate the stiffness matrix stringers, save to XData and add to global stifness matrix, returns the all the matrices in an numbered list
-                public static Tuple<int[], Matrix<double>, Matrix<double>>[] StringersStifness(ObjectIdCollection stringers, double Ec, Matrix<double> Kg)
+                // Calculate the stiffness matrix stringers, save to XData and add to global stiffness matrix, set the matrices to each element
+                public static void StringersStiffness(Stringer[] stringers, double Ec, Matrix<double> Kg)
                 {
-                    // Initialize a list to store the matrices of stringers
-                    var strMats = new Tuple<int[], Matrix<double>, Matrix<double>>[stringers.Count];
-
-                    // Get the stringers stifness matrix and add to the global stifness matrix
-                    foreach (ObjectId obj in stringers)
+                    // Calculate the stringers stiffness matrix and add to the global stiffness matrix
+                    foreach (var str in stringers)
                     {
                         // Read the parameters
-                        var    strPrms = Stringer.Parameters(obj);
-                        int    num     = strPrms.Item1;
-                        var    grips   = strPrms.Item2;
-                        double L       = strPrms.Item3,
-                            alpha   = strPrms.Item4,
-                            Ac      = strPrms.Item5;
-
-                        // Get the direction cosines
-                        double[] dirCos = Auxiliary.DirectionCosines(alpha);
-                        double l = dirCos[0],
-                            m = dirCos[1];
+                        double 
+                            L  = str.Length,
+                            Ac = str.ConcreteArea;
 
                         // Obtain the transformation matrix
-                        var T = Matrix<double>.Build.DenseOfArray(new double[,]
-                        {
-                            {l, m, 0, 0, 0, 0 },
-                            {0, 0, l, m, 0, 0 },
-                            {0, 0, 0, 0, l, m }
-                        });
+                        var T = TransformationMatrix(str);
 
                         // Calculate the constant factor of stifness
                         double EcAOverL = Ec * Ac / L;
@@ -283,20 +353,15 @@ namespace SPMTool
                         // Calculate the transformated stiffness matrix
                         var K = T.Transpose() * Kl * T;
 
-                        // Get the indexes as an array
-                        int[] ind = GlobalIndexes(grips);
-
                         // Add to the global matrix
-                        Stringer.GlobalStiffness(ind, K, Kg);
+                        Stringer.GlobalStiffness(str, K, Kg);
 
-                        // Save to the list of stringer parameters
-                        strMats[num - 1] = Tuple.Create(ind, Kl, T);
+                        // Save the stringer parameters
+                        str.TransMatrix = T;
+                        str.LocalStiffness = Kl;
 
                         //DelimitedWriter.Write("D:/SPMTooldataS" + num + ".csv", K, ";");
                     }
-
-                    // Return the list
-                    return strMats;
                 }
             }
 
