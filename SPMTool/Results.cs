@@ -385,7 +385,7 @@ namespace SPMTool
         }
 
         // Draw the displaced model
-        public static void DrawDisplacements(ObjectIdCollection stringers, List<Tuple<Point3d, double, double>> ndDisp)
+        public static void DrawDisplacements(Analysis.Stringer[] stringers, Analysis.Node[] nodes)
         {
             // Create the layer
             Auxiliary.CreateLayer(Layers.displacements, (short)AutoCAD.Colors.Yellow1, 0);
@@ -403,43 +403,57 @@ namespace SPMTool
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
-                // Get the stringers stifness matrix and add to the global stifness matrix
-                foreach (ObjectId obj in stringers)
+                foreach (var str in stringers)
                 {
-                    // Read the object as a line
-                    Line str = trans.GetObject(obj, OpenMode.ForRead) as Line;
-
                     // Initialize the displacements of the initial and end nodes
-                    double ux1 = 0,
-                           uy1 = 0,
-                           ux3 = 0,
-                           uy3 = 0;
+                    double
+                        ux1 = 0,
+                        uy1 = 0,
+                        ux3 = 0,
+                        uy3 = 0;
+
+                    // Initiate a boolean to verify if the nodes were found
+                    bool
+                        stNdFound = false,
+                        enNdFound = false;
 
                     // Get the displacements on the list
-                    foreach (var disp in ndDisp) // Initial node
+                    foreach (var nd in nodes) // Initial node
                     {
-                        if (str.StartPoint == disp.Item1)
+                        // Verify if its an external node
+                        if (nd.Type == (int) Geometry.Node.NodeType.External)
                         {
-                            ux1 = disp.Item2 * scFctr;
-                            uy1 = disp.Item3 * scFctr;
-                            break;
-                        }
-                    }
+                            // Verify the start point
+                            if (str.Grips[0] == nd.Number)
+                            {
+                                ux1 = nd.DisplacementX * scFctr;
+                                uy1 = nd.DisplacementY * scFctr;
 
-                    foreach (var disp in ndDisp) // End node
-                    {
-                        if (str.EndPoint == disp.Item1)
-                        {
-                            ux3 = disp.Item2 * scFctr;
-                            uy3 = disp.Item3 * scFctr;
-                            break;
+                                // Node found
+                                stNdFound = true;
+                            }
+
+                            // Verify the end point
+                            if (str.Grips[2] == nd.Number)
+                            {
+                                ux3 = nd.DisplacementX * scFctr;
+                                uy3 = nd.DisplacementY * scFctr;
+
+                                // Node found
+                                enNdFound = true;
+                            }
                         }
+
+                        // Verify if the nodes were found
+                        if (stNdFound && enNdFound)
+                            break;
                     }
 
                     // Calculate the displaced nodes
-                    Point3d stPt = new Point3d(str.StartPoint.X + ux1, str.StartPoint.Y + uy1, 0),
-                            enPt = new Point3d(str.EndPoint.X + ux3, str.EndPoint.Y + uy3, 0),
-                            midPt = Auxiliary.MidPoint(stPt, enPt);
+                    Point3d
+                        stPt = new Point3d(str.PointsConnected[0].X + ux1, str.PointsConnected[0].Y + uy1, 0),
+                        enPt = new Point3d(str.PointsConnected[2].X + ux3, str.PointsConnected[2].Y + uy3, 0),
+                        midPt = Auxiliary.MidPoint(stPt, enPt);
 
                     // Draw the displaced stringer
                     using (Line newStr = new Line(stPt, enPt))
@@ -471,52 +485,6 @@ namespace SPMTool
 
             // Turn the layer off
             Auxiliary.LayerOff(Layers.displacements);
-        }
-
-        // Get the nodal displacements and save to XData
-        public static void NodalDisplacements(ObjectIdCollection nodes, ObjectIdCollection stringers, List<Point3d> nodeList, Vector<double> u)
-        {
-            // Initialize a tuple list to store the node position and the displacements
-            List<Tuple<Point3d, double, double>> ndDisp = new List<Tuple<Point3d, double, double>>();
-
-            // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-            {
-                // Get the stringers stifness matrix and add to the global stifness matrix
-                foreach (ObjectId obj in nodes)
-                {
-                    // Read the object as a point
-                    DBPoint nd = trans.GetObject(obj, OpenMode.ForWrite) as DBPoint;
-
-                    // Get the index of the node on the list
-                    int i = 2 * nodeList.IndexOf(nd.Position);
-
-                    // Get the displacements
-                    double ux = Math.Round(u[i], 6),
-                           uy = Math.Round(u[i + 1], 6);
-
-                    // Get the result buffer as an array
-                    ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
-                    TypedValue[] data = rb.AsArray();
-
-                    // Save the displacements on the XData
-                    data[(int)XData.Node.Ux] = new TypedValue((int)DxfCode.ExtendedDataReal, ux);
-                    data[(int)XData.Node.Uy] = new TypedValue((int)DxfCode.ExtendedDataReal, uy);
-
-                    // Add the new XData
-                    nd.XData = new ResultBuffer(data);
-
-                    // Save only external nodes to the list
-                    if (nd.Layer == Layers.extNode)
-                        ndDisp.Add(Tuple.Create(nd.Position, ux, uy));
-                }
-
-                // Commit changes
-                trans.Commit();
-            }
-
-            // Draw the displacements
-            DrawDisplacements(stringers, ndDisp);
         }
 
         [CommandMethod("ViewElementData")]

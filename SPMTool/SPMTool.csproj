@@ -95,6 +95,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NodeAnalysis.cs" />
     <Compile Include="StringerAnalysis.cs" />
     <Compile Include="PanelAnalysis.cs" />
     <Compile Include="Forces.cs" />

@@ -358,49 +358,6 @@ namespace SPMTool
             }
         }
 
-        // Get the force vector
-        public static Vector<double> ForceVector()
-        {
-            // Access the nodes in the model
-            ObjectIdCollection nds = Geometry.Node.AllNodes();
-
-            // Get the number of DoFs
-            int numDofs = nds.Count;
-
-            // Initialize the force vector with size 2x number of DoFs (forces in x and y)
-            var f = Vector<double>.Build.Dense(numDofs * 2);
-
-            // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-            {
-                // Read the nodes data
-                foreach (ObjectId ndObj in nds)
-                {
-                    // Read as a DBPoint
-                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-
-                    // Get the result buffer as an array
-                    ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
-                    TypedValue[] data = rb.AsArray();
-
-                    // Read the node number
-                    int ndNum = Convert.ToInt32(data[(int)XData.Node.Number].Value);
-
-                    // Read the forces in x and y (transform in N)
-                    double Fx = Convert.ToDouble(data[(int)XData.Node.Fx].Value) * 1000,
-                           Fy = Convert.ToDouble(data[(int)XData.Node.Fy].Value) * 1000;
-
-                    // Get the position in the vector from the DoF list
-                    int i = 2 * ndNum - 2;
-
-                    // If force is not zero, assign the values in the force vector at position (i) and (i + 1)
-                    if (Fx != 0) f.At(i, Fx);
-                    if (Fy != 0) f.At(i + 1, Fy);
-                }
-            }
-            return f;
-        }
-
         // Collections of force positions (in X and Y)
         public static (Point3dCollection fcXPos, Point3dCollection fcYPos) ForcePositions()
         {

@@ -251,9 +251,6 @@ namespace SPMTool
                     // Save the forces to panel
                     pnl.Forces = fl;
                 }
-
-                // Draw the panel shear blocks
-                Results.DrawPanelForces(pnls);
             }
 
             public class Linear

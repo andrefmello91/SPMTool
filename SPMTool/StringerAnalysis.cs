@@ -96,8 +96,8 @@ namespace SPMTool
                         };
 
                         double
-                            w = Convert.ToDouble(data[(int) XData.Stringer.Width].Value),
-                            h = Convert.ToDouble(data[(int) XData.Stringer.Height].Value),
+                            w   = Convert.ToDouble(data[(int) XData.Stringer.Width].Value),
+                            h   = Convert.ToDouble(data[(int) XData.Stringer.Height].Value),
                             phi = Convert.ToDouble(data[(int) XData.Stringer.BarDiam].Value);
 
                         // Calculate the cross sectional area
@@ -326,8 +326,8 @@ namespace SPMTool
                 return T;
             }
 
-            // Calculate stringer forces
-            public static void StringerForces(Analysis.Stringer[] stringers, Vector<double> u)
+            // Calculate stringer forces and return the maximum absolute stringer force
+            public static double StringerForces(Analysis.Stringer[] stringers, Vector<double> u)
             {
                 // Create a matrix to store the stringer forces
                 var strForces = Matrix<double>.Build.Dense(stringers.Length, 3);
@@ -371,8 +371,7 @@ namespace SPMTool
                 // Verify the maximum stringer force in the model to draw in an uniform scale
                 double fMax = strForces.Enumerate().MaximumAbsolute();
 
-                // Draw the stringer forces diagrams
-                Results.DrawStringerForces(stringers, fMax);
+                return fMax;
             }
 
             public class Linear
