@@ -229,7 +229,7 @@ namespace SPMTool
                     // Get the displacements
                     var uStr = Vector<double>.Build.DenseOfArray(new double[]
                     {
-                        u[ind[0]] , u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1], u[ind[3]] , u[ind[3] + 1]
+                        u[ind[0]], u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1], u[ind[3]] , u[ind[3] + 1]
                     });
 
                     // Get the displacements in the direction of the stringer

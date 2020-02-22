@@ -362,8 +362,9 @@ namespace SPMTool
         public static (Point3dCollection fcXPos, Point3dCollection fcYPos) ForcePositions()
         {
             // Initialize the collection of points and directions
-            Point3dCollection fcXPos = new Point3dCollection(),
-                              fcYPos = new Point3dCollection();
+            Point3dCollection
+                fcXPos = new Point3dCollection(),
+                fcYPos = new Point3dCollection();
 
             // Get the supports
             ObjectIdCollection fcs = Auxiliary.GetEntitiesOnLayer(Layers.force);
@@ -440,7 +441,6 @@ namespace SPMTool
                     // Commit changes
                     trans.Commit();
                 }
-
             }
         }
     }

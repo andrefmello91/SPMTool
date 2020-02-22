@@ -128,10 +128,10 @@ namespace SPMTool
             public static void DoLinearAnalysis()
             {
                 // Get the concrete parameters
-                var concrete = Material.Concrete.ConcreteParams();
+                var concrete = Material.Concrete.Parameters();
 
                 // Verify if concrete parameters were set
-                if (concrete != null)
+                if (concrete.fcm != 0)
                 {
                     // Get the elastic modulus
                     double Ec = concrete.Eci;
@@ -180,9 +180,9 @@ namespace SPMTool
                     Results.DrawDisplacements(strs, nds);
 
                     // Write in a csv file (debug)
-                    DelimitedWriter.Write("D:/SPMTooldataF.csv", f.ToColumnMatrix(), ";");
-                    DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
-                    DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
+                    //DelimitedWriter.Write("D:/SPMTooldataF.csv", f.ToColumnMatrix(), ";");
+                    //DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
+                    //DelimitedWriter.Write("D:/SPMTooldataK.csv", Kg, ";");
                 }
                 else
                 {

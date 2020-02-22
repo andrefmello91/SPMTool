@@ -177,9 +177,9 @@ namespace SPMTool
 
                                             // Set the new geometry and reinforcement (line 7 to 9 of the array)
                                             data[(int)XData.Panel.XDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, phiX);
-                                            data[(int)XData.Panel.Sx]   = new TypedValue((int)DxfCode.ExtendedDataReal, sx);
+                                            data[(int)XData.Panel.Sx]    = new TypedValue((int)DxfCode.ExtendedDataReal, sx);
                                             data[(int)XData.Panel.YDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, phiY);
-                                            data[(int)XData.Panel.Sy]   = new TypedValue((int)DxfCode.ExtendedDataReal, sy);
+                                            data[(int)XData.Panel.Sy]    = new TypedValue((int)DxfCode.ExtendedDataReal, sy);
 
                                             // Add the new XData
                                             ent.XData = new ResultBuffer(data);
@@ -212,14 +212,16 @@ namespace SPMTool
         public static double[] PanelReinforcement(double[] phi, double[] s, double w)
         {
             // Get the values for each direction
-            double phiX = phi[0],
-                   phiY = phi[1],
-                   sx = s[0],
-                   sy = s[1];
+            double
+                phiX = phi[0],
+                phiY = phi[1],
+                sx   = s[0],
+                sy   = s[1];
 
             // Initialize psx and psy
-            double psx = 0,
-                   psy = 0;
+            double
+                psx = 0,
+                psy = 0;
 
             if (phiX > 0 && sx > 0)
                 psx = Constants.pi * phiX * phiX / (2 * sx * w);
@@ -227,7 +229,7 @@ namespace SPMTool
             if (phiY > 0 && sy > 0)
                 psy = Constants.pi * phiY * phiY / (2 * sy * w);
 
-            return new double[]{psx, psy};
+            return new [] { psx, psy };
         }
     }
 }

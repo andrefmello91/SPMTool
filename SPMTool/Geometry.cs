@@ -193,8 +193,10 @@ namespace SPMTool
 
                 // Create a unique collection for all the nodes
                 ObjectIdCollection nds = new ObjectIdCollection();
-                foreach (ObjectId ndObj in extNds) nds.Add(ndObj);
-                foreach (ObjectId ndObj in intNds) nds.Add(ndObj);
+                foreach (ObjectId ndObj in extNds) 
+                    nds.Add(ndObj);
+                foreach (ObjectId ndObj in intNds) 
+                    nds.Add(ndObj);
 
                 return nds;
             }
@@ -250,7 +252,8 @@ namespace SPMTool
                 var strList = ListOfStringers();
 
                 // Create lists of points for adding the nodes later
-                List<Point3d> newIntNds = new List<Point3d>(),
+                List<Point3d> 
+                    newIntNds = new List<Point3d>(),
                     newExtNds = new List<Point3d>();
 
                 // Prompt for the start point of stringer
@@ -879,7 +882,8 @@ namespace SPMTool
                                         pnl.GetGripPoints(grpPts, new IntegerCollection(), new IntegerCollection());
 
                                         // Create lines to measure the angles between the edges
-                                        Line ln1 = new Line(grpPts[0], grpPts[1]),
+                                        Line 
+                                            ln1 = new Line(grpPts[0], grpPts[1]),
                                             ln2 = new Line(grpPts[0], grpPts[2]),
                                             ln3 = new Line(grpPts[2], grpPts[3]),
                                             ln4 = new Line(grpPts[1], grpPts[3]);

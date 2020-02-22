@@ -392,7 +392,8 @@ namespace SPMTool
 
             // Erase all the displaced objects in the drawing
             ObjectIdCollection dispObjs = Auxiliary.GetEntitiesOnLayer(Layers.displacements);
-            if (dispObjs.Count > 0) Auxiliary.EraseObjects(dispObjs);
+            if (dispObjs.Count > 0) 
+                Auxiliary.EraseObjects(dispObjs);
 
             // Set a scale factor for displacements
             int scFctr = 100;

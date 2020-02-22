@@ -318,14 +318,10 @@ namespace SPMTool
             }
 
             // Calculate stringer forces and return the maximum absolute stringer force
-            public static double StringerForces(Analysis.Stringer[] stringers, Vector<double> u)
+            public static double StringerForces(Stringer[] stringers, Vector<double> u)
             {
                 // Create a matrix to store the stringer forces
                 var strForces = Matrix<double>.Build.Dense(stringers.Length, 3);
-
-                // Create empty elements to the list
-                //for (int i = 0; i < stringers.Count; i++)
-                //    strForces.Add(Vector<double>.Build.Dense(2));
 
                 foreach (var str in stringers)
                 {

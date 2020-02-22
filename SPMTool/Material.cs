@@ -122,7 +122,7 @@ namespace SPMTool
             }
 
             // Read the concrete parameters
-            public static Concrete ConcreteParams()
+            public static Concrete Parameters()
             {
                 // Initialize concrete
                 var concrete = new Concrete();
@@ -277,7 +277,7 @@ namespace SPMTool
             }
 
             // Read the steel parameters
-            public static Steel SteelParams()
+            public static Steel Parameters()
             {
                 // Initialize a list
                 var steel = new Steel();
@@ -335,8 +335,8 @@ namespace SPMTool
             string steelmsg;
 
             // Get the values
-            var concrete = Concrete.ConcreteParams();
-            var steel = Steel.SteelParams();
+            var concrete = Concrete.Parameters();
+            var steel = Steel.Parameters();
 
             // Write the concrete parameters
             if (concrete != null)
