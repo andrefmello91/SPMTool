@@ -196,33 +196,23 @@ namespace SPMTool
                 // Add the local matrix to the global at the DoFs positions
                 // i = index of the node in global matrix
                 // o = index of the line in the local matrix
-                foreach (int n in index)
+                foreach (int ind in index)
                 {
-                    // Line o
-                    // Check if the row is composed of zeroes
-                    if (K.Row(o).Exists(Auxiliary.NotZero))
+                    for (int n = ind; n <= ind + 1; n++)
                     {
-                        Kg[n, i] += K[o, 0]; Kg[n, i + 1] += K[o, 1];
-                        Kg[n, j] += K[o, 2]; Kg[n, j + 1] += K[o, 3];
-                        Kg[n, k] += K[o, 4]; Kg[n, k + 1] += K[o, 5];
-                        Kg[n, l] += K[o, 6]; Kg[n, l + 1] += K[o, 7];
+                        // Line o
+                        // Check if the row is composed of zeroes
+                        if (K.Row(o).Exists(Auxiliary.NotZero))
+                        {
+                            Kg[n, i] += K[o, 0];         Kg[n, i + 1] += K[o, 1];
+                            Kg[n, j] += K[o, 2];         Kg[n, j + 1] += K[o, 3];
+                            Kg[n, k] += K[o, 4];         Kg[n, k + 1] += K[o, 5];
+                            Kg[n, l] += K[o, 6];         Kg[n, l + 1] += K[o, 7];
+                        }
+
+                        // Increment the line index
+                        o++;
                     }
-
-                    // Increment the line index
-                    o++;
-
-                    // Line o + 1
-                    // Check if the row is composed of zeroes
-                    if (K.Row(o).Exists(Auxiliary.NotZero))
-                    {
-                        Kg[n + 1, i] += K[o, 0]; Kg[n + 1, i + 1] += K[o, 1];
-                        Kg[n + 1, j] += K[o, 2]; Kg[n + 1, j + 1] += K[o, 3];
-                        Kg[n + 1, k] += K[o, 4]; Kg[n + 1, k + 1] += K[o, 5];
-                        Kg[n + 1, l] += K[o, 6]; Kg[n + 1, l + 1] += K[o, 7];
-                    }
-
-                    // Increment the line index
-                    o++;
                 }
             }
 
