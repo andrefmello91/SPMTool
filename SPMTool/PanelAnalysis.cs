@@ -26,6 +26,7 @@ namespace SPMTool
             public Point3d CenterPoint { get; set; }
             public double[] EdgeLengths { get; set; }
             public double[] EdgeAngles { get; set; }
+            public double[] StringerDimensions { get; set; }
             public double Width { get; set; }
             public double XBarDiameter { get; set; }
             public double YBarDiameter { get; set; }
@@ -49,6 +50,7 @@ namespace SPMTool
                 CenterPoint = CenterPoint;
                 EdgeLengths = EdgeLengths;
                 EdgeAngles = EdgeAngles;
+                StringerDimensions = StringerDimensions;
                 Width = Width;
                 XBarDiameter = XBarDiameter;
                 YBarDiameter = YBarDiameter;
@@ -243,6 +245,36 @@ namespace SPMTool
 
                     // Save the forces to panel
                     pnl.Forces = fl;
+                }
+            }
+
+            // Get the dimensions of surrounding stringers
+            public static void StringersDimensions(Panel[] panels, Stringer[] stringers)
+            {
+                foreach (var panel in panels)
+                {
+                    // Initiate the stringer dimensions
+                    double[] strDims = new double[4];
+
+                    // Analyse panel grips
+                    for (int i = 0; i < 4; i++)
+                    {
+                        int grip = panel.Grips[i];
+
+                        // Verify if its an internal grip of a stringer
+                        foreach (var stringer in stringers)
+                        {
+                            if (grip == stringer.Grips[1])
+                            {
+                                // The dimension is the half of stringer height
+                                strDims[i] = 0.5 * stringer.Height;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Save to panel
+                    panel.StringerDimensions = strDims;
                 }
             }
 

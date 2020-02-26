@@ -168,7 +168,7 @@ namespace SPMTool
                 }
                 else
                 {
-                    Application.ShowAlertDialog("Please set the material parameters.");
+                    Application.ShowAlertDialog("Please set material parameters.");
                 }
             }
 
