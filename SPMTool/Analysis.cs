@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -133,51 +134,32 @@ namespace SPMTool
                 // Verify if concrete parameters were set
                 if (concrete.fcm != 0)
                 {
-                    // Get the elastic modulus
-                    double Ec = concrete.Eci;
-
-                    // Calculate the approximated shear modulus (elastic material)
-                    double Gc = Ec / 2.4;
-
                     // Update and get the elements collection
                     ObjectIdCollection
-                        ndObjs  = Geometry.Node.UpdateNodes(),
+                        ndObjs = Geometry.Node.UpdateNodes(),
                         strObjs = Geometry.Stringer.UpdateStringers(),
                         pnlObjs = Geometry.Panel.UpdatePanels();
 
                     // Get the initial element parameters
-                    var strs = Stringer.Parameters(strObjs);
-                    var pnls   = Panel.Parameters(pnlObjs);
-                    var nds     = Node.Parameters(ndObjs);
-
-                    // Get the number of DoFs
-                    int numDofs = 2 * nds.Length;
-
-                    // Initialize the global stiffness matrix
-                    var Kg = Matrix<double>.Build.Dense(numDofs, numDofs);
-
-                    // Calculate the stiffness of each stringer and panel, add to the global stiffness and get the matrices of the stiffness of elements
-                    Stringer.Linear.StringersStiffness(strs, Ec, Kg);
-                    Panel.Linear.PanelsStiffness(pnls, Gc, Kg);
+                    var stringers = Stringer.Parameters(strObjs);
+                    var panels = Panel.Parameters(pnlObjs);
+                    var nodes = Node.Parameters(ndObjs);
 
                     // Get the force vector and the constraints vector
-                    var f = ForceVector(nds);
-
-                    // Simplify the stiffness matrix
-                    SimplifyStiffnessMatrix(Kg, f, nds);
+                    var f = ForceVector(nodes);
 
                     // Solve the system
-                    var u = Kg.Solve(f);
+                    var u = LinearAnalysis(nodes, stringers, panels, concrete, f);
 
                     // Calculate the stringer, panel forces and nodal displacements
-                    double fMax = Stringer.StringerForces(strs, u);
-                    Panel.PanelForces(pnls, u);
-                    Node.NodalDisplacements(nds, u);
+                    double fMax = Stringer.StringerForces(stringers, u);
+                    Panel.PanelForces(panels, u);
+                    Node.NodalDisplacements(nodes, u);
 
                     // Draw results
-                    Results.DrawStringerForces(strs, fMax);
-                    Results.DrawPanelForces(pnls);
-                    Results.DrawDisplacements(strs, nds);
+                    Results.DrawStringerForces(stringers, fMax);
+                    Results.DrawPanelForces(panels);
+                    Results.DrawDisplacements(stringers, nodes);
 
                     // Write in a csv file (debug)
                     //DelimitedWriter.Write("D:/SPMTooldataF.csv", f.ToColumnMatrix(), ";");
@@ -188,6 +170,32 @@ namespace SPMTool
                 {
                     Application.ShowAlertDialog("Please set the material parameters.");
                 }
+            }
+
+            // Do a linear analysis and return the vector of displacements
+            public static Vector<double> LinearAnalysis(Node[] nodes, Stringer[] stringers, Panel[] panels, Material.Concrete concrete, Vector<double> forceVector)
+            {
+                // Get the elastic modulus
+                double Ec = concrete.Eci;
+
+                // Calculate the approximated shear modulus (elastic material)
+                double Gc = Ec / 2.4;
+
+                // Get the number of DoFs
+                int numDofs = 2 * nodes.Length;
+
+                // Initialize the global stiffness matrix
+                var Kg = Matrix<double>.Build.Dense(numDofs, numDofs);
+
+                // Calculate the stiffness of each stringer and panel, add to the global stiffness and get the matrices of the stiffness of elements
+                Stringer.Linear.StringersStiffness(stringers, Ec, Kg);
+                Panel.Linear.PanelsStiffness(panels, Gc, Kg);
+
+                // Simplify the stiffness matrix
+                SimplifyStiffnessMatrix(Kg, forceVector, nodes);
+
+                // Solve the system
+                return Kg.Solve(forceVector);
             }
         }
     }

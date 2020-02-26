@@ -238,6 +238,9 @@ namespace SPMTool
                     // Calculate the vector of forces
                     var fl = Kl * ul;
 
+                    // Aproximate small values to zero
+                    fl.CoerceZero(0.000001);
+
                     // Save the forces to panel
                     pnl.Forces = fl;
                 }

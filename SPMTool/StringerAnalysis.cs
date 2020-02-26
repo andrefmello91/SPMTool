@@ -392,7 +392,7 @@ namespace SPMTool
                         var K = T.Transpose() * Kl * T;
 
                         // Add to the global matrix
-                        Stringer.GlobalStiffness(str, K, Kg);
+                        GlobalStiffness(str, K, Kg);
 
                         // Save the stringer parameters
                         str.TransMatrix = T;
