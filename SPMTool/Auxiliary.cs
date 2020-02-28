@@ -314,7 +314,7 @@ namespace SPMTool
                 l = Trig.Cos(angle).CoerceZero(1E-6), 
                 m = Trig.Sin(angle).CoerceZero(1E-6);
 
-            return new double[] { l, m };
+            return new [] { l, m };
         }
 
         // Function to verify if a number is not zero

@@ -17,6 +17,10 @@ namespace SPMTool
 {
     public partial class Analysis
     {
+        // Global material parameters
+        private static Material.Concrete Concrete;
+        private static Material.Steel Steel;
+
         // Get the indexes of an element grips in the global matrix
         public static int[] GlobalIndexes(int[] grips)
         {
@@ -129,10 +133,10 @@ namespace SPMTool
             public static void DoLinearAnalysis()
             {
                 // Get the concrete parameters
-                var concrete = Material.Concrete.Parameters();
+                Concrete = Material.Concrete.Parameters();
 
                 // Verify if concrete parameters were set
-                if (concrete.fcm != 0)
+                if (Concrete.fcm != 0)
                 {
                     // Update and get the elements collection
                     ObjectIdCollection
@@ -149,7 +153,7 @@ namespace SPMTool
                     var f = ForceVector(nodes);
 
                     // Solve the system
-                    var u = LinearAnalysis(nodes, stringers, panels, concrete, f);
+                    var u = LinearAnalysis(nodes, stringers, panels, f);
 
                     // Calculate the stringer, panel forces and nodal displacements
                     double fMax = Stringer.StringerForces(stringers, u);
@@ -160,7 +164,7 @@ namespace SPMTool
                     Results.DrawStringerForces(stringers, fMax);
                     Results.DrawPanelForces(panels);
                     Results.DrawDisplacements(stringers, nodes);
-
+                    
                     // Write in a csv file (debug)
                     //DelimitedWriter.Write("D:/SPMTooldataF.csv", f.ToColumnMatrix(), ";");
                     //DelimitedWriter.Write("D:/SPMTooldataU.csv", u.ToColumnMatrix(), ";");
@@ -173,10 +177,10 @@ namespace SPMTool
             }
 
             // Do a linear analysis and return the vector of displacements
-            public static Vector<double> LinearAnalysis(Node[] nodes, Stringer[] stringers, Panel[] panels, Material.Concrete concrete, Vector<double> forceVector)
+            public static Vector<double> LinearAnalysis(Node[] nodes, Stringer[] stringers, Panel[] panels, Vector<double> forceVector)
             {
                 // Get the elastic modulus
-                double Ec = concrete.Eci;
+                double Ec = Concrete.Eci;
 
                 // Calculate the approximated shear modulus (elastic material)
                 double Gc = Ec / 2.4;

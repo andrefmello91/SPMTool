@@ -15,7 +15,7 @@ namespace SPMTool
 {
     public partial class Analysis
     {
-        public class Panel
+        public partial class Panel
         {
             // Panel parameters
             public ObjectId ObjectId { get; set; }
@@ -26,16 +26,17 @@ namespace SPMTool
             public Point3d CenterPoint { get; set; }
             public double[] EdgeLengths { get; set; }
             public double[] EdgeAngles { get; set; }
+            public double[] Dimensions { get; set; }
             public double[] StringerDimensions { get; set; }
             public double Width { get; set; }
-            public double XBarDiameter { get; set; }
-            public double YBarDiameter { get; set; }
-            public double XSpacing { get; set; }
-            public double YSpacing { get; set; }
-            public double XReinforcementRatio { get; set; }
-            public double YReinforcementRatio { get; set; }
+            public (double X, double Y) BarDiameter { get; set; }
+            public (double X, double Y) BarSpacing { get; set; }
+            public (double X, double Y) ReinforcementRatio { get; set; }
+            public (double[] X, double[] Y) EffReinforcementRatio { get; set; }
             public Matrix<double> TransMatrix { get; set; }
             public Matrix<double> LocalStiffness { get; set; }
+            public Matrix<double> BAMatrix { get; set; }
+            public Matrix<double> QPMatrix { get; set; }
             public Vector<double> Forces { get; set; }
             public double ShearStress { get; set; }
 
@@ -50,16 +51,17 @@ namespace SPMTool
                 CenterPoint = CenterPoint;
                 EdgeLengths = EdgeLengths;
                 EdgeAngles = EdgeAngles;
+                Dimensions = Dimensions;
                 StringerDimensions = StringerDimensions;
                 Width = Width;
-                XBarDiameter = XBarDiameter;
-                YBarDiameter = YBarDiameter;
-                XSpacing = XSpacing;
-                YSpacing = YSpacing;
-                XReinforcementRatio = XReinforcementRatio;
-                YReinforcementRatio = YReinforcementRatio;
+                BarDiameter = BarDiameter;
+                BarSpacing = BarSpacing;
+                ReinforcementRatio = ReinforcementRatio;
+                EffReinforcementRatio = EffReinforcementRatio;
                 TransMatrix = TransMatrix;
                 LocalStiffness = LocalStiffness;
+                BAMatrix = BAMatrix;
+                QPMatrix = QPMatrix;
                 Forces = Forces;
                 ShearStress = ShearStress;
             }
@@ -170,12 +172,9 @@ namespace SPMTool
                             EdgeLengths = dims,
                             EdgeAngles = angs,
                             Width = w,
-                            XBarDiameter = phiX,
-                            YBarDiameter = phiY,
-                            XSpacing = sx,
-                            YSpacing = sy,
-                            XReinforcementRatio = px,
-                            YReinforcementRatio = py
+                            BarDiameter = (phiX, phiY),
+                            BarSpacing = (sx, sy),
+                            ReinforcementRatio = (px, py)
                         };
                     }
 
@@ -248,6 +247,39 @@ namespace SPMTool
                 }
             }
 
+			// Get X and Y coordinates of a panel vertices
+			public static (double[] x, double[] y) VertexCoordinates(Panel panel)
+			{
+				double[]
+					x = new double[4],
+					y = new double[4];
+
+				// Get X and Y coordinates of the vertices
+				for (int i = 0; i < 4; i++)
+				{
+					x[i] = panel.Vertices[i].X;
+					y[i] = panel.Vertices[i].Y;
+				}
+
+				return (x, y);
+            }
+
+            // Calculate the dimensions of a panel and return vertices
+            static void PanelDimensions(Panel panel)
+            {
+                // Get X and Y coordinates of the vertices
+                var (x, y) = VertexCoordinates(panel);
+
+                // Calculate the necessary dimensions of the panel
+                double
+                    a = (x[1] + x[2]) / 2 - (x[0] + x[3]) / 2,
+                    b = (y[2] + y[3]) / 2 - (y[0] + y[1]) / 2,
+                    c = (x[2] + x[3]) / 2 - (x[0] + x[1]) / 2,
+                    d = (y[1] + y[2]) / 2 - (y[0] + y[3]) / 2;
+
+                panel.Dimensions = new [] { a, b, c, d };
+            }
+
             // Get the dimensions of surrounding stringers
             public static void StringersDimensions(Panel[] panels, Stringer[] stringers)
             {
@@ -277,6 +309,44 @@ namespace SPMTool
                     panel.StringerDimensions = strDims;
                 }
             }
+
+			// Calculate the effective reinforcement ratio off a panel for considering stringer dimensions
+			public static void EffectiveRatio(Panel panel)
+			{
+				// Get reinforcement ratio
+				double
+					px = panel.ReinforcementRatio.X,
+					py = panel.ReinforcementRatio.Y;
+
+				// Get stringer dimensions
+				var c = panel.StringerDimensions;
+
+				// Get X and Y coordinates of the vertices
+				var (x, y) = VertexCoordinates(panel);
+
+				// Calculate effective ratio for each edge
+				double[]
+					pxEf = new double[4],
+					pyEf = new double[4];
+
+				// Grip 1
+				pxEf[0] = px;
+				pyEf[0] = py * (x[0] - x[1]) / (x[0] - x[1] + c[1] + c[3]);
+
+				// Grip 2
+				pxEf[1] = px * (y[1] - y[2]) / (y[1] - y[2] + c[0] + c[2]);
+				pyEf[1] = py;
+
+				// Grip 3
+				pxEf[2] = px;
+				pyEf[2] = py * (x[2] - x[3]) / (x[2] - x[3] - c[1] - c[3]);
+
+				// Grip 4
+				pxEf[3] = px * (y[0] - y[3]) / (y[0] - y[3] + c[0] + c[2]);
+				pyEf[3] = py;
+
+				panel.EffReinforcementRatio = (pxEf, pyEf);
+			}
 
             public class Linear
             {
@@ -513,8 +583,143 @@ namespace SPMTool
                 }
             }
 
-            public class NonLinear
+            public partial class NonLinear
             {
+                // Calculate BA matrix
+                static void BAMatrix(Panel panel)
+                {
+                    // Get the dimensions
+                    double
+                        a = panel.Dimensions[0],
+                        b = panel.Dimensions[1],
+                        c = panel.Dimensions[2],
+                        d = panel.Dimensions[3];
+
+                    // Calculate t1, t2 and t3
+                    double
+                        t1 = a * b - c * d,
+                        t2 = 0.5 * (a * a - c * c) + b * b - d * d,
+                        t3 = 0.5 * (b * b - d * d) + a * a - c * c;
+
+                    // Calculate the components of A matrix
+                    double
+                        aOvert1 = a / t1,
+                        bOvert1 = b / t1,
+                        cOvert1 = c / t1,
+                        dOvert1 = d / t1,
+                        aOvert2 = a / t2,
+                        bOvert3 = b / t3,
+                        aOver2t1 = aOvert1 / 2,
+                        bOver2t1 = bOvert1 / 2,
+                        cOver2t1 = cOvert1 / 2,
+                        dOver2t1 = dOvert1 / 2;
+
+                    // Create A matrix
+                    var A = Matrix<double>.Build.DenseOfArray(new [,]
+                    {
+                        {   dOvert1,        0,   bOvert1,        0, -dOvert1,         0, -bOvert1,         0 },
+                        {         0, -aOvert1,         0, -cOvert1,        0,   aOvert1,        0,   cOvert1 },
+                        { -aOver2t1, dOver2t1, -cOver2t1, bOver2t1, aOver2t1, -dOver2t1, cOver2t1, -bOver2t1 },
+                        { -aOvert2,         0,   aOvert2,        0, -aOvert2,         0,  aOvert2,         0 },
+                        {        0,   bOvert3,         0, -bOvert3,        0,   bOvert3,        0,  -bOvert3 }
+                    });
+
+                    // Calculate the components of B matrix
+                    double
+                        cOvera = c / a,
+                        dOverb = d / b;
+
+                    // Create B matrix
+                    var B = Matrix<double>.Build.DenseOfArray(new [,]
+                    {
+                        {1, 0, 0, -cOvera,       0 },
+                        {0, 1, 0,       0,      -1 },
+                        {0, 0, 2,       0,       0 },
+                        {1, 0, 0,       1,       0 },
+                        {0, 1, 0,       0,  dOverb },
+                        {0, 0, 2,       0,       0 },
+                        {1, 0, 0,  cOvera,       0 },
+                        {0, 1, 0,       0,       1 },
+                        {0, 0, 2,       0,       0 },
+                        {1, 0, 0,      -1,       0 },
+                        {0, 1, 0,       0, -dOverb },
+                        {0, 0, 2,       0,       0 }
+                    });
+
+                    // Calculate B*A
+                    panel.BAMatrix = B * A;
+                }
+
+                // Calculate QP matrix
+                static void QPMatrix(Panel panel, double[] x, double[] y)
+                {
+                    // Get the dimensions
+                    double
+                        a = panel.Dimensions[0],
+                        b = panel.Dimensions[1],
+                        c = panel.Dimensions[2],
+                        d = panel.Dimensions[3];
+
+					// Get the height of surrounding stringers
+					var h = panel.StringerDimensions;
+
+					// Get panel width
+					var w = panel.Width;
+
+                    // Calculate t4
+                    double t4 = a * a + b * b;
+
+                    // Calculate the components of Q matrix
+                    double
+                        a2     = a * a,
+                        bc     = b * c,
+                        bdMt4  = b * d - t4,
+                        ab     = a * b,
+                        MbdMt4 = -b * d - t4,
+                        Tt4    = 2 * t4,
+                        acMt4  = a * c - t4,
+                        ad     = a * d,
+                        b2     = b * b,
+                        MacMt4 = -a * c - t4;
+
+                    // Create Q matrix
+                    var Q = 1 / Tt4 * Matrix<double>.Build.DenseOfArray(new double[,]
+                    {
+	                    {  a2,     bc,  bdMt4, -ab, -a2,    -bc, MbdMt4, ab },
+	                    {   0,    Tt4,      0,   0,   0,      0,      0,   0 },
+	                    {   0,      0,    Tt4,   0,   0,      0,      0,   0 },
+	                    { -ab,  acMt4,     ad,  b2,  ab, MacMt4,    -ad, -b2 },
+	                    { -a2,    -bc, MbdMt4,  ab,  a2,     bc,  bdMt4, -ab },
+	                    {   0,      0,      0,   0,   0,    Tt4,      0,   0 },
+	                    {   0,      0,      0,   0,   0,      0,    Tt4,   0 },
+	                    {  ab, MacMt4,    -ad, -b2, -ab,  acMt4,     ad,  b2 }
+                    });
+
+                    // Create P matrix
+                    var P = Matrix<double>.Build.Dense(8, 12);
+
+                    // Calculate the components of P
+                    P[0, 0]  = P[1, 2]  = w * (y[1] - y[0]);
+                    P[0, 2]             = w * (x[0] - x[1]);
+                    P[1, 1]             = w * (x[0] - x[1] + h[1] + h[3]);
+                    P[2, 3]             = w * (y[2] - y[1] - h[2] - h[0]);
+                    P[2, 5]  = P[3, 4]  = w * (x[1] - x[2]);
+                    P[3, 5]             = w * (y[2] - y[1]);
+                    P[4, 6]  = P[5, 8]  = w * (y[3] - y[2]);
+                    P[4, 8]             = w * (x[2] - x[3]);
+                    P[5, 7]             = w * (x[2] - x[3] - h[1] - h[3]);
+                    P[6, 9]             = w * (y[0] - y[3] + h[0] + h[2]);
+                    P[6, 11] = P[7, 10] = w * (x[3] - x[0]);
+                    P[7, 11]            = w * (y[0] - y[3]);
+
+                    // Calculate Q*P
+                    panel.QPMatrix = Q * P;
+                }
+
+
+
+
+
                 // Calculate the stiffness matrix of a panel, get the dofs and save to XData, returns the all the matrices in an ordered list
                 //public static Tuple<int[], Matrix<double>, Matrix<double>>[] PanelsStiffness(ObjectIdCollection panels, double Gc, Matrix<double> Kg)
                 //{
