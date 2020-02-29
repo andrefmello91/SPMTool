@@ -18,27 +18,27 @@ namespace SPMTool
         public partial class Panel
         {
             // Panel parameters
-            public ObjectId ObjectId { get; set; }
-            public int Number { get; set; }
-            public int[] Grips { get; set; }
-            public int[] Index { get; set; }
-            private Point3d[] Vertices { get; set; }
-            public Point3d CenterPoint { get; set; }
-            public double[] EdgeLengths { get; set; }
-            public double[] EdgeAngles { get; set; }
-            public double[] Dimensions { get; set; }
-            public double[] StringerDimensions { get; set; }
-            public double Width { get; set; }
-            public (double X, double Y) BarDiameter { get; set; }
-            public (double X, double Y) BarSpacing { get; set; }
-            public (double X, double Y) ReinforcementRatio { get; set; }
+            public ObjectId                 ObjectId              { get; set; }
+            public int                      Number                { get; set; }
+            public int[]                    Grips                 { get; set; }
+            public int[]                    Index                 { get; set; }
+            private Point3d[]               Vertices              { get; set; }
+            public Point3d                  CenterPoint           { get; set; }
+            public double[]                 EdgeLengths           { get; set; }
+            public double[]                 EdgeAngles            { get; set; }
+            public double[]                 Dimensions            { get; set; }
+            public double[]                 StringerDimensions    { get; set; }
+            public double                   Width                 { get; set; }
+            public (double X, double Y)     BarDiameter           { get; set; }
+            public (double X, double Y)     BarSpacing            { get; set; }
+            public (double X, double Y)     ReinforcementRatio    { get; set; }
             public (double[] X, double[] Y) EffReinforcementRatio { get; set; }
-            public Matrix<double> TransMatrix { get; set; }
-            public Matrix<double> LocalStiffness { get; set; }
-            public Matrix<double> BAMatrix { get; set; }
-            public Matrix<double> QPMatrix { get; set; }
-            public Vector<double> Forces { get; set; }
-            public double ShearStress { get; set; }
+            public Matrix<double>           TransMatrix           { get; set; }
+            public Matrix<double>           LocalStiffness        { get; set; }
+            public Matrix<double>           BAMatrix              { get; set; }
+            public Matrix<double>           QPMatrix              { get; set; }
+            public Vector<double>           Forces                { get; set; }
+            public double                   ShearStress           { get; set; }
 
             // Constructor
             public Panel()
@@ -558,7 +558,7 @@ namespace SPMTool
                     double ang2 = panel.EdgeAngles[1] - panel.EdgeAngles[0];
                     double ang4 = panel.EdgeAngles[3] - panel.EdgeAngles[2];
 
-                    if (ang2 == Constants.piOver2 && ang4 == Constants.piOver2)
+                    if (ang2 == Constants.PiOver2 && ang4 == Constants.PiOver2)
                         return true;
                     else
                         return false;

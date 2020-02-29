@@ -18,107 +18,135 @@ namespace SPMTool
         public class Concrete
         {
             // Concrete parameters
-            public double fcm { get; set; }
-            public double fctm { get; set; }
-            public double Eci { get; set; }
-            public double Ec1 { get; set; }
-            public double ec1 { get; set; }
-            public double k { get; set; }
+			public double AggregateDiameter { get; set; }
+            public double fcm               { get; set; }
+            public double fctm              { get; set; }
+            public double Eci               { get; set; }
+            public double Ec1               { get; set; }
+            public double ec1               { get; set; }
+            public double k                 { get; set; }
+			public double ecr               { get; set; }
 
             // Concrete constructor
             public Concrete()
             {
+	            AggregateDiameter = AggregateDiameter;
                 fcm = fcm;
                 fctm = fctm;
                 Eci = Eci;
                 Ec1 = Ec1;
                 ec1 = ec1;
                 k = k;
+                ecr = ecr;
             }
 
             [CommandMethod("SetConcreteParameters")]
             public static void SetConcreteParameters()
             {
-                // Definition for the Extended Data
-                string xdataStr = "Concrete data";
+	            // Definition for the Extended Data
+	            string xdataStr = "Concrete data";
 
-                // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-                Auxiliary.RegisterApp();
+	            // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
+	            Auxiliary.RegisterApp();
 
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-                {
-                    // Ask the user to input the concrete compressive strength
-                    PromptDoubleOptions fcOp = new PromptDoubleOptions("\nInput the concrete mean compressive strength (fcm) in MPa:")
-                    {
-                        AllowZero = false,
-                        AllowNegative = false
-                    };
+	            // Ask the user to input the concrete compressive strength
+	            PromptDoubleOptions fcOp =
+		            new PromptDoubleOptions("\nInput the concrete mean compressive strength (fcm) in MPa:")
+		            {
+			            AllowZero = false,
+			            AllowNegative = false
+		            };
 
-                    // Get the result
-                    PromptDoubleResult fcRes = AutoCAD.edtr.GetDouble(fcOp);
-                    if (fcRes.Status == PromptStatus.OK)
-                    {
-                        double fc = fcRes.Value;
+	            // Get the result
+	            PromptDoubleResult fcRes = AutoCAD.edtr.GetDouble(fcOp);
+	            if (fcRes.Status == PromptStatus.OK)
+	            {
+		            double fc = fcRes.Value;
 
-                        // Ask the user choose the type of the agregate
-                        PromptKeywordOptions agOp = new PromptKeywordOptions("\nChoose the type of the aggregate");
-                        agOp.Keywords.Add("Basalt");
-                        agOp.Keywords.Add("Quartzite");
-                        agOp.Keywords.Add("Limestone");
-                        agOp.Keywords.Add("Sandstone");
-                        agOp.Keywords.Default = "Quartzite";
-                        agOp.AllowNone = false;
+		            // Ask the user choose the type of the agregate
+		            PromptKeywordOptions agOp = new PromptKeywordOptions("\nChoose the type of the aggregate");
+		            agOp.Keywords.Add("Basalt");
+		            agOp.Keywords.Add("Quartzite");
+		            agOp.Keywords.Add("Limestone");
+		            agOp.Keywords.Add("Sandstone");
+		            agOp.Keywords.Default = "Quartzite";
+		            agOp.AllowNone = false;
 
-                        // Get the result
-                        PromptResult agRes = AutoCAD.edtr.GetKeywords(agOp);
-                        string agrgt = agRes.StringResult;
+		            // Get the result
+		            PromptResult agRes = AutoCAD.edtr.GetKeywords(agOp);
 
-                        // Get the value of aE
-                        double aE = 1;
-                        switch (agrgt)
-                        {
-                            case "Basalt":
-                                aE = 1.2;
-                                break;
+		            if (agRes.Status == PromptStatus.OK)
+		            {
+			            string agrgt = agRes.StringResult;
 
-                            case "Quartzite":
-                                // aE = 1 already
-                                break;
+			            // Ask the user to input the maximum aggregate diameter
+			            PromptDoubleOptions phiAgOp =
+				            new PromptDoubleOptions("\nInput the maximum diameter for concrete aggregate:")
+				            {
+					            AllowZero = false,
+					            AllowNegative = false
+				            };
 
-                            case "Limestone":
-                                aE = 0.9;
-                                break;
+			            // Get the result
+			            PromptDoubleResult phiAgRes = AutoCAD.edtr.GetDouble(phiAgOp);
 
-                            case "Sandstone":
-                                aE = 0.9;
-                                break;
-                        }
+			            if (phiAgRes.Status == PromptStatus.OK)
+			            {
+				            double phiAg = phiAgRes.Value;
 
-                        // Get the NOD in the database
-                        DBDictionary nod = (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
+				            // Get the value of aE
+				            double aE = 1;
+				            switch (agrgt)
+				            {
+					            case "Basalt":
+						            aE = 1.2;
+						            break;
 
-                        // Save the variables on the Xrecord
-                        using (ResultBuffer rb = new ResultBuffer())
-                        {
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));     // 0
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));          // 1
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fc));                       // 2
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, aE));                       // 3
+					            case "Quartzite":
+						            // aE = 1 already
+						            break;
 
-                            // Create and add data to an Xrecord
-                            Xrecord xRec = new Xrecord();
-                            xRec.Data = rb;
+					            case "Limestone":
+						            aE = 0.9;
+						            break;
 
-                            // Create the entry in the NOD and add to the transaction
-                            nod.SetAt("ConcreteParams", xRec);
-                            trans.AddNewlyCreatedDBObject(xRec, true);
-                        }
+					            case "Sandstone":
+						            aE = 0.9;
+						            break;
+				            }
 
-                        // Save the new object to the database
-                        trans.Commit();
-                    }
-                }
+				            // Start a transaction
+				            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+				            {
+
+					            // Get the NOD in the database
+					            DBDictionary nod =
+						            (DBDictionary) trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForWrite);
+
+					            // Save the variables on the Xrecord
+					            using (ResultBuffer rb = new ResultBuffer())
+					            {
+						            rb.Add(new TypedValue((int) DxfCode.ExtendedDataRegAppName, AutoCAD.appName));     // 0
+						            rb.Add(new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr));           // 1
+						            rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, fc));                        // 2
+						            rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, aE));                        // 3
+						            rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, phiAg));                     // 4
+
+						            // Create and add data to an Xrecord
+						            Xrecord xRec = new Xrecord();
+						            xRec.Data = rb;
+
+						            // Create the entry in the NOD and add to the transaction
+						            nod.SetAt("ConcreteParams", xRec);
+						            trans.AddNewlyCreatedDBObject(xRec, true);
+					            }
+
+					            // Save the new object to the database
+					            trans.Commit();
+				            }
+			            }
+		            }
+	            }
             }
 
             // Read the concrete parameters
@@ -130,9 +158,6 @@ namespace SPMTool
                 // Start a transaction
                 using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
                 {
-                    // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
                     // Get the NOD in the database
                     DBDictionary nod = (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
 
@@ -146,13 +171,13 @@ namespace SPMTool
                         TypedValue[] concData = concRb.AsArray();
 
                         // Get the parameters from XData
-                        double 
-                            fcm = Convert.ToDouble(concData[2].Value),
-                            aE = Convert.ToDouble(concData[3].Value);
-
+                        double
+	                        fcm   = Convert.ToDouble(concData[2].Value),
+	                        aE    = Convert.ToDouble(concData[3].Value),
+	                        phiAg = Convert.ToDouble(concData[4].Value);
 
                         // Calculate the parameters according do FIB MC2010
-                        double fctm, Eci, Ec1, ec1, k;
+                        double fctm, Eci, Ec1, ec1, k, ecr;
 
                         // fctm (dependant on fcm value)
                         if (fcm <= 50)
@@ -164,14 +189,17 @@ namespace SPMTool
                         ec1 = -1.6 / 1000 * Math.Pow(fcm / 10, 0.25);
                         Ec1 = fcm / ec1;
                         k = Eci / Ec1;
+                        ecr = fctm / Eci;
 
                         // Set to Concrete
+                        concrete.AggregateDiameter = phiAg;
                         concrete.fcm = fcm;
                         concrete.fctm = fctm;
                         concrete.Eci = Eci;
                         concrete.Ec1 = Ec1;
                         concrete.ec1 = ec1;
                         concrete.k = k;
+                        concrete.ecr = ecr;
                     }
                     else
                     {
@@ -183,16 +211,20 @@ namespace SPMTool
             }
 
             // Calculate concrete parameters for MCFT
-            public static double[] MCFTParams(double fc)
+            public static void MCFTParams(Concrete concrete)
             {
+	            double fc = concrete.fcm;
+
                 // Calculate the parameters
                 double ec = 0.002,
                        Ec = 2 * fc / ec,
                        ft = 0.33 * Math.Sqrt(fc),
                        ecr = ft / Ec;
 
-                // Return in the order ec || Ec || ft || ecr
-                return new double[] {fc, ec, Ec, ft, ecr};
+                concrete.ec1 = ec;
+                concrete.Eci = Ec;
+                concrete.fctm = ft;
+                concrete.ecr = ecr;
             }
         }
 

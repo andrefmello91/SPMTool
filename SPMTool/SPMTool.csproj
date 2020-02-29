@@ -95,6 +95,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MCFT.cs" />
     <Compile Include="Membrane.cs" />
     <Compile Include="NodeAnalysis.cs" />
     <Compile Include="StringerAnalysis.cs" />

@@ -45,7 +45,7 @@ namespace SPMTool
                 // Simplify the matrices removing the rows that have constraints (external nodes)
                 if (nd.Type == (int) Geometry.Node.NodeType.External)
                 {
-                    if (nd.SupportX)
+                    if (nd.Support.X)
                         // There is a support in this direction
                     {
                         // Clear the row and column [i] in the stiffness matrix (all elements will be zero)
@@ -61,7 +61,7 @@ namespace SPMTool
                         // So ui = 0
                     }
 
-                    if (nd.SupportY)
+                    if (nd.Support.Y)
                         // There is a support in this direction
                     {
                         // Clear the row and column [i] in the stiffness matrix (all elements will be zero)
@@ -112,14 +112,14 @@ namespace SPMTool
             foreach (var nd in nodes)
             {
                 // Check if it's a external node
-                if (nd.Type == (int) Geometry.Node.NodeType.External && (nd.ForceX != 0 || nd.ForceY != 0))
+                if (nd.Type == (int) Geometry.Node.NodeType.External && (nd.Force.X != 0 || nd.Force.Y != 0))
                 {
                     // Get the position in the vector
                     int i = 2 * nd.Number - 2;
 
                     // Read the forces in x and y (transform in N) and assign the values in the force vector at position (i) and (i + 1)
-                    f[i]     = nd.ForceX * 1000;
-                    f[i + 1] = nd.ForceY * 1000;
+                    f[i]     = nd.Force.X * 1000;
+                    f[i + 1] = nd.Force.Y * 1000;
                 }
             }
 

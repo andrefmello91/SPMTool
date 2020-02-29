@@ -37,10 +37,11 @@ namespace SPMTool
     // Constants
     public class Constants
     {
-        public static double
-            pi       = MathNet.Numerics.Constants.Pi,
-            piOver2  = MathNet.Numerics.Constants.PiOver2,
-            pi3Over2 = MathNet.Numerics.Constants.Pi3Over2;
+        public const double
+            Pi       = MathNet.Numerics.Constants.Pi,
+            PiOver2  = MathNet.Numerics.Constants.PiOver2,
+            PiOver4  = MathNet.Numerics.Constants.PiOver4,
+            Pi3Over2 = MathNet.Numerics.Constants.Pi3Over2;
     }
 
     // Layer names
@@ -63,9 +64,9 @@ namespace SPMTool
     public class Blocks
     {
         public static string
-            supportX = "SupportX",
-            supportY = "SupportY",
-            supportXY = "SupportXY",
+            supportX   = "SupportX",
+            supportY   = "SupportY",
+            supportXY  = "SupportXY",
             forceBlock = "ForceBlock",
             shearBlock = "ShearBlock";
     }

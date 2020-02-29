@@ -317,6 +317,20 @@ namespace SPMTool
             return new [] { l, m };
         }
 
+        public static double Tangent(double angle)
+        {
+	        double tan;
+
+	        // Calculate the tangent, return 0 if 90 or 270 degrees
+	        if (angle == Constants.PiOver2 || angle == Constants.Pi3Over2)
+		        tan = 1.633e16;
+
+	        else
+		        tan = Trig.Cos(angle).CoerceZero(1E-6);
+
+	        return tan;
+        }
+
         // Function to verify if a number is not zero
         public static Func<double, bool> NotZero = delegate (double num)
         {

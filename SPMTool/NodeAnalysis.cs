@@ -17,16 +17,13 @@ namespace SPMTool
         public class Node
         {
             // Properties
-            public ObjectId ObjectId { get; set; }
-            public int Number { get; set; }
-            public int Type { get; set; }
-            public Point3d Position { get; set; }
-            public bool SupportX { get; set; }
-            public bool SupportY { get; set; }
-            public double ForceX { get; set; }
-            public double ForceY { get; set; }
-            public double DisplacementX { get; set; }
-            public double DisplacementY { get; set; }
+            public ObjectId             ObjectId     { get; set; }
+            public int                  Number       { get; set; }
+            public int                  Type         { get; set; }
+            public Point3d              Position     { get; set; }
+            public (bool X, bool Y)     Support      { get; set; }
+            public (double X, double Y) Force        { get; set; }
+            public (double X, double Y) Displacement { get; set; }
 
             // Constructor
             public Node()
@@ -35,12 +32,9 @@ namespace SPMTool
                 Number = Number;
                 Type = Type;
                 Position = Position;
-                SupportX = SupportX;
-                SupportY = SupportY;
-                ForceX = ForceX;
-                ForceY = ForceY;
-                DisplacementX = DisplacementX;
-                DisplacementY = DisplacementY;
+                Support = Support;
+                Force = Force;
+                Displacement = Displacement;
             }
 
             // Read the parameters of nodes
@@ -96,10 +90,8 @@ namespace SPMTool
                             Number   = num,
                             Type     = type,
                             Position = ndPt.Position,
-                            SupportX = supX,
-                            SupportY = supY,
-                            ForceX   = Fx,
-                            ForceY   = Fy
+                            Support = (supX, supY),
+                            Force   = (Fx, Fy)
                         };
                     }
 
@@ -126,8 +118,7 @@ namespace SPMTool
                             uy = Math.Round(u[i + 1], 6);
 
                         // Save to the node
-                        nd.DisplacementX = ux;
-                        nd.DisplacementY = uy;
+                        nd.Displacement = (ux, uy);
 
                         // Read the object of the node as a point
                         DBPoint ndPt = trans.GetObject(nd.ObjectId, OpenMode.ForWrite) as DBPoint;

@@ -893,7 +893,7 @@ namespace SPMTool
                                         double ang4 = ln4.Angle - ln3.Angle;
 
                                         // Verify if the panel is rectangular
-                                        if (ang1 == Constants.piOver2 && ang4 == Constants.piOver2) // panel is rectangular
+                                        if (ang1 == Constants.PiOver2 && ang4 == Constants.PiOver2) // panel is rectangular
                                         {
                                             // Get the surrounding stringers to erase
                                             foreach (ObjectId strObj in strs)

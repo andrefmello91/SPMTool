@@ -152,7 +152,7 @@ namespace SPMTool
                         // If the shear is negative, mirror the block
                         if (tauAvg < 0)
                         {
-                            blkRef.TransformBy(Matrix3d.Rotation(Constants.pi, AutoCAD.curUCS.Yaxis, cntrPt));
+                            blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, AutoCAD.curUCS.Yaxis, cntrPt));
                         }
                     }
 
@@ -427,8 +427,8 @@ namespace SPMTool
                             // Verify the start point
                             if (str.Grips[0] == nd.Number)
                             {
-                                ux1 = nd.DisplacementX * scFctr;
-                                uy1 = nd.DisplacementY * scFctr;
+                                ux1 = nd.Displacement.X * scFctr;
+                                uy1 = nd.Displacement.Y * scFctr;
 
                                 // Node found
                                 stNdFound = true;
@@ -437,8 +437,8 @@ namespace SPMTool
                             // Verify the end point
                             if (str.Grips[2] == nd.Number)
                             {
-                                ux3 = nd.DisplacementX * scFctr;
-                                uy3 = nd.DisplacementY * scFctr;
+                                ux3 = nd.Displacement.X * scFctr;
+                                uy3 = nd.Displacement.Y * scFctr;
 
                                 // Node found
                                 enNdFound = true;

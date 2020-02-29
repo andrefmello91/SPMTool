@@ -203,7 +203,7 @@ namespace SPMTool
             double As = 0;
 
             if (nBars > 0 && phi > 0)
-                As = nBars * Constants.pi * phi * phi / 4;
+                As = nBars * Constants.Pi * phi * phi / 4;
 
             return As;
         }
@@ -224,10 +224,10 @@ namespace SPMTool
                 psy = 0;
 
             if (phiX > 0 && sx > 0)
-                psx = Constants.pi * phiX * phiX / (2 * sx * w);
+                psx = Constants.Pi * phiX * phiX / (2 * sx * w);
 
             if (phiY > 0 && sy > 0)
-                psy = Constants.pi * phiY * phiY / (2 * sy * w);
+                psy = Constants.Pi * phiY * phiY / (2 * sy * w);
 
             return new [] { psx, psy };
         }

@@ -177,7 +177,7 @@ namespace SPMTool
                                     if (xForce > 0) // positive force in x
                                     {
                                         // Rotate 90 degress counterclockwise
-                                        rotAng = Constants.piOver2;
+                                        rotAng = Constants.PiOver2;
 
                                         // Set the text position
                                         txtPos = new Point3d(xPos - 400, yPos + 25, 0);
@@ -186,7 +186,7 @@ namespace SPMTool
                                     if (xForce < 0) // negative force in x
                                     {
                                         // Rotate 90 degress clockwise
-                                        rotAng = -Constants.piOver2;
+                                        rotAng = -Constants.PiOver2;
 
                                         // Set the text position
                                         txtPos = new Point3d(xPos + 150, yPos + 25, 0);
@@ -242,7 +242,7 @@ namespace SPMTool
                                     if (yForce > 0) // positive force in y
                                     {
                                         // Rotate 180 degress counterclockwise
-                                        rotAng = Constants.pi;
+                                        rotAng = Constants.Pi;
 
                                         // Set the text position
                                         txtPos = new Point3d(xPos + 25, yPos - 250, 0);
@@ -380,13 +380,13 @@ namespace SPMTool
                         BlockReference blkRef = trans.GetObject(obj, OpenMode.ForRead) as BlockReference;
 
                         // If the rotation of the block is 90 or -90 degrees, the direction is X
-                        if (blkRef.Rotation == Constants.piOver2 || blkRef.Rotation == -Constants.piOver2)
+                        if (blkRef.Rotation == Constants.PiOver2 || blkRef.Rotation == -Constants.PiOver2)
                         {
                             fcXPos.Add(blkRef.Position);
                         }
 
                         // If the rotation of the block is 0 or 180 degrees, the direction is Y
-                        if (blkRef.Rotation == 0 || blkRef.Rotation == Constants.pi)
+                        if (blkRef.Rotation == 0 || blkRef.Rotation == Constants.Pi)
                         {
                             fcYPos.Add(blkRef.Position);
                         }
@@ -425,7 +425,7 @@ namespace SPMTool
 
                             // Verify the rotation of the block
                             // Force in Y
-                            if (blkRef.Rotation == 0 || blkRef.Rotation == Constants.pi)
+                            if (blkRef.Rotation == 0 || blkRef.Rotation == Constants.Pi)
                                 data[(int)XData.Node.Fy] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
 
                             // Force in X
