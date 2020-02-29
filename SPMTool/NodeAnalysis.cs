@@ -25,18 +25,6 @@ namespace SPMTool
             public (double X, double Y) Force        { get; set; }
             public (double X, double Y) Displacement { get; set; }
 
-            // Constructor
-            public Node()
-            {
-                ObjectId = ObjectId;
-                Number = Number;
-                Type = Type;
-                Position = Position;
-                Support = Support;
-                Force = Force;
-                Displacement = Displacement;
-            }
-
             // Read the parameters of nodes
             public static Node[] Parameters(ObjectIdCollection nodeObjects)
             {

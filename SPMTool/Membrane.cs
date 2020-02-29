@@ -29,36 +29,13 @@ namespace SPMTool
 					public (double fsx, double fsy) ReinforcementStresses         { get; set; }
 					public Matrix<double>           ConcreteMatrix                { get; set; }
 					public Matrix<double>           SteelMatrix                   { get; set; }
-					public Matrix<double>           Stiffness                     { get; set; }
 					public Vector<double>           Strains                       { get; set; }
 					public Vector<double>           Stresses                      { get; set; }
+					public Matrix<double>           Stiffness => ConcreteMatrix + SteelMatrix;
 
-                    // Constructor
-                    public Membrane()
-					{
-						Stop                          = Stop;
-						StopMessage                   = StopMessage;
-						LSCrack                       = LSCrack;
-						LSYieldX                      = LSYieldX;
-						LSYieldY                      = LSYieldY;
-						LSPeak                        = LSPeak;
-						StrainSlope                   = StrainSlope;
-						ReinforcementSlopes           = ReinforcementSlopes;
-						BarDiameter                   = BarDiameter;
-						BarSpacing                    = BarSpacing;
-						CrackSpacing                  = (BarSpacing.X / (5.4 * ReinforcementRatio.X), BarSpacing.Y / (5.4 * ReinforcementRatio.Y));
-						ReinforcementRatio            = ReinforcementRatio;
-						ConcreteStrains               = ConcreteStrains;
-						ConcreteStresses              = ConcreteStresses;
-						ConcreteMatrix                = ConcreteMatrix;
-						SteelMatrix                   = SteelMatrix;
-						Stiffness                     = ConcreteMatrix + SteelMatrix;
-						Strains                       = Strains;
-						Stresses                      = Stresses;
-					}
 
-					// Calculate the initial material matrix for initiating the iterations
-					public static Membrane InitialStiffness(Panel panel, (double X, double Y) effectiveRatio)
+                    // Calculate the initial material matrix for initiating the iterations
+                    public static Membrane InitialStiffness(Panel panel, (double X, double Y) effectiveRatio)
 					{
 						Membrane membrane = new Membrane();
 

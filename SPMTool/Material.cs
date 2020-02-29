@@ -17,7 +17,7 @@ namespace SPMTool
         // Concrete
         public class Concrete
         {
-            // Concrete parameters
+            // Properties
 			public double AggregateDiameter { get; set; }
             public double fcm               { get; set; }
             public double fctm              { get; set; }
@@ -26,19 +26,6 @@ namespace SPMTool
             public double ec1               { get; set; }
             public double k                 { get; set; }
 			public double ecr               { get; set; }
-
-            // Concrete constructor
-            public Concrete()
-            {
-	            AggregateDiameter = AggregateDiameter;
-                fcm = fcm;
-                fctm = fctm;
-                Eci = Eci;
-                Ec1 = Ec1;
-                ec1 = ec1;
-                k = k;
-                ecr = ecr;
-            }
 
             [CommandMethod("SetConcreteParameters")]
             public static void SetConcreteParameters()
@@ -231,20 +218,11 @@ namespace SPMTool
         // Steel
         public class Steel
         {
-            // Steel parameters
+            // Steel properties
             public double fy { get; set; }
             public double Es { get; set; }
             public double ey { get; set; }
             public double esu { get; set; }
-
-            // Steel constructor
-            public Steel()
-            {
-                fy = fy;
-                Es = Es;
-                ey = ey;
-                esu = esu;
-            }
 
             [CommandMethod("SetSteelParameters")]
             public static void SetSteelParameters()

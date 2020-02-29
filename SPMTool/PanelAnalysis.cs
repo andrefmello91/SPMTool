@@ -37,34 +37,10 @@ namespace SPMTool
             public Matrix<double>           LocalStiffness        { get; set; }
             public Matrix<double>           BAMatrix              { get; set; }
             public Matrix<double>           QPMatrix              { get; set; }
+            public Matrix<double>           DMatrix               { get; set; }
             public Vector<double>           Forces                { get; set; }
             public double                   ShearStress           { get; set; }
-
-            // Constructor
-            public Panel()
-            {
-                ObjectId = ObjectId;
-                Number = Number;
-                Grips = Grips;
-                Index = Index;
-                Vertices = Vertices;
-                CenterPoint = CenterPoint;
-                EdgeLengths = EdgeLengths;
-                EdgeAngles = EdgeAngles;
-                Dimensions = Dimensions;
-                StringerDimensions = StringerDimensions;
-                Width = Width;
-                BarDiameter = BarDiameter;
-                BarSpacing = BarSpacing;
-                ReinforcementRatio = ReinforcementRatio;
-                EffReinforcementRatio = EffReinforcementRatio;
-                TransMatrix = TransMatrix;
-                LocalStiffness = LocalStiffness;
-                BAMatrix = BAMatrix;
-                QPMatrix = QPMatrix;
-                Forces = Forces;
-                ShearStress = ShearStress;
-            }
+			public NonLinear.Membrane[]     IntPointsMembrane     { get; set; }
 
             // Read the parameters of a panel
             public static Panel[] Parameters(ObjectIdCollection panelObjects)
@@ -281,36 +257,33 @@ namespace SPMTool
             }
 
             // Get the dimensions of surrounding stringers
-            public static void StringersDimensions(Panel[] panels, Stringer[] stringers)
+            public static void StringersDimensions(Panel panel, Stringer[] stringers)
             {
-                foreach (var panel in panels)
-                {
-                    // Initiate the stringer dimensions
-                    double[] strDims = new double[4];
+	            // Initiate the stringer dimensions
+	            double[] strDims = new double[4];
 
-                    // Analyse panel grips
-                    for (int i = 0; i < 4; i++)
-                    {
-                        int grip = panel.Grips[i];
+	            // Analyse panel grips
+	            for (int i = 0; i < 4; i++)
+	            {
+		            int grip = panel.Grips[i];
 
-                        // Verify if its an internal grip of a stringer
-                        foreach (var stringer in stringers)
-                        {
-                            if (grip == stringer.Grips[1])
-                            {
-                                // The dimension is the half of stringer height
-                                strDims[i] = 0.5 * stringer.Height;
-                                break;
-                            }
-                        }
-                    }
+		            // Verify if its an internal grip of a stringer
+		            foreach (var stringer in stringers)
+		            {
+			            if (grip == stringer.Grips[1])
+			            {
+				            // The dimension is the half of stringer height
+				            strDims[i] = 0.5 * stringer.Height;
+				            break;
+			            }
+		            }
+	            }
 
-                    // Save to panel
-                    panel.StringerDimensions = strDims;
-                }
+	            // Save to panel
+	            panel.StringerDimensions = strDims;
             }
 
-			// Calculate the effective reinforcement ratio off a panel for considering stringer dimensions
+            // Calculate the effective reinforcement ratio off a panel for considering stringer dimensions
 			public static void EffectiveRatio(Panel panel)
 			{
 				// Get reinforcement ratio
@@ -585,6 +558,113 @@ namespace SPMTool
 
             public partial class NonLinear
             {
+				// Calculate panel initial nonlinear parameters
+				public static void InitialParameters(Panel[] panels, Stringer[] stringers)
+				{
+					foreach (var panel in panels)
+					{
+						// Get vertex coordinates
+						var (x, y) = VertexCoordinates(panel);
+
+						// Calculate dimensions
+						PanelDimensions(panel);
+
+						// Get surrounding stringers dimensions
+						StringersDimensions(panel, stringers);
+
+						// Calculate effective reinforcement ratio
+						EffectiveRatio(panel);
+
+						// Calculate B*A and Q*P
+						BAMatrix(panel);
+						QPMatrix(panel, x, y);
+
+						// Get the effective ratio off panel
+						var (pxEf, pyEf) = panel.EffReinforcementRatio;
+
+						// Calculate the initial membrane stiffness each int. point
+						Membrane[] membranes = new Membrane[4];
+						for (int i = 0; i < 4; i++)
+							membranes[i] = Membrane.InitialStiffness(panel, (pxEf[i], pyEf[i]));
+
+						// Set to panel
+						panel.IntPointsMembrane = membranes;
+					}
+                }
+                // Calculate panel stiffness using MCFT
+                public static void Analysis(Panel panel)
+                {
+					// Get vertex coordinates
+					var (x, y) = VertexCoordinates(panel);
+
+                    // Calculate B*A and Q*P
+                    BAMatrix(panel);
+                    QPMatrix(panel, x, y);
+
+					// Get the effective ratio off panels
+					var (pxEf, pyEf) = panel.EffReinforcementRatio;
+
+                    // Calculate the initial membrane stiffness each int. point
+					Membrane[] membranes = new Membrane[4];
+					for (int i = 0; i < 4; i++)
+						membranes[i] = Membrane.InitialStiffness(panel, (pxEf[i], pyEf[i]));
+
+                    // Initiate the load steps
+                    for (int ls = 1; ls <= 100; ls++)
+                    {
+                        // Calculate the load
+                        var f = 0.01 * ls * Input.f;
+
+                        // Calculate D Matrix
+                        var D = DMatrixMCFT(DList, QP, f, ls);
+
+                        // Break the loop if convergence is not reached
+                        if (Membrane.stop)
+                        {
+                            Console.WriteLine("Convergence not reached at step " + ls);
+                            break;
+                        }
+
+                        // Calculate panel stiffness
+                        //var K = QP * D * BA;
+
+                        // Get the strains
+                        var e = epsMatrix.Row(ls - 1);
+
+                        // Calculate the displacements
+                        //var u = K.PseudoInverse() * f;
+                        var u = BA.PseudoInverse() * e;
+
+                        // Store f and u at the matrix
+                        fMatrix.SetRow(ls - 1, f);
+                        uMatrix.SetRow(ls - 1, u);
+                    }
+
+                    // Write results
+                    if (Membrane.lsCrack != 0)
+                        Console.WriteLine("Concrete cracked at step " + Membrane.lsCrack);
+
+                    if (Membrane.lsYieldX != 0)
+                        Console.WriteLine("X reinforcement yielded at step " + Membrane.lsYieldX);
+
+                    if (Membrane.lsYieldY != 0)
+                        Console.WriteLine("Y reinforcement yielded at step " + Membrane.lsYieldY);
+
+                    if (Membrane.lsPeak != 0)
+                        Console.WriteLine("Concrete reached it's peak stress at step " + Membrane.lsPeak);
+
+                    if (Membrane.lsUlt != 0)
+                        Console.WriteLine("Concrete crushed at step " + Membrane.lsUlt);
+
+                    // Write csvs
+                    DelimitedWriter.Write("D:/f.csv", fMatrix, ";");
+                    DelimitedWriter.Write("D:/u.csv", uMatrix, ";");
+                    DelimitedWriter.Write("D:/sigma.csv", sigMatrix, ";");
+                    DelimitedWriter.Write("D:/epsilon.csv", epsMatrix, ";");
+                    DelimitedWriter.Write("D:/sigma1.csv", sig1Matrix, ";");
+                    DelimitedWriter.Write("D:/epsilon1.csv", eps1Matrix, ";");
+                }
+
                 // Calculate BA matrix
                 static void BAMatrix(Panel panel)
                 {
@@ -716,322 +796,70 @@ namespace SPMTool
                     panel.QPMatrix = Q * P;
                 }
 
+                // Calculate D matrix by MCFT
+                static void DMatrix(Panel panel, Vector<double> f, int ls)
+                {
+                    // Calculate the stresses in integration points
+                    var sigma = panel.QPMatrix.PseudoInverse() * f;
 
+                    // Approximate small numbers to zero
+                    sigma.CoerceZero(1E-6);
 
+                    // Get the stresses at each int. point in a list
+                    var sigList = new List<Vector<double>>();
+                    for (int i = 0; i <= 9; i += 3)
+                        sigList.Add(sigma.SubVector(i, 3));
 
+                    // Create lists for storing different stresses and membrane elements
+                    // D will not be calculated for equal stresses
+                    var difsigList = new List<Vector<double>>();
+                    var difMembList = new List<Membrane>();
 
-                // Calculate the stiffness matrix of a panel, get the dofs and save to XData, returns the all the matrices in an ordered list
-                //public static Tuple<int[], Matrix<double>, Matrix<double>>[] PanelsStiffness(ObjectIdCollection panels, double Gc, Matrix<double> Kg)
-                //{
-                //    // Initialize a tuple list to store the matrices of stringers
-                //    var pnlMats = new Tuple<int[], Matrix<double>, Matrix<double>>[panels.Count];
+                    // Create the matrix of the panel
+                    var Dt = Matrix<double>.Build.Dense(12, 12);
 
-                //    // Get the stringers stifness matrix and add to the global stiffness matrix
-                //    foreach (ObjectId obj in panels)
-                //    {
-                //        // Read the parameters
-                //        var pnlPrms = Panel.Parameters(obj);
-                //        int num = pnlPrms.Item1;
-                //        var verts = pnlPrms.Item2;
-                //        var grips = pnlPrms.Item3;
-                //        var L = pnlPrms.Item4;
-                //        var alpha = pnlPrms.Item5;
-                //        double t = pnlPrms.Item6;
+                    // Calculate the material matrix of each int. point by MCFT
+                    for (int i = 0; i < 4; i++)
+                    {
+                        // Initiate the membrane element
+                        Membrane membrane;
 
-                //        // Get X and Y coordinates of the vertices
-                //        double[] x = new double[4],
-                //                 y = new double[4];
+                        // Get the stresses
+                        var sig = sigList[i];
 
-                //        for (int i = 0; i < 4; i++)
-                //        {
-                //            x[i] = verts[i].X;
-                //            y[i] = verts[i].Y;
-                //        }
+                        // Verify if it's already calculated
+                        if (difsigList.Count > 0 && difsigList.Contains(sig)) // Already calculated
+                        {
+                            // Get the index of the stress vector
+                            int j = difsigList.IndexOf(sig);
 
-                //        // Calculate the necessary dimensions of the panel
-                //        double a = (x[1] + x[2]) / 2 - (x[0] + x[3]) / 2,
-                //               b = (y[2] + y[3]) / 2 - (y[0] + y[1]) / 2,
-                //               c = (x[2] + x[3]) / 2 - (x[0] + x[1]) / 2,
-                //               d = (y[1] + y[2]) / 2 - (y[0] + y[3]) / 2;
+                            // Set membrane element
+                            membrane = difMembList[j];
+                        }
 
-                //        // Calculate t1, t2, t3 and t4
-                //        double t1 = a * b - c * d,
-                //               t2 = 0.5 * (a * a - c * c) + b * b - d * d,
-                //               t3 = 0.5 * (b * b - d * d) + a * a - c * c,
-                //               t4 = a * a + b * b;
+                        else // Not calculated
+                        {
+                            // Get the initial membrane element
+                            var initialMembrane = panel.IntPointsMembrane[i];
 
-                //        // Calculate the components of A matrix
-                //        double aOvert1  = a / t1,
-                //               bOvert1  = b / t1,
-                //               cOvert1  = c / t1,
-                //               dOvert1  = d / t1,
-                //               aOvert2  = a / t2,
-                //               bOvert3  = b / t3,
-                //               aOver2t1 = aOvert1 / 2,
-                //               bOver2t1 = bOvert1 / 2,
-                //               cOver2t1 = cOvert1 / 2,
-                //               dOver2t1 = dOvert1 / 2;
+                            // Calculate stiffness by MCFT
+                            membrane = Membrane.MCFT.MCFTMain(initialMembrane, sig, ls);
+							
+                            // Add them to the list of different stresses and membranes
+                            difsigList.Add(sig);
+                            difMembList.Add(membrane);
+                        }
 
-                //        // Create A matrix
-                //        var A = Matrix<double>.Build.DenseOfArray(new double[,]
-                //        {
-                //            {  dOvert1,        0,   bOvert1,        0, -dOvert1,         0, -bOvert1,         0 },
-                //            {        0, -aOvert1,         0, -cOvert1,        0,   aOvert1,        0,   cOvert1 },
-                //            {-aOver2t1, dOver2t1, -cOver2t1, bOver2t1, aOver2t1, -dOver2t1, cOver2t1, -bOver2t1 },
-                //            { -aOvert2,        0,   aOvert2,        0, -aOvert2,         0,  aOvert2,         0 },
-                //            {        0,  bOvert3,         0, -bOvert3,        0,   bOvert3,        0,  -bOvert3 }
-                //        });
+                        // Set to panel
+                        panel.IntPointsMembrane[i] = membrane;
 
-                //        // Calculate the components of B matrix
-                //        double cOvera = c / a,
-                //               dOverb = d / b;
+                        // Set the submatrices
+                        Dt.SetSubMatrix(3 * i, 3 * i, membrane.Stiffness);
+                    }
 
-                //        // Create B matrix
-                //        var B = Matrix<double>.Build.DenseOfArray(new double[,]
-                //        {
-                //            { 1, 0, 0, -cOvera,       0 },
-                //            { 0, 1, 0,       0,      -1 },
-                //            { 0, 0, 2,       0,       0 },
-                //            { 1, 0, 0,       1,       0 },
-                //            { 0, 1, 0,       0,  dOverb },
-                //            { 0, 0, 2,       0,       0 },
-                //            { 1, 0, 0,  cOvera,       0 },
-                //            { 0, 1, 0,       0,       1 },
-                //            { 0, 0, 2,       0,       0 },
-                //            { 1, 0, 0,      -1,       0 },
-                //            { 0, 1, 0,       0, -dOverb },
-                //            { 0, 0, 2,       0,       0 }
-                //        });
-
-                //        // Calculate the components of Q matrix
-                //        double a2 = a * a,
-                //               bc = b * c,
-                //               bdMt4 = b * d - t4,
-                //               ab = a * b,
-                //               MbdMt4 = -b * d - t4,
-                //               Tt4 = 2 * t4,
-                //               acMt4 = a * c - t4,
-                //               ad = a * d,
-                //               b2 = b * b,
-                //               MacMt4 = -a * c - t4;
-
-                //        // Create Q matrix
-                //        var Q = 1 / Tt4 * Matrix<double>.Build.DenseOfArray(new double[,]
-                //        {
-                //            {  a2,     bc,  bdMt4, -ab, -a2,    -bc, MbdMt4,  ab },
-                //            {   0,    Tt4,      0,   0,   0,      0,      0,   0 },
-                //            {   0,      0,    Tt4,   0,   0,      0,      0,   0 },
-                //            { -ab,  acMt4,     ad,  b2,  ab, MacMt4,    -ad, -b2 },
-                //            { -a2,    -bc, MbdMt4,  ab,  a2,     bc,  bdMt4, -ab },
-                //            {   0,      0,      0,   0,   0,    Tt4,      0,   0 },
-                //            {   0,      0,      0,   0,   0,      0,    Tt4,   0 },
-                //            {  ab, MacMt4,    -ad, -b2, -ab,  acMt4,     ad,  b2 }
-                //        });
-
-                //        // Get the indexes as an array
-                //        int[] ind = GlobalIndexes(grips);
-
-                //        // Add to the global matrix
-                //        //Panel.GlobalStiffness(ind, K, Kg);
-
-                //        // Save to the list of panel parameters
-                //        //pnlMats[num - 1] = Tuple.Create(ind, Kl, T);
-
-                //        //DelimitedWriter.Write("D:/SPMTooldataP" + num + ".csv", K, ";");
-                //    }
-
-                //    // Return the list
-                //    return pnlMats;
-                //}
-
-                //// Calculate the stresses in concrete and steel by MCFT
-                //public static void MCFT(double[] concPars, double phiAg, double[] fy, double[] Es, double[] phi, double[] s, Vector<double> f, double t)
-                //{
-                //    // Get the concrete parameters
-                //    double fc = concPars[0],
-                //           ec = concPars[1],
-                //           Ec = concPars[2],
-                //           fcr = concPars[3],
-                //           ecr = concPars[4];
-
-                //    // Get the steel parameters
-                //    double fyx  = fy[0],
-                //           fyy  = fy[1],
-                //           Esxi = Es[0],
-                //           Esyi = Es[1];
-
-                //    // Get the reinforcement
-                //    double phiX = phi[0],
-                //           phiY = phi[1],
-                //           sx = s[0],
-                //           sy = s[1];
-
-                //    // Calculate the reinforcement ratio
-                //    double[] ps = Reinforcement.PanelReinforcement(phi, s, t);
-                //    double   psx = ps[0],
-                //             psy = ps[1];
-
-                //    // Calculate the crack spacings
-                //    double smx = 2 / 3 * phiX / (3.6 * psx),
-                //           smy = 2 / 3 * phiY / (3.6 * psy);
-
-                //    // Initialize the strain vector
-                //    var em = Vector<double>.Build.Dense(3);
-
-                //    // Initialize the principal stresses
-                //    double f1 = 0,
-                //           f2 = 0;
-
-                //    // Initialize the tolerance
-                //    double Tol = 1;
-
-                //    // Initiate a loop
-                //    do
-                //    {
-                //        // Get the strains and stresses
-                //        double ex = em[0],
-                //               ey = em[1],
-                //               yxy = em[2],
-                //               f1g = f1,
-                //               f2g = f2;
-
-                //        // Calculate principal strains by Mohr's Circle
-                //        double[] ep  = Auxiliary.PrincipalStrains(em);
-                //        double   e1a = ep[0],
-                //                 e2a = ep[1];
-
-                //        // Calculate the angle of compression principal strain
-                //        double thetaA = Math.Atan(0.5 * yxy / (ey - ex));
-
-                //        // Components of concrete stiffness matrix
-                //        double Ec1, Ec2;
-
-                //        if (f1g <= 0.0001)
-                //            Ec1 = Ec;
-                //        else
-                //            Ec1 = f1g / e1a;
-
-                //        if (f2g <= 0.0001)
-                //            Ec2 = Ec;
-                //        else
-                //            Ec2 = f2g / e2a;
-
-                //        double Gc12 = Ec1 * Ec2 / (Ec1 + Ec2);
-
-                //        // Concrete stiffness matrix
-                //        var Dc = Matrix<double>.Build.DenseOfArray(new double[,]
-                //        {
-                //            {Ec1,   0,    0},
-                //            {  0, Ec2,    0},
-                //            {  0,   0, Gc12}
-                //        });
-
-                //        // Components of steel stiffness matrix
-                //        double Esx = Math.Min(Esxi, fyx / ex),
-                //               Esy = Math.Min(Esyi, fyy / ey);
-
-                //        // Steel stiffness matrix
-                //        var Ds = Matrix<double>.Build.DenseOfArray(new double[,]
-                //        {
-                //            {psx * Esx,         0, 0},
-                //            {        0, psy * Esy, 0},
-                //            {        0,         0, 0}
-                //        });
-
-                //        // Components of concrete transformation matrix
-                //        double ang = Constants.pi - thetaA;
-                //        double cos2 = Math.Cos(ang) * Math.Cos(ang),
-                //            sin2 = Math.Sin(ang) * Math.Sin(ang),
-                //            cos2Tsin2 = cos2 * sin2,
-                //            cos2Msin2 = cos2 - sin2;
-
-                //        // Concrete transformation matrix
-                //        var T = Matrix<double>.Build.DenseOfArray(new double[,]
-                //        {
-                //            {          cos2,          sin2,  cos2Tsin2},
-                //            {          sin2,          cos2, -cos2Tsin2},
-                //            {-2 * cos2Tsin2, 2 * cos2Tsin2,  cos2Msin2}
-                //        });
-
-                //        // Complete stiffness matrix
-                //        var D = T.Transpose() * Dc * T + Ds;
-
-                //        // Calculate new strains
-                //        em = D.Inverse() * f;
-
-                //        // Get the strains
-                //        double exm  = em[0],
-                //               eym  = em[1],
-                //               yxym = em[2];
-
-                //        // Calculate principal strains by Mohr's Circle
-                //        ep = Auxiliary.PrincipalStrains(em);
-                //        double e1 = ep[0],
-                //               e2 = ep[1];
-
-                //        // Calculate the new angle of compression principal strain
-                //        double theta     = Math.Atan(0.5 * yxym / (eym - exm)),
-                //               sinTheta  = Math.Sin(theta),
-                //               cosTheta  = Math.Cos(theta),
-                //               tanTheta  = Math.Tan(theta),
-                //               sin2Theta = Math.Sin(2 * theta),
-                //               cos2Theta = Math.Cos(2 * theta);
-
-                //        // Calculate the new reinforcement stresses
-                //        double fsx = Math.Min(Esx * exm, fyx),
-                //               fsy = Math.Min(Esy * eym, fyy);
-
-                //        // Calculate the maximum concrete compressive stress
-                //        double f2maxA = fc / (0.8 + 170 * e1),
-                //               f2max  = Math.Min(f2maxA, fc);
-
-                //        // Calculate the principal compressive stress in concrete
-                //        f2 = f2max * (2 * e2 / ec - e2 / ec * e2 / ec);
-
-                //        // Calculate the principal tensile stress in concrete
-                //        double f1a;
-                //        if (e1 <= ecr)
-                //            f1a = e1 * Ec;
-                //        else
-                //            f1a = fcr / (1 + Math.Sqrt(500 * e1));
-
-                //        // Limit the principal tensile stress by crack check procedure
-                //        double smTetha = 1 / (sinTheta / smx + cosTheta / smy),                     // Crack spacing
-                //               w       = e1 * smTetha,                                              // Crack opening
-                //               f1cx    = psx * (fyx - fsx),                                         // X reinforcement capacity reserve
-                //               f1cy    = psy * (fyy - fsy),                                         // Y reinforcement capacity reserve
-                //               vcimaxA = 0.18 * Math.Sqrt(fc) / (0.31 + 24 * w / (phiAg + 16)),     // Maximum possible shear on crack interface
-                //               vcimaxB = Math.Abs(f1cx - f1cy) * sinTheta * cosTheta,               // Maximum possible shear for biaxial yielding
-                //               vcimax  = Math.Min(vcimaxA, vcimaxB),                                // Maximum shear on crack
-                //               f1b     = f1cx * sinTheta * sinTheta + f1cy * cosTheta * cosTheta,   // Biaxial yielding condition
-                //               f1c     = f1cx + vcimax * tanTheta,                                  // Maximum tensile stress for equilibrium in X
-                //               f1d     = f1cy + vcimax * tanTheta;                                  // Maximum tensile stress for equilibrium in Y
-
-                //        // Calculate the final tensile stress
-                //        var f1List = new[] {f1a, f1b, f1c, f1d};
-                //        f1 = f1List.Min();
-
-                //        // Final stresses
-                //        double rads = (f1 - f2) / 2,
-                //               cens = (f1 + f2) / 2;
-
-                //        // Vector of final stresses
-                //        var fNew = Vector<double>.Build.DenseOfArray(new double[]
-                //        {
-                //            cens - rads * cos2Theta + psx * fsx,
-                //            cens - rads * cos2Theta + psy * fsy,
-                //            rads * sin2Theta
-                //        });
-
-                //        // Verify the tolerance
-                //        var TolVec = f - fNew;
-                //        Tol = TolVec.AbsoluteMaximum();
-
-                //        // If convergence is not reached, start a new loop with the calculated
-                //        // displacements (em) and principal stresses (f1 and f2)
-
-                //    } while (Tol > 0.00001);
-                //}
+					// Set to panel
+                    panel.DMatrix = Dt;
+                }
             }
         }
     }

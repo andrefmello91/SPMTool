@@ -16,10 +16,10 @@ namespace SPMTool
                     public class MCFT
                     {
 	                    private static Material.Concrete Concrete;
-	                    private static Material.Steel Steel;
+	                    private static Material.Steel    Steel;
 
                         // Calculate D matrix (input stress vector and initial D matrix)
-                        public static Matrix<double> MCFTMain(Membrane membrane, Vector<double> sigma, int ls)
+                        public static Membrane MCFTMain(Membrane membrane, Vector<double> sigma, int ls)
                         {
                             // Max number of iterations
                             int maxIter = 1000;
@@ -78,7 +78,7 @@ namespace SPMTool
                                     membrane.Stop = true;
                             }
 
-                            return Di;
+                            return membrane;
                         }
 
                         // Calculate strain slope

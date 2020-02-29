@@ -18,7 +18,7 @@ namespace SPMTool
     {
         public class Stringer
         {
-            // Stringer parameters
+            // Stringer properties
             public ObjectId       ObjectId        { get; set; }
             public int            Number          { get; set; }
             public int[]          Grips           { get; set; }
@@ -36,27 +36,6 @@ namespace SPMTool
             public Matrix<double> LocalStiffness  { get; set; }
             public Vector<double> Forces          { get; set; }
 
-            // Constructor
-            public Stringer()
-            {
-                ObjectId = ObjectId;
-                Number = Number;
-                Grips = Grips;
-                Index = Index;
-                PointsConnected = PointsConnected;
-                NumberOfBars = NumberOfBars;
-                Length = Length;
-                Angle = Angle;
-                Width = Width;
-                Height = Height;
-                BarDiameter = BarDiameter;
-                ConcreteArea = ConcreteArea;
-                SteelArea = SteelArea;
-                Forces = Forces;
-                TransMatrix = TransMatrix;
-                LocalStiffness = LocalStiffness;
-            }
-            
             // Read the parameters of a stringer
             public static Stringer[] Parameters(ObjectIdCollection stringerObjects)
             {
