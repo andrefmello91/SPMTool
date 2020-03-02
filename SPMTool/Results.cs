@@ -128,7 +128,7 @@ namespace SPMTool
                     // Get panel data
                     int    num = pnl.Number;
                     double w   = pnl.Width;
-                    var l = pnl.EdgeLengths;
+                    var l = pnl.Edges.Length;
                     var cntrPt = pnl.CenterPoint;
 
                     // Get the maximum lenght of the panel
@@ -594,28 +594,28 @@ namespace SPMTool
 
                                 double w = Convert.ToDouble(data[(int)XData.Panel.Width].Value);
 
-                                double[] phi = new double[]
-                                {
+                                (double X, double Y) phi =
+                                (
                                     Convert.ToDouble(data[(int)XData.Panel.XDiam].Value),
                                     Convert.ToDouble(data[(int)XData.Panel.YDiam].Value)
-                                };
+                                );
 
-                                double[] s = new double[]
-                                {
+                                (double X, double Y) s = 
+                                (
                                     Convert.ToDouble(data[(int)XData.Panel.Sx].Value),
                                     Convert.ToDouble(data[(int)XData.Panel.Sy].Value)
-                                };
+                                );
 
                                 // Calculate the reinforcement ratio
-                                double[] ps = Reinforcement.PanelReinforcement(phi, s, w);
-                                double psx = Math.Round(ps[0], 5),
-                                       psy = Math.Round(ps[1], 5);
+                                var (psx, psy) = Reinforcement.PanelReinforcement(phi, s, w);
+                                psx = Math.Round(psx, 5); 
+                                psy = Math.Round(psy, 5);
 
                                 msgstr = "Panel " + pnlNum + "\n\n" +
                                          "Grips: (" + pnlGps[0] + " - " + pnlGps[1] + " - " + pnlGps[2] + " - " + pnlGps[3] + ")" + "\n" +
                                          "Width = " + w + " mm" + "\n" +
-                                         "Reinforcement (x) = Ø " + phi[0] + " mm, s = " + s[0] + " mm (ρsx = " + psx + ")\n" +
-                                         "Reinforcement (y) = Ø " + phi[1] + " mm, s = " + s[1] + " mm (ρsy = " + psy + ")";
+                                         "Reinforcement (x) = Ø " + phi.X + " mm, s = " + s.X + " mm (ρsx = " + psx + ")\n" +
+                                         "Reinforcement (y) = Ø " + phi.Y + " mm, s = " + s.Y + " mm (ρsy = " + psy + ")";
                             }
 
                             // If it's a force text

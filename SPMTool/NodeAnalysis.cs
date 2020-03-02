@@ -25,70 +25,78 @@ namespace SPMTool
             public (double X, double Y) Force        { get; set; }
             public (double X, double Y) Displacement { get; set; }
 
-            // Read the parameters of nodes
-            public static Node[] Parameters(ObjectIdCollection nodeObjects)
-            {
-                Node[] nodes = new Node[nodeObjects.Count];
+			// Constructor
+			public Node (ObjectId nodeObject)
+			{
+				// Start a transaction
+				using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+				{
+					// Read the object as a point
+					DBPoint ndPt = trans.GetObject(nodeObject, OpenMode.ForRead) as DBPoint;
 
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-                {
-                    foreach (ObjectId ndObj in nodeObjects)
-                    {
-                        // Read the object as a point
-                        DBPoint ndPt = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+					// Read the XData and get the necessary data
+					ResultBuffer rb = ndPt.GetXDataForApplication(AutoCAD.appName);
+					TypedValue[] data = rb.AsArray();
 
-                        // Read the XData and get the necessary data
-                        ResultBuffer rb = ndPt.GetXDataForApplication(AutoCAD.appName);
-                        TypedValue[] data = rb.AsArray();
+					// Get the node number
+					int num = Convert.ToInt32(data[(int) XData.Node.Number].Value);
 
-                        // Get the node number
-                        int num = Convert.ToInt32(data[(int) XData.Node.Number].Value);
+					// Get type
+					int type;
+					if (ndPt.Layer == Layers.extNode)
+						type = (int) Geometry.Node.NodeType.External;
+					else
+						type = (int) Geometry.Node.NodeType.Internal;
 
-                        // Get type
-                        int type;
-                        if (ndPt.Layer == Layers.extNode)
-                            type = (int)Geometry.Node.NodeType.External;
-                        else
-                            type = (int)Geometry.Node.NodeType.Internal;
+					// Get support conditions
+					bool
+						supX = false,
+						supY = false;
 
-                        // Get support conditions
-                        bool 
-                            supX = false, 
-                            supY = false;
+					string support = data[(int) XData.Node.Support].Value.ToString();
 
-                        string support = data[(int) XData.Node.Support].Value.ToString();
+					if (support.Contains("X"))
+						supX = true;
 
-                        if (support.Contains("X"))
-                            supX = true;
+					if (support.Contains("Y"))
+						supY = true;
 
-                        if (support.Contains("Y"))
-                            supY = true;
+					// Get forces
+					double
+						Fx = Convert.ToDouble(data[(int) XData.Node.Fx].Value),
+						Fy = Convert.ToDouble(data[(int) XData.Node.Fy].Value);
 
-                        // Get forces
-                        double
-                            Fx = Convert.ToDouble(data[(int) XData.Node.Fx].Value),
-                            Fy = Convert.ToDouble(data[(int) XData.Node.Fy].Value);
+					// Set the values
+					ObjectId = nodeObject;
+					Number   = num;
+					Type     = type;
+					Position = ndPt.Position;
+					Support  = (supX, supY);
+					Force    = (Fx, Fy);
+				}
+			}
 
-                        // Set the values
-                        int i = num - 1;
-                        nodes[i] = new Node
-                        {
-                            ObjectId = ndObj,
-                            Number   = num,
-                            Type     = type,
-                            Position = ndPt.Position,
-                            Support = (supX, supY),
-                            Force   = (Fx, Fy)
-                        };
-                    }
+			// Read the parameters of nodes
+			public static Node[] Parameters(ObjectIdCollection nodeObjects)
+			{
+				Node[] nodes = new Node[nodeObjects.Count];
 
-                    // Return the parameters
-                    return nodes;
-                }
-            }
+				foreach (ObjectId ndObj in nodeObjects)
+				{
+					// Create the node
+					Node node = new Node(ndObj);
 
-            // Get the nodal displacements and save to XData
+					// Set the values
+					int i = node.Number - 1;
+					nodes[i] = node;
+
+				}
+
+				// Return the nodes
+				return nodes;
+			}
+
+			// Get the nodal displacements and save to XData
             public static void NodalDisplacements(Node[] nodes, Vector<double> u)
             {
                 // Start a transaction

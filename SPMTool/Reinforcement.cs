@@ -209,27 +209,20 @@ namespace SPMTool
         }
 
         // Calculate the panel reinforcement ratio
-        public static double[] PanelReinforcement(double[] phi, double[] s, double w)
+        public static (double X, double Y) PanelReinforcement((double X, double Y) barDiameter, (double X, double Y) spacing, double width)
         {
-            // Get the values for each direction
-            double
-                phiX = phi[0],
-                phiY = phi[1],
-                sx   = s[0],
-                sy   = s[1];
-
             // Initialize psx and psy
             double
                 psx = 0,
                 psy = 0;
 
-            if (phiX > 0 && sx > 0)
-                psx = Constants.Pi * phiX * phiX / (2 * sx * w);
+            if (barDiameter.X > 0 && spacing.X > 0)
+                psx = Constants.Pi * barDiameter.X * barDiameter.X / (2 * spacing.X * width);
 
-            if (phiY > 0 && sy > 0)
-                psy = Constants.Pi * phiY * phiY / (2 * sy * w);
+            if (barDiameter.Y > 0 && spacing.Y > 0)
+                psy = Constants.Pi * barDiameter.Y * barDiameter.Y / (2 * spacing.Y * width);
 
-            return new [] { psx, psy };
+            return (psx, psy);
         }
     }
 }

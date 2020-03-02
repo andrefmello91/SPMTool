@@ -22,7 +22,6 @@ namespace SPMTool
             public ObjectId       ObjectId        { get; set; }
             public int            Number          { get; set; }
             public int[]          Grips           { get; set; }
-            public int[]          Index           { get; set; }
             public Point3d[]      PointsConnected { get; set; }
             public int            NumberOfBars    { get; set; }
             public double         Length          { get; set; }
@@ -30,28 +29,42 @@ namespace SPMTool
             public double         Width           { get; set; }
             public double         Height          { get; set; }
             public double         BarDiameter     { get; set; }
-            public double         ConcreteArea    { get; set; }
-            public double         SteelArea       { get; set; }
             public Matrix<double> TransMatrix     { get; set; }
             public Matrix<double> LocalStiffness  { get; set; }
             public Vector<double> Forces          { get; set; }
 
-            // Read the parameters of a stringer
-            public static Stringer[] Parameters(ObjectIdCollection stringerObjects)
-            {
-                Stringer[] stringers = new Stringer[stringerObjects.Count];
+            // Auto implemented properties
+            // Set global indexes from grips
+            public int[] Index => GlobalIndexes(Grips);
 
+            // Calculate steel area
+            public double SteelArea => Reinforcement.StringerReinforcement(NumberOfBars, BarDiameter);
+
+            // Calculate concrete area
+            public double ConcreteArea => Width * Height - SteelArea;
+
+			// Calculate reinforcement ratio
+            private double ps => SteelArea / ConcreteArea;
+
+            // Private parameters
+            private double EcAc  { get; set; }
+			private double EsAs  { get; set; }
+			private double xi => EsAs / EcAc;
+			private double t1 => EcAc * (1 + xi);
+
+			// Constructor
+			// Get the parameters from a stringer object
+			public Stringer(ObjectId stringerObject)
+			{
                 // Start a transaction
                 using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
                 {
-                    foreach (ObjectId strObj in stringerObjects)
-                    {
                         // Read the object as a line
-                        Line strLine = trans.GetObject(strObj, OpenMode.ForRead) as Line;
+                        Line strLine = trans.GetObject(stringerObject, OpenMode.ForRead) as Line;
 
                         // Get the length and angles
                         double
-                            L = strLine.Length,
+                            L     = strLine.Length,
                             alpha = strLine.Angle;
 
                         // Calculate midpoint
@@ -63,8 +76,8 @@ namespace SPMTool
 
                         // Get the stringer number
                         int
-                            num   = Convert.ToInt32(data[(int) XData.Stringer.Number].Value),
-                            nBars = Convert.ToInt32(data[(int) XData.Stringer.NumOfBars].Value);
+                            num   = Convert.ToInt32(data[(int)XData.Stringer.Number].Value),
+                            nBars = Convert.ToInt32(data[(int)XData.Stringer.NumOfBars].Value);
 
                         // Create the list of grips
                         int[] grips =
@@ -75,47 +88,43 @@ namespace SPMTool
                         };
 
                         double
-                            w   = Convert.ToDouble(data[(int) XData.Stringer.Width].Value),
-                            h   = Convert.ToDouble(data[(int) XData.Stringer.Height].Value),
-                            phi = Convert.ToDouble(data[(int) XData.Stringer.BarDiam].Value);
-
-                        // Calculate the cross sectional area
-                        double A = w * h;
-
-                        // Calculate the reinforcement area
-                        double As = Reinforcement.StringerReinforcement(nBars, phi);
-
-                        // Calculate the concrete area
-                        double Ac = A - As;
-
-                        // Get the index
-                        int i = num - 1;
-
-                        // Get the global indexes as an array
-                        int[] ind = GlobalIndexes(grips);
+                            w   = Convert.ToDouble(data[(int)XData.Stringer.Width].Value),
+                            h   = Convert.ToDouble(data[(int)XData.Stringer.Height].Value),
+                            phi = Convert.ToDouble(data[(int)XData.Stringer.BarDiam].Value);
 
                         // Set the values
-                        stringers[i] = new Stringer
-                        {
-                            ObjectId = strObj,
-                            Number = num,
-                            Grips = grips,
-                            Index = ind,
-                            PointsConnected = new []{ strLine.StartPoint, midPt, strLine.EndPoint },
-                            NumberOfBars = nBars,
-                            Length = L,
-                            Angle = alpha,
-                            Width = w,
-                            Height = h,
-                            BarDiameter = phi,
-                            ConcreteArea = Ac,
-                            SteelArea = As
-                        };
+                        ObjectId = stringerObject;
+                        Number = num;
+                        Grips = grips;
+                        PointsConnected = new[] { strLine.StartPoint, midPt, strLine.EndPoint };
+                        NumberOfBars = nBars;
+                        Length = L;
+                        Angle = alpha;
+                        Width = w;
+                        Height = h;
+                        BarDiameter = phi;
+                }
+            }
+
+            // Read the parameters of a stringer
+            public static Stringer[] Parameters(ObjectIdCollection stringerObjects)
+            {
+                Stringer[] stringers = new Stringer[stringerObjects.Count];
+
+                    foreach (ObjectId strObj in stringerObjects)
+                    {
+                        // Create the stringer
+						Stringer stringer = new Stringer(strObj);
+
+						// Get the index
+						int i = stringer.Number - 1;
+
+						// Set to the array
+						stringers[i] = stringer;
                     }
 
-                    // Return the parameters
-                    return stringers;
-                }
+                // Return the stringers
+                return stringers;
             }
 
             // Get the list of continued stringers
@@ -277,7 +286,7 @@ namespace SPMTool
             }
 
             // Calculate the transformation matrix
-            public static Matrix<double> TransformationMatrix(Stringer stringer)
+            public static void TransformationMatrix(Stringer stringer)
             {
                 // Get the direction cosines
                 double[] dirCos = Auxiliary.DirectionCosines(stringer.Angle);
@@ -286,14 +295,12 @@ namespace SPMTool
                     m = dirCos[1];
 
                 // Obtain the transformation matrix
-                var T = Matrix<double>.Build.DenseOfArray(new double[,]
+                stringer.TransMatrix = Matrix<double>.Build.DenseOfArray(new double[,]
                 {
                     {l, m, 0, 0, 0, 0 },
                     {0, 0, l, m, 0, 0 },
                     {0, 0, 0, 0, l, m }
                 });
-
-                return T;
             }
 
             // Calculate stringer forces and return the maximum absolute stringer force
@@ -354,7 +361,8 @@ namespace SPMTool
                             Ac = str.ConcreteArea;
 
                         // Obtain the transformation matrix
-                        var T = TransformationMatrix(str);
+                        TransformationMatrix(str);
+                        var T = str.TransMatrix;
 
                         // Calculate the constant factor of stifness
                         double EcAOverL = Ec * Ac / L;
@@ -382,255 +390,433 @@ namespace SPMTool
                 }
             }
 
-            public class NonLinear
-            {
-                // SPMTool default analysis methods
-                public class Default
-                {
-                    // Calculate the strain on a stringer given a force N and the concrete parameters
-                    //public static double StringerStrain(double N, double Ac, double As, List<double> concParams, List<double> steelParams)
-                    //{
-                    //    // Get the parameters
-                    //    concParams = Material.Concrete.ConcreteParams();
-                    //    steelParams = Material.Steel.SteelParams();
+     //       public class NonLinear
+     //       {
+     //           // SPMTool default analysis methods
+     //           public class Default
+     //           {
+					//// Static parameters of materials
+					//private static double fc, fctm, Ec, ec, fy, Es, ey;
 
-                    //    // Initialize the strain
-                    //    double e = 0;
+					//// Calculate the initial parameters of stringers
+					//public static void InitialParameters(Stringer[] stringers, Material.Concrete concrete, Material.Steel steel)
+					//{
+					//	foreach (var str in stringers)
+					//	{
+					//		// Calculate transformation matrix
+					//		TransformationMatrix(str);
 
-                    //    if (concParams != null)
-                    //    {
-                    //        // Get the values for concrete
-                    //        double fcm = concParams[0],
-                    //            fcr = concParams[1],
-                    //            Eci = concParams[2],
-                    //            Ec1 = concParams[3],
-                    //            ec1 = concParams[4],
-                    //            k = concParams[5];
+					//		// Get material properties
+					//		fc   = concrete.fcm;
+					//		fctm = concrete.fctm;
+					//		Ec   = concrete.Eci;
+					//		ec   = concrete.ec1;
+					//		fy   = steel.fy;
+					//		Es   = steel.Es;
+					//		ey   = steel.ey;
 
-                    //        // Get the values for steel
-                    //        double fy = steelParams[0],
-                    //            Es = steelParams[1],
-                    //            ey = steelParams[2];
+					//		// Calculate EcAc and EsAs
+					//		str.EcAc = Ec * str.ConcreteArea;
+					//		str.EsAs = Es * str.SteelArea;
 
-                    //        // Calculate ps and xi
-                    //        double ps = As / Ac,
-                    //            xi = ps * Es / Eci;
+					//		// Calculate constants
+					//		double
+					//			Ac = str.ConcreteArea,
+					//			As = str.SteelArea,
+					//			ps = str.ps,
+					//			xi = str.xi,
+					//			xiP1 = 1 + xi,
+					//			EcAc = Ec * Ac,
+					//			EsAs = Es * As,
+					//			t1 = EcAc * xiP1;
 
-                    //        // Calculate maximum forces of concrete and steel
-                    //        double Ncm = -fcm * Ac,
-                    //            Ny = fy * As;
 
-                    //        // Verify the value of N
-                    //        if (N > 0) // tensioned stringer
-                    //        {
-                    //            // Calculate critical force for concrete remain uncracked
-                    //            double Ncr = fcr * Ac * (1 + xi);
 
-                    //            if (N <= Ncr) // uncracked
-                    //                e = N / (Eci * Ac * (1 + xi));
+     //                   }
+     //               }
 
-                    //            else // cracked
-                    //            {
-                    //                // Calculate ssr
-                    //                double ssr = (fcr / ps) * (1 + xi);
+     //               // Calculate the strain and derivative on a stringer given a force N and the concrete parameters
+     //               static (double e, double de) StringerStrain(Stringer stringer, double N)
+     //               {
+     //                   // Initialize the strain and derivative
+     //                   double
+     //                       e  = 0,
+     //                       de = 0;
 
-                    //                e = (1 / Es) * (N / As - 0.6 * ssr);
-                    //            }
-                    //        }
+					//	// Get material properties
+					//	double
+					//		fc   = concrete.fcm,
+					//		fctm = concrete.fctm,
+					//		Ec   = concrete.Eci,
+					//		ec   = concrete.ec1,
+					//		fy   = steel.fy,
+					//		Es   = steel.Es,
+					//		ey   = steel.ey;
+						
+     //                   // Calculate constants
+     //                   double
+					//		Ac   = stringer.ConcreteArea,
+					//		As   = stringer.SteelArea,
+					//		ps   = stringer.ps,
+	    //                    xi   = ps * Es / Ec,
+	    //                    xiP1 = 1 + xi,
+	    //                    EcAc = Ec * Ac,
+	    //                    EsAs = Es * As,
+	    //                    t1   = EcAc * xiP1;
 
-                    //        if (N < 0) // compressed stringer
-                    //        {
-                    //            // Calculate K1 and K2
-                    //            double K1 = 1 / ec1 * (-Ncm / ec1 + Es * As * (k - 2)),
-                    //                K2 = 1 / ec1 * (Ncm * k - N * (k - 2)) + Es * As;
+     //                   // Calculate maximum forces of concrete and steel
+     //                   double
+	    //                    Nc  = -fc * Ac,
+	    //                    Nyr = fy * As;
 
-                    //            // Compare ey and ec1
-                    //            if (ey < ec1) // steel yields before concrete crushing
-                    //            {
-                    //                // Calculate the yield force and the limit force on the stringer
-                    //                double Nyc = -Ny + Ncm * (-k * ey / ec1 - Math.Pow(-ey / ec1, 2)) / (1 - (k - 2) * ey / ec1),
-                    //                    Nlim = -Ny + Ncm;
+     //                   // Calculate the maximum compressive force
+     //                   double
+	    //                    Nt1 = Nc * xiP1 * xiP1,
+	    //                    Nt2 = Nc - Nyr,
+	    //                    Nt  = Math.Max(Nt1, Nt2);
 
-                    //                // Verify the value of N
-                    //                if (Nlim <= N && N <= Nyc)
-                    //                {
-                    //                    // Calculate the constants K3, K4 and K5
-                    //                    double K3 = -Ncm / (ec1 * ec1),
-                    //                        K4 = 1 / ec1 * (Ncm * k - (Ny + N) * (k - 2)),
-                    //                        K5 = -Ny - N;
+     //                   // Verify the value of N
+     //                   if (N > 0) // tensioned stringer
+     //                   {
+     //                       // Calculate critical force for concrete remain uncracked
+     //                       double
+     //                           Ncr = fctm * Ac * xiP1,
+     //                           Nr  = Ncr / Math.Sqrt(xiP1);
 
-                    //                    // Calculate the strain
-                    //                    e = (-K4 + Math.Sqrt(K4 * K4 - 4 * K3 * K5)) / (2 * K3);
-                    //                }
+     //                       if (N <= Ncr)
+     //                       {
+     //                           // uncracked
+     //                           e = N / t1;
+     //                           de = 1 / t1;
+     //                       }
 
-                    //                else
-                    //                    e = (-K2 + Math.Sqrt(K2 * K2 + 4 * K1 * N)) / (2 * K1);
-                    //            }
+     //                       else if (N <= Nyr)
+     //                       {
+     //                           // cracked with not yielding steel
+     //                           e = (N * N - Nr * Nr) / (EsAs * N);
+     //                           de = (N * N + Nr * Nr) / (EsAs * N * N);
+     //                       }
 
-                    //            else // steel yields together or after concrete crushing
-                    //            {
-                    //                e = (-K2 + Math.Sqrt(K2 * K2 + 4 * K1 * N)) / (2 * K1);
-                    //            }
-                    //        }
-                    //    }
+     //                       else
+     //                       {
+     //                           // yielding steel
+     //                           //double n = Nyr / Nr;
+     //                           e = (Nyr * Nyr - Nr * Nr) / (EsAs * Nyr) + (N - Nyr) / t1;
+     //                           de = 1 / t1;
+     //                       }
+     //                   }
 
-                    //    return e;
-                    //}
-                }
+     //                   else if (N < 0) // compressed stringer
+     //                   {
+     //                       // Calculate the yield force
+     //                       //double Nyc = -Nyr + Nc * (2 * -ey / ec - ey / ec * ey / ec);
+     //                       //Console.WriteLine(Nyc);
 
-                // Classic SpanCAD Methods
-                public class Classic
-                {
-                    //// Calculate the strain on a stringer given a force N and the concrete parameters
-                    //public static double StringerStrain(double N, double Ac, double As)
-                    //{
-                    //    // Get the parameters of materials
-                    //    var concParams = Material.Concrete.ConcreteParams();
-                    //    var steelParams = Material.Steel.SteelParams();
+     //                       // Verify the value of N
+     //                       if (N > Nt)
+     //                       {
+     //                           // Calculate the strain for steel not yielding
+     //                           double t2 = Math.Sqrt(xiP1 * xiP1 - N / Nc);
+     //                           e = ec * (xiP1 - t2);
 
-                    //    // Initialize the strain
-                    //    double e = 0;
+     //                           // Check the strain
+     //                           if (e < -ey)
+     //                           {
+     //                               // Recalculate the strain for steel yielding
+     //                               t2 = Math.Sqrt(1 - (N + Nyr) / Nc);
+     //                               e = ec * (1 - t2);
+     //                           }
 
-                    //    if (concParams != null)
-                    //    {
-                    //        // Get the values for concrete
-                    //        double fcm = concParams[0],
-                    //            fcr = concParams[1],
-                    //            Eci = concParams[2],
-                    //            Ec1 = concParams[3],
-                    //            ec1 = concParams[4],
-                    //            k = concParams[5];
+     //                           // Calculate de
+     //                           de = 1 / (EcAc * t2);
+     //                       }
 
-                    //        // Get the values for steel
-                    //        double fy = steelParams[0],
-                    //            Es = steelParams[1],
-                    //            ey = steelParams[2];
+     //                       else
+     //                       {
+     //                           // Concrete crushed
+     //                           //double n = N / Nt;
 
-                    //        // Calculate ps and xi
-                    //        double ps = As / Ac,
-                    //            xi = ps * Es / Eci;
+     //                           // Calculate the strain for steel not yielding
+     //                           double t2 = Math.Sqrt(xiP1 * xiP1 - Nt / Nc);
+     //                           e = ec * (xiP1 - t2) + (N - Nt) / t1;
 
-                    //        // Calculate maximum forces of concrete and steel
-                    //        double Nc = -fcm * Ac,
-                    //            Nyr = fy * As;
+     //                           // Check the strain
+     //                           if (e < -ey)
+     //                           {
+     //                               // Recalculate the strain for steel yielding
+     //                               e = ec * (1 - Math.Sqrt(1 - (Nyr + Nt) / Nc)) + (N - Nt) / t1;
+     //                           }
 
-                    //        // Verify the value of N
-                    //        if (N > 0) // tensioned stringer
-                    //        {
-                    //            // Calculate critical force for concrete remain uncracked
-                    //            double Ncr = fcr * Ac * (1 + xi);
+     //                           // Calculate de
+     //                           de = 1 / t1;
+     //                       }
+     //                   }
 
-                    //            if (N <= Ncr) // uncracked
-                    //                e = N / (Eci * Ac * (1 + xi));
+     //                   return (e, de);
+     //               }
 
-                    //            else // cracked
-                    //            {
-                    //                // Calculate ssr
-                    //                double Nr = Ncr / (Math.Sqrt(1 + xi));
+     //               // Calculate the effective stringer force
+     //               double StringerForce(double N)
+     //               {
+	    //                double Ni;
 
-                    //                e = (N * N - Nr * Nr) / (Es * As * N);
-                    //            }
-                    //        }
+	    //                // Check the value of N
+	    //                if (N < Nt)
+		   //                 Ni = Nt;
 
-                    //        if (N < 0) // compressed stringer
-                    //        {
-                    //            // Calculate ec
-                    //            double ec = -2 * fcm / Eci;
+	    //                else if (N > Nyr)
+		   //                 Ni = Nyr;
 
-                    //            // Calculate the yield force
-                    //            double Nyc = -fy * As + fcm * Ac * (2 * ey / ec - ey / ec * ey / ec);
+	    //                else
+		   //                 Ni = N;
 
-                    //            // Compare ey and ec1
-                    //            if (ey < ec) // steel yields before concrete crushing
-                    //            {
-                    //                // Calculate the ultimate force on the stringer
-                    //                double Nt = -Nyr + Nc;
+	    //                return Ni;
+     //               }
 
-                    //                // Verify the value of N
-                    //                if (N >= Nyc) // steel not yielding
-                    //                    e = ec * (1 + xi - Math.Sqrt((1 + xi) * (1 + xi) - N / Nc));
+     //               // Calculate the strain on a stringer given a force N and the concrete parameters
+     //               //public static double StringerStrain(double N, double Ac, double As, List<double> concParams, List<double> steelParams)
+     //               //{
+     //               //    // Get the parameters
+     //               //    concParams = Material.Concrete.ConcreteParams();
+     //               //    steelParams = Material.Steel.SteelParams();
 
-                    //                else // steel yielding
-                    //                    e = ec * (1 - Math.Sqrt(1 - (Nyr + N) / Nc));
-                    //            }
+     //               //    // Initialize the strain
+     //               //    double e = 0;
 
-                    //            else // steel yields together or after concrete crushing
-                    //            {
-                    //                e = ec * (1 + xi - Math.Sqrt((1 + xi) * (1 + xi) - N / Nc));
-                    //            }
-                    //        }
-                    //    }
+     //               //    if (concParams != null)
+     //               //    {
+     //               //        // Get the values for concrete
+     //               //        double fcm = concParams[0],
+     //               //            fcr = concParams[1],
+     //               //            Eci = concParams[2],
+     //               //            Ec1 = concParams[3],
+     //               //            ec1 = concParams[4],
+     //               //            k = concParams[5];
 
-                    //    return e;
-                    //}
+     //               //        // Get the values for steel
+     //               //        double fy = steelParams[0],
+     //               //            Es = steelParams[1],
+     //               //            ey = steelParams[2];
 
-                    //// Calculate the stringer stiffness
-                    //public static Matrix<double> StringerStiffness(double L, double N1, double N3, double Ac, double As, double ec, double ey)
-                    //{
-                    //    // Calculate the approximated strains
-                    //    double eps1 = StringerStrain(N1, Ac, As),
-                    //        eps2 = StringerStrain(2 / 3 * N1 + N3 / 3, Ac, As),
-                    //        eps3 = StringerStrain(N1 / 3 + 2 / 3 * N3, Ac, As),
-                    //        eps4 = StringerStrain(N3, Ac, As);
+     //               //        // Calculate ps and xi
+     //               //        double ps = As / Ac,
+     //               //            xi = ps * Es / Eci;
 
-                    //    // Calculate the flexibility matrix elements
-                    //    double de1N1 = L / 24 * (3 * eps1 + 4 * eps2 + eps3),
-                    //        de1N2 = L / 12 * (eps2 + eps3),
-                    //        de2N2 = L / 24 * (eps2 + 4 * eps3 + 3 * eps4);
+     //               //        // Calculate maximum forces of concrete and steel
+     //               //        double Ncm = -fcm * Ac,
+     //               //            Ny = fy * As;
 
-                    //    // Get the flexibility matrix
-                    //    var F = Matrix<double>.Build.DenseOfArray(new double[,]
-                    //    {
-                    //        { de1N1, de1N2},
-                    //        { de1N2, de2N2}
-                    //    });
+     //               //        // Verify the value of N
+     //               //        if (N > 0) // tensioned stringer
+     //               //        {
+     //               //            // Calculate critical force for concrete remain uncracked
+     //               //            double Ncr = fcr * Ac * (1 + xi);
 
-                    //    // Get the B matrix
-                    //    var B = Matrix<double>.Build.DenseOfArray(new double[,]
-                    //    {
-                    //        { -1,  1, 0},
-                    //        {  0, -1, 1}
-                    //    });
+     //               //            if (N <= Ncr) // uncracked
+     //               //                e = N / (Eci * Ac * (1 + xi));
 
-                    //    // Calculate local stiffness matrix and return the value
-                    //    var Kl = B.Transpose() * F.Inverse() * B;
+     //               //            else // cracked
+     //               //            {
+     //               //                // Calculate ssr
+     //               //                double ssr = (fcr / ps) * (1 + xi);
 
-                    //    return Kl;
-                    //}
+     //               //                e = (1 / Es) * (N / As - 0.6 * ssr);
+     //               //            }
+     //               //        }
 
-                    //// Calculate the total plastic generalized strain in a stringer
-                    //public static double StringerPlasticStrain(double eps, double ec, double ey, double L)
-                    //{
-                    //    // Initialize the plastic strain
-                    //    double ep = 0;
+     //               //        if (N < 0) // compressed stringer
+     //               //        {
+     //               //            // Calculate K1 and K2
+     //               //            double K1 = 1 / ec1 * (-Ncm / ec1 + Es * As * (k - 2)),
+     //               //                K2 = 1 / ec1 * (Ncm * k - N * (k - 2)) + Es * As;
 
-                    //    // Case of tension
-                    //    if (eps > ey)
-                    //        ep = L / 8 * (eps - ey);
+     //               //            // Compare ey and ec1
+     //               //            if (ey < ec1) // steel yields before concrete crushing
+     //               //            {
+     //               //                // Calculate the yield force and the limit force on the stringer
+     //               //                double Nyc = -Ny + Ncm * (-k * ey / ec1 - Math.Pow(-ey / ec1, 2)) / (1 - (k - 2) * ey / ec1),
+     //               //                    Nlim = -Ny + Ncm;
 
-                    //    // Case of compression
-                    //    if (eps < ec)
-                    //        ep = L / 8 * (eps - ec);
+     //               //                // Verify the value of N
+     //               //                if (Nlim <= N && N <= Nyc)
+     //               //                {
+     //               //                    // Calculate the constants K3, K4 and K5
+     //               //                    double K3 = -Ncm / (ec1 * ec1),
+     //               //                        K4 = 1 / ec1 * (Ncm * k - (Ny + N) * (k - 2)),
+     //               //                        K5 = -Ny - N;
 
-                    //    return ep;
-                    //}
+     //               //                    // Calculate the strain
+     //               //                    e = (-K4 + Math.Sqrt(K4 * K4 - 4 * K3 * K5)) / (2 * K3);
+     //               //                }
 
-                    //// Calculate the maximum plastic strain in a stringer for tension and compression
-                    //public static Tuple<double, double> StringerMaxPlasticStrain(double L, double b, double h, double ey, double esu, double ec1, double ecu)
-                    //{
-                    //    // Calculate the maximum plastic strain for tension
-                    //    double eput = 0.3 * esu * L;
+     //               //                else
+     //               //                    e = (-K2 + Math.Sqrt(K2 * K2 + 4 * K1 * N)) / (2 * K1);
+     //               //            }
 
-                    //    // Calculate the maximum plastic strain for compression
-                    //    double et = Math.Max(ec1, -ey);
-                    //    double a = Math.Min(b, h);
-                    //    double epuc = (ecu - et) * a;
+     //               //            else // steel yields together or after concrete crushing
+     //               //            {
+     //               //                e = (-K2 + Math.Sqrt(K2 * K2 + 4 * K1 * N)) / (2 * K1);
+     //               //            }
+     //               //        }
+     //               //    }
 
-                    //    // Return a tuple in order Tension || Compression
-                    //    return Tuple.Create(eput, epuc);
-                    //}
-                }
-            }
+     //               //    return e;
+     //               //}
+     //           }
+
+     //           // Classic SpanCAD Methods
+     //           public class Classic
+     //           {
+     //               //// Calculate the strain on a stringer given a force N and the concrete parameters
+     //               //public static double StringerStrain(double N, double Ac, double As)
+     //               //{
+     //               //    // Get the parameters of materials
+     //               //    var concParams = Material.Concrete.ConcreteParams();
+     //               //    var steelParams = Material.Steel.SteelParams();
+
+     //               //    // Initialize the strain
+     //               //    double e = 0;
+
+     //               //    if (concParams != null)
+     //               //    {
+     //               //        // Get the values for concrete
+     //               //        double fcm = concParams[0],
+     //               //            fcr = concParams[1],
+     //               //            Eci = concParams[2],
+     //               //            Ec1 = concParams[3],
+     //               //            ec1 = concParams[4],
+     //               //            k = concParams[5];
+
+     //               //        // Get the values for steel
+     //               //        double fy = steelParams[0],
+     //               //            Es = steelParams[1],
+     //               //            ey = steelParams[2];
+
+     //               //        // Calculate ps and xi
+     //               //        double ps = As / Ac,
+     //               //            xi = ps * Es / Eci;
+
+     //               //        // Calculate maximum forces of concrete and steel
+     //               //        double Nc = -fcm * Ac,
+     //               //            Nyr = fy * As;
+
+     //               //        // Verify the value of N
+     //               //        if (N > 0) // tensioned stringer
+     //               //        {
+     //               //            // Calculate critical force for concrete remain uncracked
+     //               //            double Ncr = fcr * Ac * (1 + xi);
+
+     //               //            if (N <= Ncr) // uncracked
+     //               //                e = N / (Eci * Ac * (1 + xi));
+
+     //               //            else // cracked
+     //               //            {
+     //               //                // Calculate ssr
+     //               //                double Nr = Ncr / (Math.Sqrt(1 + xi));
+
+     //               //                e = (N * N - Nr * Nr) / (Es * As * N);
+     //               //            }
+     //               //        }
+
+     //               //        if (N < 0) // compressed stringer
+     //               //        {
+     //               //            // Calculate ec
+     //               //            double ec = -2 * fcm / Eci;
+
+     //               //            // Calculate the yield force
+     //               //            double Nyc = -fy * As + fcm * Ac * (2 * ey / ec - ey / ec * ey / ec);
+
+     //               //            // Compare ey and ec1
+     //               //            if (ey < ec) // steel yields before concrete crushing
+     //               //            {
+     //               //                // Calculate the ultimate force on the stringer
+     //               //                double Nt = -Nyr + Nc;
+
+     //               //                // Verify the value of N
+     //               //                if (N >= Nyc) // steel not yielding
+     //               //                    e = ec * (1 + xi - Math.Sqrt((1 + xi) * (1 + xi) - N / Nc));
+
+     //               //                else // steel yielding
+     //               //                    e = ec * (1 - Math.Sqrt(1 - (Nyr + N) / Nc));
+     //               //            }
+
+     //               //            else // steel yields together or after concrete crushing
+     //               //            {
+     //               //                e = ec * (1 + xi - Math.Sqrt((1 + xi) * (1 + xi) - N / Nc));
+     //               //            }
+     //               //        }
+     //               //    }
+
+     //               //    return e;
+     //               //}
+
+     //               //// Calculate the stringer stiffness
+     //               //public static Matrix<double> StringerStiffness(double L, double N1, double N3, double Ac, double As, double ec, double ey)
+     //               //{
+     //               //    // Calculate the approximated strains
+     //               //    double eps1 = StringerStrain(N1, Ac, As),
+     //               //        eps2 = StringerStrain(2 / 3 * N1 + N3 / 3, Ac, As),
+     //               //        eps3 = StringerStrain(N1 / 3 + 2 / 3 * N3, Ac, As),
+     //               //        eps4 = StringerStrain(N3, Ac, As);
+
+     //               //    // Calculate the flexibility matrix elements
+     //               //    double de1N1 = L / 24 * (3 * eps1 + 4 * eps2 + eps3),
+     //               //        de1N2 = L / 12 * (eps2 + eps3),
+     //               //        de2N2 = L / 24 * (eps2 + 4 * eps3 + 3 * eps4);
+
+     //               //    // Get the flexibility matrix
+     //               //    var F = Matrix<double>.Build.DenseOfArray(new double[,]
+     //               //    {
+     //               //        { de1N1, de1N2},
+     //               //        { de1N2, de2N2}
+     //               //    });
+
+     //               //    // Get the B matrix
+     //               //    var B = Matrix<double>.Build.DenseOfArray(new double[,]
+     //               //    {
+     //               //        { -1,  1, 0},
+     //               //        {  0, -1, 1}
+     //               //    });
+
+     //               //    // Calculate local stiffness matrix and return the value
+     //               //    var Kl = B.Transpose() * F.Inverse() * B;
+
+     //               //    return Kl;
+     //               //}
+
+     //               //// Calculate the total plastic generalized strain in a stringer
+     //               //public static double StringerPlasticStrain(double eps, double ec, double ey, double L)
+     //               //{
+     //               //    // Initialize the plastic strain
+     //               //    double ep = 0;
+
+     //               //    // Case of tension
+     //               //    if (eps > ey)
+     //               //        ep = L / 8 * (eps - ey);
+
+     //               //    // Case of compression
+     //               //    if (eps < ec)
+     //               //        ep = L / 8 * (eps - ec);
+
+     //               //    return ep;
+     //               //}
+
+     //               //// Calculate the maximum plastic strain in a stringer for tension and compression
+     //               //public static Tuple<double, double> StringerMaxPlasticStrain(double L, double b, double h, double ey, double esu, double ec1, double ecu)
+     //               //{
+     //               //    // Calculate the maximum plastic strain for tension
+     //               //    double eput = 0.3 * esu * L;
+
+     //               //    // Calculate the maximum plastic strain for compression
+     //               //    double et = Math.Max(ec1, -ey);
+     //               //    double a = Math.Min(b, h);
+     //               //    double epuc = (ecu - et) * a;
+
+     //               //    // Return a tuple in order Tension || Compression
+     //               //    return Tuple.Create(eput, epuc);
+     //               //}
+     //           }
+     //       }
         }
     }
 }

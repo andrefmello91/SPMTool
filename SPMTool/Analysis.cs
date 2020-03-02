@@ -133,7 +133,7 @@ namespace SPMTool
             public static void DoLinearAnalysis()
             {
                 // Get the concrete parameters
-                Concrete = Material.Concrete.Parameters();
+                Concrete = new Material.Concrete();
 
                 // Verify if concrete parameters were set
                 if (Concrete.fcm != 0)
