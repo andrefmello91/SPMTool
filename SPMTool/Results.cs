@@ -13,7 +13,7 @@ using MathNet.Numerics.Statistics;
 
 namespace SPMTool
 {
-    public class Results
+    public static class Results
     {
         // Create the block for panel shear stress
         public static void CreatePanelShearBlock()
@@ -489,7 +489,7 @@ namespace SPMTool
         }
 
         [CommandMethod("ViewElementData")]
-        public void ViewElementData()
+        public static void ViewElementData()
         {
             // Initialize a message to display
             string msgstr = "";
@@ -644,21 +644,21 @@ namespace SPMTool
 
         // Toggle view for stringer forces
         [CommandMethod("ToogleStringerForces")]
-        public void ToogleStringerForces()
+        public static void ToogleStringerForces()
         {
             Auxiliary.ToogleLayer(Layers.stringerForce);
         }
 
         // Toggle view for panel forces
         [CommandMethod("TooglePanelForces")]
-        public void TooglePanelForces()
+        public static void TooglePanelForces()
         {
             Auxiliary.ToogleLayer(Layers.panelForce);
         }
 
         // Toggle view for displacements
         [CommandMethod("ToogleDisplacements")]
-        public void ToogleDisplacements()
+        public static void ToogleDisplacements()
         {
             Auxiliary.ToogleLayer(Layers.displacements);
         }

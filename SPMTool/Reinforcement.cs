@@ -11,10 +11,10 @@ using Autodesk.AutoCAD.Geometry;
 
 namespace SPMTool
 {
-    class Reinforcement
+    public static class Reinforcement
     {
         [CommandMethod("SetStringerReinforcement")]
-        public void SetStringerReinforcement()
+        public static void SetStringerReinforcement()
         {
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -89,7 +89,7 @@ namespace SPMTool
         }
 
         [CommandMethod("SetPanelReinforcement")]
-        public void SetPanelReinforcement()
+        public static void SetPanelReinforcement()
         {
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())

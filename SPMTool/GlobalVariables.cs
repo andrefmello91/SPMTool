@@ -35,7 +35,7 @@ namespace SPMTool
     }
 
     // Constants
-    public class Constants
+    public static class Constants
     {
         public const double
             Pi       = MathNet.Numerics.Constants.Pi,
@@ -45,7 +45,7 @@ namespace SPMTool
     }
 
     // Layer names
-    public class Layers
+    public static class Layers
     {
         public static string
             extNode        = "ExtNode",
@@ -61,7 +61,7 @@ namespace SPMTool
     }
 
     // Block names
-    public class Blocks
+    public static class Blocks
     {
         public static string
             supportX   = "SupportX",
@@ -72,7 +72,7 @@ namespace SPMTool
     }
 
     // XData indexers
-    public class XData
+    public static class XData
     {
         // Node indexers
         public enum Node

@@ -11,7 +11,7 @@ using MathNet.Numerics.LinearAlgebra;
 namespace SPMTool
 {
     // Auxiliary Methods
-    public class Auxiliary
+    public static class Auxiliary
     {
         // Add the app to the Registered Applications Record
         public static void RegisterApp()

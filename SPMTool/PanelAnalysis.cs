@@ -7,6 +7,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using MathNet.Numerics.LinearAlgebra;
 using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.MacroRecorder;
 using MathNet.Numerics.Data.Text;
 
 [assembly: CommandClass(typeof(SPMTool.Analysis.Panel))]
@@ -15,54 +16,143 @@ namespace SPMTool
 {
     public partial class Analysis
     {
-        public partial class Panel
-        {
+	    public partial class Panel
+	    {
             // Panel parameters
-            public ObjectId                 ObjectId              { get; set; }
-            public int                      Number                { get; set; }
-            public int[]                    Grips                 { get; set; }
-            private Point3d[]               Vertices              { get; set; }
-            public double[]                 StringerDimensions    { get; set; }
-            public double                   Width                 { get; set; }
-            public (double X, double Y)     BarDiameter           { get; set; }
-            public (double X, double Y)     BarSpacing            { get; set; }
-            public (double[] X, double[] Y) EffReinforcementRatio { get; set; }
-            public Matrix<double>           TransMatrix           { get; set; }
+            public ObjectId                 ObjectId              { get; }
+		    public int                      Number                { get; }
+		    public int[]                    Grips                 { get; }
+		    public Point3d[]                Vertices              { get; }
+		    public (double[] x, double[] y) VertexCoordinates     { get; }
+		    public Point3d                  CenterPoint           { get; }
+		    public (double[] Length, double[] Angle) Edges        { get; }
+		    public double[]                 StringerDimensions    { get; set; }
+		    public double                   Width                 { get; }
+            public (double X, double Y)     BarDiameter           { get; }
+            public (double X, double Y)     BarSpacing            { get; }
+            public (double X, double Y)     ReinforcementRatio    { get; }
             public Matrix<double>           LocalStiffness        { get; set; }
+            public Matrix<double>           TransMatrix           { get; }
             public Matrix<double>           BAMatrix              { get; set; }
-            public Matrix<double>           QPMatrix              { get; set; }
-            public Matrix<double>           DMatrix               { get; set; }
-            public Vector<double>           Forces                { get; set; }
-            public double                   ShearStress           { get; set; }
-			public NonLinear.Membrane[]     IntPointsMembrane     { get; set; }
+		    public Matrix<double>           QPMatrix              { get; set; }
+		    public Matrix<double>           DMatrix               { get; set; }
+		    public Vector<double>           Forces                { get; set; }
+		    public double                   ShearStress           { get; set; }
+		    public NonLinear.Membrane[]     IntPointsMembrane     { get; set; }
+			public Linear					LinearPanel           { get; set; }
+			
+		    // Set global indexes from grips
+		    public int[] Index => GlobalIndexes(Grips);
 
-			// Auto implemented properties
-			// Set reinforcement ratio
-            public (double X, double Y) ReinforcementRatio => Reinforcement.PanelReinforcement(BarDiameter, BarSpacing, Width);
-
-			// Set global indexes from grips
-            public int[] Index => GlobalIndexes(Grips);
-
-			// Set the center point
-            public Point3d CenterPoint => PanelCenterPoint(Vertices);
-            public Point3d PanelCenterPoint(Point3d[] vertices)
+            // Constructor
+            // Get the parameters from a panel object
+            public Panel(ObjectId panelObject)
             {
-	            // Calculate the approximated center point
-	            var Pt1 = Auxiliary.MidPoint(vertices[0], vertices[2]);
-	            var Pt2 = Auxiliary.MidPoint(vertices[1], vertices[3]);
+                // Start a transaction
+                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+                {
+                    // Read as a solid
+                    Solid pnl = trans.GetObject(panelObject, OpenMode.ForWrite) as Solid;
+
+                    // Get the vertices
+                    Point3dCollection pnlVerts = new Point3dCollection();
+                    pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+
+                    // Get the vertices in the order needed for calculations
+                    Point3d
+                        nd1 = pnlVerts[0],
+                        nd2 = pnlVerts[1],
+                        nd3 = pnlVerts[3],
+                        nd4 = pnlVerts[2];
+
+                    // Read the XData and get the necessary data
+                    ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.appName);
+                    TypedValue[] pnlData = pnlRb.AsArray();
+
+                    // Get the panel parameters
+                    int num = Convert.ToInt32(pnlData[(int)XData.Panel.Number].Value);
+                    double
+                        w = Convert.ToDouble(pnlData[(int)XData.Panel.Width].Value),
+                        phiX = Convert.ToDouble(pnlData[(int)XData.Panel.XDiam].Value),
+                        phiY = Convert.ToDouble(pnlData[(int)XData.Panel.YDiam].Value),
+                        sx = Convert.ToDouble(pnlData[(int)XData.Panel.Sx].Value),
+                        sy = Convert.ToDouble(pnlData[(int)XData.Panel.Sy].Value);
+
+                    // Create the list of grips
+                    int[] grips =
+                    {
+                        Convert.ToInt32(pnlData[(int) XData.Panel.Grip1].Value),
+                        Convert.ToInt32(pnlData[(int) XData.Panel.Grip2].Value),
+                        Convert.ToInt32(pnlData[(int) XData.Panel.Grip3].Value),
+                        Convert.ToInt32(pnlData[(int) XData.Panel.Grip4].Value)
+                    };
+
+                    // Create the list of vertices
+                    Point3d[] verts =
+                    {
+                        nd1, nd2, nd3, nd4
+                    };
+
+                    // Set values
+                    ObjectId = panelObject;
+                    Number = num;
+                    Grips = grips;
+                    Vertices = verts;
+                    Width = w;
+                    BarDiameter = (phiX, phiY);
+                    BarSpacing = (sx, sy);
+                    VertexCoordinates = VertexxCoordinates();
+                    ReinforcementRatio = PanelReinforcement();
+                    CenterPoint = PanelCenterPoint();
+                    Edges = EdgeLengthsAngles();
+                    TransMatrix = TransformationMatrix();
+                }
+            }
+
+            // Get X and Y coordinates of a panel vertices
+            private (double[] x, double[] y) VertexxCoordinates()
+            {
+	            double[]
+		            x = new double[4],
+		            y = new double[4];
+
+                // Get X and Y coordinates of the vertices
+                for (int i = 0; i < 4; i++)
+	            {
+		            x[i] = Vertices[i].X;
+		            y[i] = Vertices[i].Y;
+	            }
+
+	            return (x, y);
+            }
+
+            // Set reinforcement ratio
+            private (double X, double Y) PanelReinforcement()
+            {
+	            return Reinforcement.PanelReinforcement(BarDiameter, BarSpacing, Width);
+            }
+			
+            // Set the center point
+            private Point3d PanelCenterPoint()
+            {
+	            // Get the vertices
+	            var verts = Vertices;
+
+                // Calculate the approximated center point
+                var Pt1 = Auxiliary.MidPoint(verts[0], verts[2]);
+	            var Pt2 = Auxiliary.MidPoint(verts[1], verts[3]);
 	            return Auxiliary.MidPoint(Pt1, Pt2);
             }
 
-			// Set edge lengths and angles
-			public (double[] Length, double[] Angle) Edges => EdgeLengthsAngles(Vertices);
-            static (double[] Length, double[] Angle) EdgeLengthsAngles(Point3d[] vertices)
+            // Set edge lengths and angles
+            private (double[] Length, double[] Angle) EdgeLengthsAngles()
 			{
 				// Create lines to measure the angles between the edges and dimensions
 				Line
-					ln1 = new Line(vertices[0], vertices[1]),
-					ln2 = new Line(vertices[1], vertices[2]),
-					ln3 = new Line(vertices[2], vertices[3]),
-					ln4 = new Line(vertices[3], vertices[0]);
+					ln1 = new Line(Vertices[0], Vertices[1]),
+					ln2 = new Line(Vertices[1], Vertices[2]),
+					ln3 = new Line(Vertices[2], Vertices[3]),
+					ln4 = new Line(Vertices[3], Vertices[0]);
 
 				// Create the list of dimensions
 				double[] dims =
@@ -86,11 +176,10 @@ namespace SPMTool
 			}
 
             // Set the dimensions for nonlinear analysis
-            public (double a, double b, double c, double d) Dimensions => PanelDimensions(Vertices);
-            static (double a, double b, double c, double d) PanelDimensions(Point3d[] vertices)
+            private (double a, double b, double c, double d) PanelDimensions()
             {
 	            // Get X and Y coordinates of the vertices
-	            var (x, y) = VertexCoordinates(vertices);
+	            var (x, y) = VertexCoordinates;
 
 	            // Calculate the necessary dimensions of the panel
 	            double
@@ -101,65 +190,80 @@ namespace SPMTool
 
 	            return (a, b, c, d);
             }
+            public (double a, double b, double c, double d) Dimensions;
 
-			// Constructor
-			// Get the parameters from a panel object
-            public Panel(ObjectId panelObject)
+            // Calculate the effective reinforcement ratio off a panel for considering stringer dimensions
+            private (double[] X, double[] Y) EffectiveRRatio()
             {
-	            // Start a transaction
-	            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+	            // Get reinforcement ratio
+	            var (px, py) = ReinforcementRatio;
+
+	            // Get stringer dimensions
+	            var c = StringerDimensions;
+
+	            // Get X and Y coordinates of the vertices
+	            var (x, y) = VertexCoordinates;
+
+	            // Calculate effective ratio for each edge
+	            double[]
+		            pxEf = new double[4],
+		            pyEf = new double[4];
+
+	            // Grip 1
+	            pxEf[0] = px;
+	            pyEf[0] = py * (x[0] - x[1]) / (x[0] - x[1] + c[1] + c[3]);
+
+	            // Grip 2
+	            pxEf[1] = px * (y[1] - y[2]) / (y[1] - y[2] + c[0] + c[2]);
+	            pyEf[1] = py;
+
+	            // Grip 3
+	            pxEf[2] = px;
+	            pyEf[2] = py * (x[2] - x[3]) / (x[2] - x[3] - c[1] - c[3]);
+
+	            // Grip 4
+	            pxEf[3] = px * (y[0] - y[3]) / (y[0] - y[3] + c[0] + c[2]);
+	            pyEf[3] = py;
+
+	            return (pxEf, pyEf);
+            }
+            public (double[] X, double[] Y) EffectiveRatio;
+
+            // Get transformation matrix
+            private Matrix<double> TransformationMatrix()
+            {
+	            // Get the angles
+	            var alpha = Edges.Angle;
+
+	            // Get the transformation matrix
+	            // Direction cosines
+	            double[]
+		            dirCos1 = Auxiliary.DirectionCosines(alpha[0]),
+		            dirCos2 = Auxiliary.DirectionCosines(alpha[1]),
+		            dirCos3 = Auxiliary.DirectionCosines(alpha[2]),
+		            dirCos4 = Auxiliary.DirectionCosines(alpha[3]);
+
+	            double
+		            m1 = dirCos1[0],
+		            n1 = dirCos1[1],
+		            m2 = dirCos2[0],
+		            n2 = dirCos2[1],
+		            m3 = dirCos3[0],
+		            n3 = dirCos3[1],
+		            m4 = dirCos4[0],
+		            n4 = dirCos4[1];
+
+	            // T matrix
+	            var T = Matrix<double>.Build.DenseOfArray(new double[,]
 	            {
-		            // Read as a solid
-		            Solid pnl = trans.GetObject(panelObject, OpenMode.ForWrite) as Solid;
+		            {m1, n1, 0, 0, 0, 0, 0, 0},
+		            {0, 0, m2, n2, 0, 0, 0, 0},
+		            {0, 0, 0, 0, m3, n3, 0, 0},
+		            {0, 0, 0, 0, 0, 0, m4, n4},
 
-		            // Get the vertices
-		            Point3dCollection pnlVerts = new Point3dCollection();
-		            pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+	            });
 
-		            // Get the vertices in the order needed for calculations
-		            Point3d
-			            nd1 = pnlVerts[0],
-			            nd2 = pnlVerts[1],
-			            nd3 = pnlVerts[3],
-			            nd4 = pnlVerts[2];
-
-		            // Read the XData and get the necessary data
-		            ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.appName);
-		            TypedValue[] pnlData = pnlRb.AsArray();
-
-		            // Get the panel parameters
-		            int num = Convert.ToInt32(pnlData[(int) XData.Panel.Number].Value);
-		            double
-			            w    = Convert.ToDouble(pnlData[(int) XData.Panel.Width].Value),
-			            phiX = Convert.ToDouble(pnlData[(int) XData.Panel.XDiam].Value),
-			            phiY = Convert.ToDouble(pnlData[(int) XData.Panel.YDiam].Value),
-			            sx   = Convert.ToDouble(pnlData[(int) XData.Panel.Sx].Value),
-			            sy   = Convert.ToDouble(pnlData[(int) XData.Panel.Sy].Value);
-
-		            // Create the list of grips
-		            int[] grips =
-		            {
-			            Convert.ToInt32(pnlData[(int) XData.Panel.Grip1].Value),
-			            Convert.ToInt32(pnlData[(int) XData.Panel.Grip2].Value),
-			            Convert.ToInt32(pnlData[(int) XData.Panel.Grip3].Value),
-			            Convert.ToInt32(pnlData[(int) XData.Panel.Grip4].Value)
-		            };
-
-		            // Create the list of vertices
-		            Point3d[] verts =
-		            {
-			            nd1, nd2, nd3, nd4
-		            };
-
-		            // Set values
-		            ObjectId    = panelObject;
-		            Number      = num;
-		            Grips       = grips;
-		            Vertices    = verts;
-		            Width       = w;
-		            BarDiameter = (phiX, phiY);
-		            BarSpacing  = (sx, sy);
-	            }
+	            return T;
             }
 
             // Read the parameters of a collection of panel objects
@@ -218,9 +322,9 @@ namespace SPMTool
             }
 
             // Calculate panel forces
-            public static void PanelForces(Panel[] pnls, Vector<double> u)
+            public static void PanelForces(Panel[] panels, Vector<double> u)
             {
-                foreach (var pnl in pnls)
+                foreach (var pnl in panels)
                 {
                     // Get the parameters
                     int[] ind = pnl.Index;
@@ -245,23 +349,6 @@ namespace SPMTool
                     // Save the forces to panel
                     pnl.Forces = fl;
                 }
-            }
-
-			// Get X and Y coordinates of a panel vertices
-			public static (double[] x, double[] y) VertexCoordinates(Point3d[] vertices)
-			{
-				double[]
-					x = new double[4],
-					y = new double[4];
-
-				// Get X and Y coordinates of the vertices
-				for (int i = 0; i < 4; i++)
-				{
-					x[i] = vertices[i].X;
-					y[i] = vertices[i].Y;
-				}
-
-				return (x, y);
             }
 
             // Get the dimensions of surrounding stringers
@@ -291,44 +378,6 @@ namespace SPMTool
 	            panel.StringerDimensions = strDims;
             }
 
-            // Calculate the effective reinforcement ratio off a panel for considering stringer dimensions
-			public static void EffectiveRatio(Panel panel)
-			{
-				// Get reinforcement ratio
-				double
-					px = panel.ReinforcementRatio.X,
-					py = panel.ReinforcementRatio.Y;
-
-				// Get stringer dimensions
-				var c = panel.StringerDimensions;
-
-				// Get X and Y coordinates of the vertices
-				var (x, y) = VertexCoordinates(panel.Vertices);
-
-				// Calculate effective ratio for each edge
-				double[]
-					pxEf = new double[4],
-					pyEf = new double[4];
-
-				// Grip 1
-				pxEf[0] = px;
-				pyEf[0] = py * (x[0] - x[1]) / (x[0] - x[1] + c[1] + c[3]);
-
-				// Grip 2
-				pxEf[1] = px * (y[1] - y[2]) / (y[1] - y[2] + c[0] + c[2]);
-				pyEf[1] = py;
-
-				// Grip 3
-				pxEf[2] = px;
-				pyEf[2] = py * (x[2] - x[3]) / (x[2] - x[3] - c[1] - c[3]);
-
-				// Grip 4
-				pxEf[3] = px * (y[0] - y[3]) / (y[0] - y[3] + c[0] + c[2]);
-				pyEf[3] = py;
-
-				panel.EffReinforcementRatio = (pxEf, pyEf);
-			}
-
             public class Linear
             {
                 // Calculate the stiffness matrix of a panel, get the dofs and save to XData, returns the all the matrices in an ordered list
@@ -341,7 +390,7 @@ namespace SPMTool
                         var verts = pnl.Vertices;
                         var L = pnl.Edges.Length;
                         double t = pnl.Width;
-
+						
                         // Initialize the stifness matrix
                         var Kl = Matrix<double>.Build.Dense(4, 4);
 
@@ -358,7 +407,7 @@ namespace SPMTool
                         }
 
                         // T matrix
-                        var T = TransformationMatrix(pnl);
+                        var T = pnl.TransMatrix;
 
                         // Global stifness matrix
                         var K = T.Transpose() * Kl * T;
@@ -368,7 +417,6 @@ namespace SPMTool
 
                         // Save to panel parameters
                         pnl.LocalStiffness = Kl;
-                        pnl.TransMatrix = T;
                     }
                 }
 
@@ -495,43 +543,6 @@ namespace SPMTool
                     return B.ToColumnMatrix() * D * B.ToRowMatrix();
                 }
 
-                // Calculate the transformation matrix
-                static Matrix<double> TransformationMatrix(Panel panel)
-                {
-                    // Get the angles
-                    var alpha = panel.Edges.Angle;
-
-                    // Get the transformation matrix
-                    // Direction cosines
-                    double[]
-                        dirCos1 = Auxiliary.DirectionCosines(alpha[0]),
-                        dirCos2 = Auxiliary.DirectionCosines(alpha[1]),
-                        dirCos3 = Auxiliary.DirectionCosines(alpha[2]),
-                        dirCos4 = Auxiliary.DirectionCosines(alpha[3]);
-
-                    double
-                        m1 = dirCos1[0],
-                        n1 = dirCos1[1],
-                        m2 = dirCos2[0],
-                        n2 = dirCos2[1],
-                        m3 = dirCos3[0],
-                        n3 = dirCos3[1],
-                        m4 = dirCos4[0],
-                        n4 = dirCos4[1];
-
-                    // T matrix
-                    var T = Matrix<double>.Build.DenseOfArray(new double[,]
-                    {
-                        {m1, n1, 0, 0, 0, 0, 0, 0},
-                        {0, 0, m2, n2, 0, 0, 0, 0},
-                        {0, 0, 0, 0, m3, n3, 0, 0},
-                        {0, 0, 0, 0, 0, 0, m4, n4},
-
-                    });
-
-                    return T;
-                }
-
                 // Function to verify if a panel is rectangular
                 private static Func<Panel, bool> RectangularPanel = delegate(Panel panel)
                 {
@@ -574,15 +585,12 @@ namespace SPMTool
 					    // Get surrounding stringers dimensions
 						StringersDimensions(panel, stringers);
 
-						// Calculate effective reinforcement ratio
-						EffectiveRatio(panel);
-						
 						// Calculate B*A and Q*P
 						BAMatrix(panel);
 						QPMatrix(panel);
 
 						// Get the effective ratio off panel
-						var (pxEf, pyEf) = panel.EffReinforcementRatio;
+						var (pxEf, pyEf) = panel.EffectiveRatio;
 
 						// Calculate the initial membrane stiffness each int. point
 						Membrane[] membranes = new Membrane[4];
@@ -734,7 +742,7 @@ namespace SPMTool
                 static void QPMatrix(Panel panel)
                 {
 	                // Get vertex coordinates
-	                var (x, y) = VertexCoordinates(panel.Vertices);
+	                var (x, y) = panel.VertexCoordinates;
 
 	                // Get the dimensions
                     double

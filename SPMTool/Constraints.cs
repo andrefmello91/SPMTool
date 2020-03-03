@@ -12,10 +12,10 @@ using MathNet.Numerics.LinearAlgebra;
 namespace SPMTool
 {
     // Constraints related commands
-    public class Constraints
+    public static class Constraints
     {
         [CommandMethod("AddConstraint")]
-        public void AddConstraint()
+        public static void AddConstraint()
         {
             // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
             Auxiliary.CreateLayer(Layers.support, (short)AutoCAD.Colors.Red, 0);
@@ -418,7 +418,7 @@ namespace SPMTool
         }
 
         // Event for remove constraint condition from a node if the block is erased by user
-        public void ConstraintErased(object senderObj, ObjectErasedEventArgs evtArgs)
+        public static void ConstraintErased(object senderObj, ObjectErasedEventArgs evtArgs)
         {
             if (evtArgs.Erased)
             {

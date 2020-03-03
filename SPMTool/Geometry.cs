@@ -15,10 +15,10 @@ using Autodesk.AutoCAD.Geometry;
 namespace SPMTool
 {
     // Geometry related commands
-    public class Geometry
+    public static class Geometry
     {
         // Node methods
-        public class Node
+        public static class Node
         {
             // Node types
             public enum NodeType
@@ -235,7 +235,7 @@ namespace SPMTool
         }
 
         // Stringer methods
-        public class Stringer
+        public static class Stringer
         {
             [CommandMethod("AddStringer")]
             public static void AddStringer()
@@ -697,7 +697,7 @@ namespace SPMTool
         }
 
         // Panel methods
-        public class Panel
+        public static class Panel
         {
             [CommandMethod("AddPanel")]
             public static void AddPanel()
@@ -1252,7 +1252,7 @@ namespace SPMTool
         }
 
         [CommandMethod("UpdateElements")]
-        public void UpdateElements()
+        public static void UpdateElements()
         {
             // Enumerate and get the number of nodes
             ObjectIdCollection nds = Node.UpdateNodes();
@@ -1272,7 +1272,7 @@ namespace SPMTool
 
         // Toggle view for nodes
         [CommandMethod("ToogleNodes")]
-        public void ToogleNodes()
+        public static void ToogleNodes()
         {
             Auxiliary.ToogleLayer(Layers.extNode);
             Auxiliary.ToogleLayer(Layers.intNode);
@@ -1280,14 +1280,14 @@ namespace SPMTool
 
         // Toggle view for stringers
         [CommandMethod("ToogleStringers")]
-        public void ToogleStringers()
+        public static void ToogleStringers()
         {
             Auxiliary.ToogleLayer(Layers.stringer);
         }
 
         // Toggle view for panels
         [CommandMethod("TooglePanels")]
-        public void TooglePanels()
+        public static void TooglePanels()
         {
             Auxiliary.ToogleLayer(Layers.panel);
         }

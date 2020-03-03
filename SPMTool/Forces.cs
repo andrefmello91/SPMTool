@@ -12,10 +12,10 @@ using MathNet.Numerics.LinearAlgebra;
 namespace SPMTool
 {
     // Constraints related commands
-    public class Forces
+    public static class Forces
     {
         [CommandMethod("AddForce")]
-        public void AddForce()
+        public static void AddForce()
         {
             // Initialize variables
             PromptSelectionResult selRes;
@@ -397,7 +397,7 @@ namespace SPMTool
         }
 
         // Event for remove constraint condition from a node if the block is erased by user
-        public void ForceErased(object senderObj, ObjectErasedEventArgs evtArgs)
+        public static void ForceErased(object senderObj, ObjectErasedEventArgs evtArgs)
         {
             if (evtArgs.Erased)
             {
