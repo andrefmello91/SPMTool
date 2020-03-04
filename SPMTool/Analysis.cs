@@ -193,7 +193,7 @@ namespace SPMTool
 
                 // Calculate the stiffness of each stringer and panel, add to the global stiffness and get the matrices of the stiffness of elements
                 Stringer.Linear.StringersStiffness(stringers, Ec, Kg);
-                Panel.Linear.PanelsStiffness(panels, Gc, Kg);
+                Panel.Linear.PanelsStiffness(panels, Concrete, Kg);
 
                 // Simplify the stiffness matrix
                 SimplifyStiffnessMatrix(Kg, forceVector, nodes);

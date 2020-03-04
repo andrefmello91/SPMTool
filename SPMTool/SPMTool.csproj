@@ -98,6 +98,7 @@
     <Compile Include="MCFT.cs" />
     <Compile Include="Membrane.cs" />
     <Compile Include="NodeAnalysis.cs" />
+    <Compile Include="Panel.cs" />
     <Compile Include="StringerAnalysis.cs" />
     <Compile Include="PanelAnalysis.cs" />
     <Compile Include="Forces.cs" />

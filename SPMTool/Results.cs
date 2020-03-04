@@ -101,7 +101,7 @@ namespace SPMTool
         }
 
         // Draw the panel shear blocks
-        public static void DrawPanelForces(Analysis.Panel[] panels)
+        public static void DrawPanelForces(Panel[] panels)
         {
             // Check if the layer already exists in the drawing. If it doesn't, then it's created:
             Auxiliary.CreateLayer(Layers.panelForce, (short)AutoCAD.Colors.Green, 0);
@@ -134,8 +134,8 @@ namespace SPMTool
                     // Get the maximum lenght of the panel
                     double lMax = l.Max();
 
-                    // Calculate the average stress
-                    double tauAvg = Analysis.Panel.Linear.ShearStress(pnl);
+                    // Get the average stress
+                    double tauAvg = pnl.ShearStress;
 
                     // Calculate the scale factor for the block and text
                     double scFctr = lMax / 1000;

@@ -30,43 +30,7 @@ namespace SPMTool
             // Read the concrete parameters
             public Concrete()
             {
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-                {
-                    // Get the NOD in the database
-                    DBDictionary nod = (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
-
-                    // Check if it exists
-                    if (nod.Contains("ConcreteParams"))
-                    {
-                        // Read the concrete Xrecord
-                        ObjectId concPar = nod.GetAt("ConcreteParams");
-                        Xrecord concXrec = (Xrecord)trans.GetObject(concPar, OpenMode.ForRead);
-                        ResultBuffer concRb = concXrec.Data;
-                        TypedValue[] concData = concRb.AsArray();
-
-                        // Get the parameters from XData
-                        fcm = Convert.ToDouble(concData[2].Value);
-                        AggregateDiameter = Convert.ToDouble(concData[4].Value);
-
-
-                        // Calculate the parameters according do FIB MC2010
-                        // fctm (dependant on fcm value)
-                        if (fcm <= 50)
-                            fctm = 0.3 * Math.Pow(fcm, 0.66666667);
-                        else
-                            fctm = 2.12 * Math.Log(1 + 0.1 * fcm);
-
-                        // Set to Concrete
-                        double aE = Convert.ToDouble(concData[3].Value);
-                        Eci = 21500 * aE * Math.Pow(fcm / 10, 0.33333333);
-                        ec1 = -1.6 / 1000 * Math.Pow(fcm / 10, 0.25);
-                    }
-                    else
-                    {
-                        Application.ShowAlertDialog("Please set concrete parameters.");
-                    }
-                }
+				ReadConcreteData();
             }
 
             [CommandMethod("SetConcreteParameters")]
@@ -178,8 +142,49 @@ namespace SPMTool
 	            }
             }
 
+			// Read concrete parameters
+			private void ReadConcreteData()
+			{
+				// Start a transaction
+				using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+				{
+					// Get the NOD in the database
+					DBDictionary nod = (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
+
+					// Check if it exists
+					if (nod.Contains("ConcreteParams"))
+					{
+						// Read the concrete Xrecord
+						ObjectId concPar = nod.GetAt("ConcreteParams");
+						Xrecord concXrec = (Xrecord)trans.GetObject(concPar, OpenMode.ForRead);
+						ResultBuffer concRb = concXrec.Data;
+						TypedValue[] concData = concRb.AsArray();
+
+						// Get the parameters from XData
+						fcm = Convert.ToDouble(concData[2].Value);
+						AggregateDiameter = Convert.ToDouble(concData[4].Value);
+
+						// Calculate the parameters according do FIB MC2010
+						// fctm (dependant on fcm value)
+						if (fcm <= 50)
+							fctm = 0.3 * Math.Pow(fcm, 0.66666667);
+						else
+							fctm = 2.12 * Math.Log(1 + 0.1 * fcm);
+
+						// Set to Concrete
+						double aE = Convert.ToDouble(concData[3].Value);
+						Eci = 21500 * aE * Math.Pow(fcm / 10, 0.33333333);
+						ec1 = -1.6 / 1000 * Math.Pow(fcm / 10, 0.25);
+					}
+					else
+					{
+						Application.ShowAlertDialog("Please set concrete parameters.");
+					}
+				}
+			}
+
             // Calculate concrete parameters for MCFT
-            public static void MCFTParams(Concrete concrete)
+            public void MCFTConcrete(Concrete concrete)
             {
 	            double fc = concrete.fcm;
 
@@ -209,36 +214,7 @@ namespace SPMTool
             // Read the steel parameters
             public Steel()
             {
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-                {
-                    // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                    // Get the NOD in the database
-                    DBDictionary nod =
-                        (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
-
-                    // Check if it exists
-                    if (nod.Contains("SteelParams"))
-                    {
-                        // Read the Steel Xrecord
-                        ObjectId steelPar = nod.GetAt("SteelParams");
-                        Xrecord steelXrec = (Xrecord)trans.GetObject(steelPar, OpenMode.ForRead);
-                        ResultBuffer steelRb = steelXrec.Data;
-                        TypedValue[] steelData = steelRb.AsArray();
-
-                        // Get the parameters
-                        fy = Convert.ToDouble(steelData[2].Value);
-                        Es = Convert.ToDouble(steelData[3].Value);
-
-                        // Maximum plastic strain on steel
-                    }
-                    else
-                    {
-                        Application.ShowAlertDialog("Please set steel parameters.");
-                    }
-                }
+				ReadSteelData();
             }
 
             [CommandMethod("SetSteelParameters")]
@@ -301,6 +277,41 @@ namespace SPMTool
                         trans.Commit();
                     }
                 }
+            }
+
+			// Read steel parameters
+			private void ReadSteelData()
+            {                
+	            // Start a transaction
+	            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+	            {
+		            // Open the Block table for read
+		            BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+		            // Get the NOD in the database
+		            DBDictionary nod =
+			            (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
+
+		            // Check if it exists
+		            if (nod.Contains("SteelParams"))
+		            {
+			            // Read the Steel Xrecord
+			            ObjectId steelPar = nod.GetAt("SteelParams");
+			            Xrecord steelXrec = (Xrecord)trans.GetObject(steelPar, OpenMode.ForRead);
+			            ResultBuffer steelRb = steelXrec.Data;
+			            TypedValue[] steelData = steelRb.AsArray();
+
+			            // Get the parameters
+			            fy = Convert.ToDouble(steelData[2].Value);
+			            Es = Convert.ToDouble(steelData[3].Value);
+
+			            // Maximum plastic strain on steel
+		            }
+		            else
+		            {
+			            Application.ShowAlertDialog("Please set steel parameters.");
+		            }
+	            }
             }
         }
 
