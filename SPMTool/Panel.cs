@@ -24,9 +24,16 @@ namespace SPMTool
         public (double X, double Y)              BarSpacing         { get; set; }
         public Vector<double>                    Forces             { get; set; }
         public Linear                            LinearPanel        { get; set; }
+		public NonLinear                         NonLinearPanel     { get; set; }
+
+        // Constructor
+        public Panel(ObjectId panelObject)
+        {
+	        ObjectId = panelObject;
+        }
 
         // Set global indexes from grips
-        public  int[] Index => GlobalIndexes(Grips);
+        public int[] Index => GlobalIndexes(Grips);
         private int[] GlobalIndexes(int[] grips)
         {
 	        // Initialize the array
@@ -39,14 +46,8 @@ namespace SPMTool
 	        return ind;
         }
 
-        // Constructor
-        public Panel(ObjectId panelObject)
-        {
-	        ObjectId = panelObject;
-        }
-
         // Get X and Y coordinates of a panel vertices
-        public  (double[] x, double[] y) VertexCoordinates => VertexxCoordinates();
+        public (double[] x, double[] y) VertexCoordinates => VertexxCoordinates();
         private (double[] x, double[] y) VertexxCoordinates()
         {
 	        double[]
@@ -123,15 +124,14 @@ namespace SPMTool
 
         public class Linear
         {
-			// Properties
-			private Material.Concrete Concrete       { get; }
-			private double            Gc             => Concrete.Eci / 2.4;
-			public Matrix<double>     LocalStiffness { get; }
+            // Properties
+            private double            Gc             { get; }
+            public Matrix<double>     LocalStiffness { get; }
 			public Matrix<double>     TransMatrix    { get; }
 
             public Linear(Panel panel, Material.Concrete concrete)
 	        {
-		        Concrete       = concrete;
+		        Gc             = concrete.Eci / 2.4;
 		        LocalStiffness = Stiffness(panel);
 		        TransMatrix    = TransformationMatrix(panel);
 	        }
@@ -323,26 +323,28 @@ namespace SPMTool
         public class NonLinear
         {
             // Properties
-            private Panel Panel { get; }
-			private Material.Concrete Concrete { get; }
-			private Material.Steel Steel { get; }
-            public Matrix<double> BAMatrix { get; set; }
-	        public Matrix<double> QPMatrix { get; set; }
-	        public Matrix<double> DMatrix { get; set; }
-	        public Matrix<double> LocalStiffness { get; set; }
+			private Material.Concrete                       Concrete       { get; }
+			private Material.Steel                          Steel          { get; }
+			public (double a, double b, double c, double d) Dimensions     { get; }
+			public (double[] X, double[] Y)                 EffectiveRatio { get; }
+			public Matrix<double>                           BAMatrix       { get; set; }
+	        public Matrix<double>                           QPMatrix       { get; set; }
+	        public Matrix<double>                           DMatrix        { get; set; }
+	        public Matrix<double>                           LocalStiffness { get; set; }
 
 	        public NonLinear(Panel panel, Material.Concrete concrete, Material.Steel steel)
 	        {
-		        Panel = panel;
 		        Concrete = concrete;
 		        Steel = steel;
+		        Dimensions = PanelDimensions(panel);
+		        EffectiveRatio = EffectiveRRatio(panel);
 	        }
 
 			// Set the dimensions for nonlinear analysis
-            private (double a, double b, double c, double d) PanelDimensions()
+            private (double a, double b, double c, double d) PanelDimensions(Panel panel)
 	        {
 		        // Get X and Y coordinates of the vertices
-		        var (x, y) = Panel.VertexCoordinates;
+		        var (x, y) = panel.VertexCoordinates;
 
 		        // Calculate the necessary dimensions of the panel
 		        double
@@ -353,19 +355,18 @@ namespace SPMTool
 
 		        return (a, b, c, d);
 	        }
-	        public (double a, double b, double c, double d) Dimensions;
 
 	        // Calculate the effective reinforcement ratio off a panel for considering stringer dimensions
-	        private (double[] X, double[] Y) EffectiveRRatio()
+	        private (double[] X, double[] Y) EffectiveRRatio(Panel panel)
 	        {
 		        // Get reinforcement ratio
-		        var (px, py) = Panel.ReinforcementRatio;
+		        var (px, py) = panel.ReinforcementRatio;
 
 		        // Get stringer dimensions
-		        var c = Panel.StringerDimensions;
+		        var c = panel.StringerDimensions;
 
 		        // Get X and Y coordinates of the vertices
-		        var (x, y) = Panel.VertexCoordinates;
+		        var (x, y) = panel.VertexCoordinates;
 
 		        // Calculate effective ratio for each edge
 		        double[]
@@ -390,7 +391,6 @@ namespace SPMTool
 
 		        return (pxEf, pyEf);
 	        }
-	        public (double[] X, double[] Y) EffectiveRatio;
 
         }
     }
