@@ -1,228 +1,240 @@
 ﻿using System;
+using System.Windows;
 using MathNet.Numerics.LinearAlgebra;
 
 namespace SPMTool
 {
-	public partial class Analysis
+	public partial class MCFT
 	{
-		public partial class Panel
-		{
-			public partial class NonLinear
-			{
-				public partial class Membrane
-				{
-					// Properties
-					public bool                     Stop                          { get; set; }
-					public string                   StopMessage                   { get; set; }
-					public int                      LSCrack                       { get; set; }
-					public int                      LSYieldX                      { get; set; }
-					public int                      LSYieldY                      { get; set; }
-					public int                      LSPeak                        { get; set; }
-					public double                   StrainSlope                   { get; set; }
-					public (double X, double Y)     ReinforcementSlopes           { get; set; }
-					public (double X, double Y)     BarDiameter                   { get; set; }
-					public (double X, double Y)     BarSpacing                    { get; set; }
-					public (double X, double Y)     CrackSpacing                  { get; set; }
-					public (double X, double Y)     ReinforcementRatio            { get; set; }
-					public (double ec1, double ec2) ConcreteStrains               { get; set; }
-					public (double fc1, double fc2) ConcreteStresses              { get; set; }
-					public (double fsx, double fsy) ReinforcementStresses         { get; set; }
-					public Matrix<double>           ConcreteMatrix                { get; set; }
-					public Matrix<double>           SteelMatrix                   { get; set; }
-					public Vector<double>           Strains                       { get; set; }
-					public Vector<double>           Stresses                      { get; set; }
-					public Matrix<double>           Stiffness => ConcreteMatrix + SteelMatrix;
+		//public class Membrane
+		//{
+		//	// Public Properties
+		//	public bool                     Stop                          { get; set; }
+		//	public string                   StopMessage                   { get; set; }
+		//	public int                      LSCrack                       { get; set; }
+		//	public int                      LSYieldX                      { get; set; }
+		//	public int                      LSYieldY                      { get; set; }
+		//	public int                      LSPeak                        { get; set; }
+		//	public Vector<double>           Strains                       { get; set; }
+		//	public double                   StrainSlope                   { get; set; }
+		//	public Vector<double>           AppliedStresses               { get; set; }
+		//	public (double ec1, double ec2) ConcreteStrains               { get; set; }
+		//	public (double X, double Y)     ReinforcementSlopes           { get; set; }
+		//	public (double X, double Y)     BarDiameter                   { get; set; }
+		//	public (double X, double Y)     BarSpacing                    { get; set; }
+		//	public (double X, double Y)     CrackSpacing                  { get; set; }
+		//	public (double X, double Y)     ReinforcementRatio            { get; set; }
+		//	public (double fc1, double fc2) ConcreteStresses              { get; set; }
+		//	public (double fsx, double fsy) ReinforcementStresses         { get; set; }
+		//	public Matrix<double>           ConcreteMatrix                { get; set; }
+		//	public Matrix<double>           SteelMatrix                   { get; set; }
+		//	public Vector<double>           Stresses                      { get; set; }
+		//	public Matrix<double>           Stiffness => ConcreteMatrix + SteelMatrix;
 
+		//	// Private properties
+		//	private Material.Concrete Concrete { get; }
+		//	private Material.Steel    Steel { get; }
+		//	private double Esx => Steel.Es;
+		//	private double Esy => Steel.Es;
+		//	private double fyx => Steel.fy;
+		//	private double fyy => Steel.fy;
 
-                    // Calculate the initial material matrix for initiating the iterations
-                    public static Membrane InitialStiffness(Panel panel, (double X, double Y) effectiveRatio)
-					{
-						Membrane membrane = new Membrane();
+		//	// Constructor
+		//	public Membrane(Panel panel, (double X, double Y) effectiveRatio, Vector<double> sigma,
+		//		Material.Concrete concrete)
+		//	{
+		//		BarDiameter        = panel.BarDiameter;
+		//		BarSpacing         = panel.BarSpacing;
+		//		ReinforcementRatio = effectiveRatio;
+		//		AppliedStresses = sigma;
+		//		Concrete = concrete;
+		//	}
 
-						// Get the parameters from panel
-						membrane.BarDiameter        = panel.BarDiameter;
-						membrane.BarSpacing         = panel.BarSpacing;
-						membrane.ReinforcementRatio = effectiveRatio;
-						membrane.ConcreteStrains    = (0, 0);
-						membrane.ConcreteStresses   = (0, 0);
-						membrane.Strains            = Vector<double>.Build.Dense(3);
-						membrane.StrainSlope        = Constants.PiOver4;
+		//	// Calculate the initial material matrix for initiating the iterations
+		//	public Membrane InitialStiffness(Panel panel, (double X, double Y) effectiveRatio, Vector<double> sigma)
+		//	{
+		//		Membrane membrane = new Membrane(panel, effectiveRatio, sigma)
+		//		{
+		//			ConcreteStrains  = (0, 0),
+		//			ConcreteStresses = (0, 0),
+		//			StrainSlope      = Constants.PiOver4
+		//		};
 
-						// Get the initial material stiffness
-						ConcreteStiffness(membrane);
-						SteelStiffness(membrane);
+		//		// Get the initial material stiffness
+		//		ConcreteStiffness(membrane);
+		//		SteelStiffness(membrane);
 
-						return  membrane;
-					}
+		//		return  membrane;
+		//	}
 
-					// Calculate concrete principal strains
-					private static void ConcretePrincipalStrains(Membrane membrane)
-					{
-						// Get the apparent strains and concrete net strains
-						double
-							ecx  = membrane.Strains[0],
-							ecy  = membrane.Strains[1],
-							ycxy = membrane.Strains[2];
+		//	// Calculate concrete principal strains
+		//	private (double ec1, double ec2) ConcretePrincipalStrains()
+		//	{
+		//		// Get the apparent strains and concrete net strains
+		//		var e = Strains;
 
-						// Calculate radius and center of Mohr's Circle
-						double
-							cen = 0.5 * (ecx + ecy),
-							rad = 0.5 * Math.Sqrt((ecx - ecy) * (ecx - ecy) + ycxy * ycxy);
+		//		double
+		//			ecx  = e[0],
+		//			ecy  = e[1],
+		//			ycxy = e[2];
 
-						// Calculate principal strains in concrete
-						double
-							ec1 = cen + rad,
-							ec2 = cen - rad;
+		//		// Calculate radius and center of Mohr's Circle
+		//		double
+		//			cen = 0.5 * (ecx + ecy),
+		//			rad = 0.5 * Math.Sqrt((ecx - ecy) * (ecx - ecy) + ycxy * ycxy);
 
-						membrane.ConcreteStrains = (ec1, ec2);
-					}
+		//		// Calculate principal strains in concrete
+		//		double
+		//			ec1 = cen + rad,
+		//			ec2 = cen - rad;
 
-					// Calculate slopes related to reinforcement
-					private static void ReinforcementSlope(Membrane membrane, double theta)
-					{
-						// Calculate angles
-						double
-							thetaNx = theta,
-							thetaNy = theta - Constants.PiOver2;
+		//		return (ec1, ec2);
+		//	}
 
-						membrane.ReinforcementSlopes = (thetaNx, thetaNy);
-					}
+		//	// Calculate slopes related to reinforcement
+		//	private static void ReinforcementSlope(Membrane membrane, double theta)
+		//	{
+		//		// Calculate angles
+		//		double
+		//			thetaNx = theta,
+		//			thetaNy = theta - Constants.PiOver2;
 
-					// Calculate reinforcement stresses
-					static void ReinforcementsStresses(Membrane membrane)
-					{
-						// Get the strains
-						double
-							ex = membrane.Strains[0],
-							ey = membrane.Strains[1];
+		//		membrane.ReinforcementSlopes = (thetaNx, thetaNy);
+		//	}
 
-						// Calculate stresses and secant moduli
-						double fsx, fsy;
-						if (ex >= 0)
-							fsx = Math.Min(Steel.Es * ex, Steel.fy);
+		//	// Calculate reinforcement stresses
+		//	static void ReinforcementsStresses(Membrane membrane)
+		//	{
+		//		// Get the strains
+		//		double
+		//			ex = membrane.Strains[0],
+		//			ey = membrane.Strains[1];
 
-						else
-							fsx = Math.Max(Steel.Es * ex, -Steel.fy);
+		//		// Calculate stresses and secant moduli
+		//		double fsx, fsy;
+		//		if (ex >= 0)
+		//			fsx = Math.Min(Steel.Es * ex, Steel.fy);
 
-						if (ey >= 0)
-							fsy = Math.Min(Steel.Es * ey, Steel.fy);
+		//		else
+		//			fsx = Math.Max(Steel.Es * ex, -Steel.fy);
 
-						else
-							fsy = Math.Max(Steel.Es * ey, -Steel.fy);
+		//		if (ey >= 0)
+		//			fsy = Math.Min(Steel.Es * ey, Steel.fy);
 
-						membrane.ReinforcementStresses = (fsx, fsy);
-					}
+		//		else
+		//			fsy = Math.Max(Steel.Es * ey, -Steel.fy);
 
-                    // Calculate steel stiffness matrix
-                    private static void SteelStiffness(Membrane membrane)
-					{
-						// Get the strains
-						double
-							ex = membrane.Strains[0],
-							ey = membrane.Strains[1];
+		//		membrane.ReinforcementStresses = (fsx, fsy);
+		//	}
 
-						// Get the stresses
-						var (fsx, fsy) = membrane.ReinforcementStresses;
+		//	// Calculate steel stiffness matrix
+		//	private static void SteelStiffness(Membrane membrane)
+		//	{
+		//		// Get the strains
+		//		double
+		//			ex = membrane.Strains[0],
+		//			ey = membrane.Strains[1];
 
-						// Calculate secant moduli
-						double Esx, Esy;
-						SteelSecantModuli();
+		//		// Get the stresses
+		//		var (fsx, fsy) = membrane.ReinforcementStresses;
 
-                        // Steel matrix
-                        var Ds = Matrix<double>.Build.Dense(3, 3);
-						Ds[0, 0] = membrane.ReinforcementRatio.X * Esx;
-						Ds[1, 1] = membrane.ReinforcementRatio.Y * Esy;
+		//		// Calculate secant moduli
+		//		double Esx, Esy;
+		//		SteelSecantModuli();
 
-						membrane.SteelMatrix = Ds;
+		//		// Steel matrix
+		//		var Ds = Matrix<double>.Build.Dense(3, 3);
+		//		Ds[0, 0] = membrane.ReinforcementRatio.X * Esx;
+		//		Ds[1, 1] = membrane.ReinforcementRatio.Y * Esy;
 
-						// Calculate secant moduli of steel
-						void SteelSecantModuli()
-						{
-							// Steel
-							if (ex == 0 || fsx == 0)
-								Esx = Steel.Es;
+		//		membrane.SteelMatrix = Ds;
 
-							else
-								Esx = Math.Min(fsx / ex, Steel.Es);
+		//		// Calculate secant moduli of steel
+		//		void SteelSecantModuli()
+		//		{
+		//			// Steel
+		//			if (ex == 0 || fsx == 0)
+		//				Esx = Steel.Es;
 
-							if (ey == 0 || fsy == 0)
-								Esy = Steel.Es;
+		//			else
+		//				Esx = Math.Min(fsx / ex, Steel.Es);
 
-							else
-								Esy = Math.Min(fsy / ey, Steel.Es);
-						}
-                    }
+		//			if (ey == 0 || fsy == 0)
+		//				Esy = Steel.Es;
 
-					// Calculate concrete stiffness matrix
-					private static void ConcreteStiffness(Membrane membrane)
-					{
-						// Get the strains and stresses
-						double
-							ec1 = membrane.ConcreteStrains.ec1,
-							ec2 = membrane.ConcreteStrains.ec2,
-							fc1 = membrane.ConcreteStresses.fc1,
-							fc2 = membrane.ConcreteStresses.fc2;
+		//			else
+		//				Esy = Math.Min(fsy / ey, Steel.Es);
+		//		}
+		//	}
 
-						// Get secant moduli
-						double Ec1, Ec2, Gc;
-						ConcreteSecantModuli();
+		//	// Calculate concrete stiffness matrix
+		//	private void ConcreteStiffness()
+		//	{
+		//		// Get the strains and stresses
+		//		double
+		//			ec1 = ConcreteStrains.ec1,
+		//			ec2 = ConcreteStrains.ec2,
+		//			fc1 = ConcreteStresses.fc1,
+		//			fc2 = ConcreteStresses.fc2;
 
-						// Calculate concrete transformation matrix
-						Matrix<double> T;
-						TransMatrix();
+		//		// Get secant moduli
+		//		double Ec1, Ec2, Gc;
+		//		ConcreteSecantModuli();
 
-						// Concrete matrix
-						var Dc1 = Matrix<double>.Build.Dense(3, 3);
-						Dc1[0, 0] = Ec1;
-						Dc1[1, 1] = Ec2;
-						Dc1[2, 2] = Gc;
+		//		// Calculate concrete transformation matrix
+		//		Matrix<double> T;
+		//		TransMatrix();
 
-						// Calculate Dc
-						membrane.ConcreteMatrix = T.Transpose() * Dc1 * T;
+		//		// Concrete matrix
+		//		var Dc1 = Matrix<double>.Build.Dense(3, 3);
+		//		Dc1[0, 0] = Ec1;
+		//		Dc1[1, 1] = Ec2;
+		//		Dc1[2, 2] = Gc;
 
-						// Calculate secant moduli of concrete
-						void ConcreteSecantModuli()
-						{
-							if (ec1 == 0 || fc1 == 0)
-								Ec1 = Concrete.Eci;
+		//		// Calculate Dc
+		//		ConcreteMatrix = T.Transpose() * Dc1 * T;
 
-							else
-								Ec1 = fc1 / ec1;
+		//		// Calculate secant moduli of concrete
+		//		void ConcreteSecantModuli()
+		//		{
+		//			if (ec1 == 0 || fc1 == 0)
+		//				Ec1 = Concrete.Eci;
 
-							if (ec2 == 0 || fc2 == 0)
-								Ec2 = Concrete.Eci;
+		//			else
+		//				Ec1 = fc1 / ec1;
 
-							else
-								Ec2 = fc2 / ec2;
+		//			if (ec2 == 0 || fc2 == 0)
+		//				Ec2 = Concrete.Eci;
 
-							Gc = Ec1 * Ec2 / (Ec1 + Ec2);
-						}
+		//			else
+		//				Ec2 = fc2 / ec2;
 
-						// Calculate concrete transformation matrix
-						void TransMatrix()
-						{
-							// Get psi angle
-							// Calculate Psi angle
-							double psi = Constants.Pi - membrane.StrainSlope;
-							double[] dirCos = Auxiliary.DirectionCosines(psi);
+		//			Gc = Ec1 * Ec2 / (Ec1 + Ec2);
+		//		}
 
-							double
-								cos    = dirCos[0],
-								sin    = dirCos[1],
-								cos2   = cos * cos,
-								sin2   = sin * sin,
-								cosSin = cos * sin;
+		//		// Calculate concrete transformation matrix
+		//		void TransMatrix()
+		//		{
+		//			// Get psi angle
+		//			// Calculate Psi angle
+		//			double psi = Constants.Pi - membrane.StrainSlope;
+		//			double[] dirCos = Auxiliary.DirectionCosines(psi);
 
-							T = Matrix<double>.Build.DenseOfArray(new [,]
-							{
-								{         cos2,       sin2,      cosSin },
-								{         sin2,       cos2,    - cosSin },
-								{ - 2 * cosSin, 2 * cosSin, cos2 - sin2 }
-							});
-                        }
-                    }
-                }
-            }
-        }
-    }
+		//			double
+		//				cos    = dirCos[0],
+		//				sin    = dirCos[1],
+		//				cos2   = cos * cos,
+		//				sin2   = sin * sin,
+		//				cosSin = cos * sin;
+
+		//			T = Matrix<double>.Build.DenseOfArray(new [,]
+		//			{
+		//				{         cos2,       sin2,      cosSin },
+		//				{         sin2,       cos2,    - cosSin },
+		//				{ - 2 * cosSin, 2 * cosSin, cos2 - sin2 }
+		//			});
+		//		}
+		//	}
+		//}
+	}
 }

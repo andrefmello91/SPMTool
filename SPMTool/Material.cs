@@ -27,6 +27,19 @@ namespace SPMTool
             public double k   => Eci / Ec1;
             public double ecr => fctm / Eci;
 
+			// Verify if concrete was set
+			public bool IsSet
+			{
+				get
+				{
+					if (fcm > 0)
+						return true;
+
+					// Else
+						return false;
+				}
+			}
+
             // Read the concrete parameters
             public Concrete()
             {
@@ -182,22 +195,6 @@ namespace SPMTool
 					}
 				}
 			}
-
-            // Calculate concrete parameters for MCFT
-            public void MCFTConcrete(Concrete concrete)
-            {
-	            double fc = concrete.fcm;
-
-                // Calculate the parameters
-                double ec = 0.002,
-                       Ec = 2 * fc / ec,
-                       ft = 0.33 * Math.Sqrt(fc),
-                       ecr = ft / Ec;
-
-                concrete.ec1 = ec;
-                concrete.Eci = Ec;
-                concrete.fctm = ft;
-            }
         }
 
         // Steel
