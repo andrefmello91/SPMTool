@@ -102,7 +102,8 @@ namespace SPMTool
 		private double t1 => EcAc * (1 + xi);
 
         // Calculate the transformation matrix
-        public  Matrix<double> TransMatrix => TransformationMatrix();
+        public  Matrix<double>       TransMatrix => transMatrix.Value;
+		private Lazy<Matrix<double>> transMatrix => new Lazy<Matrix<double>>(TransformationMatrix);
         private Matrix<double> TransformationMatrix()
 		{
 			// Get the direction cosines
@@ -121,7 +122,8 @@ namespace SPMTool
 		}
 
         // Calculate global stiffness
-        public Matrix<double> GlobalStiffness => GloballStiffness();
+        public Matrix<double>        GlobalStiffness => globalStiffness.Value;
+        private Lazy<Matrix<double>> globalStiffness => new Lazy<Matrix<double>>(GloballStiffness);
         public Matrix<double> GloballStiffness()
         {
 	        var T = TransMatrix;
@@ -171,7 +173,8 @@ namespace SPMTool
             }
 
             // Calculate local stiffness
-            public override Matrix<double> LocalStiffness => Stiffness();
+            public override Matrix<double> LocalStiffness => localStiffness.Value;
+            private Lazy<Matrix<double>>   localStiffness => new Lazy<Matrix<double>>(Stiffness);
             private Matrix<double> Stiffness()
 			{
 				// Calculate the constant factor of stiffness

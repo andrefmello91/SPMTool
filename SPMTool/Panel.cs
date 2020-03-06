@@ -177,7 +177,8 @@ namespace SPMTool
         }
 
         // Calculate global stiffness
-        public Matrix<double> GlobalStiffness => GloballStiffness();
+        public Matrix<double>        GlobalStiffness => globalStiffness.Value;
+        private Lazy<Matrix<double>> globalStiffness => new Lazy<Matrix<double>>(GloballStiffness);
         public Matrix<double> GloballStiffness()
         {
 	        var T = TransMatrix;
@@ -244,7 +245,8 @@ namespace SPMTool
 	        }
 
             // Get transformation matrix
-            public override  Matrix<double> TransMatrix => TransformationMatrix();
+            public override  Matrix<double> TransMatrix => transMatrix.Value;
+            private Lazy<Matrix<double>>    transMatrix => new Lazy<Matrix<double>>(TransformationMatrix);
             private Matrix<double> TransformationMatrix()
             {
 	            // Get the transformation matrix
@@ -276,7 +278,8 @@ namespace SPMTool
             }
 
             // Calculate panel stiffness
-            public override Matrix<double> LocalStiffness => Stiffness();
+            public override Matrix<double> LocalStiffness => localStiffness.Value;
+            private Lazy<Matrix<double>>   localStiffness => new Lazy<Matrix<double>>(Stiffness);
             private Matrix<double> Stiffness()
             {
 	            // If the panel is rectangular
@@ -337,8 +340,8 @@ namespace SPMTool
                 // Kinematic parameters
                 double
                     t1 = -b * c1 - c * s1,
-                    t2 = a * s2 + d * c2,
-                    t3 = b * c3 + c * s3,
+                    t2 =  a * s2 + d * c2,
+                    t3 =  b * c3 + c * s3,
                     t4 = -a * s4 - d * c4;
 
                 // Matrices to calculate the determinants
@@ -407,7 +410,6 @@ namespace SPMTool
                 else
                     return false;
             };
-
         }
 
         public class NonLinear
