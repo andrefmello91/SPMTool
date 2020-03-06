@@ -16,13 +16,13 @@ namespace SPMTool
     public class Results
     {
 		// Properties
-		public  double    MaxStringerForce { get; set; }
-		public Node[]     Nodes { get; set; }
-        public Stringer[] Stringers { get; set; }
-        public Panel[]    Panels { get; set; }
+		public double     MaxStringerForce { get; set; }
+		public Node[]     Nodes            { get; set; }
+        public Stringer[] Stringers        { get; set; }
+        public Panel[]    Panels           { get; set; }
 
         // Get displacement vector
-        private Vector<double> dispVector { get; set; }
+        private Vector<double> dispVector { get;}
 
         public Results(Analysis analysis)
         {
