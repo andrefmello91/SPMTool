@@ -95,7 +95,7 @@ namespace SPMTool
             Bitmap strBmp, pnlBmp, setBmp,
                    dvStrBmp, dvPnlBmp, updtBmp,
                    strRefBmp, pnlRefBmp,
-                   cncrtBmp, stlBmp,
+                   cncrtBmp,
                    suprtBmp, fcBmp,
                    linBMP, nlinBMP,
                    viewNdBmp, viewStrBmp, viewPnlBmp, viewDtBmp,
@@ -114,7 +114,6 @@ namespace SPMTool
                 strRefBmp = Properties.Resources.stringerreinforcement_large_light;
                 pnlRefBmp = Properties.Resources.panelreinforcement_large_light;
                 cncrtBmp = Properties.Resources.concrete_large_light;
-                stlBmp = Properties.Resources.steel_large_light;
                 suprtBmp = Properties.Resources.support_large_light;
                 fcBmp = Properties.Resources.force_large_light;
                 linBMP = Properties.Resources.linear_large_light;
@@ -138,7 +137,6 @@ namespace SPMTool
                 strRefBmp = Properties.Resources.stringerreinforcement_large;
                 pnlRefBmp = Properties.Resources.panelreinforcement_large;
                 cncrtBmp = Properties.Resources.concrete_large;
-                stlBmp = Properties.Resources.steel_large;
                 suprtBmp = Properties.Resources.support_large;
                 fcBmp = Properties.Resources.force_large;
                 linBMP = Properties.Resources.linear_large;
@@ -161,8 +159,8 @@ namespace SPMTool
 
             // Create the Ribbon panels
             GeometryPanel(Tab, strBmp, pnlBmp, setBmp, dvStrBmp, dvPnlBmp, updtBmp, viewDtBmp);
+            MaterialPanel(Tab, cncrtBmp, viewDtBmp);
             ReinforcementPanel(Tab, strRefBmp, pnlRefBmp);
-            MaterialPanel(Tab, cncrtBmp, stlBmp, viewDtBmp);
             ConditionsPanel(Tab, suprtBmp, fcBmp);
             AnalysisPanel(Tab, linBMP, nlinBMP);
             ViewPanel(Tab, viewNdBmp, viewStrBmp, viewPnlBmp, viewDtBmp);
@@ -324,7 +322,7 @@ namespace SPMTool
             RibbonButton button1 = new RibbonButton()
             {
                 Text = "Stringer",
-                ToolTip = "Set reinforcement to a selection of stringers",
+                ToolTip = "Set reinforcement to a selection of stringers (only needed in nonlinear analysis)",
                 ShowText = true,
                 ShowImage = true,
                 LargeImage = getBitmap(stringerRef),
@@ -335,7 +333,7 @@ namespace SPMTool
             RibbonButton button2 = new RibbonButton()
             {
                 Text = "Panel",
-                ToolTip = "Set reinforcement to a selection of panels",
+                ToolTip = "Set reinforcement to a selection of panels (only needed in nonlinear analysis)",
                 ShowText = true,
                 ShowImage = true,
                 LargeImage = getBitmap(panelRef),
@@ -359,7 +357,7 @@ namespace SPMTool
         }
 
         // Create Material Panel
-        public static void MaterialPanel(RibbonTab Tab, Bitmap concrete, Bitmap steel, Bitmap view)
+        public static void MaterialPanel(RibbonTab Tab, Bitmap concrete, Bitmap view)
         {
             RibbonPanelSource pnlSrc = new RibbonPanelSource();
             pnlSrc.Title = "Materials";
@@ -379,44 +377,21 @@ namespace SPMTool
                 CommandParameter = "SetConcreteParameters"
             };
 
-            RibbonButton button2 = new RibbonButton()
-            {
-                Text = "Steel",
-                ToolTip = "Set concrete yield strength and elastic module",
-                ShowText = true,
-                ShowImage = true,
-                LargeImage = getBitmap(steel),
-                CommandHandler = new CmdHandler(),
-                CommandParameter = "SetSteelParameters"
-            };
-
-
-            // Create a split button for materials
-            RibbonSplitButton rbSpBtn1 = new RibbonSplitButton()
-            {
-                ShowText = true,
-                IsSplit = true,
-                Size = RibbonItemSize.Large,
-                IsSynchronizedWithCurrentItem = true
-            };
-            rbSpBtn1.Items.Add(button1);
-            rbSpBtn1.Items.Add(button2);
-
             // Add to the panel source
-            pnlSrc.Items.Add(rbSpBtn1);
+            pnlSrc.Items.Add(button1);
 
             // Create a dropdown menu to secondary commands
             pnlSrc.Items.Add(new RibbonPanelBreak());
 
             RibbonButton button3 = new RibbonButton()
             {
-                Text = "View material parameters",
-                ToolTip = "View concrete and steel parameters",
+                Text = "View concrete parameters",
+                ToolTip = "View concrete parameters",
                 ShowText = true,
                 ShowImage = true,
                 LargeImage = getBitmap(view),
                 CommandHandler = new CmdHandler(),
-                CommandParameter = "ViewMaterialParameters"
+                CommandParameter = "ViewConcreteParameters"
             };
             pnlSrc.Items.Add(button3);
         }

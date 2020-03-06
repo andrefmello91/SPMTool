@@ -23,11 +23,12 @@ namespace SPMTool
 	    public double                 Height          { get; }
 	    public int                    NumberOfBars    { get; }
 	    public double                 BarDiameter     { get; }
+		public Material.Steel		  Steel           { get; }
 	    public virtual Matrix<double> LocalStiffness  { get; set; }
         public Vector<double>         Forces          { get; set; }
 
         // Constructor
-        public Stringer(ObjectId stringerObject, Material.Concrete concrete, Material.Steel steel)
+        public Stringer(ObjectId stringerObject, Material.Concrete concrete)
 		{
 			ObjectId = stringerObject;
 
@@ -54,10 +55,6 @@ namespace SPMTool
 	            // Get the stringer number
 	            Number = Convert.ToInt32(data[(int) XData.Stringer.Number].Value);
 
-	            // Get reinforcement
-	            NumberOfBars = Convert.ToInt32(data[(int) XData.Stringer.NumOfBars].Value);
-	            BarDiameter  = Convert.ToDouble(data[(int) XData.Stringer.BarDiam].Value);
-
 	            // Create the list of grips
 	            Grips = new []
 	            {
@@ -69,8 +66,20 @@ namespace SPMTool
 	            // Get geometry
 	            Width  = Convert.ToDouble(data[(int) XData.Stringer.Width].Value);
 	            Height = Convert.ToDouble(data[(int) XData.Stringer.Height].Value);
+
+	            // Get reinforcement
+	            NumberOfBars = Convert.ToInt32(data[(int)XData.Stringer.NumOfBars].Value);
+	            BarDiameter = Convert.ToDouble(data[(int)XData.Stringer.BarDiam].Value);
+
+				// Get steel data
+				double
+					fy = Convert.ToDouble(data[(int) XData.Stringer.Steelfy].Value),
+					Es = Convert.ToDouble(data[(int) XData.Stringer.SteelEs].Value);
+
+				// Set steel data
+                Steel = new Material.Steel(fy,Es);
             }
-		}
+        }
 
         // Set global indexes from grips
         public int[] Index => GlobalIndexes();
@@ -167,7 +176,7 @@ namespace SPMTool
 			private double Ec    { get; }
 
             // Constructor
-            public Linear(ObjectId stringerObject, Material.Concrete concrete, Material.Steel steel = null) : base(stringerObject, concrete, steel)
+            public Linear(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
             {
 	            Ec = concrete.Eci;
             }

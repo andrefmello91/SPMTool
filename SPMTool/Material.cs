@@ -203,15 +203,25 @@ namespace SPMTool
             // Steel properties
             public double fy { get; set; }
             public double Es { get; set; }
-            public double ey => fy / Es;
+            public double ey
+            {
+	            get
+	            {
+		            if (Es == 0)
+			            return 0;
+
+		            return fy / Es;
+	            }
+            }
 
             // Maximum plastic strain on steel
             public double esu => 0.01;
 
             // Read the steel parameters
-            public Steel()
+            public Steel(double yieldStress, double elasticModule)
             {
-				ReadSteelData();
+	            fy = yieldStress;
+	            Es = elasticModule;
             }
 
             [CommandMethod("SetSteelParameters")]
@@ -312,50 +322,49 @@ namespace SPMTool
             }
         }
 
-        [CommandMethod("ViewMaterialParameters")]
-        public void ViewMaterialParameters()
+        [CommandMethod("ViewConcreteParameters")]
+        public void ViewConcreteParameters()
         {
             // Definition for the XData
-            string xData = "Material Parameters";
+            string xData = "Concrete Parameters";
             string concmsg;
-            string steelmsg;
+            //string steelmsg;
 
             // Get the values
             var concrete = new Concrete();
-            var steel = new Steel();
 
             // Write the concrete parameters
             if (concrete != null)
             {
                 // Get the parameters
                 concmsg = "\nConcrete Parameters" +
-                          "\nfcm = " + concrete.fcm + " MPa" +
-                          "\nfctm = " + Math.Round(concrete.fctm, 2) + " MPa" +
-                          "\nEci = " + Math.Round(concrete.Eci, 2) + " MPa" +
-                          "\nεc1 = " + Math.Round(1000 * concrete.ec1,2) + " E-03";
+                          "\nfcm = "  + concrete.fcm                      + " MPa" +
+                          "\nfctm = " + Math.Round(concrete.fctm, 2)      + " MPa" +
+                          "\nEci = "  + Math.Round(concrete.Eci, 2)       + " MPa" +
+                          "\nεc1 = "  + Math.Round(1000 * concrete.ec1,2) + " E-03";
             }
             else
             {
                 concmsg = "\nConcrete Parameters NOT SET";
             }
 
-            // Write the steel parameters
-            if (steel != null)
-            {
-                // Get the parameters
-                steelmsg = "\nSteel Parameters" +
-                           "\nfy = " + steel.fy + " MPa" +
-                           "\nEs = " + steel.Es + " MPa" +
-                           "\nεy = " + Math.Round(1000 * steel.ey, 2) + " E-03";
+            //// Write the steel parameters
+            //if (steel != null)
+            //{
+            //    // Get the parameters
+            //    steelmsg = "\nSteel Parameters" +
+            //               "\nfy = " + steel.fy + " MPa" +
+            //               "\nEs = " + steel.Es + " MPa" +
+            //               "\nεy = " + Math.Round(1000 * steel.ey, 2) + " E-03";
 
-            }
-            else
-            {
-                steelmsg = "\nSteel Parameters NOT SET";
-            }
+            //}
+            //else
+            //{
+            //    steelmsg = "\nSteel Parameters NOT SET";
+            //}
 
             // Display the values returned
-            Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + xData + "\n" + concmsg + "\n" + steelmsg);
+            Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + xData + "\n" + concmsg);
         }
     }
 }

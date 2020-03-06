@@ -14,16 +14,17 @@ namespace SPMTool
     public class Panel
     {
         // Panel parameters
-        public ObjectId               ObjectId           { get; }
-        public int                    Number             { get; }
-        public int[]                  Grips              { get; }
-        public Point3d[]              Vertices           { get; }
-        public double                 Width              { get; }
-        public (double X, double Y)   BarDiameter        { get; }
-        public (double X, double Y)   BarSpacing         { get; }
-        public virtual Matrix<double> TransMatrix        { get; }
-        public virtual Matrix<double> LocalStiffness     { get; }
-        public Vector<double>         Forces             { get; set; }
+        public ObjectId                             ObjectId           { get; }
+        public int                                  Number             { get; }
+        public int[]                                Grips              { get; }
+        public Point3d[]                            Vertices           { get; }
+        public double                               Width              { get; }
+        public (double X, double Y)                 BarDiameter        { get; }
+        public (double X, double Y)                 BarSpacing         { get; }
+        public (Material.Steel X, Material.Steel Y) Steel              { get; }
+        public virtual Matrix<double>               TransMatrix        { get; }
+        public virtual Matrix<double>               LocalStiffness     { get; }
+        public Vector<double>                       Forces             { get; set; }
 
         // Constructor
         public Panel(ObjectId panelObject, Material.Concrete concrete, Material.Steel steel)
@@ -55,15 +56,6 @@ namespace SPMTool
 	            Number = Convert.ToInt32(pnlData[(int) XData.Panel.Number].Value);
 	            Width = Convert.ToDouble(pnlData[(int) XData.Panel.Width].Value);
 
-	            // Get reinforcement
-	            double
-		            phiX = Convert.ToDouble(pnlData[(int) XData.Panel.XDiam].Value),
-		            phiY = Convert.ToDouble(pnlData[(int) XData.Panel.YDiam].Value),
-		            sx = Convert.ToDouble(pnlData[(int) XData.Panel.Sx].Value),
-		            sy = Convert.ToDouble(pnlData[(int) XData.Panel.Sy].Value);
-	            BarDiameter = (phiX, phiY);
-	            BarSpacing = (sx, sy);
-
 	            // Create the list of grips
 	            Grips = new []
 	            {
@@ -79,6 +71,27 @@ namespace SPMTool
 		            nd1, nd2, nd3, nd4
 	            };
 
+	            // Get reinforcement
+	            double
+		            phiX = Convert.ToDouble(pnlData[(int)XData.Panel.XDiam].Value),
+		            phiY = Convert.ToDouble(pnlData[(int)XData.Panel.YDiam].Value),
+		            sx = Convert.ToDouble(pnlData[(int)XData.Panel.Sx].Value),
+		            sy = Convert.ToDouble(pnlData[(int)XData.Panel.Sy].Value);
+	            BarDiameter = (phiX, phiY);
+	            BarSpacing = (sx, sy);
+
+				// Get steel data
+				double
+					fyx = Convert.ToDouble(pnlData[(int) XData.Panel.fyx].Value),
+					Esx = Convert.ToDouble(pnlData[(int) XData.Panel.Esx].Value),
+					fyy = Convert.ToDouble(pnlData[(int) XData.Panel.fyy].Value),
+					Esy = Convert.ToDouble(pnlData[(int) XData.Panel.Esy].Value);
+
+				Steel = 
+				(
+					new Material.Steel(fyx, Esx), 
+					new Material.Steel(fyy, Esy)
+				);
             }
         }
 
