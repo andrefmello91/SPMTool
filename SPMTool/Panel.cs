@@ -14,14 +14,13 @@ namespace SPMTool
     public class Panel
     {
         // Panel parameters
-        public ObjectId               ObjectId           { get; set; }
-        public int                    Number             { get; set; }
-        public int[]                  Grips              { get; set; }
-        public Point3d[]              Vertices           { get; set; }
-        public double[]               StringerDimensions { get; set; }
-        public double                 Width              { get; set; }
-        public (double X, double Y)   BarDiameter        { get; set; }
-        public (double X, double Y)   BarSpacing         { get; set; }
+        public ObjectId               ObjectId           { get; }
+        public int                    Number             { get; }
+        public int[]                  Grips              { get; }
+        public Point3d[]              Vertices           { get; }
+        public double                 Width              { get; }
+        public (double X, double Y)   BarDiameter        { get; }
+        public (double X, double Y)   BarSpacing         { get; }
         public virtual Matrix<double> TransMatrix        { get; }
         public virtual Matrix<double> LocalStiffness     { get; }
         public Vector<double>         Forces             { get; set; }
@@ -29,6 +28,8 @@ namespace SPMTool
         // Constructor
         public Panel(ObjectId panelObject, Material.Concrete concrete, Material.Steel steel)
         {
+	        ObjectId = panelObject;
+
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
@@ -286,7 +287,6 @@ namespace SPMTool
 	            return NotRectangularPanelStiffness();
             }
 
-
             // Calculate local stiffness of a rectangular panel
             private Matrix<double> RectangularPanelStiffness()
             {
@@ -413,11 +413,13 @@ namespace SPMTool
         public class NonLinear
         {
             // Public Properties
-			public (double[] X, double[] Y)                 EffectiveRatio { get; }
-			public Matrix<double>                           BAMatrix       { get; set; }
-	        public Matrix<double>                           QPMatrix       { get; set; }
-	        public Matrix<double>                           DMatrix        { get; set; }
-	        public Matrix<double>                           LocalStiffness { get; set; }
+            public double[]                 StringerDimensions { get; set; }
+
+            public (double[] X, double[] Y) EffectiveRatio     { get; }
+			public Matrix<double>           BAMatrix           { get; set; }
+	        public Matrix<double>           QPMatrix           { get; set; }
+	        public Matrix<double>           DMatrix            { get; set; }
+	        public Matrix<double>           LocalStiffness     { get; set; }
 
             // Private Properties
             private Material.Concrete Concrete { get; }
@@ -443,16 +445,6 @@ namespace SPMTool
 
             public NonLinear(Panel panel, Material.Concrete concrete, Material.Steel steel)
 	        {
-		        Concrete = concrete;
-		        Steel = steel;
-		        (x, y) = panel.VertexCoordinates;
-		        w = panel.Width;
-		        (px, py) = panel.ReinforcementRatio;
-		        hs = panel.StringerDimensions;
-		        (a, b, c, d) = panel.Dimensions;
-		        EffectiveRatio = EffectiveRRatio();
-		        BAMatrix = MatrixBA();
-		        QPMatrix = MatrixQP();
 	        }
 
 

@@ -20,12 +20,12 @@ namespace SPMTool
 	    }
 
 	    // Properties
-        public ObjectId             ObjectId     { get; set; }
-	    public int                  Number       { get; set; }
-	    public int                  Type         { get; set; }
-	    public Point3d              Position     { get; set; }
-	    public (bool X, bool Y)     Support      { get; set; }
-	    public (double X, double Y) Force        { get; set; }
+        public ObjectId             ObjectId     { get; }
+	    public int                  Number       { get; }
+	    public int                  Type         { get; }
+	    public Point3d              Position     { get; }
+	    public (bool X, bool Y)     Support      { get; }
+	    public (double X, double Y) Force        { get; }
 	    public (double X, double Y) Displacement { get; set; }
 
 		// Constructor
@@ -78,7 +78,6 @@ namespace SPMTool
 		}
 
         // Calculate nodal displacements
-        // Get the nodal displacements and save to XData
         public void Displacements(Vector<double> displacementVector)
         {
 	        var u = displacementVector;

@@ -17,9 +17,9 @@ namespace SPMTool
     {
 		// Properties
 		public double     MaxStringerForce { get; set; }
-		public Node[]     Nodes            { get; set; }
-        public Stringer[] Stringers        { get; set; }
-        public Panel[]    Panels           { get; set; }
+		public Node[]     Nodes            { get; }
+        public Stringer[] Stringers        { get; }
+        public Panel[]    Panels           { get; }
 
         // Get displacement vector
         private Vector<double> dispVector { get;}

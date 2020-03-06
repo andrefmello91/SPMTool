@@ -20,10 +20,10 @@ namespace SPMTool
         // Public Properties
         public Matrix<double> GlobalStiffness    { get; set; }
 		public Vector<double> DisplacementVector { get; set; }
-		public Node[]         Nodes              { get; set; }
-        public Stringer[]     Stringers          { get; set; }
-        public Panel[]        Panels             { get; set; }
-        public Vector<double> ForceVector        { get; set; }
+		public Node[]         Nodes              { get; }
+        public Stringer[]     Stringers          { get; }
+        public Panel[]        Panels             { get; }
+        public Vector<double> ForceVector        { get; }
 
         // Constructor
         public Analysis(InputData inputData)

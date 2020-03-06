@@ -13,16 +13,16 @@ namespace SPMTool
 	public class Stringer
     {
 	    // Stringer properties
-	    public ObjectId               ObjectId        { get; set; }
-	    public int                    Number          { get; set; }
-	    public int[]                  Grips           { get; set; }
-	    public Point3d[]              PointsConnected { get; set; }
-	    public double                 Length          { get; set; }
-	    public double                 Angle           { get; set; }
-	    public double                 Width           { get; set; }
-	    public double                 Height          { get; set; }
-	    public int                    NumberOfBars    { get; set; }
-	    public double                 BarDiameter     { get; set; }
+	    public ObjectId               ObjectId        { get; }
+	    public int                    Number          { get; }
+	    public int[]                  Grips           { get; }
+	    public Point3d[]              PointsConnected { get; }
+	    public double                 Length          { get; }
+	    public double                 Angle           { get; }
+	    public double                 Width           { get; }
+	    public double                 Height          { get; }
+	    public int                    NumberOfBars    { get; }
+	    public double                 BarDiameter     { get; }
 	    public virtual Matrix<double> LocalStiffness  { get; set; }
         public Vector<double>         Forces          { get; set; }
 
