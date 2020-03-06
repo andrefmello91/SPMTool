@@ -521,6 +521,9 @@ namespace SPMTool
                     // Get the array of midpoints ordered
                     List<Point3d> midPtsList = Auxiliary.OrderPoints(midPts);
 
+                    // Bool to alert the user
+                    bool userAlert = false;
+
                     // Access the stringers on the document
                     foreach (ObjectId strObj in strs)
                     {
@@ -530,28 +533,46 @@ namespace SPMTool
                         // Initialize the array of typed values for XData
                         TypedValue[] data;
 
+                        // Get the Xdata size
+                        int size = Enum.GetNames(typeof(XData.Stringer)).Length;
+
                         // If XData does not exist, create it
                         if (str.XData == null)
-                        {
-                            // Get the Xdata size
-                            int size = Enum.GetNames(typeof(XData.Stringer)).Length;
-                            data = new TypedValue[size];
-
-                            // Set the initial parameters
-                            data[(int)XData.Stringer.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
-                            data[(int)XData.Stringer.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-                            data[(int)XData.Stringer.Width]     = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
-                            data[(int)XData.Stringer.Height]    = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
-                            data[(int)XData.Stringer.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[(int)XData.Stringer.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                        }
+	                        data = NewStringerXData();
 
                         else // Xdata exists
                         {
                             // Get the result buffer as an array
                             ResultBuffer rb = str.GetXDataForApplication(AutoCAD.appName);
                             data = rb.AsArray();
+
+							// Verify the size of XData
+							if (data.Length != size)
+							{
+								data = NewStringerXData();
+
+								// Alert the user
+								userAlert = true;
+							}
                         }
+
+						// Method to create XData
+						TypedValue[] NewStringerXData()
+						{
+							var newData = new TypedValue[size];
+
+                            // Set the initial parameters
+                            newData[(int)XData.Stringer.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
+                            newData[(int)XData.Stringer.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+                            newData[(int)XData.Stringer.Width]     = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                            newData[(int)XData.Stringer.Height]    = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                            newData[(int)XData.Stringer.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            newData[(int)XData.Stringer.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            newData[(int)XData.Stringer.Steelfy]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            newData[(int)XData.Stringer.SteelEs]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+
+                            return newData;
+						}
 
                         // Get the coordinates of the midpoint of the stringer
                         Point3d midPt = Auxiliary.MidPoint(str.StartPoint, str.EndPoint);
@@ -573,6 +594,10 @@ namespace SPMTool
                         // Add the new XData
                         str.XData = new ResultBuffer(data);
                     }
+
+					// Alert the user
+					if (userAlert)
+						Application.ShowAlertDialog("Please set stringer geometry and reinforcement again");
 
                     // Commit and dispose the transaction
                     trans.Commit();
@@ -1118,6 +1143,9 @@ namespace SPMTool
                     // Get the list of center points ordered
                     List<Point3d> cntrPtsList = Auxiliary.OrderPoints(cntrPts);
 
+					// Bool to alert the user
+					bool userAlert = false;
+
                     // Access the panels on the document
                     foreach (ObjectId pnlObj in pnls)
                     {
@@ -1127,28 +1155,48 @@ namespace SPMTool
                         // Initialize the array of typed values for XData
                         TypedValue[] data;
 
+                        // Get the Xdata size
+                        int size = Enum.GetNames(typeof(XData.Panel)).Length;
+
                         // Check if the XData already exist. If not, create it
                         if (pnl.XData == null)
-                        {
-                            // Get the Xdata size
-                            int size = Enum.GetNames(typeof(XData.Panel)).Length;
-                            data = new TypedValue[size];
-
-                            // Set the initial parameters
-                            data[(int)XData.Panel.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
-                            data[(int)XData.Panel.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-                            data[(int)XData.Panel.Width]    = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
-                            data[(int)XData.Panel.XDiam]    = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[(int)XData.Panel.Sx]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[(int)XData.Panel.YDiam]    = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[(int)XData.Panel.Sy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                        }
+	                        data = NewPanelXData();
 
                         else // Xdata exists
                         {
                             // Get the result buffer as an array
                             ResultBuffer rb = pnl.GetXDataForApplication(AutoCAD.appName);
                             data = rb.AsArray();
+
+                            // Verify the size of XData
+                            if (data.Length != size)
+                            {
+	                            data = NewPanelXData();
+
+								// Alert user
+								userAlert = true;
+                            }
+                        }
+
+						// Method to set panel data
+                        TypedValue[] NewPanelXData()
+                        {
+	                        TypedValue[] newData = new TypedValue[size];
+
+                            // Set the initial parameters
+                            newData[(int)XData.Panel.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
+                            newData[(int)XData.Panel.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+                            newData[(int)XData.Panel.Width]    = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                            newData[(int)XData.Panel.XDiam]    = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            newData[(int)XData.Panel.Sx]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            newData[(int)XData.Panel.fyx]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            newData[(int)XData.Panel.Esx]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            newData[(int)XData.Panel.YDiam]    = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            newData[(int)XData.Panel.Sy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            newData[(int)XData.Panel.fyy]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            newData[(int)XData.Panel.Esy]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+
+                            return newData;
                         }
 
                         // Get the vertices
@@ -1200,6 +1248,10 @@ namespace SPMTool
                         // Move the panels to bottom
                         drawOrder.MoveToBottom(pnls);
                     }
+
+                    // Alert user
+					if (userAlert)
+						Application.ShowAlertDialog("Please set panel geometry and reinforcement again");
 
                     // Commit and dispose the transaction
                     trans.Commit();

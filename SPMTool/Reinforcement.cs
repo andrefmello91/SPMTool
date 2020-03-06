@@ -19,72 +19,111 @@ namespace SPMTool
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
-                // Request objects to be selected in the drawing area
-                AutoCAD.edtr.WriteMessage("\nSelect the stringers to assign reinforcement (you can select other elements, the properties will be only applied to elements with 'Stringer' layer activated).");
-                PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
+	            // Request objects to be selected in the drawing area
+	            AutoCAD.edtr.WriteMessage(
+		            "\nSelect the stringers to assign reinforcement (you can select other elements, the properties will be only applied to elements with 'Stringer' layer activated).");
+	            PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
 
-                // If the prompt status is OK, objects were selected
-                if (selRes.Status == PromptStatus.OK)
-                {
-                    SelectionSet set = selRes.Value;
+	            // If the prompt status is OK, objects were selected
+	            if (selRes.Status == PromptStatus.Cancel)
+		            return;
 
-                    // Ask the user to input the stringer width
-                    PromptIntegerOptions nBarsOp = new PromptIntegerOptions("\nInput the number of stringer reinforcement bars (only needed for nonlinear analysis):")
-                    {
-                        DefaultValue = 0,
-                        AllowNegative = false
-                    };
+	            SelectionSet set = selRes.Value;
 
-                    // Get the result
-                    PromptIntegerResult nBarsRes = AutoCAD.edtr.GetInteger(nBarsOp);
+	            // Ask the user to input the stringer width
+	            PromptIntegerOptions nBarsOp =
+		            new PromptIntegerOptions(
+			            "\nInput the number of stringer reinforcement bars (only needed for nonlinear analysis):")
+		            {
+			            DefaultValue = 0,
+			            AllowNegative = false
+		            };
 
-                    if (nBarsRes.Status == PromptStatus.OK)
-                    {
-                        double nBars = nBarsRes.Value;
+	            // Get the result
+	            PromptIntegerResult nBarsRes = AutoCAD.edtr.GetInteger(nBarsOp);
 
-                        // Ask the user to input the stringer height
-                        PromptDoubleOptions phiOp = new PromptDoubleOptions("\nInput the diameter (in mm) of stringer reinforcement bars:")
-                        {
-                            DefaultValue = 0,
-                            AllowNegative = false
-                        };
+	            if (nBarsRes.Status == PromptStatus.Cancel)
+		            return;
 
-                        // Get the result
-                        PromptDoubleResult phiRes = AutoCAD.edtr.GetDouble(phiOp);
+	            double nBars = nBarsRes.Value;
 
-                        if (phiRes.Status == PromptStatus.OK)
-                        {
-                            double phi = phiRes.Value;
+	            // Ask the user to input the stringer height
+	            PromptDoubleOptions phiOp =
+		            new PromptDoubleOptions("\nInput the diameter (in mm) of stringer reinforcement bars:")
+		            {
+			            DefaultValue = 0,
+			            AllowNegative = false
+		            };
 
-                            foreach (SelectedObject obj in set)
-                            {
-                                // Open the selected object for read
-                                Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+	            // Get the result
+	            PromptDoubleResult phiRes = AutoCAD.edtr.GetDouble(phiOp);
 
-                                // Check if the selected object is a node
-                                if (ent.Layer == Layers.stringer)
-                                {
-                                    // Upgrade the OpenMode
-                                    ent.UpgradeOpen();
+	            if (phiRes.Status == PromptStatus.Cancel)
+		            return;
 
-                                    // Access the XData as an array
-                                    ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
-                                    TypedValue[] data = rb.AsArray();
+	            double phi = phiRes.Value;
 
-                                    // Set the new reinforcement
-                                    data[(int)XData.Stringer.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataReal, nBars);
-                                    data[(int)XData.Stringer.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal, phi);
+	            // Ask the user to input the Steel yield strength
+	            PromptDoubleOptions fyOp =
+		            new PromptDoubleOptions("\nInput the yield strength (MPa) of stringer reinforcement bars:")
+		            {
+			            DefaultValue = 0,
+			            AllowNegative = false
+		            };
 
-                                    // Add the new XData
-                                    ent.XData = new ResultBuffer(data);
-                                }
-                            }
+	            // Get the result
+	            PromptDoubleResult fyRes = AutoCAD.edtr.GetDouble(fyOp);
 
-                            // Save the new object to the database
-                            trans.Commit();
-                        }
-                    }
-                }
+	            if (fyRes.Status == PromptStatus.Cancel)
+		            return;
+
+	            double fy = fyRes.Value;
+
+	            // Ask the user to input the Steel elastic modulus
+	            PromptDoubleOptions EsOp =
+		            new PromptDoubleOptions("\nInput the elastic modulus (MPa) of stringer reinforcement bars:")
+		            {
+			            DefaultValue = 0,
+			            AllowNegative = false
+		            };
+
+	            // Get the result
+	            PromptDoubleResult EsRes = AutoCAD.edtr.GetDouble(EsOp);
+
+	            if (EsRes.Status == PromptStatus.Cancel)
+		            return;
+
+	            double Es = EsRes.Value;
+
+				// Save the properties
+	            foreach (SelectedObject obj in set)
+	            {
+		            // Open the selected object for read
+		            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+		            // Check if the selected object is a node
+		            if (ent.Layer == Layers.stringer)
+		            {
+			            // Upgrade the OpenMode
+			            ent.UpgradeOpen();
+
+			            // Access the XData as an array
+			            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
+			            TypedValue[] data = rb.AsArray();
+
+			            // Set the new reinforcement
+			            data[(int) XData.Stringer.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataReal, nBars);
+			            data[(int) XData.Stringer.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal, phi);
+			            data[(int) XData.Stringer.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal, fy);
+			            data[(int) XData.Stringer.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal, Es);
+
+			            // Add the new XData
+			            ent.XData = new ResultBuffer(data);
+		            }
+	            }
+
+	            // Save the new object to the database
+	            trans.Commit();
             }
         }
 
@@ -94,105 +133,181 @@ namespace SPMTool
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
-                // Request objects to be selected in the drawing area
-                AutoCAD.edtr.WriteMessage("\nSelect the panels to assign reinforcement (you can select other elements, the properties will be only applied to elements with 'Panel' layer activated).");
-                PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
+	            // Request objects to be selected in the drawing area
+	            AutoCAD.edtr.WriteMessage(
+		            "\nSelect the panels to assign reinforcement (you can select other elements, the properties will be only applied to elements with 'Panel' layer activated).");
+	            PromptSelectionResult selRes = AutoCAD.edtr.GetSelection();
 
-                // If the prompt status is OK, objects were selected
-                if (selRes.Status == PromptStatus.OK)
-                {
-                    // Get the selection
-                    SelectionSet set = selRes.Value;
+	            // If the prompt status is OK, objects were selected
+	            if (selRes.Status == PromptStatus.Cancel)
+		            return;
 
-                    // Ask the user to input the diameter of bars
-                    PromptDoubleOptions phiXOp = new PromptDoubleOptions("\nInput the reinforcement bar diameter (in mm) for the X direction for selected panels (only needed for nonlinear analysis):")
-                    {
-                        DefaultValue = 0,
-                        AllowNegative = false
-                    };
+	            // Get the selection
+	            SelectionSet set = selRes.Value;
 
-                    // Get the result
-                    PromptDoubleResult phiXRes = AutoCAD.edtr.GetDouble(phiXOp);
+	            // Ask the user to input the diameter of bars
+	            PromptDoubleOptions phiXOp =
+		            new PromptDoubleOptions(
+			            "\nInput the reinforcement bar diameter (in mm) for the X direction for selected panels (only needed for nonlinear analysis):")
+		            {
+			            DefaultValue = 0,
+			            AllowNegative = false
+		            };
 
-                    if (phiXRes.Status == PromptStatus.OK)
-                    {
-                        double phiX = phiXRes.Value;
+	            // Get the result
+	            PromptDoubleResult phiXRes = AutoCAD.edtr.GetDouble(phiXOp);
 
-                        // Ask the user to input the bar spacing
-                        PromptDoubleOptions sxOp = new PromptDoubleOptions("\nInput the bar spacing (in mm) for the X direction:")
-                        {
-                            DefaultValue = 0,
-                            AllowNegative = false
-                        };
+	            if (phiXRes.Status == PromptStatus.Cancel)
+		            return;
 
-                        // Get the result
-                        PromptDoubleResult sxRes = AutoCAD.edtr.GetDouble(sxOp);
+	            double phiX = phiXRes.Value;
 
-                        if (sxRes.Status == PromptStatus.OK)
-                        {
-                            double sx = sxRes.Value;
+	            // Ask the user to input the bar spacing
+	            PromptDoubleOptions sxOp =
+		            new PromptDoubleOptions("\nInput the bar spacing (in mm) for the X direction:")
+		            {
+			            DefaultValue = 0,
+			            AllowNegative = false
+		            };
 
-                            // Ask the user to input the diameter of bars
-                            PromptDoubleOptions phiYOp = new PromptDoubleOptions("\nInput the reinforcement bar diameter (in mm) for the Y direction for selected panels (only needed for nonlinear analysis):")
-                            {
-                                DefaultValue = 0,
-                                AllowNegative = false
-                            };
+	            // Get the result
+	            PromptDoubleResult sxRes = AutoCAD.edtr.GetDouble(sxOp);
 
-                            // Get the result
-                            PromptDoubleResult phiYRes = AutoCAD.edtr.GetDouble(phiYOp);
+	            if (sxRes.Status == PromptStatus.Cancel)
+		            return;
 
-                            if (phiYRes.Status == PromptStatus.OK)
-                            {
-                                double phiY = phiYRes.Value;
+	            double sx = sxRes.Value;
 
-                                // Ask the user to input the bar spacing
-                                PromptDoubleOptions syOp = new PromptDoubleOptions("\nInput the bar spacing (in mm) for the Y direction:")
-                                {
-                                    DefaultValue = 0,
-                                    AllowNegative = false
-                                };
+	            // Ask the user to input the Steel yield strength
+	            PromptDoubleOptions fyxOp =
+		            new PromptDoubleOptions("\nInput the yield strength (MPa) of panel reinforcement bars in X direction:")
+		            {
+			            DefaultValue = 0,
+			            AllowNegative = false
+		            };
 
-                                // Get the result
-                                PromptDoubleResult syRes = AutoCAD.edtr.GetDouble(syOp);
+	            // Get the result
+	            PromptDoubleResult fyxRes = AutoCAD.edtr.GetDouble(fyxOp);
 
-                                if (syRes.Status == PromptStatus.OK)
-                                {
-                                    double sy = syRes.Value;
+	            if (fyxRes.Status == PromptStatus.Cancel)
+		            return;
 
-                                    foreach (SelectedObject obj in set)
-                                    {
-                                        // Open the selected object for read
-                                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+	            double fyx = fyxRes.Value;
 
-                                        // Check if the selected object is a node
-                                        if (ent.Layer == Layers.panel)
-                                        {
-                                            // Upgrade the OpenMode
-                                            ent.UpgradeOpen();
+	            // Ask the user to input the Steel elastic modulus
+	            PromptDoubleOptions EsxOp =
+		            new PromptDoubleOptions("\nInput the elastic modulus (MPa) of panel reinforcement bars in X direction:")
+		            {
+			            DefaultValue = 0,
+			            AllowNegative = false
+		            };
 
-                                            // Access the XData as an array
-                                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
-                                            TypedValue[] data = rb.AsArray();
+	            // Get the result
+	            PromptDoubleResult EsxRes = AutoCAD.edtr.GetDouble(EsxOp);
 
-                                            // Set the new geometry and reinforcement (line 7 to 9 of the array)
-                                            data[(int)XData.Panel.XDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, phiX);
-                                            data[(int)XData.Panel.Sx]    = new TypedValue((int)DxfCode.ExtendedDataReal, sx);
-                                            data[(int)XData.Panel.YDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, phiY);
-                                            data[(int)XData.Panel.Sy]    = new TypedValue((int)DxfCode.ExtendedDataReal, sy);
+	            if (EsxRes.Status == PromptStatus.Cancel)
+		            return;
 
-                                            // Add the new XData
-                                            ent.XData = new ResultBuffer(data);
-                                        }
-                                    }
+	            double Esx = EsxRes.Value;
 
-                                    // Save the new object to the database
-                                    trans.Commit();
-                                }
-                            }
-                        }
-                    }
-                }
+
+                // Ask the user to input the diameter of bars
+                PromptDoubleOptions phiYOp =
+		            new PromptDoubleOptions(
+			            "\nInput the reinforcement bar diameter (in mm) for the Y direction for selected panels (only needed for nonlinear analysis):")
+		            {
+			            DefaultValue = phiX,
+			            AllowNegative = false
+		            };
+
+	            // Get the result
+	            PromptDoubleResult phiYRes = AutoCAD.edtr.GetDouble(phiYOp);
+
+	            if (phiYRes.Status == PromptStatus.Cancel)
+		            return;
+
+	            double phiY = phiYRes.Value;
+
+	            // Ask the user to input the bar spacing
+	            PromptDoubleOptions syOp =
+		            new PromptDoubleOptions("\nInput the bar spacing (in mm) for the Y direction:")
+		            {
+			            DefaultValue = sx,
+			            AllowNegative = false
+		            };
+
+	            // Get the result
+	            PromptDoubleResult syRes = AutoCAD.edtr.GetDouble(syOp);
+
+	            if (syRes.Status == PromptStatus.Cancel)
+		            return;
+
+	            double sy = syRes.Value;
+
+	            // Ask the user to input the Steel yield strength
+	            PromptDoubleOptions fyyOp =
+		            new PromptDoubleOptions("\nInput the yield strength (MPa) of panel reinforcement bars in Y direction:")
+		            {
+			            DefaultValue = fyx,
+			            AllowNegative = false
+		            };
+
+	            // Get the result
+	            PromptDoubleResult fyyRes = AutoCAD.edtr.GetDouble(fyyOp);
+
+	            if (fyyRes.Status == PromptStatus.Cancel)
+		            return;
+
+	            double fyy = fyyRes.Value;
+
+	            // Ask the user to input the Steel elastic modulus
+	            PromptDoubleOptions EsyOp =
+		            new PromptDoubleOptions("\nInput the elastic modulus (MPa) of panel reinforcement bars in X direction:")
+		            {
+			            DefaultValue = Esx,
+			            AllowNegative = false
+		            };
+
+	            // Get the result
+	            PromptDoubleResult EsyRes = AutoCAD.edtr.GetDouble(EsyOp);
+
+	            if (EsyRes.Status == PromptStatus.Cancel)
+		            return;
+
+	            double Esy = EsyRes.Value;
+
+                foreach (SelectedObject obj in set)
+	            {
+		            // Open the selected object for read
+		            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+		            // Check if the selected object is a node
+		            if (ent.Layer == Layers.panel)
+		            {
+			            // Upgrade the OpenMode
+			            ent.UpgradeOpen();
+
+			            // Access the XData as an array
+			            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
+			            TypedValue[] data = rb.AsArray();
+
+			            // Set the new geometry and reinforcement (line 7 to 9 of the array)
+			            data[(int) XData.Panel.XDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, phiX);
+			            data[(int) XData.Panel.Sx]    = new TypedValue((int) DxfCode.ExtendedDataReal, sx);
+			            data[(int) XData.Panel.fyx]   = new TypedValue((int) DxfCode.ExtendedDataReal, fyx);
+			            data[(int) XData.Panel.Esx]   = new TypedValue((int) DxfCode.ExtendedDataReal, Esx);
+			            data[(int) XData.Panel.YDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, phiY);
+			            data[(int) XData.Panel.Sy]    = new TypedValue((int) DxfCode.ExtendedDataReal, sy);
+			            data[(int)XData.Panel.fyy]    = new TypedValue((int)DxfCode.ExtendedDataReal, fyy);
+			            data[(int)XData.Panel.Esy]    = new TypedValue((int)DxfCode.ExtendedDataReal, Esy);
+
+                        // Add the new XData
+                        ent.XData = new ResultBuffer(data);
+		            }
+	            }
+
+	            // Save the new object to the database
+	            trans.Commit();
             }
         }
 

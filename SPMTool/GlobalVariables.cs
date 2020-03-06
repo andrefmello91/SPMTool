@@ -99,7 +99,9 @@ namespace SPMTool
             Width     = 6,
             Height    = 7,
             NumOfBars = 8,
-            BarDiam   = 9
+            BarDiam   = 9,
+			Steelfy   = 10,
+			SteelEs   = 11
         }
 
         // Panel indexers
@@ -115,8 +117,12 @@ namespace SPMTool
             Width    = 7,
             XDiam    = 8,
             Sx       = 9,
-            YDiam    = 10,
-            Sy       = 11
+			fyx      = 10,
+			Esx      = 11,
+            YDiam    = 12,
+            Sy       = 13,
+			fyy      = 14,
+			Esy      = 15
         }
     }
 }
