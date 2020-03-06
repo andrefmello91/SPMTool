@@ -20,9 +20,21 @@ namespace SPMTool
             // Properties
 			public double AggregateDiameter { get; set; }
             public double fcm               { get; set; }
-            public double fctm              { get; set; }
-            public double Eci               { get; set; }
-            public double ec1               { get; set; }
+			private double alphaE           { get; }
+
+			// Calculate parameters according to FIB MC2010
+			public double fctm
+			{
+				get
+				{
+					if (fcm <= 50)
+						return 0.3 * Math.Pow(fcm, 0.66666667);
+					//else
+						return 2.12 * Math.Log(1 + 0.1 * fcm);
+                }
+            }
+			public double Eci  => 21500 * alphaE * Math.Pow(fcm / 10, 0.33333333);
+            public double ec1  => -1.6 / 1000 * Math.Pow(fcm / 10, 0.25);
             public double Ec1 => fcm / ec1;
             public double k   => Eci / Ec1;
             public double ecr => fctm / Eci;
@@ -43,7 +55,31 @@ namespace SPMTool
             // Read the concrete parameters
             public Concrete()
             {
-				ReadConcreteData();
+	            // Start a transaction
+	            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+	            {
+		            // Get the NOD in the database
+		            DBDictionary nod = (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
+
+		            // Check if it exists
+		            if (nod.Contains("ConcreteParams"))
+		            {
+			            // Read the concrete Xrecord
+			            ObjectId concPar = nod.GetAt("ConcreteParams");
+			            Xrecord concXrec = (Xrecord)trans.GetObject(concPar, OpenMode.ForRead);
+			            ResultBuffer concRb = concXrec.Data;
+			            TypedValue[] concData = concRb.AsArray();
+
+			            // Get the parameters from XData
+			            fcm = Convert.ToDouble(concData[2].Value);
+			            alphaE = Convert.ToDouble(concData[3].Value);
+			            AggregateDiameter = Convert.ToDouble(concData[4].Value);
+		            }
+		            else
+		            {
+			            Application.ShowAlertDialog("Please set concrete parameters.");
+		            }
+	            }
             }
 
             [CommandMethod("SetConcreteParameters")]
@@ -154,47 +190,6 @@ namespace SPMTool
 		            }
 	            }
             }
-
-			// Read concrete parameters
-			private void ReadConcreteData()
-			{
-				// Start a transaction
-				using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-				{
-					// Get the NOD in the database
-					DBDictionary nod = (DBDictionary)trans.GetObject(AutoCAD.curDb.NamedObjectsDictionaryId, OpenMode.ForRead);
-
-					// Check if it exists
-					if (nod.Contains("ConcreteParams"))
-					{
-						// Read the concrete Xrecord
-						ObjectId concPar = nod.GetAt("ConcreteParams");
-						Xrecord concXrec = (Xrecord)trans.GetObject(concPar, OpenMode.ForRead);
-						ResultBuffer concRb = concXrec.Data;
-						TypedValue[] concData = concRb.AsArray();
-
-						// Get the parameters from XData
-						fcm = Convert.ToDouble(concData[2].Value);
-						AggregateDiameter = Convert.ToDouble(concData[4].Value);
-
-						// Calculate the parameters according do FIB MC2010
-						// fctm (dependant on fcm value)
-						if (fcm <= 50)
-							fctm = 0.3 * Math.Pow(fcm, 0.66666667);
-						else
-							fctm = 2.12 * Math.Log(1 + 0.1 * fcm);
-
-						// Set to Concrete
-						double aE = Convert.ToDouble(concData[3].Value);
-						Eci = 21500 * aE * Math.Pow(fcm / 10, 0.33333333);
-						ec1 = -1.6 / 1000 * Math.Pow(fcm / 10, 0.25);
-					}
-					else
-					{
-						Application.ShowAlertDialog("Please set concrete parameters.");
-					}
-				}
-			}
         }
 
         // Steel
@@ -332,7 +327,7 @@ namespace SPMTool
             var concrete = new Concrete();
 
             // Write the concrete parameters
-            if (concrete.fcm != 0)
+            if (concrete.IsSet)
             {
                 // Get the parameters
                 concmsg = "\nConcrete Parameters:\n" +
@@ -345,21 +340,6 @@ namespace SPMTool
             {
                 concmsg = "\nConcrete Parameters NOT SET";
             }
-
-            //// Write the steel parameters
-            //if (steel != null)
-            //{
-            //    // Get the parameters
-            //    steelmsg = "\nSteel Parameters" +
-            //               "\nfy = " + steel.fy + " MPa" +
-            //               "\nEs = " + steel.Es + " MPa" +
-            //               "\nεy = " + Math.Round(1000 * steel.ey, 2) + " E-03";
-
-            //}
-            //else
-            //{
-            //    steelmsg = "\nSteel Parameters NOT SET";
-            //}
 
             // Display the values returned
             Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + "\n" + concmsg);
