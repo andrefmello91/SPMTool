@@ -465,8 +465,11 @@ namespace SPMTool
 				// Create the layer
 				Auxiliary.CreateLayer(Layers.displacements, (short) AutoCAD.Colors.Yellow1, 0);
 
-				// Erase all the displaced objects in the drawing
-				ObjectIdCollection dispObjs = Auxiliary.GetEntitiesOnLayer(Layers.displacements);
+				// Turn the layer off
+				Auxiliary.LayerOff(Layers.displacements);
+
+                // Erase all the displaced objects in the drawing
+                ObjectIdCollection dispObjs = Auxiliary.GetEntitiesOnLayer(Layers.displacements);
 				if (dispObjs.Count > 0)
 					Auxiliary.EraseObjects(dispObjs);
 
@@ -558,9 +561,6 @@ namespace SPMTool
 
 				// Add the nodes
 				Geometry.Node.NewNode(dispNds, Layers.displacements);
-
-				// Turn the layer off
-				Auxiliary.LayerOff(Layers.displacements);
 			}
 
 			// Set displacement to nodes
@@ -596,7 +596,7 @@ namespace SPMTool
 
             }
 
-            [CommandMethod("ViewElementData")]
+			[CommandMethod("ViewElementData")]
 			public static void ViewElementData()
 			{
 				// Initialize a message to display
@@ -618,138 +618,103 @@ namespace SPMTool
 							// Get the entity for read
 							Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
 
-							// Get the extended data attached to each object for SPMTool
-							ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
-
-							// Make sure the Xdata is not empty
-							if (rb != null)
+							// If it's a node
+							if (ent.Layer == Layers.extNode || ent.Layer == Layers.intNode)
 							{
-								// Get the XData as an array
-								TypedValue[] data = rb.AsArray();
+								// Get the node
+								Node nd = new Node(entRes.ObjectId);
 
-								// If it's a node
-								if (ent.Layer == Layers.extNode || ent.Layer == Layers.intNode)
+								// Get the position
+								double
+									xPos = Math.Round(nd.Position.X, 2),
+									yPos = Math.Round(nd.Position.Y, 2);
+
+								// Get supports
+								string sup = "";
+								if (nd.Support == (false, false))
+									sup = "Free";
+								else
 								{
-									// Read as a DBpoint
-									DBPoint nd = ent as DBPoint;
+									if (nd.Support.X)
+										sup += "X";
+									if (nd.Support.Y)
+										sup += "Y";
+                                }
 
-									// Get the position
-									double xPos = Math.Round(nd.Position.X, 2),
-										yPos = Math.Round(nd.Position.Y, 2);
+								// Approximate displacements
+								double
+									ux = Math.Round(nd.Displacement.X, 2),
+									uy = Math.Round(nd.Displacement.Y, 2);
 
-									// Get the parameters
-									string ndNum = data[(int) XData.Node.Number].Value.ToString(),
-										sup   = data[(int) XData.Node.Support].Value.ToString(),
-										fX    = data[(int) XData.Node.Fx].Value.ToString(),
-										fY    = data[(int) XData.Node.Fy].Value.ToString(),
-										ux    = data[(int) XData.Node.Ux].Value.ToString(),
-										uy    = data[(int) XData.Node.Uy].Value.ToString();
-
-									msgstr = "Node " + ndNum + "\n\n" +
-									         "Node position: (" + xPos + ", " + yPos + ")" + "\n" +
-									         "Support conditions: " + sup + "\n" +
-									         "Fx = " + fX + " kN" + "\n" +
-									         "Fy = " + fY + " kN" + "\n" +
-									         "ux = " + ux + " mm" + "\n" +
-									         "uy = " + uy + " mm";
-								}
-
-								// If it's a stringer
-								if (ent.Layer == Layers.stringer)
-								{
-									// Read as a line
-									Line str = ent as Line;
-
-									// Get the lenght
-									double lgt = Math.Round(str.Length, 2);
-
-									// Get the parameters
-									string grip1 = data[(int) XData.Stringer.Number].Value.ToString(),
-										grip2 = data[(int) XData.Stringer.Grip1].Value.ToString(),
-										grip3 = data[(int) XData.Stringer.Grip2].Value.ToString(),
-										endNd = data[(int) XData.Stringer.Grip3].Value.ToString(),
-										wdt   = data[(int) XData.Stringer.Width].Value.ToString(),
-										hgt   = data[(int) XData.Stringer.Height].Value.ToString();
-
-									// Get the reinforcement
-									double nBars = Convert.ToDouble(data[(int) XData.Stringer.NumOfBars].Value),
-										phi   = Convert.ToDouble(data[(int) XData.Stringer.BarDiam].Value);
-
-									// Calculate the reinforcement area
-									double As = Math.Round(Reinforcement.StringerReinforcement(nBars, phi), 2);
-
-									msgstr = "Stringer " + grip1 + "\n\n" +
-									         "Grips: (" + grip2 + " - " + grip3 + " - " + endNd + ")" + "\n" +
-									         "Lenght = " + lgt + " mm" + "\n" +
-									         "Width = " + wdt + " mm" + "\n" +
-									         "Height = " + hgt + " mm" + "\n" +
-									         "Reinforcement = " + nBars + " Ø " + phi + " mm (" + As + " mm2)";
-								}
-
-								// If it's a panel
-								if (ent.Layer == Layers.panel)
-								{
-									// Get the parameters
-									string pnlNum = data[(int) XData.Panel.Number].Value.ToString();
-
-									string[] pnlGps =
-									{
-										data[(int) XData.Panel.Grip1].Value.ToString(),
-										data[(int) XData.Panel.Grip2].Value.ToString(),
-										data[(int) XData.Panel.Grip3].Value.ToString(),
-										data[(int) XData.Panel.Grip4].Value.ToString()
-									};
-
-									double w = Convert.ToDouble(data[(int) XData.Panel.Width].Value);
-
-									(double X, double Y) phi =
-									(
-										Convert.ToDouble(data[(int) XData.Panel.XDiam].Value),
-										Convert.ToDouble(data[(int) XData.Panel.YDiam].Value)
-									);
-
-									(double X, double Y) s =
-									(
-										Convert.ToDouble(data[(int) XData.Panel.Sx].Value),
-										Convert.ToDouble(data[(int) XData.Panel.Sy].Value)
-									);
-
-									// Calculate the reinforcement ratio
-									var (psx, psy) = Reinforcement.PanelReinforcement(phi, s, w);
-									psx = Math.Round(psx, 5);
-									psy = Math.Round(psy, 5);
-
-									msgstr = "Panel " + pnlNum + "\n\n" +
-									         "Grips: (" + pnlGps[0] + " - " + pnlGps[1] + " - " + pnlGps[2] + " - " +
-									         pnlGps[3] + ")" + "\n" +
-									         "Width = " + w + " mm" + "\n" +
-									         "Reinforcement (x) = Ø " + phi.X + " mm, s = " + s.X + " mm (ρsx = " +
-									         psx + ")\n" +
-									         "Reinforcement (y) = Ø " + phi.Y + " mm, s = " + s.Y + " mm (ρsy = " +
-									         psy + ")";
-								}
-
-								// If it's a force text
-								if (ent.Layer == Layers.forceText)
-								{
-									// Get the parameters
-									string posX = data[2].Value.ToString(),
-										posY = data[3].Value.ToString();
-
-									msgstr = "Force at position  (" + posX + ", " + posY + ")";
-								}
-
+                                msgstr = 
+									 "Node " + nd.Number + "\n\n" +
+							         "Node position: ("     + xPos + ", " + yPos + ")" + "\n" +
+							         "Support conditions: " + sup + "\n" +
+							         "Fx = " + nd.Force.X + " kN" + "\n" +
+							         "Fy = " + nd.Force.Y + " kN" + "\n" +
+							         "ux = " + ux + " mm" + "\n" +
+							         "uy = " + uy + " mm";
 							}
+
+							// If it's a stringer
+							else if (ent.Layer == Layers.stringer)
+							{
+								// Get the stringer
+								Stringer str = new Stringer(entRes.ObjectId);
+
+								// Approximate steel area
+								double As = Math.Round(str.SteelArea, 2);
+
+								msgstr = 
+									 "Stringer " + str.Number + "\n\n" +
+							         "Grips: (" + str.Grips[0] + " - " + str.Grips[1] + " - " + str.Grips[2] + ")" + "\n" +
+							         "Lenght = " + str.Length + " mm" + "\n" +
+							         "Width = " + str.Width + " mm" + "\n" +
+							         "Height = " + str.Height + " mm" + "\n\n" +
+							         "Reinforcement: " + str.NumberOfBars + " Ø " + str.BarDiameter + " mm (" + As + " mm²) \n\n" +
+							         "Steel Parameters: " +
+							         "\nfy = " + str.Steel.fy + " MPa" +
+							         "\nEs = " + str.Steel.Es + " MPa" +
+							         "\nεy = " + Math.Round(1000 * str.Steel.ey, 2) + " E-03";
+							}
+
+							// If it's a panel
+							else if (ent.Layer == Layers.panel)
+							{
+								// Get the panel
+								Panel pnl = new Panel(entRes.ObjectId);
+
+								// Approximate reinforcement ratio
+								double
+									psx = Math.Round(pnl.ReinforcementRatio.X, 3),
+									psy = Math.Round(pnl.ReinforcementRatio.Y, 3);
+
+								msgstr = 
+									 "Panel " + pnl.Number + "\n\n" +
+							         "Grips: (" + pnl.Grips[0] + " - " + pnl.Grips[1] + " - " + pnl.Grips[2] + " - " + pnl.Grips[3] + ")" + "\n" +
+							         "Width = " + pnl.Width + " mm" + "\n\n" +
+							         "Reinforcement (x): Ø " + pnl.BarDiameter.X + " mm, s = " + pnl.BarSpacing.X + " mm (ρsx = " + psx + ")\n" +
+							         "Steel Parameters (x): " +
+							         "\nfy = " + pnl.Steel.X.fy + " MPa" +
+							         "\nEs = " + pnl.Steel.X.Es + " MPa" +
+							         "\nεy = " + Math.Round(1000 * pnl.Steel.X.ey, 2) + " E-03 \n\n" +
+							         "Reinforcement (y) = Ø " + pnl.BarDiameter.Y + " mm, s = " + pnl.BarSpacing.Y + " mm (ρsy = " + psy + ")\n" +
+							         "Steel Parameters (y): " +
+							         "\nfy = " + pnl.Steel.Y.fy + " MPa" +
+							         "\nEs = " + pnl.Steel.Y.Es + " MPa" +
+							         "\nεy = " + Math.Round(1000 * pnl.Steel.Y.ey, 2) + " E-03 \n\n";
+							}
+
 							else
-							{
 								msgstr = "NONE";
-							}
 
 							// Display the values returned
 							Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + msgstr);
 						}
 					}
-					else break;
+
+					else
+						break;
 				}
 			}
 

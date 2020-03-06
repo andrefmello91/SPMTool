@@ -193,7 +193,7 @@ namespace SPMTool
             RibbonButton button3 = new RibbonButton()
             {
                 Text = "Add panel",
-                ToolTip = "Create a panel conecting four nodes",
+                ToolTip = "Create a panel connecting four nodes",
                 ShowText = true,
                 ShowImage = true,
                 LargeImage = getBitmap(panel),
@@ -360,7 +360,7 @@ namespace SPMTool
         public static void MaterialPanel(RibbonTab Tab, Bitmap concrete, Bitmap view)
         {
             RibbonPanelSource pnlSrc = new RibbonPanelSource();
-            pnlSrc.Title = "Materials";
+            pnlSrc.Title = "Material";
             RibbonPanel Panel = new RibbonPanel();
             Panel.Source = pnlSrc;
             Tab.Panels.Add(Panel);
@@ -377,13 +377,7 @@ namespace SPMTool
                 CommandParameter = "SetConcreteParameters"
             };
 
-            // Add to the panel source
-            pnlSrc.Items.Add(button1);
-
-            // Create a dropdown menu to secondary commands
-            pnlSrc.Items.Add(new RibbonPanelBreak());
-
-            RibbonButton button3 = new RibbonButton()
+            RibbonButton button2 = new RibbonButton()
             {
                 Text = "View concrete parameters",
                 ToolTip = "View concrete parameters",
@@ -393,7 +387,20 @@ namespace SPMTool
                 CommandHandler = new CmdHandler(),
                 CommandParameter = "ViewConcreteParameters"
             };
-            pnlSrc.Items.Add(button3);
+
+            // Create a split button for materials
+            RibbonSplitButton rbSpBtn1 = new RibbonSplitButton()
+            {
+	            ShowText = true,
+	            IsSplit = true,
+	            Size = RibbonItemSize.Large,
+	            IsSynchronizedWithCurrentItem = true
+            };
+            rbSpBtn1.Items.Add(button1);
+            rbSpBtn1.Items.Add(button2);
+
+            // Add to the panel source
+            pnlSrc.Items.Add(rbSpBtn1);
         }
 
         // Create Conditions Panel

@@ -74,8 +74,14 @@ namespace SPMTool
 		            Fx = Convert.ToDouble(data[(int) XData.Node.Fx].Value),
 		            Fy = Convert.ToDouble(data[(int) XData.Node.Fy].Value);
 	            Force = (Fx, Fy);
+
+                // Get displacements
+                double
+	                ux = Convert.ToDouble(data[(int)XData.Node.Ux].Value),
+	                uy = Convert.ToDouble(data[(int)XData.Node.Uy].Value);
+                Displacement = (ux, uy);
             }
-		}
+        }
 
         // Calculate nodal displacements
         public void Displacements(Vector<double> displacementVector)

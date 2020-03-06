@@ -28,7 +28,7 @@ namespace SPMTool
         public Vector<double>         Forces          { get; set; }
 
         // Constructor
-        public Stringer(ObjectId stringerObject, Material.Concrete concrete)
+        public Stringer(ObjectId stringerObject, Material.Concrete concrete = null)
 		{
 			ObjectId = stringerObject;
 

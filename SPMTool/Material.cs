@@ -326,18 +326,16 @@ namespace SPMTool
         public void ViewConcreteParameters()
         {
             // Definition for the XData
-            string xData = "Concrete Parameters";
             string concmsg;
-            //string steelmsg;
 
             // Get the values
             var concrete = new Concrete();
 
             // Write the concrete parameters
-            if (concrete != null)
+            if (concrete.fcm != 0)
             {
                 // Get the parameters
-                concmsg = "\nConcrete Parameters" +
+                concmsg = "\nConcrete Parameters:\n" +
                           "\nfcm = "  + concrete.fcm                      + " MPa" +
                           "\nfctm = " + Math.Round(concrete.fctm, 2)      + " MPa" +
                           "\nEci = "  + Math.Round(concrete.Eci, 2)       + " MPa" +
@@ -364,7 +362,7 @@ namespace SPMTool
             //}
 
             // Display the values returned
-            Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + xData + "\n" + concmsg);
+            Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + "\n" + concmsg);
         }
     }
 }

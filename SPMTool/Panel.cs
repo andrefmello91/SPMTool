@@ -27,7 +27,7 @@ namespace SPMTool
         public Vector<double>                       Forces             { get; set; }
 
         // Constructor
-        public Panel(ObjectId panelObject, Material.Concrete concrete, Material.Steel steel)
+        public Panel(ObjectId panelObject, Material.Concrete concrete = null)
         {
 	        ObjectId = panelObject;
 
@@ -251,7 +251,7 @@ namespace SPMTool
             private double d => Dimensions.d;
             private double w => Width;
 
-            public Linear(ObjectId panelObject, Material.Concrete concrete, Material.Steel steel = null) : base(panelObject, concrete, steel)
+            public Linear(ObjectId panelObject, Material.Concrete concrete) : base(panelObject, concrete)
 	        {
 				// Get data
 		        Gc = concrete.Eci / 2.4;
