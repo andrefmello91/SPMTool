@@ -11,7 +11,7 @@ using Autodesk.AutoCAD.Geometry;
 
 namespace SPMTool
 {
-    public static class Reinforcement
+    public class Reinforcement
     {
         [CommandMethod("SetStringerReinforcement")]
         public static void SetStringerReinforcement()
@@ -311,33 +311,70 @@ namespace SPMTool
             }
         }
 
-        // Calculate the stringer reinforcement area
-        public static double StringerReinforcement(double nBars, double phi)
+        public class Stringer : Reinforcement
         {
-            // Initialize As
-            double As = 0;
+			// Properties
+			public double         NumberOfBars  { get; }
+			public double         BarDiameter   { get; }
+			public Material.Steel Steel         { get; }
 
-            if (nBars > 0 && phi > 0)
-                As = nBars * Constants.Pi * phi * phi / 4;
+			// Constructor
+			public Stringer(double numberOfBars, double barDiameter, Material.Steel steel)
+			{
+				NumberOfBars = numberOfBars;
+				BarDiameter  = barDiameter;
+				Steel        = steel;
+			}
 
-            return As;
+			// Calculated reinforcement area
+			public double Area => StringerReinforcement();
+			private double StringerReinforcement()
+			{
+				// Initialize As
+				double As = 0;
+
+				if (NumberOfBars > 0 && BarDiameter > 0)
+					As = 0.25 * NumberOfBars * Constants.Pi * BarDiameter * BarDiameter;
+
+				return As;
+			}
         }
 
-        // Calculate the panel reinforcement ratio
-        public static (double X, double Y) PanelReinforcement((double X, double Y) barDiameter, (double X, double Y) spacing, double width)
+        public class Panel : Reinforcement
         {
-            // Initialize psx and psy
-            double
-                psx = 0,
-                psy = 0;
+			// Properties
+	        public (double X, double Y)                 BarDiameter { get; }
+	        public (double X, double Y)                 BarSpacing  { get; }
+	        public (Material.Steel X, Material.Steel Y) Steel       { get; }
+	        private double                              PanelWidth  { get; }
 
-            if (barDiameter.X > 0 && spacing.X > 0)
-                psx = Constants.Pi * barDiameter.X * barDiameter.X / (2 * spacing.X * width);
+	        // Constructor
+            public Panel((double X, double Y) barDiameter, (double X, double Y) barSpacing, (Material.Steel X, Material.Steel Y) steel, double panelWidth)
+			{
+				BarDiameter = barDiameter;
+				BarSpacing  = barSpacing;
+				Steel       = steel;
+				PanelWidth  = panelWidth;
+			}
 
-            if (barDiameter.Y > 0 && spacing.Y > 0)
-                psy = Constants.Pi * barDiameter.Y * barDiameter.Y / (2 * spacing.Y * width);
+            // Calculate the panel reinforcement ratio
+            public  (double X, double Y) Ratio => PanelReinforcement();
+            private (double X, double Y) PanelReinforcement()
+			{
+				// Initialize psx and psy
+				double
+					psx = 0,
+					psy = 0;
 
-            return (psx, psy);
+				if (BarDiameter.X > 0 && BarSpacing.X > 0)
+					psx = Constants.Pi * BarDiameter.X * BarDiameter.X / (2 * BarSpacing.X * PanelWidth);
+
+				if (BarDiameter.Y > 0 && BarSpacing.Y > 0)
+					psy = Constants.Pi * BarDiameter.Y * BarDiameter.Y / (2 * BarSpacing.Y * PanelWidth);
+
+				return (psx, psy);
+			}
+
         }
     }
 }

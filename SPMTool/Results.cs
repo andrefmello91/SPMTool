@@ -662,6 +662,9 @@ namespace SPMTool
 								// Get the stringer
 								Stringer str = new Stringer(entRes.ObjectId);
 
+								// Get reinforcement
+								var rf = str.Reinforcement;
+
 								// Approximate steel area
 								double As = Math.Round(str.SteelArea, 2);
 
@@ -671,11 +674,11 @@ namespace SPMTool
 							         "Lenght = " + str.Length + " mm" + "\n" +
 							         "Width = " + str.Width + " mm" + "\n" +
 							         "Height = " + str.Height + " mm" + "\n\n" +
-							         "Reinforcement: " + str.NumberOfBars + " Ø " + str.BarDiameter + " mm (" + As + " mm²) \n\n" +
+							         "Reinforcement: " + rf.NumberOfBars + " Ø " + rf.BarDiameter + " mm (" + As + " mm²) \n\n" +
 							         "Steel Parameters: " +
-							         "\nfy = " + str.Steel.fy + " MPa" +
-							         "\nEs = " + str.Steel.Es + " MPa" +
-							         "\nεy = " + Math.Round(1000 * str.Steel.ey, 2) + " E-03";
+							         "\nfy = " + rf.Steel.fy + " MPa" +
+							         "\nEs = " + rf.Steel.Es + " MPa" +
+							         "\nεy = " + Math.Round(1000 * rf.Steel.ey, 2) + " E-03";
 							}
 
 							// If it's a panel
@@ -684,25 +687,28 @@ namespace SPMTool
 								// Get the panel
 								Panel pnl = new Panel(entRes.ObjectId);
 
+								// Get reinforcement
+								var rf = pnl.Reinforcement;
+
 								// Approximate reinforcement ratio
 								double
-									psx = Math.Round(pnl.ReinforcementRatio.X, 3),
-									psy = Math.Round(pnl.ReinforcementRatio.Y, 3);
+									psx = Math.Round(rf.Ratio.X, 3),
+									psy = Math.Round(rf.Ratio.Y, 3);
 
 								msgstr = 
 									 "Panel " + pnl.Number + "\n\n" +
 							         "Grips: (" + pnl.Grips[0] + " - " + pnl.Grips[1] + " - " + pnl.Grips[2] + " - " + pnl.Grips[3] + ")" + "\n" +
 							         "Width = " + pnl.Width + " mm" + "\n\n" +
-							         "Reinforcement (x): Ø " + pnl.BarDiameter.X + " mm, s = " + pnl.BarSpacing.X + " mm (ρsx = " + psx + ")\n" +
+							         "Reinforcement (x): Ø " + rf.BarDiameter.X + " mm, s = " + rf.BarSpacing.X + " mm (ρsx = " + psx + ")\n" +
 							         "Steel Parameters (x): " +
-							         "\nfy = " + pnl.Steel.X.fy + " MPa" +
-							         "\nEs = " + pnl.Steel.X.Es + " MPa" +
-							         "\nεy = " + Math.Round(1000 * pnl.Steel.X.ey, 2) + " E-03 \n\n" +
-							         "Reinforcement (y) = Ø " + pnl.BarDiameter.Y + " mm, s = " + pnl.BarSpacing.Y + " mm (ρsy = " + psy + ")\n" +
+							         "\nfy = " + rf.Steel.X.fy + " MPa" +
+							         "\nEs = " + rf.Steel.X.Es + " MPa" +
+							         "\nεy = " + Math.Round(1000 * rf.Steel.X.ey, 2) + " E-03 \n\n" +
+							         "Reinforcement (y) = Ø " + rf.BarDiameter.Y + " mm, s = " + rf.BarSpacing.Y + " mm (ρsy = " + psy + ")\n" +
 							         "Steel Parameters (y): " +
-							         "\nfy = " + pnl.Steel.Y.fy + " MPa" +
-							         "\nEs = " + pnl.Steel.Y.Es + " MPa" +
-							         "\nεy = " + Math.Round(1000 * pnl.Steel.Y.ey, 2) + " E-03 \n\n";
+							         "\nfy = " + rf.Steel.Y.fy + " MPa" +
+							         "\nEs = " + rf.Steel.Y.Es + " MPa" +
+							         "\nεy = " + Math.Round(1000 * rf.Steel.Y.ey, 2) + " E-03 \n\n";
 							}
 
 							else

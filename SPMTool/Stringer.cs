@@ -21,9 +21,7 @@ namespace SPMTool
 	    public double                 Angle           { get; }
 	    public double                 Width           { get; }
 	    public double                 Height          { get; }
-	    public int                    NumberOfBars    { get; }
-	    public double                 BarDiameter     { get; }
-		public Material.Steel		  Steel           { get; }
+		public Reinforcement.Stringer Reinforcement   { get; }
 	    public virtual Matrix<double> LocalStiffness  { get; set; }
         public Vector<double>         Forces          { get; set; }
 
@@ -68,8 +66,8 @@ namespace SPMTool
 	            Height = Convert.ToDouble(data[(int) XData.Stringer.Height].Value);
 
 	            // Get reinforcement
-	            NumberOfBars = Convert.ToInt32(data[(int)XData.Stringer.NumOfBars].Value);
-	            BarDiameter = Convert.ToDouble(data[(int)XData.Stringer.BarDiam].Value);
+	            int numOfBars = Convert.ToInt32(data[(int)XData.Stringer.NumOfBars].Value);
+	            double phi = Convert.ToDouble(data[(int)XData.Stringer.BarDiam].Value);
 
 				// Get steel data
 				double
@@ -77,7 +75,10 @@ namespace SPMTool
 					Es = Convert.ToDouble(data[(int) XData.Stringer.SteelEs].Value);
 
 				// Set steel data
-                Steel = new Material.Steel(fy,Es);
+                var steel = new Material.Steel(fy,Es);
+
+				// Set reinforcement
+				Reinforcement = new Reinforcement.Stringer(numOfBars, phi, steel);
             }
         }
 
@@ -96,7 +97,7 @@ namespace SPMTool
 		}
 
         // Calculate steel area
-        public double SteelArea => Reinforcement.StringerReinforcement(NumberOfBars, BarDiameter);
+        public double SteelArea => Reinforcement.Area;
 
 		// Calculate concrete area
 		public double ConcreteArea => Width * Height - SteelArea;

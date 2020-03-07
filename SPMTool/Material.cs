@@ -202,15 +202,27 @@ namespace SPMTool
             {
 	            get
 	            {
-		            if (Es == 0)
+		            if (IsSet)
 			            return 0;
-
+					//else
 		            return fy / Es;
 	            }
             }
 
             // Maximum plastic strain on steel
-            public double esu => 0.01;
+            public double esu = 0.01;
+
+			// Verify if steel is set
+			public bool IsSet
+			{
+				get
+				{
+					if (fy == 0 || Es == 0)
+						return false;
+					//else
+					return true;
+				}
+            }
 
             // Read the steel parameters
             public Steel(double yieldStress, double elasticModule)

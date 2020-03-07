@@ -14,17 +14,15 @@ namespace SPMTool
     public class Panel
     {
         // Panel parameters
-        public ObjectId                             ObjectId           { get; }
-        public int                                  Number             { get; }
-        public int[]                                Grips              { get; }
-        public Point3d[]                            Vertices           { get; }
-        public double                               Width              { get; }
-        public (double X, double Y)                 BarDiameter        { get; }
-        public (double X, double Y)                 BarSpacing         { get; }
-        public (Material.Steel X, Material.Steel Y) Steel              { get; }
-        public virtual Matrix<double>               TransMatrix        { get; }
-        public virtual Matrix<double>               LocalStiffness     { get; }
-        public Vector<double>                       Forces             { get; set; }
+        public ObjectId               ObjectId       { get; }
+        public int                    Number         { get; }
+        public int[]                  Grips          { get; }
+        public Point3d[]              Vertices       { get; }
+        public double                 Width          { get; }
+		public Reinforcement.Panel    Reinforcement  { get; }
+        public virtual Matrix<double> TransMatrix    { get; }
+        public virtual Matrix<double> LocalStiffness { get; }
+        public Vector<double>         Forces         { get; set; }
 
         // Constructor
         public Panel(ObjectId panelObject, Material.Concrete concrete = null)
@@ -77,8 +75,6 @@ namespace SPMTool
 		            phiY = Convert.ToDouble(pnlData[(int)XData.Panel.YDiam].Value),
 		            sx = Convert.ToDouble(pnlData[(int)XData.Panel.Sx].Value),
 		            sy = Convert.ToDouble(pnlData[(int)XData.Panel.Sy].Value);
-	            BarDiameter = (phiX, phiY);
-	            BarSpacing = (sx, sy);
 
 				// Get steel data
 				double
@@ -87,11 +83,14 @@ namespace SPMTool
 					fyy = Convert.ToDouble(pnlData[(int) XData.Panel.fyy].Value),
 					Esy = Convert.ToDouble(pnlData[(int) XData.Panel.Esy].Value);
 
-				Steel = 
+				var steel = 
 				(
 					new Material.Steel(fyx, Esx), 
 					new Material.Steel(fyy, Esy)
 				);
+
+				// Set reinforcement
+				Reinforcement = new Reinforcement.Panel((phiX, phiY), (sx, sy), steel, Width);
             }
         }
 
@@ -141,13 +140,6 @@ namespace SPMTool
 		        d = (y[1] + y[2]) / 2 - (y[0] + y[3]) / 2;
 
 	        return (a, b, c, d);
-        }
-
-        // Set reinforcement ratio
-        public  (double X, double Y) ReinforcementRatio => PanelReinforcement();
-        private (double X, double Y) PanelReinforcement()
-        {
-	        return Reinforcement.PanelReinforcement(BarDiameter, BarSpacing, Width);
         }
 
         // Set the center point

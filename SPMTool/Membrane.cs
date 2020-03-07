@@ -5,25 +5,25 @@ namespace SPMTool
 	public class Membrane
 	{
 		// Public properties
-		public (double X, double Y) ReinforcementRatio { get; }
-		public double               StrainSlope        { get; }
+		public Reinforcement.Panel  Reinforcement { get; }
+		public double               StrainAngle   { get; }
 
         // Private properties
         private double Ec1, Ec2;
 		private double Esx, Esy;
-		private double psx => ReinforcementRatio.X;
-		private double psy => ReinforcementRatio.Y;
+		private double psx => Reinforcement.Ratio.X;
+		private double psy => Reinforcement.Ratio.Y;
 
 		// Constructor
-		public Membrane((double Ec1, double Ec2) concreteSecantModule, (double Esx, double Esy) steelSecantModule, (double X, double Y) reinforcementRatio, double strainSlope)
+		public Membrane((double Ec1, double Ec2) concreteSecantModule, (double Esx, double Esy) steelSecantModule, Reinforcement.Panel reinforcement, double strainAngle)
 		{
 			// Get parameters
-			Ec1                = concreteSecantModule.Ec1;
-			Ec2                = concreteSecantModule.Ec2;
-			Esx                = steelSecantModule.Esx;
-			Esy                = steelSecantModule.Esy;
-			ReinforcementRatio = reinforcementRatio;
-			StrainSlope        = strainSlope;
+			Ec1           = concreteSecantModule.Ec1;
+			Ec2           = concreteSecantModule.Ec2;
+			Esx           = steelSecantModule.Esx;
+			Esy           = steelSecantModule.Esy;
+			Reinforcement = reinforcement;
+			StrainAngle   = strainAngle;
 		}
 
 		// Calculate stiffness
@@ -64,7 +64,7 @@ namespace SPMTool
 		{
 			// Get psi angle
 			// Calculate Psi angle
-			double psi = Constants.Pi - StrainSlope;
+			double psi = Constants.Pi - StrainAngle;
 			double[] dirCos = Auxiliary.DirectionCosines(psi);
 
 			double

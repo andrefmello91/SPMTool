@@ -1,96 +1,142 @@
 ﻿using System;
 using System.Linq;
+using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.Statistics;
 
 namespace SPMTool
 {
-    public partial class MCFT
+    public class MCFT
     {
 	    // Public Properties
-	    public bool Stop { get; set; }
-	    public string StopMessage { get; set; }
-	    public int LSCrack { get; set; }
-	    public int LSYieldX { get; set; }
-	    public int LSYieldY { get; set; }
-	    public int LSPeak { get; set; }
-	    public Vector<double> Strains { get; set; }
-	    public double StrainSlope { get; set; }
-	    public Vector<double> AppliedStresses { get; set; }
-	    public (double ec1, double ec2) ConcreteStrains { get; set; }
-	    public (double X, double Y) ReinforcementSlopes { get; set; }
-	    public (double X, double Y) BarDiameter { get; set; }
-	    public (double X, double Y) BarSpacing { get; set; }
-	    public (double X, double Y) CrackSpacing { get; set; }
-	    public (double X, double Y) ReinforcementRatio { get; set; }
-	    public (double fc1, double fc2) ConcreteStresses { get; set; }
+		public Membrane                 FinalMembrane         { get; }
+	    public (bool S, string Message) Stop                  { get; set; }
+	    public int                      LSCrack               { get; set; }
+	    public (int X, int Y)           LSYield               { get; set; }
+	    public int                      LSPeak                { get; set; }
+	    public Vector<double>           Strains               { get; set; }
+	    public double                   StrainAngle           { get; set; }
+	    public (double ec1, double ec2) ConcreteStrains       { get; set; }
+	    public (double fc1, double fc2) ConcreteStresses      { get; set; }
 	    public (double fsx, double fsy) ReinforcementStresses { get; set; }
-	    public Matrix<double> ConcreteMatrix { get; set; }
-	    public Matrix<double> SteelMatrix { get; set; }
-	    public Vector<double> Stresses { get; set; }
-	    public Matrix<double> Stiffness => ConcreteMatrix + SteelMatrix;
 
 	    // Private properties
 	    private Material.Concrete Concrete { get; }
-	    private Material.Steel Steel { get; }
+		private Reinforcement.Panel Reinforcement { get; }
+		private (Material.Steel X, Material.Steel Y) Steel => Reinforcement.Steel;
+	    private int LoadStep { get; }
+	    private int maxIter = 1000;
 
         // Calculate concrete parameters for MCFT
-        public void MCFTConcrete(Membrane membrane, Material.Concrete concrete, Material.Steel steel)
+        private double fc    => Concrete.fcm;
+        private double ec    =  0.002;
+        private double Ec    => 2 * fc / ec;
+        private double fcr   => 0.33 * Math.Sqrt(fc);
+        private double ecr   => fcr / Ec;
+        private double phiAg => Concrete.AggregateDiameter;
+
+		// Get steel parameters
+		private double fyx  => Steel.X.fy;
+		private double Esxi => Steel.X.Es;
+		private double eyx  => Steel.X.ey;
+		private double fyy  => Steel.Y.fy;
+		private double Esyi => Steel.Y.Es;
+		private double eyy  => Steel.Y.ey;
+
+		// Get reinforcement
+		private double phiX => Reinforcement.BarDiameter.X;
+		private double phiY => Reinforcement.BarDiameter.Y;
+		private double psx  => Reinforcement.Ratio.X;
+		private double psy  => Reinforcement.Ratio.Y;
+
+		// Calculate crack spacings
+		private double smx => phiX / (5.4 * psx);
+		private double smy => phiY / (5.4 * psy);
+
+        // Constructor
+        public MCFT(Membrane initialMembrane, Material.Concrete concrete, Vector<double> appliedStresses, int loadStep)
         {
-            double fc = concrete.fcm;
+            // Get concrete
+            Concrete = concrete;
 
-            // Calculate the parameters
-            double
-                ec = 0.002,
-                Ec = 2 * fc / ec,
-                ft = 0.33 * Math.Sqrt(fc),
-                ecr = ft / Ec;
+            // Get reinforcement
+            Reinforcement = initialMembrane.Reinforcement;
 
-            concrete.ec1 = ec;
-            concrete.Eci = Ec;
-            concrete.fctm = ft;
-        }
+            // Get current load step
+            LoadStep = loadStep;
 
-        // Calculate secant moduli of steel
-        void SteelSecantModuli()
-        {
-	        // Steel
-	        if (ex == 0 || fsx == 0)
-		        Esx = Steel.Es;
+            // Get the initial stiffness
+            var Di = initialMembrane.Stiffness;
 
-	        else
-		        Esx = Math.Min(fsx / ex, Steel.Es);
+            // Initiate a loop for the iterations
+            double tol;
+            for (int it = 1; it <= maxIter; it++)
+            {
+                // Calculate the strains
+                var e = Di.Solve(appliedStresses);
 
-	        if (ey == 0 || fsy == 0)
-		        Esy = Steel.Es;
+                // Calculate the principal strains
+                var concreteStrains = ConcretePrincipalStrains(e);
 
-	        else
-		        Esy = Math.Min(fsy / ey, Steel.Es);
-        }
+                // Calculate the angle of principal strains
+                double theta = StrainsAngle(e);
 
-        // Calculate secant moduli of concrete
-        void ConcreteSecantModuli()
-        {
-	        if (ec1 == 0 || fc1 == 0)
-		        Ec1 = Concrete.Eci;
+                // Calculate reinforcement stresses
+                var reinforcementsStresses = SteelStresses(e);
 
-	        else
-		        Ec1 = fc1 / ec1;
+                // Calculate principal stresses in concrete
+                var concreteStresses = ConcretePrincipalStresses(concreteStrains, reinforcementsStresses, theta);
 
-	        if (ec2 == 0 || fc2 == 0)
-		        Ec2 = Concrete.Eci;
+                // Calculate material secant module
+                var concreteSecantModule = ConcreteSecantModule(concreteStrains, concreteStresses);
+                var steelSecantModule = SteelSecantModule(e, reinforcementsStresses);
 
-	        else
-		        Ec2 = fc2 / ec2;
+                // Get the new membrane
+                var membrane = new Membrane(concreteSecantModule, steelSecantModule, Reinforcement, theta);
 
-	        Gc = Ec1 * Ec2 / (Ec1 + Ec2);
+                // Get membrane stiffness
+                var D = membrane.Stiffness;
+
+                // Verify the tolerance
+                var tolMat = D - Di;
+                tol = tolMat.Enumerate().MaximumAbsolute();
+
+                // Assign Di for a new loop
+                Di = D;
+
+                // Verify if convergence is reached
+                if (tol < 0.0001)  // Convergence reached
+                {
+                    // Assign the results
+                    FinalMembrane         = membrane;
+                    Strains               = e;
+                    StrainAngle           = theta;
+                    ConcreteStrains       = concreteStrains;
+                    ConcreteStresses      = concreteStresses;
+                    ReinforcementStresses = reinforcementsStresses;
+
+                    // Verify if concrete cracked in this step
+                    if (LSCrack == 0 && concreteStrains.ec1 >= Concrete.ecr)
+                        LSCrack = LoadStep;
+
+                    // Verify if concrete reached it's peak stress
+                    if (LSPeak == 0 && concreteStrains.ec2 <= Concrete.ec1)
+                        LSPeak = LoadStep;
+
+                    break;
+                }
+
+                if (it == maxIter) // Not reached, analysis must stop
+                    Stop = (true, "Convergence not reached at load step " + LoadStep);
+            }
+
         }
 
         // Calculate concrete principal strains
-        private (double ec1, double ec2) ConcretePrincipalStrains()
+        private (double ec1, double ec2) ConcretePrincipalStrains(Vector<double> strainVector)
         {
 	        // Get the apparent strains and concrete net strains
-	        var e = Strains;
+	        var e = strainVector;
 
 	        double
 		        ecx = e[0],
@@ -111,109 +157,46 @@ namespace SPMTool
         }
 
         // Calculate slopes related to reinforcement
-        private static void ReinforcementSlope(Membrane membrane, double theta)
+        private (double X, double Y) ReinforcementAngles(double theta)
         {
 	        // Calculate angles
 	        double
 		        thetaNx = theta,
 		        thetaNy = theta - Constants.PiOver2;
 
-	        membrane.ReinforcementSlopes = (thetaNx, thetaNy);
+	        return (thetaNx, thetaNy);
         }
 
         // Calculate reinforcement stresses
-        static void ReinforcementsStresses(Membrane membrane)
+        private (double fsx, double fsy) SteelStresses(Vector<double> strainVector)
         {
 	        // Get the strains
 	        double
-		        ex = membrane.Strains[0],
-		        ey = membrane.Strains[1];
+		        esx = strainVector[0],
+		        esy = strainVector[1];
 
 	        // Calculate stresses and secant moduli
 	        double fsx, fsy;
-	        if (ex >= 0)
-		        fsx = Math.Min(Steel.Es * ex, Steel.fy);
+	        if (esx >= 0)
+		        fsx = Math.Min(Esxi * esx, fyx);
 
 	        else
-		        fsx = Math.Max(Steel.Es * ex, -Steel.fy);
+		        fsx = Math.Max(Esxi * esx, -fyx);
 
-	        if (ey >= 0)
-		        fsy = Math.Min(Steel.Es * ey, Steel.fy);
+	        if (esy >= 0)
+		        fsy = Math.Min(Esyi * esy, fyy);
 
 	        else
-		        fsy = Math.Max(Steel.Es * ey, -Steel.fy);
+		        fsy = Math.Max(Esyi * esy, -fyy);
 
-	        membrane.ReinforcementStresses = (fsx, fsy);
-        }
-
-        // Calculate D matrix (input stress vector and initial D matrix)
-        public static Membrane MCFTMain(Membrane membrane, Vector<double> sigma, int ls)
-        {
-            // Max number of iterations
-            int maxIter = 1000;
-
-            // Get the initial stiffness
-            var Di = membrane.Stiffness;
-
-            // Initiate a loop for the iterations
-            double tol;
-            for (int it = 1; it <= maxIter; it++)
-            {
-                // Calculate the strains
-                var e = Di.Solve(sigma);
-
-                // Calculate the principal strains
-                ConcretePrincipalStrains(membrane);
-
-                // Calculate the angle of principal strains
-                StrainSlope(membrane);
-
-                // Calculate reinforcement stresses
-                ReinforcementsStresses(membrane);
-
-                // Calculate principal stresses in concrete
-                ConcreteStresses(membrane, ls);
-
-                // Calculate material stiffness
-                ConcreteStiffness(membrane);
-                SteelStiffness(membrane);
-
-                // Get material stiffness
-                var D = membrane.Stiffness;
-
-                // Verify the tolerance
-                var tolMat = D - Di;
-                tol = tolMat.Enumerate().MaximumAbsolute();
-
-                // Assign Di for a new loop
-                Di = D;
-
-                // Verify if convergence is reached
-                if (tol < 0.0001)  // Convergence reached
-                {
-                    // Verify if concrete cracked in this step
-                    if (membrane.LSCrack == 0 && membrane.ConcreteStrains.ec1 >= Concrete.ecr)
-                        membrane.LSCrack = ls;
-
-                    // Verify if concrete reached it's peak stress
-                    if (membrane.LSPeak == 0 && membrane.ConcreteStrains.ec2 <= Concrete.ec1)
-                        membrane.LSPeak = ls;
-
-                    break;
-                }
-
-                if (it == maxIter) // Not reached, analysis must stop
-                    membrane.Stop = true;
-            }
-
-            return membrane;
+	        return (fsx, fsy);
         }
 
         // Calculate strain slope
-        private static void StrainSlope(Membrane membrane)
+        private double StrainsAngle(Vector<double> strainVector)
         {
             // Get the strains
-            var e = membrane.Strains;
+            var e = strainVector;
 
             // Calculate the strain slope
             double theta;
@@ -233,19 +216,16 @@ namespace SPMTool
                     theta += Constants.PiOver2;
             }
 
-            membrane.StrainSlope = theta;
+            return theta;
         }
 
         // Calculate principal stresses in concrete
-        static void ConcreteStresses(Membrane membrane, int ls)
+        private (double fc1, double fc2) ConcretePrincipalStresses((double ec1, double ec2) concreteStrains, (double fsx, double fsy) reinforcentStresses, double theta)
         {
             // Get the values
             double
-                fc = Concrete.fcm,
-                ec = Concrete.ec1,
-                Ec = Concrete.Eci,
-                ec1 = membrane.ConcreteStrains.ec1,
-                ec2 = membrane.ConcreteStrains.ec2;
+                ec1 = concreteStrains.ec1,
+                ec2 = concreteStrains.ec2;
 
             // Calculate the maximum concrete compressive stress
             double
@@ -261,34 +241,26 @@ namespace SPMTool
             double fc1;
 
             // Constitutive relation
-            if (ec1 <= Concrete.ecr) // Not cracked
+            if (ec1 <= ecr) // Not cracked
                 fc1 = ec1 * Ec;
 
             else // cracked
             {
                 // Calculate the principal tensile stress in concrete by crack check procedure
-                fc1 = CrackCheck(membrane, ls);
+                fc1 = CrackCheck(concreteStrains, reinforcentStresses, theta);
             }
 
-            membrane.ConcreteStresses = (fc1, fc2);
+            return (fc1, fc2);
         }
 
         // Crack check procedure
-        private static double CrackCheck(Membrane membrane, int ls)
+        private double CrackCheck((double ec1, double ec2) concreteStrains, (double fsx, double fsy) steelStresses, double theta)
         {
             // Get the values
             double
-                fc = Concrete.fcm,
-                fcr = Concrete.fctm,
-                phiAg = Concrete.AggregateDiameter,
-                ec1 = membrane.ConcreteStrains.ec1,
-                theta = membrane.StrainSlope,
-                px = membrane.ReinforcementRatio.X,
-                py = membrane.ReinforcementRatio.Y,
-                fsx = membrane.ReinforcementStresses.fsx,
-                fsy = membrane.ReinforcementStresses.fsy,
-                smx = membrane.CrackSpacing.X,
-                smy = membrane.CrackSpacing.Y;
+	            ec1 = concreteStrains.ec1,
+	            fsx = steelStresses.fsx,
+	            fsy = steelStresses.fsy;
 
             // Constitutive relation
             double f1a = fcr / (1 + Math.Sqrt(500 * ec1));
@@ -307,8 +279,8 @@ namespace SPMTool
 
             // Reinforcement capacity reserve
             double
-                f1cx = px * (Steel.fy - fsx),
-                f1cy = py * (Steel.fy - fsy);
+                f1cx = psx * (fyx - fsx),
+                f1cy = psy * (fyy - fsy);
 
             // Maximum possible shear on crack interface
             double vcimaxA = 0.18 * Math.Sqrt(Math.Abs(fc)) / (0.31 + 24 * w / (phiAg + 16));
@@ -329,44 +301,96 @@ namespace SPMTool
 
             // Calculate the minimum tensile stress
             var f1List = new[] { f1a, f1b, f1c, f1d };
-            var f1 = f1List.Min();
+            var fc1 = f1List.Min();
 
-            // Calculate shear on crack
-            StressesOnCrack(membrane, f1cx, f1cy, tanTheta, ls);
+            // Calculate critical stresses on crack
+            StressesOnCrack();
+            void StressesOnCrack()
+            {
+	            // Initiate vci = 0 (for most common cases)
+	            double vci = 0;
 
-            return f1;
+	            if (f1cx > f1cy && f1cy < fc1) // Y dominant
+		            vci = (fc1 - f1cy) / tanTheta;
+
+	            if (f1cx < f1cy && f1cx < fc1) // X dominant
+		            vci = (f1cx - fc1) * tanTheta;
+
+	            // Reinforcement stresses
+	            double
+		            fsxcr = (fc1 + vci / tanTheta) / psx + fsx,
+		            fsycr = (fc1 + vci * tanTheta) / psy + fsy;
+
+	            // Check if reinforcement yielded at crack
+	            int
+		            lsYieldX = 0,
+		            lsYieldY = 0;
+
+	            if (LSYield.X == 0 && fsxcr >= fyx)
+		            lsYieldX = LoadStep;
+
+	            if (LSYield.Y == 0 && fsycr >= fyy)
+		            lsYieldY = LoadStep;
+
+	            LSYield = (lsYieldX, lsYieldY);
+            }
+
+            return fc1;
         }
 
-        // Calculate shear on crack
-        static void StressesOnCrack(Membrane membrane, double f1cx, double f1cy, double tanTheta, int ls)
+        // Calculate secant moduli of steel
+        private (double Esx, double Esy) SteelSecantModule(Vector<double> strainVector, (double fsx, double fsy) reinforcementStresses)
         {
-            double
-                f1 = membrane.ConcreteStresses.fc1,
-                px = membrane.ReinforcementRatio.X,
-                py = membrane.ReinforcementRatio.Y,
-                fsx = membrane.ReinforcementStresses.fsx,
-                fsy = membrane.ReinforcementStresses.fsy;
+	        double Esx, Esy;
 
-            // Initiate vci = 0 (for most common cases)
-            double vci = 0;
+			// Get values
+			double
+				esx = strainVector[0],
+				esy = strainVector[1],
+				fsx = reinforcementStresses.fsx,
+				fsy = reinforcementStresses.fsy;
 
-            if (f1cx > f1cy && f1cy < f1) // Y dominant
-                vci = (f1 - f1cy) / tanTheta;
+	        // Steel
+	        if (esx == 0 || fsx == 0)
+		        Esx = Esxi;
 
-            if (f1cx < f1cy && f1cx < f1) // X dominant
-                vci = (f1cx - f1) * tanTheta;
+	        else
+		        Esx = Math.Min(fsx / esx, Esxi);
 
-            // Reinforcement stresses
-            double
-                fsxcr = (f1 + vci / tanTheta) / px + fsx,
-                fsycr = (f1 + vci * tanTheta) / py + fsy;
+	        if (esy == 0 || fsy == 0)
+		        Esy = Esyi;
 
-            // Check if reinforcement yielded at crack
-            if (membrane.LSYieldX == 0 && fsxcr >= Steel.fy)
-                membrane.LSYieldX = ls;
+	        else
+		        Esy = Math.Min(fsy / esy, Esyi);
 
-            if (membrane.LSYieldY == 0 && fsycr >= Steel.fy)
-                membrane.LSYieldY = ls;
+	        return (Esx, Esy);
+        }
+
+        // Calculate secant moduli of concrete
+        private (double Ec1, double Ec2) ConcreteSecantModule((double ec1, double ec2) conscreteStrains, (double fc1, double fc2) concreteStresses)
+        {
+	        double Ec1, Ec2;
+
+			// Get values
+			double
+				ec1 = ConcreteStrains.ec1,
+				ec2 = ConcreteStrains.ec2,
+				fc1 = concreteStresses.fc1,
+				fc2 = concreteStresses.fc2;
+
+	        if (ec1 == 0 || fc1 == 0)
+		        Ec1 = Concrete.Eci;
+
+	        else
+		        Ec1 = fc1 / ec1;
+
+	        if (ec2 == 0 || fc2 == 0)
+		        Ec2 = Concrete.Eci;
+
+	        else
+		        Ec2 = fc2 / ec2;
+
+	        return (Ec1, Ec2);
         }
 
     }
