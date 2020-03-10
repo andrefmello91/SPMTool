@@ -22,8 +22,9 @@ namespace SPMTool
 	    public double                 Width           { get; }
 	    public double                 Height          { get; }
 		public Reinforcement.Stringer Reinforcement   { get; }
-	    public virtual Matrix<double> LocalStiffness  { get; set; }
-        public Vector<double>         Forces          { get; set; }
+		public virtual Matrix<double> LocalStiffness  { get; }
+		public Vector<double>         Displacements   { get; set; }
+        public virtual Vector<double> Forces          { get; }
 
         // Constructor
         public Stringer(ObjectId stringerObject, Material.Concrete concrete = null)
@@ -141,32 +142,28 @@ namespace SPMTool
 	        return T.Transpose() * LocalStiffness * T;
         }
 
-        // Calculate stringer forces
-        public void StringerForces(Vector<double> displacementVector)
+        // Get panel displacements from global displacement vector
+        public void Displacement(Vector<double> globalDisplacementVector)
         {
-	        // Get the parameters
+	        var u = globalDisplacementVector;
 	        int[] ind = Index;
-	        var Kl = LocalStiffness;
-	        var T = TransMatrix;
-	        var u = displacementVector;
 
-            // Get the displacements
-            var uStr = Vector<double>.Build.DenseOfArray(new []
+	        // Get the displacements
+	        var us = Vector<double>.Build.Dense(6);
+	        for (int i = 0; i < 3; i++)
 	        {
-		        u[ind[0]] , u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1]
-	        });
+		        // Indexers
+		        int
+			        j = ind[i],
+			        k = 2 * i;
 
-	        // Get the displacements in the direction of the stringer
-	        var ul = T * uStr;
+		        // Set values
+		        us[k] = u[j];
+		        us[k + 1] = u[j + 1];
+	        }
 
-	        // Calculate the vector of normal forces (in kN)
-	        var fl = 0.001 * Kl * ul;
-
-	        // Aproximate small values to zero
-	        fl.CoerceZero(0.000001);
-
-	        // Save to the stringer
-	        Forces = fl;
+	        // Set
+	        Displacements = us;
         }
 
         public class Linear : Stringer
@@ -198,6 +195,27 @@ namespace SPMTool
 					{  2, -6,  4 }
 				});
             }
-		}
+
+            // Calculate stringer forces
+            public override Vector<double> Forces => StringerForces();
+            public Vector<double> StringerForces()
+            {
+	            // Get the parameters
+	            var Kl = LocalStiffness;
+	            var T  = TransMatrix;
+	            var us = Displacements;
+
+	            // Get the displacements in the direction of the stringer
+	            var ul = T * us;
+
+	            // Calculate the vector of normal forces (in kN)
+	            var fl = 0.001 * Kl * ul;
+
+	            // Aproximate small values to zero
+	            fl.CoerceZero(0.000001);
+
+	            return fl;
+            }
+        }
     }
 }

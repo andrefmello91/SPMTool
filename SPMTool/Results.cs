@@ -33,13 +33,13 @@ namespace SPMTool
 	        dispVector = analysis.DisplacementVector;
 
 			// Calculate results
-			StringerForces();
-			PanelForces();
+			StringerDisplacements();
+			PanelDisplacements();
 			NodalDisplacements();
 		}
 
-		// Calculate stringer forces and return the maximum absolute stringer force
-		private void StringerForces()
+		// Get stringer displacements
+		private void StringerDisplacements()
 		{
 			// Create a matrix to store the stringer forces
 			var strForces = Matrix<double>.Build.Dense(Stringers.Length, 3);
@@ -47,7 +47,7 @@ namespace SPMTool
 			foreach (var str in Stringers)
 			{
 				// Calculate forces
-				str.StringerForces(dispVector);
+				str.Displacement(dispVector);
 
 				// Set to the matrix of forces
 				int i = str.Number - 1;
@@ -60,11 +60,11 @@ namespace SPMTool
 			MaxStringerForce = strForces.Enumerate().MaximumAbsolute();
 		}
 
-		// Calculate panel forces
-		private void PanelForces()
+		// Get panel displacements
+		private void PanelDisplacements()
 		{
 			foreach (var pnl in Panels)
-				pnl.PanelForces(dispVector);
+				pnl.Displacement(dispVector);
 		}
 
 		// Get the nodal displacements and save to XData

@@ -14,18 +14,21 @@ namespace SPMTool
     public class Panel
     {
         // Panel parameters
-        public ObjectId               ObjectId       { get; }
-        public int                    Number         { get; }
-        public int[]                  Grips          { get; }
-        public Point3d[]              Vertices       { get; }
-        public double                 Width          { get; }
-		public Reinforcement.Panel    Reinforcement  { get; }
-        public virtual Matrix<double> TransMatrix    { get; }
-        public virtual Matrix<double> LocalStiffness { get; }
-        public Vector<double>         Forces         { get; set; }
+        public ObjectId               ObjectId        { get; }
+        public int                    Number          { get; }
+        public int[]                  Grips           { get; }
+        public Point3d[]              Vertices        { get; }
+        public double                 Width           { get; }
+		public Reinforcement.Panel    Reinforcement   { get; }
+        public virtual Matrix<double> TransMatrix     { get; }
+        public virtual Matrix<double> LocalStiffness  { get; }
+        public virtual Matrix<double> GlobalStiffness { get; }
+        public Vector<double>         Displacements   { get; set; }
+        public virtual Vector<double> Forces          { get; }
+        public virtual double         ShearStress     { get; }
 
         // Constructor
-        public Panel(ObjectId panelObject, Material.Concrete concrete = null)
+        public Panel(ObjectId panelObject, Material.Concrete concrete = null, int loadStep = 0)
         {
 	        ObjectId = panelObject;
 
@@ -129,7 +132,12 @@ namespace SPMTool
         }
 
         // Calculate dimensions
-        public  (double a, double b, double c, double d) Dimensions => PanelDimensions();
+        private double a => Dimensions.a;
+        private double b => Dimensions.b;
+        private double c => Dimensions.c;
+        private double d => Dimensions.d;
+        private double w => Width;
+        public (double a, double b, double c, double d) Dimensions => PanelDimensions();
         private (double a, double b, double c, double d) PanelDimensions()
         {
 	        // Calculate the necessary dimensions of the panel
@@ -181,69 +189,36 @@ namespace SPMTool
 	        return (l, a);
         }
 
-        // Calculate global stiffness
-        public Matrix<double>        GlobalStiffness => globalStiffness.Value;
-        private Lazy<Matrix<double>> globalStiffness => new Lazy<Matrix<double>>(GloballStiffness);
-        public Matrix<double> GloballStiffness()
-        {
-	        var T = TransMatrix;
+		// Get panel displacements from global displacement vector
+		public void Displacement(Vector<double> globalDisplacementVector)
+		{
+			var u = globalDisplacementVector;
+			int[] ind = Index;
 
-	        return T.Transpose() * LocalStiffness * T;
-        }
+            // Get the displacements
+            var up = Vector<double>.Build.Dense(8);
+            for (int i = 0; i < 4; i++)
+            {
+				// Indexers
+				int
+					j = ind[i],
+					k = 2 * i;
 
-        // Calculate panel forces
-        public void PanelForces(Vector<double> displacementVector)
-        {
-		        // Get the parameters
-		        int[] ind = Index;
-		        var Kl = LocalStiffness;
-		        var T = TransMatrix;
-		        var u = displacementVector;
+				// Set values
+	            up[k] = u[j];
+	            up[k + 1] = u[j + 1];
+            }
 
-		        // Get the displacements
-		        var uStr = Vector<double>.Build.DenseOfArray(new double[]
-		        {
-			        u[ind[0]], u[ind[0] + 1], u[ind[1]], u[ind[1] + 1], u[ind[2]] , u[ind[2] + 1], u[ind[3]] , u[ind[3] + 1]
-		        });
+			// Set
+			Displacements = up;
+		}
 
-		        // Get the displacements in the direction of the stringer
-		        var ul = T * uStr;
-
-		        // Calculate the vector of forces
-		        var fl = Kl * ul;
-
-		        // Aproximate small values to zero
-		        fl.CoerceZero(0.000001);
-
-		        // Save the forces to panel
-		        Forces = fl;
-        }
-
-        // Calculate shear stress
-        public double ShearStress => ShearsStress();
-        private double ShearsStress()
-        {
-	        // Get the dimensions as a vector
-	        var lsV = Vector<double>.Build.DenseOfArray(Edges.Length);
-
-	        // Calculate the shear stresses
-	        var tau = Forces / (lsV * Width);
-
-	        // Calculate the average stress
-	        return Math.Round((-tau[0] + tau[1] - tau[2] + tau[3]) / 4, 2);
-        }
-
-        public class Linear:Panel
+        public class Linear : Panel
         {
             // Private properties
             private double Gc { get; }
-            private double a => Dimensions.a;
-			private double b => Dimensions.b;
-            private double c => Dimensions.c;
-            private double d => Dimensions.d;
-            private double w => Width;
 
-            public Linear(ObjectId panelObject, Material.Concrete concrete) : base(panelObject, concrete)
+            public Linear(ObjectId panelObject, Material.Concrete concrete, int loadStep = 0) : base(panelObject, concrete, loadStep)
 	        {
 				// Get data
 		        Gc = concrete.Eci / 2.4;
@@ -293,6 +268,16 @@ namespace SPMTool
 
 	            // If the panel is not rectangular
 	            return NotRectangularPanelStiffness();
+            }
+
+            // Calculate global stiffness
+            public override Matrix<double> GlobalStiffness => globalStiffness.Value;
+            private Lazy<Matrix<double>> globalStiffness => new Lazy<Matrix<double>>(GloballStiffness);
+            public Matrix<double> GloballStiffness()
+            {
+	            var T = TransMatrix;
+
+	            return T.Transpose() * LocalStiffness * T;
             }
 
             // Calculate local stiffness of a rectangular panel
@@ -403,6 +388,41 @@ namespace SPMTool
                 return B.ToColumnMatrix() * D * B.ToRowMatrix();
             }
 
+            // Calculate panel forces
+            public override Vector<double> Forces => PanelForces();
+            private Vector<double> PanelForces()
+            {
+	            // Get the parameters
+	            var up = Displacements;
+	            var T  = TransMatrix;
+	            var Kl = LocalStiffness;
+
+	            // Get the displacements in the direction of the edges
+	            var ul = T * up;
+
+	            // Calculate the vector of forces
+	            var fl = Kl * ul;
+
+	            // Aproximate small values to zero
+	            fl.CoerceZero(0.000001);
+
+	            return fl;
+            }
+
+            // Calculate shear stress
+            public override double ShearStress => ShearsStress();
+            private double ShearsStress()
+            {
+	            // Get the dimensions as a vector
+	            var lsV = Vector<double>.Build.DenseOfArray(Edges.Length);
+
+	            // Calculate the shear stresses
+	            var tau = Forces / (lsV * Width);
+
+	            // Calculate the average stress
+	            return Math.Round((-tau[0] + tau[1] - tau[2] + tau[3]) / 4, 2);
+            }
+
             // Function to verify if a panel is rectangular
             private readonly Func<double[], bool> RectangularPanel = delegate (double[] angles)
             {
@@ -417,72 +437,87 @@ namespace SPMTool
             };
         }
 
-        public class NonLinear
+        public class NonLinear : Panel
         {
             // Public Properties
-            public double[]                 StringerDimensions { get; set; }
-
-            public (double[] X, double[] Y) EffectiveRatio     { get; }
-			public Matrix<double>           BAMatrix           { get; set; }
-	        public Matrix<double>           QPMatrix           { get; set; }
-	        public Matrix<double>           DMatrix            { get; set; }
-	        public Matrix<double>           LocalStiffness     { get; set; }
+			public Membrane[]     IntPointMembranes  { get; set; }
+            public double[]       StringerDimensions { get; set; }
+	        public Matrix<double> DMatrix            { get; set; }
 
             // Private Properties
             private Material.Concrete Concrete { get; }
-            private Material.Steel    Steel    { get; }
-
-            // Vertex coordinates
-            private double[] x { get; }
-			private double[] y { get; }
-
-            // Panel dimensions
-            private double a { get; }
-            private double b { get; }
-            private double c { get; }
-            private double d { get; }
-			private double w { get; }
+			private int               LoadStep { get; }
 
             // Reinforcement ratio
-            private double px { get; }
-			private double py { get; }
+            private double psx => Reinforcement.Ratio.X;
+            private double psy => Reinforcement.Ratio.Y;
 
-			// Stringer dimensions
-			private double[] hs { get; }
+            public NonLinear(ObjectId panelObject, Material.Concrete concrete, int loadStep) : base(panelObject, concrete, loadStep)
+            {
+	            Concrete = concrete;
+	            LoadStep = loadStep;
+            }
 
-            public NonLinear(Panel panel, Material.Concrete concrete, Material.Steel steel)
+            // Get the dimensions of surrounding stringers
+            public void StringersDimensions(Stringer[] stringers)
+            {
+                // Initiate the stringer dimensions
+                double[] hs = new double[4];
+
+                // Analyse panel grips
+                for (int i = 0; i < 4; i++)
+                {
+                    int grip = Grips[i];
+
+                    // Verify if its an internal grip of a stringer
+                    foreach (var stringer in stringers)
+                    {
+                        if (grip == stringer.Grips[1])
+                        {
+                            // The dimension is the half of stringer height
+                            hs[i] = 0.5 * stringer.Height;
+                            break;
+                        }
+                    }
+                }
+
+                // Save to panel
+                StringerDimensions = hs;
+            }
+
+            // Calculate the effective reinforcement ratio off a panel for considering stringer dimensions
+            public ( double[] X, double[] Y) EffectiveRatio => EffectiveRRatio();
+            private (double[] X, double[] Y) EffectiveRRatio()
 	        {
-	        }
+		        var hs = StringerDimensions;
 
-
-	        // Calculate the effective reinforcement ratio off a panel for considering stringer dimensions
-	        private (double[] X, double[] Y) EffectiveRRatio()
-	        {
 		        // Calculate effective ratio for each edge
 		        double[]
 			        pxEf = new double[4],
 			        pyEf = new double[4];
 				
 		        // Grip 1
-		        pxEf[0] = px;
-		        pyEf[0] = py * (x[0] - x[1]) / (x[0] - x[1] + hs[1] + hs[3]);
+		        pxEf[0] = psx;
+		        pyEf[0] = psy * (x[0] - x[1]) / (x[0] - x[1] + hs[1] + hs[3]);
 
 		        // Grip 2
-		        pxEf[1] = px * (y[1] - y[2]) / (y[1] - y[2] + hs[0] + hs[2]);
-		        pyEf[1] = py;
+		        pxEf[1] = psx * (y[1] - y[2]) / (y[1] - y[2] + hs[0] + hs[2]);
+		        pyEf[1] = psy;
 
 		        // Grip 3
-		        pxEf[2] = px;
-		        pyEf[2] = py * (x[2] - x[3]) / (x[2] - x[3] - hs[1] - hs[3]);
+		        pxEf[2] = psx;
+		        pyEf[2] = psy * (x[2] - x[3]) / (x[2] - x[3] - hs[1] - hs[3]);
 
 		        // Grip 4
-		        pxEf[3] = px * (y[0] - y[3]) / (y[0] - y[3] + hs[0] + hs[2]);
-		        pyEf[3] = py;
+		        pxEf[3] = psx * (y[0] - y[3]) / (y[0] - y[3] + hs[0] + hs[2]);
+		        pyEf[3] = psy;
 
 		        return (pxEf, pyEf);
 	        }
 
             // Calculate BA matrix
+            public Matrix<double> BAMatrix => matrixBA.Value;
+            private Lazy<Matrix<double>> matrixBA => new Lazy<Matrix<double>>(MatrixBA);
             private Matrix<double> MatrixBA()
             {
                 // Calculate t1, t2 and t3
@@ -541,8 +576,12 @@ namespace SPMTool
             }
 
             // Calculate QP matrix
+            public Matrix<double> QPMatrix => matrixQP.Value;
+            private Lazy<Matrix<double>> matrixQP => new Lazy<Matrix<double>>(MatrixQP);
             private Matrix<double> MatrixQP()
             {
+	            var hs = StringerDimensions;
+
                 // Calculate t4
                 double t4 = a * a + b * b;
 
@@ -594,71 +633,77 @@ namespace SPMTool
             }
 
             // Calculate D matrix by MCFT
-            //private Matrix<double> MatrixD(Panel panel, Vector<double> f, int ls)
-            //{
-            //    // Calculate the stresses in integration points
-            //    var sigma = QPMatrix.PseudoInverse() * f;
+            public void MatrixD(Vector<double> forceVector)
+            {
+				// Get the membrane elements at integration points
+				var intPointMembranes = IntPointMembranes;
 
-            //    // Approximate small numbers to zero
-            //    sigma.CoerceZero(1E-6);
+                // Calculate the stresses in integration points
+                var sigma = QPMatrix.PseudoInverse() * forceVector;
 
-            //    // Get the stresses at each int. point in a list
-            //    var sigList = new List<Vector<double>>();
-            //    for (int i = 0; i <= 9; i += 3)
-            //        sigList.Add(sigma.SubVector(i, 3));
+                // Approximate small numbers to zero
+                sigma.CoerceZero(1E-6);
 
-            //    // Create lists for storing different stresses and membrane elements
-            //    // D will not be calculated for equal stresses
-            //    var difsigList = new List<Vector<double>>();
-            //    var difMembList = new List<Membrane>();
+                // Get the stresses at each int. point in a list
+                var sigList = new List<Vector<double>>();
+                for (int i = 0; i <= 9; i += 3)
+                    sigList.Add(sigma.SubVector(i, 3));
 
-            //    // Create the matrix of the panel
-            //    var Dt = Matrix<double>.Build.Dense(12, 12);
+                // Create lists for storing different stresses and membrane elements
+                // D will not be calculated for equal stresses
+                var difsigList = new List<Vector<double>>();
+                var difMembList = new List<Membrane>();
 
-            //    // Calculate the material matrix of each int. point by MCFT
-            //    for (int i = 0; i < 4; i++)
-            //    {
-            //        // Initiate the membrane element
-            //        Membrane membrane;
+                // Create the matrix of the panel
+                var Dt = Matrix<double>.Build.Dense(12, 12);
 
-            //        // Get the stresses
-            //        var sig = sigList[i];
+                // Calculate the material matrix of each int. point by MCFT
+                for (int i = 0; i < 4; i++)
+                {
+                    // Initiate the membrane element
+                    Membrane membrane;
 
-            //        // Verify if it's already calculated
-            //        if (difsigList.Count > 0 && difsigList.Contains(sig)) // Already calculated
-            //        {
-            //            // Get the index of the stress vector
-            //            int j = difsigList.IndexOf(sig);
+                    // Get the stresses
+                    var sig = sigList[i];
 
-            //            // Set membrane element
-            //            membrane = difMembList[j];
-            //        }
+                    // Verify if it's already calculated
+                    if (difsigList.Count > 0 && difsigList.Contains(sig)) // Already calculated
+                    {
+                        // Get the index of the stress vector
+                        int j = difsigList.IndexOf(sig);
 
-            //        else // Not calculated
-            //        {
-            //            // Get the initial membrane element
-            //            var initialMembrane = panel.IntPointsMembrane[i];
+                        // Set membrane element
+                        membrane = difMembList[j];
+                    }
 
-            //            // Calculate stiffness by MCFT
-            //            membrane = Membrane.MCFT.MCFTMain(initialMembrane, sig, ls);
+                    else // Not calculated
+                    {
+                        // Get the initial membrane element
+                        var initialMembrane = intPointMembranes[i];
 
-            //            // Add them to the list of different stresses and membranes
-            //            difsigList.Add(sig);
-            //            difMembList.Add(membrane);
-            //        }
+                        // Calculate stiffness by MCFT
+                        var MCFT = new MCFT(initialMembrane, Concrete, sigma, LoadStep);
+                        membrane = MCFT.FinalMembrane;
 
-            //        // Set to panel
-            //        panel.IntPointsMembrane[i] = membrane;
+                        // Add them to the list of different stresses and membranes
+                        difsigList.Add(sig);
+                        difMembList.Add(membrane);
+                    }
 
-            //        // Set the submatrices
-            //        Dt.SetSubMatrix(3 * i, 3 * i, membrane.Stiffness);
-            //    }
+                    // Set to panel
+                    intPointMembranes[i] = membrane;
 
-            //    // Set to panel
-            //    panel.DMatrix = Dt;
-            //}
+                    // Set the submatrices
+                    Dt.SetSubMatrix(3 * i, 3 * i, membrane.Stiffness);
+                }
 
+                // Set to panel
+                IntPointMembranes = intPointMembranes;
+                DMatrix = Dt;
+            }
 
+			// Calculate stiffness
+			public override Matrix<double> GlobalStiffness => QPMatrix * DMatrix * BAMatrix;
         }
     }
 }

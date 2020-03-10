@@ -21,11 +21,10 @@ namespace SPMTool
 	    public (double fsx, double fsy) ReinforcementStresses { get; set; }
 
 	    // Private properties
-	    private Material.Concrete Concrete { get; }
+	    private Material.Concrete   Concrete      { get; }
 		private Reinforcement.Panel Reinforcement { get; }
-		private (Material.Steel X, Material.Steel Y) Steel => Reinforcement.Steel;
-	    private int LoadStep { get; }
-	    private int maxIter = 1000;
+	    private int                 LoadStep      { get; }
+	    private int                 maxIter       = 1000;
 
         // Calculate concrete parameters for MCFT
         private double fc    => Concrete.fcm;
@@ -36,12 +35,12 @@ namespace SPMTool
         private double phiAg => Concrete.AggregateDiameter;
 
 		// Get steel parameters
-		private double fyx  => Steel.X.fy;
-		private double Esxi => Steel.X.Es;
-		private double eyx  => Steel.X.ey;
-		private double fyy  => Steel.Y.fy;
-		private double Esyi => Steel.Y.Es;
-		private double eyy  => Steel.Y.ey;
+		private double fyx  => Reinforcement.Steel.X.fy;
+		private double Esxi => Reinforcement.Steel.X.Es;
+		private double eyx  => Reinforcement.Steel.X.ey;
+		private double fyy  => Reinforcement.Steel.Y.fy;
+		private double Esyi => Reinforcement.Steel.Y.Es;
+		private double eyy  => Reinforcement.Steel.Y.ey;
 
 		// Get reinforcement
 		private double phiX => Reinforcement.BarDiameter.X;

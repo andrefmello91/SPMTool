@@ -83,7 +83,7 @@ namespace SPMTool
             }
         }
 
-        // Calculate nodal displacements
+        // Get nodal displacements
         public void Displacements(Vector<double> displacementVector)
         {
 	        var u = displacementVector;
