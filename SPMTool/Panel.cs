@@ -28,7 +28,7 @@ namespace SPMTool
         public virtual double         ShearStress     { get; }
 
         // Constructor
-        public Panel(ObjectId panelObject, Material.Concrete concrete = null, int loadStep = 0)
+        public Panel(ObjectId panelObject)
         {
 	        ObjectId = panelObject;
 
@@ -218,7 +218,7 @@ namespace SPMTool
             // Private properties
             private double Gc { get; }
 
-            public Linear(ObjectId panelObject, Material.Concrete concrete, int loadStep = 0) : base(panelObject, concrete, loadStep)
+            public Linear(ObjectId panelObject, Material.Concrete concrete) : base(panelObject)
 	        {
 				// Get data
 		        Gc = concrete.Eci / 2.4;
@@ -440,9 +440,11 @@ namespace SPMTool
         public class NonLinear : Panel
         {
             // Public Properties
-			public Membrane[]     IntPointMembranes  { get; set; }
-            public double[]       StringerDimensions { get; set; }
-	        public Matrix<double> DMatrix            { get; set; }
+			public MCFT[]                   IntPointMCFT       { get; set; }
+            public double[]                 StringerDimensions { get; }
+            public (double[] X, double[] Y) EffectiveRatio     { get; }
+            public Matrix<double>           DMatrix            { get; set; }
+			public Vector<double>           StressVector       { get; set; }
 
             // Private Properties
             private Material.Concrete Concrete { get; }
@@ -452,14 +454,21 @@ namespace SPMTool
             private double psx => Reinforcement.Ratio.X;
             private double psy => Reinforcement.Ratio.Y;
 
-            public NonLinear(ObjectId panelObject, Material.Concrete concrete, int loadStep) : base(panelObject, concrete, loadStep)
+            public NonLinear(ObjectId panelObject, Material.Concrete concrete, int loadStep, Stringer[] stringers) : base(panelObject)
             {
 	            Concrete = concrete;
 	            LoadStep = loadStep;
+
+				// Get stringer dimensions and effective ratio
+				StringerDimensions = StringersDimensions(stringers);
+				EffectiveRatio     = EffectiveRRatio();
+
+				// Set the initial MCFT parameters
+				IntPointMCFT = InitialParameters();
             }
 
             // Get the dimensions of surrounding stringers
-            public void StringersDimensions(Stringer[] stringers)
+            public double[] StringersDimensions(Stringer[] stringers)
             {
                 // Initiate the stringer dimensions
                 double[] hs = new double[4];
@@ -482,11 +491,10 @@ namespace SPMTool
                 }
 
                 // Save to panel
-                StringerDimensions = hs;
+                return hs;
             }
 
             // Calculate the effective reinforcement ratio off a panel for considering stringer dimensions
-            public ( double[] X, double[] Y) EffectiveRatio => EffectiveRRatio();
             private (double[] X, double[] Y) EffectiveRRatio()
 	        {
 		        var hs = StringerDimensions;
@@ -635,45 +643,35 @@ namespace SPMTool
 			// Calculate panel strain vector
 			private Vector<double> StrainVector => BAMatrix * Displacements;
 
-			// Calculate strains in integration points
-			private List<Vector<double>> IntPointStrains()
-			{
-				// Get the vector
-				var e = StrainVector;
-
-				// Get the strains at each int. point in a list
-				var eList = new List<Vector<double>>();
-				for (int i = 0; i <= 9; i += 3)
-					eList.Add(e.SubVector(i, 3));
-
-				return eList;
-			}
-
-            // Calculate D matrix by MCFT
-            public void MatrixD()
+            // Calculate D matrix and stress vector by MCFT
+            public void MCFTAnalysis()
             {
-				// Get the membrane elements at integration points
-				var intPointMembranes = IntPointMembranes;
+				// Get MCFT results at integration points
+				var intPointMCFT = IntPointMCFT;
 
-				// Get the list of strains
-				var eList = IntPointStrains();
+				// Get the vector strains and stresses
+				var ev   = StrainVector;
 
                 // Create lists for storing different stresses and membrane elements
                 // D will not be calculated for equal stresses
                 var difeList = new List<Vector<double>>();
-                var difMembList = new List<Membrane>();
+                var difMCFTList = new List<MCFT>();
 
                 // Create the matrix of the panel
                 var Dt = Matrix<double>.Build.Dense(12, 12);
 
+				// Create the final stress vector
+				var sigf = Vector<double>.Build.Dense(12);
+
                 // Calculate the material matrix of each int. point by MCFT
                 for (int i = 0; i < 4; i++)
                 {
-                    // Initiate the membrane element
-                    Membrane membrane;
+                    // Initiate MCFT
+                    MCFT mcft;
 
-                    // Get the strains
-                    var e = eList[i];
+                    // Get the strains and stresses
+                    var e   = ev.SubVector(i, 3);
+                    var sig = intPointMCFT[i].Stresses;
 
                     // Verify if it's already calculated
                     if (difeList.Count > 0 && difeList.Contains(e)) // Already calculated
@@ -681,38 +679,85 @@ namespace SPMTool
                         // Get the index of the stress vector
                         int j = difeList.IndexOf(e);
 
-                        // Set membrane element
-                        membrane = difMembList[j];
+                        // Set membrane element and stresses
+                        mcft = difMCFTList[j];
                     }
 
                     else // Not calculated
                     {
                         // Get the initial membrane element
-                        var initialMembrane = intPointMembranes[i];
+                        var initialMembrane = intPointMCFT[i].FinalMembrane;
 
                         // Calculate stiffness by MCFT
-                        var MCFT = new MCFT(initialMembrane, Concrete, e, LoadStep);
-                        membrane = MCFT.FinalMembrane;
+                        mcft = new MCFT(initialMembrane, Concrete, e, sig, LoadStep);
 
                         // Add them to the list of different stresses and membranes
                         difeList.Add(e);
-                        difMembList.Add(membrane);
+                        difMCFTList.Add(mcft);
                     }
 
                     // Set to panel
-                    intPointMembranes[i] = membrane;
+                    intPointMCFT[i] = mcft;
 
-                    // Set the submatrices
-                    Dt.SetSubMatrix(3 * i, 3 * i, membrane.Stiffness);
+                    // Set the submatrices and subvectors
+                    Dt.SetSubMatrix(3 * i, 3 * i, mcft.FinalMembrane.Stiffness);
+                    sigf.SetSubVector(3 * i, 3, mcft.Stresses);
                 }
 
-                // Set to panel
-                IntPointMembranes = intPointMembranes;
-                DMatrix = Dt;
+                // Set results to panel
+                IntPointMCFT = intPointMCFT;
+                DMatrix      = Dt;
+                StressVector = sigf;
             }
 
-			// Calculate stiffness
-			public override Matrix<double> GlobalStiffness => QPMatrix * DMatrix * BAMatrix;
+            // Calculate stiffness
+            public override Matrix<double> GlobalStiffness => QPMatrix * DMatrix * BAMatrix;
+
+            // Initial MCFT parameters
+            private MCFT[] InitialMCFT => InitialParameters();
+			private MCFT[] InitialParameters()
+			{
+				MCFT[] initialMCFT = new MCFT[4];
+
+				for (int i = 0; i < 4; i++)
+				{
+					var reinforcement = Reinforcement;
+
+					// Get effective ratio
+					var pxEf = EffectiveRatio.X[i];
+					var pyEf = EffectiveRatio.Y[i];
+					reinforcement.Ratio = (pxEf, pyEf);
+
+					// Get parameters
+					initialMCFT[i] = new MCFT(Concrete, reinforcement);
+				}
+
+				return initialMCFT;
+			}
+
+			// Initial DMatrix
+			public Matrix<double>  InitialDMatrix => InitiallDMatrix();
+			private Matrix<double> InitiallDMatrix()
+			{
+				var Dt = Matrix<double>.Build.Dense(12, 12);
+
+				// Get the initial parameters
+				var initialMCFT = InitialMCFT;
+
+				for (int i = 0; i < 4; i++)
+				{
+					// Get the stiffness
+					var Di = initialMCFT[i].FinalMembrane.Stiffness;
+
+					// Set to stiffness
+					Dt.SetSubMatrix(3 * i, 3 * i, Di);
+				}
+
+				return Dt;
+			}
+
+			// Initial stiffness
+			public Matrix<double> InitialStiffness => QPMatrix * InitialDMatrix * BAMatrix;
         }
     }
 }

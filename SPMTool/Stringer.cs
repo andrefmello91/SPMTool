@@ -27,7 +27,7 @@ namespace SPMTool
 		public Vector<double>         Displacements   { get; set; }
 
         // Constructor
-        public Stringer(ObjectId stringerObject, Material.Concrete concrete = null)
+        public Stringer(ObjectId stringerObject)
 		{
 			ObjectId = stringerObject;
 
@@ -174,7 +174,7 @@ namespace SPMTool
 			private double Ec    { get; }
 
             // Constructor
-            public Linear(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
+            public Linear(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject)
             {
 	            Ec = concrete.Eci;
             }

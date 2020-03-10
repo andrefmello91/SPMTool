@@ -347,6 +347,7 @@ namespace SPMTool
 	        public (double X, double Y)                 BarSpacing  { get; }
 	        public (Material.Steel X, Material.Steel Y) Steel       { get; }
 	        private double                              PanelWidth  { get; }
+	        public (double X, double Y)                 Ratio       { get; set; }
 
 	        // Constructor
             public Panel((double X, double Y) barDiameter, (double X, double Y) barSpacing, (Material.Steel X, Material.Steel Y) steel, double panelWidth)
@@ -355,10 +356,10 @@ namespace SPMTool
 				BarSpacing  = barSpacing;
 				Steel       = steel;
 				PanelWidth  = panelWidth;
+				Ratio       = PanelReinforcement();
 			}
 
             // Calculate the panel reinforcement ratio
-            public  (double X, double Y) Ratio => PanelReinforcement();
             private (double X, double Y) PanelReinforcement()
 			{
 				// Initialize psx and psy

@@ -53,8 +53,8 @@ namespace SPMTool
 		private double smx => phiX / (5.4 * psx);
 		private double smy => phiY / (5.4 * psy);
 
-        // Constructor for applied stress
-        public MCFT(Membrane initialMembrane, Material.Concrete concrete, Vector<double> appliedStrain, int loadStep)
+        // Constructor
+        public MCFT(Membrane initialMembrane, Material.Concrete concrete, Vector<double> appliedStrain, Vector<double> initialStress, int loadStep)
         {
             // Get concrete
             Concrete = concrete;
@@ -68,8 +68,8 @@ namespace SPMTool
             // Get the strains
             var ei = appliedStrain;
 
-			// Initiate stress vector
-			var fi = Vector<double>.Build.Dense(3);
+			// Get the initial stress vector
+			var fi = initialStress;
 
             // Initiate a loop for the iterations
             double tol;
@@ -134,6 +134,21 @@ namespace SPMTool
                     Stop = (true, "Convergence not reached at load step " + LoadStep);
             }
 
+        }
+
+		// Constructor for initial stiffness
+        public MCFT(Material.Concrete concrete, Reinforcement.Panel reinforcement)
+        {
+	        // Get concrete
+	        Concrete = concrete;
+
+	        // Get reinforcement
+	        Reinforcement = reinforcement;
+
+			// Get initial parameters
+			FinalMembrane = new Membrane((Ec, Ec), (Esxi, Esyi), reinforcement, Constants.PiOver4);
+			Strains       = Vector<double>.Build.Dense(3);
+			Stresses      = Vector<double>.Build.Dense(3,0.01);
         }
 
         // Calculate concrete principal strains
@@ -396,6 +411,5 @@ namespace SPMTool
 
 	        return (Ec1, Ec2);
         }
-
     }
 }
