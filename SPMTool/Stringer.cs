@@ -23,8 +23,8 @@ namespace SPMTool
 	    public double                 Height          { get; }
 		public Reinforcement.Stringer Reinforcement   { get; }
 		public virtual Matrix<double> LocalStiffness  { get; }
+		public virtual Vector<double> Forces          { get; }
 		public Vector<double>         Displacements   { get; set; }
-        public virtual Vector<double> Forces          { get; }
 
         // Constructor
         public Stringer(ObjectId stringerObject, Material.Concrete concrete = null)
@@ -197,12 +197,13 @@ namespace SPMTool
             }
 
             // Calculate stringer forces
-            public override Vector<double> Forces => StringerForces();
-            public Vector<double> StringerForces()
+            public override Vector<double> Forces => forces.Value;
+            private Lazy<Vector<double>>   forces => new Lazy<Vector<double>>(StringerForces);
+            private Vector<double> StringerForces()
             {
 	            // Get the parameters
 	            var Kl = LocalStiffness;
-	            var T  = TransMatrix;
+	            var T = TransMatrix;
 	            var us = Displacements;
 
 	            // Get the displacements in the direction of the stringer
@@ -211,11 +212,11 @@ namespace SPMTool
 	            // Calculate the vector of normal forces (in kN)
 	            var fl = 0.001 * Kl * ul;
 
-	            // Aproximate small values to zero
+	            // Approximate small values to zero
 	            fl.CoerceZero(0.000001);
 
 	            return fl;
             }
-        }
+		}
     }
 }

@@ -632,26 +632,35 @@ namespace SPMTool
                 return Q * P;
             }
 
+			// Calculate panel strain vector
+			private Vector<double> StrainVector => BAMatrix * Displacements;
+
+			// Calculate strains in integration points
+			private List<Vector<double>> IntPointStrains()
+			{
+				// Get the vector
+				var e = StrainVector;
+
+				// Get the strains at each int. point in a list
+				var eList = new List<Vector<double>>();
+				for (int i = 0; i <= 9; i += 3)
+					eList.Add(e.SubVector(i, 3));
+
+				return eList;
+			}
+
             // Calculate D matrix by MCFT
-            public void MatrixD(Vector<double> forceVector)
+            public void MatrixD()
             {
 				// Get the membrane elements at integration points
 				var intPointMembranes = IntPointMembranes;
 
-                // Calculate the stresses in integration points
-                var sigma = QPMatrix.PseudoInverse() * forceVector;
-
-                // Approximate small numbers to zero
-                sigma.CoerceZero(1E-6);
-
-                // Get the stresses at each int. point in a list
-                var sigList = new List<Vector<double>>();
-                for (int i = 0; i <= 9; i += 3)
-                    sigList.Add(sigma.SubVector(i, 3));
+				// Get the list of strains
+				var eList = IntPointStrains();
 
                 // Create lists for storing different stresses and membrane elements
                 // D will not be calculated for equal stresses
-                var difsigList = new List<Vector<double>>();
+                var difeList = new List<Vector<double>>();
                 var difMembList = new List<Membrane>();
 
                 // Create the matrix of the panel
@@ -663,14 +672,14 @@ namespace SPMTool
                     // Initiate the membrane element
                     Membrane membrane;
 
-                    // Get the stresses
-                    var sig = sigList[i];
+                    // Get the strains
+                    var e = eList[i];
 
                     // Verify if it's already calculated
-                    if (difsigList.Count > 0 && difsigList.Contains(sig)) // Already calculated
+                    if (difeList.Count > 0 && difeList.Contains(e)) // Already calculated
                     {
                         // Get the index of the stress vector
-                        int j = difsigList.IndexOf(sig);
+                        int j = difeList.IndexOf(e);
 
                         // Set membrane element
                         membrane = difMembList[j];
@@ -682,11 +691,11 @@ namespace SPMTool
                         var initialMembrane = intPointMembranes[i];
 
                         // Calculate stiffness by MCFT
-                        var MCFT = new MCFT(initialMembrane, Concrete, sigma, LoadStep);
+                        var MCFT = new MCFT(initialMembrane, Concrete, e, LoadStep);
                         membrane = MCFT.FinalMembrane;
 
                         // Add them to the list of different stresses and membranes
-                        difsigList.Add(sig);
+                        difeList.Add(e);
                         difMembList.Add(membrane);
                     }
 

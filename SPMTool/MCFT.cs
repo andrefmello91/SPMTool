@@ -15,6 +15,7 @@ namespace SPMTool
 	    public (int X, int Y)           LSYield               { get; set; }
 	    public int                      LSPeak                { get; set; }
 	    public Vector<double>           Strains               { get; set; }
+	    public Vector<double>           Stresses              { get; set; }
 	    public double                   StrainAngle           { get; set; }
 	    public (double ec1, double ec2) ConcreteStrains       { get; set; }
 	    public (double fc1, double fc2) ConcreteStresses      { get; set; }
@@ -52,8 +53,8 @@ namespace SPMTool
 		private double smx => phiX / (5.4 * psx);
 		private double smy => phiY / (5.4 * psy);
 
-        // Constructor
-        public MCFT(Membrane initialMembrane, Material.Concrete concrete, Vector<double> appliedStresses, int loadStep)
+        // Constructor for applied stress
+        public MCFT(Membrane initialMembrane, Material.Concrete concrete, Vector<double> appliedStrain, int loadStep)
         {
             // Get concrete
             Concrete = concrete;
@@ -64,31 +65,31 @@ namespace SPMTool
             // Get current load step
             LoadStep = loadStep;
 
-            // Get the initial stiffness
-            var Di = initialMembrane.Stiffness;
+            // Get the strains
+            var ei = appliedStrain;
+
+			// Initiate stress vector
+			var fi = Vector<double>.Build.Dense(3);
 
             // Initiate a loop for the iterations
             double tol;
             for (int it = 1; it <= maxIter; it++)
             {
-                // Calculate the strains
-                var e = Di.Solve(appliedStresses);
-
                 // Calculate the principal strains
-                var concreteStrains = ConcretePrincipalStrains(e);
+                var concreteStrains = ConcretePrincipalStrains(ei);
 
                 // Calculate the angle of principal strains
-                double theta = StrainsAngle(e);
+                double theta = StrainsAngle(ei);
 
                 // Calculate reinforcement stresses
-                var reinforcementsStresses = SteelStresses(e);
+                var reinforcementsStresses = SteelStresses(ei);
 
                 // Calculate principal stresses in concrete
                 var concreteStresses = ConcretePrincipalStresses(concreteStrains, reinforcementsStresses, theta);
 
                 // Calculate material secant module
                 var concreteSecantModule = ConcreteSecantModule(concreteStrains, concreteStresses);
-                var steelSecantModule = SteelSecantModule(e, reinforcementsStresses);
+                var steelSecantModule = SteelSecantModule(ei, reinforcementsStresses);
 
                 // Get the new membrane
                 var membrane = new Membrane(concreteSecantModule, steelSecantModule, Reinforcement, theta);
@@ -96,19 +97,23 @@ namespace SPMTool
                 // Get membrane stiffness
                 var D = membrane.Stiffness;
 
-                // Verify the tolerance
-                var tolMat = D - Di;
-                tol = tolMat.Enumerate().MaximumAbsolute();
+				// Calculate the stresses
+				var ff = D * ei;
 
-                // Assign Di for a new loop
-                Di = D;
+                // Verify the tolerance
+                var tolVec = ff - fi;
+                tol = tolVec.AbsoluteMaximum();
+
+                // Assign fi for a new loop
+                fi = ff;
 
                 // Verify if convergence is reached
-                if (tol < 0.0001)  // Convergence reached
+                if (tol < 0.000001)  // Convergence reached
                 {
                     // Assign the results
                     FinalMembrane         = membrane;
-                    Strains               = e;
+                    Strains               = ei;
+                    Stresses              = ff;
                     StrainAngle           = theta;
                     ConcreteStrains       = concreteStrains;
                     ConcreteStresses      = concreteStresses;

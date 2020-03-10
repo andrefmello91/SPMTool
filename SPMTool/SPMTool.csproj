@@ -102,7 +102,6 @@
     <Compile Include="Panel.cs" />
     <Compile Include="Stringer.cs" />
     <Compile Include="StringerAnalysis.cs" />
-    <Compile Include="PanelAnalysis.cs" />
     <Compile Include="Forces.cs" />
     <Compile Include="GlobalVariables.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
