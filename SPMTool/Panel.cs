@@ -700,8 +700,9 @@ namespace SPMTool
                     intPointMCFT[i] = mcft;
 
                     // Set the submatrices and subvectors
-                    Dt.SetSubMatrix(3 * i, 3 * i, mcft.FinalMembrane.Stiffness);
-                    sigf.SetSubVector(3 * i, 3, mcft.Stresses);
+                    int index = 3 * i;
+                    Dt.SetSubMatrix(index, index, mcft.FinalMembrane.Stiffness);
+                    sigf.SetSubVector(index, 3, mcft.Stresses);
                 }
 
                 // Set results to panel

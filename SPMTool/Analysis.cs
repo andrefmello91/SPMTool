@@ -196,7 +196,127 @@ namespace SPMTool
             }
         }
 
+        // Get the list of continued stringers
+        public List<(int str1, int str2)> ContinuedStringers(Stringer[] stringers)
+        {
+            // Initialize a Tuple to store the continued stringers
+            var contStrs = new List<(int str1, int str2)>();
+
+            // Calculate the parameter of continuity
+            double par = 0.5 * Math.Sqrt(2);
+
+            // Verify in the list what stringers are continuous
+            foreach (var str1 in stringers)
+            {
+                // Access the number
+                int num1 = str1.Number;
+
+                foreach (var str2 in stringers)
+                {
+                    // Access the number
+                    int num2 = str2.Number;
+
+                    // Verify if it's other stringer
+                    if (num1 != num2)
+                    {
+                        // Create a tuple with the minimum stringer number first
+                        var contStr = (Math.Min(num1, num2), Math.Max(num1, num2));
+
+                        // Verify if it's already on the list
+                        if (!contStrs.Contains(contStr))
+                        {
+                            // Verify the cases
+                            // Case 1: stringers initiate or end at the same node
+                            if (str1.Grips[0] == str2.Grips[0] || str1.Grips[2] == str2.Grips[2])
+                            {
+                                // Get the direction cosines
+                                double[]
+                                    dir1 = Auxiliary.DirectionCosines(str1.Angle),
+                                    dir2 = Auxiliary.DirectionCosines(str2.Angle);
+                                double
+                                    l1 = dir1[0],
+                                    m1 = dir1[1],
+                                    l2 = dir2[0],
+                                    m2 = dir2[1];
+
+                                // Calculate the condition of continuity
+                                double cont = l1 * l2 + m1 * m2;
+
+                                // Verify the condition
+                                if (cont < -par) // continued stringer
+                                {
+                                    // Add to the list
+                                    contStrs.Add(contStr);
+                                }
+                            }
+
+                            // Case 2: a stringer initiate and the other end at the same node
+                            if (str1.Grips[0] == str2.Grips[2] || str1.Grips[2] == str2.Grips[0])
+                            {
+                                // Get the direction cosines
+                                double[]
+                                    dir1 = Auxiliary.DirectionCosines(str1.Angle),
+                                    dir2 = Auxiliary.DirectionCosines(str2.Angle);
+                                double
+                                    l1 = dir1[0],
+                                    m1 = dir1[1],
+                                    l2 = dir2[0],
+                                    m2 = dir2[1];
+
+                                // Calculate the condition of continuity
+                                double cont = l1 * l2 + m1 * m2;
+
+                                // Verify the condition
+                                if (cont > par) // continued stringer
+                                {
+                                    // Add to the list
+                                    contStrs.Add(contStr);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Order the list
+            contStrs = contStrs.OrderBy(str => str.Item2).ThenBy(str => str.Item1).ToList();
+
+            // Return the list
+            return contStrs;
+        }
+
+        //View the continued stringers
+   //     [CommandMethod("ViewContinuedStringers")]
+   //     public void ViewContinuedStringers()
+   //     {
+			//// Get input data
+			//var inputData = new InputData();
+
+	  //      // Get the list of continued stringers
+	  //      var contStrs = ContinuedStringers(inputData.Stringers);
+
+	  //      // Initialize a message to show
+	  //      string msg = "Continued stringers: ";
+
+	  //      // If there is none
+	  //      if (contStrs.Count == 0)
+		 //       msg += "None.";
+
+	  //      // Write all the continued stringers
+	  //      else
+	  //      {
+		 //       foreach (var contStr in contStrs)
+		 //       {
+			//        msg += contStr.str1 + " - " + contStr.str2 + ", ";
+		 //       }
+	  //      }
+
+	  //      // Write the message in the editor
+	  //      AutoCAD.edtr.WriteMessage(msg);
+   //     }
+
         // Linear analysis methods
+
         public class Linear : Analysis
         {
 	        [CommandMethod("DoLinearAnalysis")]
