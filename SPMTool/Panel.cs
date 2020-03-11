@@ -671,7 +671,6 @@ namespace SPMTool
 
                     // Get the strains and stresses
                     var e   = ev.SubVector(i, 3);
-                    var sig = intPointMCFT[i].Stresses;
 
                     // Verify if it's already calculated
                     if (difeList.Count > 0 && difeList.Contains(e)) // Already calculated
@@ -689,7 +688,7 @@ namespace SPMTool
                         var initialMembrane = intPointMCFT[i].FinalMembrane;
 
                         // Calculate stiffness by MCFT
-                        mcft = new MCFT(initialMembrane, Concrete, e, sig, LoadStep);
+                        mcft = new MCFT(initialMembrane, Concrete, e, LoadStep);
 
                         // Add them to the list of different stresses and membranes
                         difeList.Add(e);

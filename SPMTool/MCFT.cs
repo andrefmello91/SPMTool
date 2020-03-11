@@ -54,7 +54,7 @@ namespace SPMTool
 		private double smy => phiY / (5.4 * psy);
 
         // Constructor
-        public MCFT(Membrane initialMembrane, Material.Concrete concrete, Vector<double> appliedStrain, Vector<double> initialStress, int loadStep)
+        public MCFT(Membrane initialMembrane, Material.Concrete concrete, Vector<double> appliedStrain, int loadStep)
         {
             // Get concrete
             Concrete = concrete;
@@ -66,30 +66,30 @@ namespace SPMTool
             LoadStep = loadStep;
 
             // Get the strains
-            var ei = appliedStrain;
+            var e = appliedStrain;
 
 			// Get the initial stress vector
-			var fi = initialStress;
+			var fi = initialMembrane.Stiffness * e;
 
             // Initiate a loop for the iterations
             double tol;
             for (int it = 1; it <= maxIter; it++)
             {
                 // Calculate the principal strains
-                var concreteStrains = ConcretePrincipalStrains(ei);
+                var concreteStrains = ConcretePrincipalStrains(e);
 
                 // Calculate the angle of principal strains
-                double theta = StrainsAngle(ei);
+                double theta = StrainsAngle(e);
 
                 // Calculate reinforcement stresses
-                var reinforcementsStresses = SteelStresses(ei);
+                var reinforcementsStresses = SteelStresses(e);
 
                 // Calculate principal stresses in concrete
                 var concreteStresses = ConcretePrincipalStresses(concreteStrains, reinforcementsStresses, theta);
 
                 // Calculate material secant module
                 var concreteSecantModule = ConcreteSecantModule(concreteStrains, concreteStresses);
-                var steelSecantModule = SteelSecantModule(ei, reinforcementsStresses);
+                var steelSecantModule = SteelSecantModule(e, reinforcementsStresses);
 
                 // Get the new membrane
                 var membrane = new Membrane(concreteSecantModule, steelSecantModule, Reinforcement, theta);
@@ -98,7 +98,7 @@ namespace SPMTool
                 var D = membrane.Stiffness;
 
 				// Calculate the stresses
-				var ff = D * ei;
+				var ff = D * e;
 
                 // Verify the tolerance
                 var tolVec = ff - fi;
@@ -112,7 +112,7 @@ namespace SPMTool
                 {
                     // Assign the results
                     FinalMembrane         = membrane;
-                    Strains               = ei;
+                    Strains               = e;
                     Stresses              = ff;
                     StrainAngle           = theta;
                     ConcreteStrains       = concreteStrains;

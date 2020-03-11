@@ -7,6 +7,7 @@ using System.Windows.Forms.VisualStyles;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.RootFinding;
 
 namespace SPMTool
 {
@@ -157,6 +158,9 @@ namespace SPMTool
 			Displacements = us;
 		}
 
+		// Calculate local displacements
+		public Vector<double> LocalDisplacements => TransMatrix * Displacements;
+
 		public class Linear : Stringer
 		{
 			// Private properties
@@ -194,11 +198,8 @@ namespace SPMTool
 			{
 				// Get the parameters
 				var Kl = LocalStiffness;
-				var T = TransMatrix;
-				var us = Displacements;
-
-				// Get the displacements in the direction of the stringer
-				var ul = T * us;
+				var T  = TransMatrix;
+				var ul = LocalDisplacements;
 
 				// Calculate the vector of normal forces (in kN)
 				var fl = 0.001 * Kl * ul;
@@ -212,12 +213,19 @@ namespace SPMTool
 
 		public class NonLinear : Stringer
 		{
+			// Public properties
+			public (double e1, double e3) GenStrains { get; set; }
 
 			// Private parameters
 			private Material.Concrete Concrete { get; }
 
-			// Calculate concrete parameters
-			private double fc  => Concrete.fcm;
+			public NonLinear(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject)
+			{
+				Concrete = concrete;
+			}
+
+            // Calculate concrete parameters
+            private double fc  => Concrete.fcm;
 			private double ec  = 0.002;
 			private double ecu = 0.0035;
 			private double Ec  => 2 * fc / ec;
@@ -258,18 +266,179 @@ namespace SPMTool
 			private double Ncr => fcr * Ac * (1 + xi);
 			private double Nr  => Ncr / Math.Sqrt(1 + xi);
 
+			// Number of strain steps
+			private int StrainSteps = 10;
 
-            public NonLinear(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject)
+			// Get the B matrix
+			private Matrix<double> BMatrix = Matrix<double>.Build.DenseOfArray(new double[,]
 			{
-				Concrete = concrete;
+				{ -1,  1, 0},
+				{  0, -1, 1}
+			});
+
+			// Get the initial F matrix
+			public Matrix<double> InitialFMatrix
+			{
+				get
+				{
+					double de = 1 / t1;
+
+					// Calculate the flexibility matrix elements
+					double
+						de11 = de * Length / 3,
+						de12 = de * Length / 6,
+						de22 = de11;
+
+					// Get the flexibility matrix
+					return Matrix<double>.Build.DenseOfArray(new double[,]
+					{
+						{ de11, de12},
+						{ de12, de22}
+					});
+				}
 			}
+
+			// Initial global stiffness
+			public Matrix<double> InitialStiffness
+			{
+				get
+				{
+					var T = TransMatrix;
+					var B = BMatrix;
+
+					return T.Transpose() * B.Transpose() * InitialFMatrix * B * T;
+				}
+			}
+
+            // Flexibility and Stiffness matrices
+            private Matrix<double> FMatrix { get; set; }
+			public override Matrix<double> LocalStiffness => BMatrix.Transpose() * FMatrix * BMatrix;
+
+            // Generalized stresses
+            private (double N1, double N3) GenStresses { get; set; }
+
+			// Forces from gen stresses
+			public override Vector<double> Forces
+			{
+				get
+				{
+					var (N1,N3) = GenStresses;
+
+					return Vector<double>.Build.DenseOfArray(new []
+					{
+						-N1, N1 - N3, N3
+					});
+				}
+			}
+
+			// Calculate the effective stringer force
+            public void StringerForces()
+            {
+                // Get the initial forces (from previous load step)
+                var f = Forces;
+                double
+	                N1 = -f[0],
+	                N3 =  f[2];
+
+				// Get initial generalized strains (from previous load step)
+				var (e1i, e3i) = GenStrains;
+
+				// Get local displacements
+				var ul = LocalDisplacements;
+
+				// Calculate current generalized strains
+				double
+					e1 = ul[1] - ul[0],
+					e3 = ul[2] - ul[1];
+
+				// Calculate strain increments
+				double
+					de1 = (e1 - e1i) / StrainSteps,
+					de3 = (e3 - e3i) / StrainSteps;
+
+				// Initiate flexibility matrix
+				Matrix<double> F = Matrix<double>.Build.Dense(2,2);
+
+				// Incremental process to find forces
+                for (int i = 1; i <= StrainSteps ; i++ )
+				{
+					// Calculate generalized strains and F matrix for N1 and N3
+					F = StringerGenStrains(N1, N3).F;
+
+					// Calculate F determinant
+					double d = F.Determinant();
+
+					// Calculate increments
+					double
+						dN1 = ( F[1, 1] * de1 - F[0, 1] * de3) / d,
+						dN3 = (-F[0, 1] * de1 + F[0, 0] * de3) / d;
+
+					// Increment forces
+					N1 += dN1;
+					N3 += dN3;
+				}
+
+				// Verify the values of N1 and N3
+				N1 = PlasticForce(N1);
+				N3 = PlasticForce(N3);
+				double PlasticForce(double N)
+                {
+	                double Ni;
+
+	                // Check the value of N
+	                if (N < Nt)
+		                Ni = Nt;
+
+	                else if (N > Nyr)
+		                Ni = Nyr;
+
+	                else
+		                Ni = N;
+
+	                return Ni;
+                }
+
+				// Set values
+				FMatrix = F;
+				GenStresses = (N1, N3);
+            }
+
+            // Calculate the stringer flexibility and generalized strains
+            public ((double e1, double e3) genStrains, Matrix<double> F) StringerGenStrains(double N1, double N3)
+            {
+				// Calculate the approximated strains
+				var (eps1, de1) = StringerStrain(N1);
+				var (eps2, de2) = StringerStrain((2 * N1 + N3) / 3);
+				var (eps3, de3) = StringerStrain((N1  + 2 * N3) / 3);
+				var (eps4, de4) = StringerStrain(N3);
+
+				// Calculate approximated generalized strains
+				double
+					e1 = Length * (3 * eps1 + 6 * eps2 + 3 * eps3) / 24,
+					e3 = Length * (3 * eps2 + 6 * eps3 + 3 * eps4) / 24;
+
+                // Calculate the flexibility matrix elements
+                double
+                    de11 = Length / 24 * (3 * de1 + 4 * de2 + de3),
+					de12 = Length / 12 * (de2 + de3),
+					de22 = Length / 24 * (de2 + 4 * de3 + 3 * de4);
+
+				// Get the flexibility matrix
+				var F = Matrix<double>.Build.DenseOfArray(new double[,]
+				{
+					{ de11, de12},
+					{ de12, de22}
+				});
+
+				return ((e1, e3), F);
+            }
 
             // Calculate the strain and derivative on a stringer given a force N and the concrete parameters
             public (double e, double de) StringerStrain(double N)
             {
-	            double 
-		            e  = 0,
-		            de = 0;
+                double
+                    e = 0,
+                    de = 0;
 
                 // Verify the value of N
                 if (N > 0) // tensioned stringer
@@ -343,80 +512,39 @@ namespace SPMTool
                 return (e, de);
             }
 
-            // Calculate the effective stringer force
-            double StringerForce(double N)
-            {
-                double Ni;
-
-                // Check the value of N
-                if (N < Nt)
-                    Ni = Nt;
-
-                else if (N > Nyr)
-                    Ni = Nyr;
-
-                else
-                    Ni = N;
-
-                return Ni;
-            }
-
-
-            // Calculate the stringer stiffness
-            public Matrix<double> StringerStiffness(double N1, double N3)
-            {
-				// Calculate the approximated strains
-				double 
-					de1 = StringerStrain(N1).de,
-					de2 = StringerStrain(2 / 3 * N1 + N3 / 3).de,
-					de3 = StringerStrain(N1 / 3 + 2 / 3 * N3).de,
-					de4 = StringerStrain(N3).de;
-
-				// Calculate the flexibility matrix elements
-				double 
-					de1N1 = Length / 24 * (3 * de1 + 4 * de2 + de3),
-					de1N2 = Length / 12 * (de2 + de3),
-					de2N2 = Length / 24 * (de2 + 4 * de3 + 3 * de4);
-
-				// Get the flexibility matrix
-				var F = Matrix<double>.Build.DenseOfArray(new double[,]
-				{
-					{ de1N1, de1N2},
-					{ de1N2, de2N2}
-				});
-
-				// Get the B matrix
-				var B = Matrix<double>.Build.DenseOfArray(new double[,]
-				{
-					{ -1,  1, 0},
-					{  0, -1, 1}
-				});
-
-				// Calculate local stiffness matrix and return the value
-				var Kl = B.Transpose() * F.Inverse() * B;
-
-				return Kl;
-			}
-
-			// Calculate the total plastic generalized strain in a stringer
-			public double StringerPlasticStrain(double eps)
+            // Calculate the total plastic generalized strain in a stringer
+            public  (double ep1, double ep3) PlasticGenStrains => StringerPlasticStrain();
+            private (double ep1, double ep3) StringerPlasticStrain()
 			{
-				// Initialize the plastic strain
-				double ep = 0;
+				// Get generalized strains
+				var (e1, e3) = GenStrains;
 
-				// Case of tension
-				if (eps > ey)
-					ep = Length / 8 * (eps - ey);
+                // Calculate plastic strains
+                double PlasticStrain(double e)
+                {
+	                // Initialize the plastic strain
+	                double ep = 0;
 
-				// Case of compression
-				if (eps < ec)
-					ep = Length / 8 * (eps - ec);
+	                // Case of tension
+	                if (e > ey)
+		                ep = Length / 8 * (e - ey);
 
-				return ep;
+	                // Case of compression
+	                if (e < ec)
+		                ep = Length / 8 * (e - ec);
+
+	                return ep;
+                }
+                double
+                    ep1 = PlasticStrain(e1),
+					ep3 = PlasticStrain(e3);
+
+                return  (ep1, ep3);
 			}
 
 			// Calculate the maximum plastic strain in a stringer for tension and compression
-			private (double eput, double epuc) StringerMaxPlasticStrain()
+			public  (double eput, double epuc) MaxPlasticStrain => StringerMaxPlasticStrain();
+            private (double eput, double epuc) StringerMaxPlasticStrain()
 			{
 				// Calculate the maximum plastic strain for tension
 				double eput = 0.3 * esu * Length;
@@ -429,7 +557,6 @@ namespace SPMTool
 				// Return a tuple in order Tension || Compression
 				return (eput, epuc);
 			}
-
 		}
 	}
 }
