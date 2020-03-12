@@ -12,6 +12,7 @@ using MathNet.Numerics.Data.Text;
 
 [assembly: CommandClass(typeof(SPMTool.Analysis))]
 [assembly: CommandClass(typeof(SPMTool.Analysis.Linear))]
+[assembly: CommandClass(typeof(SPMTool.Analysis.NonLinear))]
 
 namespace SPMTool
 {
@@ -354,6 +355,142 @@ namespace SPMTool
 	            // Solve
 	            DisplacementVector = GlobalStiffness.Solve(forceVector);
             }
+        }
+
+        public class NonLinear : Analysis
+        {
+	        [CommandMethod("DoNonLinearAnalysis")]
+	        public static void DoNonLinearAnalysis()
+	        {
+		        // Get input data
+		        InputData input = new InputData.NonLinear();
+
+		        if (input.Concrete.IsSet)
+		        {
+			        // Do a linear analysis
+			        NonLinear analysis = new NonLinear(input);
+
+			        // Calculate results of analysis
+			        //Results results = new Results(analysis);
+
+			        // Draw results
+			        //Results.DrawResults.Draw(results);
+		        }
+
+		        else
+		        {
+			        Application.ShowAlertDialog("Please set concrete parameters");
+		        }
+	        }
+
+            public NonLinear(InputData inputData) : base(inputData)
+	        {
+		        // Get the initial stiffness and force vector simplified
+		        var (Ki, f) = InitialParameters();
+
+		        DelimitedWriter.Write("D:/Ki.csv", Ki, ";");
+		        DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
+	        }
+
+			// Get initial global stiffness
+			private (Matrix<double> GlobalStiffness, Vector<double> ForceVector) InitialParameters()
+			{
+				// Get force vector
+				var forceVector = ForceVector;
+
+				// Initialize the global stiffness matrix
+				var Kg = Matrix<double>.Build.Dense(numDoFs, numDoFs);
+
+				// Add stringer stiffness to global stiffness
+				foreach (var stringer in Stringers)
+				{
+					// Get the positions in the global matrix
+					int
+						i = stringer.Index[0],
+						j = stringer.Index[1],
+						k = stringer.Index[2];
+
+					// Get the stiffness
+					var K = stringer.InitialStiffness;
+
+					// Initialize an index for lines of the local matrix
+					int o = 0;
+
+					// Add the local matrix to the global at the DoFs positions
+					// n = index of the node in global matrix
+					// o = index of the line in the local matrix
+					foreach (int ind in stringer.Index)
+					{
+						for (int n = ind; n <= ind + 1; n++)
+						{
+							// Line o
+							// Check if the row is composed of zeroes
+							if (K.Row(o).Exists(Auxiliary.NotZero))
+							{
+								Kg[n, i] += K[o, 0];
+								Kg[n, i + 1] += K[o, 1];
+								Kg[n, j] += K[o, 2];
+								Kg[n, j + 1] += K[o, 3];
+								Kg[n, k] += K[o, 4];
+								Kg[n, k + 1] += K[o, 5];
+							}
+
+							// Increment the line index
+							o++;
+						}
+					}
+
+				}
+
+				// Add panel stiffness to global stiffness
+				foreach (var panel in Panels)
+				{
+					// Get the positions in the global matrix
+					int
+						i = panel.Index[0],
+						j = panel.Index[1],
+						k = panel.Index[2],
+						l = panel.Index[3];
+
+					// Get the stiffness
+					var K = panel.InitialStiffness;
+
+					// Initialize an index for lines of the local matrix
+					int o = 0;
+
+					// Add the local matrix to the global at the DoFs positions
+					// i = index of the node in global matrix
+					// o = index of the line in the local matrix
+					foreach (int ind in panel.Index)
+					{
+						for (int n = ind; n <= ind + 1; n++)
+						{
+							// Line o
+							// Check if the row is composed of zeroes
+							if (K.Row(o).Exists(Auxiliary.NotZero))
+							{
+								Kg[n, i] += K[o, 0];
+								Kg[n, i + 1] += K[o, 1];
+								Kg[n, j] += K[o, 2];
+								Kg[n, j + 1] += K[o, 3];
+								Kg[n, k] += K[o, 4];
+								Kg[n, k + 1] += K[o, 5];
+								Kg[n, l] += K[o, 6];
+								Kg[n, l + 1] += K[o, 7];
+							}
+
+							// Increment the line index
+							o++;
+						}
+					}
+
+				}
+
+				// Simplify stiffness matrix
+				SimplifyStiffnessMatrix(Kg, forceVector);
+
+				return (Kg, forceVector);
+			}
         }
     }
 }

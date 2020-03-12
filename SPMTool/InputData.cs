@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Autodesk.AutoCAD.DatabaseServices;
+using MathNet.Numerics.Data.Text;
 using MathNet.Numerics.LinearAlgebra;
 
 namespace SPMTool
@@ -136,10 +137,21 @@ namespace SPMTool
 		        Stringers   = ReadStringers(stringerObjects);
 		        Panels      = ReadPanels(panelObjects);
 		        ForceVector = ReadForces();
-	        }
 
-	        // Read nonlinear parameters stringers
-	        private Stringer[] ReadStringers(ObjectIdCollection stringerObjects)
+		        foreach (var panel in Panels)
+		        {
+			        DelimitedWriter.Write("D:/Kp" + panel.Number + ".csv", panel.InitialStiffness, ";");
+		        }
+
+		        foreach (var stringer in Stringers)
+		        {
+			        DelimitedWriter.Write("D:/Ks" + stringer.Number + ".csv", stringer.InitialStiffness, ";");
+		        }
+
+            }
+
+            // Read nonlinear parameters stringers
+            private Stringer[] ReadStringers(ObjectIdCollection stringerObjects)
 	        {
 		        Stringer[] stringers = new Stringer[stringerObjects.Count];
 

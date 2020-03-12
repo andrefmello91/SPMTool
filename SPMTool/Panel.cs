@@ -14,18 +14,19 @@ namespace SPMTool
     public class Panel
     {
         // Panel parameters
-        public ObjectId               ObjectId        { get; }
-        public int                    Number          { get; }
-        public int[]                  Grips           { get; }
-        public Point3d[]              Vertices        { get; }
-        public double                 Width           { get; }
-		public Reinforcement.Panel    Reinforcement   { get; }
-        public virtual Matrix<double> TransMatrix     { get; }
-        public virtual Matrix<double> LocalStiffness  { get; }
-        public virtual Matrix<double> GlobalStiffness { get; }
-        public Vector<double>         Displacements   { get; set; }
-        public virtual Vector<double> Forces          { get; }
-        public virtual double         ShearStress     { get; }
+        public ObjectId               ObjectId         { get; }
+        public int                    Number           { get; }
+        public int[]                  Grips            { get; }
+        public Point3d[]              Vertices         { get; }
+        public double                 Width            { get; }
+		public Reinforcement.Panel    Reinforcement    { get; }
+        public virtual Matrix<double> TransMatrix      { get; }
+        public virtual Matrix<double> InitialStiffness { get; }
+        public virtual Matrix<double> LocalStiffness   { get; }
+        public virtual Matrix<double> GlobalStiffness  { get; }
+        public Vector<double>         Displacements    { get; set; }
+        public virtual Vector<double> Forces           { get; }
+        public virtual double         ShearStress      { get; }
 
         // Constructor
         public Panel(ObjectId panelObject)
@@ -779,7 +780,7 @@ namespace SPMTool
 			}
 
 			// Initial stiffness
-			public Matrix<double> InitialStiffness => QPMatrix * InitialDMatrix * BAMatrix;
+			public override Matrix<double> InitialStiffness => QPMatrix * InitialDMatrix * BAMatrix;
         }
     }
 }

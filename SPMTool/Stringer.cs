@@ -14,18 +14,19 @@ namespace SPMTool
 	public class Stringer
 	{
 		// Stringer properties
-		public ObjectId               ObjectId        { get; }
-		public int                    Number          { get; }
-		public int[]                  Grips           { get; }
-		public Point3d[]              PointsConnected { get; }
-		public double                 Length          { get; }
-		public double                 Angle           { get; }
-		public double                 Width           { get; }
-		public double                 Height          { get; }
-		public Reinforcement.Stringer Reinforcement   { get; }
-		public virtual Matrix<double> LocalStiffness  { get; }
-		public virtual Vector<double> Forces          { get; }
-		public Vector<double>         Displacements   { get; set; }
+		public ObjectId               ObjectId         { get; }
+		public int                    Number           { get; }
+		public int[]                  Grips            { get; }
+		public Point3d[]              PointsConnected  { get; }
+		public double                 Length           { get; }
+		public double                 Angle            { get; }
+		public double                 Width            { get; }
+		public double                 Height           { get; }
+		public Reinforcement.Stringer Reinforcement    { get; }
+		public virtual Matrix<double> InitialStiffness { get; }
+        public virtual Matrix<double> LocalStiffness   { get; }
+		public virtual Vector<double> Forces           { get; }
+		public Vector<double>         Displacements    { get; set; }
 
 		// Constructor
 		public Stringer(ObjectId stringerObject)
@@ -301,20 +302,20 @@ namespace SPMTool
 			}
 
 			// Initial global stiffness
-			public Matrix<double> InitialStiffness
+			public override Matrix<double> InitialStiffness
 			{
 				get
 				{
 					var T = TransMatrix;
 					var B = BMatrix;
 
-					return T.Transpose() * B.Transpose() * InitialFMatrix * B * T;
+					return T.Transpose() * B.Transpose() * InitialFMatrix.Inverse() * B * T;
 				}
 			}
 
             // Flexibility and Stiffness matrices
             private Matrix<double> FMatrix { get; set; }
-			public override Matrix<double> LocalStiffness => BMatrix.Transpose() * FMatrix * BMatrix;
+			public override Matrix<double> LocalStiffness => BMatrix.Transpose() * FMatrix.Inverse() * BMatrix;
 
             // Generalized stresses
             private (double N1, double N3) GenStresses { get; set; }
