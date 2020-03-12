@@ -77,19 +77,19 @@ namespace SPMTool
 
                 // Get linear elements
                 Nodes       = ReadNodes(nodeObjects);
-                Stringers   = ReadStringers(stringerObjects, Concrete);
-				Panels      = ReadPanels(panelObjects, Concrete);
+                Stringers   = ReadStringers(stringerObjects);
+				Panels      = ReadPanels(panelObjects);
 				ForceVector = ReadForces();
 			}
 
             // Read linear parameters stringers
-            private Stringer[] ReadStringers(ObjectIdCollection stringerObjects, Material.Concrete concrete)
+            private Stringer[] ReadStringers(ObjectIdCollection stringerObjects)
 			{
 				Stringer[] stringers = new Stringer[stringerObjects.Count];
 
 				foreach (ObjectId strObj in stringerObjects)
 				{
-					Stringer stringer = new Stringer.Linear(strObj, concrete);
+					Stringer stringer = new Stringer.Linear(strObj, Concrete);
 
 					// Set to the array
 					int i = stringer.Number - 1;
@@ -101,13 +101,13 @@ namespace SPMTool
 			}
 
 			// Read linear parameters of panels
-			private Panel[] ReadPanels(ObjectIdCollection panelObjects, Material.Concrete concrete)
+			private Panel[] ReadPanels(ObjectIdCollection panelObjects)
 			{
 				Panel[] panels = new Panel[panelObjects.Count];
 
 				foreach (ObjectId pnlObj in panelObjects)
 				{
-					Panel panel = new Panel.Linear(pnlObj, concrete);
+					Panel panel = new Panel.Linear(pnlObj, Concrete);
 
 					// Set to the array
 					int i = panel.Number - 1;
@@ -116,6 +116,62 @@ namespace SPMTool
 
 				return panels;
 			}
+        }
+
+        public class NonLinear : InputData
+        {
+	        public NonLinear()
+	        {
+		        // Get the collection of elements in the model
+		        ObjectIdCollection
+			        nodeObjects     = Geometry.Node.UpdateNodes(),
+			        stringerObjects = Geometry.Stringer.UpdateStringers(),
+			        panelObjects    = Geometry.Panel.UpdatePanels();
+
+		        // Get concrete data
+		        Concrete = new Material.Concrete();
+
+		        // Get linear elements
+		        Nodes       = ReadNodes(nodeObjects);
+		        Stringers   = ReadStringers(stringerObjects);
+		        Panels      = ReadPanels(panelObjects);
+		        ForceVector = ReadForces();
+	        }
+
+	        // Read nonlinear parameters stringers
+	        private Stringer[] ReadStringers(ObjectIdCollection stringerObjects)
+	        {
+		        Stringer[] stringers = new Stringer[stringerObjects.Count];
+
+		        foreach (ObjectId strObj in stringerObjects)
+		        {
+			        Stringer stringer = new Stringer.NonLinear(strObj, Concrete);
+
+			        // Set to the array
+			        int i = stringer.Number - 1;
+			        stringers[i] = stringer;
+		        }
+
+		        // Return the stringers
+		        return stringers;
+	        }
+
+	        // Read nonlinear parameters of panels
+	        private Panel[] ReadPanels(ObjectIdCollection panelObjects)
+	        {
+		        Panel[] panels = new Panel[panelObjects.Count];
+
+		        foreach (ObjectId pnlObj in panelObjects)
+		        {
+			        Panel panel = new Panel.NonLinear(pnlObj, Concrete, Stringers);
+
+			        // Set to the array
+			        int i = panel.Number - 1;
+			        panels[i] = panel;
+		        }
+
+		        return panels;
+	        }
         }
     }
 }

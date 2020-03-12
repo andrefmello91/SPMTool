@@ -460,16 +460,15 @@ namespace SPMTool
 
             // Private Properties
             private Material.Concrete Concrete { get; }
-			private int               LoadStep { get; }
+			private int               LoadStep { get; set; }
 
             // Reinforcement ratio
             private double psx => Reinforcement.Ratio.X;
             private double psy => Reinforcement.Ratio.Y;
 
-            public NonLinear(ObjectId panelObject, Material.Concrete concrete, int loadStep, Stringer[] stringers) : base(panelObject)
+            public NonLinear(ObjectId panelObject, Material.Concrete concrete, Stringer[] stringers) : base(panelObject)
             {
 	            Concrete = concrete;
-	            LoadStep = loadStep;
 
 				// Get stringer dimensions and effective ratio
 				StringerDimensions = StringersDimensions(stringers);
