@@ -9,6 +9,7 @@ using Autodesk.AutoCAD.EditorInput;
 using MathNet.Numerics.LinearAlgebra;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.Data.Text;
+using MathNet.Numerics.Statistics;
 
 [assembly: CommandClass(typeof(SPMTool.Analysis))]
 [assembly: CommandClass(typeof(SPMTool.Analysis.Linear))]
@@ -25,6 +26,7 @@ namespace SPMTool
         public Stringer[]     Stringers          { get; }
         public Panel[]        Panels             { get; }
         public Vector<double> ForceVector        { get; }
+        public double         MaxStringerForce   { get; set; }
 
         // Constructor
         public Analysis(InputData inputData)
@@ -195,6 +197,45 @@ namespace SPMTool
                     }
                 }
             }
+
+			// Approximate small numbers to zero
+			Kg.CoerceZero(1E-9);
+        }
+
+        // Get stringer displacements
+        private void StringerDisplacements()
+        {
+	        // Create a matrix to store the stringer forces
+	        var strForces = Matrix<double>.Build.Dense(Stringers.Length, 3);
+
+	        foreach (var str in Stringers)
+	        {
+		        // Calculate forces
+		        str.Displacement(DisplacementVector);
+
+		        // Set to the matrix of forces
+		        int i = str.Number - 1;
+		        strForces.SetRow(i, str.Forces);
+
+		        //Global.ed.WriteMessage("\nStringer " + strNum.ToString() + ":\n" + fl.ToString());
+	        }
+
+	        // Verify the maximum stringer force in the model to draw in an uniform scale
+	        MaxStringerForce = strForces.Enumerate().MaximumAbsolute();
+        }
+
+        // Get panel displacements
+        private void PanelDisplacements()
+        {
+	        foreach (var pnl in Panels)
+		        pnl.Displacement(DisplacementVector);
+        }
+
+        // Get the nodal displacements and save to XData
+        private void NodalDisplacements()
+        {
+	        foreach (var nd in Nodes)
+		        nd.Displacements(DisplacementVector);
         }
 
         // Get the list of continued stringers
@@ -331,11 +372,8 @@ namespace SPMTool
 			        // Do a linear analysis
 			        Linear analysis = new Linear(input);
 
-			        // Calculate results of analysis
-			        Results results = new Results(analysis);
-
-			        // Draw results
-			        Results.DrawResults.Draw(results);
+                    // Draw results of analysis
+                    Results.Draw(analysis);
 		        }
 
 		        else
@@ -354,6 +392,11 @@ namespace SPMTool
 
 	            // Solve
 	            DisplacementVector = GlobalStiffness.Solve(forceVector);
+
+	            // Calculate displacements
+	            StringerDisplacements();
+	            PanelDisplacements();
+	            NodalDisplacements();
             }
         }
 
@@ -387,6 +430,18 @@ namespace SPMTool
 	        {
 		        // Get the initial stiffness and force vector simplified
 		        var (Ki, f) = InitialParameters();
+
+				// Get the initial force vector
+				var fi = 0.01 * f;
+
+				// Solve the initial displacements
+				var u = Ki.Solve(fi);
+
+				// Initiate iterations
+				for (int it = 1; it <= 1000; it++)
+				{
+
+				}
 
 		        DelimitedWriter.Write("D:/Ki.csv", Ki, ";");
 		        DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
@@ -427,11 +482,11 @@ namespace SPMTool
 							// Check if the row is composed of zeroes
 							if (K.Row(o).Exists(Auxiliary.NotZero))
 							{
-								Kg[n, i] += K[o, 0];
+								Kg[n, i]     += K[o, 0];
 								Kg[n, i + 1] += K[o, 1];
-								Kg[n, j] += K[o, 2];
+								Kg[n, j]     += K[o, 2];
 								Kg[n, j + 1] += K[o, 3];
-								Kg[n, k] += K[o, 4];
+								Kg[n, k]     += K[o, 4];
 								Kg[n, k + 1] += K[o, 5];
 							}
 
@@ -469,13 +524,13 @@ namespace SPMTool
 							// Check if the row is composed of zeroes
 							if (K.Row(o).Exists(Auxiliary.NotZero))
 							{
-								Kg[n, i] += K[o, 0];
+								Kg[n, i]     += K[o, 0];
 								Kg[n, i + 1] += K[o, 1];
-								Kg[n, j] += K[o, 2];
+								Kg[n, j]     += K[o, 2];
 								Kg[n, j + 1] += K[o, 3];
-								Kg[n, k] += K[o, 4];
+								Kg[n, k]     += K[o, 4];
 								Kg[n, k + 1] += K[o, 5];
-								Kg[n, l] += K[o, 6];
+								Kg[n, l]     += K[o, 6];
 								Kg[n, l + 1] += K[o, 7];
 							}
 
