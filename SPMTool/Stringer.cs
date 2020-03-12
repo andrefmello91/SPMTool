@@ -85,17 +85,19 @@ namespace SPMTool
 		}
 
 		// Set global indexes from grips
-		public int[] Index => GlobalIndexes();
-		private int[] GlobalIndexes()
+		public int[] Index
 		{
-			// Initialize the array
-			int[] ind = new int[Grips.Length];
+			get
+			{
+				// Initialize the array
+				int[] ind = new int[Grips.Length];
 
-			// Get the indexes
-			for (int i = 0; i < Grips.Length; i++)
-				ind[i] = 2 * Grips[i] - 2;
+				// Get the indexes
+				for (int i = 0; i < Grips.Length; i++)
+					ind[i] = 2 * Grips[i] - 2;
 
-			return ind;
+				return ind;
+			}
 		}
 
 		// Calculate steel area
@@ -513,50 +515,55 @@ namespace SPMTool
             }
 
             // Calculate the total plastic generalized strain in a stringer
-            public  (double ep1, double ep3) PlasticGenStrains => StringerPlasticStrain();
-            private (double ep1, double ep3) StringerPlasticStrain()
-			{
-				// Get generalized strains
-				var (e1, e3) = GenStrains;
+            public  (double ep1, double ep3) PlasticGenStrains
+            {
+	            get
+	            {
+		            // Get generalized strains
+		            var (e1, e3) = GenStrains;
 
-                // Calculate plastic strains
-                double PlasticStrain(double e)
-                {
-	                // Initialize the plastic strain
-	                double ep = 0;
+		            // Calculate plastic strains
+		            double PlasticStrain(double e)
+		            {
+			            // Initialize the plastic strain
+			            double ep = 0;
 
-	                // Case of tension
-	                if (e > ey)
-		                ep = Length / 8 * (e - ey);
+			            // Case of tension
+			            if (e > ey)
+				            ep = Length / 8 * (e - ey);
 
-	                // Case of compression
-	                if (e < ec)
-		                ep = Length / 8 * (e - ec);
+			            // Case of compression
+			            if (e < ec)
+				            ep = Length / 8 * (e - ec);
 
-	                return ep;
-                }
-                double
-                    ep1 = PlasticStrain(e1),
-					ep3 = PlasticStrain(e3);
+			            return ep;
+		            }
 
-                return  (ep1, ep3);
-			}
+		            double
+			            ep1 = PlasticStrain(e1),
+			            ep3 = PlasticStrain(e3);
 
-			// Calculate the maximum plastic strain in a stringer for tension and compression
-			public  (double eput, double epuc) MaxPlasticStrain => StringerMaxPlasticStrain();
-            private (double eput, double epuc) StringerMaxPlasticStrain()
-			{
-				// Calculate the maximum plastic strain for tension
-				double eput = 0.3 * esu * Length;
+		            return  (ep1, ep3);
+	            }
+            }
 
-				// Calculate the maximum plastic strain for compression
-				double et   = Math.Max(ec, -ey);
-				double a    = Math.Min(Width, Height);
-				double epuc = (ecu - et) * a;
+            // Calculate the maximum plastic strain in a stringer for tension and compression
+            public  (double eput, double epuc) MaxPlasticStrain
+            {
+	            get
+	            {
+		            // Calculate the maximum plastic strain for tension
+		            double eput = 0.3 * esu * Length;
 
-				// Return a tuple in order Tension || Compression
-				return (eput, epuc);
-			}
+		            // Calculate the maximum plastic strain for compression
+		            double et   = Math.Max(ec, -ey);
+		            double a    = Math.Min(Width, Height);
+		            double epuc = (ecu - et) * a;
+
+		            // Return a tuple in order Tension || Compression
+		            return (eput, epuc);
+	            }
+            }
 		}
 	}
 }

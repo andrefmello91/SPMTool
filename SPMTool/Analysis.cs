@@ -15,7 +15,7 @@ using MathNet.Numerics.Data.Text;
 
 namespace SPMTool
 {
-    public partial class Analysis
+    public class Analysis
     {
         // Public Properties
         public Matrix<double> GlobalStiffness    { get; set; }
