@@ -719,7 +719,7 @@ namespace SPMTool
 
                     // Set the submatrices and subvectors
                     int index = 3 * i;
-                    Dt.SetSubMatrix(index, index, mcft.FinalMembrane.Stiffness);
+                    //Dt.SetSubMatrix(index, index, mcft.FinalMembrane.Stiffness);
                     sigf.SetSubVector(index, 3, mcft.Stresses);
                 }
 
@@ -732,7 +732,10 @@ namespace SPMTool
             // Calculate stiffness
             public override Matrix<double> GlobalStiffness => QPMatrix * DMatrix * BAMatrix;
 
-            // Initial MCFT parameters
+			// Calculate panel forces
+			public override Vector<double> Forces => QPMatrix * StressVector;
+
+			// Initial MCFT parameters
             private MCFT[] InitialMCFT
             {
 	            get

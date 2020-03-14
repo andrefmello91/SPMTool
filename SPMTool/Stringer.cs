@@ -26,6 +26,7 @@ namespace SPMTool
 		public virtual Matrix<double> InitialStiffness { get; }
         public virtual Matrix<double> LocalStiffness   { get; }
 		public virtual Vector<double> Forces           { get; }
+		public virtual Vector<double> GlobalForces     { get; }
 		public Vector<double>         Displacements    { get; set; }
 
 		// Constructor
@@ -201,7 +202,6 @@ namespace SPMTool
 			{
 				// Get the parameters
 				var Kl = LocalStiffness;
-				var T  = TransMatrix;
 				var ul = LocalDisplacements;
 
 				// Calculate the vector of normal forces (in kN)
@@ -325,7 +325,7 @@ namespace SPMTool
 			{
 				get
 				{
-					var (N1,N3) = GenStresses;
+					var (N1, N3) = GenStresses;
 
 					return Vector<double>.Build.DenseOfArray(new []
 					{
@@ -334,24 +334,47 @@ namespace SPMTool
 				}
 			}
 
-			// Calculate the effective stringer force
+			// Global stringer forces
+			public Vector<double> GlobalForces => TransMatrix.Transpose() * Forces;
+
+            // Generalized stresses for each iteration
+            private (double N1, double N3) ItGenStresses { get; set; }
+
+			// Forces from gen stresses for each iteration
+			public Vector<double> ItForces
+			{
+				get
+				{
+					var (N1, N3) = ItGenStresses;
+
+					return Vector<double>.Build.DenseOfArray(new []
+					{
+						-N1, N1 - N3, N3
+					});
+				}
+			}
+
+			// Global stringer forces for each iteration
+			public Vector<double> ItGlobalForces => TransMatrix.Transpose() * ItForces;
+
+            // Calculate the effective stringer force
             public void StringerForces()
             {
                 // Get the initial forces (from previous load step)
-                var f = Forces;
+                var genStresses = GenStresses;
                 double
-	                N1 = -f[0],
-	                N3 =  f[2];
+	                N1 = genStresses.N1,
+	                N3 = genStresses.N3;
 
 				// Get initial generalized strains (from previous load step)
 				var (e1i, e3i) = GenStrains;
 
-				// Get local displacements
-				var ul = LocalDisplacements;
+                // Get local displacements
+                var ul = LocalDisplacements;
 
-				// Calculate current generalized strains
-				double
-					e1 = ul[1] - ul[0],
+                // Calculate current generalized strains
+                double
+                    e1 = ul[1] - ul[0],
 					e3 = ul[2] - ul[1];
 
 				// Calculate strain increments
@@ -401,9 +424,81 @@ namespace SPMTool
 	                return Ni;
                 }
 
-				// Set values
-				FMatrix = F;
+                // Set values
+                //FMatrix = F;
 				GenStresses = (N1, N3);
+            }
+
+            // Calculate the effective stringer force for each iteration
+            public void ItStringerForces()
+            {
+                // Get the initial forces (from previous load step)
+                var genStresses = GenStresses;
+                double
+	                N1 = genStresses.N1,
+	                N3 = genStresses.N3;
+
+				// Get initial generalized strains (from previous load step)
+				var (e1i, e3i) = GenStrains;
+
+                // Get local displacements
+                var ul = LocalDisplacements;
+
+                // Calculate current generalized strains
+                double
+                    e1 = ul[1] - ul[0],
+					e3 = ul[2] - ul[1];
+
+				// Calculate strain increments
+				double
+					de1 = (e1 - e1i) / StrainSteps,
+					de3 = (e3 - e3i) / StrainSteps;
+
+				// Initiate flexibility matrix
+				Matrix<double> F = Matrix<double>.Build.Dense(2,2);
+
+				// Incremental process to find forces
+                for (int i = 1; i <= StrainSteps ; i++ )
+				{
+					// Calculate generalized strains and F matrix for N1 and N3
+					F = StringerGenStrains(N1, N3).F;
+
+					// Calculate F determinant
+					double d = F.Determinant();
+
+					// Calculate increments
+					double
+						dN1 = ( F[1, 1] * de1 - F[0, 1] * de3) / d,
+						dN3 = (-F[0, 1] * de1 + F[0, 0] * de3) / d;
+
+					// Increment forces
+					N1 += dN1;
+					N3 += dN3;
+				}
+
+				// Verify the values of N1 and N3
+				N1 = PlasticForce(N1);
+				N3 = PlasticForce(N3);
+				double PlasticForce(double N)
+                {
+	                double Ni;
+
+	                // Check the value of N
+	                if (N < Nt)
+		                Ni = Nt;
+
+	                else if (N > Nyr)
+		                Ni = Nyr;
+
+	                else
+		                Ni = N;
+
+	                return Ni;
+                }
+
+                // Set values
+                //FMatrix = F;
+				ItGenStresses = (N1, N3);
             }
 
             // Calculate the stringer flexibility and generalized strains
@@ -444,7 +539,7 @@ namespace SPMTool
                     de = 0;
 
                 // Verify the value of N
-                if (N > 0) // tensioned stringer
+                if (N >= 0) // tensioned stringer
                 {
                     if (N <= Ncr)
                     {

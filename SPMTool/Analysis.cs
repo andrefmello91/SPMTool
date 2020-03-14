@@ -203,7 +203,7 @@ namespace SPMTool
         }
 
         // Get stringer displacements
-        private void StringerDisplacements()
+        private void StringerDisplacements(Vector<double> globalDisplacements)
         {
 	        // Create a matrix to store the stringer forces
 	        var strForces = Matrix<double>.Build.Dense(Stringers.Length, 3);
@@ -211,7 +211,7 @@ namespace SPMTool
 	        foreach (var str in Stringers)
 	        {
 		        // Calculate forces
-		        str.Displacement(DisplacementVector);
+		        str.Displacement(globalDisplacements);
 
 		        // Set to the matrix of forces
 		        int i = str.Number - 1;
@@ -225,17 +225,17 @@ namespace SPMTool
         }
 
         // Get panel displacements
-        private void PanelDisplacements()
+        private void PanelDisplacements(Vector<double> globalDisplacements)
         {
 	        foreach (var pnl in Panels)
-		        pnl.Displacement(DisplacementVector);
+		        pnl.Displacement(globalDisplacements);
         }
 
         // Get the nodal displacements and save to XData
-        private void NodalDisplacements()
+        private void NodalDisplacements(Vector<double> globalDisplacements)
         {
 	        foreach (var nd in Nodes)
-		        nd.Displacements(DisplacementVector);
+		        nd.Displacements(globalDisplacements);
         }
 
         // Get the list of continued stringers
@@ -393,10 +393,10 @@ namespace SPMTool
 	            // Solve
 	            DisplacementVector = GlobalStiffness.Solve(forceVector);
 
-	            // Calculate displacements
-	            StringerDisplacements();
-	            PanelDisplacements();
-	            NodalDisplacements();
+	            // Calculate element displacements
+	            StringerDisplacements(DisplacementVector);
+	            PanelDisplacements(DisplacementVector);
+	            NodalDisplacements(DisplacementVector);
             }
         }
 
@@ -429,22 +429,64 @@ namespace SPMTool
             public NonLinear(InputData inputData) : base(inputData)
 	        {
 		        // Get the initial stiffness and force vector simplified
-		        var (Ki, f) = InitialParameters();
+		        var (Ki, fg) = InitialParameters();
 
 				// Get the initial force vector
-				var fi = 0.01 * f;
+				var f = 0.01 * fg;
 
 				// Solve the initial displacements
-				var u = Ki.Solve(fi);
+				var u = Ki.Solve(f);
 
-				// Initiate iterations
-				for (int it = 1; it <= 1000; it++)
-				{
+				// Calculate element displacements and forces
+				StringerAnalysis(u);
+				PanelAnalysis(u);
 
-				}
+				// Get the internal force vector
+				var fi = InternalForces();
+				var Du = Ki.Solve(f - fi);
 
-		        DelimitedWriter.Write("D:/Ki.csv", Ki, ";");
+                var fii = Matrix<double>.Build.Dense(1000, numDoFs);
+                var frr = Matrix<double>.Build.Dense(1000, numDoFs);
+
+                // Initiate iterations
+                for (int it = 1; it <= 50; it++)
+                {
+                    // Calculate element displacements and forces
+                    ItStringerAnalysis(u + Du);
+					PanelAnalysis(u + Du);
+
+					// Get the internal force vector
+					fi = ItInternalForces();
+
+					// Calculate residual forces
+					var fr = f - fi;
+
+                    // Calculate tolerance
+                    double tol = fr.AbsoluteMaximum();
+
+                    // Check tolerance
+                    if (tol <= 0.001)
+                    {
+                        DelimitedWriter.Write("D:/fi.csv", fi.ToColumnMatrix(), ";");
+                        AutoCAD.edtr.WriteMessage("It = " + it);
+                        break;
+                    }
+
+                    // Calculate displacement increment
+                    var du = Ki.Solve(fr);
+
+                    fii.SetRow(it - 1, fi);
+                    frr.SetRow(it - 1, fr);
+
+                    // Set new displacements
+                    u += du;
+                }
+
+                DelimitedWriter.Write("D:/Ki.csv", Ki, ";");
 		        DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
+		        DelimitedWriter.Write("D:/fii.csv", fii, ";");
+		        DelimitedWriter.Write("D:/frr.csv", frr, ";");
+		        DelimitedWriter.Write("D:/u.csv", u.ToColumnMatrix(), ";");
 	        }
 
 			// Get initial global stiffness
@@ -545,6 +587,136 @@ namespace SPMTool
 				SimplifyStiffnessMatrix(Kg, forceVector);
 
 				return (Kg, forceVector);
+			}
+
+			// Calculate stringer forces
+			private void StringerAnalysis(Vector<double> globalDisplacements)
+			{
+				foreach (Stringer.NonLinear stringer in Stringers)
+				{
+					stringer.Displacement(globalDisplacements);
+					stringer.StringerForces();
+                    DelimitedWriter.Write("D:/fs" + stringer.Number + ".csv", stringer.GlobalForces.ToColumnMatrix(), ";");
+                    DelimitedWriter.Write("D:/us" + stringer.Number + ".csv", stringer.Displacements.ToColumnMatrix(), ";");
+                }
+            }
+
+			// Calculate stringer forces for each iteration
+			private void ItStringerAnalysis(Vector<double> globalDisplacements)
+			{
+				foreach (Stringer.NonLinear stringer in Stringers)
+				{
+					stringer.Displacement(globalDisplacements);
+					stringer.ItStringerForces();
+                    DelimitedWriter.Write("D:/fs" + stringer.Number + ".csv", stringer.GlobalForces.ToColumnMatrix(), ";");
+                    DelimitedWriter.Write("D:/us" + stringer.Number + ".csv", stringer.Displacements.ToColumnMatrix(), ";");
+                }
+            }
+
+			// Calculate panel stresses nd forces
+			private void PanelAnalysis(Vector<double> globalDisplacements)
+			{
+				foreach (Panel.NonLinear panel in Panels)
+				{
+					panel.Displacement(globalDisplacements);
+					panel.MCFTAnalysis();
+                    DelimitedWriter.Write("D:/fp" + panel.Number + ".csv", panel.Forces.ToColumnMatrix(), ";");
+                    DelimitedWriter.Write("D:/up" + panel.Number + ".csv", panel.Displacements.ToColumnMatrix(), ";");
+                }
+			}
+
+			// Get the internal force vector
+			private Vector<double> InternalForces()
+			{
+				var fi = Vector<double>.Build.Dense(numDoFs);
+
+				foreach (Stringer.NonLinear stringer in Stringers)
+				{
+					// Get index and forces
+					int[] index = stringer.Index;
+					var fs = stringer.GlobalForces;
+
+					for (int i = 0; i < 3; i++)
+					{
+						// Indexers
+						int
+							j = index[i],
+							k = 2 * i;
+
+						// Add values
+						fi[j]     += fs[k];
+						fi[j + 1] += fs[k + 1];
+					}
+
+				}
+
+				foreach (Panel.NonLinear panel in Panels)
+				{
+					// Get index and forces
+					int[] index = panel.Index;
+					var fs = panel.Forces;
+
+					for (int i = 0; i < 4; i++)
+					{
+						// Indexers
+						int
+							j = index[i],
+							k = 2 * i;
+
+						// Add values
+						fi[j]     += fs[k];
+						fi[j + 1] += fs[k + 1];
+					}
+				}
+
+				return fi;
+			}
+
+			// Get the internal force vector for each iteration
+			private Vector<double> ItInternalForces()
+			{
+				var fi = Vector<double>.Build.Dense(numDoFs);
+
+				foreach (Stringer.NonLinear stringer in Stringers)
+				{
+					// Get index and forces
+					int[] index = stringer.Index;
+					var fs = stringer.ItGlobalForces;
+
+					for (int i = 0; i < 3; i++)
+					{
+						// Indexers
+						int
+							j = index[i],
+							k = 2 * i;
+
+						// Add values
+						fi[j]     += fs[k];
+						fi[j + 1] += fs[k + 1];
+					}
+
+				}
+
+				foreach (Panel.NonLinear panel in Panels)
+				{
+					// Get index and forces
+					int[] index = panel.Index;
+					var fs = panel.Forces;
+
+					for (int i = 0; i < 4; i++)
+					{
+						// Indexers
+						int
+							j = index[i],
+							k = 2 * i;
+
+						// Add values
+						fi[j]     += fs[k];
+						fi[j + 1] += fs[k + 1];
+					}
+				}
+
+				return fi;
 			}
         }
     }

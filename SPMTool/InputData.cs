@@ -55,7 +55,7 @@ namespace SPMTool
 			        int i = 2 * nd.Number - 2;
 
 			        // Read the forces in x and y (transform in N) and assign the values in the force vector at position (i) and (i + 1)
-			        f[i] = nd.Force.X * 1000;
+			        f[i]     = nd.Force.X * 1000;
 			        f[i + 1] = nd.Force.Y * 1000;
 		        }
 	        }
@@ -137,17 +137,6 @@ namespace SPMTool
 		        Stringers   = ReadStringers(stringerObjects);
 		        Panels      = ReadPanels(panelObjects);
 		        ForceVector = ReadForces();
-
-		        foreach (var panel in Panels)
-		        {
-			        DelimitedWriter.Write("D:/Kp" + panel.Number + ".csv", panel.InitialStiffness, ";");
-		        }
-
-		        foreach (var stringer in Stringers)
-		        {
-			        DelimitedWriter.Write("D:/Ks" + stringer.Number + ".csv", stringer.InitialStiffness, ";");
-		        }
-
             }
 
             // Read nonlinear parameters stringers

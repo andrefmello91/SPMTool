@@ -68,13 +68,13 @@ namespace SPMTool
             // Get the strains
             var e = appliedStrain;
 
-			// Get the initial stress vector
-			var fi = initialMembrane.Stiffness * e;
+			//// Get the initial stress vector
+			//var fi = initialMembrane.Stiffness * e;
 
-            // Initiate a loop for the iterations
-            double tol;
-            for (int it = 1; it <= maxIter; it++)
-            {
+   //         // Initiate a loop for the iterations
+   //         double tol;
+   //         for (int it = 1; it <= maxIter; it++)
+   //         {
                 // Calculate the principal strains
                 var concreteStrains = ConcretePrincipalStrains(e);
 
@@ -98,22 +98,22 @@ namespace SPMTool
                 var D = membrane.Stiffness;
 
 				// Calculate the stresses
-				var ff = D * e;
+				var f = D * e;
 
-                // Verify the tolerance
-                var tolVec = ff - fi;
-                tol = tolVec.AbsoluteMaximum();
+                //// Verify the tolerance
+                //var tolVec = ff - fi;
+                //tol = tolVec.AbsoluteMaximum();
 
-                // Assign fi for a new loop
-                fi = ff;
+                //// Assign fi for a new loop
+                //fi = ff;
 
-                // Verify if convergence is reached
-                if (tol < 0.000001)  // Convergence reached
-                {
+                //// Verify if convergence is reached
+                //if (tol < 0.000001)  // Convergence reached
+                //{
                     // Assign the results
                     FinalMembrane         = membrane;
                     Strains               = e;
-                    Stresses              = ff;
+                    Stresses              = f;
                     StrainAngle           = theta;
                     ConcreteStrains       = concreteStrains;
                     ConcreteStresses      = concreteStresses;
@@ -127,12 +127,12 @@ namespace SPMTool
                     if (LSPeak == 0 && concreteStrains.ec2 <= Concrete.ec1)
                         LSPeak = LoadStep;
 
-                    break;
-                }
+            //        break;
+            //    }
 
-                if (it == maxIter) // Not reached, analysis must stop
-                    Stop = (true, "Convergence not reached at load step " + LoadStep);
-            }
+            //    if (it == maxIter) // Not reached, analysis must stop
+	           //     Stop = (true, "Convergence not reached at load step " + LoadStep);
+            //}
 
         }
 
