@@ -14,19 +14,40 @@ namespace SPMTool
     {
 		// Properties
 		public Material.Concrete Concrete    { get; set; }
-		public Material.Concrete Steel       { get; set; }
         public Node[]            Nodes       { get; set; }
 	    public Stringer[]        Stringers   { get; set; }
 	    public Panel[]           Panels      { get; set; }
 	    public Vector<double>    ForceVector { get; set; }
+	    public List<int>         Constraints { get; set; }
 	    public int               numDoFs     => 2 * Nodes.Length;
 
-        // Read the parameters of nodes
-        private Node[] ReadNodes(ObjectIdCollection nodeObjects)
-	    {
-		    Node[] nodes = new Node[nodeObjects.Count];
+		// Private properties
+		private ObjectIdCollection NodeObjects     { get; }
+		private ObjectIdCollection StringerObjects { get; }
+		private ObjectIdCollection PanelObjects    { get; }
 
-		    foreach (ObjectId ndObj in nodeObjects)
+		public InputData()
+		{
+			// Get the collection of elements in the model
+			NodeObjects = Geometry.Node.UpdateNodes();
+			StringerObjects = Geometry.Stringer.UpdateStringers();
+			PanelObjects = Geometry.Panel.UpdatePanels();
+
+			// Get concrete data
+			Concrete = new Material.Concrete();
+
+			// Read nodes, forces and constraints
+			Nodes       = ReadNodes();
+			ForceVector = ReadForces();
+			Constraints = ConstraintList();
+		}
+
+        // Read the parameters of nodes
+        private Node[] ReadNodes()
+	    {
+		    Node[] nodes = new Node[NodeObjects.Count];
+
+		    foreach (ObjectId ndObj in NodeObjects)
 		    {
 			    Node node = new Node(ndObj);
 
@@ -63,32 +84,48 @@ namespace SPMTool
 	        return f;
         }
 
-        public class Linear : InputData
+		// Get constraint list
+		private List<int> ConstraintList()
+		{
+			var constraintList = new List<int>();
+
+			foreach (var nd in Nodes)
+			{
+				// Get the index of the row
+				int i = 2 * nd.Number - 2;
+
+				// Simplify the matrices removing the rows that have constraints (external nodes)
+				if (nd.Type == (int) Node.NodeType.External)
+				{
+					if (nd.Support.X)
+						// There is a support in X direction
+						constraintList.Add(i);
+
+					if (nd.Support.Y)
+						// There is a support in Y direction
+						constraintList.Add(i + 1);
+				}
+
+			}
+
+			return constraintList.OrderBy(i => i).ToList();
+		}
+
+		public class Linear : InputData
 	    {
 			public Linear()
 			{
-				// Get the collection of elements in the model
-				ObjectIdCollection
-					nodeObjects     = Geometry.Node.UpdateNodes(),
-					stringerObjects = Geometry.Stringer.UpdateStringers(),
-					panelObjects    = Geometry.Panel.UpdatePanels();
-
-				// Get concrete data
-				Concrete = new Material.Concrete();
-
                 // Get linear elements
-                Nodes       = ReadNodes(nodeObjects);
-                Stringers   = ReadStringers(stringerObjects);
-				Panels      = ReadPanels(panelObjects);
-				ForceVector = ReadForces();
+                Stringers = ReadStringers();
+				Panels    = ReadPanels();
 			}
 
             // Read linear parameters stringers
-            private Stringer[] ReadStringers(ObjectIdCollection stringerObjects)
+            private Stringer[] ReadStringers()
 			{
-				Stringer[] stringers = new Stringer[stringerObjects.Count];
+				Stringer[] stringers = new Stringer[StringerObjects.Count];
 
-				foreach (ObjectId strObj in stringerObjects)
+				foreach (ObjectId strObj in StringerObjects)
 				{
 					Stringer stringer = new Stringer.Linear(strObj, Concrete);
 
@@ -102,11 +139,11 @@ namespace SPMTool
 			}
 
 			// Read linear parameters of panels
-			private Panel[] ReadPanels(ObjectIdCollection panelObjects)
+			private Panel[] ReadPanels()
 			{
-				Panel[] panels = new Panel[panelObjects.Count];
+				Panel[] panels = new Panel[PanelObjects.Count];
 
-				foreach (ObjectId pnlObj in panelObjects)
+				foreach (ObjectId pnlObj in PanelObjects)
 				{
 					Panel panel = new Panel.Linear(pnlObj, Concrete);
 
@@ -123,28 +160,17 @@ namespace SPMTool
         {
 	        public NonLinear()
 	        {
-		        // Get the collection of elements in the model
-		        ObjectIdCollection
-			        nodeObjects     = Geometry.Node.UpdateNodes(),
-			        stringerObjects = Geometry.Stringer.UpdateStringers(),
-			        panelObjects    = Geometry.Panel.UpdatePanels();
-
-		        // Get concrete data
-		        Concrete = new Material.Concrete();
-
-		        // Get linear elements
-		        Nodes       = ReadNodes(nodeObjects);
-		        Stringers   = ReadStringers(stringerObjects);
-		        Panels      = ReadPanels(panelObjects);
-		        ForceVector = ReadForces();
-            }
+		        // Get nonlinear elements
+		        Stringers = ReadStringers();
+		        Panels    = ReadPanels();
+	        }
 
             // Read nonlinear parameters stringers
-            private Stringer[] ReadStringers(ObjectIdCollection stringerObjects)
+            private Stringer[] ReadStringers()
 	        {
-		        Stringer[] stringers = new Stringer[stringerObjects.Count];
+		        Stringer[] stringers = new Stringer[StringerObjects.Count];
 
-		        foreach (ObjectId strObj in stringerObjects)
+		        foreach (ObjectId strObj in StringerObjects)
 		        {
 			        Stringer stringer = new Stringer.NonLinear(strObj, Concrete);
 
@@ -158,11 +184,11 @@ namespace SPMTool
 	        }
 
 	        // Read nonlinear parameters of panels
-	        private Panel[] ReadPanels(ObjectIdCollection panelObjects)
+	        private Panel[] ReadPanels()
 	        {
-		        Panel[] panels = new Panel[panelObjects.Count];
+		        Panel[] panels = new Panel[PanelObjects.Count];
 
-		        foreach (ObjectId pnlObj in panelObjects)
+		        foreach (ObjectId pnlObj in PanelObjects)
 		        {
 			        Panel panel = new Panel.NonLinear(pnlObj, Concrete, Stringers);
 

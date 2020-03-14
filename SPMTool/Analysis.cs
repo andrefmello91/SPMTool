@@ -26,6 +26,7 @@ namespace SPMTool
         public Stringer[]     Stringers          { get; }
         public Panel[]        Panels             { get; }
         public Vector<double> ForceVector        { get; }
+        public List<int>      Constraints        { get; }
         public double         MaxStringerForce   { get; set; }
 
         // Constructor
@@ -36,6 +37,7 @@ namespace SPMTool
 			Stringers   = inputData.Stringers;
 			Panels      = inputData.Panels;
 			ForceVector = inputData.ForceVector;
+			Constraints = inputData.Constraints;
 		}
 
 		// Get the number of DoFs
@@ -137,49 +139,28 @@ namespace SPMTool
         // Simplify the stiffness matrix
         private void SimplifyStiffnessMatrix(Matrix<double> Kg, Vector<double> forceVector)
         {
+	        foreach (var index in Constraints)
+	        {
+		        // Clear the row and column [i] in the stiffness matrix (all elements will be zero)
+		        Kg.ClearRow(index);
+		        Kg.ClearColumn(index);
+
+		        // Set the diagonal element to 1
+		        Kg[index, index] = 1;
+
+		        // Clear the row in the force vector
+		        forceVector[index] = 0;
+
+		        // So ui = 0
+	        }
+
             foreach (var nd in Nodes)
             {
                 // Get the index of the row
                 int i = 2 * nd.Number - 2;
 
-                // Simplify the matrices removing the rows that have constraints (external nodes)
-                if (nd.Type == (int)Node.NodeType.External)
-                {
-                    if (nd.Support.X)
-                        // There is a support in this direction
-                    {
-                        // Clear the row and column [i] in the stiffness matrix (all elements will be zero)
-                        Kg.ClearRow(i);
-                        Kg.ClearColumn(i);
-
-                        // Set the diagonal element to 1
-                        Kg[i, i] = 1;
-
-                        // Clear the row in the force vector
-                        forceVector[i] = 0;
-
-                        // So ui = 0
-                    }
-
-                    if (nd.Support.Y)
-                        // There is a support in this direction
-                    {
-                        // Clear the row and column [i] in the stiffness matrix (all elements will be zero)
-                        Kg.ClearRow(i + 1);
-                        Kg.ClearColumn(i + 1);
-
-                        // Set the diagonal element to 1
-                        Kg[i + 1, i + 1] = 1;
-
-                        // Clear the row in the force vector
-                        forceVector[i + 1] = 0;
-
-                        // So ui = 0
-                    }
-                }
-                
                 // Simplification for internal nodes (There is only a displacement at the stringer direction, the perpendicular one will be zero)
-                else
+                if (nd.Type == (int)Node.NodeType.Internal)
                 {
                     // Verify rows i and i + 1
                     for (int j = i; j <= i + 1; j++)
