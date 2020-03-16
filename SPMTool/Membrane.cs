@@ -47,8 +47,8 @@ namespace SPMTool
 		// Get reinforcement
 		private double phiX => Reinforcement.BarDiameter.X;
 		private double phiY => Reinforcement.BarDiameter.Y;
-		private double psx => Reinforcement.Ratio.X;
-		private double psy => Reinforcement.Ratio.Y;
+		private double psx  => Reinforcement.Ratio.X;
+		private double psy  => Reinforcement.Ratio.Y;
 
         // Calculate reinforcement stresses
         public  (double fsx, double fsy) ReinforcementStresses
@@ -291,8 +291,8 @@ namespace SPMTool
 
             // Calculate concrete parameters for MCFT
             private double         fc    => Concrete.fcm;
-            private double         ec    =  0.002;
-            public override double Ec    => 2 * fc / ec;
+            private double         ec    =  - 0.002;
+            public override double Ec    => - 2 * fc / ec;
             private double         fcr   => 0.33 * Math.Sqrt(fc);
             private double         ecr   => fcr / Ec;
             private double         phiAg => Concrete.AggregateDiameter;
@@ -342,8 +342,8 @@ namespace SPMTool
 
 		            // Calculate the maximum concrete compressive stress
 		            double
-			            f2maxA = fc / (0.8 - 0.34 * ec1 / ec),
-			            f2max = Math.Max(f2maxA, fc);
+			            f2maxA = - fc / (0.8 - 0.34 * ec1 / ec),
+			            f2max  = Math.Max(f2maxA, - fc);
 
 		            // Calculate the principal compressive stress in concrete
 		            double

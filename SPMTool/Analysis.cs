@@ -434,19 +434,19 @@ namespace SPMTool
                 {
                     // Calculate element displacements and forces
                     ItStringerAnalysis(u + Du);
-					PanelAnalysis(u + Du);
+                    PanelAnalysis(u + Du);
 
-					// Get the internal force vector
-					var fit = ItInternalForces();
+                    // Get the internal force vector
+                    var fit = ItInternalForces();
 
-					// Calculate residual forces
-					var fr = f - fit;
+                    // Calculate residual forces
+                    var fr = f - fit;
 
-					// Simplify for constraints (support reactions are not considered)
-					foreach (var i in Constraints)
-						fr[i] = 0;
+                    // Simplify for constraints (support reactions are not considered)
+                    foreach (var i in Constraints)
+                        fr[i] = 0;
 
-					// Calculate tolerance
+                    // Calculate tolerance
                     double tol = fr.AbsoluteMaximum();
 
                     // Check tolerance
@@ -605,7 +605,18 @@ namespace SPMTool
 				{
 					panel.Displacement(globalDisplacements);
 					panel.MCFTAnalysis();
-                    DelimitedWriter.Write("D:/sig" + panel.Number + ".csv", panel.StressVector.ToColumnMatrix(), ";");
+
+					var sigC = Matrix<double>.Build.Dense(4, 2);
+					var eC   = Matrix<double>.Build.Dense(4, 2);
+					for (int i = 0; i < 4; i++)
+					{
+						var (fc1, fc2) = panel.IntPointsMembrane[i].ConcretePrincipalStresses;
+						var (ec1, ec2) = panel.IntPointsMembrane[i].ConcretePrincipalStrains;
+						sigC.SetRow(i, new [] {fc1, fc2});
+						eC.SetRow(i, new [] {ec1, ec2});
+					}
+                    DelimitedWriter.Write("D:/sigC" + panel.Number + ".csv", sigC, ";");
+                    DelimitedWriter.Write("D:/ec" + panel.Number + ".csv", eC, ";");
                     //DelimitedWriter.Write("D:/up" + panel.Number + ".csv", panel.Displacements.ToColumnMatrix(), ";");
                 }
 			}
