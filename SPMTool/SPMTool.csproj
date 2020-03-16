@@ -96,7 +96,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="InputData.cs" />
-    <Compile Include="MCFT.cs" />
     <Compile Include="Membrane.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="Panel.cs" />
