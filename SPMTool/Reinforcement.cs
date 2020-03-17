@@ -347,7 +347,6 @@ namespace SPMTool
 	        public (double X, double Y)                 BarSpacing  { get; }
 	        public (Material.Steel X, Material.Steel Y) Steel       { get; }
 	        private double                              PanelWidth  { get; }
-	        public (double X, double Y)                 Ratio       { get; set; }
 
 	        // Constructor
             public Panel((double X, double Y) barDiameter, (double X, double Y) barSpacing, (Material.Steel X, Material.Steel Y) steel, double panelWidth)
@@ -356,26 +355,40 @@ namespace SPMTool
 				BarSpacing  = barSpacing;
 				Steel       = steel;
 				PanelWidth  = panelWidth;
-				Ratio       = PanelReinforcement();
 			}
 
             // Calculate the panel reinforcement ratio
-            private (double X, double Y) PanelReinforcement()
+            public (double X, double Y) Ratio
+            {
+	            get
+	            {
+					// Verify if effective ratio was set
+					if (_effectiveRatio == (0, 0) || _effectiveRatio == (null, null))
+					{
+						// Initialize psx and psy
+						double
+							psx = 0,
+							psy = 0;
+
+						if (BarDiameter.X > 0 && BarSpacing.X > 0)
+							psx = Constants.Pi * BarDiameter.X * BarDiameter.X / (2 * BarSpacing.X * PanelWidth);
+
+						if (BarDiameter.Y > 0 && BarSpacing.Y > 0)
+							psy = Constants.Pi * BarDiameter.Y * BarDiameter.Y / (2 * BarSpacing.Y * PanelWidth);
+
+						return (psx, psy);
+					}
+
+		            return _effectiveRatio;
+	            }
+            }
+
+            // Set reinforcement ratio (for using with effective ratio)
+            private (double X, double Y) _effectiveRatio;
+            public void SetEffectiveRatio((double X, double Y) effectiveRatio)
 			{
-				// Initialize psx and psy
-				double
-					psx = 0,
-					psy = 0;
-
-				if (BarDiameter.X > 0 && BarSpacing.X > 0)
-					psx = Constants.Pi * BarDiameter.X * BarDiameter.X / (2 * BarSpacing.X * PanelWidth);
-
-				if (BarDiameter.Y > 0 && BarSpacing.Y > 0)
-					psy = Constants.Pi * BarDiameter.Y * BarDiameter.Y / (2 * BarSpacing.Y * PanelWidth);
-
-				return (psx, psy);
+				_effectiveRatio = effectiveRatio;
 			}
-
         }
     }
 }

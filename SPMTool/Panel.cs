@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.StatusBar;
+using MathNet.Numerics.Data.Text;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 
@@ -474,7 +476,13 @@ namespace SPMTool
 				EffectiveRatio     = EffectiveRRatio();
 
 				// Get initial membrane stiffness
-				IntPointsMembrane = InitialMCFT;
+				//for (int i = 0; i < 4; i++)
+				//{
+				//	var (psx, psy) = IntPointsMembrane[i].Reinforcement.Ratio;
+    //                AutoCAD.edtr.WriteMessage("\n" + psx + ", " + psy);
+				//}
+
+				DelimitedWriter.Write("D:/D.csv", DMatrix,";");
             }
 
             // Get the dimensions of surrounding stringers
@@ -678,9 +686,9 @@ namespace SPMTool
 	                // Get the strains and stresses
 	                var e = ev.SubVector(i, 3);
 
-					// Get the reinforcement and effective ratio
-	                var reinforcement = Reinforcement;
-	                reinforcement.Ratio = (pxEf[i], pyEf[i]);
+                    // Get the reinforcement and effective ratio
+                    var reinforcement = new Reinforcement.Panel(Reinforcement.BarDiameter, Reinforcement.BarSpacing, Reinforcement.Steel, Width);
+	                reinforcement.SetEffectiveRatio((pxEf[i], pyEf[i]));
 
                     // Calculate stiffness by MCFT
                     var membrane = new Membrane.MCFT(Concrete, reinforcement, e, LoadStep);
@@ -701,7 +709,11 @@ namespace SPMTool
 		            var Dt = Matrix<double>.Build.Dense(12, 12);
 
 		            // Get the initial parameters
-		            var membranes = IntPointsMembrane;
+		            Membrane.MCFT[] membranes;
+		            if (IntPointsMembrane != null)
+			            membranes = IntPointsMembrane;
+		            else
+			            membranes = InitialMCFT;
 
 		            for (int i = 0; i < 4; i++)
 		            {
@@ -751,15 +763,14 @@ namespace SPMTool
 	            get
 	            {
 		            var initialMCFT = new Membrane.MCFT[4];
+		            var (pxEf, pyEf) = EffectiveRatio;
 
-		            for (int i = 0; i < 4; i++)
+                    for (int i = 0; i < 4; i++)
 		            {
-			            var reinforcement = Reinforcement;
+			            var reinforcement = new Reinforcement.Panel(Reinforcement.BarDiameter, Reinforcement.BarSpacing, Reinforcement.Steel, Width);
 
 			            // Get effective ratio
-			            var pxEf = EffectiveRatio.X[i];
-			            var pyEf = EffectiveRatio.Y[i];
-			            reinforcement.Ratio = (pxEf, pyEf);
+			            reinforcement.SetEffectiveRatio((pxEf[i], pyEf[i]));
 
 			            // Get parameters
 			            initialMCFT[i] = new Membrane.MCFT(Concrete, reinforcement);

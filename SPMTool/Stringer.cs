@@ -289,7 +289,7 @@ namespace SPMTool
 					// Calculate the flexibility matrix elements
 					double
 						de11 = de * Length / 3,
-						de12 = de * Length / 6,
+						de12 = de11 / 2,
 						de22 = de11;
 
 					// Get the flexibility matrix
