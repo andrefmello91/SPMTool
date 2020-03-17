@@ -474,15 +474,6 @@ namespace SPMTool
 				// Get stringer dimensions and effective ratio
 				StringerDimensions = StringersDimensions(stringers);
 				EffectiveRatio     = EffectiveRRatio();
-
-				// Get initial membrane stiffness
-				//for (int i = 0; i < 4; i++)
-				//{
-				//	var (psx, psy) = IntPointsMembrane[i].Reinforcement.Ratio;
-    //                AutoCAD.edtr.WriteMessage("\n" + psx + ", " + psy);
-				//}
-
-				DelimitedWriter.Write("D:/D.csv", DMatrix,";");
             }
 
             // Get the dimensions of surrounding stringers
@@ -666,7 +657,7 @@ namespace SPMTool
             }
 
 			// Calculate panel strain vector
-			private Vector<double> StrainVector => BAMatrix * Displacements;
+			public Vector<double> StrainVector => BAMatrix * Displacements;
 
             // Calculate D matrix and stress vector by MCFT
             public void MCFTAnalysis()
@@ -684,7 +675,7 @@ namespace SPMTool
                 for (int i = 0; i < 4; i++)
                 {
 	                // Get the strains and stresses
-	                var e = ev.SubVector(i, 3);
+	                var e = ev.SubVector(3 * i, 3);
 
                     // Get the reinforcement and effective ratio
                     var reinforcement = new Reinforcement.Panel(Reinforcement.BarDiameter, Reinforcement.BarSpacing, Reinforcement.Steel, Width);

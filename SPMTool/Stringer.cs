@@ -318,7 +318,7 @@ namespace SPMTool
 			public override Matrix<double> LocalStiffness => BMatrix.Transpose() * FMatrix.Inverse() * BMatrix;
 
             // Generalized stresses
-            private (double N1, double N3) GenStresses { get; set; }
+            public (double N1, double N3) GenStresses { get; set; }
 
 			// Forces from gen stresses
 			public override Vector<double> Forces

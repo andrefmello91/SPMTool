@@ -430,48 +430,48 @@ namespace SPMTool
                 var frr = Matrix<double>.Build.Dense(1000, numDoFs);
 
                 // Initiate iterations
-                for (int it = 1; it <= 50; it++)
-                {
-                    // Calculate element displacements and forces
-                    ItStringerAnalysis(u + Du);
-                    PanelAnalysis(u + Du);
+                //for (int it = 1; it <= 50; it++)
+                //{
+                //    // Calculate element displacements and forces
+                //    ItStringerAnalysis(u + Du);
+                //    PanelAnalysis(u + Du);
 
-                    // Get the internal force vector
-                    var fit = ItInternalForces();
+                //    // Get the internal force vector
+                //    var fit = ItInternalForces();
 
-                    // Calculate residual forces
-                    var fr = f - fit;
+                //    // Calculate residual forces
+                //    var fr = f - fit;
 
-                    // Simplify for constraints (support reactions are not considered)
-                    foreach (var i in Constraints)
-                        fr[i] = 0;
+                //    // Simplify for constraints (support reactions are not considered)
+                //    foreach (var i in Constraints)
+                //        fr[i] = 0;
 
-                    // Calculate tolerance
-                    double tol = fr.AbsoluteMaximum();
+                //    // Calculate tolerance
+                //    double tol = fr.AbsoluteMaximum();
 
-                    // Check tolerance
-                    if (tol <= 0.001)
-                    {
-                        DelimitedWriter.Write("D:/fi.csv", fit.ToColumnMatrix(), ";");
-                        AutoCAD.edtr.WriteMessage("It = " + it);
-                        break;
-                    }
+                //    // Check tolerance
+                //    if (tol <= 0.001)
+                //    {
+                //        DelimitedWriter.Write("D:/fi.csv", fit.ToColumnMatrix(), ";");
+                //        AutoCAD.edtr.WriteMessage("It = " + it);
+                //        break;
+                //    }
 
-                    // Calculate displacement increment
-                    var du = Ki.Solve(fr);
+                //    // Calculate displacement increment
+                //    var du = Ki.Solve(fr);
 
-                    fii.SetRow(it - 1, fit);
-                    frr.SetRow(it - 1, fr);
+                //    fii.SetRow(it - 1, fit);
+                //    frr.SetRow(it - 1, fr);
 
-                    // Set new displacements
-                    Du += du;
-                }
+                //    // Set new displacements
+                //    Du += du;
+                //}
 
-                DelimitedWriter.Write("D:/Ki.csv", Ki, ";");
-		        DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
-		        DelimitedWriter.Write("D:/fii.csv", fii, ";");
-		        DelimitedWriter.Write("D:/frr.csv", frr, ";");
-		        DelimitedWriter.Write("D:/u.csv", u.ToColumnMatrix(), ";");
+          //      DelimitedWriter.Write("D:/Ki.csv", Ki, ";");
+		        //DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
+		        //DelimitedWriter.Write("D:/fi.csv", fi.ToColumnMatrix(), ";");
+		        //DelimitedWriter.Write("D:/frr.csv", frr, ";");
+		        //DelimitedWriter.Write("D:/u.csv", u.ToColumnMatrix(), ";");
 	        }
 
 			// Get initial global stiffness
@@ -581,8 +581,8 @@ namespace SPMTool
 				{
 					stringer.Displacement(globalDisplacements);
 					stringer.StringerForces();
-                    DelimitedWriter.Write("D:/fs" + stringer.Number + ".csv", stringer.GlobalForces.ToColumnMatrix(), ";");
-                    DelimitedWriter.Write("D:/us" + stringer.Number + ".csv", stringer.Displacements.ToColumnMatrix(), ";");
+                    //DelimitedWriter.Write("D:/fs" + stringer.Number + ".csv", stringer.GlobalForces.ToColumnMatrix(), ";");
+                    //DelimitedWriter.Write("D:/us" + stringer.Number + ".csv", stringer.Displacements.ToColumnMatrix(), ";");
                 }
             }
 
@@ -608,17 +608,21 @@ namespace SPMTool
 
 					var sigC = Matrix<double>.Build.Dense(4, 2);
 					var eC   = Matrix<double>.Build.Dense(4, 2);
+					var e   = Matrix<double>.Build.Dense(4, 3);
 					for (int i = 0; i < 4; i++)
 					{
 						var (fc1, fc2) = panel.IntPointsMembrane[i].ConcretePrincipalStresses;
 						var (ec1, ec2) = panel.IntPointsMembrane[i].ConcretePrincipalStrains;
+						var ep = panel.IntPointsMembrane[i].Strains;
 						sigC.SetRow(i, new [] {fc1, fc2});
 						eC.SetRow(i, new [] {ec1, ec2});
+						e.SetRow(i, ep);
 					}
                     DelimitedWriter.Write("D:/sigC" + panel.Number + ".csv", sigC, ";");
                     DelimitedWriter.Write("D:/ec" + panel.Number + ".csv", eC, ";");
-                    //DelimitedWriter.Write("D:/up" + panel.Number + ".csv", panel.Displacements.ToColumnMatrix(), ";");
-                }
+                    DelimitedWriter.Write("D:/up" + panel.Number + ".csv", panel.Displacements.ToColumnMatrix(), ";");
+                    DelimitedWriter.Write("D:/e" + panel.Number + ".csv", e, ";");
+				}
 			}
 
 			// Get the internal force vector
