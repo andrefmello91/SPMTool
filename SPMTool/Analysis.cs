@@ -347,7 +347,7 @@ namespace SPMTool
 	        public static void DoLinearAnalysis()
 	        {
 		        // Get input data
-				InputData input = new InputData.Linear();
+				InputData input = new InputData((int)Stringer.Behavior.Linear, (int)Panel.Behavior.Linear);
 
 		        if (input.Concrete.IsSet)
 		        {
@@ -388,7 +388,7 @@ namespace SPMTool
 	        public static void DoNonLinearAnalysis()
 	        {
 		        // Get input data
-		        InputData input = new InputData.NonLinear();
+		        InputData input = new InputData((int)Stringer.Behavior.NonLinear, (int)Panel.Behavior.NonLinear);
 
 		        if (input.Concrete.IsSet)
 		        {

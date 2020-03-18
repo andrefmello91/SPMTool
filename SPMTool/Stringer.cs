@@ -86,6 +86,13 @@ namespace SPMTool
 			}
 		}
 
+		// Enum for setting stringer behavior
+		public enum Behavior
+		{
+			Linear    = 1,
+			NonLinear = 2
+		}
+
 		// Set global indexes from grips
 		public int[] Index
 		{
@@ -350,7 +357,7 @@ namespace SPMTool
 			}
 
 			// Global stringer forces
-			public Vector<double> GlobalForces => TransMatrix.Transpose() * Forces;
+			public override Vector<double> GlobalForces => TransMatrix.Transpose() * Forces;
 
             // Generalized strains and stresses for each iteration
             private (double N1, double N3) IterationGenStrains  { get; set; }

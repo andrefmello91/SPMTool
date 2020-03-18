@@ -100,6 +100,13 @@ namespace SPMTool
             }
         }
 
+        // Enum for setting stringer behavior
+        public enum Behavior
+        {
+	        Linear    = 1,
+	        NonLinear = 2
+        }
+
         // Set global indexes from grips
         public int[] Index
         {
