@@ -20,7 +20,6 @@ namespace SPMTool
     public class Analysis
     {
         // Public Properties
-        public Matrix<double> GlobalStiffness    { get; set; }
 		public Vector<double> DisplacementVector { get; set; }
 		public Node[]         Nodes              { get; }
         public Stringer[]     Stringers          { get; }
@@ -44,7 +43,7 @@ namespace SPMTool
 		private int numDoFs => 2 * Nodes.Length;
 
         // Calculate Global Stiffness
-        private Matrix<double> GlobalSStiffness(Vector<double> forceVector)
+        private Matrix<double> GlobalStiffness(Vector<double> forceVector = null)
 		{
 			// Initialize the global stiffness matrix
 			var Kg = Matrix<double>.Build.Dense(numDoFs, numDoFs);
@@ -137,7 +136,7 @@ namespace SPMTool
 		}
 
         // Simplify the stiffness matrix
-        private void SimplifyStiffnessMatrix(Matrix<double> Kg, Vector<double> forceVector)
+        private void SimplifyStiffnessMatrix(Matrix<double> Kg, Vector<double> forceVector = null)
         {
 	        foreach (var index in Constraints)
 	        {
@@ -149,7 +148,8 @@ namespace SPMTool
 		        Kg[index, index] = 1;
 
 		        // Clear the row in the force vector
-		        forceVector[index] = 0;
+				if (forceVector != null)
+					forceVector[index] = 0;
 
 		        // So ui = 0
 	        }
@@ -173,7 +173,8 @@ namespace SPMTool
                             Kg[j, j] = 1;
 
                             // Clear the row in the force vector
-                            forceVector[j] = 0;
+                            if (forceVector != null)
+                                forceVector[j] = 0;
                         }
                     }
                 }
@@ -369,10 +370,10 @@ namespace SPMTool
 	            var forceVector = ForceVector;
 
 	            // Calculate and simplify global stiffness and force vector
-	            GlobalStiffness = GlobalSStiffness(forceVector);
+	            var globalStiffness = GlobalStiffness(forceVector);
 
 	            // Solve
-	            DisplacementVector = GlobalStiffness.Solve(forceVector);
+	            DisplacementVector = globalStiffness.Solve(forceVector);
 
 	            // Calculate element displacements
 	            StringerDisplacements(DisplacementVector);
@@ -413,64 +414,69 @@ namespace SPMTool
 				var f = ForceVector;
 
 		        // Get the initial stiffness and force vector simplified
-		        var Kg = GlobalSStiffness(f);
+		        var Kg = GlobalStiffness(f);
 
-				// Get the initial force vector
-				var fin = 0.01 * f;
+		        var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
+		        var fiMatrix = Matrix<double>.Build.Dense(100, numDoFs);
 
-				// Solve the initial displacements
-				var u = Kg.Solve(fin);
+				// Initialize a loop for load steps
+				for (int loadStep = 1; loadStep <= 100; loadStep++)
+				{
+					// Get the force vector
+					var fs = 0.01 * loadStep * f;
 
-				//// Calculate element displacements and forces
-				//StringerAnalysis(u);
-				//PanelAnalysis(u);
+					// Solve the initial displacements
+					var u = Kg.Solve(fs);
 
-    //            // Get the internal force vector
-    //            var fi = InternalForces();
-    //            var du = Kg.Solve(fin - fi);
+					Vector<double> fi = Vector<double>.Build.Dense(numDoFs);
 
+					// Initiate iterations
+					for (int it = 0; it <= 100; it++)
+					{
+						// Calculate element displacements and forces
+						StringerAnalysis(u);
+						PanelAnalysis(u);
 
-                //var fii = Matrix<double>.Build.Dense(50, numDoFs);
-                //var frr = Matrix<double>.Build.Dense(50, numDoFs);
+						// Get the internal force vector
+						var fit = InternalForces();
 
-                // Initiate iterations
-                for (int it = 0; it <= 1000; it++)
-                {
-                    // Calculate element displacements and forces
-                    StringerAnalysis(u);
-                    PanelAnalysis(u);
+						// Calculate residual forces
+						var fr = fs - fit;
 
-                    // Get the internal force vector
-                    var fit = InternalForces();
+						// Calculate tolerance
+						double tol = fr.AbsoluteMaximum();
 
-                    // Calculate residual forces
-                    var fr = fin - fit;
+						// Check tolerance
+						if (tol <= 0.001)
+						{
+							AutoCAD.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
+							uMatrix.SetRow(loadStep - 1, u);
+							break;
+						}
 
-                    //fii.SetRow(it - 1, fit);
-                    //frr.SetRow(it - 1, fr);
+						// Calculate displacement increment
+						var du = Kg.Solve(fr);
 
-                    // Calculate tolerance
-                    double tol = fr.AbsoluteMaximum();
+						// Increment displacements
+						u += du;
 
-                    // Check tolerance
-                    if (tol <= 0.001)
-                    {
-                        AutoCAD.edtr.WriteMessage("It = " + it);
-                        break;
-                    }
+						fi = fit;
+					}
 
-                    // Calculate displacement increment
-                    var du = Kg.Solve(fr);
+					fiMatrix.SetRow(loadStep - 1, fi);
 
-                    // Increment displacements
-                    u += du;
-                }
+					// Set the results to stringers
+					StringerResults();
+
+					// Update stiffness
+					Kg = GlobalStiffness();
+				}
 
                 //DelimitedWriter.Write("D:/Ki.csv", Kg, ";");
                 //DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
-                //DelimitedWriter.Write("D:/fii.csv", fii, ";");
+                DelimitedWriter.Write("D:/fi.csv", fiMatrix, ";");
                 //DelimitedWriter.Write("D:/frr.csv", frr, ";");
-                //DelimitedWriter.Write("D:/Du.csv", Du.ToColumnMatrix(), ";");
+                DelimitedWriter.Write("D:/u.csv", uMatrix, ";");
             }
 
 			// Get initial global stiffness
@@ -652,9 +658,7 @@ namespace SPMTool
 			private void StringerResults()
 			{
 				foreach (Stringer.NonLinear stringer in Stringers)
-				{
 					stringer.Results();
-				}
 			}
         }
     }
