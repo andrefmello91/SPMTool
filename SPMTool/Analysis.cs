@@ -472,7 +472,7 @@ namespace SPMTool
 					Kg = GlobalStiffness();
 				}
 
-                //DelimitedWriter.Write("D:/Ki.csv", Kg, ";");
+                DelimitedWriter.Write("D:/K.csv", Kg, ";");
                 //DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
                 DelimitedWriter.Write("D:/fi.csv", fiMatrix, ";");
                 //DelimitedWriter.Write("D:/frr.csv", frr, ";");

@@ -203,9 +203,9 @@ namespace SPMTool
 	            get
 	            {
 		            if (IsSet)
-			            return 0;
+			            return fy / Es;
 					//else
-		            return fy / Es;
+		            return 0;
 	            }
             }
 
