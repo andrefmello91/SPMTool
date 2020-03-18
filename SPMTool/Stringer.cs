@@ -315,7 +315,22 @@ namespace SPMTool
 
             // Flexibility and Stiffness matrices
             private Matrix<double> FMatrix { get; set; }
-			public override Matrix<double> LocalStiffness => BMatrix.Transpose() * FMatrix.Inverse() * BMatrix;
+
+            public override Matrix<double> LocalStiffness
+            {
+	            get
+	            {
+		            Matrix<double> F;
+		            if (FMatrix != null)
+			            F = FMatrix;
+		            else
+			            F = InitialFMatrix;
+
+					return
+						BMatrix.Transpose() * F.Inverse() * BMatrix;
+	            }
+
+            }
 
             // Generalized stresses
             public (double N1, double N3) GenStresses { get; set; }
@@ -337,15 +352,16 @@ namespace SPMTool
 			// Global stringer forces
 			public Vector<double> GlobalForces => TransMatrix.Transpose() * Forces;
 
-            // Generalized stresses for each iteration
-            private (double N1, double N3) ItGenStresses { get; set; }
+            // Generalized strains and stresses for each iteration
+            private (double N1, double N3) IterationGenStrains  { get; set; }
+            private (double N1, double N3) IterationGenStresses { get; set; }
 
 			// Forces from gen stresses for each iteration
-			public Vector<double> ItForces
+			public Vector<double> IterationForces
 			{
 				get
 				{
-					var (N1, N3) = ItGenStresses;
+					var (N1, N3) = IterationGenStresses;
 
 					return Vector<double>.Build.DenseOfArray(new []
 					{
@@ -355,7 +371,7 @@ namespace SPMTool
 			}
 
 			// Global stringer forces for each iteration
-			public Vector<double> ItGlobalForces => TransMatrix.Transpose() * ItForces;
+			public Vector<double> IterationGlobalForces => TransMatrix.Transpose() * IterationForces;
 
             // Calculate the effective stringer force
             public void StringerForces()
@@ -425,80 +441,9 @@ namespace SPMTool
                 }
 
                 // Set values
-                //FMatrix = F;
-				GenStresses = (N1, N3);
-            }
-
-            // Calculate the effective stringer force for each iteration
-            public void ItStringerForces()
-            {
-                // Get the initial forces (from previous load step)
-                var genStresses = GenStresses;
-                double
-	                N1 = genStresses.N1,
-	                N3 = genStresses.N3;
-
-				// Get initial generalized strains (from previous load step)
-				var (e1i, e3i) = GenStrains;
-
-                // Get local displacements
-                var ul = LocalDisplacements;
-
-                // Calculate current generalized strains
-                double
-                    e1 = ul[1] - ul[0],
-					e3 = ul[2] - ul[1];
-
-				// Calculate strain increments
-				double
-					de1 = (e1 - e1i) / StrainSteps,
-					de3 = (e3 - e3i) / StrainSteps;
-
-				// Initiate flexibility matrix
-				Matrix<double> F = Matrix<double>.Build.Dense(2,2);
-
-				// Incremental process to find forces
-                for (int i = 1; i <= StrainSteps ; i++ )
-				{
-					// Calculate generalized strains and F matrix for N1 and N3
-					F = StringerGenStrains(N1, N3).F;
-
-					// Calculate F determinant
-					double d = F.Determinant();
-
-					// Calculate increments
-					double
-						dN1 = ( F[1, 1] * de1 - F[0, 1] * de3) / d,
-						dN3 = (-F[0, 1] * de1 + F[0, 0] * de3) / d;
-
-					// Increment forces
-					N1 += dN1;
-					N3 += dN3;
-				}
-
-				// Verify the values of N1 and N3
-				N1 = PlasticForce(N1);
-				N3 = PlasticForce(N3);
-				double PlasticForce(double N)
-                {
-	                double Ni;
-
-	                // Check the value of N
-	                if (N < Nt)
-		                Ni = Nt;
-
-	                else if (N > Nyr)
-		                Ni = Nyr;
-
-	                else
-		                Ni = N;
-
-	                return Ni;
-                }
-
-                // Set values
-                //FMatrix = F;
-				ItGenStresses = (N1, N3);
+                FMatrix = F;
+				IterationGenStresses = (N1, N3);
+				IterationGenStrains =  (e1, e3);
             }
 
             // Calculate the stringer flexibility and generalized strains
@@ -609,6 +554,18 @@ namespace SPMTool
 
                 return (e, de);
             }
+
+			// Set stringer results (after reached convergence)
+			public void Results()
+			{
+				// Get the values
+				var genStrains  = IterationGenStrains;
+				var genStresses = IterationGenStresses;
+
+				// Set the final values
+				GenStrains  = genStrains;
+				GenStresses = genStresses;
+			}
 
             // Calculate the total plastic generalized strain in a stringer
             public  (double ep1, double ep3) PlasticGenStrains
