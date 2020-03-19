@@ -416,8 +416,13 @@ namespace SPMTool
 		        // Get the initial stiffness and force vector simplified
 		        var Kg = GlobalStiffness(f);
 
-		        var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
+		        // Solve the initial displacements
+		        var u = Kg.Solve(0.01 * f);
+
+                var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
 		        var fiMatrix = Matrix<double>.Build.Dense(100, numDoFs);
+		        //var fstr = Matrix<double>.Build.Dense(4,3);
+		        //var estr = Matrix<double>.Build.Dense(4, 2);
 
 				// Initialize a loop for load steps
 				for (int loadStep = 1; loadStep <= 100; loadStep++)
@@ -425,13 +430,10 @@ namespace SPMTool
 					// Get the force vector
 					var fs = 0.01 * loadStep * f;
 
-					// Solve the initial displacements
-					var u = Kg.Solve(fs);
-
 					Vector<double> fi = Vector<double>.Build.Dense(numDoFs);
 
 					// Initiate iterations
-					for (int it = 0; it <= 100; it++)
+					for (int it = 0; it <= 500; it++)
 					{
 						// Calculate element displacements and forces
 						StringerAnalysis(u);
@@ -450,7 +452,6 @@ namespace SPMTool
 						if (tol <= 0.001)
 						{
 							AutoCAD.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
-							uMatrix.SetRow(loadStep - 1, u);
 							break;
 						}
 
@@ -464,18 +465,28 @@ namespace SPMTool
 					}
 
 					fiMatrix.SetRow(loadStep - 1, fi);
+					uMatrix.SetRow(loadStep - 1, u);
 
-					// Set the results to stringers
-					StringerResults();
+                    // Set the results to stringers
+                    StringerResults();
 
 					// Update stiffness
-					Kg = GlobalStiffness();
+					//if (loadStep < 40)
+					//{
+					//	foreach (Stringer.NonLinear stringer in Stringers)
+					//	{
+					//		fstr.SetRow(stringer.Number - 1, stringer.Forces);
+					//		estr.SetRow(stringer.Number - 1, new [] { stringer.GenStrains.e1, stringer.GenStrains.e3});
+					//	}
+						Kg = GlobalStiffness();
+					//}
 				}
 
                 DelimitedWriter.Write("D:/K.csv", Kg, ";");
                 //DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
                 DelimitedWriter.Write("D:/fi.csv", fiMatrix, ";");
-                //DelimitedWriter.Write("D:/frr.csv", frr, ";");
+                //DelimitedWriter.Write("D:/fstr.csv", fstr, ";");
+                //DelimitedWriter.Write("D:/estr.csv", estr, ";");
                 DelimitedWriter.Write("D:/u.csv", uMatrix, ";");
             }
 
