@@ -308,13 +308,13 @@ namespace SPMTool
         }
 
         // Get the direction cosines of a vector
-        public static double[] DirectionCosines(double angle)
+        public static (double cos, double sin) DirectionCosines(double angle)
         {
             double 
-                l = Trig.Cos(angle).CoerceZero(1E-6), 
-                m = Trig.Sin(angle).CoerceZero(1E-6);
+                cos = Trig.Cos(angle).CoerceZero(1E-6), 
+                sin = Trig.Sin(angle).CoerceZero(1E-6);
 
-            return new [] { l, m };
+            return (cos, sin);
         }
 
         public static double Tangent(double angle)

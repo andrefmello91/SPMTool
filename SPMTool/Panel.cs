@@ -204,6 +204,22 @@ namespace SPMTool
 	        }
         }
 
+		// Calculate direction cosines of each edge
+		public (double cos, double sin)[] DirectionCosines
+		{
+			get
+			{
+				(double cos, double sin)[] directionCosines = new (double cos, double sin)[4];
+
+                var angles = Angles;
+
+                for (int i = 0; i < 4; i++)
+	                directionCosines[i] = Auxiliary.DirectionCosines(angles[i]);
+
+                return directionCosines;
+			}
+		}
+
         // Get panel displacements from global displacement vector
 		public void Displacement(Vector<double> globalDisplacementVector)
 		{
@@ -246,21 +262,11 @@ namespace SPMTool
             {
 	            // Get the transformation matrix
 	            // Direction cosines
-	            double[]
-		            dirCos1 = Auxiliary.DirectionCosines(Angles[0]),
-		            dirCos2 = Auxiliary.DirectionCosines(Angles[1]),
-		            dirCos3 = Auxiliary.DirectionCosines(Angles[2]),
-		            dirCos4 = Auxiliary.DirectionCosines(Angles[3]);
-
-	            double
-		            m1 = dirCos1[0],
-		            n1 = dirCos1[1],
-		            m2 = dirCos2[0],
-		            n2 = dirCos2[1],
-		            m3 = dirCos3[0],
-		            n3 = dirCos3[1],
-		            m4 = dirCos4[0],
-		            n4 = dirCos4[1];
+	            var dirCos = DirectionCosines;
+	            var (m1, n1) = dirCos[0];
+	            var (m2, n2) = dirCos[1];
+	            var (m3, n3) = dirCos[2];
+	            var (m4, n4) = dirCos[3];
 
 	            // T matrix
 	            return Matrix<double>.Build.DenseOfArray(new double[,]

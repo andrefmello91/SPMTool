@@ -254,14 +254,8 @@ namespace SPMTool
                             if (str1.Grips[0] == str2.Grips[0] || str1.Grips[2] == str2.Grips[2])
                             {
                                 // Get the direction cosines
-                                double[]
-                                    dir1 = Auxiliary.DirectionCosines(str1.Angle),
-                                    dir2 = Auxiliary.DirectionCosines(str2.Angle);
-                                double
-                                    l1 = dir1[0],
-                                    m1 = dir1[1],
-                                    l2 = dir2[0],
-                                    m2 = dir2[1];
+                                var (l1, m1) = str1.DirectionCosines;
+                                var (l2, m2) = str2.DirectionCosines;
 
                                 // Calculate the condition of continuity
                                 double cont = l1 * l2 + m1 * m2;
@@ -278,14 +272,8 @@ namespace SPMTool
                             if (str1.Grips[0] == str2.Grips[2] || str1.Grips[2] == str2.Grips[0])
                             {
                                 // Get the direction cosines
-                                double[]
-                                    dir1 = Auxiliary.DirectionCosines(str1.Angle),
-                                    dir2 = Auxiliary.DirectionCosines(str2.Angle);
-                                double
-                                    l1 = dir1[0],
-                                    m1 = dir1[1],
-                                    l2 = dir2[0],
-                                    m2 = dir2[1];
+                                var (l1, m1) = str1.DirectionCosines;
+                                var (l2, m2) = str2.DirectionCosines;
 
                                 // Calculate the condition of continuity
                                 double cont = l1 * l2 + m1 * m2;
@@ -421,11 +409,13 @@ namespace SPMTool
 
                 var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
 		        var fiMatrix = Matrix<double>.Build.Dense(100, numDoFs);
-		        //var fstr = Matrix<double>.Build.Dense(4,3);
-		        //var estr = Matrix<double>.Build.Dense(4, 2);
+		        var fr38 = Matrix<double>.Build.Dense(200, numDoFs);
+		        var du38 = Matrix<double>.Build.Dense(200, numDoFs);
+                var fstr = Matrix<double>.Build.Dense(4, 3);
+                var estr = Matrix<double>.Build.Dense(4, 2);
 
-				// Initialize a loop for load steps
-				for (int loadStep = 1; loadStep <= 100; loadStep++)
+                // Initialize a loop for load steps
+                for (int loadStep = 1; loadStep <= 38; loadStep++)
 				{
 					// Get the force vector
 					var fs = 0.01 * loadStep * f;
@@ -449,7 +439,7 @@ namespace SPMTool
 						double tol = fr.AbsoluteMaximum();
 
 						// Check tolerance
-						if (tol <= 0.001)
+						if (tol <= 1E-6)
 						{
 							AutoCAD.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
 							break;
@@ -462,6 +452,12 @@ namespace SPMTool
 						u += du;
 
 						fi = fit;
+
+						if (loadStep == 38)
+						{
+							fr38.SetRow(it, fr);
+							du38.SetRow(it, du);
+						}
 					}
 
 					fiMatrix.SetRow(loadStep - 1, fi);
@@ -470,23 +466,25 @@ namespace SPMTool
                     // Set the results to stringers
                     StringerResults();
 
-					// Update stiffness
-					//if (loadStep < 40)
-					//{
-					//	foreach (Stringer.NonLinear stringer in Stringers)
-					//	{
-					//		fstr.SetRow(stringer.Number - 1, stringer.Forces);
-					//		estr.SetRow(stringer.Number - 1, new [] { stringer.GenStrains.e1, stringer.GenStrains.e3});
-					//	}
-						Kg = GlobalStiffness();
-					//}
-				}
+                    // Update stiffness
+                    if (loadStep < 38)
+                    {
+                        foreach (Stringer.NonLinear stringer in Stringers)
+                        {
+                            fstr.SetRow(stringer.Number - 1, stringer.Forces);
+                            estr.SetRow(stringer.Number - 1, new[] { stringer.GenStrains.e1, stringer.GenStrains.e3 });
+                        }
+                        Kg = GlobalStiffness();
+                    }
+                }
 
                 DelimitedWriter.Write("D:/K.csv", Kg, ";");
                 //DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
                 DelimitedWriter.Write("D:/fi.csv", fiMatrix, ";");
-                //DelimitedWriter.Write("D:/fstr.csv", fstr, ";");
-                //DelimitedWriter.Write("D:/estr.csv", estr, ";");
+                DelimitedWriter.Write("D:/fr38.csv", fr38, ";");
+                DelimitedWriter.Write("D:/du38.csv", du38, ";");
+                DelimitedWriter.Write("D:/fstr.csv", fstr, ";");
+                DelimitedWriter.Write("D:/estr.csv", estr, ";");
                 DelimitedWriter.Write("D:/u.csv", uMatrix, ";");
             }
 

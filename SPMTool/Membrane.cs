@@ -237,11 +237,8 @@ namespace SPMTool
 				// Get psi angle
 				// Calculate Psi angle
 				double psi = Constants.Pi - StrainAngle;
-				double[] dirCos = Auxiliary.DirectionCosines(psi);
-
+				var (cos, sin) = Auxiliary.DirectionCosines(psi);
 				double
-					cos    = dirCos[0],
-					sin    = dirCos[1],
 					cos2   = cos * cos,
 					sin2   = sin * sin,
 					cosSin = cos * sin;
@@ -379,11 +376,8 @@ namespace SPMTool
                 double f1a = fcr / (1 + Math.Sqrt(500 * ec1));
 
                 // Calculate thetaC sine and cosine
-                var dirCos = Auxiliary.DirectionCosines(theta);
-                double
-                    cosTheta = dirCos[0],
-                    sinTheta = dirCos[1],
-                    tanTheta = Auxiliary.Tangent(theta);
+                var (cosTheta, sinTheta) = Auxiliary.DirectionCosines(theta);
+                double tanTheta = Auxiliary.Tangent(theta);
 
                 // Average crack spacing and opening
                 double
