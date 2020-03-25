@@ -13,9 +13,9 @@ namespace SPMTool
 		public int                              LSCrack                   { get; set; }
 		public (int X, int Y)                   LSYield                   { get; set; }
 		public int                              LSPeak                    { get; set; }
-		public Vector<double>                   Strains                   { get; set; }
-		public virtual (double ec1, double ec2) ConcretePrincipalStrains  { get; set; }
-		public virtual (double fc1, double fc2) ConcretePrincipalStresses { get; set; }
+		public Vector<double>                   Strains                   { get; }
+		public virtual (double ec1, double ec2) ConcretePrincipalStrains  { get; }
+		public virtual (double fc1, double fc2) ConcretePrincipalStresses { get; }
 		public virtual double                   Ec                        { get; }
 		private int                             LoadStep                  { get; }
 
@@ -79,7 +79,7 @@ namespace SPMTool
         }
 
         // Calculate strain slope
-        public  double StrainAngle
+        public double StrainAngle
         {
 	        get
 	        {
@@ -192,7 +192,7 @@ namespace SPMTool
         public Matrix<double> Stiffness => ConcreteStiffness + SteelStiffness;
 
         // Calculate steel stiffness matrix
-        private Matrix<double> SteelStiffness
+        public Matrix<double> SteelStiffness
         {
 	        get
 	        {
@@ -208,7 +208,7 @@ namespace SPMTool
         }
 
         // Calculate concrete stiffness matrix
-        private Matrix<double> ConcreteStiffness
+        public Matrix<double> ConcreteStiffness
         {
 	        get
 	        {
@@ -230,14 +230,11 @@ namespace SPMTool
         }
 
         // Calculate concrete transformation matrix
-		private Matrix<double> TransformationMatrix
+		public Matrix<double> TransformationMatrix
 		{
 			get
 			{
-				// Get psi angle
-				// Calculate Psi angle
-				double psi = Constants.Pi - StrainAngle;
-				var (cos, sin) = Auxiliary.DirectionCosines(psi);
+				var (cos, sin) = Auxiliary.DirectionCosines(StrainAngle);
 				double
 					cos2   = cos * cos,
 					sin2   = sin * sin,
@@ -253,18 +250,7 @@ namespace SPMTool
 		}
 
         // Calculate stresses
-        public Vector<double> Stresses
-        {
-	        get
-	        {
-		        // Verify strains
-		        if (Strains.Exists(Auxiliary.NotZero))
-		        {
-			        return Stiffness * Strains;
-		        }
-				return Vector<double>.Build.Dense(3);
-            }
-        }
+        public Vector<double> Stresses => Stiffness * Strains;
 
         // Calculate slopes related to reinforcement
         private (double X, double Y) ReinforcementAngles
@@ -303,6 +289,7 @@ namespace SPMTool
             {
             }
 
+            // Calculate principal strains in concrete
             public override (double ec1, double ec2) ConcretePrincipalStrains
             {
 	            get
@@ -344,7 +331,7 @@ namespace SPMTool
 
 		            // Calculate the principal compressive stress in concrete
 		            double
-			            n = ec2 / ec,
+			            n   = ec2 / ec,
 			            fc2 = f2max * (2 * n - n * n);
 
 		            // Calculate principal tensile stress

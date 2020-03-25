@@ -418,6 +418,16 @@ namespace SPMTool
 				for (int i = 0; i < 4; i++)
 					fStrs[i] = Matrix<double>.Build.Dense(200, 3);
 				var fPnl = Matrix<double>.Build.Dense(200, 8);
+				var uPnl = Matrix<double>.Build.Dense(200, 8);
+				var sigPnl = Matrix<double>.Build.Dense(200, 12);
+				var epsPnl = Matrix<double>.Build.Dense(200, 12);
+				var e1Pnl = Matrix<double>.Build.Dense(200, 8);
+				var f1Pnl = Matrix<double>.Build.Dense(200, 8);
+				var thetaPnl = Matrix<double>.Build.Dense(200, 4);
+				var DPnl = Matrix<double>.Build.Dense(2400, 12);
+				var DcPnl = Matrix<double>.Build.Dense(2400, 12);
+				var DsPnl = Matrix<double>.Build.Dense(2400, 12);
+				var KPnl = Matrix<double>.Build.Dense(2400, 8);
 
                 // Initialize a loop for load steps
                 for (int loadStep = 1; loadStep <= 38; loadStep++)
@@ -469,7 +479,41 @@ namespace SPMTool
 								fStrs[i].SetRow(it, stringer.IterationForces);
 							}
 
-							fPnl.SetRow(it, Panels[0].Forces);
+							var panel = Panels[0] as Panel.NonLinear;
+                            fPnl.SetRow(it, panel.Forces);
+                            uPnl.SetRow(it, panel.Displacements);
+							sigPnl.SetRow(it, panel.StressVector);
+							epsPnl.SetRow(it, panel.StrainVector);
+							DPnl.SetSubMatrix(12 * it, 0, panel.DMatrix);
+							DcPnl.SetSubMatrix(12 * it, 0, panel.ConcreteStiffness);
+							DsPnl.SetSubMatrix(12 * it, 0, panel.SteelStiffness);
+							KPnl.SetSubMatrix(8 * it, 0, panel.GlobalStiffness);
+
+							var f1v = Vector<double>.Build.Dense(8);
+							var e1v = Vector<double>.Build.Dense(8);
+							var thetav = Vector<double>.Build.Dense(4);
+
+							for (int i = 0; i < 4; i++)
+							{
+								var (f1, f2) = panel.IntPointsMembrane[i].ConcretePrincipalStresses;
+								var (e1, e2) = panel.IntPointsMembrane[i].ConcretePrincipalStrains;
+								double theta = panel.IntPointsMembrane[i].StrainAngle;
+								f1v[2 * i]     = f1;
+								f1v[2 * i + 1] = f2;
+								e1v[2 * i]     = e1;
+								e1v[2 * i + 1] = e2;
+								thetav[i] = theta;
+							}
+
+							f1Pnl.SetRow(it, f1v);
+							e1Pnl.SetRow(it, e1v);
+							thetaPnl.SetRow(it, thetav);
+
+							if (it == 0)
+							{
+								for (int i = 0; i < 4; i++)
+									AutoCAD.edtr.WriteMessage("T " + i + ": " + panel.IntPointsMembrane[i].TransformationMatrix);
+							}
 						}
 					}
 
@@ -507,7 +551,16 @@ namespace SPMTool
                 }
 
                 DelimitedWriter.Write("D:/fPnl1.csv", fPnl, ";");
-
+                DelimitedWriter.Write("D:/uPnl1.csv", uPnl, ";");
+                DelimitedWriter.Write("D:/sigPnl1.csv", sigPnl, ";");
+                DelimitedWriter.Write("D:/epsPnl1.csv", epsPnl, ";");
+                DelimitedWriter.Write("D:/f1Pnl1.csv", f1Pnl, ";");
+                DelimitedWriter.Write("D:/e1Pnl1.csv", e1Pnl, ";");
+                DelimitedWriter.Write("D:/thetaPnl1.csv", thetaPnl, ";");
+                DelimitedWriter.Write("D:/DPnl1.csv", DPnl, ";");
+                DelimitedWriter.Write("D:/DcPnl1.csv", DcPnl, ";");
+                DelimitedWriter.Write("D:/DsPnl1.csv", DsPnl, ";");
+                DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");
             }
 
             // Get initial global stiffness

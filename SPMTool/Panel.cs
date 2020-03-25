@@ -706,7 +706,7 @@ namespace SPMTool
             }
 
             // Calculate DMatrix
-            private Matrix<double> DMatrix
+            public Matrix<double> DMatrix
             {
 	            get
 	            {
@@ -732,30 +732,84 @@ namespace SPMTool
 	            }
             }
 
+            // Concrete stiffness
+            public Matrix<double> ConcreteStiffness
+            {
+	            get
+	            {
+		            var Dc = Matrix<double>.Build.Dense(12, 12);
+
+		            // Get the initial parameters
+		            Membrane.MCFT[] membranes;
+		            if (IntPointsMembrane != null)
+			            membranes = IntPointsMembrane;
+		            else
+			            membranes = InitialMCFT;
+
+		            for (int i = 0; i < 4; i++)
+		            {
+			            // Get the stiffness
+			            var Di = membranes[i].ConcreteStiffness;
+
+			            // Set to stiffness
+			            Dc.SetSubMatrix(3 * i, 3 * i, Di);
+		            }
+
+		            return Dc;
+	            }
+            }
+
+            // Steel stiffness
+            public Matrix<double> SteelStiffness
+            {
+	            get
+	            {
+		            var Ds = Matrix<double>.Build.Dense(12, 12);
+
+		            // Get the initial parameters
+		            Membrane.MCFT[] membranes;
+		            if (IntPointsMembrane != null)
+			            membranes = IntPointsMembrane;
+		            else
+			            membranes = InitialMCFT;
+
+		            for (int i = 0; i < 4; i++)
+		            {
+			            // Get the stiffness
+			            var Di = membranes[i].SteelStiffness;
+
+			            // Set to stiffness
+			            Ds.SetSubMatrix(3 * i, 3 * i, Di);
+		            }
+
+		            return Ds;
+	            }
+            }
+
             // Calculate stiffness
             public override Matrix<double> GlobalStiffness => QPMatrix * DMatrix * BAMatrix;
 
             // Get stress vector
             public Vector<double> StressVector
             {
-	            get
-	            {
-		            var sigma = Vector<double>.Build.Dense(12);
+                get
+                {
+                    var sigma = Vector<double>.Build.Dense(12);
 
-		            // Get the initial parameters
-		            var membranes = IntPointsMembrane;
+                    // Get the initial parameters
+                    var membranes = IntPointsMembrane;
 
-		            for (int i = 0; i < 4; i++)
-		            {
-			            // Get the stiffness
-			            var sig = membranes[i].Stresses;
+                    for (int i = 0; i < 4; i++)
+                    {
+                        // Get the stiffness
+                        var sig = membranes[i].Stresses;
 
-			            // Set to stiffness
-			            sigma.SetSubVector(3 * i, 3, sig);
-		            }
+                        // Set to stiffness
+                        sigma.SetSubVector(3 * i, 3, sig);
+                    }
 
-		            return sigma;
-	            }
+                    return sigma;
+                }
             }
 
             // Calculate panel forces
