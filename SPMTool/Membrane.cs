@@ -318,7 +318,7 @@ namespace SPMTool
 		            // Calculate radius and center of Mohr's Circle
 		            double
 			            cen = 0.5 * (ecx + ecy),
-			            rad = 0.5 * Math.Sqrt((ecx - ecy) * (ecx - ecy) + ycxy * ycxy);
+			            rad = 0.5 * Math.Sqrt((ecy - ecx) * (ecy - ecx) + ycxy * ycxy);
 
 		            // Calculate principal strains in concrete
 		            double

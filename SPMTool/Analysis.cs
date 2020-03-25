@@ -414,6 +414,11 @@ namespace SPMTool
                 var fstr = Matrix<double>.Build.Dense(4, 3);
                 var estr = Matrix<double>.Build.Dense(4, 2);
 
+				var fStrs = new Matrix<double>[4];
+				for (int i = 0; i < 4; i++)
+					fStrs[i] = Matrix<double>.Build.Dense(200, 3);
+				var fPnl = Matrix<double>.Build.Dense(200, 8);
+
                 // Initialize a loop for load steps
                 for (int loadStep = 1; loadStep <= 38; loadStep++)
 				{
@@ -457,6 +462,14 @@ namespace SPMTool
 						{
 							fr38.SetRow(it, fr);
 							du38.SetRow(it, du);
+
+							foreach (Stringer.NonLinear stringer in Stringers)
+							{
+								var i = stringer.Number - 1;
+								fStrs[i].SetRow(it, stringer.IterationForces);
+							}
+
+							fPnl.SetRow(it, Panels[0].Forces);
 						}
 					}
 
@@ -486,10 +499,19 @@ namespace SPMTool
                 DelimitedWriter.Write("D:/fstr.csv", fstr, ";");
                 DelimitedWriter.Write("D:/estr.csv", estr, ";");
                 DelimitedWriter.Write("D:/u.csv", uMatrix, ";");
+
+                for (int i = 0; i < 4; i++)
+                {
+	                int n = i + 1;
+	                DelimitedWriter.Write("D:/fStr" + n + ".csv", fStrs[i], ";");
+                }
+
+                DelimitedWriter.Write("D:/fPnl1.csv", fPnl, ";");
+
             }
 
-			// Get initial global stiffness
-			private (Matrix<double> GlobalStiffness, Vector<double> ForceVector) InitialParameters()
+            // Get initial global stiffness
+            private (Matrix<double> GlobalStiffness, Vector<double> ForceVector) InitialParameters()
 			{
 				// Get force vector
 				var forceVector = ForceVector;
