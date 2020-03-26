@@ -172,6 +172,9 @@ namespace SPMTool
 		// Calculate local displacements
 		public Vector<double> LocalDisplacements => TransMatrix * Displacements;
 
+		// Maximum stringer force
+		public double MaxForce => Forces.AbsoluteMaximum();
+
 		public class Linear : Stringer
 		{
 			// Private properties

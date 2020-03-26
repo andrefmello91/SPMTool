@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Windows;
 using MathNet.Numerics.LinearAlgebra;
 
 namespace SPMTool
@@ -77,6 +78,23 @@ namespace SPMTool
 		        return (fsx, fsy);
 	        }
         }
+
+		// Get reinforcement stresses as a vector
+		public Vector<double> ReinforcementStressVector
+		{
+			get
+			{
+				double 
+					fsx = 0,
+					fsy = 0;
+
+				if (Strains.Exists(Auxiliary.NotZero))
+					(fsx, fsy) = ReinforcementStresses;
+
+				return 
+					Vector<double>.Build.DenseOfArray(new [] {fsx, fsy, 0});
+			}
+		}
 
         // Calculate strain slope
         public double StrainAngle
@@ -249,8 +267,41 @@ namespace SPMTool
 			}
 		}
 
+		// Calculate concrete stresses
+		public Vector<double> ConcreteStresses
+		{
+			get
+			{
+				if (Strains.Exists(Auxiliary.NotZero))
+				{
+					// Get T transposed
+					var TT = TransformationMatrix.Transpose();
+
+					// Get principal stresses as a vector
+					var (fc1, fc2) = ConcretePrincipalStresses;
+					var f1 = Vector<double>.Build.DenseOfArray(new [] {fc1, fc2, 0});
+
+					return TT * f1;
+				}
+
+				return
+					Vector<double>.Build.Dense(3);
+			}
+		}
+
         // Calculate stresses
-        public Vector<double> Stresses => Stiffness * Strains;
+        public Vector<double> Stresses
+        {
+	        get
+	        {
+		        if (Strains.Exists(Auxiliary.NotZero))
+		        {
+			        return Stiffness * Strains;
+		        }
+
+		        return Vector<double>.Build.Dense(3);
+	        }
+        }
 
         // Calculate slopes related to reinforcement
         private (double X, double Y) ReinforcementAngles

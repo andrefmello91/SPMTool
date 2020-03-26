@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -236,13 +237,16 @@ namespace SPMTool
 					k = 2 * i;
 
 				// Set values
-	            up[k] = u[j];
+	            up[k]     = u[j];
 	            up[k + 1] = u[j + 1];
             }
 
 			// Set
 			Displacements = up;
 		}
+
+		// Maximum panel force
+		public double MaxForce => Forces.AbsoluteMaximum();
 
         public class Linear : Panel
         {
@@ -324,6 +328,7 @@ namespace SPMTool
                         {-1, bOvera, -1, bOvera}
                 });
             }
+
             private Matrix<double> NotRectangularPanelStiffness()
             {
                 // Get the dimensions
@@ -460,8 +465,8 @@ namespace SPMTool
 
                 if (ang2 == Constants.PiOver2 && ang4 == Constants.PiOver2)
                     return true;
-                else
-                    return false;
+
+	            return false;
             };
         }
 
@@ -608,45 +613,54 @@ namespace SPMTool
                 return B * A;
             }
 
-            // Calculate QP matrix
-            public Matrix<double> QPMatrix => matrixQP.Value;
-            private Lazy<Matrix<double>> matrixQP => new Lazy<Matrix<double>>(MatrixQP);
-            private Matrix<double> MatrixQP()
+            // Calculate Q matrix
+            private Matrix<double> QMatrix => matrixQ.Value;
+            private Lazy<Matrix<double>> matrixQ => new Lazy<Matrix<double>>(MatrixQ);
+            private Matrix<double> MatrixQ()
             {
-				// Get dimensions
-				var (x, y) = VertexCoordinates;
-				var (a, b, c, d) = Dimensions;
-				double w = Width;
-	            var hs = StringerDimensions;
+                // Get dimensions
+                var (a, b, c, d) = Dimensions;
 
                 // Calculate t4
                 double t4 = a * a + b * b;
 
                 // Calculate the components of Q matrix
                 double
-                    a2     = a * a,
-                    bc     = b * c,
-                    bdMt4  = b * d - t4,
-                    ab     = a * b,
+                    a2 = a * a,
+                    bc = b * c,
+                    bdMt4 = b * d - t4,
+                    ab = a * b,
                     MbdMt4 = -b * d - t4,
-                    Tt4    = 2 * t4,
-                    acMt4  = a * c - t4,
-                    ad     = a * d,
-                    b2     = b * b,
+                    Tt4 = 2 * t4,
+                    acMt4 = a * c - t4,
+                    ad = a * d,
+                    b2 = b * b,
                     MacMt4 = -a * c - t4;
 
                 // Create Q matrix
-                var Q = 1 / Tt4 * Matrix<double>.Build.DenseOfArray(new double[,]
-                {
-	                {  a2,     bc,  bdMt4, -ab, -a2,    -bc, MbdMt4,  ab },
-	                {   0,    Tt4,      0,   0,   0,      0,      0,   0 },
-	                {   0,      0,    Tt4,   0,   0,      0,      0,   0 }, 
-	                { -ab,  acMt4,     ad,  b2,  ab, MacMt4,    -ad, -b2 },
-                    { -a2,    -bc, MbdMt4,  ab,  a2,     bc,  bdMt4, -ab },
-	                {   0,      0,      0,   0,   0,    Tt4,      0,   0 },
-	                {   0,      0,      0,   0,   0,      0,    Tt4,   0 },
-	                {  ab, MacMt4,    -ad, -b2, -ab,  acMt4,     ad,  b2 }
-                });
+                return
+	                1 / Tt4 * Matrix<double>.Build.DenseOfArray(new [,]
+	                {
+		                {  a2,     bc,  bdMt4, -ab, -a2,    -bc, MbdMt4,  ab },
+		                {   0,    Tt4,      0,   0,   0,      0,      0,   0 },
+		                {   0,      0,    Tt4,   0,   0,      0,      0,   0 },
+		                { -ab,  acMt4,     ad,  b2,  ab, MacMt4,    -ad, -b2 },
+		                { -a2,    -bc, MbdMt4,  ab,  a2,     bc,  bdMt4, -ab },
+		                {   0,      0,      0,   0,   0,    Tt4,      0,   0 },
+		                {   0,      0,      0,   0,   0,      0,    Tt4,   0 },
+		                {  ab, MacMt4,    -ad, -b2, -ab,  acMt4,     ad,  b2 }
+	                });
+            }
+
+            // Calculate P matrix
+            private Matrix<double> PMatrix => matrixP.Value;
+            private Lazy<Matrix<double>> matrixP => new Lazy<Matrix<double>>(MatrixP);
+            private Matrix<double> MatrixP()
+            {
+				// Get dimensions
+				var (x, y) = VertexCoordinates;
+				double w = Width;
+	            var hs = StringerDimensions;
 
                 // Create P matrix
                 var P = Matrix<double>.Build.Dense(8, 12);
@@ -665,8 +679,15 @@ namespace SPMTool
                 P[6, 11] = P[7, 10] = w * (x[3] - x[0]);
                 P[7, 11]            = w * (y[0] - y[3]);
 
-                // Calculate Q*P
-                return Q * P;
+                return P;
+            }
+
+            // Calculate QP matrix
+            public Matrix<double> QPMatrix => matrixQP.Value;
+            private Lazy<Matrix<double>> matrixQP => new Lazy<Matrix<double>>(MatrixQP);
+            private Matrix<double> MatrixQP()
+            {
+                return QMatrix * PMatrix;
             }
 
 			// Calculate panel strain vector
@@ -679,10 +700,10 @@ namespace SPMTool
 				var membranes = new Membrane.MCFT[4];
 
 				// Get the vector strains and stresses
-				var ev   = StrainVector;
+				var ev = StrainVector;
 
 				// Get effective ratio
-				var (pxEf, pyEf) = EffectiveRatio;
+				//var (pxEf, pyEf) = EffectiveRatio;
 
                 // Calculate the material matrix of each int. point by MCFT
                 for (int i = 0; i < 4; i++)
@@ -691,11 +712,11 @@ namespace SPMTool
 	                var e = ev.SubVector(3 * i, 3);
 
                     // Get the reinforcement and effective ratio
-                    var reinforcement = new Reinforcement.Panel(Reinforcement.BarDiameter, Reinforcement.BarSpacing, Reinforcement.Steel, Width);
-	                reinforcement.SetEffectiveRatio((pxEf[i], pyEf[i]));
+                 //   var reinforcement = new Reinforcement.Panel(Reinforcement.BarDiameter, Reinforcement.BarSpacing, Reinforcement.Steel, Width);
+	                //reinforcement.SetEffectiveRatio((pxEf[i], pyEf[i]));
 
                     // Calculate stiffness by MCFT
-                    var membrane = new Membrane.MCFT(Concrete, reinforcement, e, LoadStep);
+                    var membrane = new Membrane.MCFT(Concrete, Reinforcement, e, LoadStep);
 
 	                // Set to panel
 	                membranes[i] = membrane;
@@ -789,31 +810,115 @@ namespace SPMTool
             // Calculate stiffness
             public override Matrix<double> GlobalStiffness => QPMatrix * DMatrix * BAMatrix;
 
+            // Get concrete stresses in a matrix
+            public Matrix<double> ConcreteStresses
+            {
+	            get
+	            {
+		            var sigma = Matrix<double>.Build.Dense(4,3);
+
+		            // Get the initial parameters
+		            var membranes = IntPointsMembrane;
+
+		            for (int i = 0; i < 4; i++)
+		            {
+			            // Get the stiffness
+			            var sig = membranes[i].ConcreteStresses;
+
+			            // Set to stiffness
+			            sigma.SetRow(i, sig);
+		            }
+
+		            return sigma;
+	            }
+            }
+
+            // Get reinforcement stresses in a matrix
+            public Matrix<double> ReinforcementStresses
+            {
+	            get
+	            {
+		            var sigma = Matrix<double>.Build.Dense(4, 3);
+
+		            // Get the initial parameters
+		            var membranes = IntPointsMembrane;
+
+		            for (int i = 0; i < 4; i++)
+		            {
+			            // Get the stiffness
+			            var sig = membranes[i].ReinforcementStressVector;
+
+			            // Set to stiffness
+			            sigma.SetRow(i, sig);
+		            }
+
+		            return sigma;
+	            }
+            }
+
             // Get stress vector
             public Vector<double> StressVector
             {
-                get
-                {
-                    var sigma = Vector<double>.Build.Dense(12);
+	            get
+	            {
+		            var sigma = Vector<double>.Build.Dense(12);
 
-                    // Get the initial parameters
-                    var membranes = IntPointsMembrane;
+		            // Get the initial parameters
+		            var membranes = IntPointsMembrane;
 
-                    for (int i = 0; i < 4; i++)
-                    {
-                        // Get the stiffness
-                        var sig = membranes[i].Stresses;
+		            for (int i = 0; i < 4; i++)
+		            {
+			            // Get the stiffness
+			            var sig = membranes[i].Stresses;
 
-                        // Set to stiffness
-                        sigma.SetSubVector(3 * i, 3, sig);
-                    }
+			            // Set to stiffness
+			            sigma.SetSubVector(3 * i, 3, sig);
+		            }
 
-                    return sigma;
-                }
+		            return sigma;
+	            }
             }
 
             // Calculate panel forces
-            public override Vector<double> Forces => QPMatrix * StressVector;
+            public override Vector<double> Forces
+            {
+	            get
+	            {
+					// Get vertex coordinates, width and stringer dimensions
+					var (x ,y) = VertexCoordinates;
+					var t = Width;
+					var c = StringerDimensions;
+
+					// Get concrete, steel and total stresses
+					var sigC = ConcreteStresses;
+					var sigS = ReinforcementStresses;
+					var sig  = ConcreteStresses + ReinforcementStresses;
+
+					// Calculate forces (not in equilibrium)
+					var f = t * Vector<double>.Build.DenseOfArray(new []
+					{
+						-sig[0, 0] * (y[0] - y[1]) - sig[0, 2] * (x[1] - x[0]),
+
+						-sigC[0, 1] * (x[1] - x[0] - c[1] - c[3]) - sigS[0, 1] * (x[1] - x[0]) - sig[0, 2] * (y[0] - y[1]),
+
+						sigC[1, 0] * (y[2] - y[1] - c[2] - c[0]) + sigS[1, 0] * (y[2] - y[1]) - sig[1, 2] * (x[2] - x[1]),
+
+						-sig[1, 1] * (x[2] - x[1]) + sig[1, 2] * (y[2] - y[1]),
+
+						-sig[2, 0] * (y[2] - y[3]) + sig[2, 2] * (x[2] - x[3]),
+
+						sigC[2, 1] * (x[2] - x[3] - c[1] - c[3]) + sigS[2, 1] * (x[2] - x[3]) - sig[2, 2] * (y[2] - y[3]),
+
+						-sigC[3, 0] * (y[3] - y[0] - c[0] - c[2]) - sigS[3, 0] * (y[3] - y[0]) - sig[3, 2] * (x[0] - x[3]),
+
+						-sig[3, 1] * (x[0] - x[3]) - sig[3, 2] * (y[3] - y[0])
+					});
+
+					// Transform to equilibrium
+					var Q = QMatrix;
+					return Q * f;
+	            }
+            }
 
             // Initial MCFT parameters
             private Membrane.MCFT[] InitialMCFT
@@ -821,17 +926,17 @@ namespace SPMTool
 	            get
 	            {
 		            var initialMCFT = new Membrane.MCFT[4];
-		            var (pxEf, pyEf) = EffectiveRatio;
+		            //var (pxEf, pyEf) = EffectiveRatio;
 
                     for (int i = 0; i < 4; i++)
 		            {
-			            var reinforcement = new Reinforcement.Panel(Reinforcement.BarDiameter, Reinforcement.BarSpacing, Reinforcement.Steel, Width);
+			            //var reinforcement = new Reinforcement.Panel(Reinforcement.BarDiameter, Reinforcement.BarSpacing, Reinforcement.Steel, Width);
 
 			            // Get effective ratio
-			            reinforcement.SetEffectiveRatio((pxEf[i], pyEf[i]));
+			            //reinforcement.SetEffectiveRatio((pxEf[i], pyEf[i]));
 
 			            // Get parameters
-			            initialMCFT[i] = new Membrane.MCFT(Concrete, reinforcement);
+			            initialMCFT[i] = new Membrane.MCFT(Concrete, Reinforcement);
 		            }
 
 		            return initialMCFT;
