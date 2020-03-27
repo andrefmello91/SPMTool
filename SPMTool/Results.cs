@@ -601,24 +601,29 @@ namespace SPMTool
 							// Get the stringer
 							Stringer str = new Stringer(entRes.ObjectId);
 
-							// Get reinforcement
-							var rf = str.Reinforcement;
-
-							// Approximate steel area
-							double As = Math.Round(str.SteelArea, 2);
-
 							msgstr =
 								"Stringer " + str.Number + "\n\n" +
 								"Grips: (" + str.Grips[0] + " - " + str.Grips[1] + " - " + str.Grips[2] + ")" + "\n" +
 								"Lenght = " + str.Length + " mm" + "\n" +
 								"Width = " + str.Width + " mm" + "\n" +
-								"Height = " + str.Height + " mm" + "\n\n" +
-								"Reinforcement: " + rf.NumberOfBars + " Ø " + rf.BarDiameter + " mm (" + As +
-								" mm²) \n\n" +
-								"Steel Parameters: " +
-								"\nfy = " + rf.Steel.fy + " MPa" +
-								"\nEs = " + rf.Steel.Es + " MPa" +
-								"\nεy = " + Math.Round(1000 * rf.Steel.ey, 2) + " E-03";
+								"Height = " + str.Height + " mm";
+
+							// Get reinforcement
+							var rf = str.Reinforcement;
+
+							if (rf.NumberOfBars > 0)
+							{
+								// Approximate steel area
+								double As = Math.Round(str.SteelArea, 2);
+
+								msgstr +=
+									"\n\nReinforcement: " + rf.NumberOfBars + " Ø " + rf.BarDiameter + " mm (" + As +
+									" mm²) \n\n" +
+									"Steel Parameters: " +
+									"\nfy = " + rf.Steel.fy + " MPa" +
+									"\nEs = " + rf.Steel.Es + " MPa" +
+									"\nεy = " + Math.Round(1000 * rf.Steel.ey, 2) + " E-03";
+							}
 						}
 
 						// If it's a panel
@@ -627,21 +632,25 @@ namespace SPMTool
 							// Get the panel
 							Panel pnl = new Panel(entRes.ObjectId);
 
-							// Get reinforcement
-							var rf = pnl.Reinforcement;
-
-							// Approximate reinforcement ratio
-							double
-								psx = Math.Round(rf.Ratio.X, 3),
-								psy = Math.Round(rf.Ratio.Y, 3);
-
 							msgstr =
 								"Panel " + pnl.Number + "\n\n" +
 								"Grips: (" + pnl.Grips[0] + " - " + pnl.Grips[1] + " - " + pnl.Grips[2] + " - " +
 								pnl.Grips[3] + ")" + "\n" +
-								"Width = " + pnl.Width + " mm" + "\n\n" +
-								"Reinforcement (x): Ø " + rf.BarDiameter.X + " mm, s = " + rf.BarSpacing.X +
-								" mm (ρsx = " + psx + ")\n" +
+								"Width = " + pnl.Width + " mm";
+
+							// Get reinforcement
+							var rf = pnl.Reinforcement;
+
+
+							if (rf.BarDiameter != (0, 0))
+                            {
+	                            // Approximate reinforcement ratio
+	                            double
+		                            psx = Math.Round(rf.Ratio.X, 3),
+		                            psy = Math.Round(rf.Ratio.Y, 3);
+
+                                msgstr +=
+								"\n\nReinforcement (x): Ø " + rf.BarDiameter.X + " mm, s = " + rf.BarSpacing.X + " mm (ρsx = " + psx + ")\n" +
 								"Steel Parameters (x): " +
 								"\nfy = " + rf.Steel.X.fy + " MPa" +
 								"\nEs = " + rf.Steel.X.Es + " MPa" +
@@ -652,6 +661,7 @@ namespace SPMTool
 								"\nfy = " + rf.Steel.Y.fy + " MPa" +
 								"\nEs = " + rf.Steel.Y.Es + " MPa" +
 								"\nεy = " + Math.Round(1000 * rf.Steel.Y.ey, 2) + " E-03 \n\n";
+							}
 						}
 
 						else

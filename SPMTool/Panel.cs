@@ -475,7 +475,6 @@ namespace SPMTool
             // Public Properties
 			public Membrane.MCFT[]          IntPointsMembrane  { get; set; }
             public double[]                 StringerDimensions { get; }
-            public (double[] X, double[] Y) EffectiveRatio     { get; }
 
             // Private Properties
             private Material.Concrete Concrete { get; }
@@ -491,7 +490,6 @@ namespace SPMTool
 
 				// Get stringer dimensions and effective ratio
 				StringerDimensions = StringersDimensions(stringers);
-				EffectiveRatio     = EffectiveRRatio();
             }
 
             // Get the dimensions of surrounding stringers
@@ -520,36 +518,6 @@ namespace SPMTool
                 // Save to panel
                 return hs;
             }
-
-            // Calculate the effective reinforcement ratio off a panel for considering stringer dimensions
-            private (double[] X, double[] Y) EffectiveRRatio()
-	        {
-		        var hs = StringerDimensions;
-		        var (x, y) = VertexCoordinates;
-
-		        // Calculate effective ratio for each edge
-		        double[]
-			        pxEf = new double[4],
-			        pyEf = new double[4];
-				
-		        // Grip 1
-		        pxEf[0] = psx;
-		        pyEf[0] = psy * (x[0] - x[1]) / (x[0] - x[1] + hs[1] + hs[3]);
-
-		        // Grip 2
-		        pxEf[1] = psx * (y[1] - y[2]) / (y[1] - y[2] + hs[0] + hs[2]);
-		        pyEf[1] = psy;
-
-		        // Grip 3
-		        pxEf[2] = psx;
-		        pyEf[2] = psy * (x[2] - x[3]) / (x[2] - x[3] - hs[1] - hs[3]);
-
-		        // Grip 4
-		        pxEf[3] = psx * (y[0] - y[3]) / (y[0] - y[3] + hs[0] + hs[2]);
-		        pyEf[3] = psy;
-
-		        return (pxEf, pyEf);
-	        }
 
             // Calculate BA matrix
             public Matrix<double> BAMatrix => matrixBA.Value;

@@ -409,14 +409,6 @@ namespace SPMTool
                 // Solve the initial displacements
                 var u = Kg.Solve(0.01 * f);
 
-                //StringerAnalysis(u);
-                //PanelAnalysis(u);
-                //StringerResults();
-                //Kg = GlobalStiffness();
-
-                //DelimitedWriter.Write("D:/Kg.csv", Kg, ";");
-
-
                 var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
 		        var fiMatrix = Matrix<double>.Build.Dense(100, numDoFs);
 		        var fr1 = Matrix<double>.Build.Dense(maxIterations, numDoFs);
@@ -463,7 +455,8 @@ namespace SPMTool
 						// Check convergence
 						if (EquilibriumConvergence(fr))
 						{
-							AutoCAD.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
+							AutoCAD.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + (it + 1));
+							fi = fit;
 							break;
 						}
 
@@ -472,8 +465,6 @@ namespace SPMTool
 
 						// Increment displacements
 						u += du;
-
-						fi = fit;
 
                         if (loadStep == 1)
                         {
@@ -587,7 +578,7 @@ namespace SPMTool
 				double maxForce = maxForces.MaximumAbsolute();
 
 				// Check convergence
-				if (residualForces.AbsoluteMaximum() <= maxForce / 30)
+				if (residualForces.AbsoluteMaximum() <= maxForce / 100)
 					return true;
 
 				// Else
