@@ -409,12 +409,12 @@ namespace SPMTool
                 // Solve the initial displacements
                 var u = Kg.Solve(0.01 * f);
 
-                StringerAnalysis(u);
-                PanelAnalysis(u);
-                StringerResults();
-                Kg = GlobalStiffness();
+                //StringerAnalysis(u);
+                //PanelAnalysis(u);
+                //StringerResults();
+                //Kg = GlobalStiffness();
 
-                DelimitedWriter.Write("D:/Kg.csv", Kg, ";");
+                //DelimitedWriter.Write("D:/Kg.csv", Kg, ";");
 
 
                 var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
@@ -489,11 +489,12 @@ namespace SPMTool
                             var panel = Panels[0] as Panel.NonLinear;
                             fPnl.SetRow(it, panel.Forces);
                             uPnl.SetRow(it, panel.Displacements);
-                            sigPnl.SetRow(it, panel.StressVector);
+                            sigPnl.SetRow(it, panel.StressVector.sigma);
                             epsPnl.SetRow(it, panel.StrainVector);
-                            DPnl.SetSubMatrix(12 * it, 0, panel.DMatrix);
-                            DcPnl.SetSubMatrix(12 * it, 0, panel.ConcreteStiffness);
-                            DsPnl.SetSubMatrix(12 * it, 0, panel.SteelStiffness);
+                            var (D, Dc, Ds) = panel.DMatrix;
+                            DPnl.SetSubMatrix(12 * it, 0, D);
+                            DcPnl.SetSubMatrix(12 * it, 0, Dc);
+                            DsPnl.SetSubMatrix(12 * it, 0, Ds);
                             KPnl.SetSubMatrix(8 * it, 0, panel.GlobalStiffness);
 
                             var f1v = Vector<double>.Build.Dense(8);
@@ -545,8 +546,8 @@ namespace SPMTool
                 DelimitedWriter.Write("D:/K.csv", Kg, ";");
                 //DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
                 DelimitedWriter.Write("D:/fi.csv", fiMatrix, ";");
-                DelimitedWriter.Write("D:/fr38.csv", fr1, ";");
-                DelimitedWriter.Write("D:/du38.csv", du1, ";");
+                DelimitedWriter.Write("D:/fr1.csv", fr1, ";");
+                DelimitedWriter.Write("D:/du1.csv", du1, ";");
                 DelimitedWriter.Write("D:/fstr.csv", fstr, ";");
                 DelimitedWriter.Write("D:/estr.csv", estr, ";");
                 DelimitedWriter.Write("D:/u.csv", uMatrix, ";");

@@ -652,43 +652,54 @@ namespace SPMTool
 	                });
             }
 
-            // Calculate P matrix
-            private Matrix<double> PMatrix => matrixP.Value;
-            private Lazy<Matrix<double>> matrixP => new Lazy<Matrix<double>>(MatrixP);
-            private Matrix<double> MatrixP()
+            // Calculate P matrices for concrete and steel
+            private (Matrix<double> Pc, Matrix<double> Ps) PMatrix => matrixP.Value;
+            private Lazy<(Matrix<double> Pc, Matrix<double> Ps)> matrixP => new Lazy<(Matrix<double> Pc, Matrix<double> Ps)>(MatrixP);
+            private (Matrix<double> Pc, Matrix<double> Ps) MatrixP()
             {
 				// Get dimensions
 				var (x, y) = VertexCoordinates;
-				double w = Width;
+				double t = Width;
 	            var hs = StringerDimensions;
 
-                // Create P matrix
-                var P = Matrix<double>.Build.Dense(8, 12);
+                // Create P matrices
+                var Pc = Matrix<double>.Build.Dense(8, 12);
+                var Ps = Matrix<double>.Build.Dense(8, 12);
 
-                // Calculate the components of P
-                P[0, 0] = P[1, 2]   = w * (y[1] - y[0]);
-                P[0, 2]             = w * (x[0] - x[1]);
-                P[1, 1]             = w * (x[0] - x[1] + hs[1] + hs[3]);
-                P[2, 3]             = w * (y[2] - y[1] - hs[2] - hs[0]);
-                P[2, 5] = P[3, 4]   = w * (x[1] - x[2]);
-                P[3, 5]             = w * (y[2] - y[1]);
-                P[4, 6] = P[5, 8]   = w * (y[3] - y[2]);
-                P[4, 8]             = w * (x[2] - x[3]);
-                P[5, 7]             = w * (x[2] - x[3] - hs[1] - hs[3]);
-                P[6, 9]             = w * (y[0] - y[3] + hs[0] + hs[2]);
-                P[6, 11] = P[7, 10] = w * (x[3] - x[0]);
-                P[7, 11]            = w * (y[0] - y[3]);
+                // Calculate the components of Pc
+                Pc[0, 0] = Pc[1, 2]   = t * (y[1] - y[0]);
+                Pc[0, 2]              = t * (x[0] - x[1]);
+                Pc[1, 1]              = t * (x[0] - x[1] + hs[1] + hs[3]);
+                Pc[2, 3]              = t * (y[2] - y[1] - hs[2] - hs[0]);
+                Pc[2, 5] = Pc[3, 4]   = t * (x[1] - x[2]);
+                Pc[3, 5]              = t * (y[2] - y[1]);
+                Pc[4, 6] = Pc[5, 8]   = t * (y[3] - y[2]);
+                Pc[4, 8]              = t * (x[2] - x[3]);
+                Pc[5, 7]              = t * (x[2] - x[3] - hs[1] - hs[3]);
+                Pc[6, 9]              = t * (y[0] - y[3] + hs[0] + hs[2]);
+                Pc[6, 11] = Pc[7, 10] = t * (x[3] - x[0]);
+                Pc[7, 11]             = t * (y[0] - y[3]);
 
-                return P;
+                // Calculate the components of Ps
+                Ps[0, 0]  = Pc[0, 0];
+                Ps[1, 1]  = t * (x[0] - x[1]);
+                Ps[2, 3]  = t * (y[2] - y[1]);
+                Ps[3, 4]  = Pc[3, 4];
+                Ps[4, 6]  = Pc[4, 6];
+                Ps[5, 7]  = t * (x[2] - x[3]);
+                Ps[6, 9]  = t * (y[0] - y[3]);
+                Ps[7, 10] = Pc[7, 10];
+
+                return (Pc, Ps);
             }
 
             // Calculate QP matrix
-            public Matrix<double> QPMatrix => matrixQP.Value;
-            private Lazy<Matrix<double>> matrixQP => new Lazy<Matrix<double>>(MatrixQP);
-            private Matrix<double> MatrixQP()
-            {
-                return QMatrix * PMatrix;
-            }
+            //public Matrix<double> QPMatrix => matrixQP.Value;
+            //private Lazy<Matrix<double>> matrixQP => new Lazy<Matrix<double>>(MatrixQP);
+            //private Matrix<double> MatrixQP()
+            //{
+            //    return QMatrix * PMatrix;
+            //}
 
 			// Calculate panel strain vector
 			public Vector<double> StrainVector => BAMatrix * Displacements;
@@ -727,14 +738,16 @@ namespace SPMTool
             }
 
             // Calculate DMatrix
-            public Matrix<double> DMatrix
+            public (Matrix<double> D, Matrix<double> Dc, Matrix<double> Ds) DMatrix
             {
 	            get
 	            {
 		            var Dt = Matrix<double>.Build.Dense(12, 12);
+		            var Dc = Matrix<double>.Build.Dense(12, 12);
+		            var Ds = Matrix<double>.Build.Dense(12, 12);
 
-		            // Get the initial parameters
-		            Membrane.MCFT[] membranes;
+                    // Get the initial parameters
+                    Membrane.MCFT[] membranes;
 		            if (IntPointsMembrane != null)
 			            membranes = IntPointsMembrane;
 		            else
@@ -744,124 +757,40 @@ namespace SPMTool
 		            {
 			            // Get the stiffness
 			            var Di = membranes[i].Stiffness;
+			            var Dci = membranes[i].ConcreteStiffness;
+			            var Dsi = membranes[i].SteelStiffness;
 
 			            // Set to stiffness
 			            Dt.SetSubMatrix(3 * i, 3 * i, Di);
+			            Dc.SetSubMatrix(3 * i, 3 * i, Dci);
+			            Ds.SetSubMatrix(3 * i, 3 * i, Dsi);
 		            }
 
-		            return Dt;
-	            }
-            }
-
-            // Concrete stiffness
-            public Matrix<double> ConcreteStiffness
-            {
-	            get
-	            {
-		            var Dc = Matrix<double>.Build.Dense(12, 12);
-
-		            // Get the initial parameters
-		            Membrane.MCFT[] membranes;
-		            if (IntPointsMembrane != null)
-			            membranes = IntPointsMembrane;
-		            else
-			            membranes = InitialMCFT;
-
-		            for (int i = 0; i < 4; i++)
-		            {
-			            // Get the stiffness
-			            var Di = membranes[i].ConcreteStiffness;
-
-			            // Set to stiffness
-			            Dc.SetSubMatrix(3 * i, 3 * i, Di);
-		            }
-
-		            return Dc;
-	            }
-            }
-
-            // Steel stiffness
-            public Matrix<double> SteelStiffness
-            {
-	            get
-	            {
-		            var Ds = Matrix<double>.Build.Dense(12, 12);
-
-		            // Get the initial parameters
-		            Membrane.MCFT[] membranes;
-		            if (IntPointsMembrane != null)
-			            membranes = IntPointsMembrane;
-		            else
-			            membranes = InitialMCFT;
-
-		            for (int i = 0; i < 4; i++)
-		            {
-			            // Get the stiffness
-			            var Di = membranes[i].SteelStiffness;
-
-			            // Set to stiffness
-			            Ds.SetSubMatrix(3 * i, 3 * i, Di);
-		            }
-
-		            return Ds;
+		            return (Dt, Dc, Ds);
 	            }
             }
 
             // Calculate stiffness
-            public override Matrix<double> GlobalStiffness => QPMatrix * DMatrix * BAMatrix;
-
-            // Get concrete stresses in a matrix
-            public Matrix<double> ConcreteStresses
+            public override Matrix<double> GlobalStiffness
             {
 	            get
 	            {
-		            var sigma = Matrix<double>.Build.Dense(4,3);
+		            var (Pc, Ps)    = PMatrix;
+		            var (_, Dc, Ds) = DMatrix;
 
-		            // Get the initial parameters
-		            var membranes = IntPointsMembrane;
-
-		            for (int i = 0; i < 4; i++)
-		            {
-			            // Get the stiffness
-			            var sig = membranes[i].ConcreteStresses;
-
-			            // Set to stiffness
-			            sigma.SetRow(i, sig);
-		            }
-
-		            return sigma;
-	            }
-            }
-
-            // Get reinforcement stresses in a matrix
-            public Matrix<double> ReinforcementStresses
-            {
-	            get
-	            {
-		            var sigma = Matrix<double>.Build.Dense(4, 3);
-
-		            // Get the initial parameters
-		            var membranes = IntPointsMembrane;
-
-		            for (int i = 0; i < 4; i++)
-		            {
-			            // Get the stiffness
-			            var sig = membranes[i].ReinforcementStressVector;
-
-			            // Set to stiffness
-			            sigma.SetRow(i, sig);
-		            }
-
-		            return sigma;
+		            return
+			            QMatrix * (Pc * Dc + Ps * Ds) * BAMatrix;
 	            }
             }
 
             // Get stress vector
-            public Vector<double> StressVector
+            public (Vector<double> sigma, Vector<double> sigmaC, Vector<double> sigmaS) StressVector
             {
 	            get
 	            {
-		            var sigma = Vector<double>.Build.Dense(12);
+		            var sigma  = Vector<double>.Build.Dense(12);
+		            var sigmaC = Vector<double>.Build.Dense(12);
+		            var sigmaS = Vector<double>.Build.Dense(12);
 
 		            // Get the initial parameters
 		            var membranes = IntPointsMembrane;
@@ -869,13 +798,17 @@ namespace SPMTool
 		            for (int i = 0; i < 4; i++)
 		            {
 			            // Get the stiffness
-			            var sig = membranes[i].Stresses;
+			            var sig  = membranes[i].Stresses;
+			            var sigC = membranes[i].ConcreteStresses;
+			            var sigS = membranes[i].ReinforcementStressVector;
 
 			            // Set to stiffness
 			            sigma.SetSubVector(3 * i, 3, sig);
+			            sigmaC.SetSubVector(3 * i, 3, sigC);
+			            sigmaS.SetSubVector(3 * i, 3, sigS);
 		            }
 
-		            return sigma;
+		            return (sigma, sigmaC, sigmaS);
 	            }
             }
 
@@ -884,39 +817,14 @@ namespace SPMTool
             {
 	            get
 	            {
-					// Get vertex coordinates, width and stringer dimensions
-					var (x ,y) = VertexCoordinates;
-					var t = Width;
-					var c = StringerDimensions;
+					// Get P matrices
+					var (Pc, Ps) = PMatrix;
 
-					// Get concrete, steel and total stresses
-					var sigC = ConcreteStresses;
-					var sigS = ReinforcementStresses;
-					var sig  = ConcreteStresses + ReinforcementStresses;
+					// Get stresses
+					var (_, sigC, sigS) = StressVector;
 
-					// Calculate forces (not in equilibrium)
-					var f = t * Vector<double>.Build.DenseOfArray(new []
-					{
-						-sig[0, 0] * (y[0] - y[1]) - sig[0, 2] * (x[1] - x[0]),
-
-						-sigC[0, 1] * (x[1] - x[0] - c[1] - c[3]) - sigS[0, 1] * (x[1] - x[0]) - sig[0, 2] * (y[0] - y[1]),
-
-						sigC[1, 0] * (y[2] - y[1] - c[2] - c[0]) + sigS[1, 0] * (y[2] - y[1]) - sig[1, 2] * (x[2] - x[1]),
-
-						-sig[1, 1] * (x[2] - x[1]) + sig[1, 2] * (y[2] - y[1]),
-
-						-sig[2, 0] * (y[2] - y[3]) + sig[2, 2] * (x[2] - x[3]),
-
-						sigC[2, 1] * (x[2] - x[3] - c[1] - c[3]) + sigS[2, 1] * (x[2] - x[3]) - sig[2, 2] * (y[2] - y[3]),
-
-						-sigC[3, 0] * (y[3] - y[0] - c[0] - c[2]) - sigS[3, 0] * (y[3] - y[0]) - sig[3, 2] * (x[0] - x[3]),
-
-						-sig[3, 1] * (x[0] - x[3]) - sig[3, 2] * (y[3] - y[0])
-					});
-
-					// Transform to equilibrium
-					var Q = QMatrix;
-					return Q * f;
+					return
+						QMatrix * (Pc * sigC + Ps * sigS);
 	            }
             }
 

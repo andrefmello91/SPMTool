@@ -79,7 +79,7 @@ namespace SPMTool
 	        }
         }
 
-		// Get reinforcement stresses as a vector
+		// Get reinforcement stresses as a vector multiplied by reinforcement ratio
 		public Vector<double> ReinforcementStressVector
 		{
 			get
@@ -92,7 +92,7 @@ namespace SPMTool
 					(fsx, fsy) = ReinforcementStresses;
 
 				return 
-					Vector<double>.Build.DenseOfArray(new [] {fsx, fsy, 0});
+					Vector<double>.Build.DenseOfArray(new [] {psx * fsx, psy * fsy, 0});
 			}
 		}
 
