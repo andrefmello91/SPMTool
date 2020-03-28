@@ -432,7 +432,7 @@ namespace SPMTool
 				var KPnl = Matrix<double>.Build.Dense(12 * maxIterations, 8);
 
                 // Initialize a loop for load steps
-                for (int loadStep = 1; loadStep <= 100; loadStep++)
+                for (int loadStep = 1; loadStep <= 40; loadStep++)
 				{
 					// Get the force vector
 					var fs = 0.01 * loadStep * f;

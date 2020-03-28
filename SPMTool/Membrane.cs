@@ -20,7 +20,6 @@ namespace SPMTool
 		public virtual (double ec1, double ec2) ConcretePrincipalStrains  { get; }
 		public virtual (double fc1, double fc2) ConcretePrincipalStresses { get; }
 		private int                             LoadStep                  { get; }
-		private double                          fcr                       { get; }
 
         // Constructor
         public Membrane(Material.Concrete concrete, Reinforcement.Panel reinforcement, Vector<double> appliedStrain = null, int loadStep = 0)
@@ -43,7 +42,6 @@ namespace SPMTool
         private double fc    => Concrete.fcm;
         private double ec    = -0.002;
         private double Ec    => -2 * fc / ec;
-        private double ecr   => fcr / Ec;
         private double phiAg => Concrete.AggregateDiameter;
 
         // Get steel parameters
@@ -306,9 +304,8 @@ namespace SPMTool
 	        get
 	        {
 		        if (Strains.Exists(Auxiliary.NotZero))
-		        {
-			        return Stiffness * Strains;
-		        }
+			        return
+				        Stiffness * Strains;
 
 		        return Vector<double>.Build.Dense(3);
 	        }
@@ -337,7 +334,8 @@ namespace SPMTool
             }
 
             // Calculate concrete parameters for MCFT
-            private new double fcr => 0.33 * Math.Sqrt(fc);
+            private double fcr => 0.33 * Math.Sqrt(fc);
+            private double ecr => fcr / Ec;
 
             // Calculate principal strains in concrete
             public override (double ec1, double ec2) ConcretePrincipalStrains
@@ -497,7 +495,8 @@ namespace SPMTool
             }
 
             // Calculate concrete parameters for DSFM
-			private new double fcr => 0.65 * Math.Pow(fc, 0.33);
+			private double fcr => 0.65 * Math.Pow(fc, 0.33);
+			private double ecr => fcr / Ec;
 			private double     Gf  = 0.075;
 			private double     ets => 2 * Gf / (fcr * Lr);
 
