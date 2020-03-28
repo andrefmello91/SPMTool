@@ -455,7 +455,7 @@ namespace SPMTool
 						// Check convergence
 						if (EquilibriumConvergence(fr))
 						{
-							AutoCAD.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + (it + 1));
+							AutoCAD.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
 							fi = fit;
 							break;
 						}
@@ -562,23 +562,31 @@ namespace SPMTool
                 DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");
             }
 
+			// Get maximum element force
+			private double MaxElementForce
+			{
+				get
+				{
+					// Get a list of maximum force of elements
+					var maxForces = new List<double>();
+
+					foreach (var stringer in Stringers)
+						maxForces.Add(stringer.MaxForce);
+
+					foreach (var panel in Panels)
+						maxForces.Add(panel.MaxForce);
+
+					// Get the maximum force on elements
+					return
+						maxForces.MaximumAbsolute();
+                }
+            }
+			
 			// Verify convergence
 			private bool EquilibriumConvergence(Vector<double> residualForces)
 			{
-				// Get a list of maximum force of elements
-				var maxForces = new List<double>();
-
-				foreach (var stringer in Stringers)
-					maxForces.Add(stringer.MaxForce);
-
-				foreach (var panel in Panels)
-					maxForces.Add(panel.MaxForce);
-
-				// Get the maximum force on elements
-				double maxForce = maxForces.MaximumAbsolute();
-
 				// Check convergence
-				if (residualForces.AbsoluteMaximum() <= maxForce / 100)
+				if (residualForces.AbsoluteMaximum() <= MaxElementForce / 100)
 					return true;
 
 				// Else
