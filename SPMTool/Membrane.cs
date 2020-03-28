@@ -187,36 +187,34 @@ namespace SPMTool
         }
 
         // Calculate secant module of concrete
-        private (double Ec1, double Ec2) ConcreteSecantModule
+        private (double Ec1, double Ec2) ConcreteSecantModule => ConcreteSecantModules(Strains);
+        private (double Ec1, double Ec2) ConcreteSecantModules(Vector<double> strains)
         {
-	        get
+	        double Ec1, Ec2;
+
+	        // Verify strains
+	        if (strains.Exists(Auxiliary.NotZero))
 	        {
-		        double Ec1, Ec2;
+		        // Get values
+		        var (ec1, ec2) = ConcretePrincipalStrains;
+		        var (fc1, fc2) = ConcretePrincipalStresses;
 
-		        // Verify strains
-		        if (Strains.Exists(Auxiliary.NotZero))
-		        {
-			        // Get values
-			        var (ec1, ec2) = ConcretePrincipalStrains;
-			        var (fc1, fc2) = ConcretePrincipalStresses;
+		        if (ec1 == 0 || fc1 == 0)
+			        Ec1 = Ec;
 
-			        if (ec1 == 0 || fc1 == 0)
-				        Ec1 = Ec;
-
-			        else
-				        Ec1 = fc1 / ec1;
-
-			        if (ec2 == 0 || fc2 == 0)
-				        Ec2 = Ec;
-
-			        else
-				        Ec2 = fc2 / ec2;
-		        }
 		        else
-			        Ec1 = Ec2 = Ec;
+			        Ec1 = fc1 / ec1;
 
-		        return (Ec1, Ec2);
+		        if (ec2 == 0 || fc2 == 0)
+			        Ec2 = Ec;
+
+		        else
+			        Ec2 = fc2 / ec2;
 	        }
+	        else
+		        Ec1 = Ec2 = Ec;
+
+	        return (Ec1, Ec2);
         }
 
         // Calculate stiffness
@@ -303,7 +301,7 @@ namespace SPMTool
 		}
 
         // Calculate stresses
-        public Vector<double> Stresses
+        public virtual Vector<double> Stresses
         {
 	        get
 	        {
@@ -489,7 +487,7 @@ namespace SPMTool
 		{
 			// Private properties
 			private Vector<double> InitialConcreteStrain { get; }
-            private double         Lr                     { get; }
+            private double         Lr                    { get; }
 
 			// Constructor
             public DSFM(Material.Concrete concrete, Reinforcement.Panel reinforcement, double referenceLength, Vector<double> initialConcreteStrain, Vector<double> appliedStrain = null, int loadStep = 0) : base(concrete, reinforcement, appliedStrain, loadStep)
@@ -806,12 +804,45 @@ namespace SPMTool
 
 					// Check if es = {0, 0, 0}
 					if (es.Exists(Auxiliary.NotZero))
-						return Dc * es;
+						return
+							Dc * es;
 
 					return 
 						Vector<double>.Build.Dense(3);
                 }
             }
+
+			// Calculate the final concrete strain
+			public Vector<double> ConcreteStrains
+			{
+				get
+				{
+					// Get crack slip strains
+					var es = CrackSlipStrains;
+
+					// Calculate the concrete strains
+					return 
+						Strains - es;
+				}
+			}
+			
+			// Calculate concrete secant module
+			private new (double Ec1, double Ec2) ConcreteSecantModule => ConcreteSecantModules(ConcreteStrains);
+
+			// Calculate stresses
+			public override Vector<double> Stresses
+			{
+				get
+				{
+					if (Strains.Exists(Auxiliary.NotZero))
+						return 
+							Stiffness * Strains + PseudoPrestress;
+
+					return
+						Vector<double>.Build.Dense(3);
+				}
+			}
+
         }
     }
 
