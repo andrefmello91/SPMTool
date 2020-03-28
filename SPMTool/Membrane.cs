@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Linq;
 using System.Windows;
+using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.RootFinding;
 
 namespace SPMTool
 {
 	public class Membrane
 	{
-        // Public Properties
+        // Properties
         public Material.Concrete                Concrete                  { get; }
         public Reinforcement.Panel              Reinforcement             { get; }
         public (bool S, string Message)         Stop                      { get; set; }
@@ -17,8 +19,8 @@ namespace SPMTool
 		public Vector<double>                   Strains                   { get; }
 		public virtual (double ec1, double ec2) ConcretePrincipalStrains  { get; }
 		public virtual (double fc1, double fc2) ConcretePrincipalStresses { get; }
-		public virtual double                   Ec                        { get; }
 		private int                             LoadStep                  { get; }
+		private double                          fcr                       { get; }
 
         // Constructor
         public Membrane(Material.Concrete concrete, Reinforcement.Panel reinforcement, Vector<double> appliedStrain = null, int loadStep = 0)
@@ -37,6 +39,13 @@ namespace SPMTool
 				Strains = Vector<double>.Build.Dense(3);
 		}
 
+        // Calculate concrete parameters for membrane element
+        private double fc    => Concrete.fcm;
+        private double ec    = -0.002;
+        private double Ec    => -2 * fc / ec;
+        private double ecr   => fcr / Ec;
+        private double phiAg => Concrete.AggregateDiameter;
+
         // Get steel parameters
         private double fyx  => Reinforcement.Steel.X.fy;
 		private double Esxi => Reinforcement.Steel.X.Es;
@@ -51,8 +60,12 @@ namespace SPMTool
 		private double psx  => Reinforcement.Ratio.X;
 		private double psy  => Reinforcement.Ratio.Y;
 
+		// Calculate crack spacings
+		private double smx => phiX / (5.4 * psx);
+		private double smy => phiY / (5.4 * psy);
+
         // Calculate reinforcement stresses
-        public  (double fsx, double fsy) ReinforcementStresses
+        public (double fsx, double fsy) ReinforcementStresses
         {
 	        get
 	        {
@@ -97,7 +110,7 @@ namespace SPMTool
 		}
 
         // Calculate strain slope
-        public double StrainAngle
+        public virtual double StrainAngle
         {
 	        get
 	        {
@@ -320,32 +333,20 @@ namespace SPMTool
 
         public class MCFT : Membrane
         {
-            // Private properties
-            private int maxIter = 1000;
-
-            // Calculate concrete parameters for MCFT
-            private double         fc    => Concrete.fcm;
-            private double         ec    =  - 0.002;
-            public override double Ec    => - 2 * fc / ec;
-            private double         fcr   => 0.33 * Math.Sqrt(fc);
-            private double         ecr   => fcr / Ec;
-            private double         phiAg => Concrete.AggregateDiameter;
-
-            // Calculate crack spacings
-            private double smx => phiX / (5.4 * psx);
-            private double smy => phiY / (5.4 * psy);
-
             // Constructor
-            public MCFT(Material.Concrete concrete, Reinforcement.Panel reinforcement, Vector<double> appliedStrain = null, int loadStep = 0): base(concrete, reinforcement, appliedStrain, loadStep)
+            public MCFT(Material.Concrete concrete, Reinforcement.Panel reinforcement, Vector<double> appliedStrain = null, int loadStep = 0) : base(concrete, reinforcement, appliedStrain, loadStep)
             {
             }
+
+            // Calculate concrete parameters for MCFT
+            private new double fcr => 0.33 * Math.Sqrt(fc);
 
             // Calculate principal strains in concrete
             public override (double ec1, double ec2) ConcretePrincipalStrains
             {
 	            get
 	            {
-		            // Get the apparent strains and concrete net strains
+		            // Get the strains
 		            var e = Strains;
 
 		            double
@@ -484,6 +485,334 @@ namespace SPMTool
             }
         }
 
+		public class DSFM : Membrane
+		{
+			// Private properties
+			private Vector<double> InitialConcreteStrain { get; }
+            private double         Lr                     { get; }
+
+			// Constructor
+            public DSFM(Material.Concrete concrete, Reinforcement.Panel reinforcement, double referenceLength, Vector<double> initialConcreteStrain, Vector<double> appliedStrain = null, int loadStep = 0) : base(concrete, reinforcement, appliedStrain, loadStep)
+            {
+	            Lr = referenceLength;
+	            InitialConcreteStrain = initialConcreteStrain;
+            }
+
+            // Calculate concrete parameters for DSFM
+			private new double fcr => 0.65 * Math.Pow(fc, 0.33);
+			private double     Gf  = 0.075;
+			private double     ets => 2 * Gf / (fcr * Lr);
+
+			// Concrete strain angle
+			public override double StrainAngle => StrainAngles.theta;
+
+			// Calculate strain angles
+			private (double thetaE, double theta) StrainAngles
+			{
+				get
+				{
+					double
+						thetaE = CalculateStrainAngle(Strains),
+						theta  = CalculateStrainAngle(InitialConcreteStrain);
+
+					return (thetaE, theta);
+				}
+            }
+
+			// Calculate strain angle
+			private double CalculateStrainAngle(Vector<double> strains)
+			{
+				double angle;
+				// Calculate the inclination of apparent strains
+				if (strains[2] == 0)
+					angle = 0;
+
+				else if (strains[0] == strains[1])
+					angle = Constants.PiOver4;
+
+				else
+				{
+					double tan2Angle = strains[2] / (strains[0] - strains[1]);
+					angle = 0.5 * Math.Atan(tan2Angle);
+
+					// Theta must be positive
+					if (angle < 0)
+						angle += Constants.PiOver2;
+				}
+
+				return angle;
+            }
+
+            // Calculate principal strains in concrete
+            public override (double ec1, double ec2) ConcretePrincipalStrains
+			{
+				get
+				{
+					// Get concrete net strains
+					var ec = InitialConcreteStrain;
+
+					double
+						ecx  = ec[0],
+						ecy  = ec[1],
+						ycxy = ec[2];
+
+					// Calculate radius and center of Mohr's Circle
+					double
+						cen = 0.5 * (ecx + ecy),
+						rad = 0.5 * Math.Sqrt((ecx - ecy) * (ecx - ecy) + ycxy * ycxy);
+
+                    // Calculate principal strains in concrete
+                    double
+                        ec1 = cen + rad,
+						ec2 = cen - rad;
+
+					return (ec1, ec2);
+				}
+			}
+
+            // Calculate principal stresses in concrete
+            public override (double fc1, double fc2) ConcretePrincipalStresses
+            {
+	            get
+	            {
+					// Get strains
+					var (ec1, ec2) = ConcretePrincipalStrains;
+
+                    // Calculate the coefficients
+                    double Cd, betaD;
+                    if (ec1 == 0 || ec2 == 0 || -ec1 / ec2 <= 0.28)
+                        Cd = 1;
+
+                    else
+                        Cd = Math.Max(0.35 * Math.Pow(-ec1 / ec2 - 0.28, 0.8), 1);
+
+                    betaD = Math.Min(1 / (1 + 0.55 * Cd), 1);
+
+                    // Calculate fp and ep
+                    double
+                        fp = -betaD * fc,
+                        ep =  betaD * ec;
+
+                    // Calculate parameters of concrete
+                    double k;
+                    if (ep <= ec2)
+                        k = 1;
+                    else
+                        k = 0.67 - fp / 62;
+
+                    double
+                        n = 0.8 - fp / 17,
+                        ec2ep = ec2 / ep;
+
+                    // Calculate the principal compressive stress in concrete
+                    double fc2 = fp * n * ec2ep / (n - 1 + Math.Pow(ec2ep, n * k));
+
+                    // Initiate fc1
+                    double fc1;
+
+                    // Check if concrete is cracked
+                    if (ec1 <= ecr) // Not cracked
+	                    fc1 = Ec * ec1;
+
+                    else // Cracked
+                    {
+                        // Calculate concrete postcracking stress associated with tension softening
+                        double fc1a = fcr * (1 - (ec1 - ecr) / (ets - ecr));
+
+						// Get reinforcement angles and stresses
+						var (thetaNx, thetaNy) = ReinforcementAngles;
+						var (fsx, fsy)         = ReinforcementStresses;
+
+                        // Calculate coefficient for tension stiffening effect
+                        double
+                            cosNx = Auxiliary.DirectionCosines(thetaNx).cos,
+                            cosNy = Auxiliary.DirectionCosines(thetaNy).cos,
+                            m     = 0.25 / (psx / phiX * Math.Abs(cosNx) + psy / phiY * Math.Abs(cosNy));
+
+                        // Calculate concrete postcracking stress associated with tension stiffening
+                        double fc1b = fcr / (1 + Math.Sqrt(2.2 * m * ec1));
+
+                        // Calculate concrete tensile stress
+                        double fc1c = Math.Max(fc1a, fc1b);
+
+                        // Check the maximum value of fc1 that can be transmitted across cracks
+                        double
+                            cos2x = cosNx * cosNx,
+                            cos2y = cosNy * cosNy,
+                            fc1s = psx * (fyx - fsx) * cos2x + psy * (fyy - fsy) * cos2y;
+
+                        // Choose the minimum value of fc1
+                        fc1 = Math.Min(fc1c, fc1s);
+                    }
+
+                    return (fc1, fc2);
+                }
+            }
+
+            // Calculate local stresses on crack
+            private (double fscrx, double fscry, double vci) CrackLocalStresses
+            {
+	            get
+	            {
+                    // Initiate stresses
+                    double
+                        fscrx = 0,
+                        fscry = 0,
+                        vci   = 0;
+
+                    // Get the strains
+                    double
+                        ex = Strains[0],
+                        ey = Strains[1];
+
+					// Get concrete tensile stress
+					double fc1 = ConcretePrincipalStresses.fc1;
+
+                    // Get reinforcement angles and stresses
+                    var (thetaNx, thetaNy) = ReinforcementAngles;
+                    var (fsx, fsy)         = ReinforcementStresses;
+
+                    // Calculate cosines and sines
+                    var (cosNx, sinNx) = Auxiliary.DirectionCosines(thetaNx);
+                    var (cosNy, sinNy) = Auxiliary.DirectionCosines(thetaNy);
+                    double
+                        cosNx2 = cosNx * cosNx,
+                        cosNy2 = cosNy * cosNy;
+
+                    // Function to check equilibrium
+                    Func<double, double> crackEquilibrium = delegate (double de1crIt)
+                    {
+                        // Calculate local strains
+                        double
+                            escrx = ex + de1crIt * cosNx2,
+                            escry = ey + de1crIt * cosNy2;
+
+                        // Calculate reinforcement stresses
+                        fscrx = Math.Min(escrx * Esxi, fyx);
+                        fscry = Math.Min(escry * Esyi, fyy);
+
+                        // Check equilibrium (must be zero)
+                        double equil = psx * (fscrx - fsx) * cosNx2 + psy * (fscry - fsy) * cosNy2 - fc1;
+
+                        return equil;
+                    };
+
+                    // Solve the nonlinear equation by Brent Method
+                    double de1cr;
+                    bool solution = Brent.TryFindRoot(crackEquilibrium, 1E-9, 0.01, 1E-6, 1000, out de1cr);
+
+                    // Verify if it reached convergence
+                    if (solution)
+                    {
+                        // Calculate local strains
+                        double
+                            escrx = ex + de1cr * cosNx2,
+                            escry = ey + de1cr * cosNy2;
+
+                        // Calculate reinforcement stresses
+                        fscrx = Math.Min(escrx * Esxi, fyx);
+                        fscry = Math.Min(escry * Esyi, fyy);
+
+                        // Calculate shear stress
+                        vci = psx * (fscrx - fsx) * cosNx * sinNx + psy * (fscry - fsy) * cosNy * sinNy;
+                    }
+
+                    // Analysis must stop
+                    else
+                        Stop = (true, "Equilibrium on crack not reached at step ");
+
+                    return (fscrx, fscry, vci);
+                }
+            }
+
+			// Calculate crack slip
+			private Vector<double> CrackSlipStrains
+			{
+				get
+				{
+					// Get concrete principal tensile strain
+					double ec1 = ConcretePrincipalStrains.ec1;
+
+					// Verify if concrete is cracked
+					if (ec1 <= ecr) // Not cracked
+						return
+							Vector<double>.Build.Dense(3);
+
+					// Cracked
+					// Get the strains
+					double
+						ex  = Strains[0],
+						ey  = Strains[1],
+						yxy = Strains[2];
+
+					// Get the angles
+					var (thetaE, theta) = StrainAngles;
+					var (cosTheta, sinTheta) = Auxiliary.DirectionCosines(thetaE);
+
+					// Calculate crack spacings and width
+					double s = 1 / (sinTheta / smx + cosTheta / smy);
+
+					// Calculate crack width
+					double w = ec1 * s;
+
+					// Calculate shear slip strain by stress-based approach
+					var (_, _, vci) = CrackLocalStresses;
+					double
+						ds = vci / (1.8 * Math.Pow(w, -0.8) + (0.234 * Math.Pow(w, -0.707) - 0.2) * fc),
+						ysa = ds / s;
+
+					// Calculate shear slip strain by rotation lag approach
+					double
+						thetaIc = Constants.PiOver4,
+						dThetaE = thetaE - thetaIc,
+						thetaL = Trig.DegreeToRadian(5),
+						dThetaS;
+
+					if (Math.Abs(dThetaE) > thetaL)
+						dThetaS = dThetaE - thetaL;
+
+					else
+						dThetaS = dThetaE;
+
+					double
+						thetaS = thetaIc + dThetaS;
+
+					var (cos2ThetaS, sin2ThetaS) = Auxiliary.DirectionCosines(2 * thetaS);
+
+					double ysb = yxy * cos2ThetaS + (ey - ex) * sin2ThetaS;
+
+					// Calculate shear slip strains
+					var (cos2Theta, sin2Theta) = Auxiliary.DirectionCosines(2 * theta);
+					double
+						ys   = Math.Max(ysa, ysb),
+						exs  = -ys / 2 * sin2Theta,
+						eys  = ys / 2 * sin2Theta,
+						yxys = ys * cos2Theta;
+
+					// Calculate the vector of shear slip strains
+					return 
+						Vector<double>.Build.DenseOfArray(new [] { exs, eys, yxys });
+				}
+			}
+
+			// Calculate the pseudo-prestress
+			private Vector<double> PseudoPrestress
+			{
+				get
+				{
+					// Get concrete stiffness and crack slip strains
+					var Dc = ConcreteStiffness;
+					var es = CrackSlipStrains;
+
+					// Check if es = {0, 0, 0}
+					if (es.Exists(Auxiliary.NotZero))
+						return Dc * es;
+
+					return 
+						Vector<double>.Build.Dense(3);
+                }
+            }
+        }
     }
 
 }
