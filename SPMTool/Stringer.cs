@@ -94,20 +94,7 @@ namespace SPMTool
 		}
 
 		// Set global indexes from grips
-		public int[] Index
-		{
-			get
-			{
-				// Initialize the array
-				int[] ind = new int[Grips.Length];
-
-				// Get the indexes
-				for (int i = 0; i < Grips.Length; i++)
-					ind[i] = 2 * Grips[i] - 2;
-
-				return ind;
-			}
-		}
+		public int[] DoFIndex => Auxiliary.GlobalIndexes(Grips);
 
 		// Calculate direction cosines
 		public (double cos, double sin) DirectionCosines => Auxiliary.DirectionCosines(Angle);
@@ -149,20 +136,17 @@ namespace SPMTool
 		public void Displacement(Vector<double> globalDisplacementVector)
 		{
 			var u = globalDisplacementVector;
-			int[] ind = Index;
+			int[] ind = DoFIndex;
 
 			// Get the displacements
 			var us = Vector<double>.Build.Dense(6);
-			for (int i = 0; i < 3; i++)
+			for (int i = 0; i < ind.Length; i++)
 			{
-				// Indexers
-				int
-					j = ind[i],
-					k = 2 * i;
+				// Global index
+				int j = ind[i];
 
 				// Set values
-				us[k]     = u[j];
-				us[k + 1] = u[j + 1];
+				us[i] = u[j];
 			}
 
 			// Set

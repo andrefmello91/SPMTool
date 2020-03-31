@@ -254,58 +254,33 @@ namespace SPMTool
             }
         }
 
-        // Method to erase duplicated stringers
-        public static void EraseDuplicatedStringers()
-        {
-            // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-            {
-                // Get all the stringers in the model collection
-                ObjectIdCollection strsUpdt = GetEntitiesOnLayer(Layers.stringer);
+		// Get global indexes of a node
+		public static int[] GlobalIndexes(int nodeNumber)
+		{
+			return
+				new []
+				{
+					2 * nodeNumber - 2, 2 * nodeNumber - 1
+				};
+		}
 
-                // Create a collection to erase later
-                ObjectIdCollection strsToErase = new ObjectIdCollection();
+		// Get global indexes of an element's grips
+		public static int[] GlobalIndexes(int[] gripNumbers)
+		{
+			// Initialize the array
+			int[] ind = new int[2 * gripNumbers.Length];
 
-                // Create a list of the stringers objectId, start and endpoints
-                List<Tuple<ObjectId, Point3d, Point3d>> strList = new List<Tuple<ObjectId, Point3d, Point3d>>();
-                foreach (ObjectId strObj in strsUpdt)
-                {
-                    // Read as a line
-                    Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
-                    strList.Add(Tuple.Create(strObj, str.StartPoint, str.EndPoint));
-                }
+			// Get the indexes
+			for (int i = 0; i < gripNumbers.Length; i++)
+			{
+				int j = 2 * i;
 
-                // Initialize a new list
-                var otherStrList = strList;
+				ind[j]     = 2 * gripNumbers[i] - 2;
+				ind[j + 1] = 2 * gripNumbers[i] - 1;
+			}
 
-                // Verify if there are more than one stringer in the same position
-                for (int i = 0; i < strList.Count; i++)
-                {
-                    // Get the stringer
-                    var str = strList[i];
-
-                    // Create a new list without the selected element
-                    otherStrList.Remove(str);
-
-                    // Check if there are elements with the same start and end points
-                    foreach (var otherStr in otherStrList)
-                    {
-                        if (str.Item2 == otherStr.Item2 && str.Item3 == otherStr.Item3)
-                        {
-                            // Add to the list for erase
-                            strsToErase.Add(otherStr.Item1);
-                        }
-                    }
-                }
-
-                // Erase the stringers
-               if (strsToErase.Count > 0)
-                    EraseObjects(strsToErase);
-
-                // Commit changes
-                trans.Commit();
-            }
-        }
+			return ind;
+		}
 
         // Get the direction cosines of a vector
         public static (double cos, double sin) DirectionCosines(double angle)
@@ -340,69 +315,5 @@ namespace SPMTool
                 return false;
         };
 
-        // Calculate principal strains by Mohr's Circle
-        public static double[] PrincipalStrains(Vector<double> epsilon)
-        {
-            // Get the strains
-            double ex = epsilon[0],
-                ey = epsilon[1],
-                yxy = epsilon[2];
-
-            double rad = Math.Sqrt(((ey - ex) * (ey - ex) + yxy * yxy) / 2),   // Radius
-                cen = Math.Sqrt((ex + ey) / 2),                                // Center
-                e1 = rad + cen,                                                // Tension principal strain
-                e2 = cen - rad;                                                // Compression principal strain
-
-            return new double[] {e1, e2};
-        }
-
-
-        // In case a support or force is erased
-        //public static void BlockErased(object sender, ObjectEventArgs eventArgs)
-        //{
-        //    if (eventArgs.DBObject.IsErased)
-        //    {
-        //        // Read as a block reference
-        //        BlockReference blkRef = eventArgs.DBObject as BlockReference;
-
-        //        // Check if it's a support
-        //        if (blkRef.Layer == Global.supLyr)
-        //        {
-        //            // Get the nodes collection
-        //            ObjectIdCollection nds = AuxMethods.GetEntitiesOnLayer("Node");
-
-        //            // Start a transaction
-        //            using (Transaction trans = Global.curDb.TransactionManager.StartTransaction())
-        //            {
-        //                // Update the support condition in the node XData
-        //                foreach (ObjectId obj in nds)
-        //                {
-        //                    // Read as a point
-        //                    DBPoint nd = trans.GetObject(obj, OpenMode.ForRead) as DBPoint;
-
-        //                    if (nd.Position == blkRef.Position)
-        //                    {
-        //                        // Get the result buffer as an array
-        //                        ResultBuffer rb = nd.GetXDataForApplication(Global.appName);
-        //                        TypedValue[] data = rb.AsArray();
-
-        //                        // Set the updated support condition (in case of a support block was erased)
-        //                        string support = "Free";
-        //                        data[5] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
-
-        //                        // Add the new XData
-        //                        nd.UpgradeOpen();
-        //                        ResultBuffer newRb = new ResultBuffer(data);
-        //                        nd.XData = newRb;
-        //                        break;
-        //                    }
-        //                }
-
-        //                // Commit
-        //                trans.Commit();
-        //            }
-        //        }
-        //    }
-        //}
     }
 }

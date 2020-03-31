@@ -51,86 +51,49 @@ namespace SPMTool
 			// Add stringer stiffness to global stiffness
 			foreach (var stringer in Stringers)
 			{
-				// Get the positions in the global matrix
-				int 
-					i = stringer.Index[0],
-					j = stringer.Index[1],
-					k = stringer.Index[2];
+				// Get DoF indexes
+				var index = stringer.DoFIndex;
 
 				// Get the stiffness
 				var K = stringer.GlobalStiffness;
 
-				// Initialize an index for lines of the local matrix
-				int o = 0;
-
-				// Add the local matrix to the global at the DoFs positions
-				// n = index of the node in global matrix
-				// o = index of the line in the local matrix
-				foreach (int ind in stringer.Index)
-				{
-					for (int n = ind; n <= ind + 1; n++)
-					{
-						// Line o
-						// Check if the row is composed of zeroes
-						if (K.Row(o).Exists(Auxiliary.NotZero))
-						{
-							Kg[n, i]     += K[o, 0];     
-							Kg[n, i + 1] += K[o, 1];
-							Kg[n, j]     += K[o, 2];     
-							Kg[n, j + 1] += K[o, 3];
-							Kg[n, k]     += K[o, 4];    
-							Kg[n, k + 1] += K[o, 5];
-						}
-
-						// Increment the line index
-						o++;
-					}
-				}
-
+                // Add the local matrix to the global at the DoFs positions
+                AddStiffness(K, index);
             }
 
-			// Add panel stiffness to global stiffness
-			foreach (var panel in Panels)
+            // Add panel stiffness to global stiffness
+            foreach (var panel in Panels)
 			{
-				// Get the positions in the global matrix
-				int 
-					i = panel.Index[0],
-					j = panel.Index[1],
-					k = panel.Index[2],
-					l = panel.Index[3];
+				// Get DoF indexes
+				var index = panel.DoFIndex;
 
-				// Get the stiffness
-				var K = panel.GlobalStiffness;
+                // Get the stiffness
+                var K = panel.GlobalStiffness;
 
-                // Initialize an index for lines of the local matrix
-                int o = 0;
+                // Add the local matrix to the global at the DoFs positions
+                AddStiffness(K, index);
+			}
 
-				// Add the local matrix to the global at the DoFs positions
-				// i = index of the node in global matrix
-				// o = index of the line in the local matrix
-				foreach (int ind in panel.Index)
+			// Add local stiffness to global matrix
+			void AddStiffness(Matrix<double> elementStiffness, int[] dofIndex)
+			{
+				for (int i = 0; i < dofIndex.Length; i++)
 				{
-					for (int n = ind; n <= ind + 1; n++)
-					{
-						// Line o
-						// Check if the row is composed of zeroes
-						if (K.Row(o).Exists(Auxiliary.NotZero))
-						{
-							Kg[n, i] += K[o, 0]; Kg[n, i + 1] += K[o, 1];
-							Kg[n, j] += K[o, 2]; Kg[n, j + 1] += K[o, 3];
-							Kg[n, k] += K[o, 4]; Kg[n, k + 1] += K[o, 5];
-							Kg[n, l] += K[o, 6]; Kg[n, l + 1] += K[o, 7];
-						}
+					// Global index
+					int k = dofIndex[i];
 
-						// Increment the line index
-						o++;
+					for (int j = 0; j < dofIndex.Length; j++)
+					{
+						// Global index
+						int l = dofIndex[j];
+
+						Kg[k, l] += elementStiffness[i, j];
 					}
 				}
-
             }
 
-			// Simplify stiffness matrix
-			SimplifyStiffnessMatrix(Kg, forceVector);
+            // Simplify stiffness matrix
+            SimplifyStiffnessMatrix(Kg, forceVector);
 
 			return Kg;
 		}
@@ -138,43 +101,43 @@ namespace SPMTool
         // Simplify the stiffness matrix
         private void SimplifyStiffnessMatrix(Matrix<double> Kg, Vector<double> forceVector = null)
         {
-	        foreach (var index in Constraints)
+	        foreach (var i in Constraints)
 	        {
 		        // Clear the row and column [i] in the stiffness matrix (all elements will be zero)
-		        Kg.ClearRow(index);
-		        Kg.ClearColumn(index);
+		        Kg.ClearRow(i);
+		        Kg.ClearColumn(i);
 
 		        // Set the diagonal element to 1
-		        Kg[index, index] = 1;
+		        Kg[i, i] = 1;
 
 		        // Clear the row in the force vector
 				if (forceVector != null)
-					forceVector[index] = 0;
+					forceVector[i] = 0;
 
 		        // So ui = 0
 	        }
 
-            foreach (var nd in Nodes)
+            foreach (var node in Nodes)
             {
-                // Get the index of the row
-                int i = 2 * nd.Number - 2;
+                // Get DoF indexes
+                var index = node.DoFIndex;
 
                 // Simplification for internal nodes (There is only a displacement at the stringer direction, the perpendicular one will be zero)
-                if (nd.Type == (int)Node.NodeType.Internal)
+                if (node.Type == (int)Node.NodeType.Internal)
                 {
-                    // Verify rows i and i + 1
-                    for (int j = i; j <= i + 1; j++)
+                    // Verify rows
+                    foreach (int i in index)
                     {
                         // Verify what line of the matrix is composed of zeroes
-                        if (!Kg.Row(j).Exists(Auxiliary.NotZero))
+                        if (!Kg.Row(i).Exists(Auxiliary.NotZero))
                         {
                             // The row is composed of only zeroes, so the displacement must be zero
                             // Set the diagonal element to 1
-                            Kg[j, j] = 1;
+                            Kg[i, i] = 1;
 
                             // Clear the row in the force vector
                             if (forceVector != null)
-                                forceVector[j] = 0;
+                                forceVector[i] = 0;
                         }
                     }
                 }
@@ -370,9 +333,9 @@ namespace SPMTool
         public class NonLinear : Analysis
         {
 			// Max iterations
-			private int maxIterations = 500;
+			private int maxIterations = 10000;
 
-	        [CommandMethod("DoNonLinearAnalysis")]
+			[CommandMethod("DoNonLinearAnalysis")]
 	        public static void DoNonLinearAnalysis()
 	        {
 		        // Get input data
@@ -411,28 +374,29 @@ namespace SPMTool
 
                 var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
 		        var fiMatrix = Matrix<double>.Build.Dense(100, numDoFs);
-		        var fr1 = Matrix<double>.Build.Dense(maxIterations, numDoFs);
-		        var du1 = Matrix<double>.Build.Dense(maxIterations, numDoFs);
+                var fr56 = Matrix<double>.Build.Dense(maxIterations, numDoFs);
+                var fi56 = Matrix<double>.Build.Dense(maxIterations, numDoFs);
+                var du56 = Matrix<double>.Build.Dense(maxIterations, numDoFs);
                 var fstr = Matrix<double>.Build.Dense(4, 3);
                 var estr = Matrix<double>.Build.Dense(4, 2);
 
-				var fStrs = new Matrix<double>[4];
-				for (int i = 0; i < 4; i++)
-					fStrs[i] = Matrix<double>.Build.Dense(maxIterations, 3);
-				var fPnl = Matrix<double>.Build.Dense(maxIterations, 8);
-				var uPnl = Matrix<double>.Build.Dense(maxIterations, 8);
-				var sigPnl = Matrix<double>.Build.Dense(maxIterations, 12);
-				var epsPnl = Matrix<double>.Build.Dense(maxIterations, 12);
-				var e1Pnl = Matrix<double>.Build.Dense(maxIterations, 8);
-				var f1Pnl = Matrix<double>.Build.Dense(maxIterations, 8);
-				var thetaPnl = Matrix<double>.Build.Dense(maxIterations, 4);
-				var DPnl = Matrix<double>.Build.Dense(12 * maxIterations, 12);
-				var DcPnl = Matrix<double>.Build.Dense(12 * maxIterations, 12);
-				var DsPnl = Matrix<double>.Build.Dense(12 * maxIterations, 12);
-				var KPnl = Matrix<double>.Build.Dense(12 * maxIterations, 8);
+                var fStrs = new Matrix<double>[4];
+                for (int i = 0; i < 4; i++)
+                    fStrs[i] = Matrix<double>.Build.Dense(maxIterations, 3);
+                var fPnl = Matrix<double>.Build.Dense(maxIterations, 8);
+                var uPnl = Matrix<double>.Build.Dense(maxIterations, 8);
+                var sigPnl = Matrix<double>.Build.Dense(maxIterations, 12);
+                var epsPnl = Matrix<double>.Build.Dense(maxIterations, 12);
+                var e1Pnl = Matrix<double>.Build.Dense(maxIterations, 8);
+                var f1Pnl = Matrix<double>.Build.Dense(maxIterations, 8);
+                var thetaPnl = Matrix<double>.Build.Dense(maxIterations, 4);
+                var DPnl = Matrix<double>.Build.Dense(12 * maxIterations, 12);
+                var DcPnl = Matrix<double>.Build.Dense(12 * maxIterations, 12);
+                var DsPnl = Matrix<double>.Build.Dense(12 * maxIterations, 12);
+                var KPnl = Matrix<double>.Build.Dense(12 * maxIterations, 8);
 
                 // Initialize a loop for load steps
-                for (int loadStep = 1; loadStep <= 40; loadStep++)
+                for (int loadStep = 1; loadStep <= 56; loadStep++)
 				{
 					// Get the force vector
 					var fs = 0.01 * loadStep * f;
@@ -453,7 +417,7 @@ namespace SPMTool
 						var fr = fs - fit;
 
 						// Check convergence
-						if (EquilibriumConvergence(fr))
+						if (EquilibriumConvergence(fr, it))
 						{
 							AutoCAD.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
 							fi = fit;
@@ -466,10 +430,11 @@ namespace SPMTool
 						// Increment displacements
 						u += du;
 
-                        if (loadStep == 1)
+                        if (loadStep == 56)
                         {
-                            fr1.SetRow(it, fr);
-                            du1.SetRow(it, du);
+                            fi56.SetRow(it, fit);
+                            fr56.SetRow(it, fr);
+                            du56.SetRow(it, du);
 
                             foreach (Stringer.NonLinear stringer in Stringers)
                             {
@@ -523,30 +488,31 @@ namespace SPMTool
                     StringerResults();
 
                     // Update stiffness
-                    //if (loadStep < 38)
-                    //{
-                    //    foreach (Stringer.NonLinear stringer in Stringers)
-                    //    {
-                    //        fstr.SetRow(stringer.Number - 1, stringer.Forces);
-                    //        estr.SetRow(stringer.Number - 1, new[] { stringer.GenStrains.e1, stringer.GenStrains.e3 });
-                    //    }
+                    if (loadStep < 56)
+                    {
+                        foreach (Stringer.NonLinear stringer in Stringers)
+                        {
+                            fstr.SetRow(stringer.Number - 1, stringer.Forces);
+                            estr.SetRow(stringer.Number - 1, new[] { stringer.GenStrains.e1, stringer.GenStrains.e3 });
+                        }
                         Kg = GlobalStiffness();
-                    //}
+                    }
                 }
 
                 DelimitedWriter.Write("D:/K.csv", Kg, ";");
-                //DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
+                DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
                 DelimitedWriter.Write("D:/fi.csv", fiMatrix, ";");
-                DelimitedWriter.Write("D:/fr1.csv", fr1, ";");
-                DelimitedWriter.Write("D:/du1.csv", du1, ";");
+                DelimitedWriter.Write("D:/fi56.csv", fi56, ";");
+                DelimitedWriter.Write("D:/fr56.csv", fr56, ";");
+                DelimitedWriter.Write("D:/du56.csv", du56, ";");
                 DelimitedWriter.Write("D:/fstr.csv", fstr, ";");
                 DelimitedWriter.Write("D:/estr.csv", estr, ";");
                 DelimitedWriter.Write("D:/u.csv", uMatrix, ";");
 
                 for (int i = 0; i < 4; i++)
                 {
-	                int n = i + 1;
-	                DelimitedWriter.Write("D:/fStr" + n + ".csv", fStrs[i], ";");
+                    int n = i + 1;
+                    DelimitedWriter.Write("D:/fStr" + n + ".csv", fStrs[i], ";");
                 }
 
                 DelimitedWriter.Write("D:/fPnl1.csv", fPnl, ";");
@@ -583,114 +549,18 @@ namespace SPMTool
             }
 			
 			// Verify convergence
-			private bool EquilibriumConvergence(Vector<double> residualForces)
+			private bool EquilibriumConvergence(Vector<double> residualForces, int iteration)
 			{
-				// Check convergence
-				if (residualForces.AbsoluteMaximum() <= MaxElementForce / 100)
+				double
+					maxForce  = residualForces.AbsoluteMaximum(),
+					tolerance = MaxElementForce / 30;
+
+                // Check convergence
+                if (maxForce <= tolerance && iteration > 0)
 					return true;
 
 				// Else
 				return false;
-			}
-
-			// Get initial global stiffness
-            private (Matrix<double> GlobalStiffness, Vector<double> ForceVector) InitialParameters()
-			{
-				// Get force vector
-				var forceVector = ForceVector;
-
-				// Initialize the global stiffness matrix
-				var Kg = Matrix<double>.Build.Dense(numDoFs, numDoFs);
-
-				// Add stringer stiffness to global stiffness
-				foreach (var stringer in Stringers)
-				{
-					// Get the positions in the global matrix
-					int
-						i = stringer.Index[0],
-						j = stringer.Index[1],
-						k = stringer.Index[2];
-
-					// Get the stiffness
-					var K = stringer.InitialStiffness;
-
-					// Initialize an index for lines of the local matrix
-					int o = 0;
-
-					// Add the local matrix to the global at the DoFs positions
-					// n = index of the node in global matrix
-					// o = index of the line in the local matrix
-					foreach (int ind in stringer.Index)
-					{
-						for (int n = ind; n <= ind + 1; n++)
-						{
-							// Line o
-							// Check if the row is composed of zeroes
-							if (K.Row(o).Exists(Auxiliary.NotZero))
-							{
-								Kg[n, i]     += K[o, 0];
-								Kg[n, i + 1] += K[o, 1];
-								Kg[n, j]     += K[o, 2];
-								Kg[n, j + 1] += K[o, 3];
-								Kg[n, k]     += K[o, 4];
-								Kg[n, k + 1] += K[o, 5];
-							}
-
-							// Increment the line index
-							o++;
-						}
-					}
-
-				}
-
-				// Add panel stiffness to global stiffness
-				foreach (var panel in Panels)
-				{
-					// Get the positions in the global matrix
-					int
-						i = panel.Index[0],
-						j = panel.Index[1],
-						k = panel.Index[2],
-						l = panel.Index[3];
-
-					// Get the stiffness
-					var K = panel.GlobalStiffness;
-
-					// Initialize an index for lines of the local matrix
-					int o = 0;
-
-					// Add the local matrix to the global at the DoFs positions
-					// i = index of the node in global matrix
-					// o = index of the line in the local matrix
-					foreach (int ind in panel.Index)
-					{
-						for (int n = ind; n <= ind + 1; n++)
-						{
-							// Line o
-							// Check if the row is composed of zeroes
-							if (K.Row(o).Exists(Auxiliary.NotZero))
-							{
-								Kg[n, i]     += K[o, 0];
-								Kg[n, i + 1] += K[o, 1];
-								Kg[n, j]     += K[o, 2];
-								Kg[n, j + 1] += K[o, 3];
-								Kg[n, k]     += K[o, 4];
-								Kg[n, k + 1] += K[o, 5];
-								Kg[n, l]     += K[o, 6];
-								Kg[n, l + 1] += K[o, 7];
-							}
-
-							// Increment the line index
-							o++;
-						}
-					}
-
-				}
-
-				// Simplify stiffness matrix
-				SimplifyStiffnessMatrix(Kg, forceVector);
-
-				return (Kg, forceVector);
 			}
 
 			// Calculate stringer forces
@@ -725,44 +595,38 @@ namespace SPMTool
 				foreach (Stringer.NonLinear stringer in Stringers)
 				{
 					// Get index and forces
-					int[] index = stringer.Index;
+					int[] index = stringer.DoFIndex;
 					var fs = stringer.IterationGlobalForces;
 
-					for (int i = 0; i < 3; i++)
-					{
-						// Indexers
-						int
-							j = index[i],
-							k = 2 * i;
+					// Add values
+					AddForce(fs, index);
+                }
 
-						// Add values
-						fi[j]     += fs[k];
-						fi[j + 1] += fs[k + 1];
-					}
-
-				}
-
-				foreach (Panel.NonLinear panel in Panels)
+                foreach (Panel.NonLinear panel in Panels)
 				{
 					// Get index and forces
-					int[] index = panel.Index;
+					int[] index = panel.DoFIndex;
 					var fp = panel.Forces;
 
-					for (int i = 0; i < 4; i++)
-					{
-						// Indexers
-						int
-							j = index[i],
-							k = 2 * i;
-
-						// Add values
-						fi[j]     += fp[k];
-						fi[j + 1] += fp[k + 1];
-					}
+					// Add values
+					AddForce(fp, index);
 				}
 
-				// Simplify for constraints
-				foreach (var i in Constraints)
+                // Add element forces to global vector
+                void AddForce(Vector<double> elementForces, int[] dofIndex)
+				{
+					for (int i = 0; i < dofIndex.Length; i++)
+					{
+						// DoF index
+						int j = dofIndex[i];
+
+						// Add values
+						fi[j] += elementForces[i];
+					}
+                }
+
+                // Simplify for constraints
+                foreach (var i in Constraints)
 					fi[i] = 0;
 
                 return fi;

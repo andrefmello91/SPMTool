@@ -109,20 +109,7 @@ namespace SPMTool
         }
 
         // Set global indexes from grips
-        public int[] Index
-        {
-	        get
-	        {
-		        // Initialize the array
-		        int[] ind = new int[Grips.Length];
-
-		        // Get the indexes
-		        for (int i = 0; i < Grips.Length; i++)
-			        ind[i] = 2 * Grips[i] - 2;
-
-		        return ind;
-	        }
-        }
+        public int[] DoFIndex => Auxiliary.GlobalIndexes(Grips);
 
         // Get X and Y coordinates of a panel vertices
         public  (double[] x, double[] y) VertexCoordinates
@@ -225,20 +212,17 @@ namespace SPMTool
 		public void Displacement(Vector<double> globalDisplacementVector)
 		{
 			var u = globalDisplacementVector;
-			int[] ind = Index;
+			int[] ind = DoFIndex;
 
             // Get the displacements
             var up = Vector<double>.Build.Dense(8);
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < ind.Length; i++)
             {
 				// Indexers
-				int
-					j = ind[i],
-					k = 2 * i;
+				int j = ind[i];
 
 				// Set values
-	            up[k]     = u[j];
-	            up[k + 1] = u[j + 1];
+	            up[i] = u[j];
             }
 
 			// Set

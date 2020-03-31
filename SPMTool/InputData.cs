@@ -148,23 +148,25 @@ namespace SPMTool
 		{
 			var constraintList = new List<int>();
 
-			foreach (var nd in Nodes)
+			foreach (var node in Nodes)
 			{
-				// Get the index of the row
-				int i = 2 * nd.Number - 2;
+				// Get DoF indexes
+				var index = node.DoFIndex;
+				int
+					i = index[0],
+					j = index[1];
 
 				// Simplify the matrices removing the rows that have constraints (external nodes)
-				if (nd.Type == (int) Node.NodeType.External)
+				if (node.Type == (int) Node.NodeType.External)
 				{
-					if (nd.Support.X)
+					if (node.Support.X)
 						// There is a support in X direction
 						constraintList.Add(i);
 
-					if (nd.Support.Y)
+					if (node.Support.Y)
 						// There is a support in Y direction
-						constraintList.Add(i + 1);
+						constraintList.Add(j);
 				}
-
 			}
 
 			return constraintList.OrderBy(i => i).ToList();

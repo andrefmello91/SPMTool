@@ -83,18 +83,24 @@ namespace SPMTool
             }
         }
 
+		// Get index of DoFs
+		public int[] DoFIndex => Auxiliary.GlobalIndexes(Number);
+
         // Get nodal displacements
         public void Displacements(Vector<double> displacementVector)
         {
 	        var u = displacementVector;
 
 	        // Get the index of the node on the list
-	        int i = 2 * Number - 2;
+	        var index = DoFIndex;
+	        int 
+		        i = index[0],
+		        j = index[1];
 
 	        // Get the displacements
 	        double
 		        ux = Math.Round(u[i], 6),
-		        uy = Math.Round(u[i + 1], 6);
+		        uy = Math.Round(u[j], 6);
 
 	        // Save to the node
 	        Displacement = (ux, uy);
