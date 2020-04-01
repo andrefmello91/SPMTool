@@ -20,73 +20,111 @@ namespace SPMTool
 	    }
 
 	    // Properties
-        public ObjectId             ObjectId     { get; }
-	    public int                  Number       { get; }
-	    public int                  Type         { get; }
-	    public Point3d              Position     { get; }
-	    public (bool X, bool Y)     Support      { get; }
-	    public (double X, double Y) Force        { get; }
-	    public (double X, double Y) Displacement { get; set; }
+	    public ObjectId             ObjectId => 
+		    PointObject.ObjectId;
+        public DBPoint              PointObject  { get; }
+        private TypedValue[]        Data         { get; }
 
 		// Constructor
 		public Node(ObjectId nodeObject)
 		{
-			ObjectId = nodeObject;
-
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
 	            // Read the object as a point
-	            DBPoint ndPt = trans.GetObject(nodeObject, OpenMode.ForRead) as DBPoint;
+	            PointObject = trans.GetObject(nodeObject, OpenMode.ForRead) as DBPoint;
 
 	            // Read the XData and get the necessary data
-	            ResultBuffer rb = ndPt.GetXDataForApplication(AutoCAD.appName);
-	            TypedValue[] data = rb.AsArray();
-
-	            // Get the position
-	            Position = ndPt.Position;
-
-	            // Get the node number
-	            Number = Convert.ToInt32(data[(int) XData.Node.Number].Value);
-
-	            // Get type
-	            if (ndPt.Layer == Layers.extNode)
-		            Type = (int) NodeType.External;
-	            else
-		            Type = (int) NodeType.Internal;
-
-	            // Get support conditions
-	            string support = data[(int) XData.Node.Support].Value.ToString();
-	            bool
-		            supX = false,
-		            supY = false;
-
-	            if (support.Contains("X"))
-		            supX = true;
-
-	            if (support.Contains("Y"))
-		            supY = true;
-
-	            Support = (supX, supY);
-
-	            // Get forces
-	            double
-		            Fx = Convert.ToDouble(data[(int) XData.Node.Fx].Value),
-		            Fy = Convert.ToDouble(data[(int) XData.Node.Fy].Value);
-	            Force = (Fx, Fy);
-
-                // Get displacements
-                double
-	                ux = Convert.ToDouble(data[(int)XData.Node.Ux].Value),
-	                uy = Convert.ToDouble(data[(int)XData.Node.Uy].Value);
-                Displacement = (ux, uy);
+	            ResultBuffer rb = PointObject.GetXDataForApplication(AutoCAD.appName);
+	            Data = rb.AsArray();
             }
         }
 
-		// Get index of DoFs
-		public int[] DoFIndex => Auxiliary.GlobalIndexes(Number);
+		// Get the position
+		public Point3d Position => PointObject.Position;
 
-        // Get nodal displacements
+        // Get the node number
+        public int Number => Convert.ToInt32(Data[(int)XData.Node.Number].Value);
+
+	    // Get type of node
+	    public int Type
+	    {
+		    get
+		    {
+			    if (PointObject.Layer == Layers.extNode)
+				    return
+					    (int)NodeType.External;
+			    
+			    return
+				    (int)NodeType.Internal;
+            }
+        }
+
+	    // Get support conditions
+	    public (bool X, bool Y) Support
+	    {
+		    get
+		    {
+			    string support = Data[(int)XData.Node.Support].Value.ToString();
+			    bool
+				    supX = false,
+				    supY = false;
+
+			    if (support.Contains("X"))
+				    supX = true;
+
+			    if (support.Contains("Y"))
+				    supY = true;
+
+			    return
+				    (supX, supY);
+            }
+        }
+
+	    // Get applied forces
+	    public (double X, double Y) Force
+	    {
+		    get
+		    {
+			    double
+				    Fx = Convert.ToDouble(Data[(int)XData.Node.Fx].Value),
+				    Fy = Convert.ToDouble(Data[(int)XData.Node.Fy].Value);
+
+			    return
+				    (Fx, Fy);
+            }
+        }
+
+        // Get index of DoFs
+        public int[] DoFIndex => Auxiliary.GlobalIndexes(Number);
+
+		// Get displacements
+		private bool _displacementCalculated;
+		private (double X, double Y) _displacement;
+		public (double X, double Y) Displacement 
+		{
+			get
+			{
+				if (_displacementCalculated)
+					return
+						_displacement;
+
+				// Get displacements from XData
+				double
+					ux = Convert.ToDouble(Data[(int)XData.Node.Ux].Value),
+					uy = Convert.ToDouble(Data[(int)XData.Node.Uy].Value);
+
+				return
+					(ux, uy);
+			}
+			set
+			{
+				_displacementCalculated = true;
+                _displacement           = value;
+			}
+		}
+
+        // Get nodal displacements from displacement vector
         public void Displacements(Vector<double> displacementVector)
         {
 	        var u = displacementVector;
