@@ -16,7 +16,8 @@ namespace SPMTool
 	    {
 		    All = 0,
 		    External = 1,
-		    Internal = 2
+		    Internal = 2,
+			Displaced = 3
 	    }
 
 	    // Properties

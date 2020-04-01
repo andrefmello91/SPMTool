@@ -20,34 +20,20 @@ namespace SPMTool
         // Node methods
         public static class Node
         {
-            // Method to add nodes at a given position and a layer name
-            public static void NewNode(Point3d position, string layerName)
-            {
-                // Get the list of nodes
-                var ndList = ListOfNodes((int)SPMTool.Node.NodeType.All);
-
-                // Check if a node already exists at the position. If not, its created
-                if (!ndList.Contains(position))
-                {
-                    // Add to the list
-                    ndList.Add(position);
-
-                    // Create the node and set the layer
-                    DBPoint nd = new DBPoint(position)
-                    {
-                        Layer = layerName
-                    };
-
-                    // Add the new object
-                    Auxiliary.AddObject(nd);
-                }
-            }
-
             // Method to add nodes at a given list of positions and a layer name
-            public static void NewNode(List<Point3d> positions, string layerName)
+            public static void NewNode(List<Point3d> positions, int nodeType)
             {
                 // Get the list of nodes
                 var ndList = ListOfNodes((int)SPMTool.Node.NodeType.All);
+
+				// Get the layer name
+				string layerName;
+				if (nodeType == (int) SPMTool.Node.NodeType.External)
+					layerName = Layers.extNode;
+				else if (nodeType == (int)SPMTool.Node.NodeType.Internal)
+					layerName = Layers.intNode;
+				else
+					layerName = Layers.displacements;
 
                 foreach (Point3d pt in positions)
                 {
@@ -60,7 +46,7 @@ namespace SPMTool
                         // Create the node and set the layer
                         DBPoint nd = new DBPoint(pt)
                         {
-                            Layer = layerName
+	                        Layer = layerName
                         };
 
                         // Add the new object
@@ -81,11 +67,8 @@ namespace SPMTool
                 // Start a transaction
                 using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
                 {
-                    // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
                     // Get the list of nodes ordered
-                    List<Point3d> ndList = ListOfNodes((int)SPMTool.Node.NodeType.All);
+                    var ndList = ListOfNodes((int)SPMTool.Node.NodeType.All);
 
                     // Access the nodes on the document
                     foreach (ObjectId ndObj in nds)
@@ -159,7 +142,7 @@ namespace SPMTool
                     nds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
 
                 // Create a point collection
-                List<Point3d> ndPos = new List<Point3d>();
+               var pts = new List<Point3d>();
 
                 // Start a transaction
                 using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -168,12 +151,13 @@ namespace SPMTool
                     {
                         // Read as a point and add to the collection
                         DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-                        ndPos.Add(nd.Position);
+                        pts.Add(nd.Position);
                     }
                 }
 
                 // Return the node list ordered
-                return Auxiliary.OrderPoints(ndPos);
+                return
+	                Auxiliary.OrderPoints(pts);
             }
 
             // Get the collection of all of the nodes
@@ -278,8 +262,7 @@ namespace SPMTool
                             List<Point3d> extNds = Auxiliary.OrderPoints(nds);
 
                             // Create the stringer and add to drawing
-                            Tuple<Point3d, Point3d> strPts = Tuple.Create(extNds[0], extNds[1]);
-                            Line str = NewStringer(strList, strPts);
+                            Line str = NewStringer(strList, extNds[0], extNds[1]);
                             Auxiliary.AddObject(str);
 
                             // Get the midpoint
@@ -308,8 +291,8 @@ namespace SPMTool
                 }
 
                 // Create the nodes
-                Node.NewNode(newExtNds, Layers.extNode);
-                Node.NewNode(newIntNds, Layers.intNode);
+                Node.NewNode(newExtNds, (int)SPMTool.Node.NodeType.External);
+                Node.NewNode(newIntNds, (int)SPMTool.Node.NodeType.Internal);
 
                 // Update the nodes and stringers
                 Node.UpdateNodes();
@@ -317,19 +300,19 @@ namespace SPMTool
             }
 
             // Create a stringer if it doesn't already exist
-            public static Line NewStringer(List<Tuple<Point3d, Point3d>> stringerList, Tuple<Point3d, Point3d> stringerPoints)
+            public static Line NewStringer(List<(Point3d start, Point3d end)> stringerList, Point3d startPoint, Point3d endPoint)
             {
                 // Initialize a line
                 Line str = new Line();
 
                 // Check if a stringer already exist on that position. If not, create it
-                if (!stringerList.Contains(stringerPoints))
+                if (!stringerList.Contains((startPoint, endPoint)))
                 {
                     // Add to the list
-                    stringerList.Add(stringerPoints);
+                    stringerList.Add((startPoint, endPoint));
 
                     // Create the line in Model space
-                    str = new Line(stringerPoints.Item1, stringerPoints.Item2)
+                    str = new Line(startPoint, endPoint)
                     {
                         Layer = Layers.stringer
                     };
@@ -437,8 +420,7 @@ namespace SPMTool
                                             Point3d endPt = new Point3d(xCrd, yCrd, 0);
 
                                             // Create the stringer
-                                            Tuple<Point3d, Point3d> strPts = Tuple.Create(stPt, endPt);
-                                            Line newStr = NewStringer(strList, strPts);
+                                            Line newStr = NewStringer(strList, stPt, endPt);
                                             Auxiliary.AddObject(newStr);
 
                                             // Append the XData of the original stringer
@@ -466,7 +448,7 @@ namespace SPMTool
                                         str.Erase();
 
                                         // Remove from the list
-                                        strList.Remove(Tuple.Create(strSt, strEnd));
+                                        strList.Remove((strSt, strEnd));
                                     }
                                 }
 
@@ -475,8 +457,8 @@ namespace SPMTool
                             }
 
                             // Create the nodes
-                            Node.NewNode(newExtNds, Layers.extNode);
-                            Node.NewNode(newIntNds, Layers.intNode);
+                            Node.NewNode(newExtNds, (int)SPMTool.Node.NodeType.External);
+                            Node.NewNode(newIntNds, (int)SPMTool.Node.NodeType.Internal);
                         }
                     }
                 }
@@ -608,13 +590,13 @@ namespace SPMTool
             }
 
             // List of stringers (start and end points)
-            public static List<Tuple<Point3d, Point3d>> ListOfStringers()
+            public static List<(Point3d start, Point3d end)> ListOfStringers()
             {
                 // Get the stringers in the model
                 ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.stringer);
 
                 // Initialize a list
-                List<Tuple<Point3d, Point3d>> strList = new List<Tuple<Point3d, Point3d>>();
+                var strList = new List<(Point3d startPoint, Point3d endPoint)>();
 
                 if (strs.Count > 0)
                 {
@@ -627,7 +609,7 @@ namespace SPMTool
                             Line str = trans.GetObject(obj, OpenMode.ForRead) as Line;
 
                             // Add to the list
-                            strList.Add(Tuple.Create(str.StartPoint, str.EndPoint));
+                            strList.Add((str.StartPoint, str.EndPoint));
                         }
                     }
                 }
@@ -768,7 +750,7 @@ namespace SPMTool
                             List<Point3d> vrts = Auxiliary.OrderPoints(nds);
 
                             // Create the panel if it doesn't exist
-                            var pnlPts = Tuple.Create(vrts[0], vrts[1], vrts[2], vrts[3]);
+                            var pnlPts = (vrts[0], vrts[1], vrts[2], vrts[3]);
                             Solid pnl = NewPanel(pnlList, pnlPts);
                             Auxiliary.AddObject(pnl);
                         }
@@ -788,7 +770,7 @@ namespace SPMTool
             }
 
             // Create a panel if it doesn't already exist
-            public static Solid NewPanel(List<Tuple<Point3d, Point3d, Point3d, Point3d>> panelList, Tuple<Point3d, Point3d, Point3d, Point3d> vertices)
+            public static Solid NewPanel(List<(Point3d, Point3d, Point3d, Point3d)> panelList, (Point3d, Point3d, Point3d, Point3d) vertices)
             {
                 // Initialize a solid
                 Solid pnl = new Solid();
@@ -857,7 +839,7 @@ namespace SPMTool
                                 newExtNds = new List<Point3d>();
 
                             // Create a list of start and end points for adding the stringers later
-                            var newStrList = new List<Tuple<Point3d, Point3d>>();
+                            var newStrList = new List<(Point3d start, Point3d end)>();
 
                             // Access the stringers in the model
                             ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.stringer);
@@ -940,7 +922,7 @@ namespace SPMTool
                                                     }
 
                                                     // Erase and remove from the list
-                                                    strList.Remove(Tuple.Create(str.StartPoint, str.EndPoint));
+                                                    strList.Remove((str.StartPoint, str.EndPoint));
                                                     str.UpgradeOpen();
                                                     str.Erase();
                                                 }
@@ -966,7 +948,7 @@ namespace SPMTool
                                                     verts.Add(new Point3d(stPt.X + (j + 1) * distX, stPt.Y + (i + 1) * distY, 0));
 
                                                     // Create the panel
-                                                    var pnlPts = Tuple.Create(verts[0], verts[1], verts[2], verts[3]);
+                                                    var pnlPts = (verts[0], verts[1], verts[2], verts[3]);
                                                     Solid newPnl = NewPanel(pnlList, pnlPts);
                                                     Auxiliary.AddObject(newPnl);
 
@@ -981,12 +963,12 @@ namespace SPMTool
                                                     }
 
                                                     // Create tuples to adding the stringers later
-                                                    Tuple<Point3d, Point3d>[] strsToAdd = new Tuple<Point3d, Point3d>[]
+                                                    var strsToAdd = new []
                                                     {
-                                                        Tuple.Create(verts[0], verts[1]),
-                                                        Tuple.Create(verts[0], verts[2]),
-                                                        Tuple.Create(verts[2], verts[3]),
-                                                        Tuple.Create(verts[1], verts[3])
+                                                        (verts[0], verts[1]),
+                                                        (verts[0], verts[2]),
+                                                        (verts[2], verts[3]),
+                                                        (verts[1], verts[3])
                                                     };
 
                                                     // Add to the list of new stringers
@@ -1003,7 +985,7 @@ namespace SPMTool
                                             pnl.Erase();
 
                                             // Remove from the list
-                                            pnlList.Remove(Tuple.Create(grpPts[0], grpPts[1], grpPts[2], grpPts[3]));
+                                            pnlList.Remove((grpPts[0], grpPts[1], grpPts[2], grpPts[3]));
                                         }
 
                                         else // panel is not rectangular
@@ -1018,7 +1000,7 @@ namespace SPMTool
                             // Create the stringers
                             foreach (var pts in newStrList)
                             {
-                                Line str = Stringer.NewStringer(strList, pts);
+                                Line str = Stringer.NewStringer(strList, pts.start, pts.end);
                                 Auxiliary.AddObject(str);
 
                                 // Get the midpoint to add the external node
@@ -1028,8 +1010,8 @@ namespace SPMTool
                             }
 
                             // Create the nodes
-                            Node.NewNode(newExtNds, Layers.extNode);
-                            Node.NewNode(newIntNds, Layers.intNode);
+                            Node.NewNode(newExtNds, (int)SPMTool.Node.NodeType.External);
+                            Node.NewNode(newIntNds, (int)SPMTool.Node.NodeType.Internal);
 
                             // Update the elements
                             Node.UpdateNodes();
@@ -1262,13 +1244,13 @@ namespace SPMTool
             }
 
             // List of panels (collection of vertices)
-            public static List<Tuple<Point3d, Point3d, Point3d, Point3d>> ListOfPanels()
+            public static List<(Point3d, Point3d, Point3d, Point3d)> ListOfPanels()
             {
                 // Get the stringers in the model
                 ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.panel);
 
                 // Initialize a list
-                var pnlList = new List<Tuple<Point3d, Point3d, Point3d, Point3d>>();
+                var pnlList = new List<(Point3d, Point3d, Point3d, Point3d)>();
 
                 if (pnls.Count > 0)
                 {
@@ -1285,7 +1267,7 @@ namespace SPMTool
                             pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
 
                             // Add to the list
-                            var pnlPts = Tuple.Create(pnlVerts[0], pnlVerts[1], pnlVerts[2], pnlVerts[3]);
+                            var pnlPts = (pnlVerts[0], pnlVerts[1], pnlVerts[2], pnlVerts[3]);
                             pnlList.Add(pnlPts);
                         }
                     }

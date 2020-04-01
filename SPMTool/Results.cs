@@ -499,7 +499,7 @@ namespace SPMTool
 			}
 
 			// Add the nodes
-			Geometry.Node.NewNode(dispNds, Layers.displacements);
+			Geometry.Node.NewNode(dispNds, (int)SPMTool.Node.NodeType.Displaced);
 		}
 
 		// Set displacement to nodes
