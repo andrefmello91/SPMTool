@@ -257,35 +257,101 @@ namespace SPMTool
             return contStrs;
         }
 
+        // Get the list of panel's DoFs that have continuity
+        private List<int> PanelContinuousDoFs()
+        {
+	        var contDofs = new List<int>();
+
+	        foreach (var pnl1 in Panels)
+	        {
+		        // Get Dofs normal to edges
+		        var DoFs1 = pnl1.DoFIndex;
+		        var nDofs1 = new[]
+		        {
+			        DoFs1[1], DoFs1[2], DoFs1[5], DoFs1[6]
+		        };
+
+		        foreach (var pnl2 in Panels)
+		        {
+			        if (pnl1.Number != pnl2.Number)
+			        {
+				        // Get Dofs normal to edges
+				        var DoFs2 = pnl2.DoFIndex;
+				        var nDofs2 = new[]
+				        {
+					        DoFs2[1], DoFs2[2], DoFs2[5], DoFs2[6]
+				        }.ToList();
+
+				        // Verify if there is a common DoF
+				        foreach (var dof in nDofs1)
+					        if (nDofs2.Contains(dof) && !contDofs.Contains(dof))
+						        contDofs.Add(dof);
+			        }
+		        }
+	        }
+
+	        return contDofs;
+        }
+
+        // Get DoFs that are not continuous
+        private int[] NotContinuousPanelDoFs => notContPnlDoFs.Value;
+        private Lazy<int[]> notContPnlDoFs => new Lazy<int[]>(NotContinuousPanelDofs);
+        private int[] NotContinuousPanelDofs()
+        {
+	        // Create an array containing all DoFs
+	        var AllDoFs = new int[numDoFs];
+	        for (int i = 0; i < numDoFs; i++)
+		        AllDoFs[i] = i;
+
+	        // Get the continuous DoFs
+	        var contDofs = PanelContinuousDoFs();
+
+	        // Verify if exist continuous DoFs
+	        if (contDofs.Count == 0)
+		        return
+			        AllDoFs;
+
+	        // Create a list containing only not continuous DoFs
+	        var notContDoFs = new List<int>();
+	        foreach (int dof in AllDoFs)
+	        {
+		        if (!contDofs.Contains(dof))
+			        notContDoFs.Add(dof);
+	        }
+
+	        return
+		        notContDoFs.ToArray();
+        }
+
         //View the continued stringers
-   //     [CommandMethod("ViewContinuedStringers")]
-   //     public void ViewContinuedStringers()
-   //     {
-			//// Get input data
-			//var inputData = new InputData();
+        //     [CommandMethod("ViewContinuedStringers")]
+        //     public void ViewContinuedStringers()
+        //     {
+        //// Get input data
+        //var inputData = new InputData();
 
-	  //      // Get the list of continued stringers
-	  //      var contStrs = ContinuedStringers(inputData.Stringers);
+        //      // Get the list of continued stringers
+        //      var contStrs = ContinuedStringers(inputData.Stringers);
 
-	  //      // Initialize a message to show
-	  //      string msg = "Continued stringers: ";
+        //      // Initialize a message to show
+        //      string msg = "Continued stringers: ";
 
-	  //      // If there is none
-	  //      if (contStrs.Count == 0)
-		 //       msg += "None.";
+        //      // If there is none
+        //      if (contStrs.Count == 0)
+        //       msg += "None.";
 
-	  //      // Write all the continued stringers
-	  //      else
-	  //      {
-		 //       foreach (var contStr in contStrs)
-		 //       {
-			//        msg += contStr.str1 + " - " + contStr.str2 + ", ";
-		 //       }
-	  //      }
+        //      // Write all the continued stringers
+        //      else
+        //      {
+        //       foreach (var contStr in contStrs)
+        //       {
+        //        msg += contStr.str1 + " - " + contStr.str2 + ", ";
+        //       }
+        //      }
 
-	  //      // Write the message in the editor
-	  //      AutoCAD.edtr.WriteMessage(msg);
-   //     }
+        //      // Write the message in the editor
+        //      AutoCAD.edtr.WriteMessage(msg);
+        //     }
 
         // Linear analysis methods
 
@@ -333,7 +399,7 @@ namespace SPMTool
         public class NonLinear : Analysis
         {
 			// Max iterations
-			private int maxIterations = 10000;
+			private int maxIterations = 1000;
 
 			[CommandMethod("DoNonLinearAnalysis")]
 	        public static void DoNonLinearAnalysis()
@@ -526,10 +592,10 @@ namespace SPMTool
                 DelimitedWriter.Write("D:/DcPnl1.csv", DcPnl, ";");
                 DelimitedWriter.Write("D:/DsPnl1.csv", DsPnl, ";");
                 DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");
-            }
+	        }
 
-			// Get maximum element force
-			private double MaxElementForce
+            // Get maximum element force
+            private double MaxElementForce
 			{
 				get
 				{
