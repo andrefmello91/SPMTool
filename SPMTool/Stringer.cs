@@ -29,7 +29,8 @@ namespace SPMTool
 		public double                 Angle            { get; }
 		public double                 Width            { get; }
 		public double                 Height           { get; }
-		public Reinforcement.Stringer Reinforcement    { get; }
+		public Material.Concrete      Concrete         { get; }
+        public Reinforcement.Stringer Reinforcement    { get; }
 		public virtual Matrix<double> InitialStiffness { get; }
         public virtual Matrix<double> LocalStiffness   { get; }
 		public virtual Vector<double> Forces           { get; }
@@ -37,9 +38,10 @@ namespace SPMTool
 		public Vector<double>         Displacements    { get; set; }
 
 		// Constructor
-		public Stringer(ObjectId stringerObject)
+		public Stringer(ObjectId stringerObject, Material.Concrete concrete = null)
 		{
 			ObjectId = stringerObject;
+			Concrete = concrete;
 
 			// Start a transaction
 			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -162,14 +164,13 @@ namespace SPMTool
 		public class Linear : Stringer
 		{
 			// Private properties
-			private double L     => Length;
-			private double Ac    => ConcreteArea;
-			private double Ec    { get; }
+			private double L  => Length;
+			private double Ac => ConcreteArea;
+			private double Ec => Concrete.Eci;
 
 			// Constructor
-			public Linear(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject)
+			public Linear(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
 			{
-				Ec = concrete.Eci;
 			}
 
 			// Calculate local stiffness
@@ -214,12 +215,8 @@ namespace SPMTool
 			public (double N1, double N3) GenStresses { get; set; }
 			public (double e1, double e3) GenStrains { get; set; }
 
-            // Private parameters
-            private Material.Concrete Concrete { get; }
-
-			public NonLinear(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject)
+			public NonLinear(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
 			{
-				Concrete = concrete;
 			}
 
             // Calculate concrete parameters

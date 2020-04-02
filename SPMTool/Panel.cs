@@ -29,6 +29,7 @@ namespace SPMTool
         public int[]                  Grips            { get; }
         public Point3d[]              Vertices         { get; }
         public double                 Width            { get; }
+		public Material.Concrete      Concrete         { get; }
 		public Reinforcement.Panel    Reinforcement    { get; }
         public virtual Matrix<double> TransMatrix      { get; }
         public virtual Matrix<double> InitialStiffness { get; }
@@ -39,9 +40,10 @@ namespace SPMTool
         public virtual double         ShearStress      { get; }
 
         // Constructor
-        public Panel(ObjectId panelObject)
+        public Panel(ObjectId panelObject, Material.Concrete concrete = null)
         {
 	        ObjectId = panelObject;
+	        Concrete = concrete;
 
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -235,12 +237,10 @@ namespace SPMTool
         public class Linear : Panel
         {
             // Private properties
-            private double Gc { get; }
+            private double Gc => Concrete.Eci / 2.4;
 
-            public Linear(ObjectId panelObject, Material.Concrete concrete) : base(panelObject)
+            public Linear(ObjectId panelObject, Material.Concrete concrete) : base(panelObject, concrete)
 	        {
-				// Get data
-		        Gc = concrete.Eci / 2.4;
 	        }
 
             // Get transformation matrix
@@ -457,21 +457,18 @@ namespace SPMTool
         public class NonLinear : Panel
         {
             // Public Properties
-			public Membrane.MCFT[]          IntPointsMembrane  { get; set; }
-            public double[]                 StringerDimensions { get; }
+			public Membrane.MCFT[] IntPointsMembrane  { get; set; }
+            public double[]        StringerDimensions { get; }
 
             // Private Properties
-            private Material.Concrete Concrete { get; }
 			private int               LoadStep { get; set; }
 
             // Reinforcement ratio
             private double psx => Reinforcement.Ratio.X;
             private double psy => Reinforcement.Ratio.Y;
 
-            public NonLinear(ObjectId panelObject, Material.Concrete concrete, Stringer[] stringers) : base(panelObject)
+            public NonLinear(ObjectId panelObject, Material.Concrete concrete, Stringer[] stringers) : base(panelObject, concrete)
             {
-	            Concrete = concrete;
-
 				// Get stringer dimensions and effective ratio
 				StringerDimensions = StringersDimensions(stringers);
             }

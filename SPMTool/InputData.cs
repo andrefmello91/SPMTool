@@ -169,7 +169,8 @@ namespace SPMTool
 				}
 			}
 
-			return constraintList.OrderBy(i => i).ToList();
+			return
+				constraintList.OrderBy(i => i).ToList();
 		}
     }
 }
