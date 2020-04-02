@@ -13,18 +13,16 @@ namespace SPMTool
 {
 	public class Stringer
 	{
-		// Enum for setting stringer behavior
-		public enum Behavior
-		{
-			Linear = 1,
-			NonLinear = 2
-		}
-
-        // Stringer properties
-        public Line                   LineObject       { get; }
-		public ObjectId               ObjectId => 
-			LineObject.ObjectId;
-		private TypedValue[]	      Data             { get; }
+		// Stringer properties
+		public ObjectId               ObjectId         { get; }
+		public int                    Number           { get; }
+		public int[]                  Grips            { get; }
+		public Point3d[]              PointsConnected  { get; }
+		public double                 Length           { get; }
+		public double                 Angle            { get; }
+		public double                 Width            { get; }
+		public double                 Height           { get; }
+		public Reinforcement.Stringer Reinforcement    { get; }
 		public virtual Matrix<double> InitialStiffness { get; }
         public virtual Matrix<double> LocalStiffness   { get; }
 		public virtual Vector<double> Forces           { get; }
@@ -34,68 +32,72 @@ namespace SPMTool
 		// Constructor
 		public Stringer(ObjectId stringerObject)
 		{
+			ObjectId = stringerObject;
+
 			// Start a transaction
 			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
 			{
 				// Read the object as a line
-				LineObject = trans.GetObject(stringerObject, OpenMode.ForRead) as Line;
+				Line strLine = trans.GetObject(stringerObject, OpenMode.ForRead) as Line;
+
+				// Get the length and angles
+				Length = strLine.Length;
+				Angle  = strLine.Angle;
+
+				// Calculate midpoint
+				var midPt = Auxiliary.MidPoint(strLine.StartPoint, strLine.EndPoint);
+
+				// Get the points
+				PointsConnected = new[] { strLine.StartPoint, midPt, strLine.EndPoint };
 
 				// Read the XData and get the necessary data
-				ResultBuffer rb = LineObject.GetXDataForApplication(AutoCAD.appName);
-				Data = rb.AsArray();
+				ResultBuffer rb = strLine.GetXDataForApplication(AutoCAD.appName);
+				TypedValue[] data = rb.AsArray();
+
+				// Get the stringer number
+				Number = Convert.ToInt32(data[(int) XData.Stringer.Number].Value);
+
+				// Create the list of grips
+				Grips = new []
+				{
+					Convert.ToInt32(data[(int) XData.Stringer.Grip1].Value),
+					Convert.ToInt32(data[(int) XData.Stringer.Grip2].Value),
+					Convert.ToInt32(data[(int) XData.Stringer.Grip3].Value)
+				};
+
+				// Get geometry
+				Width  = Convert.ToDouble(data[(int) XData.Stringer.Width].Value);
+				Height = Convert.ToDouble(data[(int) XData.Stringer.Height].Value);
+
+				// Get reinforcement
+				int numOfBars = Convert.ToInt32(data[(int) XData.Stringer.NumOfBars].Value);
+				double phi = Convert.ToDouble(data[(int) XData.Stringer.BarDiam].Value);
+
+				// Get steel data
+				double
+					fy = Convert.ToDouble(data[(int) XData.Stringer.Steelfy].Value),
+					Es = Convert.ToDouble(data[(int) XData.Stringer.SteelEs].Value);
+
+				// Set steel data
+				var steel = new Material.Steel(fy, Es);
+
+				// Set reinforcement
+				Reinforcement = new Reinforcement.Stringer(numOfBars, phi, steel);
 			}
 		}
 
-		// Get the stringer number
-		public int Number => Convert.ToInt32(Data[(int)XData.Stringer.Number].Value);
-
-		// Create the list of grips
-		public int[] Grips => new []
+		// Enum for setting stringer behavior
+		public enum Behavior
 		{
-			Convert.ToInt32(Data[(int)XData.Stringer.Grip1].Value),
-			Convert.ToInt32(Data[(int)XData.Stringer.Grip2].Value),
-			Convert.ToInt32(Data[(int)XData.Stringer.Grip3].Value)
-		};
+			Linear    = 1,
+			NonLinear = 2
+		}
 
-        // Get geometry
-        public double Length => LineObject.Length;
-        public double Angle  => LineObject.Angle;
-        public double Width  => Convert.ToDouble(Data[(int)XData.Stringer.Width].Value);
-		public double Height => Convert.ToDouble(Data[(int)XData.Stringer.Height].Value);
+		// Set global indexes from grips
+		public int[] DoFIndex => Auxiliary.GlobalIndexes(Grips);
 
-		// Calculate midpoint
-		private Point3d MidPoint => Auxiliary.MidPoint(LineObject.StartPoint, LineObject.EndPoint);
-
-        // Get the connected points
-        public Point3d[] PointsConnected => new[] { LineObject.StartPoint, MidPoint, LineObject.EndPoint };
-
-        // Get reinforcement
-        public  Reinforcement.Stringer       Reinforcement => reinforcement.Value;
-        private Lazy<Reinforcement.Stringer> reinforcement => new Lazy<Reinforcement.Stringer>(StringerReinforcement);
-        private Reinforcement.Stringer       StringerReinforcement()
-        {
-	        // Get reinforcement
-	        int numOfBars = Convert.ToInt32(Data[(int) XData.Stringer.NumOfBars].Value);
-	        double phi    = Convert.ToDouble(Data[(int) XData.Stringer.BarDiam].Value);
-
-	        // Get steel data
-	        double
-		        fy = Convert.ToDouble(Data[(int) XData.Stringer.Steelfy].Value),
-		        Es = Convert.ToDouble(Data[(int) XData.Stringer.SteelEs].Value);
-
-	        // Set steel data
-	        var steel = new Material.Steel(fy, Es);
-
-	        // Set reinforcement
-	        return
-		        new Reinforcement.Stringer(numOfBars, phi, steel);
-        }
-
-        // Set global indexes from grips
-        public int[] DoFIndex => Auxiliary.GlobalIndexes(Grips);
-
-        // Calculate direction cosines
-        public (double cos, double sin) DirectionCosines => Auxiliary.DirectionCosines(Angle);
+		// Calculate direction cosines
+		public (double cos, double sin) DirectionCosines => Auxiliary.DirectionCosines(Angle);
 
 		// Calculate steel area
 		public double SteelArea => Reinforcement.Area;

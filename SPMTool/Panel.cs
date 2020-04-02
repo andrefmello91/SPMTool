@@ -16,18 +16,13 @@ namespace SPMTool
 {
     public class Panel
     {
-	    // Enum for setting stringer behavior
-	    public enum Behavior
-	    {
-		    Linear = 1,
-		    NonLinear = 2
-	    }
-
         // Panel parameters
-        public ObjectId               ObjectId =>
-	        SolidObject.ObjectId;
-        public Solid                  SolidObject      { get; }
-        private TypedValue[]          Data             { get; }
+        public ObjectId               ObjectId         { get; }
+        public int                    Number           { get; }
+        public int[]                  Grips            { get; }
+        public Point3d[]              Vertices         { get; }
+        public double                 Width            { get; }
+		public Reinforcement.Panel    Reinforcement    { get; }
         public virtual Matrix<double> TransMatrix      { get; }
         public virtual Matrix<double> InitialStiffness { get; }
         public virtual Matrix<double> LocalStiffness   { get; }
@@ -39,86 +34,78 @@ namespace SPMTool
         // Constructor
         public Panel(ObjectId panelObject)
         {
+	        ObjectId = panelObject;
+
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
             {
 	            // Read as a solid
-	            SolidObject = trans.GetObject(panelObject, OpenMode.ForWrite) as Solid;
+	            Solid pnl = trans.GetObject(panelObject, OpenMode.ForWrite) as Solid;
 
+	            // Get the vertices
+	            Point3dCollection pnlVerts = new Point3dCollection();
+	            pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+
+	            // Get the vertices in the order needed for calculations
+	            Point3d
+		            nd1 = pnlVerts[0],
+		            nd2 = pnlVerts[1],
+		            nd3 = pnlVerts[3],
+		            nd4 = pnlVerts[2];
 
 	            // Read the XData and get the necessary data
-	            ResultBuffer pnlRb = SolidObject.GetXDataForApplication(AutoCAD.appName);
-	            Data = pnlRb.AsArray();
+	            ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.appName);
+	            TypedValue[] pnlData = pnlRb.AsArray();
+
+	            // Get the panel parameters
+	            Number = Convert.ToInt32(pnlData[(int) XData.Panel.Number].Value);
+	            Width = Convert.ToDouble(pnlData[(int) XData.Panel.Width].Value);
+
+	            // Create the list of grips
+	            Grips = new []
+	            {
+		            Convert.ToInt32(pnlData[(int) XData.Panel.Grip1].Value),
+		            Convert.ToInt32(pnlData[(int) XData.Panel.Grip2].Value),
+		            Convert.ToInt32(pnlData[(int) XData.Panel.Grip3].Value),
+		            Convert.ToInt32(pnlData[(int) XData.Panel.Grip4].Value)
+	            };
+
+	            // Create the list of vertices
+	            Vertices = new []
+	            {
+		            nd1, nd2, nd3, nd4
+	            };
+
+	            // Get reinforcement
+	            double
+		            phiX = Convert.ToDouble(pnlData[(int)XData.Panel.XDiam].Value),
+		            phiY = Convert.ToDouble(pnlData[(int)XData.Panel.YDiam].Value),
+		            sx = Convert.ToDouble(pnlData[(int)XData.Panel.Sx].Value),
+		            sy = Convert.ToDouble(pnlData[(int)XData.Panel.Sy].Value);
+
+				// Get steel data
+				double
+					fyx = Convert.ToDouble(pnlData[(int) XData.Panel.fyx].Value),
+					Esx = Convert.ToDouble(pnlData[(int) XData.Panel.Esx].Value),
+					fyy = Convert.ToDouble(pnlData[(int) XData.Panel.fyy].Value),
+					Esy = Convert.ToDouble(pnlData[(int) XData.Panel.Esy].Value);
+
+				var steel = 
+				(
+					new Material.Steel(fyx, Esx), 
+					new Material.Steel(fyy, Esy)
+				);
+
+				// Set reinforcement
+				Reinforcement = new Reinforcement.Panel((phiX, phiY), (sx, sy), steel, Width);
             }
         }
 
-        // Get the vertices
-        public Point3d[] Vertices
+        // Enum for setting stringer behavior
+        public enum Behavior
         {
-	        get
-	        {
-				// Get grip points of the solid
-		        Point3dCollection pnlVerts = new Point3dCollection();
-		        SolidObject.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
-
-		        // Get the vertices in the order needed for calculations
-		        Point3d
-			        nd1 = pnlVerts[0],
-			        nd2 = pnlVerts[1],
-			        nd3 = pnlVerts[3],
-			        nd4 = pnlVerts[2];
-
-		        // Create the list of vertices
-		        return new[]
-		        {
-			        nd1, nd2, nd3, nd4
-		        };
-	        }
-        }
-
-        // Get panel number
-        public int Number => Convert.ToInt32(Data[(int) XData.Panel.Number].Value);
-
-        // Get width
-        public double Width => Convert.ToDouble(Data[(int) XData.Panel.Width].Value);
-
-        // Create the list of grips
-        public int[] Grips => new []
-        {
-	        Convert.ToInt32(Data[(int)XData.Panel.Grip1].Value),
-	        Convert.ToInt32(Data[(int)XData.Panel.Grip2].Value),
-	        Convert.ToInt32(Data[(int)XData.Panel.Grip3].Value),
-	        Convert.ToInt32(Data[(int)XData.Panel.Grip4].Value)
-        };
-
-        // Get reinforcement
-        public  Reinforcement.Panel       Reinforcement => reinforcement.Value;
-        private Lazy<Reinforcement.Panel> reinforcement => new Lazy<Reinforcement.Panel>(PanelReinforcement);
-        private Reinforcement.Panel       PanelReinforcement()
-        {
-	        // Get reinforcement
-	        double
-		        phiX = Convert.ToDouble(Data[(int) XData.Panel.XDiam].Value),
-		        phiY = Convert.ToDouble(Data[(int) XData.Panel.YDiam].Value),
-		        sx   = Convert.ToDouble(Data[(int) XData.Panel.Sx].Value),
-		        sy   = Convert.ToDouble(Data[(int) XData.Panel.Sy].Value);
-
-	        // Get steel data
-	        double
-		        fyx = Convert.ToDouble(Data[(int) XData.Panel.fyx].Value),
-		        Esx = Convert.ToDouble(Data[(int) XData.Panel.Esx].Value),
-		        fyy = Convert.ToDouble(Data[(int) XData.Panel.fyy].Value),
-		        Esy = Convert.ToDouble(Data[(int) XData.Panel.Esy].Value);
-
-	        var steel =
-	        (
-		        new Material.Steel(fyx, Esx),
-		        new Material.Steel(fyy, Esy)
-	        );
-
-	        // Set reinforcement
-	        return
-		        new Reinforcement.Panel((phiX, phiY), (sx, sy), steel, Width);
+	        Linear    = 1,
+	        NonLinear = 2
         }
 
         // Set global indexes from grips
