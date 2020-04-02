@@ -13,8 +13,15 @@ namespace SPMTool
 {
 	public class Stringer
 	{
-		// Stringer properties
-		public ObjectId               ObjectId         { get; }
+		// Enum for setting stringer behavior
+		public enum Behavior
+		{
+			Linear = 1,
+			NonLinear = 2
+		}
+
+        // Stringer properties
+        public ObjectId               ObjectId         { get; }
 		public int                    Number           { get; }
 		public int[]                  Grips            { get; }
 		public Point3d[]              PointsConnected  { get; }
@@ -84,13 +91,6 @@ namespace SPMTool
 				// Set reinforcement
 				Reinforcement = new Reinforcement.Stringer(numOfBars, phi, steel);
 			}
-		}
-
-		// Enum for setting stringer behavior
-		public enum Behavior
-		{
-			Linear    = 1,
-			NonLinear = 2
 		}
 
 		// Set global indexes from grips

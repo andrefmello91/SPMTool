@@ -16,6 +16,13 @@ namespace SPMTool
 {
     public class Panel
     {
+	    // Enum for setting stringer behavior
+	    public enum Behavior
+	    {
+		    Linear = 1,
+		    NonLinear = 2
+	    }
+
         // Panel parameters
         public ObjectId               ObjectId         { get; }
         public int                    Number           { get; }
@@ -99,13 +106,6 @@ namespace SPMTool
 				// Set reinforcement
 				Reinforcement = new Reinforcement.Panel((phiX, phiY), (sx, sy), steel, Width);
             }
-        }
-
-        // Enum for setting stringer behavior
-        public enum Behavior
-        {
-	        Linear    = 1,
-	        NonLinear = 2
         }
 
         // Set global indexes from grips

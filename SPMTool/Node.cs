@@ -15,8 +15,8 @@ namespace SPMTool
 	    public enum NodeType
 	    {
 		    All = 0,
-		    External = 1,
-		    Internal = 2,
+		    External  = 1,
+		    Internal  = 2,
 			Displaced = 3
 	    }
 
@@ -74,12 +74,14 @@ namespace SPMTool
 	            double
 		            Fx = Convert.ToDouble(data[(int) XData.Node.Fx].Value),
 		            Fy = Convert.ToDouble(data[(int) XData.Node.Fy].Value);
+
 	            Force = (Fx, Fy);
 
                 // Get displacements
                 double
 	                ux = Convert.ToDouble(data[(int)XData.Node.Ux].Value),
 	                uy = Convert.ToDouble(data[(int)XData.Node.Uy].Value);
+
                 Displacement = (ux, uy);
             }
         }
