@@ -15,45 +15,85 @@ using Autodesk.AutoCAD.Geometry;
 namespace SPMTool
 {
     // Geometry related commands
-    public static class Geometry
+    public class Geometry
     {
         // Node methods
-        public static class Node
+        public class Node
         {
-            // Method to add nodes at a given list of positions and a layer name
-            public static void NewNode(List<Point3d> positions, int nodeType)
-            {
-                // Get the list of nodes
-                var ndList = ListOfNodes((int)SPMTool.Node.NodeType.All);
-
-				// Get the layer name
-				string layerName;
-				if (nodeType == (int) SPMTool.Node.NodeType.External)
-					layerName = Layers.extNode;
-				else if (nodeType == (int)SPMTool.Node.NodeType.Internal)
-					layerName = Layers.intNode;
-				else
-					layerName = Layers.displacements;
-
-                foreach (Point3d pt in positions)
-                {
-                    // Check if a node already exists at the position. If not, its created
-                    if (!ndList.Contains(pt))
-                    {
-                        // Add to the list
-                        ndList.Add(pt);
-
-                        // Create the node and set the layer
-                        DBPoint nd = new DBPoint(pt)
-                        {
-	                        Layer = layerName
-                        };
-
-                        // Add the new object
-                        Auxiliary.AddObject(nd);
-                    }
-                }
+			// Properties
+			public DBPoint PointObject { get; }
+			public Point3d Position
+				=> PointObject.Position;
+			public int Type { get; }
+			public string Layer
+			{
+				get
+				{
+					if (Type == (int)SPMTool.Node.NodeType.External)
+						return
+							Layers.extNode;
+					if (Type == (int)SPMTool.Node.NodeType.Internal)
+						return
+							Layers.intNode;
+					
+					return 
+						Layers.displacements;
+				}
             }
+
+			// Constructor
+			public Node(Point3d position, int nodeType)
+			{
+				// Get the list of nodes
+				var ndList = NodePositions((int)SPMTool.Node.NodeType.All);
+
+				// Check if a node already exists at the position. If not, its created
+				if (!ndList.Contains(position))
+				{
+					// Get the type of node
+					Type = nodeType;
+
+					// Add to the list
+					ndList.Add(position);
+
+					// Create the node and set the layer
+					PointObject = new DBPoint(position)
+					{
+						Layer = Layer
+					};
+
+					// Add the new object
+					Auxiliary.AddObject(PointObject);
+				}
+            }
+
+			public Node(List<Point3d> positions, int nodeType)
+			{
+				// Get the list of nodes
+				var ndList = NodePositions((int)SPMTool.Node.NodeType.All);
+
+				foreach (var position in positions)
+				{
+					// Check if a node already exists at the position. If not, its created
+					if (!ndList.Contains(position))
+					{
+						// Get the type of node
+						Type = nodeType;
+
+						// Add to the list
+						ndList.Add(position);
+
+						// Create the node and set the layer
+						PointObject = new DBPoint(position)
+						{
+							Layer = Layer
+						};
+
+						// Add the new object
+						Auxiliary.AddObject(PointObject);
+					}
+				}
+			}
 
             // Enumerate all the nodes in the model and return the collection of nodes
             public static ObjectIdCollection UpdateNodes()
@@ -68,7 +108,7 @@ namespace SPMTool
                 using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
                 {
                     // Get the list of nodes ordered
-                    var ndList = ListOfNodes((int)SPMTool.Node.NodeType.All);
+                    var ndList = NodePositions((int)SPMTool.Node.NodeType.All);
 
                     // Access the nodes on the document
                     foreach (ObjectId ndObj in nds)
@@ -126,7 +166,7 @@ namespace SPMTool
             }
 
             // Get the list of node positions ordered
-            public static List<Point3d> ListOfNodes(int nodeType)
+            public static List<Point3d> NodePositions(int nodeType)
             {
                 // Initialize an object collection
                 ObjectIdCollection nds = new ObjectIdCollection();
@@ -211,8 +251,41 @@ namespace SPMTool
         }
 
         // Stringer methods
-        public static class Stringer
+        public class Stringer
         {
+			// Properties
+			public Line    LineObject { get; }
+			public Point3d StartPoint
+				=> LineObject.StartPoint;
+			public Point3d EndPoint
+				=> LineObject.EndPoint;
+			public string  Layer = Layers.stringer;
+
+			// Constructor
+			public Stringer(Point3d startPoint, Point3d endPoint, List<(Point3d start, Point3d end)> stringerList = null)
+			{
+				// Get the list of stringers if it's not imposed
+				if (stringerList == null)
+					stringerList = ListOfStringers();
+
+				// Check if a stringer already exist on that position. If not, create it
+				if (!stringerList.Contains((startPoint, endPoint)))
+				{
+					// Add to the list
+					stringerList.Add((startPoint, endPoint));
+
+					// Create the line in Model space
+					LineObject = new Line(startPoint, endPoint)
+					{
+						Layer = Layer
+					};
+
+					// Add the object
+					Auxiliary.AddObject(LineObject);
+				}
+			}
+
+
             [CommandMethod("AddStringer")]
             public static void AddStringer()
             {
@@ -262,8 +335,7 @@ namespace SPMTool
                             List<Point3d> extNds = Auxiliary.OrderPoints(nds);
 
                             // Create the stringer and add to drawing
-                            Line str = NewStringer(strList, extNds[0], extNds[1]);
-                            Auxiliary.AddObject(str);
+                            new Stringer(extNds[0], extNds[1], strList);
 
                             // Get the midpoint
                             Point3d midPt = Auxiliary.MidPoint(extNds[0], extNds[1]);
@@ -291,34 +363,12 @@ namespace SPMTool
                 }
 
                 // Create the nodes
-                Node.NewNode(newExtNds, (int)SPMTool.Node.NodeType.External);
-                Node.NewNode(newIntNds, (int)SPMTool.Node.NodeType.Internal);
+                new Node(newExtNds, (int)SPMTool.Node.NodeType.External);
+                new Node(newIntNds, (int)SPMTool.Node.NodeType.Internal);
 
                 // Update the nodes and stringers
                 Node.UpdateNodes();
                 UpdateStringers();
-            }
-
-            // Create a stringer if it doesn't already exist
-            public static Line NewStringer(List<(Point3d start, Point3d end)> stringerList, Point3d startPoint, Point3d endPoint)
-            {
-                // Initialize a line
-                Line str = new Line();
-
-                // Check if a stringer already exist on that position. If not, create it
-                if (!stringerList.Contains((startPoint, endPoint)))
-                {
-                    // Add to the list
-                    stringerList.Add((startPoint, endPoint));
-
-                    // Create the line in Model space
-                    str = new Line(startPoint, endPoint)
-                    {
-                        Layer = Layers.stringer
-                    };
-                }
-
-                return str;
             }
 
             [CommandMethod("DivideStringer")]
@@ -420,11 +470,14 @@ namespace SPMTool
                                             Point3d endPt = new Point3d(xCrd, yCrd, 0);
 
                                             // Create the stringer
-                                            Line newStr = NewStringer(strList, stPt, endPt);
-                                            Auxiliary.AddObject(newStr);
+                                            var newStr = new Stringer(stPt, endPt, strList);
+
+											// Get the line
+											var strLine = newStr.LineObject;
 
                                             // Append the XData of the original stringer
-                                            newStr.XData = rb;
+											if (strLine != null)
+												strLine.XData = rb;
 
                                             // Get the mid point
                                             midPt = Auxiliary.MidPoint(stPt, endPt);
@@ -457,8 +510,8 @@ namespace SPMTool
                             }
 
                             // Create the nodes
-                            Node.NewNode(newExtNds, (int)SPMTool.Node.NodeType.External);
-                            Node.NewNode(newIntNds, (int)SPMTool.Node.NodeType.Internal);
+                            new Node(newExtNds, (int)SPMTool.Node.NodeType.External);
+                            new Node(newIntNds, (int)SPMTool.Node.NodeType.Internal);
                         }
                     }
                 }
@@ -696,8 +749,37 @@ namespace SPMTool
         }
 
         // Panel methods
-        public static class Panel
+        public class Panel
         {
+			// Properties
+			public Solid  SolidObject { get; }
+			public string Layer = Layers.panel;
+
+			// Constructor
+			public Panel((Point3d, Point3d, Point3d, Point3d) vertices, List<(Point3d, Point3d, Point3d, Point3d)> panelList = null)
+			{
+				// Check if list of panels is null
+				if (panelList == null)
+					panelList = ListOfPanels();
+
+				// Check if a panel already exist on that position. If not, create it
+				if (!panelList.Contains(vertices))
+				{
+					// Add to the list
+					panelList.Add(vertices);
+
+					// Create the panel as a solid with 4 segments (4 points)
+					SolidObject = new Solid(vertices.Item1, vertices.Item2, vertices.Item3, vertices.Item4)
+					{
+						// Set the layer to Panel
+						Layer = Layer
+					};
+
+					// Add the object
+					Auxiliary.AddObject(SolidObject);
+				}
+            }
+
             [CommandMethod("AddPanel")]
             public static void AddPanel()
             {
@@ -751,8 +833,7 @@ namespace SPMTool
 
                             // Create the panel if it doesn't exist
                             var pnlPts = (vrts[0], vrts[1], vrts[2], vrts[3]);
-                            Solid pnl = NewPanel(pnlList, pnlPts);
-                            Auxiliary.AddObject(pnl);
+                            new Panel(pnlPts, pnlList);
                         }
 
                         else
@@ -769,30 +850,6 @@ namespace SPMTool
                 UpdatePanels();
             }
 
-            // Create a panel if it doesn't already exist
-            public static Solid NewPanel(List<(Point3d, Point3d, Point3d, Point3d)> panelList, (Point3d, Point3d, Point3d, Point3d) vertices)
-            {
-                // Initialize a solid
-                Solid pnl = new Solid();
-
-                // Check if a panel already exist on that position. If not, create it
-                if (!panelList.Contains(vertices))
-                {
-                    // Add to the list
-                    panelList.Add(vertices);
-
-                    // Create the panel as a solid with 4 segments (4 points)
-                    pnl = new Solid(vertices.Item1, vertices.Item2, vertices.Item3, vertices.Item4)
-                    {
-                        // Set the layer to Panel
-                        Layer = Layers.panel
-                    };
-                }
-
-                return pnl;
-            }
-
-            // Method to divide a panel and adjacent stringers
             [CommandMethod("DividePanel")]
             public static void DividePanel()
             {
@@ -949,11 +1006,14 @@ namespace SPMTool
 
                                                     // Create the panel
                                                     var pnlPts = (verts[0], verts[1], verts[2], verts[3]);
-                                                    Solid newPnl = NewPanel(pnlList, pnlPts);
-                                                    Auxiliary.AddObject(newPnl);
+                                                    var newPnl = new Panel(pnlPts, pnlList);
+
+													// Get the solid object
+													var pnlSolid = newPnl.SolidObject;
 
                                                     // Append the XData of the original panel
-                                                    newPnl.XData = rb;
+													if (pnlSolid != null)
+														pnlSolid.XData = rb;
 
                                                     // Add the vertices to the list for creating external nodes
                                                     foreach (Point3d pt in verts)
@@ -1000,8 +1060,7 @@ namespace SPMTool
                             // Create the stringers
                             foreach (var pts in newStrList)
                             {
-                                Line str = Stringer.NewStringer(strList, pts.start, pts.end);
-                                Auxiliary.AddObject(str);
+                                new Stringer(pts.start, pts.end, strList);
 
                                 // Get the midpoint to add the external node
                                 Point3d midPt = Auxiliary.MidPoint(pts.Item1, pts.Item2);
@@ -1010,8 +1069,8 @@ namespace SPMTool
                             }
 
                             // Create the nodes
-                            Node.NewNode(newExtNds, (int)SPMTool.Node.NodeType.External);
-                            Node.NewNode(newIntNds, (int)SPMTool.Node.NodeType.Internal);
+                            new Node(newExtNds, (int)SPMTool.Node.NodeType.External);
+                            new Node(newIntNds, (int)SPMTool.Node.NodeType.Internal);
 
                             // Update the elements
                             Node.UpdateNodes();
