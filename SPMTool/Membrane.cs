@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Windows;
 using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.RootFinding;
@@ -95,17 +94,24 @@ namespace SPMTool
 		{
 			get
 			{
-				double 
-					fsx = 0,
-					fsy = 0;
-
 				if (Strains.Exists(Auxiliary.NotZero))
-					(fsx, fsy) = ReinforcementStresses;
+					return
+						SteelStiffness * Strains;
 
-				return 
-					Vector<double>.Build.DenseOfArray(new [] {psx * fsx, psy * fsy, 0});
+				return
+					Vector<double>.Build.Dense(3);
+
+				//double 
+				//	fsx = 0,
+				//	fsy = 0;
+
+				//if (Strains.Exists(Auxiliary.NotZero))
+				//	(fsx, fsy) = ReinforcementStresses;
+
+				//return 
+				//	Vector<double>.Build.DenseOfArray(new [] {psx * fsx, psy * fsy, 0});
 			}
-		}
+        }
 
         // Calculate strain slope
         public virtual double StrainAngle
@@ -179,8 +185,8 @@ namespace SPMTool
 			        Esy = Esyi;
 		        }
 
-		        return (Esx, Esy);
-
+		        return
+			        (Esx, Esy);
             }
         }
 
@@ -209,10 +215,12 @@ namespace SPMTool
 		        else
 			        Ec2 = fc2 / ec2;
 	        }
+
 	        else
 		        Ec1 = Ec2 = Ec;
 
-	        return (Ec1, Ec2);
+	        return
+		        (Ec1, Ec2);
         }
 
         // Calculate stiffness
@@ -252,7 +260,8 @@ namespace SPMTool
 		        var T = TransformationMatrix;
 
 		        // Calculate Dc
-		        return T.Transpose() * Dc1 * T;
+		        return
+			        T.Transpose() * Dc1 * T;
 	        }
         }
 
@@ -283,14 +292,17 @@ namespace SPMTool
 			{
 				if (Strains.Exists(Auxiliary.NotZero))
 				{
-					// Get T transposed
-					var TT = TransformationMatrix.Transpose();
+					//// Get T transposed
+					//var TT = TransformationMatrix.Transpose();
 
-					// Get principal stresses as a vector
-					var (fc1, fc2) = ConcretePrincipalStresses;
-					var f1 = Vector<double>.Build.DenseOfArray(new [] {fc1, fc2, 0});
+					//// Get principal stresses as a vector
+					//var (fc1, fc2) = ConcretePrincipalStresses;
+					//var f1 = Vector<double>.Build.DenseOfArray(new [] {fc1, fc2, 0});
 
-					return TT * f1;
+					//return
+					//	TT * f1;
+					return
+						ConcreteStiffness * Strains;
 				}
 
 				return

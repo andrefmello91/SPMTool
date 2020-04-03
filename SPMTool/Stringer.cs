@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms.VisualStyles;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.RootFinding;
 
 namespace SPMTool
 {
@@ -31,7 +25,6 @@ namespace SPMTool
 		public double                 Height           { get; }
 		public Material.Concrete      Concrete         { get; }
         public Reinforcement.Stringer Reinforcement    { get; }
-		public virtual Matrix<double> InitialStiffness { get; }
         public virtual Matrix<double> LocalStiffness   { get; }
 		public virtual Vector<double> Forces           { get; }
 		public virtual Vector<double> GlobalForces     { get; }
@@ -293,21 +286,10 @@ namespace SPMTool
 				}
 			}
 
-			// Initial global stiffness
-			public override Matrix<double> InitialStiffness
-			{
-				get
-				{
-					var T = TransMatrix;
-					var B = BMatrix;
-
-					return T.Transpose() * B.Transpose() * InitialFMatrix.Inverse() * B * T;
-				}
-			}
-
             // Flexibility and Stiffness matrices
             private Matrix<double> FMatrix { get; set; }
 
+			// Calculate local stiffness
             public override Matrix<double> LocalStiffness
             {
 	            get
@@ -342,7 +324,7 @@ namespace SPMTool
 			public override Vector<double> GlobalForces => TransMatrix.Transpose() * Forces;
 
             // Generalized strains and stresses for each iteration
-            private (double N1, double N3) IterationGenStrains  { get; set; }
+            private (double e1, double e3) IterationGenStrains  { get; set; }
             private (double N1, double N3) IterationGenStresses { get; set; }
 
 			// Forces from gen stresses for each iteration
@@ -366,10 +348,7 @@ namespace SPMTool
             public void StringerForces()
             {
                 // Get the initial forces (from previous load step)
-                var genStresses = GenStresses;
-                double
-	                N1 = genStresses.N1,
-	                N3 = genStresses.N3;
+                var (N1, N3) = GenStresses;
 
 				// Get initial generalized strains (from previous load step)
 				var (e1i, e3i) = GenStrains;
@@ -394,7 +373,7 @@ namespace SPMTool
                 for (int i = 1; i <= StrainSteps ; i++ )
 				{
 					// Calculate generalized strains and F matrix for N1 and N3
-					F = StringerGenStrains((N1, N3)).F;
+					((e1, e3), F) = StringerGenStrains((N1, N3));
 
 					// Calculate F determinant
 					double d = F.Determinant();
@@ -433,82 +412,6 @@ namespace SPMTool
                 FMatrix = F;
 				IterationGenStresses = (N1, N3);
 				IterationGenStrains  = (e1, e3);
-            }
-
-			// Iteration process to find forces
-			public void IterateForces()
-			{
-				// Get the initial forces (from previous load step)
-				var genStresses = GenStresses;
-				double
-					N1 = genStresses.N1,
-					N3 = genStresses.N3;
-
-				// Get initial generalized strains (from previous load step)
-				//var (e1i, e3i) = GenStrains;
-
-				// Get local displacements
-				var ul = LocalDisplacements;
-
-				// Calculate current generalized strains
-				double
-					e1 = ul[1] - ul[0],
-					e3 = ul[2] - ul[1];
-
-				// Get the vectors
-				Vector<double>
-					N = Vector<double>.Build.DenseOfArray(new [] { N1, N3 }),
-					e = Vector<double>.Build.DenseOfArray(new [] { e1, e3 });
-
-				// Initiate values
-				double e1i, e3i;
-				Matrix<double> F;
-
-				// Iterate the forces
-				for ( ; ; )
-				{
-					// Get generalized strains and flexibility matrix
-					((e1i, e3i),F) = StringerGenStrains((N[0], N[1]));
-					var ei = Vector<double>.Build.DenseOfArray(new[] { e1i, e3i });
-
-					// Calculate residual
-					var er = e - ei;
-
-					// Verify tolerance
-					double tol = er.AbsoluteMaximum();
-
-					if (tol < 0.001)
-						break;
-
-					// Calculate increment
-					var Ninc = F.Solve(er);
-					N += Ninc;
-				}
-
-				// Verify the values of N1 and N3
-				N1 = PlasticForce(N1);
-				N3 = PlasticForce(N3);
-				double PlasticForce(double Ni)
-				{
-					double Np;
-
-					// Check the value of N
-					if (Ni < Nt)
-						Np = Nt;
-
-					else if (Ni > Nyr)
-						Np = Nyr;
-
-					else
-						Np = Ni;
-
-					return Np;
-				}
-
-				// Set values
-				FMatrix = F;
-				IterationGenStresses = (N1, N3);
-				IterationGenStrains  = (e1i, e3i);
             }
 
             // Calculate the stringer flexibility and generalized strains

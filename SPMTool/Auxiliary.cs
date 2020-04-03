@@ -6,7 +6,6 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Colors;
 using MathNet.Numerics;
-using MathNet.Numerics.LinearAlgebra;
 
 namespace SPMTool
 {

@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
+﻿using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
-using Autodesk.AutoCAD.Geometry;
 
 [assembly: CommandClass(typeof(SPMTool.Reinforcement))]
 
@@ -327,16 +322,18 @@ namespace SPMTool
 			}
 
 			// Calculated reinforcement area
-			public double Area => StringerReinforcement();
-			private double StringerReinforcement()
+			public double Area
 			{
-				// Initialize As
-				double As = 0;
+				get
+				{
+					// Initialize As
+					double As = 0;
 
-				if (NumberOfBars > 0 && BarDiameter > 0)
-					As = 0.25 * NumberOfBars * Constants.Pi * BarDiameter * BarDiameter;
+					if (NumberOfBars > 0 && BarDiameter > 0)
+						As = 0.25 * NumberOfBars * Constants.Pi * BarDiameter * BarDiameter;
 
-				return As;
+					return As;
+				}
 			}
         }
 
@@ -362,33 +359,20 @@ namespace SPMTool
             {
 	            get
 	            {
-					// Verify if effective ratio was set
-					if (_effectiveRatio == (0, 0) || _effectiveRatio == (null, null))
-					{
-						// Initialize psx and psy
-						double
-							psx = 0,
-							psy = 0;
+		            // Initialize psx and psy
+		            double
+			            psx = 0,
+			            psy = 0;
 
-						if (BarDiameter.X > 0 && BarSpacing.X > 0)
-							psx = Constants.Pi * BarDiameter.X * BarDiameter.X / (2 * BarSpacing.X * PanelWidth);
+		            if (BarDiameter.X > 0 && BarSpacing.X > 0)
+			            psx = Constants.Pi * BarDiameter.X * BarDiameter.X / (2 * BarSpacing.X * PanelWidth);
 
-						if (BarDiameter.Y > 0 && BarSpacing.Y > 0)
-							psy = Constants.Pi * BarDiameter.Y * BarDiameter.Y / (2 * BarSpacing.Y * PanelWidth);
+		            if (BarDiameter.Y > 0 && BarSpacing.Y > 0)
+			            psy = Constants.Pi * BarDiameter.Y * BarDiameter.Y / (2 * BarSpacing.Y * PanelWidth);
 
-						return (psx, psy);
-					}
-
-		            return _effectiveRatio;
+		            return (psx, psy);
 	            }
             }
-
-            // Set reinforcement ratio (for using with effective ratio)
-            private (double X, double Y) _effectiveRatio;
-            public void SetEffectiveRatio((double X, double Y) effectiveRatio)
-			{
-				_effectiveRatio = effectiveRatio;
-			}
         }
     }
 }

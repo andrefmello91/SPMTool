@@ -6,7 +6,6 @@ using System.IO;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
 using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.DatabaseServices;
 
 
 namespace SPMTool

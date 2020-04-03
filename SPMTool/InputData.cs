@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using Autodesk.AutoCAD.DatabaseServices;
-using MathNet.Numerics.Data.Text;
 using MathNet.Numerics.LinearAlgebra;
 
 namespace SPMTool

@@ -1,16 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.StatusBar;
-using MathNet.Numerics.Data.Text;
 using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace SPMTool
 {
@@ -142,10 +133,10 @@ namespace SPMTool
 
 		        // Calculate the necessary dimensions of the panel
 		        double
-			        a = (x[1] + x[2]) / 2 - (x[0] + x[3]) / 2,
-			        b = (y[2] + y[3]) / 2 - (y[0] + y[1]) / 2,
-			        c = (x[2] + x[3]) / 2 - (x[0] + x[1]) / 2,
-			        d = (y[1] + y[2]) / 2 - (y[0] + y[3]) / 2;
+			        a = 0.5 * (x[1] + x[2] - x[0] - x[3]),
+			        b = 0.5 * (y[2] + y[3] - y[0] - y[1]),
+			        c = 0.5 * (x[2] + x[3] - x[0] - x[1]),
+			        d = 0.5 * (y[1] + y[2] - y[0] - y[3]);
 
 		        return (a, b, c, d);
 	        }
@@ -527,7 +518,7 @@ namespace SPMTool
                     dOver2t1 = dOvert1 / 2;
 
                 // Create A matrix
-                var A = Matrix<double>.Build.DenseOfArray(new[,]
+                var A = Matrix<double>.Build.DenseOfArray(new [,]
                 {
 	                {   dOvert1,        0,   bOvert1,        0, -dOvert1,         0, -bOvert1,         0 },
 	                {         0, -aOvert1,         0, -cOvert1,        0,   aOvert1,        0,   cOvert1 },
@@ -575,15 +566,15 @@ namespace SPMTool
 
                 // Calculate the components of Q matrix
                 double
-                    a2 = a * a,
-                    bc = b * c,
-                    bdMt4 = b * d - t4,
-                    ab = a * b,
+                    a2     = a * a,
+                    bc     = b * c,
+                    bdMt4  = b * d - t4,
+                    ab     = a * b,
                     MbdMt4 = -b * d - t4,
-                    Tt4 = 2 * t4,
-                    acMt4 = a * c - t4,
-                    ad = a * d,
-                    b2 = b * b,
+                    Tt4    = 2 * t4,
+                    acMt4  = a * c - t4,
+                    ad     = a * d,
+                    b2     = b * b,
                     MacMt4 = -a * c - t4;
 
                 // Create Q matrix
@@ -609,7 +600,7 @@ namespace SPMTool
 				// Get dimensions
 				var (x, y) = VertexCoordinates;
 				double t = Width;
-	            var hs = StringerDimensions;
+	            var c = StringerDimensions;
 
                 // Create P matrices
                 var Pc = Matrix<double>.Build.Dense(8, 12);
@@ -618,37 +609,35 @@ namespace SPMTool
                 // Calculate the components of Pc
                 Pc[0, 0] = Pc[1, 2]   = t * (y[1] - y[0]);
                 Pc[0, 2]              = t * (x[0] - x[1]);
-                Pc[1, 1]              = t * (x[0] - x[1] + hs[1] + hs[3]);
-                Pc[2, 3]              = t * (y[2] - y[1] - hs[2] - hs[0]);
+                Pc[1, 1]              = t * (x[0] - x[1] + c[1] + c[3]);
+
+                Pc[2, 3]              = t * (y[2] - y[1] - c[2] - c[0]);
                 Pc[2, 5] = Pc[3, 4]   = t * (x[1] - x[2]);
                 Pc[3, 5]              = t * (y[2] - y[1]);
+
                 Pc[4, 6] = Pc[5, 8]   = t * (y[3] - y[2]);
                 Pc[4, 8]              = t * (x[2] - x[3]);
-                Pc[5, 7]              = t * (x[2] - x[3] - hs[1] - hs[3]);
-                Pc[6, 9]              = t * (y[0] - y[3] + hs[0] + hs[2]);
+                Pc[5, 7]              = t * (x[2] - x[3] - c[1] - c[3]);
+
+                Pc[6, 9]              = t * (y[0] - y[3] + c[0] + c[2]);
                 Pc[6, 11] = Pc[7, 10] = t * (x[3] - x[0]);
                 Pc[7, 11]             = t * (y[0] - y[3]);
 
                 // Calculate the components of Ps
                 Ps[0, 0]  = Pc[0, 0];
                 Ps[1, 1]  = t * (x[0] - x[1]);
+
                 Ps[2, 3]  = t * (y[2] - y[1]);
                 Ps[3, 4]  = Pc[3, 4];
+
                 Ps[4, 6]  = Pc[4, 6];
                 Ps[5, 7]  = t * (x[2] - x[3]);
+
                 Ps[6, 9]  = t * (y[0] - y[3]);
                 Ps[7, 10] = Pc[7, 10];
 
                 return (Pc, Ps);
             }
-
-            // Calculate QP matrix
-            //public Matrix<double> QPMatrix => matrixQP.Value;
-            //private Lazy<Matrix<double>> matrixQP => new Lazy<Matrix<double>>(MatrixQP);
-            //private Matrix<double> MatrixQP()
-            //{
-            //    return QMatrix * PMatrix;
-            //}
 
 			// Calculate panel strain vector
 			public Vector<double> StrainVector => BAMatrix * Displacements;
@@ -783,20 +772,15 @@ namespace SPMTool
 	            get
 	            {
 		            var initialMCFT = new Membrane.MCFT[4];
-		            //var (pxEf, pyEf) = EffectiveRatio;
 
                     for (int i = 0; i < 4; i++)
 		            {
-			            //var reinforcement = new Reinforcement.Panel(Reinforcement.BarDiameter, Reinforcement.BarSpacing, Reinforcement.Steel, Width);
-
-			            // Get effective ratio
-			            //reinforcement.SetEffectiveRatio((pxEf[i], pyEf[i]));
-
 			            // Get parameters
 			            initialMCFT[i] = new Membrane.MCFT(Concrete, Reinforcement);
 		            }
 
-		            return initialMCFT;
+		            return
+			            initialMCFT;
 	            }
             }
 

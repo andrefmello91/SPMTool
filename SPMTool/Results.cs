@@ -6,8 +6,6 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.Statistics;
 
 [assembly: CommandClass(typeof(SPMTool.Results))]
 
@@ -15,18 +13,13 @@ namespace SPMTool
 {
 	public static class Results
 	{
+		// Draw results
 		public static void Draw(Analysis analysis)
 		{
-			// Get the elements
-			var nodes            = analysis.Nodes;
-			var stringers     = analysis.Stringers;
-			var panels          = analysis.Panels;
-			var maxStringerForce = analysis.MaxStringerForce;
-
-			SetDisplacements(nodes);
-			DrawDisplacements(stringers, nodes);
-			DrawStringerForces(stringers, maxStringerForce);
-			DrawPanelForces(panels);
+			SetDisplacements(analysis.Nodes);
+			DrawDisplacements(analysis.Stringers, analysis.Nodes);
+			DrawStringerForces(analysis.Stringers, analysis.MaxStringerForce);
+			DrawPanelForces(analysis.Panels);
 		}
 
 		// Create the block for panel shear stress
@@ -205,7 +198,8 @@ namespace SPMTool
 
 			// Erase all the stringer forces in the drawing
 			ObjectIdCollection strFs = Auxiliary.GetEntitiesOnLayer(Layers.stringerForce);
-			if (strFs.Count > 0) Auxiliary.EraseObjects(strFs);
+			if (strFs.Count > 0) 
+				Auxiliary.EraseObjects(strFs);
 
 			// Start a transaction
 			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -215,30 +209,27 @@ namespace SPMTool
 				{
 					// Get the parameters of the stringer
 					double
-						l = str.Length,
+						l   = str.Length,
 						ang = str.Angle;
 
 					// Get the start point
 					var stPt = str.PointsConnected[0];
 
-					// Get the stringer number
-					int num = str.Number;
-
 					// Get the forces in the list
 					var f = str.Forces;
 					double
-						f1 =  Math.Round(f[0], 2),
-						f3 = -Math.Round(f[2], 2);
+						N1 =  Math.Round(f[0], 2),
+						N3 = -Math.Round(f[2], 2);
 
 					// Check if at least one force is not zero
-					if (f1 != 0 || f3 != 0)
+					if (N1 != 0 || N3 != 0)
 					{
 						// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
-						double h1 = 150 * f1 / maxForce,
-							h3 = 150 * f3 / maxForce;
+						double h1 = 150 * N1 / maxForce,
+							h3 = 150 * N3 / maxForce;
 
 						// Check if the forces are in the same direction
-						if (f1 * f3 >= 0) // same direction
+						if (N1 * N3 >= 0) // same direction
 						{
 							// Calculate the points (the solid will be rotated later)
 							Point3d[] vrts =
@@ -257,7 +248,7 @@ namespace SPMTool
 								dgrm.Transparency = Auxiliary.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
-								if (Math.Max(f1, f3) > 0) dgrm.ColorIndex = (short) AutoCAD.Colors.Blue1;
+								if (Math.Max(N1, N3) > 0) dgrm.ColorIndex = (short) AutoCAD.Colors.Blue1;
 								else dgrm.ColorIndex = (short) AutoCAD.Colors.Red;
 
 								// Add the diagram to the drawing
@@ -297,7 +288,7 @@ namespace SPMTool
 								dgrm1.Transparency = Auxiliary.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
-								if (f1 > 0) dgrm1.ColorIndex = (short) AutoCAD.Colors.Blue1;
+								if (N1 > 0) dgrm1.ColorIndex = (short) AutoCAD.Colors.Blue1;
 								else dgrm1.ColorIndex = (short) AutoCAD.Colors.Red;
 
 								// Add the diagram to the drawing
@@ -314,7 +305,7 @@ namespace SPMTool
 								dgrm3.Transparency = Auxiliary.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
-								if (f3 > 0) dgrm3.ColorIndex = (short) AutoCAD.Colors.Blue1;
+								if (N3 > 0) dgrm3.ColorIndex = (short) AutoCAD.Colors.Blue1;
 								else dgrm3.ColorIndex = (short) AutoCAD.Colors.Red;
 
 								// Add the diagram to the drawing
@@ -326,17 +317,17 @@ namespace SPMTool
 						}
 
 						// Create the texts if forces are not zero
-						if (f1 != 0)
+						if (N1 != 0)
 						{
 							using (DBText txt1 = new DBText())
 							{
 								// Set the parameters
 								txt1.Layer = Layers.stringerForce;
 								txt1.Height = 30;
-								txt1.TextString = Math.Abs(f1).ToString();
+								txt1.TextString = Math.Abs(N1).ToString();
 
 								// Set the color (blue to compression and red to tension) and position
-								if (f1 > 0)
+								if (N1 > 0)
 								{
 									txt1.ColorIndex = (short) AutoCAD.Colors.Blue1;
 									txt1.Position = new Point3d(stPt.X + 10, stPt.Y + h1 + 20, 0);
@@ -355,17 +346,17 @@ namespace SPMTool
 							}
 						}
 
-						if (f3 != 0)
+						if (N3 != 0)
 						{
 							using (DBText txt3 = new DBText())
 							{
 								// Set the parameters
 								txt3.Layer = Layers.stringerForce;
 								txt3.Height = 30;
-								txt3.TextString = Math.Abs(f3).ToString();
+								txt3.TextString = Math.Abs(N3).ToString();
 
 								// Set the color (blue to compression and red to tension) and position
-								if (f3 > 0)
+								if (N3 > 0)
 								{
 									txt3.ColorIndex = (short) AutoCAD.Colors.Blue1;
 									txt3.Position = new Point3d(stPt.X + l - 10, stPt.Y + h3 + 20, 0);

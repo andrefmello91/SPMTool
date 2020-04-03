@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
 using MathNet.Numerics.LinearAlgebra;
-using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.Data.Text;
 using MathNet.Numerics.Statistics;
 
@@ -398,8 +394,9 @@ namespace SPMTool
 
         public class NonLinear : Analysis
         {
-			// Max iterations
+			// Max iterations and load steps
 			private int maxIterations = 1000;
+			private int loadSteps = 100;
 
 			[CommandMethod("DoNonLinearAnalysis")]
 	        public static void DoNonLinearAnalysis()
@@ -412,14 +409,11 @@ namespace SPMTool
 			        // Do a linear analysis
 			        NonLinear analysis = new NonLinear(input);
 
-			        // Calculate results of analysis
-			        //Results results = new Results(analysis);
-
-			        // Draw results
-			        //Results.DrawResults.Draw(results);
+			        // Draw results of analysis
+			        Results.Draw(analysis);
 		        }
 
-		        else
+                else
 		        {
 			        Application.ShowAlertDialog("Please set concrete parameters");
 		        }
@@ -445,6 +439,9 @@ namespace SPMTool
                 var du56 = Matrix<double>.Build.Dense(maxIterations, numDoFs);
                 var fstr = Matrix<double>.Build.Dense(4, 3);
                 var estr = Matrix<double>.Build.Dense(4, 2);
+				var flPnl = Matrix<double>.Build.Dense(100, 8);
+				var sigCPnl = Matrix<double>.Build.Dense(100, 12);
+				var sigSPnl = Matrix<double>.Build.Dense(100, 12);
 
                 var fStrs = new Matrix<double>[4];
                 for (int i = 0; i < 4; i++)
@@ -462,7 +459,7 @@ namespace SPMTool
                 var KPnl = Matrix<double>.Build.Dense(12 * maxIterations, 8);
 
                 // Initialize a loop for load steps
-                for (int loadStep = 1; loadStep <= 56; loadStep++)
+                for (int loadStep = 1; loadStep <= loadSteps; loadStep++)
 				{
 					// Get the force vector
 					var fs = 0.01 * loadStep * f;
@@ -496,74 +493,82 @@ namespace SPMTool
 						// Increment displacements
 						u += du;
 
-                        if (loadStep == 56)
-                        {
-                            fi56.SetRow(it, fit);
-                            fr56.SetRow(it, fr);
-                            du56.SetRow(it, du);
+                        //if (loadStep == 56)
+                        //{
+                        //    fi56.SetRow(it, fit);
+                        //    fr56.SetRow(it, fr);
+                        //    du56.SetRow(it, du);
 
-                            foreach (Stringer.NonLinear stringer in Stringers)
-                            {
-                                var i = stringer.Number - 1;
-                                fStrs[i].SetRow(it, stringer.IterationForces);
-                            }
+                        //    foreach (Stringer.NonLinear stringer in Stringers)
+                        //    {
+                        //        var i = stringer.Number - 1;
+                        //        fStrs[i].SetRow(it, stringer.IterationForces);
+                        //    }
 
-                            var panel = Panels[0] as Panel.NonLinear;
-                            fPnl.SetRow(it, panel.Forces);
-                            uPnl.SetRow(it, panel.Displacements);
-                            sigPnl.SetRow(it, panel.StressVector.sigma);
-                            epsPnl.SetRow(it, panel.StrainVector);
-                            var (D, Dc, Ds) = panel.DMatrix;
-                            DPnl.SetSubMatrix(12 * it, 0, D);
-                            DcPnl.SetSubMatrix(12 * it, 0, Dc);
-                            DsPnl.SetSubMatrix(12 * it, 0, Ds);
-                            KPnl.SetSubMatrix(8 * it, 0, panel.GlobalStiffness);
+                        //    var panel = Panels[0] as Panel.NonLinear;
+                        //    fPnl.SetRow(it, panel.Forces);
+                        //    uPnl.SetRow(it, panel.Displacements);
+                        //    sigPnl.SetRow(it, panel.StressVector.sigma);
+                        //    epsPnl.SetRow(it, panel.StrainVector);
+                        //    var (D, Dc, Ds) = panel.DMatrix;
+                        //    DPnl.SetSubMatrix(12 * it, 0, D);
+                        //    DcPnl.SetSubMatrix(12 * it, 0, Dc);
+                        //    DsPnl.SetSubMatrix(12 * it, 0, Ds);
+                        //    KPnl.SetSubMatrix(8 * it, 0, panel.GlobalStiffness);
 
-                            var f1v = Vector<double>.Build.Dense(8);
-                            var e1v = Vector<double>.Build.Dense(8);
-                            var thetav = Vector<double>.Build.Dense(4);
+                        //    var f1v = Vector<double>.Build.Dense(8);
+                        //    var e1v = Vector<double>.Build.Dense(8);
+                        //    var thetav = Vector<double>.Build.Dense(4);
 
-                            for (int i = 0; i < 4; i++)
-                            {
-                                var (f1, f2) = panel.IntPointsMembrane[i].ConcretePrincipalStresses;
-                                var (e1, e2) = panel.IntPointsMembrane[i].ConcretePrincipalStrains;
-                                double theta = panel.IntPointsMembrane[i].StrainAngle;
-                                f1v[2 * i] = f1;
-                                f1v[2 * i + 1] = f2;
-                                e1v[2 * i] = e1;
-                                e1v[2 * i + 1] = e2;
-                                thetav[i] = theta;
-                            }
+                        //    for (int i = 0; i < 4; i++)
+                        //    {
+                        //        var (f1, f2) = panel.IntPointsMembrane[i].ConcretePrincipalStresses;
+                        //        var (e1, e2) = panel.IntPointsMembrane[i].ConcretePrincipalStrains;
+                        //        double theta = panel.IntPointsMembrane[i].StrainAngle;
+                        //        f1v[2 * i] = f1;
+                        //        f1v[2 * i + 1] = f2;
+                        //        e1v[2 * i] = e1;
+                        //        e1v[2 * i + 1] = e2;
+                        //        thetav[i] = theta;
+                        //    }
 
-                            f1Pnl.SetRow(it, f1v);
-                            e1Pnl.SetRow(it, e1v);
-                            thetaPnl.SetRow(it, thetav);
+                        //    f1Pnl.SetRow(it, f1v);
+                        //    e1Pnl.SetRow(it, e1v);
+                        //    thetaPnl.SetRow(it, thetav);
 
-                            //if (it == 0)
-                            //{
-                            //    for (int i = 0; i < 4; i++)
-                            //        AutoCAD.edtr.WriteMessage("\nps " + i + ": (" + panel.EffectiveRatio.X[i] + ", " + panel.EffectiveRatio.Y[i] + ")");
-                            //}
-                        }
+                        //    //if (it == 0)
+                        //    //{
+                        //    //    for (int i = 0; i < 4; i++)
+                        //    //        AutoCAD.edtr.WriteMessage("\nps " + i + ": (" + panel.EffectiveRatio.X[i] + ", " + panel.EffectiveRatio.Y[i] + ")");
+                        //    //}
+                        //}
                     }
+
+					var pnl = Panels[0] as Panel.NonLinear;
 
 					fiMatrix.SetRow(loadStep - 1, fi);
 					uMatrix.SetRow(loadStep - 1, u);
+					flPnl.SetRow(loadStep - 1, pnl.Forces);
+					sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
+					sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
 
                     // Set the results to stringers
                     StringerResults();
 
                     // Update stiffness
-                    if (loadStep < 56)
-                    {
-                        foreach (Stringer.NonLinear stringer in Stringers)
-                        {
-                            fstr.SetRow(stringer.Number - 1, stringer.Forces);
-                            estr.SetRow(stringer.Number - 1, new[] { stringer.GenStrains.e1, stringer.GenStrains.e3 });
-                        }
+                    //if (loadStep < 56)
+                    //{
+                    //    foreach (Stringer.NonLinear stringer in Stringers)
+                    //    {
+                    //        fstr.SetRow(stringer.Number - 1, stringer.Forces);
+                    //        estr.SetRow(stringer.Number - 1, new[] { stringer.GenStrains.e1, stringer.GenStrains.e3 });
+                    //    }
                         Kg = GlobalStiffness();
-                    }
+                    //}
                 }
+
+				// Set nodal displacements
+				NodalDisplacements(u);
 
                 DelimitedWriter.Write("D:/K.csv", Kg, ";");
                 DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
@@ -574,6 +579,9 @@ namespace SPMTool
                 DelimitedWriter.Write("D:/fstr.csv", fstr, ";");
                 DelimitedWriter.Write("D:/estr.csv", estr, ";");
                 DelimitedWriter.Write("D:/u.csv", uMatrix, ";");
+                DelimitedWriter.Write("D:/flPnl.csv", flPnl, ";");
+                DelimitedWriter.Write("D:/sigCPnl.csv", sigCPnl, ";");
+                DelimitedWriter.Write("D:/sigSPnl.csv", sigSPnl, ";");
 
                 for (int i = 0; i < 4; i++)
                 {
