@@ -100,16 +100,6 @@ namespace SPMTool
 
 				return
 					Vector<double>.Build.Dense(3);
-
-				//double 
-				//	fsx = 0,
-				//	fsy = 0;
-
-				//if (Strains.Exists(Auxiliary.NotZero))
-				//	(fsx, fsy) = ReinforcementStresses;
-
-				//return 
-				//	Vector<double>.Build.DenseOfArray(new [] {psx * fsx, psy * fsy, 0});
 			}
         }
 
@@ -138,10 +128,10 @@ namespace SPMTool
 				        double tan2Angle = e[2] / (e[1] - e[0]);
 				        theta = 0.5 * Math.Atan(tan2Angle);
 
-				        // Theta must be positive
-				        if (theta < 0)
-					        theta += Constants.PiOver2;
-			        }
+                        // Theta must be positive
+                        if (theta < 0)
+                            theta += Constants.PiOver2;
+                    }
 		        }
 		        else
 			        theta = Constants.PiOver4;
@@ -164,6 +154,7 @@ namespace SPMTool
 			        double
 				        esx = Strains[0],
 				        esy = Strains[1];
+
 			        var (fsx, fsy) = ReinforcementStresses;
 
 			        // Steel
@@ -276,12 +267,13 @@ namespace SPMTool
 					sin2   = sin * sin,
 					cosSin = cos * sin;
 
-				return Matrix<double>.Build.DenseOfArray(new[,]
-				{
-					{         cos2,       sin2,      cosSin },
-					{         sin2,       cos2,    - cosSin },
-					{ - 2 * cosSin, 2 * cosSin, cos2 - sin2 }
-				});
+				return
+					Matrix<double>.Build.DenseOfArray(new[,]
+					{
+						{         cos2,       sin2,      cosSin },
+						{         sin2,       cos2,    - cosSin },
+						{ - 2 * cosSin, 2 * cosSin, cos2 - sin2 }
+					});
 			}
 		}
 
@@ -291,19 +283,8 @@ namespace SPMTool
 			get
 			{
 				if (Strains.Exists(Auxiliary.NotZero))
-				{
-					//// Get T transposed
-					//var TT = TransformationMatrix.Transpose();
-
-					//// Get principal stresses as a vector
-					//var (fc1, fc2) = ConcretePrincipalStresses;
-					//var f1 = Vector<double>.Build.DenseOfArray(new [] {fc1, fc2, 0});
-
-					//return
-					//	TT * f1;
 					return
 						ConcreteStiffness * Strains;
-				}
 
 				return
 					Vector<double>.Build.Dense(3);
@@ -376,40 +357,149 @@ namespace SPMTool
 	            }
             }
 
-            // Calculate principal stresses in concrete
+            // Calculate principal stresses in concrete (VECCHIO, 1993)
             public override (double fc1, double fc2) ConcretePrincipalStresses
             {
 	            get
 	            {
 		            // Get the strains
-		            var (ec1, ec2) = ConcretePrincipalStrains;
+		            var concreteStrains = ConcretePrincipalStrains;
 
-		            // Calculate the maximum concrete compressive stress
-		            double
-			            f2maxA = - fc / (0.8 - 0.34 * ec1 / ec),
-			            f2max  = Math.Max(f2maxA, - fc);
+					// Calculate stresses
+					double
+						fc1 = ConcreteTensileStress(concreteStrains),
+						fc2 = ConcreteCompressiveStress(concreteStrains);
 
-		            // Calculate the principal compressive stress in concrete
-		            double
-			            n   = ec2 / ec,
-			            fc2 = f2max * (2 * n - n * n);
-
-		            // Calculate principal tensile stress
-		            double fc1;
-
-		            // Constitutive relation
-		            if (ec1 <= ecr) // Not cracked
-			            fc1 = ec1 * Ec;
-
-		            else // cracked
-		            {
-			            // Calculate the principal tensile stress in concrete by crack check procedure
-			            fc1 = CrackCheck((ec1, ec2));
-		            }
-
-		            return (fc1, fc2);
+					return
+                        (fc1, fc2);
 	            }
             }
+
+            // Calculate compressive stress in concrete (VECCHIO, 1993)
+            private double ConcreteCompressiveStress((double ec1, double ec2) concretePrincipalStrains)
+            {
+	            var (ec1, ec2) = concretePrincipalStrains;
+
+	            // Calculate coefficients Kc and Kf
+	            double Kc;
+
+	            if (ec1 == 0 || ec2 == 0 || -ec1 / ec2 <= 0.28)
+		            Kc = 1;
+	            else
+	            {
+					// Get the limit tensile strain
+					double e1 = LimitTensileStrain(ec1);
+
+		            Kc = Math.Max(0.35 * Math.Pow(-e1 / ec2 - 0.28, 0.8), 1);
+	            }
+
+	            double Kf = Math.Max(0.1825 * Math.Sqrt(fc), 1);
+
+	            // Calculate beta
+	            double beta = 1 / (1 + Kc * Kf);
+
+	            double fp, ep;
+
+	            if (ec2 > beta * ec)
+	            {
+		            // Calculate fp and ep
+		            fp = beta * fc;
+		            ep = beta * ec;
+	            }
+	            else
+	            {
+		            fp = fc;
+		            ep = ec;
+	            }
+
+	            // Calculate n
+	            double n = 0.8 + fp / 17;
+
+	            // Calculate k
+	            double k;
+
+	            if (ec < ep)
+		            k = 1;
+	            else
+		            k = 0.67 + fp / 62;
+
+	            // Calculate compressive stress
+	            double ec2ep = ec2 / ep;
+
+				// Calculate fc2
+				double fc2 = -fp * n * ec2ep / (n - 1 + Math.Pow(ec2ep, n * k));
+
+				if (ec2 > beta * ec)
+					return
+						fc2;
+
+				// Else fc2 = fc2base
+				return
+					beta * fc2;
+            }
+
+            // Calculate tensile stress in concrete
+			private double ConcreteTensileStress ((double ec1, double ec2) concretePrincipalStrains)
+			{
+				var (ec1, ec2) = concretePrincipalStrains;
+
+				// Constitutive relation
+				if (ec1 <= ecr) // Not cracked
+					return
+						ec1 * Ec;
+
+				// Else, cracked
+				// Calculate the principal tensile stress in concrete by crack check procedure
+				return
+					CrackCheck((ec1, ec2));
+			}
+
+			// Principal stresses by classic formulation
+            private double ClassicConcreteCompressiveStress((double ec1, double ec2) concretePrincipalStrains)
+            {
+	            // Get the strains
+	            var (ec1, ec2) = concretePrincipalStrains;
+
+	            // Calculate the maximum concrete compressive stress
+	            double
+		            f2maxA = - fc / (0.8 - 0.34 * ec1 / ec),
+		            f2max  = Math.Max(f2maxA, - fc);
+
+	            // Calculate the principal compressive stress in concrete
+	            double n   = ec2 / ec;
+
+	            return
+		            f2max * (2 * n - n * n);
+            }
+
+			// Calculate maximum tensile strain for using on softening formulation
+			private double LimitTensileStrain(double appliedStrain)
+			{
+				if (appliedStrain <= ecr)
+					return appliedStrain;
+
+                // Get reinforcement stresses
+                var (fsx, fsy) = ReinforcementStresses;
+
+                // Reinforcement capacity reserve
+                double
+	                f1cx = psx * (fyx - fsx),
+	                f1cy = psy * (fyy - fsy);
+
+                // Calculate theta sine and cosine
+                var (cosTheta,_) = Auxiliary.DirectionCosines(StrainAngle);
+
+				// Calculate e1L
+				double
+					a = (f1cy - f1cx) * cosTheta * cosTheta - f1cy,
+					b = a + fcr,
+					n = a * a,
+					d = 500 * b * b,
+					e1L = n / d;
+
+                return
+					Math.Min(appliedStrain, e1L);
+			}
 
             // Crack check procedure
             private double CrackCheck((double ec1, double ec2) concreteStrains)
@@ -437,7 +527,7 @@ namespace SPMTool
                     f1cy = psy * (fyy - fsy);
 
                 // Maximum possible shear on crack interface
-                double vcimaxA = 0.18 * Math.Sqrt(Math.Abs(fc)) / (0.31 + 24 * w / (phiAg + 16));
+                double vcimaxA = 0.18 * Math.Sqrt(fc) / (0.31 + 24 * w / (phiAg + 16));
 
                 // Maximum possible shear for biaxial yielding
                 double vcimaxB = Math.Abs(f1cx - f1cy) * sinTheta * cosTheta;

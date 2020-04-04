@@ -452,11 +452,7 @@ namespace SPMTool
             public double[]        StringerDimensions { get; }
 
             // Private Properties
-			private int               LoadStep { get; set; }
-
-            // Reinforcement ratio
-            private double psx => Reinforcement.Ratio.X;
-            private double psy => Reinforcement.Ratio.Y;
+			private int LoadStep { get; set; }
 
             public NonLinear(ObjectId panelObject, Material.Concrete concrete, Stringer[] stringers) : base(panelObject, concrete)
             {
@@ -651,18 +647,11 @@ namespace SPMTool
 				// Get the vector strains and stresses
 				var ev = StrainVector;
 
-				// Get effective ratio
-				//var (pxEf, pyEf) = EffectiveRatio;
-
                 // Calculate the material matrix of each int. point by MCFT
                 for (int i = 0; i < 4; i++)
                 {
 	                // Get the strains and stresses
 	                var e = ev.SubVector(3 * i, 3);
-
-                    // Get the reinforcement and effective ratio
-                 //   var reinforcement = new Reinforcement.Panel(Reinforcement.BarDiameter, Reinforcement.BarSpacing, Reinforcement.Steel, Width);
-	                //reinforcement.SetEffectiveRatio((pxEf[i], pyEf[i]));
 
                     // Calculate stiffness by MCFT
                     var membrane = new Membrane.MCFT(Concrete, Reinforcement, e, LoadStep);
@@ -686,6 +675,7 @@ namespace SPMTool
 
                     // Get the initial parameters
                     Membrane.MCFT[] membranes;
+
 		            if (IntPointsMembrane != null)
 			            membranes = IntPointsMembrane;
 		            else
@@ -783,7 +773,6 @@ namespace SPMTool
 			            initialMCFT;
 	            }
             }
-
         }
     }
 }

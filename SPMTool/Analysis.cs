@@ -395,7 +395,7 @@ namespace SPMTool
         public class NonLinear : Analysis
         {
 			// Max iterations and load steps
-			private int maxIterations = 1000;
+			private int maxIterations = 100;
 			private int loadSteps = 100;
 
 			[CommandMethod("DoNonLinearAnalysis")]
@@ -410,7 +410,7 @@ namespace SPMTool
 			        NonLinear analysis = new NonLinear(input);
 
 			        // Draw results of analysis
-			        Results.Draw(analysis);
+			        //Results.Draw(analysis);
 		        }
 
                 else
@@ -461,8 +461,11 @@ namespace SPMTool
                 // Initialize a loop for load steps
                 for (int loadStep = 1; loadStep <= loadSteps; loadStep++)
 				{
+					// Calculate the current load factor
+					double lf = Convert.ToDouble(loadStep) / loadSteps;
+
 					// Get the force vector
-					var fs = 0.01 * loadStep * f;
+					var fs = lf * f;
 
 					Vector<double> fi = Vector<double>.Build.Dense(numDoFs);
 
@@ -551,6 +554,7 @@ namespace SPMTool
 					flPnl.SetRow(loadStep - 1, pnl.Forces);
 					sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
 					sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
+					epsPnl.SetRow(loadStep - 1, pnl.StrainVector);
 
                     // Set the results to stringers
                     StringerResults();
@@ -582,24 +586,24 @@ namespace SPMTool
                 DelimitedWriter.Write("D:/flPnl.csv", flPnl, ";");
                 DelimitedWriter.Write("D:/sigCPnl.csv", sigCPnl, ";");
                 DelimitedWriter.Write("D:/sigSPnl.csv", sigSPnl, ";");
+                DelimitedWriter.Write("D:/epsPnl.csv", epsPnl, ";");
 
-                for (int i = 0; i < 4; i++)
-                {
-                    int n = i + 1;
-                    DelimitedWriter.Write("D:/fStr" + n + ".csv", fStrs[i], ";");
-                }
+                //for (int i = 0; i < 4; i++)
+                //{
+                //    int n = i + 1;
+                //    DelimitedWriter.Write("D:/fStr" + n + ".csv", fStrs[i], ";");
+                //}
 
-                DelimitedWriter.Write("D:/fPnl1.csv", fPnl, ";");
-                DelimitedWriter.Write("D:/uPnl1.csv", uPnl, ";");
-                DelimitedWriter.Write("D:/sigPnl1.csv", sigPnl, ";");
-                DelimitedWriter.Write("D:/epsPnl1.csv", epsPnl, ";");
-                DelimitedWriter.Write("D:/f1Pnl1.csv", f1Pnl, ";");
-                DelimitedWriter.Write("D:/e1Pnl1.csv", e1Pnl, ";");
-                DelimitedWriter.Write("D:/thetaPnl1.csv", thetaPnl, ";");
-                DelimitedWriter.Write("D:/DPnl1.csv", DPnl, ";");
-                DelimitedWriter.Write("D:/DcPnl1.csv", DcPnl, ";");
-                DelimitedWriter.Write("D:/DsPnl1.csv", DsPnl, ";");
-                DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");
+                //DelimitedWriter.Write("D:/fPnl1.csv", fPnl, ";");
+                //DelimitedWriter.Write("D:/uPnl1.csv", uPnl, ";");
+                //DelimitedWriter.Write("D:/sigPnl1.csv", sigPnl, ";");
+                //DelimitedWriter.Write("D:/f1Pnl1.csv", f1Pnl, ";");
+                //DelimitedWriter.Write("D:/e1Pnl1.csv", e1Pnl, ";");
+                //DelimitedWriter.Write("D:/thetaPnl1.csv", thetaPnl, ";");
+                //DelimitedWriter.Write("D:/DPnl1.csv", DPnl, ";");
+                //DelimitedWriter.Write("D:/DcPnl1.csv", DcPnl, ";");
+                //DelimitedWriter.Write("D:/DsPnl1.csv", DsPnl, ";");
+                //DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");
 	        }
 
             // Get maximum element force
@@ -627,7 +631,7 @@ namespace SPMTool
 			{
 				double
 					maxForce  = residualForces.AbsoluteMaximum(),
-					tolerance = MaxElementForce / 30;
+					tolerance = MaxElementForce / 100;
 
                 // Check convergence
                 if (maxForce <= tolerance && iteration > 0)

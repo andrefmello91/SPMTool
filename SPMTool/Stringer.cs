@@ -417,9 +417,7 @@ namespace SPMTool
             // Calculate the stringer flexibility and generalized strains
             public ((double e1, double e3) genStrains, Matrix<double> F) StringerGenStrains((double N1, double N3) genStresses)
             {
-	            double
-		            N1 = genStresses.N1,
-		            N3 = genStresses.N3;
+	            var (N1, N3) = genStresses;
 
 	            // Calculate the approximated strains
 				var (eps1, de1) = StringerStrain(N1);
