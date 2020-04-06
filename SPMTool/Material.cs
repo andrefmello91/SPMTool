@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.Interpolation;
 
 [assembly: CommandClass(typeof(SPMTool.Material))]
 [assembly: CommandClass(typeof(SPMTool.Material.Concrete))]
@@ -17,9 +21,9 @@ namespace SPMTool
         public class Concrete
         {
             // Properties
-			public double AggregateDiameter { get; set; }
-            public double fcm               { get; set; }
-			private double alphaE           { get; }
+			public  double AggregateDiameter { get; }
+            public  double fcm               { get; }
+			private double alphaE            { get; }
 
 			// Calculate parameters according to FIB MC2010
 			public double fctm
@@ -37,6 +41,47 @@ namespace SPMTool
             public double Ec1 => fcm / ec1;
             public double k   => Eci / Ec1;
             public double ecr => fctm / Eci;
+            public double eclim
+            {
+	            get
+	            {
+					// Verify fcm
+		            if (fcm < 50)
+			            return
+				            -0.0035;
+
+		            if (fcm >= 90)
+			            return
+				            -0.003;
+
+					// Get classes and ultimate strains
+					if (classes.Contains(fcm))
+					{
+						int i = Array.IndexOf(classes, fcm);
+
+						return
+							ultimateStrain[i];
+					}
+
+					// Interpolate values
+					var spline = CubicSpline.InterpolateAkimaSorted(classes, ultimateStrain);
+
+					return
+						spline.Interpolate(fcm);
+	            }
+            }
+
+			// Array of high strength concrete classes, C50 to C90 (MC2010)
+			private double[] classes =
+			{
+				50, 55, 60, 70, 80, 90
+			};
+
+			// Array of ultimate strains for each concrete class, C50 to C90 (MC2010)
+			private double[] ultimateStrain =
+			{
+				-0.0034, -0.0034, -0.0033, -0.0032, -0.0031, -0.003
+            };
 
 			// Verify if concrete was set
 			public bool IsSet
@@ -189,6 +234,37 @@ namespace SPMTool
 		            }
 	            }
             }
+
+            [CommandMethod("ViewConcreteParameters")]
+            public void ViewConcreteParameters()
+            {
+	            // Definition for the XData
+	            string concmsg;
+
+	            // Get the values
+	            var concrete = new Concrete();
+
+	            // Write the concrete parameters
+	            if (concrete.IsSet)
+	            {
+		            // Get the parameters
+		            concmsg = "\nConcrete Parameters:\n" +
+		                      "\nfcm = "    + concrete.fcm + " MPa" +
+		                      "\nfctm = "   + Math.Round(concrete.fctm, 2) + " MPa" +
+		                      "\nEci = "    + Math.Round(concrete.Eci, 2) + " MPa" +
+		                      "\nεc1 = "    + Math.Round(1000 * concrete.ec1, 2) + " E-03" +
+		                      "\nεc,lim = " + Math.Round(1000 * concrete.eclim, 2) + " E-03" +
+		                      "\nφ,ag = "   + concrete.AggregateDiameter + " mm";
+	            }
+	            else
+	            {
+		            concmsg = "\nConcrete Parameters NOT SET";
+	            }
+
+	            // Display the values returned
+	            Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + "\n" + concmsg);
+            }
+
         }
 
         // Steel
@@ -326,34 +402,6 @@ namespace SPMTool
 		            }
 	            }
             }
-        }
-
-        [CommandMethod("ViewConcreteParameters")]
-        public void ViewConcreteParameters()
-        {
-            // Definition for the XData
-            string concmsg;
-
-            // Get the values
-            var concrete = new Concrete();
-
-            // Write the concrete parameters
-            if (concrete.IsSet)
-            {
-                // Get the parameters
-                concmsg = "\nConcrete Parameters:\n" +
-                          "\nfcm = "  + concrete.fcm                      + " MPa" +
-                          "\nfctm = " + Math.Round(concrete.fctm, 2)      + " MPa" +
-                          "\nEci = "  + Math.Round(concrete.Eci, 2)       + " MPa" +
-                          "\nεc1 = "  + Math.Round(1000 * concrete.ec1,2) + " E-03";
-            }
-            else
-            {
-                concmsg = "\nConcrete Parameters NOT SET";
-            }
-
-            // Display the values returned
-            Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + "\n" + concmsg);
         }
     }
 }

@@ -78,8 +78,11 @@ namespace SPMTool
                 if (StringerBehavior == (int)Stringer.Behavior.Linear)
 					stringer = new Stringer.Linear(strObj, Concrete);
 
-				else
-					stringer = new Stringer.NonLinear(strObj, Concrete);
+				else if (StringerBehavior == (int)Stringer.Behavior.NonLinearClassic)
+					stringer = new Stringer.NonLinear.Classic(strObj, Concrete);
+
+                else
+					stringer = new Stringer.NonLinear.MC2010(strObj, Concrete);
 
 				// Set to the array
                 int i = stringer.Number - 1;

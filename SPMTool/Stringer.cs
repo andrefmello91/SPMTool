@@ -11,7 +11,8 @@ namespace SPMTool
 		public enum Behavior
 		{
 			Linear = 1,
-			NonLinear = 2
+			NonLinearClassic = 2,
+			NonLinearMC2010
 		}
 
         // Stringer properties
@@ -212,15 +213,15 @@ namespace SPMTool
 			{
 			}
 
-            // Calculate concrete parameters
-            private double fc  => Concrete.fcm;
-			private double ec  = 0.002;
-			private double ecu = 0.0035;
-			private double Ec  => 2 * fc / ec;
-			private double fcr => 0.33 * Math.Sqrt(fc);
-			private double ecr => fcr / Ec;
+            // Concrete parameters
+            public virtual double fc  { get; }
+            public virtual double ec  { get; }
+            public virtual double ecu { get; }
+            public virtual double Ec  { get; }
+            public virtual double fcr { get; }
+            public virtual double ecr { get; }
 
-			// Steel parameters
+				// Steel parameters
 			private double fy  => Reinforcement.Steel.fy;
 			private double ey  => Reinforcement.Steel.ey;
 			private double Es  => Reinforcement.Steel.Es;
@@ -446,81 +447,10 @@ namespace SPMTool
 				return ((e1, e3), F);
             }
 
-            // Calculate the strain and derivative on a stringer given a force N and the concrete parameters
-            public (double e, double de) StringerStrain(double N)
+            // Virtual method to calculate strain
+            public virtual (double e, double de) StringerStrain(double N)
             {
-                double e, de;
-
-                // Verify the value of N
-                if (N >= 0) // tensioned stringer
-                {
-                    if (N <= Ncr)
-                    {
-                        // uncracked
-                        e  = N / t1;
-                        de = 1 / t1;
-                    }
-
-                    else if (N <= Nyr)
-                    {
-                        // cracked with not yielding steel
-                        e  = (N * N - Nr * Nr) / (EsAs * N);
-                        de = (N * N + Nr * Nr) / (EsAs * N * N);
-                    }
-
-                    else
-                    {
-                        // yielding steel
-                        //double n = Nyr / Nr;
-                        e = (Nyr * Nyr - Nr * Nr) / (EsAs * Nyr) + (N - Nyr) / t1;
-                        de = 1 / t1;
-                    }
-                }
-
-                else // compressed stringer (N < 0)
-                {
-                    // Calculate the yield force
-                    //double Nyc = -Nyr + Nc * (2 * -ey / ec - ey / ec * ey / ec);
-                    //Console.WriteLine(Nyc);
-
-                    // Verify the value of N
-                    if (N > Nt)
-                    {
-                        // Calculate the strain for steel not yielding
-                        double t2 = Math.Sqrt((1 + xi) * (1 + xi) - N / Nc);
-                        e = ec * (1 + xi - t2);
-
-                        // Check the strain
-                        if (e < -ey)
-                        {
-                            // Recalculate the strain for steel yielding
-                            t2 = Math.Sqrt(1 - (N + Nyr) / Nc);
-                            e = ec * (1 - t2);
-                        }
-
-                        // Calculate de
-                        de = 1 / (EcAc * t2);
-                    }
-
-                    else
-                    {
-                        // Calculate the strain for steel not yielding
-                        double t2 = Math.Sqrt((1 + xi) * (1 + xi) - Nt / Nc);
-                        e = ec * ((1 + xi) - t2) + (N - Nt) / t1;
-
-                        // Check the strain
-                        if (e < -ey)
-                        {
-                            // Recalculate the strain for steel yielding
-                            e = ec * (1 - Math.Sqrt(1 - (Nyr + Nt) / Nc)) + (N - Nt) / t1;
-                        }
-
-                        // Calculate de
-                        de = 1 / t1;
-                    }
-                }
-
-                return (e, de);
+                return (0, 0);
             }
 
 			// Set stringer results (after reached convergence)
@@ -585,7 +515,195 @@ namespace SPMTool
 		            return (eput, epuc);
 	            }
             }
-		}
+
+			// Classic SPM model
+			public class Classic : NonLinear
+			{
+				public Classic(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
+				{
+				}
+
+				// Calculate concrete parameters
+				public override double fc  => Concrete.fcm;
+				public override double ec  => 0.002;
+				public override double ecu => 0.0035;
+				public override double Ec  => 2 * fc / ec;
+				public override double fcr => 0.33 * Math.Sqrt(fc);
+				public override double ecr => fcr / Ec;
+
+                // Calculate the strain and derivative on a stringer given a force N and the concrete parameters
+                public override (double e, double de) StringerStrain(double N)
+                {
+                    double e, de;
+
+                    // Verify the value of N
+                    if (N >= 0) // tensioned stringer
+                    {
+                        if (N <= Ncr)
+                        {
+                            // uncracked
+                            e = N / t1;
+                            de = 1 / t1;
+                        }
+
+                        else if (N <= Nyr)
+                        {
+                            // cracked with not yielding steel
+                            e = (N * N - Nr * Nr) / (EsAs * N);
+                            de = (N * N + Nr * Nr) / (EsAs * N * N);
+                        }
+
+                        else
+                        {
+                            // yielding steel
+                            //double n = Nyr / Nr;
+                            e = (Nyr * Nyr - Nr * Nr) / (EsAs * Nyr) + (N - Nyr) / t1;
+                            de = 1 / t1;
+                        }
+                    }
+
+                    else // compressed stringer (N < 0)
+                    {
+                        // Calculate the yield force
+                        //double Nyc = -Nyr + Nc * (2 * -ey / ec - ey / ec * ey / ec);
+                        //Console.WriteLine(Nyc);
+
+                        // Verify the value of N
+                        if (N > Nt)
+                        {
+                            // Calculate the strain for steel not yielding
+                            double t2 = Math.Sqrt((1 + xi) * (1 + xi) - N / Nc);
+                            e = ec * (1 + xi - t2);
+
+                            // Check the strain
+                            if (e < -ey)
+                            {
+                                // Recalculate the strain for steel yielding
+                                t2 = Math.Sqrt(1 - (N + Nyr) / Nc);
+                                e = ec * (1 - t2);
+                            }
+
+                            // Calculate de
+                            de = 1 / (EcAc * t2);
+                        }
+
+                        else
+                        {
+                            // Calculate the strain for steel not yielding
+                            double t2 = Math.Sqrt((1 + xi) * (1 + xi) - Nt / Nc);
+                            e = ec * ((1 + xi) - t2) + (N - Nt) / t1;
+
+                            // Check the strain
+                            if (e < -ey)
+                            {
+                                // Recalculate the strain for steel yielding
+                                e = ec * (1 - Math.Sqrt(1 - (Nyr + Nt) / Nc)) + (N - Nt) / t1;
+                            }
+
+                            // Calculate de
+                            de = 1 / t1;
+                        }
+                    }
+
+                    return (e, de);
+                }
+			}
+
+            // MC2010 model for concrete
+            public class MC2010 : NonLinear
+            {
+	            public MC2010(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
+	            {
+	            }
+
+                // Get concrete parameters
+                public override double fc  => Concrete.fcm;
+                public override double ec  => Concrete.ec1;
+                public override double ecu => 0.0035;
+                public override double Ec  => Concrete.Eci;
+                public override double fcr => Concrete.fctm;
+                public override double ecr => Concrete.ecr;
+
+
+                // Calculate the strain and derivative on a stringer given a force N and the concrete parameters
+                public override (double e, double de) StringerStrain(double N)
+                {
+                    double e, de;
+
+                    // Verify the value of N
+                    if (N >= 0) // tensioned stringer
+                    {
+                        if (N <= Ncr)
+                        {
+                            // uncracked
+                            e = N / t1;
+                            de = 1 / t1;
+                        }
+
+                        else if (N <= Nyr)
+                        {
+                            // cracked with not yielding steel
+                            e = (N * N - Nr * Nr) / (EsAs * N);
+                            de = (N * N + Nr * Nr) / (EsAs * N * N);
+                        }
+
+                        else
+                        {
+                            // yielding steel
+                            //double n = Nyr / Nr;
+                            e = (Nyr * Nyr - Nr * Nr) / (EsAs * Nyr) + (N - Nyr) / t1;
+                            de = 1 / t1;
+                        }
+                    }
+
+                    else // compressed stringer (N < 0)
+                    {
+                        // Calculate the yield force
+                        //double Nyc = -Nyr + Nc * (2 * -ey / ec - ey / ec * ey / ec);
+                        //Console.WriteLine(Nyc);
+
+                        // Verify the value of N
+                        if (N > Nt)
+                        {
+                            // Calculate the strain for steel not yielding
+                            double t2 = Math.Sqrt((1 + xi) * (1 + xi) - N / Nc);
+                            e = ec * (1 + xi - t2);
+
+                            // Check the strain
+                            if (e < -ey)
+                            {
+                                // Recalculate the strain for steel yielding
+                                t2 = Math.Sqrt(1 - (N + Nyr) / Nc);
+                                e = ec * (1 - t2);
+                            }
+
+                            // Calculate de
+                            de = 1 / (EcAc * t2);
+                        }
+
+                        else
+                        {
+                            // Calculate the strain for steel not yielding
+                            double t2 = Math.Sqrt((1 + xi) * (1 + xi) - Nt / Nc);
+                            e = ec * ((1 + xi) - t2) + (N - Nt) / t1;
+
+                            // Check the strain
+                            if (e < -ey)
+                            {
+                                // Recalculate the strain for steel yielding
+                                e = ec * (1 - Math.Sqrt(1 - (Nyr + Nt) / Nc)) + (N - Nt) / t1;
+                            }
+
+                            // Calculate de
+                            de = 1 / t1;
+                        }
+                    }
+
+                    return (e, de);
+                }
+
+            }
+        }
 	}
 }
 
