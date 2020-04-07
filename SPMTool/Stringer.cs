@@ -736,8 +736,8 @@ namespace SPMTool
 		                    rdelta = Math.Sqrt(k2 * k2 - 4 * k1 * N),
 
                         // Calculate e and de
-						    e  = -0.5 * (k2 + rdelta) / k1,
-			                de =  0.5 * (-dk2 * (k2 + rdelta) + 2 * k1) / (k1 * rdelta);
+						    e  = 0.5 * (-k2 + rdelta) / k1,
+			                de = 0.5 * (dk2 * (k2 - rdelta) + 2 * k1) / (k1 * rdelta);
 
 						return
 			                (e, de);
@@ -752,7 +752,7 @@ namespace SPMTool
 			                rdelta = Math.Sqrt(k2 * k2 - 4 * k1 * NlimC),
 
 			                // Calculate e and de
-			                e  = -0.5 * (k2 + rdelta) / k1 + (N - NlimC) / t1,
+			                e  = 0.5 * (-k2 + rdelta) / k1 + (N - NlimC) / t1,
 			                de = 1 / t1;
 
 		                return
@@ -770,8 +770,8 @@ namespace SPMTool
 			                rdelta = Math.Sqrt(k4 * k4 - 4 * k3 * k5),
 
 		                // Calculate e and de
-							e  = -0.5 * (k4 + rdelta) / k3,
-							de =  0.5 * (-dk4 * (k4 + rdelta) + 2 * k3) / (k3 * rdelta);
+							e  = 0.5 * (-k4 + rdelta) / k3,
+							de = 0.5 * (dk4 * (k4 - rdelta) + 2 * k3) / (k3 * rdelta);
 
                         return
                             (e, de);
@@ -787,7 +787,7 @@ namespace SPMTool
 			                delta = Math.Sqrt(k4 * k4 - 4 * k3 * k5),
 
 		                // Calculate e and de
-							e = -0.5 * (k4 + delta) / k3 + (N - NlimS) / t1,
+							e  = 0.5 * (-k4 + delta) / k3 + (N - NlimS) / t1,
 							de = 1 / t1;
 
 		                return
