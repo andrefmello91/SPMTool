@@ -402,7 +402,7 @@ namespace SPMTool
 	        public static void DoNonLinearAnalysis()
 	        {
 		        // Get input data
-		        InputData input = new InputData((int)Stringer.Behavior.NonLinearClassic, (int)Panel.Behavior.NonLinear);
+		        InputData input = new InputData((int)Stringer.Behavior.NonLinearMC2010, (int)Panel.Behavior.NonLinear);
 
 		        if (input.Concrete.IsSet)
 		        {

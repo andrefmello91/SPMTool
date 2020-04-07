@@ -6,7 +6,7 @@ using MathNet.Numerics.RootFinding;
 
 namespace SPMTool
 {
-	public class Membrane
+	public abstract class Membrane
 	{
         // Properties
         public Material.Concrete                Concrete                  { get; }
@@ -39,8 +39,10 @@ namespace SPMTool
 
         // Calculate concrete parameters for membrane element
         private double fc    => Concrete.fcm;
-        private double ec    = -0.002;
-        private double Ec    => -2 * fc / ec;
+        private double ec    => Concrete.ec1;
+        private double Ec    => Concrete.Eci;
+        //private double ec    = -0.002;
+        //private double Ec    => -2 * fc / ec;
         private double phiAg => Concrete.AggregateDiameter;
 
         // Get steel parameters
