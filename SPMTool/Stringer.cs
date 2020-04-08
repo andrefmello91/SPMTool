@@ -121,13 +121,15 @@ namespace SPMTool
 		}
 
 		// Calculate global stiffness
-		public Matrix<double>        GlobalStiffness => globalStiffness.Value;
-		private Lazy<Matrix<double>> globalStiffness => new Lazy<Matrix<double>>(GloballStiffness);
-		public Matrix<double> GloballStiffness()
+		public Matrix<double> GlobalStiffness
 		{
-			var T = TransMatrix;
+			get
+			{
+				var T = TransMatrix;
 
-			return T.Transpose() * LocalStiffness * T;
+				return
+					T.Transpose() * LocalStiffness * T;
+			}
 		}
 
 		// Get stringer displacements from global displacement vector
@@ -652,7 +654,7 @@ namespace SPMTool
 	                // Verify the value of N
 	                if (N >= 0) // tensioned stringer
 	                {
-		                if (N <= Ncr)
+		                if (N < Ncr)
 			                return
 				                Uncracked();
 

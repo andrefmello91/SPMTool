@@ -396,22 +396,22 @@ namespace SPMTool
         {
 			// Max iterations and load steps
 			private int maxIterations = 100;
-			private int loadSteps = 100;
+			private int loadSteps     = 100;
 
 			[CommandMethod("DoNonLinearAnalysis")]
 	        public static void DoNonLinearAnalysis()
 	        {
 		        // Get input data
-		        InputData input = new InputData((int)Stringer.Behavior.NonLinearMC2010, (int)Panel.Behavior.NonLinear);
+		        InputData input = new InputData((int)Stringer.Behavior.NonLinearClassic, (int)Panel.Behavior.NonLinear);
 
 		        if (input.Concrete.IsSet)
 		        {
 			        // Do a linear analysis
 			        NonLinear analysis = new NonLinear(input);
 
-			        // Draw results of analysis
-			        //Results.Draw(analysis);
-		        }
+                    // Draw results of analysis
+                    Results.Draw(analysis);
+                }
 
                 else
 		        {

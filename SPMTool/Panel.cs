@@ -684,7 +684,7 @@ namespace SPMTool
 		            for (int i = 0; i < 4; i++)
 		            {
 			            // Get the stiffness
-			            var Di = membranes[i].Stiffness;
+			            var Di  = membranes[i].Stiffness;
 			            var Dci = membranes[i].ConcreteStiffness;
 			            var Dsi = membranes[i].SteelStiffness;
 

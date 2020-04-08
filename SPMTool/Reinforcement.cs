@@ -365,12 +365,13 @@ namespace SPMTool
 			            psy = 0;
 
 		            if (BarDiameter.X > 0 && BarSpacing.X > 0)
-			            psx = Constants.Pi * BarDiameter.X * BarDiameter.X / (2 * BarSpacing.X * PanelWidth);
+			            psx = 0.5 * Constants.Pi * BarDiameter.X * BarDiameter.X / (BarSpacing.X * PanelWidth);
 
 		            if (BarDiameter.Y > 0 && BarSpacing.Y > 0)
-			            psy = Constants.Pi * BarDiameter.Y * BarDiameter.Y / (2 * BarSpacing.Y * PanelWidth);
+			            psy = 0.5 * Constants.Pi * BarDiameter.Y * BarDiameter.Y / (BarSpacing.Y * PanelWidth);
 
-		            return (psx, psy);
+		            return
+			            (psx, psy);
 	            }
             }
         }

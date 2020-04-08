@@ -41,6 +41,8 @@ namespace SPMTool
         private double fc    => Concrete.fcm;
         private double ec    => Concrete.ec1;
         private double Ec    => Concrete.Eci;
+        private double fcr   => Concrete.fctm;
+        private double ecr   => Concrete.ecr;
         //private double ec    = -0.002;
         //private double Ec    => -2 * fc / ec;
         private double phiAg => Concrete.AggregateDiameter;
@@ -329,8 +331,8 @@ namespace SPMTool
             }
 
             // Calculate concrete parameters for MCFT
-            private double fcr => 0.33 * Math.Sqrt(fc);
-            private double ecr => fcr / Ec;
+            //private double fcr => 0.33 * Math.Sqrt(fc);
+            //private double ecr => fcr / Ec;
 
             // Calculate principal strains in concrete
             public override (double ec1, double ec2) ConcretePrincipalStrains
@@ -370,7 +372,7 @@ namespace SPMTool
 					// Calculate stresses
 					double
 						fc1 = ConcreteTensileStress(concreteStrains),
-						fc2 = ConcreteCompressiveStress(concreteStrains);
+						fc2 = ClassicConcreteCompressiveStress(concreteStrains);
 
 					return
                         (fc1, fc2);

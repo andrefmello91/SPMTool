@@ -80,13 +80,11 @@ namespace SPMTool
 					return 2.12 * Math.Log(1 + 0.1 * fcm);
 				}
 			}
-
 			public double Eci  => 21500 * alphaE * Math.Pow(fcm / 10, 0.33333333);
 			public double ec1  => -1.6 / 1000 * Math.Pow(fcm / 10, 0.25);
 			public double Ec1 => fcm / ec1;
 			public double k   => Eci / Ec1;
 			public double ecr => fctm / Eci;
-
 			public double eclim
 			{
 				get
@@ -289,9 +287,11 @@ namespace SPMTool
 				get
 				{
 					if (IsSet)
-						return fy / Es;
+						return
+							fy / Es;
 					//else
-					return 0;
+					return
+						0;
 				}
 			}
 
@@ -304,9 +304,11 @@ namespace SPMTool
 				get
 				{
 					if (fy == 0 || Es == 0)
-						return false;
+						return
+							false;
 					//else
-					return true;
+					return
+						true;
 				}
 			}
 
