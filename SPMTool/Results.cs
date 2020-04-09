@@ -218,14 +218,15 @@ namespace SPMTool
 					// Get the forces in the list
 					var f = str.Forces;
 					double
-						N1 =  Math.Round(f[0], 2),
-						N3 = -Math.Round(f[2], 2);
+						N1 =  f[0],
+						N3 = -f[2];
 
 					// Check if at least one force is not zero
 					if (N1 != 0 || N3 != 0)
 					{
 						// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
-						double h1 = 150 * N1 / maxForce,
+						double
+							h1 = 150 * N1 / maxForce,
 							h3 = 150 * N3 / maxForce;
 
 						// Check if the forces are in the same direction
@@ -324,7 +325,10 @@ namespace SPMTool
 								// Set the parameters
 								txt1.Layer = Layers.stringerForce;
 								txt1.Height = 30;
-								txt1.TextString = Math.Abs(N1).ToString();
+
+								// Write force in kN
+								double N1kN = Math.Abs(Math.Round(0.001 * N1, 2));
+								txt1.TextString = N1kN.ToString();
 
 								// Set the color (blue to compression and red to tension) and position
 								if (N1 > 0)
@@ -353,10 +357,13 @@ namespace SPMTool
 								// Set the parameters
 								txt3.Layer = Layers.stringerForce;
 								txt3.Height = 30;
-								txt3.TextString = Math.Abs(N3).ToString();
 
-								// Set the color (blue to compression and red to tension) and position
-								if (N3 > 0)
+								// Write force in kN
+								double N3kN = Math.Abs(Math.Round(0.001 * N3, 2));
+								txt3.TextString = N3kN.ToString();
+
+                                // Set the color (blue to compression and red to tension) and position
+                                if (N3 > 0)
 								{
 									txt3.ColorIndex = (short) AutoCAD.Colors.Blue1;
 									txt3.Position = new Point3d(stPt.X + l - 10, stPt.Y + h3 + 20, 0);

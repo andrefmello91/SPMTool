@@ -138,7 +138,8 @@ namespace SPMTool
 			        c = 0.5 * (x[2] + x[3] - x[0] - x[1]),
 			        d = 0.5 * (y[1] + y[2] - y[0] - y[3]);
 
-		        return (a, b, c, d);
+		        return
+			        (a, b, c, d);
 	        }
         }
 
@@ -197,7 +198,8 @@ namespace SPMTool
                 for (int i = 0; i < 4; i++)
 	                directionCosines[i] = Auxiliary.DirectionCosines(angles[i]);
 
-                return directionCosines;
+                return
+	                directionCosines;
 			}
 		}
 
@@ -264,10 +266,12 @@ namespace SPMTool
             {
 	            // If the panel is rectangular
 	            if (RectangularPanel(Angles))
-		            return RectangularPanelStiffness();
+		            return
+			            RectangularPanelStiffness();
 
 	            // If the panel is not rectangular
-	            return NotRectangularPanelStiffness();
+	            return
+		            NotRectangularPanelStiffness();
             }
 
             // Calculate global stiffness
@@ -432,7 +436,7 @@ namespace SPMTool
             }
 
             // Function to verify if a panel is rectangular
-            private readonly Func<double[], bool> RectangularPanel = delegate (double[] angles)
+            private readonly Func<double[], bool> RectangularPanel =  angles =>
             {
                 // Calculate the angles between the edges
                 double ang2 = angles[1] - angles[0];
@@ -488,9 +492,9 @@ namespace SPMTool
             }
 
             // Calculate BA matrix
-            public Matrix<double> BAMatrix => matrixBA.Value;
-            private Lazy<Matrix<double>> matrixBA => new Lazy<Matrix<double>>(MatrixBA);
-            private Matrix<double> MatrixBA()
+            public (Matrix<double> BA, Matrix<double> A, Matrix<double> B) BAMatrix => matrixBA.Value;
+            private Lazy<(Matrix<double> BA, Matrix<double> A, Matrix<double> B)> matrixBA => new Lazy<(Matrix<double> BA, Matrix<double> A, Matrix<double> B)>(MatrixBA);
+            private (Matrix<double> BA, Matrix<double> A, Matrix<double> B) MatrixBA()
             {
 	            var (a, b, c, d) = Dimensions;
 
@@ -546,7 +550,10 @@ namespace SPMTool
                 });
 
                 // Calculate B*A
-                return B * A;
+                var BA = B * A;
+
+                return
+	                (BA, A, B);
             }
 
             // Calculate Q matrix
@@ -632,11 +639,15 @@ namespace SPMTool
                 Ps[6, 9]  = t * (y[0] - y[3]);
                 Ps[7, 10] = Pc[7, 10];
 
-                return (Pc, Ps);
+                return
+	                (Pc, Ps);
             }
 
+			// Calculate generalized strains
+			public Vector<double> GenStrains => BAMatrix.A * Displacements;
+
 			// Calculate panel strain vector
-			public Vector<double> StrainVector => BAMatrix * Displacements;
+			public Vector<double> StrainVector => BAMatrix.B * GenStrains;
 
             // Calculate D matrix and stress vector by MCFT
             public void MCFTAnalysis()
@@ -665,7 +676,7 @@ namespace SPMTool
             }
 
             // Calculate DMatrix
-            public (Matrix<double> D, Matrix<double> Dc, Matrix<double> Ds) DMatrix
+            public (Matrix<double> D, Matrix<double> Dc, Matrix<double> Ds) MaterialStiffness
             {
 	            get
 	            {
@@ -704,10 +715,11 @@ namespace SPMTool
 	            get
 	            {
 		            var (Pc, Ps)    = PMatrix;
-		            var (_, Dc, Ds) = DMatrix;
+		            var (_, Dc, Ds) = MaterialStiffness;
+		            var Pd = Pc * Dc + Ps * Ds;
 
-		            return
-			            QMatrix * (Pc * Dc + Ps * Ds) * BAMatrix;
+                    return
+			            QMatrix * Pd * BAMatrix.BA;
 	            }
             }
 
@@ -751,8 +763,12 @@ namespace SPMTool
 					// Get stresses
 					var (_, sigC, sigS) = StressVector;
 
-					return
-						QMatrix * (Pc * sigC + Ps * sigS);
+					// Calculate forces
+					var f = Pc * sigC + Ps * sigS;
+
+					// Correct forces
+                    return
+						QMatrix * f;
 	            }
             }
 

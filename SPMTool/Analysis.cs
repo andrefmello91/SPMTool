@@ -13,7 +13,7 @@ using MathNet.Numerics.Statistics;
 
 namespace SPMTool
 {
-    public class Analysis
+    public abstract class Analysis
     {
         // Public Properties
 		public Vector<double> DisplacementVector { get; set; }
@@ -22,7 +22,6 @@ namespace SPMTool
         public Panel[]        Panels             { get; }
         public Vector<double> ForceVector        { get; }
         public List<int>      Constraints        { get; }
-        public double         MaxStringerForce   { get; set; }
 
         // Constructor
         public Analysis(InputData inputData)
@@ -143,26 +142,14 @@ namespace SPMTool
 			Kg.CoerceZero(1E-9);
         }
 
-        // Get stringer displacements
+        // Set stringer displacements
         private void StringerDisplacements(Vector<double> globalDisplacements)
         {
-	        // Create a list to store the maximum stringer forces
-	        var strForces =new List<double>();
-
 	        foreach (var str in Stringers)
-	        {
-		        // Calculate forces
 		        str.Displacement(globalDisplacements);
-
-		        // Add to the list of forces
-				strForces.Add(str.MaxForce);
-	        }
-
-	        // Verify the maximum stringer force in the model to draw in an uniform scale
-	        MaxStringerForce = strForces.MaximumAbsolute();
         }
 
-        // Get panel displacements
+        // Set panel displacements
         private void PanelDisplacements(Vector<double> globalDisplacements)
         {
 	        foreach (var pnl in Panels)
@@ -175,6 +162,45 @@ namespace SPMTool
 	        foreach (var nd in Nodes)
 		        nd.Displacements(globalDisplacements);
         }
+
+        // Calculate maximum stringer force
+        public double MaxStringerForce
+        {
+	        get
+	        {
+		        // Create a list to store the maximum stringer forces
+		        var strForces = new List<double>();
+
+                foreach (var str in Stringers)
+			        // Add to the list of forces
+			        strForces.Add(str.MaxForce);
+
+		        // Verify the maximum stringer force
+		        return
+			        strForces.MaximumAbsolute();
+            }
+        }
+
+        // Calculate maximum panel force
+        public double MaxPanelForce
+        {
+	        get
+	        {
+		        // Create a list to store the maximum panel forces
+		        var pnlForces = new List<double>();
+
+                foreach (var pnl in Panels)
+			        // Add to the list of forces
+			        pnlForces.Add(pnl.MaxForce);
+
+		        // Verify the maximum panel force
+		        return
+			        pnlForces.MaximumAbsolute();
+            }
+        }
+
+        // Get maximum element force
+        private double MaxElementForce => Math.Max(MaxStringerForce, MaxPanelForce);
 
         // Get the list of continued stringers
         public List<(int str1, int str2)> ContinuedStringers(Stringer[] stringers)
@@ -434,29 +460,16 @@ namespace SPMTool
 
                 var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
 		        var fiMatrix = Matrix<double>.Build.Dense(100, numDoFs);
-                var fr56 = Matrix<double>.Build.Dense(maxIterations, numDoFs);
-                var fi56 = Matrix<double>.Build.Dense(maxIterations, numDoFs);
-                var du56 = Matrix<double>.Build.Dense(maxIterations, numDoFs);
-                var fstr = Matrix<double>.Build.Dense(4, 3);
-                var estr = Matrix<double>.Build.Dense(4, 2);
-				var flPnl = Matrix<double>.Build.Dense(100, 8);
+                //var fstr = Matrix<double>.Build.Dense(4, 3);
+                //var estr = Matrix<double>.Build.Dense(4, 2);
+				var fPnl = Matrix<double>.Build.Dense(100, 8);
 				var sigCPnl = Matrix<double>.Build.Dense(100, 12);
 				var sigSPnl = Matrix<double>.Build.Dense(100, 12);
-
-                var fStrs = new Matrix<double>[4];
-                for (int i = 0; i < 4; i++)
-                    fStrs[i] = Matrix<double>.Build.Dense(maxIterations, 3);
-                var fPnl = Matrix<double>.Build.Dense(maxIterations, 8);
-                var uPnl = Matrix<double>.Build.Dense(maxIterations, 8);
-                var sigPnl = Matrix<double>.Build.Dense(maxIterations, 12);
-                var epsPnl = Matrix<double>.Build.Dense(maxIterations, 12);
-                var e1Pnl = Matrix<double>.Build.Dense(maxIterations, 8);
-                var f1Pnl = Matrix<double>.Build.Dense(maxIterations, 8);
-                var thetaPnl = Matrix<double>.Build.Dense(maxIterations, 4);
-                var DPnl = Matrix<double>.Build.Dense(12 * maxIterations, 12);
-                var DcPnl = Matrix<double>.Build.Dense(12 * maxIterations, 12);
-                var DsPnl = Matrix<double>.Build.Dense(12 * maxIterations, 12);
-                var KPnl = Matrix<double>.Build.Dense(12 * maxIterations, 8);
+                var uPnl = Matrix<double>.Build.Dense(100, 8);
+                var genStPnl = Matrix<double>.Build.Dense(100, 5);
+                var epsPnl = Matrix<double>.Build.Dense(100, 12);
+                var DcPnl = Matrix<double>.Build.Dense(1200, 12);
+                var DsPnl = Matrix<double>.Build.Dense(1200, 12);
 
                 // Initialize a loop for load steps
                 for (int loadStep = 1; loadStep <= loadSteps; loadStep++)
@@ -495,71 +508,27 @@ namespace SPMTool
 
 						// Increment displacements
 						u += du;
-
-                        //if (loadStep == 56)
-                        //{
-                        //    fi56.SetRow(it, fit);
-                        //    fr56.SetRow(it, fr);
-                        //    du56.SetRow(it, du);
-
-                        //    foreach (Stringer.NonLinear stringer in Stringers)
-                        //    {
-                        //        var i = stringer.Number - 1;
-                        //        fStrs[i].SetRow(it, stringer.IterationForces);
-                        //    }
-
-                        //    var panel = Panels[0] as Panel.NonLinear;
-                        //    fPnl.SetRow(it, panel.Forces);
-                        //    uPnl.SetRow(it, panel.Displacements);
-                        //    sigPnl.SetRow(it, panel.StressVector.sigma);
-                        //    epsPnl.SetRow(it, panel.StrainVector);
-                        //    var (D, Dc, Ds) = panel.DMatrix;
-                        //    DPnl.SetSubMatrix(12 * it, 0, D);
-                        //    DcPnl.SetSubMatrix(12 * it, 0, Dc);
-                        //    DsPnl.SetSubMatrix(12 * it, 0, Ds);
-                        //    KPnl.SetSubMatrix(8 * it, 0, panel.GlobalStiffness);
-
-                        //    var f1v = Vector<double>.Build.Dense(8);
-                        //    var e1v = Vector<double>.Build.Dense(8);
-                        //    var thetav = Vector<double>.Build.Dense(4);
-
-                        //    for (int i = 0; i < 4; i++)
-                        //    {
-                        //        var (f1, f2) = panel.IntPointsMembrane[i].ConcretePrincipalStresses;
-                        //        var (e1, e2) = panel.IntPointsMembrane[i].ConcretePrincipalStrains;
-                        //        double theta = panel.IntPointsMembrane[i].StrainAngle;
-                        //        f1v[2 * i] = f1;
-                        //        f1v[2 * i + 1] = f2;
-                        //        e1v[2 * i] = e1;
-                        //        e1v[2 * i + 1] = e2;
-                        //        thetav[i] = theta;
-                        //    }
-
-                        //    f1Pnl.SetRow(it, f1v);
-                        //    e1Pnl.SetRow(it, e1v);
-                        //    thetaPnl.SetRow(it, thetav);
-
-                        //    //if (it == 0)
-                        //    //{
-                        //    //    for (int i = 0; i < 4; i++)
-                        //    //        AutoCAD.edtr.WriteMessage("\nps " + i + ": (" + panel.EffectiveRatio.X[i] + ", " + panel.EffectiveRatio.Y[i] + ")");
-                        //    //}
-                        //}
                     }
 
 					var pnl = Panels[0] as Panel.NonLinear;
 
 					fiMatrix.SetRow(loadStep - 1, fi);
 					uMatrix.SetRow(loadStep - 1, u);
-					flPnl.SetRow(loadStep - 1, pnl.Forces);
+					fPnl.SetRow(loadStep - 1, pnl.Forces);
 					sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
 					sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
 					epsPnl.SetRow(loadStep - 1, pnl.StrainVector);
+					uPnl.SetRow(loadStep - 1, pnl.Displacements);
+					genStPnl.SetRow(loadStep - 1, pnl.GenStrains);
+					DcPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Dc);
+					DsPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Ds);
 
                     // Set the results to stringers
                     StringerResults();
 
                     // Update stiffness
+                    Kg = GlobalStiffness();
+
                     //if (loadStep < 56)
                     //{
                     //    foreach (Stringer.NonLinear stringer in Stringers)
@@ -567,23 +536,19 @@ namespace SPMTool
                     //        fstr.SetRow(stringer.Number - 1, stringer.Forces);
                     //        estr.SetRow(stringer.Number - 1, new[] { stringer.GenStrains.e1, stringer.GenStrains.e3 });
                     //    }
-                        Kg = GlobalStiffness();
                     //}
                 }
 
-				// Set nodal displacements
-				NodalDisplacements(u);
+                // Set nodal displacements
+                NodalDisplacements(u);
 
                 DelimitedWriter.Write("D:/K.csv", Kg, ";");
                 DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
                 DelimitedWriter.Write("D:/fi.csv", fiMatrix, ";");
-                DelimitedWriter.Write("D:/fi56.csv", fi56, ";");
-                DelimitedWriter.Write("D:/fr56.csv", fr56, ";");
-                DelimitedWriter.Write("D:/du56.csv", du56, ";");
-                DelimitedWriter.Write("D:/fstr.csv", fstr, ";");
-                DelimitedWriter.Write("D:/estr.csv", estr, ";");
+                //DelimitedWriter.Write("D:/fstr.csv", fstr, ";");
+                //DelimitedWriter.Write("D:/estr.csv", estr, ";");
                 DelimitedWriter.Write("D:/u.csv", uMatrix, ";");
-                DelimitedWriter.Write("D:/flPnl.csv", flPnl, ";");
+                DelimitedWriter.Write("D:/genStPnl.csv", genStPnl, ";");
                 DelimitedWriter.Write("D:/sigCPnl.csv", sigCPnl, ";");
                 DelimitedWriter.Write("D:/sigSPnl.csv", sigSPnl, ";");
                 DelimitedWriter.Write("D:/epsPnl.csv", epsPnl, ";");
@@ -594,38 +559,19 @@ namespace SPMTool
                 //    DelimitedWriter.Write("D:/fStr" + n + ".csv", fStrs[i], ";");
                 //}
 
-                //DelimitedWriter.Write("D:/fPnl1.csv", fPnl, ";");
-                //DelimitedWriter.Write("D:/uPnl1.csv", uPnl, ";");
+                DelimitedWriter.Write("D:/fPnl1.csv", fPnl, ";");
+                DelimitedWriter.Write("D:/uPnl1.csv", uPnl, ";");
+                DelimitedWriter.Write("D:/DcPnl1.csv", DcPnl, ";");
+                DelimitedWriter.Write("D:/DsPnl1.csv", DsPnl, ";");
                 //DelimitedWriter.Write("D:/sigPnl1.csv", sigPnl, ";");
                 //DelimitedWriter.Write("D:/f1Pnl1.csv", f1Pnl, ";");
                 //DelimitedWriter.Write("D:/e1Pnl1.csv", e1Pnl, ";");
                 //DelimitedWriter.Write("D:/thetaPnl1.csv", thetaPnl, ";");
                 //DelimitedWriter.Write("D:/DPnl1.csv", DPnl, ";");
-                //DelimitedWriter.Write("D:/DcPnl1.csv", DcPnl, ";");
-                //DelimitedWriter.Write("D:/DsPnl1.csv", DsPnl, ";");
+
                 //DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");
-	        }
-
-            // Get maximum element force
-            private double MaxElementForce
-			{
-				get
-				{
-					// Get a list of maximum force of elements
-					var maxForces = new List<double>();
-
-					foreach (var stringer in Stringers)
-						maxForces.Add(stringer.MaxForce);
-
-					foreach (var panel in Panels)
-						maxForces.Add(panel.MaxForce);
-
-					// Get the maximum force on elements
-					return
-						maxForces.MaximumAbsolute();
-                }
             }
-			
+
 			// Verify convergence
 			private bool EquilibriumConvergence(Vector<double> residualForces, int iteration)
 			{

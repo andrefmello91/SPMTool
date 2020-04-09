@@ -197,11 +197,11 @@ namespace SPMTool
 				var Kl = LocalStiffness;
 				var ul = LocalDisplacements;
 
-				// Calculate the vector of normal forces (in kN)
-				var fl = 0.001 * Kl * ul;
+				// Calculate the vector of normal forces
+				var fl = Kl * ul;
 
 				// Approximate small values to zero
-				fl.CoerceZero(0.000001);
+				fl.CoerceZero(0.001);
 
 				return fl;
 			}
@@ -260,7 +260,7 @@ namespace SPMTool
 			private double Nr  => Ncr / Math.Sqrt(1 + xi);
 
 			// Number of strain steps
-			private int StrainSteps = 10;
+			private int StrainSteps = 5;
 
 			// Get the B matrix
 			private Matrix<double> BMatrix = Matrix<double>.Build.DenseOfArray(new double[,]
@@ -292,7 +292,7 @@ namespace SPMTool
 			}
 
             // Flexibility and Stiffness matrices
-            private Matrix<double> FMatrix { get; set; }
+            public Matrix<double> FMatrix { get; set; }
 
 			// Calculate local stiffness
             public override Matrix<double> LocalStiffness
@@ -392,6 +392,81 @@ namespace SPMTool
 					N1 += dN1;
 					N3 += dN3;
 				}
+
+				// Verify the values of N1 and N3
+				N1 = PlasticForce(N1);
+				N3 = PlasticForce(N3);
+				double PlasticForce(double N)
+                {
+	                double Ni;
+
+	                // Check the value of N
+	                if (N < Nt)
+		                Ni = Nt;
+
+	                else if (N > Nyr)
+		                Ni = Nyr;
+
+	                else
+		                Ni = N;
+
+	                return Ni;
+                }
+
+                // Set values
+                FMatrix = F;
+				IterationGenStresses = (N1, N3);
+				IterationGenStrains  = (e1, e3);
+            }
+
+            // Calculate the effective stringer force
+            public void IterateForces()
+            {
+                // Get the initial forces (from previous load step)
+                var (N1i, N3i) = GenStresses;
+
+                // Get local displacements
+                var ul = LocalDisplacements;
+
+                // Calculate current generalized strains
+                double
+                    e1 = ul[1] - ul[0],
+					e3 = ul[2] - ul[1];
+
+				// Function to find values of genStresses
+				Func<double[], double[]> FindGenStresses = initialGenStresses =>
+				{
+					double
+						N1it = initialGenStresses[0],
+						N3it = initialGenStresses[1];
+
+					// Calculate the approximated strains
+					var (eps1, _) = StringerStrain(N1it);
+					var (eps2, _) = StringerStrain((2 * N1it + N3it) / 3);
+					var (eps3, _) = StringerStrain((N1it + 2 * N3it) / 3);
+					var (eps4, _) = StringerStrain(N3it);
+
+					// Calculate approximated generalized strains
+					double
+						e1it = Length * (3 * eps1 + 6 * eps2 + 3 * eps3) / 24,
+						e3it = Length * (3 * eps2 + 6 * eps3 + 3 * eps4) / 24;
+
+                    return
+                        new []
+						{
+							e1it - e1,
+							e3it - e3
+						};
+				};
+
+				// Find values
+				var genStresses = Broyden.FindRoot(FindGenStresses, new [] { N1i, N3i }, 1E-3);
+				double
+					N1 = genStresses[0],
+					N3 = genStresses[1];
+
+				// Calculate F matrix
+				var F = StringerGenStrains((N1, N3)).F;
 
 				// Verify the values of N1 and N3
 				N1 = PlasticForce(N1);

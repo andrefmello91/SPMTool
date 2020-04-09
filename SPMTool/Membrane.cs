@@ -2,6 +2,7 @@
 using System.Linq;
 using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Double;
 using MathNet.Numerics.RootFinding;
 
 namespace SPMTool
@@ -293,7 +294,19 @@ namespace SPMTool
 				return
 					Vector<double>.Build.Dense(3);
 			}
-		}
+			//{
+            //	var (fc1, fc2) = ConcretePrincipalStresses;
+            //	var (cos2Theta, sin2Theta) = Auxiliary.DirectionCosines(2 * StrainAngle);
+
+            //	double
+            //		fcx  = 0.5 * (fc1 + fc2 - (fc1 - fc2) * cos2Theta),
+            //		fcy  = 0.5 * (fc1 + fc2 + (fc1 - fc2) * cos2Theta),
+            //		vcxy = 0.5 * (fc1 - fc2) * sin2Theta;
+
+            //	return
+            //		Vector<double>.Build.DenseOfArray(new [] { fcx, fcy, vcxy });
+            //}
+        }
 
         // Calculate stresses
         public virtual Vector<double> Stresses
