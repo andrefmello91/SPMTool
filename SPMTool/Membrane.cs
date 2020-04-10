@@ -10,16 +10,16 @@ namespace SPMTool
 	public abstract class Membrane
 	{
         // Properties
-        public Material.Concrete                Concrete                  { get; }
-        public Reinforcement.Panel              Reinforcement             { get; }
-        public (bool S, string Message)         Stop                      { get; set; }
-		public int                              LSCrack                   { get; set; }
-		public (int X, int Y)                   LSYield                   { get; set; }
-		public int                              LSPeak                    { get; set; }
-		public Vector<double>                   Strains                   { get; }
-		public virtual (double ec1, double ec2) ConcretePrincipalStrains  { get; }
-		public virtual (double fc1, double fc2) ConcretePrincipalStresses { get; }
-		private int                             LoadStep                  { get; }
+        public Material.Concrete                 Concrete                  { get; }
+        public Reinforcement.Panel               Reinforcement             { get; }
+        public (bool S, string Message)          Stop                      { get; set; }
+		public int                               LSCrack                   { get; set; }
+		public (int X, int Y)                    LSYield                   { get; set; }
+		public int                               LSPeak                    { get; set; }
+		public Vector<double>                    Strains                   { get; }
+		public abstract (double ec1, double ec2) ConcretePrincipalStrains  { get; }
+		public abstract (double fc1, double fc2) ConcretePrincipalStresses { get; }
+		private int                              LoadStep                  { get; }
 
         // Constructor
         public Membrane(Material.Concrete concrete, Reinforcement.Panel reinforcement, Vector<double> appliedStrain = null, int loadStep = 0)

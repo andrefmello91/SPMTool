@@ -7,7 +7,7 @@ using MathNet.Numerics.RootFinding;
 
 namespace SPMTool
 {
-	public class Stringer
+	public abstract class Stringer
 	{
 		// Enum for setting stringer behavior
 		public enum Behavior
@@ -18,20 +18,19 @@ namespace SPMTool
 		}
 
         // Stringer properties
-        public ObjectId               ObjectId         { get; }
-		public int                    Number           { get; }
-		public int[]                  Grips            { get; }
-		public Point3d[]              PointsConnected  { get; }
-		public double                 Length           { get; }
-		public double                 Angle            { get; }
-		public double                 Width            { get; }
-		public double                 Height           { get; }
-		public Material.Concrete      Concrete         { get; }
-        public Reinforcement.Stringer Reinforcement    { get; }
-        public virtual Matrix<double> LocalStiffness   { get; }
-		public virtual Vector<double> Forces           { get; }
-		public virtual Vector<double> GlobalForces     { get; }
-		public Vector<double>         Displacements    { get; set; }
+        public ObjectId                ObjectId         { get; }
+		public int                     Number           { get; }
+		public int[]                   Grips            { get; }
+		public Point3d[]               PointsConnected  { get; }
+		public double                  Length           { get; }
+		public double                  Angle            { get; }
+		public double                  Width            { get; }
+		public double                  Height           { get; }
+		public Material.Concrete       Concrete         { get; }
+        public Reinforcement.Stringer  Reinforcement    { get; }
+        public abstract Matrix<double> LocalStiffness   { get; }
+		public abstract Vector<double> Forces           { get; }
+		public Vector<double>          Displacements    { get; set; }
 
 		// Constructor
 		public Stringer(ObjectId stringerObject, Material.Concrete concrete = null)
@@ -89,6 +88,9 @@ namespace SPMTool
 				// Set reinforcement
 				Reinforcement = new Reinforcement.Stringer(numOfBars, phi, steel);
 			}
+
+            // Calculate transformation matrix
+            TransMatrix = TransformationMatrix();
 		}
 
 		// Set global indexes from grips
@@ -104,8 +106,7 @@ namespace SPMTool
 		public double ConcreteArea => Width * Height - SteelArea;
 
 		// Calculate the transformation matrix
-		public  Matrix<double>       TransMatrix => transMatrix.Value;
-		private Lazy<Matrix<double>> transMatrix => new Lazy<Matrix<double>>(TransformationMatrix);
+		public  Matrix<double> TransMatrix { get; }
 		private Matrix<double> TransformationMatrix()
 		{
 			// Get the direction cosines
@@ -156,62 +157,68 @@ namespace SPMTool
 		// Calculate local displacements
 		public Vector<double> LocalDisplacements => TransMatrix * Displacements;
 
-		// Maximum stringer force
-		public double MaxForce => Forces.AbsoluteMaximum();
+        // Global stringer forces
+        public Vector<double> GlobalForces => TransMatrix.Transpose() * Forces;
 
-		public class Linear : Stringer
-		{
-			// Private properties
-			private double L  => Length;
-			private double Ac => ConcreteArea;
-			private double Ec => Concrete.Eci;
+        // Maximum stringer force
+        public double MaxForce => Forces.AbsoluteMaximum();
 
-			// Constructor
-			public Linear(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
-			{
-			}
+        public class Linear : Stringer
+        {
+            // Private properties
+            private double L  => Length;
+            private double Ac => ConcreteArea;
+            private double Ec => Concrete.Eci;
 
-			// Calculate local stiffness
-			public override Matrix<double> LocalStiffness => localStiffness.Value;
-			private Lazy<Matrix<double>>   localStiffness => new Lazy<Matrix<double>>(Stiffness);
-			private Matrix<double> Stiffness()
-			{
-				// Calculate the constant factor of stiffness
-				double EcAOverL = Ec * Ac / L;
+            // Constructor
+            public Linear(ObjectId stringerObject, Material.Concrete concrete = null) : base(stringerObject, concrete)
+            {
+            }
 
-				// Calculate the local stiffness matrix
-				return EcAOverL * Matrix<double>.Build.DenseOfArray(new double[,]
-				{
-					{  4, -6,  2 },
-					{ -6, 12, -6 },
-					{  2, -6,  4 }
-				});
-			}
+            // Calculate local stiffness
+            public override Matrix<double> LocalStiffness
+            {
+                get
+                {
+                    // Calculate the constant factor of stiffness
+                    double EcAOverL = Ec * Ac / L;
+
+                    // Calculate the local stiffness matrix
+                    return
+                        EcAOverL * Matrix<double>.Build.DenseOfArray(new double[,]
+                        {
+                            {  4, -6,  2 },
+                            { -6, 12, -6 },
+                            {  2, -6,  4 }
+                        });
+                }
+            }
 
 			// Calculate stringer forces
-			public override Vector<double> Forces => forces.Value;
-			private Lazy<Vector<double>>   forces => new Lazy<Vector<double>>(StringerForces);
-			private Vector<double> StringerForces()
-			{
-				// Get the parameters
-				var Kl = LocalStiffness;
-				var ul = LocalDisplacements;
+			public override Vector<double> Forces
+            {
+                get
+                {
+                    // Get the parameters
+                    var Kl = LocalStiffness;
+                    var ul = LocalDisplacements;
 
-				// Calculate the vector of normal forces
-				var fl = Kl * ul;
+                    // Calculate the vector of normal forces
+                    var fl = Kl * ul;
 
-				// Approximate small values to zero
-				fl.CoerceZero(0.001);
+                    // Approximate small values to zero
+                    fl.CoerceZero(0.001);
 
-				return fl;
-			}
+                    return fl;
+                }
+            }
 		}
 
 		public abstract class NonLinear : Stringer
 		{
 			// Public properties
 			public (double N1, double N3) GenStresses { get; set; }
-			public (double e1, double e3) GenStrains { get; set; }
+			public (double e1, double e3) GenStrains  { get; set; }
 
 			public NonLinear(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
 			{
@@ -251,7 +258,8 @@ namespace SPMTool
 						Nt1 = Nc * (1 + xi) * (1 + xi),
 						Nt2 = Nc - Nyr;
 
-					return Math.Max(Nt1, Nt2);
+					return
+                        Math.Max(Nt1, Nt2);
 				}
             }
 
@@ -300,6 +308,7 @@ namespace SPMTool
 	            get
 	            {
 		            Matrix<double> F;
+
 		            if (FMatrix != null)
 			            F = FMatrix;
 		            else
@@ -318,15 +327,13 @@ namespace SPMTool
 				{
 					var (N1, N3) = GenStresses;
 
-					return Vector<double>.Build.DenseOfArray(new []
-					{
-						-N1, N1 - N3, N3
-					});
+					return
+                        Vector<double>.Build.DenseOfArray(new []
+					    {
+						    -N1, N1 - N3, N3
+					    });
 				}
 			}
-
-			// Global stringer forces
-			public override Vector<double> GlobalForces => TransMatrix.Transpose() * Forces;
 
             // Generalized strains and stresses for each iteration
             private (double e1, double e3) IterationGenStrains  { get; set; }
@@ -339,10 +346,11 @@ namespace SPMTool
 				{
 					var (N1, N3) = IterationGenStresses;
 
-					return Vector<double>.Build.DenseOfArray(new []
-					{
-						-N1, N1 - N3, N3
-					});
+					return
+                        Vector<double>.Build.DenseOfArray(new []
+					    {
+						    -N1, N1 - N3, N3
+					    });
 				}
 			}
 
@@ -542,7 +550,7 @@ namespace SPMTool
 			}
 
             // Calculate the total plastic generalized strain in a stringer
-            public  (double ep1, double ep3) PlasticGenStrains
+            public (double ep1, double ep3) PlasticGenStrains
             {
 	            get
 	            {
@@ -575,7 +583,7 @@ namespace SPMTool
             }
 
             // Calculate the maximum plastic strain in a stringer for tension and compression
-            public  (double eput, double epuc) MaxPlasticStrain
+            public (double eput, double epuc) MaxPlasticStrain
             {
 	            get
 	            {

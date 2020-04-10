@@ -597,7 +597,7 @@ namespace SPMTool
 						else if (ent.Layer == Layers.stringer)
 						{
 							// Get the stringer
-							Stringer str = new Stringer(entRes.ObjectId);
+							var str = new Stringer.Linear(entRes.ObjectId);
 
 							msgstr =
 								"Stringer " + str.Number + "\n\n" +
@@ -628,7 +628,7 @@ namespace SPMTool
 						else if (ent.Layer == Layers.panel)
 						{
 							// Get the panel
-							Panel pnl = new Panel(entRes.ObjectId);
+							var pnl = new Panel.Linear(entRes.ObjectId);
 
 							msgstr =
 								"Panel " + pnl.Number + "\n\n" +

@@ -5,7 +5,7 @@ using MathNet.Numerics.LinearAlgebra;
 
 namespace SPMTool
 {
-    public class Panel
+    public abstract class Panel
     {
 	    // Enum for setting stringer behavior
 	    public enum Behavior
@@ -15,20 +15,18 @@ namespace SPMTool
 	    }
 
         // Panel parameters
-        public ObjectId               ObjectId         { get; }
-        public int                    Number           { get; }
-        public int[]                  Grips            { get; }
-        public Point3d[]              Vertices         { get; }
-        public double                 Width            { get; }
-		public Material.Concrete      Concrete         { get; }
-		public Reinforcement.Panel    Reinforcement    { get; }
-        public virtual Matrix<double> TransMatrix      { get; }
-        public virtual Matrix<double> InitialStiffness { get; }
-        public virtual Matrix<double> LocalStiffness   { get; }
-        public virtual Matrix<double> GlobalStiffness  { get; }
-        public Vector<double>         Displacements    { get; set; }
-        public virtual Vector<double> Forces           { get; }
-        public virtual double         ShearStress      { get; }
+        public ObjectId                ObjectId         { get; }
+        public int                     Number           { get; }
+        public int[]                   Grips            { get; }
+        public Point3d[]               Vertices         { get; }
+        public double                  Width            { get; }
+		public Material.Concrete       Concrete         { get; }
+		public Reinforcement.Panel     Reinforcement    { get; }
+        public abstract Matrix<double> LocalStiffness   { get; }
+        public abstract Matrix<double> GlobalStiffness  { get; }
+        public Vector<double>          Displacements    { get; set; }
+        public abstract Vector<double> Forces           { get; }
+        public abstract double         ShearStress      { get; }
 
         // Constructor
         public Panel(ObjectId panelObject, Material.Concrete concrete = null)
@@ -227,18 +225,35 @@ namespace SPMTool
 		// Maximum panel force
 		public double MaxForce => Forces.AbsoluteMaximum();
 
+        // Function to verify if a panel is rectangular
+        private readonly Func<double[], bool> RectangularPanel = angles =>
+        {
+            // Calculate the angles between the edges
+            double ang2 = angles[1] - angles[0];
+            double ang4 = angles[3] - angles[2];
+
+            if (ang2 == Constants.PiOver2 && ang4 == Constants.PiOver2)
+                return true;
+
+            return false;
+        };
+
         public class Linear : Panel
         {
             // Private properties
             private double Gc => Concrete.Eci / 2.4;
 
-            public Linear(ObjectId panelObject, Material.Concrete concrete) : base(panelObject, concrete)
+            public Linear(ObjectId panelObject, Material.Concrete concrete = null) : base(panelObject, concrete)
 	        {
-	        }
+                // Get transformation matrix
+                TransMatrix = TransformationMatrix();
 
-            // Get transformation matrix
-            public override  Matrix<double> TransMatrix => transMatrix.Value;
-            private Lazy<Matrix<double>>    transMatrix => new Lazy<Matrix<double>>(TransformationMatrix);
+                // Calculate panel stiffness
+                LocalStiffness = Stiffness();
+            }
+
+            // Calculate transformation matrix
+            private Matrix<double> TransMatrix { get; }
             private Matrix<double> TransformationMatrix()
             {
 	            // Get the transformation matrix
@@ -260,8 +275,7 @@ namespace SPMTool
             }
 
             // Calculate panel stiffness
-            public override Matrix<double> LocalStiffness => localStiffness.Value;
-            private Lazy<Matrix<double>>   localStiffness => new Lazy<Matrix<double>>(Stiffness);
+            public override Matrix<double> LocalStiffness { get; }
             private Matrix<double> Stiffness()
             {
 	            // If the panel is rectangular
@@ -271,17 +285,19 @@ namespace SPMTool
 
 	            // If the panel is not rectangular
 	            return
-		            NotRectangularPanelStiffness();
+		            NonRectangularPanelStiffness();
             }
 
             // Calculate global stiffness
-            public override Matrix<double> GlobalStiffness => globalStiffness.Value;
-            private Lazy<Matrix<double>> globalStiffness => new Lazy<Matrix<double>>(GloballStiffness);
-            public Matrix<double> GloballStiffness()
+            public override Matrix<double> GlobalStiffness
             {
-	            var T = TransMatrix;
+                get
+                {
+                    var T = TransMatrix;
 
-	            return T.Transpose() * LocalStiffness * T;
+                    return
+                        T.Transpose() * LocalStiffness * T;
+                }
             }
 
             // Calculate local stiffness of a rectangular panel
@@ -308,7 +324,8 @@ namespace SPMTool
                 });
             }
 
-            private Matrix<double> NotRectangularPanelStiffness()
+            // Calculate local stiffness of a nonrectangular panel
+            private Matrix<double> NonRectangularPanelStiffness()
             {
                 // Get the dimensions
                 var (x, y) = VertexCoordinates;
@@ -431,22 +448,11 @@ namespace SPMTool
 		            var tau = Forces / (lsV * Width);
 
 		            // Calculate the average stress
-		            return Math.Round((-tau[0] + tau[1] - tau[2] + tau[3]) / 4, 2);
+		            return
+                        Math.Round((-tau[0] + tau[1] - tau[2] + tau[3]) / 4, 2);
 	            }
             }
 
-            // Function to verify if a panel is rectangular
-            private readonly Func<double[], bool> RectangularPanel =  angles =>
-            {
-                // Calculate the angles between the edges
-                double ang2 = angles[1] - angles[0];
-                double ang4 = angles[3] - angles[2];
-
-                if (ang2 == Constants.PiOver2 && ang4 == Constants.PiOver2)
-                    return true;
-
-	            return false;
-            };
         }
 
         public class NonLinear : Panel
@@ -497,7 +503,7 @@ namespace SPMTool
             }
 
             // Calculate BA matrix
-            public (Matrix<double> BA, Matrix<double> A, Matrix<double> B) BAMatrix { get; }
+            private (Matrix<double> BA, Matrix<double> A, Matrix<double> B) BAMatrix { get; }
             private (Matrix<double> BA, Matrix<double> A, Matrix<double> B) MatrixBA()
             {
 	            var (a, b, c, d) = Dimensions;
@@ -560,7 +566,7 @@ namespace SPMTool
 	                (BA, A, B);
             }
 
-            // Calculate Q matrix
+            // Calculate Q matrixS
             private Matrix<double> QMatrix { get; }
             private Matrix<double> MatrixQ()
             {
@@ -791,6 +797,10 @@ namespace SPMTool
 			            initialMCFT;
 	            }
             }
+
+            // Properties not needed
+            public override Matrix<double> LocalStiffness => throw new NotImplementedException();
+            public override double         ShearStress    => throw new NotImplementedException();
         }
     }
 }
