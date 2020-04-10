@@ -421,7 +421,7 @@ namespace SPMTool
         public class NonLinear : Analysis
         {
 			// Max iterations and load steps
-			private int maxIterations = 100;
+			private int maxIterations = 1000;
 			private int loadSteps     = 100;
 
 			[CommandMethod("DoNonLinearAnalysis")]
@@ -490,16 +490,15 @@ namespace SPMTool
 						PanelAnalysis(u);
 
 						// Get the internal force vector
-						var fit = InternalForces();
+						fi = InternalForces();
 
 						// Calculate residual forces
-						var fr = fs - fit;
+						var fr = fs - fi;
 
 						// Check convergence
 						if (EquilibriumConvergence(fr, it))
 						{
 							AutoCAD.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
-							fi = fit;
 							break;
 						}
 

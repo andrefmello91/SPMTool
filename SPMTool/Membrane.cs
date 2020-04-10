@@ -130,14 +130,14 @@ namespace SPMTool
 
 			        else
 			        {
-				        double tan2Angle = e[2] / (e[1] - e[0]);
+				        double tan2Angle = e[2] / (e[0] - e[1]);
 				        theta = 0.5 * Math.Atan(tan2Angle);
 
                         // Theta must be positive
                         if (theta < 0)
                             theta += Constants.PiOver2;
                     }
-		        }
+                }
 		        else
 			        theta = Constants.PiOver4;
 
@@ -363,7 +363,7 @@ namespace SPMTool
 		            // Calculate radius and center of Mohr's Circle
 		            double
 			            cen = 0.5 * (ecx + ecy),
-			            rad = 0.5 * Math.Sqrt((ecy - ecx) * (ecy - ecx) + ycxy * ycxy);
+			            rad = 0.5 * Math.Sqrt((ecx - ecy) * (ecx - ecy) + ycxy * ycxy);
 
 		            // Calculate principal strains in concrete
 		            double
@@ -616,8 +616,8 @@ namespace SPMTool
             // Calculate concrete parameters for DSFM
 			private double fcr => 0.65 * Math.Pow(fc, 0.33);
 			private double ecr => fcr / Ec;
-			private double     Gf  = 0.075;
-			private double     ets => 2 * Gf / (fcr * Lr);
+			private double Gf  = 0.075;
+			private double ets => 2 * Gf / (fcr * Lr);
 
 			// Concrete strain angle
 			public override double StrainAngle => StrainAngles.theta;

@@ -716,10 +716,10 @@ namespace SPMTool
 	            {
 		            var (Pc, Ps)    = PMatrix;
 		            var (_, Dc, Ds) = MaterialStiffness;
-		            var Pd = Pc * Dc + Ps * Ds;
+		            var PD = Pc * Dc + Ps * Ds;
 
                     return
-			            QMatrix * Pd * BAMatrix.BA;
+			            QMatrix * PD * BAMatrix.BA;
 	            }
             }
 
