@@ -462,6 +462,11 @@ namespace SPMTool
             {
 				// Get stringer dimensions and effective ratio
 				StringerDimensions = StringersDimensions(stringers);
+
+                // Calculate initial matrices
+                BAMatrix = MatrixBA();
+                QMatrix  = MatrixQ();
+                PMatrix  = MatrixP();
             }
 
             // Get the dimensions of surrounding stringers
@@ -492,8 +497,7 @@ namespace SPMTool
             }
 
             // Calculate BA matrix
-            public (Matrix<double> BA, Matrix<double> A, Matrix<double> B) BAMatrix => matrixBA.Value;
-            private Lazy<(Matrix<double> BA, Matrix<double> A, Matrix<double> B)> matrixBA => new Lazy<(Matrix<double> BA, Matrix<double> A, Matrix<double> B)>(MatrixBA);
+            public (Matrix<double> BA, Matrix<double> A, Matrix<double> B) BAMatrix { get; }
             private (Matrix<double> BA, Matrix<double> A, Matrix<double> B) MatrixBA()
             {
 	            var (a, b, c, d) = Dimensions;
@@ -557,8 +561,7 @@ namespace SPMTool
             }
 
             // Calculate Q matrix
-            private Matrix<double> QMatrix => matrixQ.Value;
-            private Lazy<Matrix<double>> matrixQ => new Lazy<Matrix<double>>(MatrixQ);
+            private Matrix<double> QMatrix { get; }
             private Matrix<double> MatrixQ()
             {
                 // Get dimensions
@@ -596,8 +599,7 @@ namespace SPMTool
             }
 
             // Calculate P matrices for concrete and steel
-            private (Matrix<double> Pc, Matrix<double> Ps) PMatrix => matrixP.Value;
-            private Lazy<(Matrix<double> Pc, Matrix<double> Ps)> matrixP => new Lazy<(Matrix<double> Pc, Matrix<double> Ps)>(MatrixP);
+            private (Matrix<double> Pc, Matrix<double> Ps) PMatrix { get; }
             private (Matrix<double> Pc, Matrix<double> Ps) MatrixP()
             {
 				// Get dimensions

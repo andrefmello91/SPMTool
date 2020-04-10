@@ -99,51 +99,21 @@ namespace SPMTool
 		{
 			get
 			{
-				if (Strains.Exists(Auxiliary.NotZero))
-					return
-						SteelStiffness * Strains;
+                if (Strains.Exists(Auxiliary.NotZero))
+                {
+                    var (fsx, fsy) = ReinforcementStresses;
+
+                    return
+                        CreateVector.DenseOfArray(new[] { psx * fsx, psy * fsy, 0 });
+                }
 
 				return
 					Vector<double>.Build.Dense(3);
 			}
         }
 
-        // Calculate strain slope
-        public virtual double StrainAngle
-        {
-	        get
-	        {
-		        double theta;
-
-		        // Get the strains
-		        var e = Strains;
-
-		        // Verify the strains
-		        if (e.Exists(Auxiliary.NotZero))
-		        {
-			        // Calculate the strain slope
-			        if (e[2] == 0)
-				        theta = 0;
-
-			        else if (e[0] == e[1])
-				        theta = Constants.PiOver4;
-
-			        else
-			        {
-				        double tan2Angle = e[2] / (e[0] - e[1]);
-				        theta = 0.5 * Math.Atan(tan2Angle);
-
-                        // Theta must be positive
-                        if (theta < 0)
-                            theta += Constants.PiOver2;
-                    }
-                }
-		        else
-			        theta = Constants.PiOver4;
-
-		        return theta;
-	        }
-        }
+        // Principal tensile strain angle
+        public abstract double CrackAngle { get; }
 
         // Calculate secant module of steel
         private (double Esx, double Esy) SteelSecantModule
@@ -248,8 +218,8 @@ namespace SPMTool
 
 		        // Concrete matrix
 		        var Dc1 = Matrix<double>.Build.Dense(3, 3);
-		        Dc1[0, 0] = Ec1;
-		        Dc1[1, 1] = Ec2;
+		        Dc1[0, 0] = Ec2;
+		        Dc1[1, 1] = Ec1;
 		        Dc1[2, 2] = Gc;
 
 		        // Get transformation matrix
@@ -266,7 +236,9 @@ namespace SPMTool
 		{
 			get
 			{
-				var (cos, sin) = Auxiliary.DirectionCosines(StrainAngle);
+                double psi = Constants.Pi - CrackAngle;
+
+				var (cos, sin) = Auxiliary.DirectionCosines(psi);
 				double
 					cos2   = cos * cos,
 					sin2   = sin * sin,
@@ -288,8 +260,14 @@ namespace SPMTool
 			get
 			{
 				if (Strains.Exists(Auxiliary.NotZero))
-					return
-						ConcreteStiffness * Strains;
+                {
+                    var (fc1, fc2) = ConcretePrincipalStresses;
+                    var TT = TransformationMatrix.Transpose();
+                    var fc = CreateVector.DenseOfArray(new[] { fc2, fc1, 0 });
+
+                    return
+                        TT * fc;
+                }
 
 				return
 					Vector<double>.Build.Dense(3);
@@ -328,11 +306,12 @@ namespace SPMTool
 	        {
 		        // Calculate angles
 		        double
-					theta   = StrainAngle,
+					theta   = CrackAngle,
 			        thetaNx = theta,
 			        thetaNy = theta - Constants.PiOver2;
 
-		        return (thetaNx, thetaNy);
+		        return
+                    (thetaNx, thetaNy);
 	        }
         }
 
@@ -347,6 +326,43 @@ namespace SPMTool
             //private double fcr => 0.33 * Math.Sqrt(fc);
             //private double ecr => fcr / Ec;
 
+            // Calculate crack angle
+            public override double CrackAngle
+            {
+                get
+                {
+                    double theta;
+
+                    // Get the strains
+                    var e = Strains;
+
+                    // Verify the strains
+                    if (e.Exists(Auxiliary.NotZero))
+                    {
+                        // Calculate the strain slope
+                        if (e[2] == 0)
+                            theta = 0;
+
+                        else if (e[0] == e[1])
+                            theta = Constants.PiOver4;
+
+                        else
+                        {
+                            double tan2Angle = e[2] / (e[1] - e[0]);
+                            theta = 0.5 * Math.Atan(tan2Angle);
+
+                            // Theta must be positive
+                            if (theta < 0)
+                                theta += Constants.PiOver2;
+                        }
+                    }
+                    else
+                        theta = Constants.PiOver4;
+
+                    return theta;
+                }
+            }
+
             // Calculate principal strains in concrete
             public override (double ec1, double ec2) ConcretePrincipalStrains
             {
@@ -355,22 +371,18 @@ namespace SPMTool
 		            // Get the strains
 		            var e = Strains;
 
-		            double
-			            ecx  = e[0],
-			            ecy  = e[1],
-			            ycxy = e[2];
-
 		            // Calculate radius and center of Mohr's Circle
 		            double
-			            cen = 0.5 * (ecx + ecy),
-			            rad = 0.5 * Math.Sqrt((ecx - ecy) * (ecx - ecy) + ycxy * ycxy);
+			            cen = 0.5 * (e[0] + e[1]),
+			            rad = 0.5 * Math.Sqrt((e[1] - e[0]) * (e[1] - e[0]) + e[2] * e[2]);
 
 		            // Calculate principal strains in concrete
 		            double
 			            ec1 = cen + rad,
 			            ec2 = cen - rad;
 
-		            return (ec1, ec2);
+		            return
+                        (ec1, ec2);
 	            }
             }
 
@@ -504,7 +516,7 @@ namespace SPMTool
 	                f1cy = psy * (fyy - fsy);
 
                 // Calculate theta sine and cosine
-                var (cosTheta,_) = Auxiliary.DirectionCosines(StrainAngle);
+                var (cosTheta,_) = Auxiliary.DirectionCosines(CrackAngle);
 
 				// Calculate e1L
 				double
@@ -523,7 +535,7 @@ namespace SPMTool
             {
                 // Get the values
                 double ec1   = concreteStrains.ec1;
-                double theta = StrainAngle;
+                double theta = CrackAngle;
                 var (fsx, fsy) = ReinforcementStresses;
 
                 // Constitutive relation
@@ -620,7 +632,7 @@ namespace SPMTool
 			private double ets => 2 * Gf / (fcr * Lr);
 
 			// Concrete strain angle
-			public override double StrainAngle => StrainAngles.theta;
+			public override double CrackAngle => StrainAngles.theta;
 
 			// Calculate strain angles
 			private (double thetaE, double theta) StrainAngles

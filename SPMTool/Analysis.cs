@@ -421,7 +421,7 @@ namespace SPMTool
         public class NonLinear : Analysis
         {
 			// Max iterations and load steps
-			private int maxIterations = 1000;
+			private int maxIterations = 100;
 			private int loadSteps     = 100;
 
 			[CommandMethod("DoNonLinearAnalysis")]
