@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using MathNet.Numerics.LinearAlgebra;
 
 [assembly: CommandClass(typeof(SPMTool.Force))]
 
@@ -147,9 +145,6 @@ namespace SPMTool
                                     {
                                         fcBlk.UpgradeOpen();
 
-                                        // Remove the event handler
-                                        //fcBlk.Erased -= new ObjectErasedEventHandler(ForceErased);
-
                                         // Erase the force block
                                         fcBlk.Erase();
                                     }
@@ -221,9 +216,6 @@ namespace SPMTool
                                     // Rotate the block
                                     blkRef.TransformBy(Matrix3d.Rotation(rotAng, AutoCAD.curUCS.Zaxis, insPt));
 
-                                    // Set the event handler for watching erasing
-                                    //blkRef.Erased += new ObjectErasedEventHandler(ForceErased);
-
                                     // Set XData to force block
                                     blkRef.XData = ForceData(xForce, (int)ForceDirection.X);
 
@@ -287,9 +279,6 @@ namespace SPMTool
 
                                     // Rotate the block
                                     blkRef.TransformBy(Matrix3d.Rotation(rotAng, AutoCAD.curUCS.Zaxis, insPt));
-
-                                    // Set the event handler for watching erasing
-                                    //blkRef.Erased += new ObjectErasedEventHandler(ForceErased);
 
                                     // Set XData to force block
                                     blkRef.XData = ForceData(yForce, (int)ForceDirection.Y);
@@ -408,48 +397,10 @@ namespace SPMTool
             }
         }
 
-        // Collections of force positions (in X and Y)
-        public static (Point3dCollection fcXPos, Point3dCollection fcYPos) ForcePositions()
-        {
-            // Initialize the collection of points and directions
-            Point3dCollection
-                fcXPos = new Point3dCollection(),
-                fcYPos = new Point3dCollection();
-
-            // Get the supports
-            ObjectIdCollection fcs = Auxiliary.GetEntitiesOnLayer(Layers.force);
-
-            if (fcs.Count > 0)
-            {
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-                {
-                    foreach (ObjectId obj in fcs)
-                    {
-                        // Read as a block reference
-                        BlockReference blkRef = trans.GetObject(obj, OpenMode.ForRead) as BlockReference;
-
-                        // If the rotation of the block is 90 or -90 degrees, the direction is X
-                        if (blkRef.Rotation == Constants.PiOver2 || blkRef.Rotation == -Constants.PiOver2)
-                        {
-                            fcXPos.Add(blkRef.Position);
-                        }
-
-                        // If the rotation of the block is 0 or 180 degrees, the direction is Y
-                        if (blkRef.Rotation == 0 || blkRef.Rotation == Constants.Pi)
-                        {
-                            fcYPos.Add(blkRef.Position);
-                        }
-                    }
-                }
-            }
-            return (fcXPos, fcYPos);
-        }
-
         // Read applied forces
         public static Force[] ListOfForces()
         {
-            List<Force> forces = new List<Force>();
+            var forces = new List<Force>();
 
             // Get force objects
             var fObjs = Auxiliary.GetEntitiesOnLayer(Layers.force);
@@ -460,53 +411,5 @@ namespace SPMTool
             return
                 forces.ToArray();
         }
-
-        // Event for remove constraint condition from a node if the block is erased by user
-        //public static void ForceErased(object senderObj, ObjectErasedEventArgs evtArgs)
-        //{
-        //    if (evtArgs.Erased)
-        //    {
-        //        // Read the block
-        //        BlockReference blkRef = evtArgs.DBObject as BlockReference;
-
-        //        // Get the external nodes in the model
-        //        ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
-
-        //        // Start a transaction
-        //        using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-        //        {
-        //            // Access the node
-        //            foreach (ObjectId ndObj in extNds)
-        //            {
-        //                // Read as a DBPoint
-        //                DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-
-        //                // Check the position
-        //                if (nd.Position == blkRef.Position)
-        //                {
-        //                    // Access the XData as an array
-        //                    ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
-        //                    TypedValue[] data = rb.AsArray();
-
-        //                    // Verify the rotation of the block
-        //                    // Force in Y
-        //                    if (blkRef.Rotation == 0 || blkRef.Rotation == Constants.Pi)
-        //                        data[(int)XData.Node.Fy] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-
-        //                    // Force in X
-        //                    else
-        //                        data[(int)XData.Node.Fx] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-
-        //                    // Save the XData
-        //                    nd.UpgradeOpen();
-        //                    nd.XData = new ResultBuffer(data);
-        //                }
-        //            }
-
-        //            // Commit changes
-        //            trans.Commit();
-        //        }
-        //    }
-        //}
     }
 }

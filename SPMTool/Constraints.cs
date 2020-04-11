@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using MathNet.Numerics.LinearAlgebra;
 
 [assembly: CommandClass(typeof(SPMTool.Constraint))]
 
@@ -177,9 +175,6 @@ namespace SPMTool
 
                                         // Set XData
                                         blkRef.XData = SupportData(support);
-
-                                        // Set the event handler for watching erasing
-                                        //blkRef.Erased += new ObjectErasedEventHandler(ConstraintErased);
                                     }
                                 }
                             }
@@ -422,75 +417,5 @@ namespace SPMTool
             return
                 constraints.ToArray();
         }
-
-        // Collection of support positions
-        public static Point3dCollection SupportPositions()
-        {
-            // Initialize the collection of points
-            Point3dCollection supPos = new Point3dCollection();
-
-            // Get the supports
-            ObjectIdCollection spts = Auxiliary.GetEntitiesOnLayer(Layers.support);
-
-            if (spts.Count > 0)
-            {
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-                {
-
-                    foreach (ObjectId obj in spts)
-                    {
-                        // Read as a block reference
-                        BlockReference blkRef = trans.GetObject(obj, OpenMode.ForRead) as BlockReference;
-
-                        // Get the position and add to the collection
-                        supPos.Add(blkRef.Position);
-                    }
-                }
-            }
-            return supPos;
-        }
-
-        // Event for remove constraint condition from a node if the block is erased by user
-        //public static void ConstraintErased(object senderObj, ObjectErasedEventArgs evtArgs)
-        //{
-        //    if (evtArgs.Erased)
-        //    {
-        //        // Read the block
-        //        BlockReference blkRef = evtArgs.DBObject as BlockReference;
-
-        //        // Get the external nodes in the model
-        //        ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
-
-        //        // Start a transaction
-        //        using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-        //        {
-        //            // Access the node
-        //            foreach (ObjectId ndObj in extNds)
-        //            {
-        //                // Read as a DBPoint
-        //                DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-
-        //                // Check the position
-        //                if (nd.Position == blkRef.Position)
-        //                {
-        //                    // Access the XData as an array
-        //                    ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
-        //                    TypedValue[] data = rb.AsArray();
-
-        //                    // Set the support condition to FREE
-        //                    data[(int)XData.Node.Support] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Free");
-
-        //                    // Save the XData
-        //                    nd.UpgradeOpen();
-        //                    nd.XData = new ResultBuffer(data);
-        //                }
-        //            }
-
-        //            // Commit changes
-        //            trans.Commit();
-        //        }
-        //    }
-        //}
     }
 }
