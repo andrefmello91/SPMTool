@@ -8,13 +8,15 @@ namespace SPMTool
     public class InputData
     {
 		// Properties
-		public Material.Concrete Concrete    { get; set; }
-        public Node[]            Nodes       { get; set; }
-	    public Stringer[]        Stringers   { get; set; }
-	    public Panel[]           Panels      { get; set; }
-	    public Vector<double>    ForceVector { get; set; }
-	    public List<int>         Constraints { get; set; }
-	    public int               numDoFs     => 2 * Nodes.Length;
+		public Material.Concrete Concrete        { get; }
+        public Node[]            Nodes           { get; }
+	    public Stringer[]        Stringers       { get; }
+	    public Panel[]           Panels          { get; }
+	    public Force[]           Forces          { get; }
+	    public Constraint[]      Constraints     { get; }
+	    public Vector<double>    ForceVector     { get; }
+	    public int[]             ConstraintIndex { get; }
+	    public int               numDoFs         => 2 * Nodes.Length;
 
 		// Private properties
 		private ObjectIdCollection NodeObjects      { get; }
@@ -30,6 +32,10 @@ namespace SPMTool
 			StringerObjects = Geometry.Stringer.UpdateStringers();
 			PanelObjects    = Geometry.Panel.UpdatePanels();
 
+            // Read forces and constraints
+            Forces      = Force.ListOfForces();
+            Constraints = Constraint.ListOfConstraints();
+
 			// Get concrete data
 			Concrete = new Material.Concrete();
 
@@ -37,10 +43,10 @@ namespace SPMTool
 			StringerBehavior = stringerBehavior;
 			PanelBehavior    = panelBehavior;
 
-			// Read nodes, forces and constraints
-			Nodes       = ReadNodes();
-			ForceVector = ReadForces();
-			Constraints = ConstraintList();
+			// Read nodes, forces and constraints indexes
+			Nodes           = ReadNodes();
+			ForceVector     = ReadForces();
+			ConstraintIndex = ConstraintsIndex();
 
 			// Read elements
 			Stringers = ReadStringers();
@@ -54,10 +60,10 @@ namespace SPMTool
 
 		    foreach (ObjectId ndObj in NodeObjects)
 		    {
-			    Node node = new Node(ndObj);
+			    Node node = new Node(ndObj, Forces, Constraints);
 
 			    // Set to nodes
-			    int i = node.Number - 1;
+			    int i    = node.Number - 1;
 			    nodes[i] = node;
 		    }
 
@@ -110,7 +116,7 @@ namespace SPMTool
 					panel = new Panel.NonLinear(pnlObj, Concrete, Stringers);
 
                 // Set to the array
-                int i = panel.Number - 1;
+                int i     = panel.Number - 1;
 		        panels[i] = panel;
 	        }
 
@@ -142,7 +148,7 @@ namespace SPMTool
         }
 
 		// Get constraint list
-		private List<int> ConstraintList()
+		private int[] ConstraintsIndex()
 		{
 			var constraintList = new List<int>();
 
@@ -168,7 +174,7 @@ namespace SPMTool
 			}
 
 			return
-				constraintList.OrderBy(i => i).ToList();
+				constraintList.OrderBy(i => i).ToArray();
 		}
     }
 }
