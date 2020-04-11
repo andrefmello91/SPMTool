@@ -21,7 +21,7 @@ namespace SPMTool
         public Stringer[]     Stringers          { get; }
         public Panel[]        Panels             { get; }
         public Vector<double> ForceVector        { get; }
-        public List<int>      Constraints        { get; }
+        public int[]          Constraints        { get; }
 
         // Constructor
         public Analysis(InputData inputData)
@@ -31,7 +31,7 @@ namespace SPMTool
 			Stringers   = inputData.Stringers;
 			Panels      = inputData.Panels;
 			ForceVector = inputData.ForceVector;
-			Constraints = inputData.Constraints;
+			Constraints = inputData.ConstraintIndex;
 		}
 
 		// Get the number of DoFs

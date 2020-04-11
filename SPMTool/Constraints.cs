@@ -7,13 +7,60 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 
-[assembly: CommandClass(typeof(SPMTool.Constraints))]
+[assembly: CommandClass(typeof(SPMTool.Constraint))]
 
 namespace SPMTool
 {
     // Constraints related commands
-    public static class Constraints
+    public class Constraint
     {
+        // Support conditions
+        public enum Support
+        {
+            X  = 0,
+            Y  = 1,
+            XY = 2
+        }
+
+        // Properties
+        public ObjectId         SupportObject { get; }
+        public Point3d          Position      { get; }
+        public (bool X, bool Y) Direction     { get; }
+
+        // Constructor
+        public Constraint(ObjectId supportObject)
+        {
+            SupportObject = supportObject;
+
+            // Start a transaction
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            {
+                // Read the object as a blockreference
+                var sBlck = trans.GetObject(supportObject, OpenMode.ForRead) as BlockReference;
+
+                // Get the position
+                Position = sBlck.Position;
+
+                // Read the XData and get the necessary data
+                ResultBuffer rb = sBlck.GetXDataForApplication(AutoCAD.appName);
+                TypedValue[] data = rb.AsArray();
+
+                // Get the direction
+                int dir = Convert.ToInt32(data[(int)XData.Support.Direction].Value);
+
+                var (x, y) = (false, false);
+
+                if (dir == (int)Support.X || dir == (int)Support.XY)
+                    x = true;
+
+                if (dir == (int)Support.Y || dir == (int)Support.XY)
+                    y = true;
+
+                Direction = (x, y);
+            }
+
+        }
+
         [CommandMethod("AddConstraint")]
         public static void AddConstraint()
         {
@@ -23,6 +70,9 @@ namespace SPMTool
             // Initialize variables
             PromptSelectionResult selRes;
             SelectionSet set;
+
+            // Definition for the Extended Data
+            string xdataStr = "Support Data";
 
             // Check if the support blocks already exist. If not, create the blocks
             CreateSupportBlocks();
@@ -37,8 +87,8 @@ namespace SPMTool
                 BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Read the object Ids of the support blocks
-                ObjectId xBlock = blkTbl[Blocks.supportX];
-                ObjectId yBlock = blkTbl[Blocks.supportY];
+                ObjectId xBlock  = blkTbl[Blocks.supportX];
+                ObjectId yBlock  = blkTbl[Blocks.supportY];
                 ObjectId xyBlock = blkTbl[Blocks.supportXY];
 
                 // Request objects to be selected in the drawing area
@@ -50,7 +100,7 @@ namespace SPMTool
                 {
                     // Get the objects selected
                     set = selRes.Value;
-
+                    
                     // Ask the user set the support conditions:
                     PromptKeywordOptions supOp = new PromptKeywordOptions("\nAdd support in which direction?");
                     supOp.Keywords.Add("Free");
@@ -75,16 +125,9 @@ namespace SPMTool
                             // Check if the selected object is a node
                             if (ent.Layer == Layers.extNode)
                             {
-                                // Upgrade the OpenMode
-                                ent.UpgradeOpen();
-
                                 // Read as a point and get the position
                                 DBPoint nd = ent as DBPoint;
                                 Point3d ndPos = nd.Position;
-
-                                // Access the XData as an array
-                                ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
-                                TypedValue[] data = rb.AsArray();
 
                                 // Check if there is a support block at the node position
                                 if (sprts.Count > 0)
@@ -100,7 +143,7 @@ namespace SPMTool
                                             spBlk.UpgradeOpen();
 
                                             // Remove the event handler
-                                            spBlk.Erased -= new ObjectErasedEventHandler(ConstraintErased);
+                                            //spBlk.Erased -= new ObjectErasedEventHandler(ConstraintErased);
 
                                             // Erase the support
                                             spBlk.Erase();
@@ -108,12 +151,6 @@ namespace SPMTool
                                         }
                                     }
                                 }
-
-                                // Set the new support conditions
-                                data[(int)XData.Node.Support] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, support);
-
-                                // Add the new XData
-                                ent.XData = new ResultBuffer(data);
 
                                 // If the node is not Free, add the support blocks
                                 if (support != "Free")
@@ -123,9 +160,14 @@ namespace SPMTool
 
                                     // Choose the block to insert
                                     ObjectId supBlock = new ObjectId();
-                                    if (support == "X" && xBlock != ObjectId.Null) supBlock = xBlock;
-                                    if (support == "Y" && yBlock != ObjectId.Null) supBlock = yBlock;
-                                    if (support == "XY" && xyBlock != ObjectId.Null) supBlock = xyBlock;
+                                    if (support == "X" && xBlock != ObjectId.Null)
+                                        supBlock = xBlock;
+
+                                    if (support == "Y" && yBlock != ObjectId.Null)
+                                        supBlock = yBlock;
+
+                                    if (support == "XY" && xyBlock != ObjectId.Null)
+                                        supBlock = xyBlock;
 
                                     // Insert the block into the current space
                                     using (BlockReference blkRef = new BlockReference(insPt, supBlock))
@@ -133,8 +175,11 @@ namespace SPMTool
                                         blkRef.Layer = Layers.support;
                                         Auxiliary.AddObject(blkRef);
 
+                                        // Set XData
+                                        blkRef.XData = SupportData(support);
+
                                         // Set the event handler for watching erasing
-                                        blkRef.Erased += new ObjectErasedEventHandler(ConstraintErased);
+                                        //blkRef.Erased += new ObjectErasedEventHandler(ConstraintErased);
                                     }
                                 }
                             }
@@ -144,6 +189,27 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
+            }
+
+            // Create XData for forces
+            ResultBuffer SupportData(string supportCondition)
+            {
+                // Get the Xdata size
+                int size  = Enum.GetNames(typeof(XData.Support)).Length;
+                var sData = new TypedValue[size];
+
+                // Get support enum as strings and get index
+                var names = Enum.GetNames(typeof(Support));
+                int index = Array.IndexOf(names, supportCondition);
+
+                // Set values
+                sData[(int)XData.Support.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
+                sData[(int)XData.Support.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+                sData[(int)XData.Support.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32, index);
+
+                // Add XData to force block
+                return
+                    new ResultBuffer(sData);
             }
         }
 
@@ -157,8 +223,8 @@ namespace SPMTool
                 BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
-                ObjectId xBlock = ObjectId.Null;
-                ObjectId yBlock = ObjectId.Null;
+                ObjectId xBlock  = ObjectId.Null;
+                ObjectId yBlock  = ObjectId.Null;
                 ObjectId xyBlock = ObjectId.Null;
 
                 // Check if the support blocks already exist in the drawing
@@ -342,51 +408,19 @@ namespace SPMTool
             }
         }
 
-        // Get the constraints as enumerated list to get the support conditions
-        public static IEnumerable<Tuple<int, double>> ConstraintList()
+        // Get support list
+        public static Constraint[] ListOfConstraints()
         {
-            // Access the nodes in the model
-            ObjectIdCollection nds = Geometry.Node.AllNodes();
+            var constraints = new List<Constraint>();
 
-            // Get the number of DoFs
-            int numDofs = nds.Count;
+            // Get force objects
+            var sObjs = Auxiliary.GetEntitiesOnLayer(Layers.support);
 
-            // Initialize the constraint list with size 2x number of nodes (displacements in x and y)
-            // Assign 1 (free node) initially to each value
-            var cons = Vector<double>.Build.Dense(2 * numDofs, 1);
+            foreach (ObjectId sObj in sObjs)
+                constraints.Add(new Constraint(sObj));
 
-            // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-            {
-                // Read the nodes data
-                foreach (ObjectId ndObj in nds)
-                {
-                    // Read as a DBPoint
-                    DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
-
-                    // Get the result buffer as an array
-                    ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
-                    TypedValue[] data = rb.AsArray();
-
-                    // Read the node number
-                    int ndNum = Convert.ToInt32(data[(int)XData.Node.Number].Value);
-
-                    // Read the support condition
-                    string sup = data[(int)XData.Node.Support].Value.ToString();
-
-                    // Get the position in the vector
-                    int i = 2 * ndNum - 2;
-
-                    // If there is a support the value on the vector will be zero on that direction
-                    // X (i) , Y (i + 1)
-                    if (sup.Contains("X")) cons.At(i, 0);
-                    if (sup.Contains("Y")) cons.At(i + 1, 0);
-                }
-            }
-
-            // Write the values
-            //Global.ed.WriteMessage("\nVector of displacements:\n" + u.ToString());
-            return cons.EnumerateIndexed();
+            return
+                constraints.ToArray();
         }
 
         // Collection of support positions
@@ -418,45 +452,45 @@ namespace SPMTool
         }
 
         // Event for remove constraint condition from a node if the block is erased by user
-        public static void ConstraintErased(object senderObj, ObjectErasedEventArgs evtArgs)
-        {
-            if (evtArgs.Erased)
-            {
-                // Read the block
-                BlockReference blkRef = evtArgs.DBObject as BlockReference;
+        //public static void ConstraintErased(object senderObj, ObjectErasedEventArgs evtArgs)
+        //{
+        //    if (evtArgs.Erased)
+        //    {
+        //        // Read the block
+        //        BlockReference blkRef = evtArgs.DBObject as BlockReference;
 
-                // Get the external nodes in the model
-                ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
+        //        // Get the external nodes in the model
+        //        ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
 
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-                {
-                    // Access the node
-                    foreach (ObjectId ndObj in extNds)
-                    {
-                        // Read as a DBPoint
-                        DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+        //        // Start a transaction
+        //        using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+        //        {
+        //            // Access the node
+        //            foreach (ObjectId ndObj in extNds)
+        //            {
+        //                // Read as a DBPoint
+        //                DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
 
-                        // Check the position
-                        if (nd.Position == blkRef.Position)
-                        {
-                            // Access the XData as an array
-                            ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
-                            TypedValue[] data = rb.AsArray();
+        //                // Check the position
+        //                if (nd.Position == blkRef.Position)
+        //                {
+        //                    // Access the XData as an array
+        //                    ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
+        //                    TypedValue[] data = rb.AsArray();
 
-                            // Set the support condition to FREE
-                            data[(int)XData.Node.Support] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Free");
+        //                    // Set the support condition to FREE
+        //                    data[(int)XData.Node.Support] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Free");
 
-                            // Save the XData
-                            nd.UpgradeOpen();
-                            nd.XData = new ResultBuffer(data);
-                        }
-                    }
+        //                    // Save the XData
+        //                    nd.UpgradeOpen();
+        //                    nd.XData = new ResultBuffer(data);
+        //                }
+        //            }
 
-                    // Commit changes
-                    trans.Commit();
-                }
-            }
-        }
+        //            // Commit changes
+        //            trans.Commit();
+        //        }
+        //    }
+        //}
     }
 }

@@ -121,21 +121,13 @@ namespace SPMTool
                         // Initialize the array of typed values for XData
                         TypedValue[] data;
 
+                        // Get the Xdata size
+                        int size = Enum.GetNames(typeof(XData.Node)).Length;
+
                         // If the Extended data does not exist, create it
                         if (nd.XData == null)
                         {
-                            // Get the Xdata size
-                            int size = Enum.GetNames(typeof(XData.Node)).Length;
-                            data = new TypedValue[size];
-
-                            // Set the initial parameters
-                            data[(int)XData.Node.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
-                            data[(int)XData.Node.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-                            data[(int)XData.Node.Support]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Free");
-                            data[(int)XData.Node.Fx]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[(int)XData.Node.Fy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[(int)XData.Node.Ux]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-                            data[(int)XData.Node.Uy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                            data = nodeXData();
                         }
 
                         else // Xdata exists
@@ -143,6 +135,10 @@ namespace SPMTool
                             // Get the result buffer as an array
                             ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
                             data = rb.AsArray();
+
+                            // Check length
+                            if (data.Length != size)
+                                data = nodeXData();
                         }
 
                         // Set the updated number
@@ -158,6 +154,25 @@ namespace SPMTool
 
                     // Commit and dispose the transaction
                     trans.Commit();
+                }
+
+                // Create node XData
+                TypedValue[] nodeXData()
+                {
+                    // Get the Xdata size
+                    int size = Enum.GetNames(typeof(XData.Node)).Length;
+
+                    // Initialize the array of typed values for XData
+                    var nData = new TypedValue[size];
+
+                    // Set the initial parameters
+                    nData[(int)XData.Node.AppName] = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
+                    nData[(int)XData.Node.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+                    nData[(int)XData.Node.Ux] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+                    nData[(int)XData.Node.Uy] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+
+                    return
+                        nData;
                 }
 
                 // Return the collection of nodes

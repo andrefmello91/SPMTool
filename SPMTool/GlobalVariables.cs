@@ -80,11 +80,8 @@ namespace SPMTool
             AppName  = 0,
             XDataStr = 1,
             Number   = 2,
-            Support  = 3,
-            Fx       = 4,
-            Fy       = 5,
-            Ux       = 6,
-            Uy       = 7
+            Ux       = 3,
+            Uy       = 4
         }
 
         // Stringer indexers
@@ -123,6 +120,23 @@ namespace SPMTool
             Sy       = 13,
 			fyy      = 14,
 			Esy      = 15
+        }
+
+        // Force indexers
+        public enum Force
+        {
+            AppName    = 0,
+            XDataStr   = 1,
+            Value      = 2,
+            Direction  = 3
+        }
+
+        // Support Indexers
+        public enum Support
+        {
+            AppName   = 0,
+            XDataStr  = 1,
+            Direction = 2,
         }
     }
 }

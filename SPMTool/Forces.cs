@@ -7,19 +7,59 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 
-[assembly: CommandClass(typeof(SPMTool.Forces))]
+[assembly: CommandClass(typeof(SPMTool.Force))]
 
 namespace SPMTool
 {
     // Constraints related commands
-    public static class Forces
+    public class Force
     {
+        // Force directions
+        public enum ForceDirection
+        {
+            X = 0,
+            Y = 1
+        }
+
+        // Properties
+        public ObjectId ForceObject { get; }
+        public double   Value       { get; }
+        public Point3d  Position    { get; }
+        public int      Direction   { get; }
+
+        // Constructor
+        public Force(ObjectId forceObject)
+        {
+            ForceObject = forceObject;
+
+            // Start a transaction
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            {
+                // Read the object as a blockreference
+                var fBlck = trans.GetObject(ForceObject, OpenMode.ForRead) as BlockReference;
+
+                // Get the position
+                Position = fBlck.Position;
+
+                // Read the XData and get the necessary data
+                ResultBuffer rb = fBlck.GetXDataForApplication(AutoCAD.appName);
+                TypedValue[] data = rb.AsArray();
+
+                // Get value and direction
+                Value     = Convert.ToDouble(data[(int)XData.Force.Value].Value);
+                Direction = Convert.ToInt32(data[(int)XData.Force.Direction].Value);
+            }
+        }
+
         [CommandMethod("AddForce")]
         public static void AddForce()
         {
             // Initialize variables
             PromptSelectionResult selRes;
             SelectionSet set;
+
+            // Definition for the Extended Data
+            string xdataStr = "Force Data";
 
             // Check if the layer Force and ForceText already exists in the drawing. If it doesn't, then it's created:
             Auxiliary.CreateLayer(Layers.force, (short)AutoCAD.Colors.Yellow, 0);
@@ -83,9 +123,6 @@ namespace SPMTool
                         // Check if the selected object is a node
                         if (ent.Layer == Layers.extNode)
                         {
-                            // Upgrade the OpenMode
-                            ent.UpgradeOpen();
-
                             // Read as a point and get the position
                             DBPoint nd = ent as DBPoint;
                             Point3d ndPos = nd.Position;
@@ -93,17 +130,6 @@ namespace SPMTool
                             // Get the node coordinates
                             double xPos = ndPos.X;
                             double yPos = ndPos.Y;
-
-                            // Access the XData as an array
-                            ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.appName);
-                            TypedValue[] data = rb.AsArray();
-
-                            // Set the new forces (line 6 and 7 of the array)
-                            data[(int)XData.Node.Fx] = new TypedValue((int)DxfCode.ExtendedDataReal, xForce);
-                            data[(int)XData.Node.Fy] = new TypedValue((int)DxfCode.ExtendedDataReal, yForce);
-
-                            // Add the new XData
-                            ent.XData = new ResultBuffer(data);
 
                             // Add the block to selected node at
                             Point3d insPt = ndPos;
@@ -122,7 +148,7 @@ namespace SPMTool
                                         fcBlk.UpgradeOpen();
 
                                         // Remove the event handler
-                                        fcBlk.Erased -= new ObjectErasedEventHandler(ForceErased);
+                                        //fcBlk.Erased -= new ObjectErasedEventHandler(ForceErased);
 
                                         // Erase the force block
                                         fcBlk.Erase();
@@ -196,7 +222,10 @@ namespace SPMTool
                                     blkRef.TransformBy(Matrix3d.Rotation(rotAng, AutoCAD.curUCS.Zaxis, insPt));
 
                                     // Set the event handler for watching erasing
-                                    blkRef.Erased += new ObjectErasedEventHandler(ForceErased);
+                                    //blkRef.Erased += new ObjectErasedEventHandler(ForceErased);
+
+                                    // Set XData to force block
+                                    blkRef.XData = ForceData(xForce, (int)ForceDirection.X);
 
                                     // Define the force text
                                     DBText text = new DBText()
@@ -260,7 +289,10 @@ namespace SPMTool
                                     blkRef.TransformBy(Matrix3d.Rotation(rotAng, AutoCAD.curUCS.Zaxis, insPt));
 
                                     // Set the event handler for watching erasing
-                                    blkRef.Erased += new ObjectErasedEventHandler(ForceErased);
+                                    //blkRef.Erased += new ObjectErasedEventHandler(ForceErased);
+
+                                    // Set XData to force block
+                                    blkRef.XData = ForceData(yForce, (int)ForceDirection.Y);
 
                                     // Define the force text
                                     DBText text = new DBText()
@@ -293,6 +325,24 @@ namespace SPMTool
 
                 // Save the new object to the database
                 trans.Commit();
+            }
+
+            // Create XData for forces
+            ResultBuffer ForceData(double forceValue, int forceDirecion)
+            {
+                // Get the Xdata size
+                int size = Enum.GetNames(typeof(XData.Force)).Length;
+                var fData = new TypedValue[size];
+
+                // Set values
+                fData[(int)XData.Force.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
+                fData[(int)XData.Force.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+                fData[(int)XData.Force.Value]     = new TypedValue((int)DxfCode.ExtendedDataReal, forceValue);
+                fData[(int)XData.Force.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32, forceDirecion);
+
+                // Add XData to force block
+                return
+                    new ResultBuffer(fData);
             }
         }
 
@@ -396,52 +446,67 @@ namespace SPMTool
             return (fcXPos, fcYPos);
         }
 
-        // Event for remove constraint condition from a node if the block is erased by user
-        public static void ForceErased(object senderObj, ObjectErasedEventArgs evtArgs)
+        // Read applied forces
+        public static Force[] ListOfForces()
         {
-            if (evtArgs.Erased)
-            {
-                // Read the block
-                BlockReference blkRef = evtArgs.DBObject as BlockReference;
+            List<Force> forces = new List<Force>();
 
-                // Get the external nodes in the model
-                ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
+            // Get force objects
+            var fObjs = Auxiliary.GetEntitiesOnLayer(Layers.force);
 
-                // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-                {
-                    // Access the node
-                    foreach (ObjectId ndObj in extNds)
-                    {
-                        // Read as a DBPoint
-                        DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+            foreach (ObjectId fObj in fObjs)
+                forces.Add(new Force(fObj));
 
-                        // Check the position
-                        if (nd.Position == blkRef.Position)
-                        {
-                            // Access the XData as an array
-                            ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
-                            TypedValue[] data = rb.AsArray();
-
-                            // Verify the rotation of the block
-                            // Force in Y
-                            if (blkRef.Rotation == 0 || blkRef.Rotation == Constants.Pi)
-                                data[(int)XData.Node.Fy] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-
-                            // Force in X
-                            else
-                                data[(int)XData.Node.Fx] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-
-                            // Save the XData
-                            nd.UpgradeOpen();
-                            nd.XData = new ResultBuffer(data);
-                        }
-                    }
-
-                    // Commit changes
-                    trans.Commit();
-                }
-            }
+            return
+                forces.ToArray();
         }
+
+        // Event for remove constraint condition from a node if the block is erased by user
+        //public static void ForceErased(object senderObj, ObjectErasedEventArgs evtArgs)
+        //{
+        //    if (evtArgs.Erased)
+        //    {
+        //        // Read the block
+        //        BlockReference blkRef = evtArgs.DBObject as BlockReference;
+
+        //        // Get the external nodes in the model
+        //        ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
+
+        //        // Start a transaction
+        //        using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+        //        {
+        //            // Access the node
+        //            foreach (ObjectId ndObj in extNds)
+        //            {
+        //                // Read as a DBPoint
+        //                DBPoint nd = trans.GetObject(ndObj, OpenMode.ForRead) as DBPoint;
+
+        //                // Check the position
+        //                if (nd.Position == blkRef.Position)
+        //                {
+        //                    // Access the XData as an array
+        //                    ResultBuffer rb = nd.GetXDataForApplication(AutoCAD.appName);
+        //                    TypedValue[] data = rb.AsArray();
+
+        //                    // Verify the rotation of the block
+        //                    // Force in Y
+        //                    if (blkRef.Rotation == 0 || blkRef.Rotation == Constants.Pi)
+        //                        data[(int)XData.Node.Fy] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+
+        //                    // Force in X
+        //                    else
+        //                        data[(int)XData.Node.Fx] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+
+        //                    // Save the XData
+        //                    nd.UpgradeOpen();
+        //                    nd.XData = new ResultBuffer(data);
+        //                }
+        //            }
+
+        //            // Commit changes
+        //            trans.Commit();
+        //        }
+        //    }
+        //}
     }
 }
