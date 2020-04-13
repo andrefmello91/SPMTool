@@ -509,18 +509,18 @@ namespace SPMTool
 						u += du;
                     }
 
-					var pnl = Panels[0] as Panel.NonLinear;
+                    //var pnl = Panels[0] as Panel.NonLinear;
 
-					fiMatrix.SetRow(loadStep - 1, fi);
-					uMatrix.SetRow(loadStep - 1, u);
-					fPnl.SetRow(loadStep - 1, pnl.Forces);
-					sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
-					sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
-					epsPnl.SetRow(loadStep - 1, pnl.StrainVector);
-					uPnl.SetRow(loadStep - 1, pnl.Displacements);
-					genStPnl.SetRow(loadStep - 1, pnl.GenStrains);
-					DcPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Dc);
-					DsPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Ds);
+                    fiMatrix.SetRow(loadStep - 1, fi);
+                    uMatrix.SetRow(loadStep - 1, u);
+                    //fPnl.SetRow(loadStep - 1, pnl.Forces);
+                    //sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
+                    //sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
+                    //epsPnl.SetRow(loadStep - 1, pnl.StrainVector);
+                    //uPnl.SetRow(loadStep - 1, pnl.Displacements);
+                    //genStPnl.SetRow(loadStep - 1, pnl.GenStrains);
+                    //DcPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Dc);
+                    //DsPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Ds);
 
                     // Set the results to stringers
                     StringerResults();

@@ -566,35 +566,50 @@ namespace SPMTool
 								xPos = Math.Round(nd.Position.X, 2),
 								yPos = Math.Round(nd.Position.Y, 2);
 
-							// Get supports
-							string sup = "";
-							if (nd.Support == (false, false))
-								sup = "Free";
-							else
-							{
-								if (nd.Support.X)
-									sup += "X";
-								if (nd.Support.Y)
-									sup += "Y";
-							}
-
-							// Approximate displacements
-							double
-								ux = Math.Round(nd.Displacement.X, 2),
-								uy = Math.Round(nd.Displacement.Y, 2);
-
 							msgstr =
 								"Node " + nd.Number + "\n\n" +
-								"Node position: ("     + xPos + ", " + yPos + ")" + "\n" +
-								"Support conditions: " + sup + "\n" +
-								"Fx = " + nd.Force.X + " kN" + "\n" +
-								"Fy = " + nd.Force.Y + " kN" + "\n" +
-								"ux = " + ux + " mm" + "\n" +
-								"uy = " + uy + " mm";
-						}
+								"Position: (" + xPos + ", " + yPos + ")";
 
-						// If it's a stringer
-						else if (ent.Layer == Layers.stringer)
+							// Read applied forces
+							if (nd.Force != (0, 0))
+								msgstr +=
+									"\n\nApplied forces:\n" +
+									"Fx = " + nd.Force.X + " kN" + "\n" +
+									"Fy = " + nd.Force.Y + " kN" + "\n";
+
+							// Get supports
+							if (nd.Support != (false, false))
+							{
+								string sup = "";
+
+								if (nd.Support.X)
+									sup += "X";
+
+								if (nd.Support.Y)
+									sup += "Y";
+
+								msgstr +=
+									"\n\nSupport conditions: " + sup;
+
+							}
+
+							// Get displacements
+							if (nd.Displacement != (0, 0))
+							{
+								// Approximate displacements
+								double
+									ux = Math.Round(nd.Displacement.X, 2),
+									uy = Math.Round(nd.Displacement.Y, 2);
+
+								msgstr +=
+									"\n\nDisplacements:\n" +
+									"ux = " + ux + " mm" + "\n" +
+									"uy = " + uy + " mm";
+							}
+                        }
+
+                        // If it's a stringer
+                        else if (ent.Layer == Layers.stringer)
 						{
 							// Get the stringer
 							var str = new Stringer.Linear(entRes.ObjectId);
