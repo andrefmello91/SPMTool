@@ -232,8 +232,11 @@ namespace SPMTool
             }
 
             // Get the node number at the position
-            public static int GetNodeNumber(Point3d position, ObjectIdCollection nodes)
+            public static int GetNodeNumber(Point3d position, ObjectIdCollection nodes = null)
             {
+	            if (nodes == null)
+		            nodes = AllNodes();
+
                 // Initiate the node number
                 int ndNum = 0;
 
@@ -280,7 +283,7 @@ namespace SPMTool
 			{
 				// Get the list of stringers if it's not imposed
 				if (stringerList == null)
-					stringerList = ListOfStringers();
+					stringerList = ListOfStringerPoints();
 
 				// Check if a stringer already exist on that position. If not, create it
 				if (!stringerList.Contains((startPoint, endPoint)))
@@ -299,20 +302,19 @@ namespace SPMTool
 				}
 			}
 
-
             [CommandMethod("AddStringer")]
             public static void AddStringer()
             {
                 // Check if the layers already exists in the drawing. If it doesn't, then it's created:
-                Auxiliary.CreateLayer(Layers.extNode, (short)AutoCAD.Colors.Red, 0);
-                Auxiliary.CreateLayer(Layers.intNode, (short)AutoCAD.Colors.Blue, 0);
-                Auxiliary.CreateLayer(Layers.stringer, (short)AutoCAD.Colors.Cyan, 0);
+                Auxiliary.CreateLayer(Layers.extNode, (short)AutoCAD.Colors.Red);
+                Auxiliary.CreateLayer(Layers.intNode, (short)AutoCAD.Colors.Blue);
+                Auxiliary.CreateLayer(Layers.stringer, (short)AutoCAD.Colors.Cyan);
 
                 // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
                 Auxiliary.RegisterApp();
 
                 // Get the list of start and endpoints
-                var strList = ListOfStringers();
+                var strList = ListOfStringerPoints();
 
                 // Create lists of points for adding the nodes later
                 List<Point3d> 
@@ -408,7 +410,7 @@ namespace SPMTool
                         int strNum = strNumRes.Value;
 
                         // Get the list of start and endpoints
-                        var strList = ListOfStringers();
+                        var strList = ListOfStringerPoints();
 
                         // Get the selection set and analyse the elements
                         SelectionSet set = selRes.Value;
@@ -426,12 +428,6 @@ namespace SPMTool
                             // Start a transaction
                             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
                             {
-                                // Open the Block table for read
-                                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                                // Open the Block table record Model space for write
-                                BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
                                 foreach (SelectedObject obj in set)
                                 {
                                     // Open the selected object for read
@@ -635,9 +631,9 @@ namespace SPMTool
                             strEnNd  = Node.GetNodeNumber(str.EndPoint, nds);
 
                         // Set the updated number and nodes in ascending number and length (line 2 to 6)
-                        data[(int)XData.Stringer.Number]   = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
+                        data[(int)XData.Stringer.Number] = new TypedValue((int)DxfCode.ExtendedDataReal, strNum);
                         data[(int)XData.Stringer.Grip1]  = new TypedValue((int)DxfCode.ExtendedDataReal, strStNd);
-                        data[(int)XData.Stringer.Grip2] = new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd);
+                        data[(int)XData.Stringer.Grip2]  = new TypedValue((int)DxfCode.ExtendedDataReal, strMidNd);
                         data[(int)XData.Stringer.Grip3]  = new TypedValue((int)DxfCode.ExtendedDataReal, strEnNd);
 
                         // Add the new XData
@@ -657,7 +653,7 @@ namespace SPMTool
             }
 
             // List of stringers (start and end points)
-            public static List<(Point3d start, Point3d end)> ListOfStringers()
+            public static List<(Point3d start, Point3d end)> ListOfStringerPoints()
             {
                 // Get the stringers in the model
                 ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.stringer);
@@ -774,7 +770,7 @@ namespace SPMTool
 			{
 				// Check if list of panels is null
 				if (panelList == null)
-					panelList = ListOfPanels();
+					panelList = ListOfPanelVertices();
 
 				// Check if a panel already exist on that position. If not, create it
 				if (!panelList.Contains(vertices))
@@ -804,7 +800,7 @@ namespace SPMTool
                 Auxiliary.RegisterApp();
 
                 // Get the list of panel vertices
-                var pnlList = ListOfPanels();
+                var pnlList = ListOfPanelVertices();
 
                 // Create a loop for creating infinite panels
                 for ( ; ; )
@@ -900,10 +896,10 @@ namespace SPMTool
                             int clmn = clmnRes.Value;
 
                             // Get the list of start and endpoints
-                            var strList = Stringer.ListOfStringers();
+                            var strList = Stringer.ListOfStringerPoints();
 
                             // Get the list of panels
-                            var pnlList = ListOfPanels();
+                            var pnlList = ListOfPanelVertices();
 
                             // Create lists of points for adding the nodes later
                             List<Point3d> newIntNds = new List<Point3d>(),
@@ -1317,7 +1313,7 @@ namespace SPMTool
             }
 
             // List of panels (collection of vertices)
-            public static List<(Point3d, Point3d, Point3d, Point3d)> ListOfPanels()
+            public static List<(Point3d, Point3d, Point3d, Point3d)> ListOfPanelVertices()
             {
                 // Get the stringers in the model
                 ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.panel);
@@ -1366,7 +1362,7 @@ namespace SPMTool
             int numPnls = pnls.Count;
 
             // Display the number of updated elements
-            AutoCAD.edtr.WriteMessage("\n" + numNds.ToString() + " nodes, " + numStrs.ToString() + " stringers and " + numPnls.ToString() + " panels updated.");
+            AutoCAD.edtr.WriteMessage("\n" + numNds + " nodes, " + numStrs + " stringers and " + numPnls + " panels updated.");
         }
 
         // Toggle view for nodes

@@ -765,19 +765,46 @@ namespace SPMTool
             {
 	            get
 	            {
-					// Get P matrices
-					var (Pc, Ps) = PMatrix;
+                    //// Get dimensions
+                    //var (x, y) = VertexCoordinates;
+                    //var c = StringerDimensions;
 
-					// Get stresses
-					var (_, sigC, sigS) = StressVector;
+                    //         // Get stresses
+                    //         var (sig, sigC, sigS) = StressVector;
+                    //         var (sig1, sigC1, sigS1) = (sig.SubVector(0, 3), sigC.SubVector(0, 3), sigS.SubVector(0, 3));
+                    //         var (sig2, sigC2, sigS2) = (sig.SubVector(3, 3), sigC.SubVector(3, 3), sigS.SubVector(3, 3));
+                    //         var (sig3, sigC3, sigS3) = (sig.SubVector(6, 3), sigC.SubVector(6, 3), sigS.SubVector(6, 3));
+                    //         var (sig4, sigC4, sigS4) = (sig.SubVector(9, 3), sigC.SubVector(9, 3), sigS.SubVector(9, 3));
 
-					// Calculate forces
-					var f = Pc * sigC + Ps * sigS;
+                    //// Calculate forces
+                    //var f = Width * Vector<double>.Build.DenseOfArray(new []
+                    //{
+                    //	-sig1[0]  * (y[0] - y[1]) - sig1[2] * (x[1] - x[0]),
+                    //	-sigC1[1] * (x[1] - x[0] - c[1] - c[3]) - sigS1[1] * (x[1] - x[0]) - sig1[2] * (y[0] - y[1]),
+                    //	 sigC2[0] * (y[2] - y[1] - c[2] - c[0]) + sigS2[0] * (y[2] - y[1]) - sig2[2] * (x[2] - x[1]),
+                    //	-sig2[1]  * (x[2] - x[1]) + sig2[2] * (y[2] - y[1]),
+                    //	-sig3[0]  * (y[2] - y[3]) + sig3[2] * (x[2] - x[3]),
+                    //	 sigC3[1] * (x[2] - x[3] - c[1] - c[3]) + sigS3[1] * (x[2] - x[3]) - sig3[2] * (y[2] - y[3]),
+                    //	-sigC4[0] * (y[3] - y[0] - c[0] - c[2]) - sigS4[0] * (y[3] - y[0]) - sig4[2] * (x[0] - x[3]),
+                    //	-sig4[1]  * (x[0] - x[3]) - sig4[2] * (y[3] - y[0])
+                    //});
 
-					// Correct forces
+                    //return
+                    //	QMatrix * f;
+
+                    // Get P matrices
+                    var (Pc, Ps) = PMatrix;
+
+                    // Get stresses
+                    var (_, sigC, sigS) = StressVector;
+
+                    // Calculate forces
+                    var f = Pc * sigC + Ps * sigS;
+
+                    // Correct forces
                     return
 						QMatrix * f;
-	            }
+                }
             }
 
             // Initial MCFT parameters

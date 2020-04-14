@@ -63,7 +63,7 @@ namespace SPMTool
         public static void AddConstraint()
         {
             // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-            Auxiliary.CreateLayer(Layers.support, (short)AutoCAD.Colors.Red, 0);
+            Auxiliary.CreateLayer(Layers.support, (short)AutoCAD.Colors.Red);
 
             // Initialize variables
             PromptSelectionResult selRes;

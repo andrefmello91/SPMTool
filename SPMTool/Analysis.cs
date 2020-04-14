@@ -145,22 +145,22 @@ namespace SPMTool
         // Set stringer displacements
         private void StringerDisplacements(Vector<double> globalDisplacements)
         {
-	        foreach (var str in Stringers)
-		        str.Displacement(globalDisplacements);
+	        foreach (var stringer in Stringers)
+		        stringer.Displacement(globalDisplacements);
         }
 
         // Set panel displacements
         private void PanelDisplacements(Vector<double> globalDisplacements)
         {
-	        foreach (var pnl in Panels)
-		        pnl.Displacement(globalDisplacements);
+	        foreach (var panel in Panels)
+		        panel.Displacement(globalDisplacements);
         }
 
         // Get the nodal displacements and save to XData
         private void NodalDisplacements(Vector<double> globalDisplacements)
         {
-	        foreach (var nd in Nodes)
-		        nd.Displacements(globalDisplacements);
+	        foreach (var node in Nodes)
+		        node.Displacements(globalDisplacements);
         }
 
         // Calculate maximum stringer force
@@ -312,37 +312,39 @@ namespace SPMTool
 		        }
 	        }
 
-	        return contDofs;
+	        return
+		        contDofs;
         }
 
         // Get DoFs that are not continuous
-        private int[] NotContinuousPanelDoFs => notContPnlDoFs.Value;
-        private Lazy<int[]> notContPnlDoFs => new Lazy<int[]>(NotContinuousPanelDofs);
-        private int[] NotContinuousPanelDofs()
+        private int[] NotContinuousPanelDoFs
         {
-	        // Create an array containing all DoFs
-	        var AllDoFs = new int[numDoFs];
-	        for (int i = 0; i < numDoFs; i++)
-		        AllDoFs[i] = i;
-
-	        // Get the continuous DoFs
-	        var contDofs = PanelContinuousDoFs();
-
-	        // Verify if exist continuous DoFs
-	        if (contDofs.Count == 0)
-		        return
-			        AllDoFs;
-
-	        // Create a list containing only not continuous DoFs
-	        var notContDoFs = new List<int>();
-	        foreach (int dof in AllDoFs)
+	        get
 	        {
-		        if (!contDofs.Contains(dof))
-			        notContDoFs.Add(dof);
-	        }
+		        // Create an array containing all DoFs
+		        var AllDoFs = new int[numDoFs];
+		        for (int i = 0; i < numDoFs; i++)
+			        AllDoFs[i] = i;
 
-	        return
-		        notContDoFs.ToArray();
+		        // Get the continuous DoFs
+		        var contDofs = PanelContinuousDoFs();
+
+		        // Verify if exist continuous DoFs
+		        if (contDofs.Count == 0)
+			        return
+				        AllDoFs;
+
+		        // Create a list containing only not continuous DoFs
+		        var notContDoFs = new List<int>();
+		        foreach (int dof in AllDoFs)
+		        {
+			        if (!contDofs.Contains(dof))
+				        notContDoFs.Add(dof);
+		        }
+
+		        return
+			        notContDoFs.ToArray();
+	        }
         }
 
         //View the continued stringers
@@ -395,9 +397,7 @@ namespace SPMTool
 		        }
 
 		        else
-		        {
 			        Application.ShowAlertDialog("Please set concrete parameters");
-		        }
 	        }
 
 	        public Linear(InputData inputData) : base(inputData)
@@ -440,9 +440,7 @@ namespace SPMTool
                 }
 
                 else
-		        {
 			        Application.ShowAlertDialog("Please set concrete parameters");
-		        }
 	        }
 
             public NonLinear(InputData inputData) : base(inputData)
@@ -509,18 +507,18 @@ namespace SPMTool
 						u += du;
                     }
 
-                    //var pnl = Panels[0] as Panel.NonLinear;
+                    var pnl = Panels[0] as Panel.NonLinear;
 
                     fiMatrix.SetRow(loadStep - 1, fi);
                     uMatrix.SetRow(loadStep - 1, u);
-                    //fPnl.SetRow(loadStep - 1, pnl.Forces);
-                    //sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
-                    //sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
-                    //epsPnl.SetRow(loadStep - 1, pnl.StrainVector);
-                    //uPnl.SetRow(loadStep - 1, pnl.Displacements);
-                    //genStPnl.SetRow(loadStep - 1, pnl.GenStrains);
-                    //DcPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Dc);
-                    //DsPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Ds);
+                    fPnl.SetRow(loadStep - 1, pnl.Forces);
+                    sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
+                    sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
+                    epsPnl.SetRow(loadStep - 1, pnl.StrainVector);
+                    uPnl.SetRow(loadStep - 1, pnl.Displacements);
+                    genStPnl.SetRow(loadStep - 1, pnl.GenStrains);
+                    DcPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Dc);
+                    DsPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Ds);
 
                     // Set the results to stringers
                     StringerResults();
@@ -579,7 +577,7 @@ namespace SPMTool
 					tolerance = MaxElementForce / 100;
 
                 // Check convergence
-                if (maxForce <= tolerance && iteration > 0)
+                if (maxForce <= tolerance && iteration > 4)
 					return true;
 
 				// Else

@@ -60,8 +60,8 @@ namespace SPMTool
             string xdataStr = "Force Data";
 
             // Check if the layer Force and ForceText already exists in the drawing. If it doesn't, then it's created:
-            Auxiliary.CreateLayer(Layers.force, (short)AutoCAD.Colors.Yellow, 0);
-            Auxiliary.CreateLayer(Layers.forceText, (short)AutoCAD.Colors.Yellow, 0);
+            Auxiliary.CreateLayer(Layers.force, (short)AutoCAD.Colors.Yellow);
+            Auxiliary.CreateLayer(Layers.forceText, (short)AutoCAD.Colors.Yellow);
 
             // Check if the force block already exist. If not, create the blocks
             CreateForceBlock();

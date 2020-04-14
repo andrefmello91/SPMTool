@@ -17,7 +17,6 @@ namespace SPMTool
 		public (int X, int Y)                    LSYield                   { get; set; }
 		public int                               LSPeak                    { get; set; }
 		public Vector<double>                    Strains                   { get; }
-		public abstract (double ec1, double ec2) ConcretePrincipalStrains  { get; }
 		public abstract (double fc1, double fc2) ConcretePrincipalStresses { get; }
 		private int                              LoadStep                  { get; }
 
@@ -66,6 +65,70 @@ namespace SPMTool
 		private double smx => phiX / (5.4 * psx);
 		private double smy => phiY / (5.4 * psy);
 
+        // Calculate tensile strain angle
+        public double StrainAngle
+        {
+            get
+            {
+                double theta = 0;
+
+                // Get the strains
+                var e = Strains;
+
+                // Verify the strains
+                if (e.Exists(Auxiliary.NotZero))
+                {
+                    // Calculate the strain slope
+                    if (e[2] == 0)
+                        theta = 0;
+
+                    else if (Math.Abs(e[0] - e[1]) <= 1E-6)
+                    {
+                        if (e[2] > 0)
+                            theta = Constants.PiOver4;
+
+                        else
+                            theta = -Constants.PiOver4;
+                    }
+
+                    else
+                    {
+                        double tan2Angle = e[2] / (e[0] - e[1]);
+                        theta = 0.5 * Math.Atan(tan2Angle);
+
+                        // Theta must be positive
+                        //if (theta < 0)
+                        //    theta += Constants.PiOver2;
+                    }
+                }
+
+                return theta;
+            }
+        }
+
+        // Calculate principal strains in concrete
+        public (double ec1, double ec2) ConcretePrincipalStrains
+        {
+            get
+            {
+                // Get the strains
+                var e = Strains;
+
+                // Calculate radius and center of Mohr's Circle
+                double
+                    cen = 0.5 * (e[0] + e[1]),
+                    rad = 0.5 * Math.Sqrt((e[0] - e[1]) * (e[0] - e[1]) + e[2] * e[2]);
+
+                // Calculate principal strains in concrete
+                double
+                    ec1 = cen + rad,
+                    ec2 = cen - rad;
+
+                return
+                    (ec1, ec2);
+            }
+        }
+
         // Calculate reinforcement stresses
         public (double fsx, double fsy) ReinforcementStresses
         {
@@ -101,19 +164,19 @@ namespace SPMTool
 			{
                 if (Strains.Exists(Auxiliary.NotZero))
                 {
-                    var (fsx, fsy) = ReinforcementStresses;
+                    //var (fsx, fsy) = ReinforcementStresses;
+
+                    //return
+                    //    CreateVector.DenseOfArray(new[] { psx * fsx, psy * fsy, 0 });
 
                     return
-                        CreateVector.DenseOfArray(new[] { psx * fsx, psy * fsy, 0 });
+						SteelStiffness * Strains;
                 }
 
-				return
+                return
 					Vector<double>.Build.Dense(3);
 			}
         }
-
-        // Principal tensile strain angle
-        public abstract double CrackAngle { get; }
 
         // Calculate secant module of steel
         private (double Esx, double Esy) SteelSecantModule
@@ -218,8 +281,8 @@ namespace SPMTool
 
 		        // Concrete matrix
 		        var Dc1 = Matrix<double>.Build.Dense(3, 3);
-		        Dc1[0, 0] = Ec2;
-		        Dc1[1, 1] = Ec1;
+		        Dc1[0, 0] = Ec1;
+		        Dc1[1, 1] = Ec2;
 		        Dc1[2, 2] = Gc;
 
 		        // Get transformation matrix
@@ -227,18 +290,17 @@ namespace SPMTool
 
 		        // Calculate Dc
 		        return
-			        T.Transpose() * Dc1 * T;
+			        T.Inverse() * Dc1 * T;
 	        }
         }
 
-        // Calculate concrete transformation matrix
+        // Calculate stresses/strains transformation matrix
+		// This matrix transforms from x-y to 1-2 coordinates
 		public Matrix<double> TransformationMatrix
 		{
 			get
 			{
-                double psi = Constants.Pi - CrackAngle;
-
-				var (cos, sin) = Auxiliary.DirectionCosines(psi);
+				var (cos, sin) = Auxiliary.DirectionCosines(StrainAngle);
 				double
 					cos2   = cos * cos,
 					sin2   = sin * sin,
@@ -247,9 +309,9 @@ namespace SPMTool
 				return
 					Matrix<double>.Build.DenseOfArray(new[,]
 					{
-						{         cos2,       sin2,      cosSin },
-						{         sin2,       cos2,    - cosSin },
-						{ - 2 * cosSin, 2 * cosSin, cos2 - sin2 }
+						{    cos2,   sin2,  2 * cosSin },
+						{    sin2,   cos2, -2 * cosSin },
+						{ -cosSin, cosSin, cos2 - sin2 }
 					});
 			}
 		}
@@ -261,12 +323,14 @@ namespace SPMTool
 			{
 				if (Strains.Exists(Auxiliary.NotZero))
                 {
-                    var (fc1, fc2) = ConcretePrincipalStresses;
-                    var TT = TransformationMatrix.Transpose();
-                    var fc = CreateVector.DenseOfArray(new[] { fc2, fc1, 0 });
+                    //var (fc1, fc2) = ConcretePrincipalStresses;
+                    //var fc = CreateVector.DenseOfArray(new[] { fc1, fc2, 0 });
+
+                    //return
+                    //    TransformationMatrix.Inverse() * fc;
 
                     return
-                        TT * fc;
+	                    ConcreteStiffness * Strains;
                 }
 
 				return
@@ -306,7 +370,7 @@ namespace SPMTool
 	        {
 		        // Calculate angles
 		        double
-					theta   = CrackAngle,
+					theta   = StrainAngle,
 			        thetaNx = theta,
 			        thetaNy = theta - Constants.PiOver2;
 
@@ -325,66 +389,6 @@ namespace SPMTool
             // Calculate concrete parameters for MCFT
             //private double fcr => 0.33 * Math.Sqrt(fc);
             //private double ecr => fcr / Ec;
-
-            // Calculate crack angle
-            public override double CrackAngle
-            {
-                get
-                {
-                    double theta;
-
-                    // Get the strains
-                    var e = Strains;
-
-                    // Verify the strains
-                    if (e.Exists(Auxiliary.NotZero))
-                    {
-                        // Calculate the strain slope
-                        if (e[2] == 0)
-                            theta = 0;
-
-                        else if (e[0] == e[1])
-                            theta = Constants.PiOver4;
-
-                        else
-                        {
-                            double tan2Angle = e[2] / (e[1] - e[0]);
-                            theta = 0.5 * Math.Atan(tan2Angle);
-
-                            // Theta must be positive
-                            if (theta < 0)
-                                theta += Constants.PiOver2;
-                        }
-                    }
-                    else
-                        theta = Constants.PiOver4;
-
-                    return theta;
-                }
-            }
-
-            // Calculate principal strains in concrete
-            public override (double ec1, double ec2) ConcretePrincipalStrains
-            {
-	            get
-	            {
-		            // Get the strains
-		            var e = Strains;
-
-		            // Calculate radius and center of Mohr's Circle
-		            double
-			            cen = 0.5 * (e[0] + e[1]),
-			            rad = 0.5 * Math.Sqrt((e[1] - e[0]) * (e[1] - e[0]) + e[2] * e[2]);
-
-		            // Calculate principal strains in concrete
-		            double
-			            ec1 = cen + rad,
-			            ec2 = cen - rad;
-
-		            return
-                        (ec1, ec2);
-	            }
-            }
 
             // Calculate principal stresses in concrete (VECCHIO, 1993)
             public override (double fc1, double fc2) ConcretePrincipalStresses
@@ -516,7 +520,7 @@ namespace SPMTool
 	                f1cy = psy * (fyy - fsy);
 
                 // Calculate theta sine and cosine
-                var (cosTheta,_) = Auxiliary.DirectionCosines(CrackAngle);
+                var (cosTheta,_) = Auxiliary.DirectionCosines(StrainAngle);
 
 				// Calculate e1L
 				double
@@ -535,7 +539,7 @@ namespace SPMTool
             {
                 // Get the values
                 double ec1   = concreteStrains.ec1;
-                double theta = CrackAngle;
+                double theta = StrainAngle;
                 var (fsx, fsy) = ReinforcementStresses;
 
                 // Constitutive relation
@@ -632,7 +636,7 @@ namespace SPMTool
 			private double ets => 2 * Gf / (fcr * Lr);
 
 			// Concrete strain angle
-			public override double CrackAngle => StrainAngles.theta;
+			public double CrackAngle => StrainAngles.theta;
 
 			// Calculate strain angles
 			private (double thetaE, double theta) StrainAngles
@@ -670,33 +674,6 @@ namespace SPMTool
 
 				return angle;
             }
-
-            // Calculate principal strains in concrete
-            public override (double ec1, double ec2) ConcretePrincipalStrains
-			{
-				get
-				{
-					// Get concrete net strains
-					var ec = InitialConcreteStrain;
-
-					double
-						ecx  = ec[0],
-						ecy  = ec[1],
-						ycxy = ec[2];
-
-					// Calculate radius and center of Mohr's Circle
-					double
-						cen = 0.5 * (ecx + ecy),
-						rad = 0.5 * Math.Sqrt((ecx - ecy) * (ecx - ecy) + ycxy * ycxy);
-
-                    // Calculate principal strains in concrete
-                    double
-                        ec1 = cen + rad,
-						ec2 = cen - rad;
-
-					return (ec1, ec2);
-				}
-			}
 
             // Calculate principal stresses in concrete
             public override (double fc1, double fc2) ConcretePrincipalStresses

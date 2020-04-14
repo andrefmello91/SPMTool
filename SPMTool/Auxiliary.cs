@@ -45,7 +45,7 @@ namespace SPMTool
         }
 
         // Method to create a layer given a name, a color and transparency
-        public static void CreateLayer(string layerName, short layerColor, int transparency)
+        public static void CreateLayer(string layerName, short layerColor, int transparency = 0)
         {
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -70,7 +70,9 @@ namespace SPMTool
 
                         // Assign the name and transparency to the layer
                         lyrTblRec.Name = layerName;
-                        lyrTblRec.Transparency = Transparency(transparency);
+
+						if (transparency != 0)
+							lyrTblRec.Transparency = Transparency(transparency);
                     }
                 }
 
@@ -161,12 +163,11 @@ namespace SPMTool
             }
         }
 
-
         // This method select all objects on a determined layer
         public static ObjectIdCollection GetEntitiesOnLayer(string layerName)
         {
             // Build a filter list so that only entities on the specified layer are selected
-            TypedValue[] tvs = new TypedValue[1]
+            TypedValue[] tvs =
             {
                 new TypedValue((int)DxfCode.LayerName, layerName)
             };
@@ -177,13 +178,9 @@ namespace SPMTool
             PromptSelectionResult selRes = AutoCAD.edtr.SelectAll(selFt);
 
             if (selRes.Status == PromptStatus.OK)
-            {
                 return new ObjectIdCollection(selRes.Value.GetObjectIds());
-            }
-            else
-            {
-                return new ObjectIdCollection();
-            }
+
+	        return new ObjectIdCollection();
         }
 
         // This method calculates the midpoint between two points
@@ -206,7 +203,8 @@ namespace SPMTool
             points = points.OrderBy(pt => pt.Y).ThenBy(pt => pt.X).ToList();
 
             // Return the point list
-            return points;
+            return
+	            points;
         }
 
         // Add objects to drawing
@@ -306,12 +304,12 @@ namespace SPMTool
         }
 
         // Function to verify if a number is not zero
-        public static Func<double, bool> NotZero = delegate (double num)
+        public static Func<double, bool> NotZero => num =>
         {
             if (num != 0) 
                 return true;
-            else 
-                return false;
+
+	        return false;
         };
 
     }
