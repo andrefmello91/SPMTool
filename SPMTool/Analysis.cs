@@ -186,17 +186,22 @@ namespace SPMTool
         {
 	        get
 	        {
-		        // Create a list to store the maximum panel forces
-		        var pnlForces = new List<double>();
+		        if (Panels.Length > 0)
+		        {
+			        // Create a list to store the maximum panel forces
+			        var pnlForces = new List<double>();
 
-                foreach (var pnl in Panels)
-			        // Add to the list of forces
-			        pnlForces.Add(pnl.MaxForce);
+			        foreach (var pnl in Panels)
+				        // Add to the list of forces
+				        pnlForces.Add(pnl.MaxForce);
 
-		        // Verify the maximum panel force
-		        return
-			        pnlForces.MaximumAbsolute();
-            }
+			        // Verify the maximum panel force
+			        return
+				        pnlForces.MaximumAbsolute();
+		        }
+
+		        return 0;
+	        }
         }
 
         // Get maximum element force
@@ -458,11 +463,11 @@ namespace SPMTool
 
                 var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
 		        var fiMatrix = Matrix<double>.Build.Dense(100, numDoFs);
-                //var fstr = Matrix<double>.Build.Dense(4, 3);
-                //var estr = Matrix<double>.Build.Dense(4, 2);
-				var fPnl = Matrix<double>.Build.Dense(100, 8);
-				var sigCPnl = Matrix<double>.Build.Dense(100, 12);
-				var sigSPnl = Matrix<double>.Build.Dense(100, 12);
+                var fstr = Matrix<double>.Build.Dense(4, 3);
+                var estr = Matrix<double>.Build.Dense(4, 2);
+                var fPnl = Matrix<double>.Build.Dense(100, 8);
+                var sigCPnl = Matrix<double>.Build.Dense(100, 12);
+                var sigSPnl = Matrix<double>.Build.Dense(100, 12);
                 var uPnl = Matrix<double>.Build.Dense(100, 8);
                 var genStPnl = Matrix<double>.Build.Dense(100, 5);
                 var epsPnl = Matrix<double>.Build.Dense(100, 12);
@@ -486,10 +491,10 @@ namespace SPMTool
 					{
 						// Calculate element displacements and forces
 						StringerAnalysis(u);
-						PanelAnalysis(u);
+                        PanelAnalysis(u);
 
-						// Get the internal force vector
-						fi = InternalForces();
+                        // Get the internal force vector
+                        fi = InternalForces();
 
 						// Calculate residual forces
 						var fr = fs - fi;
@@ -524,9 +529,9 @@ namespace SPMTool
                     var thetaPnl = new double[4];
 
                     for (int i = 0; i < 4; i++)
-	                    thetaPnl[i] = pnl.IntPointsMembrane[i].StrainAngle;
+                        thetaPnl[i] = pnl.IntPointsMembrane[i].StrainAngle;
 
-					thetaPnl1.SetRow(loadStep - 1, thetaPnl);
+                    thetaPnl1.SetRow(loadStep - 1, thetaPnl);
 
                     // Set the results to stringers
                     StringerResults();
@@ -553,7 +558,7 @@ namespace SPMTool
                 //DelimitedWriter.Write("D:/fstr.csv", fstr, ";");
                 //DelimitedWriter.Write("D:/estr.csv", estr, ";");
                 DelimitedWriter.Write("D:/u.csv", uMatrix, ";");
-                DelimitedWriter.Write("D:/genStPnl.csv", genStPnl, ";");
+                //DelimitedWriter.Write("D:/genStPnl.csv", genStPnl, ";");
                 DelimitedWriter.Write("D:/sigCPnl.csv", sigCPnl, ";");
                 DelimitedWriter.Write("D:/sigSPnl.csv", sigSPnl, ";");
                 DelimitedWriter.Write("D:/epsPnl.csv", epsPnl, ";");
@@ -571,7 +576,7 @@ namespace SPMTool
                 //DelimitedWriter.Write("D:/sigPnl1.csv", sigPnl, ";");
                 //DelimitedWriter.Write("D:/f1Pnl1.csv", f1Pnl, ";");
                 //DelimitedWriter.Write("D:/e1Pnl1.csv", e1Pnl, ";");
-                DelimitedWriter.Write("D:/thetaPnl1.csv", thetaPnl1, ";");
+                //DelimitedWriter.Write("D:/thetaPnl1.csv", thetaPnl1, ";");
                 //DelimitedWriter.Write("D:/DPnl1.csv", DPnl, ";");
 
                 //DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");
@@ -631,17 +636,18 @@ namespace SPMTool
 					AddForce(fs, index);
                 }
 
-                foreach (Panel.NonLinear panel in Panels)
-				{
-					// Get index and forces
-					int[] index = panel.DoFIndex;
-					var fp = panel.Forces;
+				if (Panels.Length > 0)
+	                foreach (Panel.NonLinear panel in Panels)
+					{
+						// Get index and forces
+						int[] index = panel.DoFIndex;
+						var fp = panel.Forces;
 
-					// Add values
-					AddForce(fp, index);
-				}
+						// Add values
+						AddForce(fp, index);
+					}
 
-                // Add element forces to global vector
+				// Add element forces to global vector
                 void AddForce(Vector<double> elementForces, int[] dofIndex)
 				{
 					for (int i = 0; i < dofIndex.Length; i++)

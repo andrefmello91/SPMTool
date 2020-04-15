@@ -528,9 +528,9 @@ namespace SPMTool
 
 				// Calculate concrete parameters
 				public override double fc  => Concrete.fcm;
-				public override double ec  => 0.002;
-				public override double ecu => 0.0035;
-				public override double Ec  => 2 * fc / ec;
+				public override double ec  => -0.002;
+				public override double ecu => -0.0035;
+				public override double Ec  => -2 * fc / ec;
 				public override double fcr => 0.33 * Math.Sqrt(fc);
 				public override double ecr => fcr / Ec;
 
