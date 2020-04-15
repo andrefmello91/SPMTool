@@ -516,48 +516,69 @@ namespace SPMTool
 
                 // Calculate the components of A matrix
                 double
-                    aOvert1  = a / t1,
-                    bOvert1  = b / t1,
-                    cOvert1  = c / t1,
-                    dOvert1  = d / t1,
-                    aOvert2  = a / t2,
-                    bOvert3  = b / t3,
-                    aOver2t1 = aOvert1 / 2,
-                    bOver2t1 = bOvert1 / 2,
-                    cOver2t1 = cOvert1 / 2,
-                    dOver2t1 = dOvert1 / 2;
+                    a_t1  = a / t1,
+                    b_t1  = b / t1,
+                    c_t1  = c / t1,
+                    d_t1  = d / t1,
+                    a_t2  = a / t2,
+                    b_t3  = b / t3,
+                    a_2t1 = a_t1 / 2,
+                    b_2t1 = b_t1 / 2,
+                    c_2t1 = c_t1 / 2,
+                    d_2t1 = d_t1 / 2;
 
                 // Create A matrix
                 var A = Matrix<double>.Build.DenseOfArray(new [,]
                 {
-	                {   dOvert1,        0,   bOvert1,        0, -dOvert1,         0, -bOvert1,         0 },
-	                {         0, -aOvert1,         0, -cOvert1,        0,   aOvert1,        0,   cOvert1 },
-	                { -aOver2t1, dOver2t1, -cOver2t1, bOver2t1, aOver2t1, -dOver2t1, cOver2t1, -bOver2t1 },
-	                { -aOvert2,         0,   aOvert2,        0, -aOvert2,         0,  aOvert2,         0 },
-	                {        0,   bOvert3,         0, -bOvert3,        0,   bOvert3,        0,  -bOvert3 }
+	                {   d_t1,     0,   b_t1,     0, -d_t1,      0, -b_t1,      0 },
+	                {      0, -a_t1,      0, -c_t1,     0,   a_t1,     0,   c_t1 },
+	                { -a_2t1, d_2t1, -c_2t1, b_2t1, a_2t1, -d_2t1, c_2t1, -b_2t1 },
+	                { - a_t2,     0,   a_t2,     0, -a_t2,      0,  a_t2,      0 },
+	                {      0,  b_t3,      0, -b_t3,     0,   b_t3,     0,  -b_t3 }
                 });
 
                 // Calculate the components of B matrix
                 double
-                    cOvera = c / a,
-                    dOverb = d / b;
+	                c_a  = c / a,
+	                d_b  = d / b,
+	                a2_b = 2 * a / b,
+	                b2_a = 2 * b / a,
+	                c2_b = 2 * c / b,
+	                d2_a = 2 * d / a;
 
-                // Create B matrix
+                    // Create B matrix
                 var B = Matrix<double>.Build.DenseOfArray(new[,]
                 {
-	                {1, 0, 0, -cOvera,       0 },
-	                {0, 1, 0,       0,      -1 },
-	                {0, 0, 2,       0,       0 },
-	                {1, 0, 0,       1,       0 },
-	                {0, 1, 0,       0,  dOverb },
-	                {0, 0, 2,       0,       0 },
-	                {1, 0, 0,  cOvera,       0 },
-	                {0, 1, 0,       0,       1 },
-	                {0, 0, 2,       0,       0 },
-	                {1, 0, 0,      -1,       0 },
-	                {0, 1, 0,       0, -dOverb },
-	                {0, 0, 2,       0,       0 }
+	                {1, 0, 0,  -c_a,     0 },
+	                {0, 1, 0,     0,    -1 },
+	                {0, 0, 2,  b2_a,  c2_b },
+	                {1, 0, 0,     1,     0 },
+	                {0, 1, 0,     0,   d_b },
+	                {0, 0, 2, -d2_a, -a2_b },
+	                {1, 0, 0,   c_a,     0 },
+	                {0, 1, 0,     0,     1 },
+	                {0, 0, 2, -b2_a, -c2_b },
+	                {1, 0, 0,    -1,     0 },
+	                {0, 1, 0,     0,  -d_b },
+	                {0, 0, 2,  d2_a,  a2_b }
                 });
+
+                //var B = Matrix<double>.Build.DenseOfArray(new[,]
+                //{
+	               // {1, 0, 0, -c_a,    0 },
+	               // {0, 1, 0,    0,   -1 },
+	               // {0, 0, 2,    0,    0 },
+	               // {1, 0, 0,    1,    0 },
+	               // {0, 1, 0,    0,  d_b },
+	               // {0, 0, 2,    0,    0 },
+	               // {1, 0, 0,  c_a,    0 },
+	               // {0, 1, 0,    0,    1 },
+	               // {0, 0, 2,    0,    0 },
+	               // {1, 0, 0,   -1,    0 },
+	               // {0, 1, 0,    0, -d_b },
+	               // {0, 0, 2,    0,    0 }
+                //});
+
 
                 // Calculate B*A
                 var BA = B * A;
@@ -698,7 +719,7 @@ namespace SPMTool
 		            if (IntPointsMembrane != null)
 			            membranes = IntPointsMembrane;
 		            else
-			            membranes = InitialMCFT;
+			            membranes = InitialMCFT();
 
 		            for (int i = 0; i < 4; i++)
 		            {
@@ -808,21 +829,18 @@ namespace SPMTool
             }
 
             // Initial MCFT parameters
-            private Membrane.MCFT[] InitialMCFT
+            private Membrane.MCFT[] InitialMCFT()
             {
-	            get
+	            var initialMCFT = new Membrane.MCFT[4];
+
+	            for (int i = 0; i < 4; i++)
 	            {
-		            var initialMCFT = new Membrane.MCFT[4];
-
-                    for (int i = 0; i < 4; i++)
-		            {
-			            // Get parameters
-			            initialMCFT[i] = new Membrane.MCFT(Concrete, Reinforcement);
-		            }
-
-		            return
-			            initialMCFT;
+		            // Get parameters
+		            initialMCFT[i] = new Membrane.MCFT(Concrete, Reinforcement);
 	            }
+
+	            return
+		            initialMCFT;
             }
 
             // Properties not needed

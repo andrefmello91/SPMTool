@@ -225,12 +225,12 @@ namespace SPMTool
 			}
 
             // Concrete parameters
-            public virtual double fc  { get; }
-            public virtual double ec  { get; }
-            public virtual double ecu { get; }
-            public virtual double Ec  { get; }
-            public virtual double fcr { get; }
-            public virtual double ecr { get; }
+            public abstract double fc  { get; }
+            public abstract double ec  { get; }
+            public abstract double ecu { get; }
+            public abstract double Ec  { get; }
+            public abstract double fcr { get; }
+            public abstract double ecr { get; }
 
 				// Steel parameters
 			private double fy  => Reinforcement.Steel.fy;
@@ -239,29 +239,20 @@ namespace SPMTool
 			private double esu => Reinforcement.Steel.esu;
 
 			// Constants
-			private double Ac   => ConcreteArea;
-			private double As   => SteelArea;
-			private double ps   => As / Ac;
-			private double EcAc => Ec * Ac;
-			private double EsAs => Es * As;
-			private double xi   => EsAs / EcAc;
-			private double t1   => EcAc * (1 + xi);
+			private double Ac    => ConcreteArea;
+			private double As    => SteelArea;
+			private double ps    => As / Ac;
+			private double EcAc  => Ec * Ac;
+			private double EsAs  => Es * As;
+			private double xi    => EsAs / EcAc;
+			private double t1    => EcAc + EsAs;
+			private double ey_ec => ey / ec;
 
-			// Maximum stringer forces
-			private double Nc  => -fc * Ac;
+            // Maximum stringer forces
+            private double Nc  => -fc * Ac;
 			private double Nyr =>  fy * As;
-			private double Nt
-			{
-				get
-				{
-					double
-						Nt1 = Nc * (1 + xi) * (1 + xi),
-						Nt2 = Nc - Nyr;
-
-					return
-                        Math.Max(Nt1, Nt2);
-				}
-            }
+			public abstract double Nyc { get; }
+			public abstract double Nt  { get; }
 
 			// Cracking load
 			private double Ncr => fcr * Ac * (1 + xi);
@@ -380,14 +371,14 @@ namespace SPMTool
 					de3 = (e3 - e3i) / StrainSteps;
 
 				// Initiate flexibility matrix
-				Matrix<double> F = Matrix<double>.Build.Dense(2,2);
+				Matrix<double> F;
 
-				// Incremental process to find forces
+				// Calculate generalized strains and F matrix for N1 and N3
+				((e1, e3), F) = StringerGenStrains((N1, N3));
+
+                // Incremental process to find forces
                 for (int i = 1; i <= StrainSteps ; i++ )
 				{
-					// Calculate generalized strains and F matrix for N1 and N3
-					((e1, e3), F) = StringerGenStrains((N1, N3));
-
 					// Calculate F determinant
 					double d = F.Determinant();
 
@@ -399,85 +390,13 @@ namespace SPMTool
 					// Increment forces
 					N1 += dN1;
 					N3 += dN3;
-				}
 
-				// Verify the values of N1 and N3
-				N1 = PlasticForce(N1);
-				N3 = PlasticForce(N3);
-				double PlasticForce(double N)
-                {
-	                double Ni;
-
-	                // Check the value of N
-	                if (N < Nt)
-		                Ni = Nt;
-
-	                else if (N > Nyr)
-		                Ni = Nyr;
-
-	                else
-		                Ni = N;
-
-	                return Ni;
+					// Recalculate generalized strains and F matrix for N1 and N3
+					((e1, e3), F) = StringerGenStrains((N1, N3));
                 }
 
-                // Set values
-                FMatrix = F;
-				IterationGenStresses = (N1, N3);
-				IterationGenStrains  = (e1, e3);
-            }
-
-            // Calculate the effective stringer force
-            public void IterateForces()
-            {
-                // Get the initial forces (from previous load step)
-                var (N1i, N3i) = GenStresses;
-
-                // Get local displacements
-                var ul = LocalDisplacements;
-
-                // Calculate current generalized strains
-                double
-                    e1 = ul[1] - ul[0],
-					e3 = ul[2] - ul[1];
-
-				// Function to find values of genStresses
-				Func<double[], double[]> FindGenStresses = initialGenStresses =>
-				{
-					double
-						N1it = initialGenStresses[0],
-						N3it = initialGenStresses[1];
-
-					// Calculate the approximated strains
-					var (eps1, _) = StringerStrain(N1it);
-					var (eps2, _) = StringerStrain((2 * N1it + N3it) / 3);
-					var (eps3, _) = StringerStrain((N1it + 2 * N3it) / 3);
-					var (eps4, _) = StringerStrain(N3it);
-
-					// Calculate approximated generalized strains
-					double
-						e1it = Length * (3 * eps1 + 6 * eps2 + 3 * eps3) / 24,
-						e3it = Length * (3 * eps2 + 6 * eps3 + 3 * eps4) / 24;
-
-                    return
-                        new []
-						{
-							e1it - e1,
-							e3it - e3
-						};
-				};
-
-				// Find values
-				var genStresses = Broyden.FindRoot(FindGenStresses, new [] { N1i, N3i }, 1E-3);
-				double
-					N1 = genStresses[0],
-					N3 = genStresses[1];
-
-				// Calculate F matrix
-				var F = StringerGenStrains((N1, N3)).F;
-
-				// Verify the values of N1 and N3
-				N1 = PlasticForce(N1);
+                // Verify the values of N1 and N3
+                N1 = PlasticForce(N1);
 				N3 = PlasticForce(N3);
 				double PlasticForce(double N)
                 {
@@ -615,83 +534,131 @@ namespace SPMTool
 				public override double fcr => 0.33 * Math.Sqrt(fc);
 				public override double ecr => fcr / Ec;
 
+                // Maximum stringer forces
+                public override double Nyc => -Nyr + Nc * (-2 * ey_ec - (-ey_ec) * (-ey_ec));
+                public override double Nt
+                {
+	                get
+	                {
+		                double
+			                Nt1 = Nc * (1 + xi) * (1 + xi),
+			                Nt2 = Nc - Nyr;
+
+		                return
+			                Math.Max(Nt1, Nt2);
+	                }
+                }
+
                 // Calculate the strain and derivative on a stringer given a force N and the concrete parameters
                 public override (double e, double de) StringerStrain(double N)
                 {
-                    double e, de;
+	                // Verify the value of N
+	                // Tensioned stringer
+	                if (N >= 0)
+	                {
+		                if (N <= Ncr)
+			                return
+				                Uncracked(N);
 
-                    // Verify the value of N
-                    if (N >= 0) // tensioned stringer
-                    {
-                        if (N <= Ncr)
-                        {
-                            // uncracked
-                            e = N / t1;
-                            de = 1 / t1;
-                        }
+		                if (N <= Nyr)
+			                return
+				                Cracked(N);
 
-                        else if (N <= Nyr)
-                        {
-                            // cracked with not yielding steel
-                            e = (N * N - Nr * Nr) / (EsAs * N);
-                            de = (N * N + Nr * Nr) / (EsAs * N * N);
-                        }
+		                return
+			                YieldingSteel(N);
+	                }
 
-                        else
-                        {
-                            // yielding steel
-                            //double n = Nyr / Nr;
-                            e = (Nyr * Nyr - Nr * Nr) / (EsAs * Nyr) + (N - Nyr) / t1;
-                            de = 1 / t1;
-                        }
-                    }
+	                // Compressed stringer
+	                if (N > Nt)
+		                return
+			                ConcreteNotCrushed(N);
 
-                    else // compressed stringer (N < 0)
-                    {
-                        // Calculate the yield force
-                        //double Nyc = -Nyr + Nc * (2 * -ey / ec - ey / ec * ey / ec);
-                        //Console.WriteLine(Nyc);
-
-                        // Verify the value of N
-                        if (N > Nt)
-                        {
-                            // Calculate the strain for steel not yielding
-                            double t2 = Math.Sqrt((1 + xi) * (1 + xi) - N / Nc);
-                            e = ec * (1 + xi - t2);
-
-                            // Check the strain
-                            if (e < -ey)
-                            {
-                                // Recalculate the strain for steel yielding
-                                t2 = Math.Sqrt(1 - (N + Nyr) / Nc);
-                                e = ec * (1 - t2);
-                            }
-
-                            // Calculate de
-                            de = 1 / (EcAc * t2);
-                        }
-
-                        else
-                        {
-                            // Calculate the strain for steel not yielding
-                            double t2 = Math.Sqrt((1 + xi) * (1 + xi) - Nt / Nc);
-                            e = ec * ((1 + xi) - t2) + (N - Nt) / t1;
-
-                            // Check the strain
-                            if (e < -ey)
-                            {
-                                // Recalculate the strain for steel yielding
-                                e = ec * (1 - Math.Sqrt(1 - (Nyr + Nt) / Nc)) + (N - Nt) / t1;
-                            }
-
-                            // Calculate de
-                            de = 1 / t1;
-                        }
-                    }
-
-                    return (e, de);
+	                return
+		                ConcreteCrushing(N);
                 }
-			}
+
+                // Tension Cases
+                // Case T.1: Uncracked
+                private (double e, double de) Uncracked(double N)
+                {
+                    double
+                        e  = N / t1,
+                        de = 1 / t1;
+
+                    return
+                        (e, de);
+                }
+
+                // Case T.2: Cracked with not yielding steel
+                private (double e, double de) Cracked(double N)
+                {
+                    double
+                        e  = (N * N - Nr * Nr) / (EsAs * N),
+                        de = (N * N + Nr * Nr) / (EsAs * N * N);
+
+                    return
+                        (e, de);
+                }
+
+                // Case T.3: Cracked with yielding steel
+                private (double e, double de) YieldingSteel(double N)
+                {
+
+                    double
+                        e = (Nyr * Nyr - Nr * Nr) / (EsAs * Nyr) + (N - Nyr) / t1,
+                        de = 1 / t1;
+
+                    return
+                        (e, de);
+                }
+
+
+                // Compression Cases
+                // Case C.1: concrete not crushed
+                private (double e, double de) ConcreteNotCrushed(double N)
+                {
+                    // Calculate the strain for steel not yielding
+                    double
+                        t2 = Math.Sqrt((1 + xi) * (1 + xi) - N / Nc),
+                        e = ec * (1 + xi - t2);
+
+                    // Check the strain
+                    if (e < -ey)
+                    {
+                        // Recalculate the strain for steel yielding
+                        t2 = Math.Sqrt(1 - (N + Nyr) / Nc);
+                        e = ec * (1 - t2);
+                    }
+
+                    // Calculate de
+                    double de = 1 / (EcAc * t2);
+
+                    return
+                        (e, de);
+                }
+
+                // Case C.2: Concrete crushing
+                private (double e, double de) ConcreteCrushing(double N)
+                {
+                    // Calculate the strain for steel not yielding
+                    double
+                        t2 = Math.Sqrt((1 + xi) * (1 + xi) - Nt / Nc),
+                        e = ec * ((1 + xi) - t2) + (N - Nt) / t1;
+
+                    // Check the strain
+                    if (e < -ey)
+                    {
+                        // Recalculate the strain for steel yielding
+                        e = ec * (1 - Math.Sqrt(1 - (Nyr + Nt) / Nc)) + (N - Nt) / t1;
+                    }
+
+                    // Calculate de
+                    double de = 1 / t1;
+
+                    return
+                        (e, de);
+                }
+            }
 
             // MC2010 model for concrete
             public class MC2010 : NonLinear
@@ -712,13 +679,12 @@ namespace SPMTool
                 private double         sigSr  => fcr * (1 + xi) / ps;
 
                 // Calculate the yield force on compression
-                private double eyec => ey / ec;
-                private double Nyc  => -Nyr + Nc * (-k * eyec - eyec * eyec) / (1 - (k - 2) * eyec);
+                public override double Nyc => -Nyr + Nc * (-k * ey_ec - ey_ec * ey_ec) / (1 - (k - 2) * ey_ec);
 
-				// Calculate limit force on compression
-				private double NlimC => EsAs * ec + Nc;
+                // Calculate limit force on compression
+                private double NlimC => EsAs * ec + Nc;
 				private double NlimS => -Nyr + Nc;
-				private double Nlim
+				public override double Nt
 				{
 					get
 					{
@@ -739,14 +705,14 @@ namespace SPMTool
 	                {
 		                if (N < Ncr)
 			                return
-				                Uncracked();
+				                Uncracked(N);
 
 		                if (N <= Nyr)
 			                return
-				                Cracked();
+				                Cracked(N);
 
 		                return
-			                YieldingSteel();
+			                YieldingSteel(N);
 	                }
 
 	                // Verify if steel yields before concrete crushing
@@ -755,130 +721,131 @@ namespace SPMTool
 		                // Steel doesn't yield
 		                if (N > NlimC)
 			                return
-				                SteelNotYielding();
+				                SteelNotYielding(N);
 
 		                // Else, concrete crushes
 		                return
-			                ConcreteCrushing();
+			                ConcreteCrushing(N);
 	                }
 
 	                // Else, steel yields first
 	                if (N >= Nyc)
 		                return
-			                SteelNotYielding();
+			                SteelNotYielding(N);
 
 	                if (N >= NlimS)
 		                return
-			                SteelYielding();
+			                SteelYielding(N);
 
 	                return
-		                SteelYieldingConcreteCrushed();
+		                SteelYieldingConcreteCrushed(N);
+                }
 
-					// Tension Cases
-	                // Case T.1: Uncracked
-	                (double e, double de) Uncracked()
-	                {
-		                double
-			                e  = N / t1,
-			                de = 1 / t1;
+                // Tension Cases
+                // Case T.1: Uncracked
+                private (double e, double de) Uncracked(double N)
+                {
+                    double
+                        e  = N / t1,
+                        de = 1 / t1;
 
-		                return
-			                (e, de);
-	                }
+                    return
+                        (e, de);
+                }
 
-	                // Case T.2: Cracked with not yielding steel
-	                (double e, double de) Cracked()
-	                {
-		                double
-			                e = (N / As - beta * sigSr) / Es,
-			                de = 1 / EsAs;
+                // Case T.2: Cracked with not yielding steel
+                private (double e, double de) Cracked(double N)
+                {
+                    double
+                        e  = (N / As - beta * sigSr) / Es,
+                        de = 1 / EsAs;
 
-		                return
-			                (e, de);
-	                }
+                    return
+                        (e, de);
+                }
 
-	                // Case T.3: Cracked with yielding steel
-	                (double e, double de) YieldingSteel()
-	                {
+                // Case T.3: Cracked with yielding steel
+                private (double e, double de) YieldingSteel(double N)
+                {
 
-		                double
-			                e = (Nyr / As - beta * sigSr) / Es + (N - Nyr) / t1,
-			                de = 1 / t1;
+                    double
+                        e = (Nyr / As - beta * sigSr) / Es + (N - Nyr) / t1,
+                        de = 1 / t1;
 
-		                return
-			                (e, de);
-	                }
+                    return
+                        (e, de);
+                }
 
-					
-                    // Compression Cases
-                    // Case C.1: steel not yielding
-                    (double e, double de) SteelNotYielding()
-                    {
-	                    double
-		                    k1     = (Nc / ec - EsAs * (k - 2)) / ec,
-		                    k2     = (N * (k - 2) - Nc * k) / ec - EsAs,
-		                    dk2    = (k - 2) / ec,
-		                    rdelta = Math.Sqrt(k2 * k2 - 4 * k1 * N),
+
+                // Compression Cases
+                // Case C.1: steel not yielding
+                private (double e, double de) SteelNotYielding(double N)
+                {
+                    double
+                        k1     = (Nc / ec - EsAs * (k - 2)) / ec,
+                        k2     = (N * (k - 2) - Nc * k) / ec - EsAs,
+                        dk2    = (k - 2) / ec,
+                        rdelta = Math.Sqrt(k2 * k2 - 4 * k1 * N),
 
                         // Calculate e and de
-						    e  = 0.5 * (-k2 + rdelta) / k1,
-			                de = 0.5 * (dk2 * (k2 - rdelta) + 2 * k1) / (k1 * rdelta);
+                        e  = 0.5 * (-k2 + rdelta) / k1,
+                        de = 0.5 * (dk2 * (k2 - rdelta) + 2 * k1) / (k1 * rdelta);
 
-						return
-			                (e, de);
-	                }
-
-	                // Case C.2: Concrete crushing and steel is not yielding
-	                (double e, double de) ConcreteCrushing()
-	                {
-		                double
-			                k1     = (Nc / ec - EsAs * (k - 2)) / ec,
-			                k2     = (NlimC * (k - 2) - Nc * k) / ec - EsAs,
-			                rdelta = Math.Sqrt(k2 * k2 - 4 * k1 * NlimC),
-
-			                // Calculate e and de
-			                e  = 0.5 * (-k2 + rdelta) / k1 + (N - NlimC) / t1,
-			                de = 1 / t1;
-
-		                return
-			                (e, de);
-	                }
-	                
-	                // Case C.3: steel is yielding and concrete is not crushed
-	                (double e, double de) SteelYielding()
-	                {
-		                double
-			                k3     = Nc / (ec * ec),
-			                k4     = ((Nyr + N) * (k - 2) - Nc * k) / ec,
-			                k5     = Nyr + N,
-			                dk4    = (k - 2) / ec,
-			                rdelta = Math.Sqrt(k4 * k4 - 4 * k3 * k5),
-
-		                // Calculate e and de
-							e  = 0.5 * (-k4 + rdelta) / k3,
-							de = 0.5 * (dk4 * (k4 - rdelta) + 2 * k3) / (k3 * rdelta);
-
-                        return
-                            (e, de);
-	                }
-
-	                // Case C.4: steel is yielding and concrete is crushed
-	                (double e, double de) SteelYieldingConcreteCrushed()
-	                {
-		                double
-			                k3    = Nc / (ec * ec),
-			                k4    = ((Nyr + NlimS) * (k - 2) - Nc * k) / ec,
-			                k5    = Nyr + NlimS,
-			                delta = Math.Sqrt(k4 * k4 - 4 * k3 * k5),
-
-		                // Calculate e and de
-							e  = 0.5 * (-k4 + delta) / k3 + (N - NlimS) / t1,
-							de = 1 / t1;
-
-		                return
-                            (e, de);
-	                }
+                    return
+                        (e, de);
                 }
+
+                // Case C.2: Concrete crushing and steel is not yielding
+                private (double e, double de) ConcreteCrushing(double N)
+                {
+                    double
+                        k1     = (Nc / ec - EsAs * (k - 2)) / ec,
+                        k2     = (NlimC * (k - 2) - Nc * k) / ec - EsAs,
+                        rdelta = Math.Sqrt(k2 * k2 - 4 * k1 * NlimC),
+
+                        // Calculate e and de
+                        e  = 0.5 * (-k2 + rdelta) / k1 + (N - NlimC) / t1,
+                        de = 1 / t1;
+
+                    return
+                        (e, de);
+                }
+
+                // Case C.3: steel is yielding and concrete is not crushed
+                private (double e, double de) SteelYielding(double N)
+                {
+                    double
+                        k3     = Nc / (ec * ec),
+                        k4     = ((Nyr + N) * (k - 2) - Nc * k) / ec,
+                        k5     = Nyr + N,
+                        dk4    = (k - 2) / ec,
+                        rdelta = Math.Sqrt(k4 * k4 - 4 * k3 * k5),
+
+                        // Calculate e and de
+                        e  = 0.5 * (-k4 + rdelta) / k3,
+                        de = 0.5 * (dk4 * (k4 - rdelta) + 2 * k3) / (k3 * rdelta);
+
+                    return
+                        (e, de);
+                }
+
+                // Case C.4: steel is yielding and concrete is crushed
+                private (double e, double de) SteelYieldingConcreteCrushed(double N)
+                {
+                    double
+                        k3    = Nc / (ec * ec),
+                        k4    = ((Nyr + NlimS) * (k - 2) - Nc * k) / ec,
+                        k5    = Nyr + NlimS,
+                        delta = Math.Sqrt(k4 * k4 - 4 * k3 * k5),
+
+                        // Calculate e and de
+                        e = 0.5 * (-k4 + delta) / k3 + (N - NlimS) / t1,
+                        de = 1 / t1;
+
+                    return
+                        (e, de);
+                }
+
             }
         }
 	}

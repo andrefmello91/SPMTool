@@ -468,6 +468,7 @@ namespace SPMTool
                 var epsPnl = Matrix<double>.Build.Dense(100, 12);
                 var DcPnl = Matrix<double>.Build.Dense(1200, 12);
                 var DsPnl = Matrix<double>.Build.Dense(1200, 12);
+                var thetaPnl1 = Matrix<double>.Build.Dense(100, 4);
 
                 // Initialize a loop for load steps
                 for (int loadStep = 1; loadStep <= loadSteps; loadStep++)
@@ -520,6 +521,13 @@ namespace SPMTool
                     DcPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Dc);
                     DsPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Ds);
 
+                    var thetaPnl = new double[4];
+
+                    for (int i = 0; i < 4; i++)
+	                    thetaPnl[i] = pnl.IntPointsMembrane[i].StrainAngle;
+
+					thetaPnl1.SetRow(loadStep - 1, thetaPnl);
+
                     // Set the results to stringers
                     StringerResults();
 
@@ -563,7 +571,7 @@ namespace SPMTool
                 //DelimitedWriter.Write("D:/sigPnl1.csv", sigPnl, ";");
                 //DelimitedWriter.Write("D:/f1Pnl1.csv", f1Pnl, ";");
                 //DelimitedWriter.Write("D:/e1Pnl1.csv", e1Pnl, ";");
-                //DelimitedWriter.Write("D:/thetaPnl1.csv", thetaPnl, ";");
+                DelimitedWriter.Write("D:/thetaPnl1.csv", thetaPnl1, ";");
                 //DelimitedWriter.Write("D:/DPnl1.csv", DPnl, ";");
 
                 //DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");

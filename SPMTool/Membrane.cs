@@ -290,7 +290,7 @@ namespace SPMTool
 
 		        // Calculate Dc
 		        return
-			        T.Inverse() * Dc1 * T;
+			        T.Transpose() * Dc1 * T;
 	        }
         }
 
@@ -300,7 +300,7 @@ namespace SPMTool
 		{
 			get
 			{
-				var (cos, sin) = Auxiliary.DirectionCosines(StrainAngle);
+				var (cos, sin) = Auxiliary.DirectionCosines(-StrainAngle);
 				double
 					cos2   = cos * cos,
 					sin2   = sin * sin,
@@ -309,9 +309,9 @@ namespace SPMTool
 				return
 					Matrix<double>.Build.DenseOfArray(new[,]
 					{
-						{    cos2,   sin2,  2 * cosSin },
-						{    sin2,   cos2, -2 * cosSin },
-						{ -cosSin, cosSin, cos2 - sin2 }
+						{        cos2,       sin2,      cosSin },
+						{        sin2,       cos2,     -cosSin },
+						{ -2 * cosSin, 2 * cosSin, cos2 - sin2 }
 					});
 			}
 		}
@@ -320,8 +320,8 @@ namespace SPMTool
 		public Vector<double> ConcreteStresses
 		{
 			get
-			{
-				if (Strains.Exists(Auxiliary.NotZero))
+            {
+                if (Strains.Exists(Auxiliary.NotZero))
                 {
                     //var (fc1, fc2) = ConcretePrincipalStresses;
                     //var fc = CreateVector.DenseOfArray(new[] { fc1, fc2, 0 });
@@ -330,23 +330,23 @@ namespace SPMTool
                     //    TransformationMatrix.Inverse() * fc;
 
                     return
-	                    ConcreteStiffness * Strains;
+                     ConcreteStiffness * Strains;
                 }
 
-				return
-					Vector<double>.Build.Dense(3);
-			}
-			//{
-            //	var (fc1, fc2) = ConcretePrincipalStresses;
-            //	var (cos2Theta, sin2Theta) = Auxiliary.DirectionCosines(2 * StrainAngle);
+                return
+                    Vector<double>.Build.Dense(3);
+            }
+            //{
+            //    var (fc1, fc2) = ConcretePrincipalStresses;
+            //    var (cosTheta, sinTheta) = Auxiliary.DirectionCosines(StrainAngle);
 
-            //	double
-            //		fcx  = 0.5 * (fc1 + fc2 - (fc1 - fc2) * cos2Theta),
-            //		fcy  = 0.5 * (fc1 + fc2 + (fc1 - fc2) * cos2Theta),
-            //		vcxy = 0.5 * (fc1 - fc2) * sin2Theta;
+            //    double
+            //        fcx  = fc1 * cosTheta * cosTheta + fc2 * sinTheta * sinTheta,
+            //        fcy  = fc1 * sinTheta * sinTheta + fc2 * cosTheta * cosTheta,
+            //        vcxy = (fc1 - fc2) * sinTheta * cosTheta;
 
-            //	return
-            //		Vector<double>.Build.DenseOfArray(new [] { fcx, fcy, vcxy });
+            //    return
+            //        Vector<double>.Build.DenseOfArray(new[] { fcx, fcy, vcxy });
             //}
         }
 
