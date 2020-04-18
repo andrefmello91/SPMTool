@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Globalization;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -19,7 +20,7 @@ namespace SPMTool
 			SetDisplacements(analysis.Nodes);
 			DrawDisplacements(analysis.Stringers, analysis.Nodes);
 			DrawStringerForces(analysis.Stringers, analysis.MaxStringerForce);
-			DrawPanelForces(analysis.Panels);
+			DrawPanelStresses(analysis.Panels);
 		}
 
 		// Create the block for panel shear stress
@@ -107,18 +108,196 @@ namespace SPMTool
 			}
 		}
 
-		// Draw the panel shear blocks
-		private static void DrawPanelForces(Panel[] panels)
+		// Create the block for panel principal stresses
+		private static void CreatePanelStressesBlock()
+		{
+            // Start a transaction
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            {
+                // Open the Block table for read
+                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Initialize the block Ids
+                ObjectId compStressBlock = ObjectId.Null;
+                ObjectId tensStressBlock = ObjectId.Null;
+
+                // Check if the stress blocks already exist in the drawing
+                if (!blkTbl.Has(Blocks.CompressiveStress))
+                {
+                    // Create the X block
+                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
+                    {
+                        blkTblRec.Name = Blocks.CompressiveStress;
+
+                        // Add the block table record to the block table and to the transaction
+                        blkTbl.UpgradeOpen();
+                        blkTbl.Add(blkTblRec);
+                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
+
+                        // Set the name
+                        compStressBlock = blkTblRec.Id;
+
+                        // Set the insertion point for the block
+                        Point3d origin = new Point3d(0, 0, 0);
+                        blkTblRec.Origin = origin;
+
+                        // Create a object collection and add the lines
+                        using (DBObjectCollection objCollection = new DBObjectCollection())
+                        {
+	                        // Get vertices of the solid
+	                        Point3d[] verts1 =
+	                        {
+		                        new Point3d(-50, -50, 0),
+		                        new Point3d( 50, -50, 0),
+		                        new Point3d(-50,  50, 0),
+		                        new Point3d( 50,  50, 0)
+	                        };
+
+	                        // Create a solid
+	                        var solid = new Solid(verts1[0], verts1[1], verts1[2], verts1[3]);
+	                        objCollection.Add(solid);
+
+                            // Create two arrows for compressive stress
+                            // Create lines
+                            Line line1 = new Line()
+                            {
+	                            StartPoint = new Point3d( -175, 0, 0),
+	                            EndPoint   = new Point3d(-87.5, 0, 0)
+                            };
+                            objCollection.Add(line1);
+
+                            Line line2 = new Line()
+                            {
+	                            StartPoint = new Point3d(87.5, 0, 0),
+	                            EndPoint   = new Point3d( 175, 0, 0)
+                            };
+                            objCollection.Add(line2);
+
+                            // Get vertices of the solids
+                            Point3d[] verts2 =
+                            {
+	                            new Point3d(-87.5, -25, 0),
+	                            new Point3d(-87.5,  25, 0),
+	                            new Point3d(  -50,   0, 0)
+                            };
+
+                            Point3d[] verts3 =
+                            {
+	                            new Point3d(  50,   0, 0),
+	                            new Point3d(87.5, -25, 0),
+	                            new Point3d(87.5,  25, 0)
+                            };
+
+
+                            // Create the solids and add to the collection
+                            Solid arrow1 = new Solid(verts2[0], verts2[1], verts2[2]);
+                            Solid arrow2 = new Solid(verts3[0], verts3[1], verts3[2]);
+                            objCollection.Add(arrow1);
+                            objCollection.Add(arrow2);
+
+                            // Add the objects to the block table record
+                            foreach (Entity ent in objCollection)
+                            {
+                                blkTblRec.AppendEntity(ent);
+                                trans.AddNewlyCreatedDBObject(ent, true);
+                            }
+                        }
+                    }
+                }
+
+				// Check if tensile stress block exists
+                if (!blkTbl.Has(Blocks.TensileStress))
+                {
+                    // Create the X block
+                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
+                    {
+                        blkTblRec.Name = Blocks.TensileStress;
+
+                        // Add the block table record to the block table and to the transaction
+                        blkTbl.UpgradeOpen();
+                        blkTbl.Add(blkTblRec);
+                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
+
+                        // Set the name
+                        tensStressBlock = blkTblRec.Id;
+
+                        // Set the insertion point for the block
+                        Point3d origin = new Point3d(0, 0, 0);
+                        blkTblRec.Origin = origin;
+
+                        // Create a object collection and add the lines
+                        using (DBObjectCollection objCollection = new DBObjectCollection())
+                        {
+                            // Create two arrows for tensile stress
+                            // Create lines
+                            Line line1 = new Line()
+                            {
+	                            StartPoint = new Point3d(0,    50, 0),
+	                            EndPoint   = new Point3d(0, 137.5, 0)
+                            };
+                            objCollection.Add(line1);
+
+                            Line line2 = new Line()
+                            {
+	                            StartPoint = new Point3d(0,    -50, 0),
+	                            EndPoint   = new Point3d(0, -137.5, 0)
+                            };
+                            objCollection.Add(line2);
+
+                            // Get vertices of the solids
+                            Point3d[] verts2 =
+                            {
+	                            new Point3d(-25, 137.5, 0),
+	                            new Point3d(  0,   175, 0),
+	                            new Point3d( 25, 137.5, 0),
+                            };
+
+                            Point3d[] verts3 =
+                            {
+	                            new Point3d(-25, -137.5, 0),
+	                            new Point3d(  0,   -175, 0),
+	                            new Point3d( 25, -137.5, 0),
+                            };
+
+
+                            // Create the solids and add to the collection
+                            Solid arrow1 = new Solid(verts2[0], verts2[1], verts2[2]);
+                            Solid arrow2 = new Solid(verts3[0], verts3[1], verts3[2]);
+                            objCollection.Add(arrow1);
+                            objCollection.Add(arrow2);
+
+                            // Add the objects to the block table record
+                            foreach (Entity ent in objCollection)
+                            {
+                                blkTblRec.AppendEntity(ent);
+                                trans.AddNewlyCreatedDBObject(ent, true);
+                            }
+                        }
+                    }
+                }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+            }
+
+        }
+
+        // Draw the panel shear blocks
+        private static void DrawPanelStresses(Panel[] panels)
 		{
 			// Check if the layer already exists in the drawing. If it doesn't, then it's created:
 			Auxiliary.CreateLayer(Layers.panelForce, (short) AutoCAD.Colors.Green, 0);
+			Auxiliary.CreateLayer(Layers.compressiveStress, (short)AutoCAD.Colors.Blue1, 80);
+			Auxiliary.CreateLayer(Layers.tensileStress, (short)AutoCAD.Colors.Red, 80);
 
-			// Check if the shear blocks already exist. If not, create the blocks
-			CreatePanelShearBlock();
+            // Check if the shear blocks already exist. If not, create the blocks
+            CreatePanelShearBlock();
+            CreatePanelStressesBlock();
 
-			// Erase all the panel forces in the drawing
-			ObjectIdCollection pnlFs = Auxiliary.GetEntitiesOnLayer(Layers.panelForce);
-			if (pnlFs.Count > 0) Auxiliary.EraseObjects(pnlFs);
+            // Erase all the panel forces in the drawing
+			Auxiliary.EraseObjects(Layers.panelForce);
+			Auxiliary.EraseObjects(Layers.compressiveStress);
+			Auxiliary.EraseObjects(Layers.tensileStress);
 
 			// Start a transaction
 			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
@@ -128,25 +307,26 @@ namespace SPMTool
 
 				// Read the object Ids of the support blocks
 				ObjectId shearBlock = blkTbl[Blocks.shearBlock];
+				ObjectId compStress = blkTbl[Blocks.CompressiveStress];
+				ObjectId tensStress = blkTbl[Blocks.TensileStress];
 
 				// Get the stringers stifness matrix and add to the global stifness matrix
 				foreach (var pnl in panels)
 				{
 					// Get panel data
-					int    num = pnl.Number;
-					double w   = pnl.Width;
-					var l = pnl.Edges.Length;
+					var l     = pnl.Edges.Length;
 					var cntrPt = pnl.CenterPoint;
 
 					// Get the maximum lenght of the panel
 					double lMax = l.Max();
 
 					// Get the average stress
-					double tauAvg = pnl.ShearStress;
+					double tauAvg = Math.Round(pnl.AverageStresses[2], 2);
 
 					// Calculate the scale factor for the block and text
 					double scFctr = lMax / 1000;
 
+					// Create shear block
 					// Insert the block into the current space
 					using (BlockReference blkRef = new BlockReference(cntrPt, shearBlock))
 					{
@@ -180,7 +360,104 @@ namespace SPMTool
 						// Add the text to the drawing
 						Auxiliary.AddObject(tauTxt);
 					}
-				}
+
+					// Create stress block
+					// Get principal stresses
+					var (sigma, theta) = pnl.PrincipalStresses;
+					if (sigma[1] != 0)
+					{
+						// Create compressive stress block
+						using (BlockReference blkRef = new BlockReference(cntrPt, compStress))
+						{
+							blkRef.Layer = Layers.compressiveStress;
+							blkRef.ColorIndex = (int)AutoCAD.Colors.Blue1;
+							Auxiliary.AddObject(blkRef);
+
+							// Set the scale of the block
+							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
+
+							// Rotate the block in theta angle
+							if (theta != 0)
+							{
+								blkRef.TransformBy(Matrix3d.Rotation(theta, AutoCAD.curUCS.Zaxis, cntrPt));
+							}
+						}
+
+						// Create the text
+						using (DBText sigTxt = new DBText())
+						{
+							// Create a line and rotate to get insertion point
+							var ln = new Line
+							{
+								StartPoint = cntrPt,
+								EndPoint = new Point3d(cntrPt.X + 210 * scFctr, cntrPt.Y, 0)
+							};
+
+							ln.TransformBy(Matrix3d.Rotation(theta, AutoCAD.curUCS.Zaxis, cntrPt));
+
+                            // Set the alignment point
+							Point3d algnPt = ln.EndPoint;
+
+							// Set the parameters
+							sigTxt.Layer = Layers.compressiveStress;
+							sigTxt.Height = 30 * scFctr;
+							sigTxt.TextString = Math.Round(Math.Abs(sigma[1]), 2).ToString();
+							sigTxt.Position = algnPt;
+                            sigTxt.HorizontalMode = TextHorizontalMode.TextCenter;
+                            sigTxt.AlignmentPoint = algnPt;
+
+                            // Add the text to the drawing
+                            Auxiliary.AddObject(sigTxt);
+						}
+                    }
+
+					// Verify tensile stress
+					if (sigma[0] != 0)
+					{
+						// Create tensile stress block
+						using (BlockReference blkRef = new BlockReference(cntrPt, tensStress))
+						{
+							blkRef.Layer = Layers.tensileStress;
+							Auxiliary.AddObject(blkRef);
+
+							// Set the scale of the block
+							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
+
+							// Rotate the block in theta angle
+							if (theta != 0)
+							{
+								blkRef.TransformBy(Matrix3d.Rotation(theta, AutoCAD.curUCS.Zaxis, cntrPt));
+							}
+						}
+
+						// Create the text
+						using (DBText sigTxt = new DBText())
+						{
+							// Create a line and rotate to get insertion point
+							var ln = new Line
+							{
+								StartPoint = cntrPt,
+								EndPoint = new Point3d(cntrPt.X, cntrPt.Y + 210 * scFctr, 0)
+							};
+
+							ln.TransformBy(Matrix3d.Rotation(theta, AutoCAD.curUCS.Zaxis, cntrPt));
+
+                            // Set the alignment point
+							Point3d algnPt = ln.EndPoint;
+
+							// Set the parameters
+							sigTxt.Layer = Layers.tensileStress;
+							sigTxt.Height = 30 * scFctr;
+							sigTxt.TextString = Math.Round(Math.Abs(sigma[1]), 2).ToString();
+							sigTxt.Position = algnPt;
+                            sigTxt.HorizontalMode = TextHorizontalMode.TextCenter;
+                            sigTxt.AlignmentPoint = algnPt;
+
+                            // Add the text to the drawing
+                            Auxiliary.AddObject(sigTxt);
+						}
+                    }
+                }
 
 				// Save the new objects to the database
 				trans.Commit();
@@ -188,6 +465,8 @@ namespace SPMTool
 
 			// Turn the layer on
 			Auxiliary.LayerOn(Layers.panelForce);
+			Auxiliary.LayerOff(Layers.compressiveStress);
+			Auxiliary.LayerOff(Layers.tensileStress);
 		}
 
 		// Draw the stringer forces diagrams
@@ -249,8 +528,10 @@ namespace SPMTool
 								dgrm.Transparency = Auxiliary.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
-								if (Math.Max(N1, N3) > 0) dgrm.ColorIndex = (short) AutoCAD.Colors.Blue1;
-								else dgrm.ColorIndex = (short) AutoCAD.Colors.Red;
+								if (Math.Max(N1, N3) > 0)
+									dgrm.ColorIndex = (short) AutoCAD.Colors.Blue1;
+								else
+									dgrm.ColorIndex = (short) AutoCAD.Colors.Red;
 
 								// Add the diagram to the drawing
 								Auxiliary.AddObject(dgrm);
@@ -702,6 +983,14 @@ namespace SPMTool
 		public static void TooglePanelForces()
 		{
 			Auxiliary.ToogleLayer(Layers.panelForce);
+		}
+
+		// Toggle view for panel forces
+		[CommandMethod("TooglePanelStresses")]
+		public static void TooglePanelStresses()
+		{
+			Auxiliary.ToogleLayer(Layers.compressiveStress);
+			Auxiliary.ToogleLayer(Layers.tensileStress);
 		}
 
 		// Toggle view for displacements

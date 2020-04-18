@@ -15,18 +15,19 @@ namespace SPMTool
 	    }
 
         // Panel parameters
-        public ObjectId                ObjectId         { get; }
-        public int                     Number           { get; }
-        public int[]                   Grips            { get; }
-        public Point3d[]               Vertices         { get; }
-        public double                  Width            { get; }
-		public Material.Concrete       Concrete         { get; }
-		public Reinforcement.Panel     Reinforcement    { get; }
-        public abstract Matrix<double> LocalStiffness   { get; }
-        public abstract Matrix<double> GlobalStiffness  { get; }
-        public Vector<double>          Displacements    { get; set; }
-        public abstract Vector<double> Forces           { get; }
-        public abstract double         ShearStress      { get; }
+        public ObjectId                                      ObjectId          { get; }
+        public int                                           Number            { get; }
+        public int[]                                         Grips             { get; }
+        public Point3d[]                                     Vertices          { get; }
+        public double                                        Width             { get; }
+		public Material.Concrete                             Concrete          { get; }
+		public Reinforcement.Panel                           Reinforcement     { get; }
+        public abstract Matrix<double>                       LocalStiffness    { get; }
+        public abstract Matrix<double>                       GlobalStiffness   { get; }
+        public Vector<double>                                Displacements     { get; set; }
+        public abstract Vector<double>                       Forces            { get; }
+        public abstract Vector<double>                       AverageStresses   { get; }
+        public abstract (Vector<double> sigma, double theta) PrincipalStresses { get; }
 
         // Constructor
         public Panel(ObjectId panelObject, Material.Concrete concrete = null)
@@ -436,23 +437,66 @@ namespace SPMTool
 	            }
             }
 
-            // Calculate shear stress
-            public override double ShearStress
-            {
-	            get
-	            {
-		            // Get the dimensions as a vector
-		            var lsV = Vector<double>.Build.DenseOfArray(Edges.Length);
+			// Calculate panel stresses
+			public override Vector<double> AverageStresses
+			{
+				get
+				{
+					// Get the dimensions as a vector
+					var lsV = Vector<double>.Build.DenseOfArray(Edges.Length);
 
-		            // Calculate the shear stresses
-		            var tau = Forces / (lsV * Width);
+					// Calculate the shear stresses
+					var tau = Forces / (lsV * Width);
 
-		            // Calculate the average stress
-		            return
-                        Math.Round((-tau[0] + tau[1] - tau[2] + tau[3]) / 4, 2);
-	            }
+					// Calculate the average stress
+					double tauAvg =	(-tau[0] + tau[1] - tau[2] + tau[3]) / 4;
+
+					return
+						Vector<double>.Build.DenseOfArray(new[] { 0, 0, tauAvg });
+				}
             }
 
+			// Calculate principal stresses by Equilibrium Plasticity Truss Model
+			// Theta is the angle of sigma 2
+			public override (Vector<double> sigma, double theta) PrincipalStresses
+			{
+				get
+				{
+					double sig2;
+
+					// Get shear stress
+					double tau = AverageStresses[2];
+
+					// Get steel strengths
+					double
+                        fyx = Reinforcement.Steel.X.fy,
+						fyy = Reinforcement.Steel.Y.fy;
+
+					if (fyx == fyy)
+						sig2 = -2 * Math.Abs(tau);
+
+					else
+					{
+                        // Get relation of steel strengths
+                        double rLambda = Math.Sqrt(fyx / fyy);
+                        sig2 = -Math.Abs(tau) * (rLambda + 1 / rLambda);
+					}
+
+					var sigma = Vector<double>.Build.DenseOfArray(new [] {0, sig2, 0});
+
+					// Calculate theta
+					double theta;
+
+					if (tau <= 0)
+						theta = Constants.PiOver4;
+
+					else
+						theta = -Constants.PiOver4;
+
+					return
+						(sigma, theta);
+				}
+			}
         }
 
         public class NonLinear : Panel
@@ -828,7 +872,50 @@ namespace SPMTool
                 }
             }
 
-            // Initial MCFT parameters
+			// Calculate panel stresses
+			public override Vector<double> AverageStresses
+			{
+				get
+				{
+					// Get stress vector
+					var sigma = StressVector.sigma;
+
+					// Calculate average stresses
+					double
+						sigxm  = (sigma[0] + sigma[3] + sigma[6] + sigma[9])  / 4,
+						sigym  = (sigma[1] + sigma[4] + sigma[7] + sigma[10]) / 4,
+						sigxym = (sigma[2] + sigma[5] + sigma[8] + sigma[11]) / 4;
+
+					return
+						Vector<double>.Build.DenseOfArray(new [] {sigxm, sigym, sigxym});
+				}
+			}
+
+            // Calculate principal stresses
+            // Theta is the angle of sigma 2
+            public override (Vector<double> sigma, double theta) PrincipalStresses
+			{
+				get
+				{
+					// Get average stresses
+					var sigm = AverageStresses;
+
+					// Calculate principal stresses by Mohr's Circle
+					double
+						rad   = 0.5 * (sigm[0] + sigm[1]),
+						cen   = Math.Sqrt(0.25 * (sigm[0] - sigm[1]) * (sigm[0] - sigm[1]) + sigm[2] * sigm[2]),
+						sig1  = cen + rad,
+						sig2  = cen - rad,
+						theta = Math.Atan((sig1 - sigm[1]) / sigm[2]) - Constants.PiOver2;
+
+					var sigma = Vector<double>.Build.DenseOfArray(new [] {sig1, sig2, 0});
+
+					return
+						(sigma, theta);
+				}
+			}
+
+			// Initial MCFT parameters
             private Membrane.MCFT[] InitialMCFT()
             {
 	            var initialMCFT = new Membrane.MCFT[4];
@@ -845,7 +932,6 @@ namespace SPMTool
 
             // Properties not needed
             public override Matrix<double> LocalStiffness => throw new NotImplementedException();
-            public override double         ShearStress    => throw new NotImplementedException();
         }
     }
 }

@@ -599,6 +599,17 @@ namespace SPMTool
 
             RibbonButton button3 = new RibbonButton()
             {
+                Text = "Panel principal stresses",
+                ToolTip = "Toogle view for panel principal stresses",
+                ShowText = true,
+                ShowImage = true,
+                LargeImage = getBitmap(panelF),
+                CommandHandler = new CmdHandler(),
+                CommandParameter = "TooglePanelStresses"
+            };
+
+            RibbonButton button4 = new RibbonButton()
+            {
                 Text = "Displacements",
                 ToolTip = "Toogle view for magnified displacements of the model",
                 ShowText = true,
@@ -619,6 +630,7 @@ namespace SPMTool
             rbSpBtn1.Items.Add(button1);
             rbSpBtn1.Items.Add(button2);
             rbSpBtn1.Items.Add(button3);
+            rbSpBtn1.Items.Add(button4);
 
             // Add to the panel source
             pnlSrc.Items.Add(rbSpBtn1);

@@ -789,7 +789,7 @@ namespace SPMTool
 
                         // Calculate e and de
                         e  = 0.5 * (-k2 + rdelta) / k1,
-                        de = 0.5 * (dk2 * (k2 - rdelta) + 2 * k1) / (k1 * rdelta);
+                        de = 0.5 * (dk2 * (-k2 + rdelta) + 2 * k1) / (k1 * rdelta);
 
                     return
                         (e, de);
@@ -823,7 +823,7 @@ namespace SPMTool
 
                         // Calculate e and de
                         e  = 0.5 * (-k4 + rdelta) / k3,
-                        de = 0.5 * (dk4 * (k4 - rdelta) + 2 * k3) / (k3 * rdelta);
+                        de = 0.5 * (dk4 * (-k4 + rdelta) + 2 * k3) / (k3 * rdelta);
 
                     return
                         (e, de);

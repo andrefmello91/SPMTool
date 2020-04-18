@@ -251,6 +251,16 @@ namespace SPMTool
             }
         }
 
+        // Erase the objects in a layer
+        public static void EraseObjects(string layerName)
+        {
+			// Get objects
+			var objs = GetEntitiesOnLayer(layerName);
+
+			if (objs.Count > 0)
+				EraseObjects(objs);
+        }
+
 		// Get global indexes of a node
 		public static int[] GlobalIndexes(int nodeNumber)
 		{

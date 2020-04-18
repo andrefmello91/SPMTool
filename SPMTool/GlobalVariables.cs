@@ -48,27 +48,31 @@ namespace SPMTool
     public static class Layers
     {
         public static string
-            extNode        = "ExtNode",
-            intNode        = "IntNode",
-            stringer       = "Stringer",
-            panel          = "Panel",
-            support        = "Support",
-            force          = "Force",
-            forceText      = "ForceText",
-            stringerForce  = "StringerForces",
-            panelForce     = "PanelShear",
-            displacements  = "Displacements";
+            extNode            = "ExtNode",
+            intNode            = "IntNode",
+            stringer           = "Stringer",
+            panel              = "Panel",
+            support            = "Support",
+            force              = "Force",
+            forceText          = "ForceText",
+            stringerForce      = "StringerForces",
+            panelForce         = "PanelShear",
+            compressiveStress  = "CompressivePanelStress",
+            tensileStress      = "TensilePanelStress",
+            displacements      = "Displacements";
     }
 
     // Block names
     public static class Blocks
     {
-        public static string
-            supportX   = "SupportX",
-            supportY   = "SupportY",
-            supportXY  = "SupportXY",
-            forceBlock = "ForceBlock",
-            shearBlock = "ShearBlock";
+	    public static string
+		    supportX          = "SupportX",
+		    supportY          = "SupportY",
+		    supportXY         = "SupportXY",
+		    forceBlock        = "ForceBlock",
+		    shearBlock        = "ShearBlock",
+		    CompressiveStress = "CompressiveStressBlock",
+		    TensileStress     = "NonLinearStressBlock";
     }
 
     // XData indexers
