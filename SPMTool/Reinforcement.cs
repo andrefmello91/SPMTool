@@ -62,7 +62,7 @@ namespace SPMTool
 	            PromptDoubleOptions fyOp =
 		            new PromptDoubleOptions("\nInput the yield strength (MPa) of stringer reinforcement bars:")
 		            {
-			            DefaultValue = 0,
+			            DefaultValue = 500,
 			            AllowNegative = false
 		            };
 
@@ -78,7 +78,7 @@ namespace SPMTool
 	            PromptDoubleOptions EsOp =
 		            new PromptDoubleOptions("\nInput the elastic modulus (MPa) of stringer reinforcement bars:")
 		            {
-			            DefaultValue = 0,
+			            DefaultValue = 210000,
 			            AllowNegative = false
 		            };
 
@@ -177,7 +177,7 @@ namespace SPMTool
 	            PromptDoubleOptions fyxOp =
 		            new PromptDoubleOptions("\nInput the yield strength (MPa) of panel reinforcement bars in X direction:")
 		            {
-			            DefaultValue = 0,
+			            DefaultValue = 500,
 			            AllowNegative = false
 		            };
 
@@ -193,7 +193,7 @@ namespace SPMTool
 	            PromptDoubleOptions EsxOp =
 		            new PromptDoubleOptions("\nInput the elastic modulus (MPa) of panel reinforcement bars in X direction:")
 		            {
-			            DefaultValue = 0,
+			            DefaultValue = 210000,
 			            AllowNegative = false
 		            };
 

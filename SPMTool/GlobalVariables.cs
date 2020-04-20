@@ -135,6 +135,16 @@ namespace SPMTool
             Direction  = 3
         }
 
+        // Force text indexers
+        public enum ForceText
+        {
+            AppName    = 0,
+            XDataStr   = 1,
+			XPosition  = 2,
+			YPosition  = 3,
+            Direction  = 4
+        }
+
         // Support Indexers
         public enum Support
         {

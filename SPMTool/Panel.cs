@@ -33,7 +33,12 @@ namespace SPMTool
         public Panel(ObjectId panelObject, Material.Concrete concrete = null)
         {
 	        ObjectId = panelObject;
-	        Concrete = concrete;
+
+			// Get concrete
+			if (concrete == null)
+				Concrete = new Material.Concrete();
+			else
+				Concrete = concrete;
 
             // Start a transaction
             using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())

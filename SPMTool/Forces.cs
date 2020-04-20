@@ -164,8 +164,8 @@ namespace SPMTool
                                     TypedValue[] txtData = txtRb.AsArray();
 
                                     // Get the position of the node of the text
-                                    double ndX = Convert.ToDouble(txtData[2].Value);
-                                    double ndY = Convert.ToDouble(txtData[3].Value);
+                                    double ndX = Convert.ToDouble(txtData[(int)XData.ForceText.XPosition].Value);
+                                    double ndY = Convert.ToDouble(txtData[(int)XData.ForceText.YPosition].Value);
                                     Point3d ndTxtPos = new Point3d(ndX, ndY, 0);
 
                                     // Check if the position is equal to the selected node
@@ -201,7 +201,7 @@ namespace SPMTool
                                         rotAng = Constants.PiOver2;
 
                                         // Set the text position
-                                        txtPos = new Point3d(xPos - 400, yPos + 25, 0);
+                                        txtPos = new Point3d(xPos - 200, yPos + 25, 0);
                                     }
 
                                     if (xForce < 0) // negative force in x
@@ -210,7 +210,7 @@ namespace SPMTool
                                         rotAng = -Constants.PiOver2;
 
                                         // Set the text position
-                                        txtPos = new Point3d(xPos + 150, yPos + 25, 0);
+                                        txtPos = new Point3d(xPos + 75, yPos + 25, 0);
                                     }
 
                                     // Rotate the block
@@ -224,7 +224,7 @@ namespace SPMTool
                                     {
                                         TextString = xForceAbs.ToString(),
                                         Position = txtPos,
-                                        Height = 50,
+                                        Height = 30,
                                         Layer = Layers.forceText
                                     };
 
@@ -232,15 +232,7 @@ namespace SPMTool
                                     Auxiliary.AddObject(text);
 
                                     // Add the node position to the text XData
-                                    using (ResultBuffer txtRb = new ResultBuffer())
-                                    {
-                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));    // 0
-                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Force at nodes")); // 1
-                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndPos.X));                 // 2
-                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndPos.Y));                 // 3
-
-                                        text.XData = txtRb;
-                                    }
+                                    text.XData = ForceTextData(ndPos, (int)ForceDirection.X);
                                 }
                             }
 
@@ -266,7 +258,7 @@ namespace SPMTool
                                         rotAng = Constants.Pi;
 
                                         // Set the text position
-                                        txtPos = new Point3d(xPos + 25, yPos - 250, 0);
+                                        txtPos = new Point3d(xPos + 25, yPos - 125, 0);
                                     }
 
                                     if (yForce < 0) // negative force in y
@@ -274,7 +266,7 @@ namespace SPMTool
                                         // No rotation needed
 
                                         // Set the text position
-                                        txtPos = new Point3d(xPos + 25, yPos + 200, 0);
+                                        txtPos = new Point3d(xPos + 25, yPos + 100, 0);
                                     }
 
                                     // Rotate the block
@@ -288,7 +280,7 @@ namespace SPMTool
                                     {
                                         TextString = yForceAbs.ToString(),
                                         Position = txtPos,
-                                        Height = 50,
+                                        Height = 30,
                                         Layer = Layers.forceText
                                     };
 
@@ -296,15 +288,7 @@ namespace SPMTool
                                     Auxiliary.AddObject(text);
 
                                     // Add the node position to the text XData
-                                    using (ResultBuffer txtRb = new ResultBuffer())
-                                    {
-                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName));    // 0
-                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Force at nodes")); // 1
-                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndPos.X));                 // 2
-                                        txtRb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, ndPos.Y));                 // 3
-
-                                        text.XData = txtRb;
-                                    }
+                                    text.XData = ForceTextData(ndPos, (int)ForceDirection.Y);
                                 }
                             }
                         }
@@ -328,6 +312,25 @@ namespace SPMTool
                 fData[(int)XData.Force.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
                 fData[(int)XData.Force.Value]     = new TypedValue((int)DxfCode.ExtendedDataReal, forceValue);
                 fData[(int)XData.Force.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32, forceDirecion);
+
+                // Add XData to force block
+                return
+                    new ResultBuffer(fData);
+            }
+
+            // Create XData for force text
+            ResultBuffer ForceTextData(Point3d forcePosition, int forceDirection)
+            {
+                // Get the Xdata size
+                int size = Enum.GetNames(typeof(XData.ForceText)).Length;
+                var fData = new TypedValue[size];
+
+                // Set values
+                fData[(int)XData.ForceText.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
+                fData[(int)XData.ForceText.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Force at nodes");
+                fData[(int)XData.ForceText.XPosition] = new TypedValue((int)DxfCode.ExtendedDataReal, forcePosition.X);
+                fData[(int)XData.ForceText.YPosition] = new TypedValue((int)DxfCode.ExtendedDataReal, forcePosition.Y);
+                fData[(int)XData.ForceText.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32, forceDirection);
 
                 // Add XData to force block
                 return
@@ -370,16 +373,16 @@ namespace SPMTool
                         using (DBObjectCollection arrow = new DBObjectCollection())
                         {
                             // Create the arrow line and solid)
-                            Line line = new Line()
+                            Line line = new Line
                             {
-                                StartPoint = new Point3d(0, 75, 0),
-                                EndPoint = new Point3d(0, 250, 0)
+                                StartPoint = new Point3d(0, 37.5, 0),
+                                EndPoint = new Point3d(0, 125, 0)
                             };
                             // Add to the collection
                             arrow.Add(line);
 
                             // Create the solid and add to the collection
-                            Solid solid = new Solid(origin, new Point3d(-50, 75, 0), new Point3d(50, 75, 0));
+                            Solid solid = new Solid(origin, new Point3d(-25, 37.5, 0), new Point3d(25, 37.5, 0));
                             arrow.Add(solid);
 
                             // Add the lines to the block table record

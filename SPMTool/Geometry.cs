@@ -609,8 +609,8 @@ namespace SPMTool
                             // Set the initial parameters
                             newData[(int)XData.Stringer.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
                             newData[(int)XData.Stringer.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-                            newData[(int)XData.Stringer.Width]     = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
-                            newData[(int)XData.Stringer.Height]    = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                            newData[(int)XData.Stringer.Width]     = new TypedValue((int)DxfCode.ExtendedDataReal, 100);
+                            newData[(int)XData.Stringer.Height]    = new TypedValue((int)DxfCode.ExtendedDataReal, 100);
                             newData[(int)XData.Stringer.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                             newData[(int)XData.Stringer.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                             newData[(int)XData.Stringer.Steelfy]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
@@ -695,10 +695,30 @@ namespace SPMTool
                     {
                         SelectionSet set = selRes.Value;
 
+                        // Get default values from the first selected stringer
+                        double defWd = 100, defH = 100;
+                        foreach (SelectedObject obj in set)
+                        {
+	                        // Open the selected object for read
+	                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+	                        // Check if the selected object is a node
+	                        if (ent.Layer == Layers.stringer)
+	                        {
+								var stringer = new SPMTool.Stringer.Linear(obj.ObjectId);
+
+								// Get width and height
+								defWd = stringer.Width;
+								defH  = stringer.Height;
+
+								break;
+	                        }
+                        }
+
                         // Ask the user to input the stringer width
                         PromptDoubleOptions strWOp = new PromptDoubleOptions("\nInput the width (in mm) for the selected stringers:")
                         {
-                            DefaultValue = 1,
+                            DefaultValue = defWd,
                             AllowZero = false,
                             AllowNegative = false
                         };
@@ -713,7 +733,7 @@ namespace SPMTool
                             // Ask the user to input the stringer height
                             PromptDoubleOptions strHOp = new PromptDoubleOptions("\nInput the height (in mm) for the selected stringers:")
                             {
-                                DefaultValue = 1,
+                                DefaultValue = defH,
                                 AllowZero = false,
                                 AllowNegative = false
                             };
@@ -1110,10 +1130,29 @@ namespace SPMTool
                         // Get the selection
                         SelectionSet set = selRes.Value;
 
+                        // Get default values from the first selected stringer
+                        double defWd = 100;
+                        foreach (SelectedObject obj in set)
+                        {
+	                        // Open the selected object for read
+	                        Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+
+	                        // Check if the selected object is a node
+	                        if (ent.Layer == Layers.panel)
+	                        {
+		                        var panel = new SPMTool.Panel.Linear(obj.ObjectId);
+
+		                        // Get width and height
+		                        defWd = panel.Width;
+
+		                        break;
+	                        }
+                        }
+
                         // Ask the user to input the panel width
                         PromptDoubleOptions pnlWOp = new PromptDoubleOptions("\nInput the width (in mm) for the selected panels:")
                         {
-                            DefaultValue = 1,
+                            DefaultValue = defWd,
                             AllowZero = false,
                             AllowNegative = false
                         };
@@ -1237,7 +1276,7 @@ namespace SPMTool
                             // Set the initial parameters
                             newData[(int)XData.Panel.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
                             newData[(int)XData.Panel.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-                            newData[(int)XData.Panel.Width]    = new TypedValue((int)DxfCode.ExtendedDataReal, 1);
+                            newData[(int)XData.Panel.Width]    = new TypedValue((int)DxfCode.ExtendedDataReal, 100);
                             newData[(int)XData.Panel.XDiam]    = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                             newData[(int)XData.Panel.Sx]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
                             newData[(int)XData.Panel.fyx]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);

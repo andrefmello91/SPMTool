@@ -36,10 +36,15 @@ namespace SPMTool
 		public Stringer(ObjectId stringerObject, Material.Concrete concrete = null)
 		{
 			ObjectId = stringerObject;
-			Concrete = concrete;
 
-			// Start a transaction
-			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+			// Get concrete
+			if (concrete == null)
+				Concrete = new Material.Concrete();
+			else
+				Concrete = concrete;
+
+            // Start a transaction
+            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
 			{
 				// Read the object as a line
 				Line strLine = trans.GetObject(stringerObject, OpenMode.ForRead) as Line;
