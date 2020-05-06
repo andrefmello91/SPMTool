@@ -16,16 +16,16 @@ namespace SPMTool
         public static void RegisterApp()
         {
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Registered Applications table for read
-                RegAppTable regAppTbl = trans.GetObject(AutoCAD.curDb.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-                if (!regAppTbl.Has(AutoCAD.appName))
+                RegAppTable regAppTbl = trans.GetObject(ACAD.Current.db.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+                if (!regAppTbl.Has(ACAD.Current.appName))
                 {
                     using (RegAppTableRecord regAppTblRec = new RegAppTableRecord())
                     {
-                        regAppTblRec.Name = AutoCAD.appName;
-                        trans.GetObject(AutoCAD.curDb.RegAppTableId, OpenMode.ForWrite);
+                        regAppTblRec.Name = ACAD.Current.appName;
+                        trans.GetObject(ACAD.Current.db.RegAppTableId, OpenMode.ForWrite);
                         regAppTbl.Add(regAppTblRec);
                         trans.AddNewlyCreatedDBObject(regAppTblRec, true);
                     }
@@ -48,10 +48,10 @@ namespace SPMTool
         public static void CreateLayer(string layerName, short layerColor, int transparency = 0)
         {
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(AutoCAD.curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+                LayerTable lyrTbl = trans.GetObject(ACAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
 
                 if (!lyrTbl.Has(layerName))
                 {
@@ -62,7 +62,7 @@ namespace SPMTool
                         lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, layerColor);
 
                         // Upgrade the Layer table for write
-                        trans.GetObject(AutoCAD.curDb.LayerTableId, OpenMode.ForWrite);
+                        trans.GetObject(ACAD.Current.db.LayerTableId, OpenMode.ForWrite);
 
                         // Append the new layer to the Layer table and the transaction
                         lyrTbl.Add(lyrTblRec);
@@ -85,10 +85,10 @@ namespace SPMTool
         public static void ToogleLayer(string layerName)
         {
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(AutoCAD.curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+                LayerTable lyrTbl = trans.GetObject(ACAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
 
                 if (lyrTbl.Has(layerName))
                 {
@@ -115,10 +115,10 @@ namespace SPMTool
         public static void LayerOff(string layerName)
         {
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(AutoCAD.curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+                LayerTable lyrTbl = trans.GetObject(ACAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
 
                 if (lyrTbl.Has(layerName))
                 {
@@ -141,10 +141,10 @@ namespace SPMTool
         public static void LayerOn(string layerName)
         {
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(AutoCAD.curDb.LayerTableId, OpenMode.ForRead) as LayerTable;
+                LayerTable lyrTbl = trans.GetObject(ACAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
 
                 if (lyrTbl.Has(layerName))
                 {
@@ -175,7 +175,7 @@ namespace SPMTool
             SelectionFilter selFt = new SelectionFilter(tvs);
 
             // Get the entities on the layername
-            PromptSelectionResult selRes = AutoCAD.edtr.SelectAll(selFt);
+            PromptSelectionResult selRes = ACAD.Current.edtr.SelectAll(selFt);
 
             if (selRes.Status == PromptStatus.OK)
                 return new ObjectIdCollection(selRes.Value.GetObjectIds());
@@ -213,10 +213,10 @@ namespace SPMTool
             if (entity != null)
             {
                 // Start a transaction
-                using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+                using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
                 {
                     // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    BlockTable blkTbl = trans.GetObject(ACAD.Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                     // Open the Block table record Model space for write
                     BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
@@ -235,7 +235,7 @@ namespace SPMTool
         public static void EraseObjects(ObjectIdCollection objects)
         {
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
             {
                 foreach (ObjectId obj in objects)
                 {

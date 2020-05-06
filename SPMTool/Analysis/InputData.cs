@@ -2,21 +2,23 @@
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics.LinearAlgebra;
+using SPMTool.Elements;
+using SPMTool.Material;
 
-namespace SPMTool
+namespace SPMTool.Analysis
 {
     public class InputData
     {
 		// Properties
-		public Material.Concrete Concrete        { get; }
-        public Node[]            Nodes           { get; }
-	    public Stringer[]        Stringers       { get; }
-	    public Panel[]           Panels          { get; }
-	    public Force[]           Forces          { get; }
-	    public Constraint[]      Constraints     { get; }
-	    public Vector<double>    ForceVector     { get; }
-	    public int[]             ConstraintIndex { get; }
-	    public int               numDoFs         => 2 * Nodes.Length;
+		public Concrete       Concrete        { get; }
+        public Node[]         Nodes           { get; }
+	    public Stringer[]     Stringers       { get; }
+	    public Panel[]        Panels          { get; }
+	    public Force[]        Forces          { get; }
+	    public Constraint[]   Constraints     { get; }
+	    public Vector<double> ForceVector     { get; }
+	    public int[]          ConstraintIndex { get; }
+	    public int            numDoFs         => 2 * Nodes.Length;
 
 		// Private properties
 		private ObjectIdCollection NodeObjects      { get; }
@@ -28,16 +30,16 @@ namespace SPMTool
 		public InputData(int stringerBehavior, int panelBehavior)
 		{
 			// Get the collection of elements in the model
-			NodeObjects     = Geometry.Node.UpdateNodes();
-			StringerObjects = Geometry.Stringer.UpdateStringers();
-			PanelObjects    = Geometry.Panel.UpdatePanels();
+			NodeObjects     = ACAD.Geometry.Node.UpdateNodes();
+			StringerObjects = ACAD.Geometry.Stringer.UpdateStringers();
+			PanelObjects    = ACAD.Geometry.Panel.UpdatePanels();
 
             // Read forces and constraints
             Forces      = Force.ListOfForces();
             Constraints = Constraint.ListOfConstraints();
 
 			// Get concrete data
-			Concrete = new Material.Concrete();
+			Concrete = Concrete.ReadData();
 
 			// Set the behavior of elements
 			StringerBehavior = stringerBehavior;

@@ -95,27 +95,35 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InputData.cs" />
-    <Compile Include="Membrane.cs" />
-    <Compile Include="Node.cs" />
-    <Compile Include="Panel.cs" />
-    <Compile Include="Stringer.cs" />
-    <Compile Include="Forces.cs" />
-    <Compile Include="GlobalVariables.cs" />
+    <Compile Include="Analysis\InputData.cs" />
+    <Compile Include="AutoCAD\Forces.cs" />
+    <Compile Include="AutoCAD\Geometry-Panel .cs" />
+    <Compile Include="AutoCAD\Geometry-Stringer .cs" />
+    <Compile Include="AutoCAD\Geometry-Node.cs" />
+    <Compile Include="AutoCAD\Supports.cs" />
+    <Compile Include="Elements\IntegrationPoint.cs" />
+    <Compile Include="Elements\Membrane.cs" />
+    <Compile Include="Material\Concrete.cs" />
+    <Compile Include="Elements\Membrane-old.cs" />
+    <Compile Include="Elements\Node.cs" />
+    <Compile Include="Elements\Panel.cs" />
+    <Compile Include="Elements\Stringer.cs" />
+    <Compile Include="Elements\Forces.cs" />
+    <Compile Include="Global\GlobalVariables.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Reinforcement.cs" />
-    <Compile Include="Results.cs" />
-    <Compile Include="Geometry.cs" />
-    <Compile Include="Auxiliary.cs" />
-    <Compile Include="Analysis.cs" />
-    <Compile Include="Material.cs" />
+    <Compile Include="Material\Reinforcement.cs" />
+    <Compile Include="Analysis\Results.cs" />
+    <Compile Include="AutoCAD\Geometry.cs" />
+    <Compile Include="Global\Auxiliary.cs" />
+    <Compile Include="Analysis\Analysis.cs" />
+    <Compile Include="Material\Steel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Constraints.cs" />
-    <Compile Include="UserInterface.cs" />
+    <Compile Include="Elements\Constraints.cs" />
+    <Compile Include="AutoCAD\UserInterface.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -303,5 +311,6 @@
   <ItemGroup>
     <None Include="Resources\panelreinforcement_large_light.png" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

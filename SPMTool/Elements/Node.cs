@@ -2,8 +2,9 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
+using SPMTool.ACAD;
 
-namespace SPMTool
+namespace SPMTool.Elements
 {
     public class Node
     {
@@ -31,19 +32,19 @@ namespace SPMTool
 			ObjectId = nodeObject;
 
             if (forces == null)
-                forces = SPMTool.Force.ListOfForces();
+                forces = Elements.Force.ListOfForces();
 
             if (constraints == null)
                 constraints = Constraint.ListOfConstraints();
 
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
             {
 	            // Read the object as a point
 	            DBPoint ndPt = trans.GetObject(nodeObject, OpenMode.ForRead) as DBPoint;
 
 	            // Read the XData and get the necessary data
-	            ResultBuffer rb = ndPt.GetXDataForApplication(AutoCAD.appName);
+	            ResultBuffer rb = ndPt.GetXDataForApplication(Current.appName);
 	            TypedValue[] data = rb.AsArray();
 
 	            // Get the position
@@ -114,10 +115,10 @@ namespace SPMTool
                 if (force.Position == Position)
                 {
                     // Read force
-                    if (force.Direction == (int)SPMTool.Force.ForceDirection.X)
+                    if (force.Direction == (int)Elements.Force.ForceDirection.X)
                         Fx = force.Value;
 
-                    if (force.Direction == (int)SPMTool.Force.ForceDirection.Y)
+                    if (force.Direction == (int)Elements.Force.ForceDirection.Y)
                         Fy = force.Value;
                 }
             }

@@ -1,16 +1,17 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Globalization;
+using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using SPMTool.ACAD;
+using SPMTool.Elements;
 
-[assembly: CommandClass(typeof(SPMTool.Results))]
+[assembly: CommandClass(typeof(SPMTool.Analysis.Results))]
 
-namespace SPMTool
+namespace SPMTool.Analysis
 {
 	public static class Results
 	{
@@ -27,10 +28,10 @@ namespace SPMTool
 		private static void CreatePanelShearBlock()
 		{
 			// Start a transaction
-			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Open the Block table for read
-				BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+				BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
 				// Initialize the block Id
 				ObjectId shearBlock = ObjectId.Null;
@@ -112,10 +113,10 @@ namespace SPMTool
 		private static void CreatePanelStressesBlock()
 		{
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(ACAD.Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
                 ObjectId compStressBlock = ObjectId.Null;
@@ -286,9 +287,9 @@ namespace SPMTool
         private static void DrawPanelStresses(Panel[] panels)
 		{
 			// Check if the layer already exists in the drawing. If it doesn't, then it's created:
-			Auxiliary.CreateLayer(Layers.panelForce, (short) AutoCAD.Colors.Green, 0);
-			Auxiliary.CreateLayer(Layers.compressiveStress, (short)AutoCAD.Colors.Blue1, 80);
-			Auxiliary.CreateLayer(Layers.tensileStress, (short)AutoCAD.Colors.Red, 80);
+			Auxiliary.CreateLayer(Layers.panelForce, (short) Colors.Green, 0);
+			Auxiliary.CreateLayer(Layers.compressiveStress, (short)Colors.Blue1, 80);
+			Auxiliary.CreateLayer(Layers.tensileStress, (short)Colors.Red, 80);
 
             // Check if the shear blocks already exist. If not, create the blocks
             CreatePanelShearBlock();
@@ -300,10 +301,10 @@ namespace SPMTool
 			Auxiliary.EraseObjects(Layers.tensileStress);
 
 			// Start a transaction
-			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+			using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
 			{
 				// Open the Block table for read
-				BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+				BlockTable blkTbl = trans.GetObject(ACAD.Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
 				// Read the object Ids of the support blocks
 				ObjectId shearBlock = blkTbl[Blocks.shearBlock];
@@ -339,7 +340,7 @@ namespace SPMTool
 						// If the shear is negative, mirror the block
 						if (tauAvg < 0)
 						{
-							blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, AutoCAD.curUCS.Yaxis, cntrPt));
+							blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, ACAD.Current.ucs.Yaxis, cntrPt));
 						}
 					}
 
@@ -370,7 +371,7 @@ namespace SPMTool
 						using (BlockReference blkRef = new BlockReference(cntrPt, compStress))
 						{
 							blkRef.Layer = Layers.compressiveStress;
-							blkRef.ColorIndex = (int)AutoCAD.Colors.Blue1;
+							blkRef.ColorIndex = (int)Colors.Blue1;
 							Auxiliary.AddObject(blkRef);
 
 							// Set the scale of the block
@@ -379,7 +380,7 @@ namespace SPMTool
 							// Rotate the block in theta angle
 							if (theta != 0)
 							{
-								blkRef.TransformBy(Matrix3d.Rotation(theta, AutoCAD.curUCS.Zaxis, cntrPt));
+								blkRef.TransformBy(Matrix3d.Rotation(theta, ACAD.Current.ucs.Zaxis, cntrPt));
 							}
 						}
 
@@ -393,7 +394,7 @@ namespace SPMTool
 								EndPoint = new Point3d(cntrPt.X + 210 * scFctr, cntrPt.Y, 0)
 							};
 
-							ln.TransformBy(Matrix3d.Rotation(theta, AutoCAD.curUCS.Zaxis, cntrPt));
+							ln.TransformBy(Matrix3d.Rotation(theta, ACAD.Current.ucs.Zaxis, cntrPt));
 
                             // Set the alignment point
 							Point3d algnPt = ln.EndPoint;
@@ -426,7 +427,7 @@ namespace SPMTool
 							// Rotate the block in theta angle
 							if (theta != 0)
 							{
-								blkRef.TransformBy(Matrix3d.Rotation(theta, AutoCAD.curUCS.Zaxis, cntrPt));
+								blkRef.TransformBy(Matrix3d.Rotation(theta, ACAD.Current.ucs.Zaxis, cntrPt));
 							}
 						}
 
@@ -440,7 +441,7 @@ namespace SPMTool
 								EndPoint = new Point3d(cntrPt.X, cntrPt.Y + 210 * scFctr, 0)
 							};
 
-							ln.TransformBy(Matrix3d.Rotation(theta, AutoCAD.curUCS.Zaxis, cntrPt));
+							ln.TransformBy(Matrix3d.Rotation(theta, ACAD.Current.ucs.Zaxis, cntrPt));
 
                             // Set the alignment point
 							Point3d algnPt = ln.EndPoint;
@@ -473,7 +474,7 @@ namespace SPMTool
 		private static void DrawStringerForces(Stringer[] stringers, double maxForce)
 		{
 			// Check if the layer already exists in the drawing. If it doesn't, then it's created:
-			Auxiliary.CreateLayer(Layers.stringerForce, (short) AutoCAD.Colors.Grey, 0);
+			Auxiliary.CreateLayer(Layers.stringerForce, (short) Colors.Grey, 0);
 
 			// Erase all the stringer forces in the drawing
 			ObjectIdCollection strFs = Auxiliary.GetEntitiesOnLayer(Layers.stringerForce);
@@ -481,7 +482,7 @@ namespace SPMTool
 				Auxiliary.EraseObjects(strFs);
 
 			// Start a transaction
-			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+			using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
 			{
 				// Get the stringers stifness matrix and add to the global stifness matrix
 				foreach (var str in stringers)
@@ -529,15 +530,15 @@ namespace SPMTool
 
 								// Set the color (blue to compression and red to tension)
 								if (Math.Max(N1, N3) > 0)
-									dgrm.ColorIndex = (short) AutoCAD.Colors.Blue1;
+									dgrm.ColorIndex = (short) Colors.Blue1;
 								else
-									dgrm.ColorIndex = (short) AutoCAD.Colors.Red;
+									dgrm.ColorIndex = (short) Colors.Red;
 
 								// Add the diagram to the drawing
 								Auxiliary.AddObject(dgrm);
 
 								// Rotate the diagram
-								dgrm.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
+								dgrm.TransformBy(Matrix3d.Rotation(ang, ACAD.Current.ucs.Zaxis, stPt));
 							}
 						}
 
@@ -570,14 +571,14 @@ namespace SPMTool
 								dgrm1.Transparency = Auxiliary.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
-								if (N1 > 0) dgrm1.ColorIndex = (short) AutoCAD.Colors.Blue1;
-								else dgrm1.ColorIndex = (short) AutoCAD.Colors.Red;
+								if (N1 > 0) dgrm1.ColorIndex = (short) Colors.Blue1;
+								else dgrm1.ColorIndex = (short) Colors.Red;
 
 								// Add the diagram to the drawing
 								Auxiliary.AddObject(dgrm1);
 
 								// Rotate the diagram
-								dgrm1.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
+								dgrm1.TransformBy(Matrix3d.Rotation(ang, ACAD.Current.ucs.Zaxis, stPt));
 							}
 
 							using (Solid dgrm3 = new Solid(vrts3[0], vrts3[1], vrts3[2]))
@@ -587,14 +588,14 @@ namespace SPMTool
 								dgrm3.Transparency = Auxiliary.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
-								if (N3 > 0) dgrm3.ColorIndex = (short) AutoCAD.Colors.Blue1;
-								else dgrm3.ColorIndex = (short) AutoCAD.Colors.Red;
+								if (N3 > 0) dgrm3.ColorIndex = (short) Colors.Blue1;
+								else dgrm3.ColorIndex = (short) Colors.Red;
 
 								// Add the diagram to the drawing
 								Auxiliary.AddObject(dgrm3);
 
 								// Rotate the diagram
-								dgrm3.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
+								dgrm3.TransformBy(Matrix3d.Rotation(ang, ACAD.Current.ucs.Zaxis, stPt));
 							}
 						}
 
@@ -614,12 +615,12 @@ namespace SPMTool
 								// Set the color (blue to compression and red to tension) and position
 								if (N1 > 0)
 								{
-									txt1.ColorIndex = (short) AutoCAD.Colors.Blue1;
+									txt1.ColorIndex = (short) Colors.Blue1;
 									txt1.Position = new Point3d(stPt.X + 10, stPt.Y + h1 + 20, 0);
 								}
 								else
 								{
-									txt1.ColorIndex = (short) AutoCAD.Colors.Red;
+									txt1.ColorIndex = (short) Colors.Red;
 									txt1.Position = new Point3d(stPt.X + 10, stPt.Y + h1 - 50, 0);
 								}
 
@@ -627,7 +628,7 @@ namespace SPMTool
 								Auxiliary.AddObject(txt1);
 
 								// Rotate the text
-								txt1.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
+								txt1.TransformBy(Matrix3d.Rotation(ang, ACAD.Current.ucs.Zaxis, stPt));
 							}
 						}
 
@@ -646,12 +647,12 @@ namespace SPMTool
                                 // Set the color (blue to compression and red to tension) and position
                                 if (N3 > 0)
 								{
-									txt3.ColorIndex = (short) AutoCAD.Colors.Blue1;
+									txt3.ColorIndex = (short) Colors.Blue1;
 									txt3.Position = new Point3d(stPt.X + l - 10, stPt.Y + h3 + 20, 0);
 								}
 								else
 								{
-									txt3.ColorIndex = (short) AutoCAD.Colors.Red;
+									txt3.ColorIndex = (short) Colors.Red;
 									txt3.Position = new Point3d(stPt.X + l - 10, stPt.Y + h3 - 50, 0);
 								}
 
@@ -663,7 +664,7 @@ namespace SPMTool
 								Auxiliary.AddObject(txt3);
 
 								// Rotate the text
-								txt3.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
+								txt3.TransformBy(Matrix3d.Rotation(ang, ACAD.Current.ucs.Zaxis, stPt));
 							}
 						}
 					}
@@ -681,7 +682,7 @@ namespace SPMTool
 		private static void DrawDisplacements(Stringer[] stringers, Node[] nodes)
 		{
 			// Create the layer
-			Auxiliary.CreateLayer(Layers.displacements, (short) AutoCAD.Colors.Yellow1, 0);
+			Auxiliary.CreateLayer(Layers.displacements, (short) Colors.Yellow1, 0);
 
 			// Turn the layer off
 			Auxiliary.LayerOff(Layers.displacements);
@@ -698,7 +699,7 @@ namespace SPMTool
 			List<Point3d> dispNds = new List<Point3d>();
 
 			// Start a transaction
-			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+			using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
 			{
 				foreach (var str in stringers)
 				{
@@ -778,14 +779,14 @@ namespace SPMTool
 			}
 
 			// Add the nodes
-			new Geometry.Node(dispNds, (int)SPMTool.Node.NodeType.Displaced);
+			new Geometry.Node(dispNds, (int)Node.NodeType.Displaced);
 		}
 
 		// Set displacement to nodes
 		private static void SetDisplacements(Node[] nodes)
 		{
 			// Start a transaction
-			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+			using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
 			{
 				// Get the stringers stifness matrix and add to the global stifness matrix
 				foreach (var nd in nodes)
@@ -797,7 +798,7 @@ namespace SPMTool
 					DBPoint ndPt = trans.GetObject(nd.ObjectId, OpenMode.ForWrite) as DBPoint;
 
 					// Get the result buffer as an array
-					ResultBuffer rb = ndPt.GetXDataForApplication(AutoCAD.appName);
+					ResultBuffer rb = ndPt.GetXDataForApplication(ACAD.Current.appName);
 					TypedValue[] data = rb.AsArray();
 
 					// Save the displacements on the XData
@@ -825,13 +826,13 @@ namespace SPMTool
 			{
 				// Request the object to be selected in the drawing area
 				PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to view data:");
-				PromptEntityResult entRes = AutoCAD.edtr.GetEntity(entOp);
+				PromptEntityResult entRes = ACAD.Current.edtr.GetEntity(entOp);
 
 				// If the prompt status is OK, objects were selected
 				if (entRes.Status == PromptStatus.OK)
 				{
 					// Start a transaction
-					using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+					using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
 					{
 						// Get the entity for read
 						Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
@@ -914,9 +915,9 @@ namespace SPMTool
 									"\n\nReinforcement: " + rf.NumberOfBars + " Ø " + rf.BarDiameter + " mm (" + As +
 									" mm²) \n\n" +
 									"Steel Parameters: " +
-									"\nfy = " + rf.Steel.fy + " MPa" +
-									"\nEs = " + rf.Steel.Es + " MPa" +
-									"\nεy = " + Math.Round(1000 * rf.Steel.ey, 2) + " E-03";
+									"\nfy = " + rf.Steel.YieldStress + " MPa" +
+									"\nEs = " + rf.Steel.ElasticModule + " MPa" +
+									"\nεy = " + Math.Round(1000 * rf.Steel.YieldStrain, 2) + " E-03";
 							}
 						}
 
@@ -946,15 +947,15 @@ namespace SPMTool
                                 msgstr +=
 								"\n\nReinforcement (x): Ø " + rf.BarDiameter.X + " mm, s = " + rf.BarSpacing.X + " mm (ρsx = " + psx + ")\n" +
 								"Steel Parameters (x): " +
-								"\nfy = " + rf.Steel.X.fy + " MPa" +
-								"\nEs = " + rf.Steel.X.Es + " MPa" +
-								"\nεy = " + Math.Round(1000 * rf.Steel.X.ey, 2) + " E-03 \n\n" +
+								"\nfy = " + rf.Steel.X.YieldStress + " MPa" +
+								"\nEs = " + rf.Steel.X.ElasticModule + " MPa" +
+								"\nεy = " + Math.Round(1000 * rf.Steel.X.YieldStrain, 2) + " E-03 \n\n" +
 								"Reinforcement (y) = Ø " + rf.BarDiameter.Y + " mm, s = " + rf.BarSpacing.Y +
 								" mm (ρsy = " + psy + ")\n" +
 								"Steel Parameters (y): " +
-								"\nfy = " + rf.Steel.Y.fy + " MPa" +
-								"\nEs = " + rf.Steel.Y.Es + " MPa" +
-								"\nεy = " + Math.Round(1000 * rf.Steel.Y.ey, 2) + " E-03 \n\n";
+								"\nfy = " + rf.Steel.Y.YieldStress + " MPa" +
+								"\nEs = " + rf.Steel.Y.ElasticModule + " MPa" +
+								"\nεy = " + Math.Round(1000 * rf.Steel.Y.YieldStrain, 2) + " E-03 \n\n";
 							}
 						}
 
@@ -962,7 +963,7 @@ namespace SPMTool
 							msgstr = "NONE";
 
 						// Display the values returned
-						Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + msgstr);
+						Application.ShowAlertDialog(ACAD.Current.appName + "\n\n" + msgstr);
 					}
 				}
 

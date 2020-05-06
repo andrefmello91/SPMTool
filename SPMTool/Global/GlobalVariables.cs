@@ -5,34 +5,68 @@ using Autodesk.AutoCAD.Geometry;
 
 namespace SPMTool
 {
-    // AutoCAD variables
-    public static class AutoCAD
-    {
-        // Get the current document, database and editor
-        public static Document curDoc = Application.DocumentManager.MdiActiveDocument;
-        public static Database curDb = curDoc.Database;
-        public static Editor edtr = curDoc.Editor;
+	namespace ACAD
+	{
+		// AutoCAD variables
+		public static class Current
+		{
+			// Get the current document, database and editor
+			public static Document doc = Application.DocumentManager.MdiActiveDocument;
+			public static Database db = doc.Database;
+			public static Editor edtr = doc.Editor;
 
-        // Get the coordinate system for transformations
-        public static Matrix3d curUCSMatrix = edtr.CurrentUserCoordinateSystem;
-        public static CoordinateSystem3d curUCS = curUCSMatrix.CoordinateSystem3d;
+			// Get the coordinate system for transformations
+			public static Matrix3d ucsMatrix = edtr.CurrentUserCoordinateSystem;
+			public static CoordinateSystem3d ucs = ucsMatrix.CoordinateSystem3d;
 
-        // Define the appName
-        public static string appName = "SPMTool";
+			// Define the appName
+			public static string appName = "SPMTool";
+		}
 
-        // Color codes
-        public enum Colors : short
-        {
-            Red      = 1,
-            Yellow   = 2,
-            Yellow1  = 41,
-            Cyan     = 4,
-            Blue1    = 5,
-            Blue     = 150,
-            Green    = 92,
-            Grey     = 254
-        }
-    }
+		// Color codes
+		public enum Colors : short
+		{
+			Red = 1,
+			Yellow = 2,
+			Yellow1 = 41,
+			Cyan = 4,
+			Blue1 = 5,
+			Blue = 150,
+			Green = 92,
+			Grey = 254
+		}
+
+		// Layer names
+		public static class Layers
+		{
+			public static string
+				extNode = "ExtNode",
+				intNode = "IntNode",
+				stringer = "Stringer",
+				panel = "Panel",
+				support = "Support",
+				force = "Force",
+				forceText = "ForceText",
+				stringerForce = "StringerForces",
+				panelForce = "PanelShear",
+				compressiveStress = "CompressivePanelStress",
+				tensileStress = "TensilePanelStress",
+				displacements = "Displacements";
+		}
+
+		// Block names
+		public static class Blocks
+		{
+			public static string
+				supportX = "SupportX",
+				supportY = "SupportY",
+				supportXY = "SupportXY",
+				forceBlock = "ForceBlock",
+				shearBlock = "ShearBlock",
+				CompressiveStress = "CompressiveStressBlock",
+				TensileStress = "NonLinearStressBlock";
+		}
+	}
 
     // Constants
     public static class Constants
@@ -44,36 +78,6 @@ namespace SPMTool
             Pi3Over2 = MathNet.Numerics.Constants.Pi3Over2;
     }
 
-    // Layer names
-    public static class Layers
-    {
-        public static string
-            extNode            = "ExtNode",
-            intNode            = "IntNode",
-            stringer           = "Stringer",
-            panel              = "Panel",
-            support            = "Support",
-            force              = "Force",
-            forceText          = "ForceText",
-            stringerForce      = "StringerForces",
-            panelForce         = "PanelShear",
-            compressiveStress  = "CompressivePanelStress",
-            tensileStress      = "TensilePanelStress",
-            displacements      = "Displacements";
-    }
-
-    // Block names
-    public static class Blocks
-    {
-	    public static string
-		    supportX          = "SupportX",
-		    supportY          = "SupportY",
-		    supportXY         = "SupportXY",
-		    forceBlock        = "ForceBlock",
-		    shearBlock        = "ShearBlock",
-		    CompressiveStress = "CompressiveStressBlock",
-		    TensileStress     = "NonLinearStressBlock";
-    }
 
     // XData indexers
     public static class XData

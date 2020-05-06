@@ -1,54 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.Runtime;
+using SPMTool.Elements;
 
-[assembly: CommandClass(typeof(SPMTool.Force))]
+[assembly: CommandClass(typeof(SPMTool.ACAD.Forces))]
 
-namespace SPMTool
+namespace SPMTool.ACAD
 {
-    // Constraints related commands
-    public class Force
+    public class Forces
     {
-        // Force directions
-        public enum ForceDirection
-        {
-            X = 0,
-            Y = 1
-        }
-
-        // Properties
-        public ObjectId ForceObject { get; }
-        public double   Value       { get; }
-        public Point3d  Position    { get; }
-        public int      Direction   { get; }
-
-        // Constructor
-        public Force(ObjectId forceObject)
-        {
-            ForceObject = forceObject;
-
-            // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-            {
-                // Read the object as a blockreference
-                var fBlck = trans.GetObject(ForceObject, OpenMode.ForRead) as BlockReference;
-
-                // Get the position
-                Position = fBlck.Position;
-
-                // Read the XData and get the necessary data
-                ResultBuffer rb = fBlck.GetXDataForApplication(AutoCAD.appName);
-                TypedValue[] data = rb.AsArray();
-
-                // Get value and direction
-                Value     = Convert.ToDouble(data[(int)XData.Force.Value].Value);
-                Direction = Convert.ToInt32(data[(int)XData.Force.Direction].Value);
-            }
-        }
-
         [CommandMethod("AddForce")]
         public static void AddForce()
         {
@@ -60,8 +22,8 @@ namespace SPMTool
             string xdataStr = "Force Data";
 
             // Check if the layer Force and ForceText already exists in the drawing. If it doesn't, then it's created:
-            Auxiliary.CreateLayer(Layers.force, (short)AutoCAD.Colors.Yellow);
-            Auxiliary.CreateLayer(Layers.forceText, (short)AutoCAD.Colors.Yellow);
+            Auxiliary.CreateLayer(Layers.force, (short)Colors.Yellow);
+            Auxiliary.CreateLayer(Layers.forceText, (short)Colors.Yellow);
 
             // Check if the force block already exist. If not, create the blocks
             CreateForceBlock();
@@ -73,17 +35,17 @@ namespace SPMTool
             ObjectIdCollection fcTxts = Auxiliary.GetEntitiesOnLayer(Layers.forceText);
 
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Read the force block
                 ObjectId ForceBlock = blkTbl[Blocks.forceBlock];
 
                 // Request objects to be selected in the drawing area
-                AutoCAD.edtr.WriteMessage("\nSelect a node to add load:");
-                selRes = AutoCAD.edtr.GetSelection();
+                Current.edtr.WriteMessage("\nSelect a node to add load:");
+                selRes = Current.edtr.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
@@ -92,24 +54,28 @@ namespace SPMTool
                     set = selRes.Value;
 
                     // Ask the user set the load value in x direction:
-                    PromptDoubleOptions xForceOp = new PromptDoubleOptions("\nEnter force (in kN) in X direction(positive following axis direction)?")
-                    {
-                        DefaultValue = 0
-                    };
-                    
+                    PromptDoubleOptions xForceOp =
+                        new PromptDoubleOptions(
+                            "\nEnter force (in kN) in X direction(positive following axis direction)?")
+                        {
+                            DefaultValue = 0
+                        };
+
                     // Get the result
-                    PromptDoubleResult xForceRes = AutoCAD.edtr.GetDouble(xForceOp);
+                    PromptDoubleResult xForceRes = Current.edtr.GetDouble(xForceOp);
                     if (xForceRes.Status == PromptStatus.Cancel) return;
                     double xForce = xForceRes.Value;
 
                     // Ask the user set the load value in y direction:
-                    PromptDoubleOptions yForceOp = new PromptDoubleOptions("\nEnter force (in kN) in Y direction(positive following axis direction)?")
-                    {
-                        DefaultValue = 0
-                    };
+                    PromptDoubleOptions yForceOp =
+                        new PromptDoubleOptions(
+                            "\nEnter force (in kN) in Y direction(positive following axis direction)?")
+                        {
+                            DefaultValue = 0
+                        };
 
                     // Get the result
-                    PromptDoubleResult yForceRes = AutoCAD.edtr.GetDouble(yForceOp);
+                    PromptDoubleResult yForceRes = Current.edtr.GetDouble(yForceOp);
                     if (yForceRes.Status == PromptStatus.Cancel) return;
                     double yForce = yForceRes.Value;
 
@@ -138,7 +104,8 @@ namespace SPMTool
                                 foreach (ObjectId fcObj in fcs)
                                 {
                                     // Read as a block reference
-                                    BlockReference fcBlk = trans.GetObject(fcObj, OpenMode.ForRead) as BlockReference;
+                                    BlockReference fcBlk =
+                                        trans.GetObject(fcObj, OpenMode.ForRead) as BlockReference;
 
                                     // Check if the position is equal to the selected node
                                     if (fcBlk.Position == ndPos)
@@ -160,7 +127,7 @@ namespace SPMTool
                                     Entity txtEnt = trans.GetObject(txtObj, OpenMode.ForRead) as Entity;
 
                                     // Access the XData as an array
-                                    ResultBuffer txtRb = txtEnt.GetXDataForApplication(AutoCAD.appName);
+                                    ResultBuffer txtRb = txtEnt.GetXDataForApplication(Current.appName);
                                     TypedValue[] txtData = txtRb.AsArray();
 
                                     // Get the position of the node of the text
@@ -214,10 +181,10 @@ namespace SPMTool
                                     }
 
                                     // Rotate the block
-                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, AutoCAD.curUCS.Zaxis, insPt));
+                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, Current.ucs.Zaxis, insPt));
 
                                     // Set XData to force block
-                                    blkRef.XData = ForceData(xForce, (int)ForceDirection.X);
+                                    blkRef.XData = ForceData(xForce, (int)Force.ForceDirection.X);
 
                                     // Define the force text
                                     DBText text = new DBText()
@@ -232,7 +199,7 @@ namespace SPMTool
                                     Auxiliary.AddObject(text);
 
                                     // Add the node position to the text XData
-                                    text.XData = ForceTextData(ndPos, (int)ForceDirection.X);
+                                    text.XData = ForceTextData(ndPos, (int)Force.ForceDirection.X);
                                 }
                             }
 
@@ -270,10 +237,10 @@ namespace SPMTool
                                     }
 
                                     // Rotate the block
-                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, AutoCAD.curUCS.Zaxis, insPt));
+                                    blkRef.TransformBy(Matrix3d.Rotation(rotAng, Current.ucs.Zaxis, insPt));
 
                                     // Set XData to force block
-                                    blkRef.XData = ForceData(yForce, (int)ForceDirection.Y);
+                                    blkRef.XData = ForceData(yForce, (int)Force.ForceDirection.Y);
 
                                     // Define the force text
                                     DBText text = new DBText()
@@ -288,10 +255,11 @@ namespace SPMTool
                                     Auxiliary.AddObject(text);
 
                                     // Add the node position to the text XData
-                                    text.XData = ForceTextData(ndPos, (int)ForceDirection.Y);
+                                    text.XData = ForceTextData(ndPos, (int)Force.ForceDirection.Y);
                                 }
                             }
                         }
+
                         // If x or y forces are 0, the block is not added
                     }
                 }
@@ -308,10 +276,13 @@ namespace SPMTool
                 var fData = new TypedValue[size];
 
                 // Set values
-                fData[(int)XData.Force.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
-                fData[(int)XData.Force.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-                fData[(int)XData.Force.Value]     = new TypedValue((int)DxfCode.ExtendedDataReal, forceValue);
-                fData[(int)XData.Force.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32, forceDirecion);
+                fData[(int)XData.Force.AppName] =
+                    new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName);
+                fData[(int)XData.Force.XDataStr] =
+                    new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+                fData[(int)XData.Force.Value] = new TypedValue((int)DxfCode.ExtendedDataReal, forceValue);
+                fData[(int)XData.Force.Direction] =
+                    new TypedValue((int)DxfCode.ExtendedDataInteger32, forceDirecion);
 
                 // Add XData to force block
                 return
@@ -326,11 +297,16 @@ namespace SPMTool
                 var fData = new TypedValue[size];
 
                 // Set values
-                fData[(int)XData.ForceText.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
-                fData[(int)XData.ForceText.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Force at nodes");
-                fData[(int)XData.ForceText.XPosition] = new TypedValue((int)DxfCode.ExtendedDataReal, forcePosition.X);
-                fData[(int)XData.ForceText.YPosition] = new TypedValue((int)DxfCode.ExtendedDataReal, forcePosition.Y);
-                fData[(int)XData.ForceText.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32, forceDirection);
+                fData[(int)XData.ForceText.AppName] =
+                    new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName);
+                fData[(int)XData.ForceText.XDataStr] =
+                    new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Force at nodes");
+                fData[(int)XData.ForceText.XPosition] =
+                    new TypedValue((int)DxfCode.ExtendedDataReal, forcePosition.X);
+                fData[(int)XData.ForceText.YPosition] =
+                    new TypedValue((int)DxfCode.ExtendedDataReal, forcePosition.Y);
+                fData[(int)XData.ForceText.Direction] =
+                    new TypedValue((int)DxfCode.ExtendedDataInteger32, forceDirection);
 
                 // Add XData to force block
                 return
@@ -341,10 +317,10 @@ namespace SPMTool
         // Method to create the force block
         public static void CreateForceBlock()
         {
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
                 ObjectId ForceBlock = ObjectId.Null;
@@ -398,21 +374,6 @@ namespace SPMTool
                 // Commit and dispose the transaction
                 trans.Commit();
             }
-        }
-
-        // Read applied forces
-        public static Force[] ListOfForces()
-        {
-            var forces = new List<Force>();
-
-            // Get force objects
-            var fObjs = Auxiliary.GetEntitiesOnLayer(Layers.force);
-
-            foreach (ObjectId fObj in fObjs)
-                forces.Add(new Force(fObj));
-
-            return
-                forces.ToArray();
         }
     }
 }

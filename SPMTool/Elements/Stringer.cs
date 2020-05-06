@@ -4,8 +4,9 @@ using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.RootFinding;
+using SPMTool.Material;
 
-namespace SPMTool
+namespace SPMTool.Elements
 {
 	public abstract class Stringer
 	{
@@ -39,12 +40,12 @@ namespace SPMTool
 
 			// Get concrete
 			if (concrete == null)
-				Concrete = new Material.Concrete();
+				Concrete = Concrete.ReadData();
 			else
 				Concrete = concrete;
 
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
 			{
 				// Read the object as a line
 				Line strLine = trans.GetObject(stringerObject, OpenMode.ForRead) as Line;
@@ -60,7 +61,7 @@ namespace SPMTool
 				PointsConnected = new[] { strLine.StartPoint, midPt, strLine.EndPoint };
 
 				// Read the XData and get the necessary data
-				ResultBuffer rb = strLine.GetXDataForApplication(AutoCAD.appName);
+				ResultBuffer rb = strLine.GetXDataForApplication(ACAD.Current.appName);
 				TypedValue[] data = rb.AsArray();
 
 				// Get the stringer number
@@ -173,7 +174,7 @@ namespace SPMTool
             // Private properties
             private double L  => Length;
             private double Ac => ConcreteArea;
-            private double Ec => Concrete.Eci;
+            private double Ec => Concrete.Ec;
 
             // Constructor
             public Linear(ObjectId stringerObject, Material.Concrete concrete = null) : base(stringerObject, concrete)
@@ -238,9 +239,9 @@ namespace SPMTool
             public abstract double ecr { get; }
 
 				// Steel parameters
-			private double fy  => Reinforcement.Steel.fy;
-			private double ey  => Reinforcement.Steel.ey;
-			private double Es  => Reinforcement.Steel.Es;
+			private double fy  => Reinforcement.Steel.YieldStress;
+			private double ey  => Reinforcement.Steel.YieldStrain;
+			private double Es  => Reinforcement.Steel.ElasticModule;
 			private double esu => Reinforcement.Steel.esu;
 
 			// Constants
@@ -532,7 +533,7 @@ namespace SPMTool
 				}
 
 				// Calculate concrete parameters
-				public override double fc  => Concrete.fcm;
+				public override double fc  => Concrete.fc;
 				public override double ec  => -0.002;
 				public override double ecu => -0.0035;
 				public override double Ec  => -2 * fc / ec;
@@ -673,11 +674,11 @@ namespace SPMTool
 	            }
 
                 // Get concrete parameters
-                public override double fc     => Concrete.fcm;
-                public override double ec     => Concrete.ec1;
-                public override double ecu    => Concrete.eclim;
-                public override double Ec     => Concrete.Eci;
-                public override double fcr    => Concrete.fctm;
+                public override double fc     => Concrete.fc;
+                public override double ec     => Concrete.ec;
+                public override double ecu    => Concrete.ecu;
+                public override double Ec     => Concrete.Ec;
+                public override double fcr    => Concrete.fcr;
                 public override double ecr    => Concrete.ecr;
                 public double          k      => Concrete.k;
                 private double         beta   =  0.6;

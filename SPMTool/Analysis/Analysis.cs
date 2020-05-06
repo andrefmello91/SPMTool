@@ -3,15 +3,17 @@ using System.Linq;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.StatusBar;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.Data.Text;
 using MathNet.Numerics.Statistics;
+using SPMTool.Elements;
 
-[assembly: CommandClass(typeof(SPMTool.Analysis))]
-[assembly: CommandClass(typeof(SPMTool.Analysis.Linear))]
-[assembly: CommandClass(typeof(SPMTool.Analysis.NonLinear))]
+[assembly: CommandClass(typeof(SPMTool.Analysis.Analysis))]
+[assembly: CommandClass(typeof(SPMTool.Analysis.Analysis.Linear))]
+[assembly: CommandClass(typeof(SPMTool.Analysis.Analysis.NonLinear))]
 
-namespace SPMTool
+namespace SPMTool.Analysis
 {
     public abstract class Analysis
     {
@@ -379,32 +381,13 @@ namespace SPMTool
         //      }
 
         //      // Write the message in the editor
-        //      AutoCAD.edtr.WriteMessage(msg);
+        //      ACAD.Current.edtr.WriteMessage(msg);
         //     }
 
         // Linear analysis methods
 
         public class Linear : Analysis
         {
-	        [CommandMethod("DoLinearAnalysis")]
-	        public static void DoLinearAnalysis()
-	        {
-		        // Get input data
-				InputData input = new InputData((int)Stringer.Behavior.Linear, (int)Panel.Behavior.Linear);
-
-		        if (input.Concrete.IsSet)
-		        {
-			        // Do a linear analysis
-			        Linear analysis = new Linear(input);
-
-                    // Draw results of analysis
-                    Results.Draw(analysis);
-		        }
-
-		        else
-			        Application.ShowAlertDialog("Please set concrete parameters");
-	        }
-
 	        public Linear(InputData inputData) : base(inputData)
             {
 	            // Get force Vector
@@ -421,6 +404,25 @@ namespace SPMTool
 	            PanelDisplacements(DisplacementVector);
 	            NodalDisplacements(DisplacementVector);
             }
+
+	        [CommandMethod("DoLinearAnalysis")]
+	        public static void DoLinearAnalysis()
+	        {
+		        // Get input data
+		        InputData input = new InputData((int)Stringer.Behavior.Linear, (int)Panel.Behavior.Linear);
+
+		        if (input.Concrete.IsSet)
+		        {
+			        // Do a linear analysis
+			        Linear analysis = new Linear(input);
+
+			        // Draw results of analysis
+			        Results.Draw(analysis);
+		        }
+
+		        else
+			        Application.ShowAlertDialog("Please set concrete parameters");
+	        }
         }
 
         public class NonLinear : Analysis
@@ -428,25 +430,6 @@ namespace SPMTool
 			// Max iterations and load steps
 			private int maxIterations = 100;
 			private int loadSteps     = 100;
-
-			[CommandMethod("DoNonLinearAnalysis")]
-	        public static void DoNonLinearAnalysis()
-	        {
-		        // Get input data
-		        InputData input = new InputData((int)Stringer.Behavior.NonLinearClassic, (int)Panel.Behavior.NonLinear);
-
-		        if (input.Concrete.IsSet)
-		        {
-			        // Do a linear analysis
-			        NonLinear analysis = new NonLinear(input);
-
-                    // Draw results of analysis
-                    Results.Draw(analysis);
-                }
-
-                else
-			        Application.ShowAlertDialog("Please set concrete parameters");
-	        }
 
             public NonLinear(InputData inputData) : base(inputData)
 	        {
@@ -459,7 +442,8 @@ namespace SPMTool
 		        DelimitedWriter.Write("D:/Ki.csv", Kg, ";");
 
                 // Solve the initial displacements
-                var u = Kg.Solve(0.01 * f);
+                var u0 = Kg.Solve(0.01 * f);
+                var ui = u0;
 
                 var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
 		        var fiMatrix = Matrix<double>.Build.Dense(100, numDoFs);
@@ -490,8 +474,8 @@ namespace SPMTool
 					for (int it = 0; it < maxIterations; it++)
 					{
 						// Calculate element displacements and forces
-						StringerAnalysis(u);
-                        PanelAnalysis(u);
+						StringerAnalysis(ui);
+                        PanelAnalysis(ui);
 
                         // Get the internal force vector
                         fi = InternalForces();
@@ -500,44 +484,46 @@ namespace SPMTool
 						var fr = fs - fi;
 
 						// Check convergence
-						if (EquilibriumConvergence(fr, it))
+						if (EquilibriumConvergence(fr, ui - u0, it))
 						{
-							AutoCAD.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
+							ACAD.Current.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
 							break;
 						}
+
+						// Set initial displacements
+						u0 = ui;
 
 						// Calculate displacement increment
 						var du = Kg.Solve(fr);
 
 						// Increment displacements
-						u += du;
+						ui += du;
                     }
 
                     var pnl = Panels[0] as Panel.NonLinear;
 
                     fiMatrix.SetRow(loadStep - 1, fi);
-                    uMatrix.SetRow(loadStep - 1, u);
+                    uMatrix.SetRow(loadStep - 1, u0);
                     fPnl.SetRow(loadStep - 1, pnl.Forces);
                     sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
                     sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
                     epsPnl.SetRow(loadStep - 1, pnl.StrainVector);
                     uPnl.SetRow(loadStep - 1, pnl.Displacements);
-                    genStPnl.SetRow(loadStep - 1, pnl.GenStrains);
                     DcPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Dc);
                     DsPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Ds);
 
                     var thetaPnl = new double[4];
 
                     for (int i = 0; i < 4; i++)
-                        thetaPnl[i] = pnl.IntPointsMembrane[i].StrainAngle;
+                        thetaPnl[i] = pnl.IntegrationPoints[i].Membrane.PrincipalAngles.theta2;
 
                     thetaPnl1.SetRow(loadStep - 1, thetaPnl);
 
-                    // Set the results to stringers
-                    StringerResults();
+                    // Set the results to elements
+                    Results();
 
                     // Update stiffness
-                    Kg = GlobalStiffness();
+                    //Kg = GlobalStiffness();
 
                     //if (loadStep < 56)
                     //{
@@ -550,7 +536,7 @@ namespace SPMTool
                 }
 
                 // Set nodal displacements
-                NodalDisplacements(u);
+                NodalDisplacements(u0);
 
                 DelimitedWriter.Write("D:/K.csv", Kg, ";");
                 DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
@@ -582,15 +568,17 @@ namespace SPMTool
                 //DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");
             }
 
-			// Verify convergence
-			private bool EquilibriumConvergence(Vector<double> residualForces, int iteration)
+            // Verify convergence
+            private bool EquilibriumConvergence(Vector<double> residualForces, Vector<double> residualDisplacements, int iteration)
 			{
 				double
 					maxForce  = residualForces.AbsoluteMaximum(),
-					tolerance = MaxElementForce / 100;
+					maxDisp  = residualDisplacements.AbsoluteMaximum(),
+					fTol = MaxElementForce / 100,
+					uTol = 0.001;
 
                 // Check convergence
-                if (maxForce <= tolerance && iteration > 4)
+                if (maxForce <= fTol && maxDisp <= uTol && iteration > 1)
 					return true;
 
 				// Else
@@ -615,7 +603,7 @@ namespace SPMTool
 				foreach (Panel.NonLinear panel in Panels)
 				{
 					panel.Displacement(globalDisplacements);
-					panel.MCFTAnalysis();
+					panel.Analysis();
                     //DelimitedWriter.Write("D:/up" + panel.Number + ".csv", panel.Displacements.ToColumnMatrix(), ";");
                     //DelimitedWriter.Write("D:/fp" + panel.Number + ".csv", panel.Forces.ToColumnMatrix(), ";");
 				}
@@ -668,11 +656,34 @@ namespace SPMTool
 			}
 
 			// Set the results for each stringer
-			private void StringerResults()
+			private void Results()
 			{
 				foreach (Stringer.NonLinear stringer in Stringers)
 					stringer.Results();
+
+				foreach (Panel.NonLinear panel in Panels)
+					panel.Results();
 			}
+
+			[CommandMethod("DoNonLinearAnalysis")]
+			public static void DoNonLinearAnalysis()
+			{
+				// Get input data
+				InputData input = new InputData((int)Stringer.Behavior.NonLinearClassic, (int)Panel.Behavior.NonLinear);
+
+				if (input.Concrete.IsSet)
+				{
+					// Do a linear analysis
+					NonLinear analysis = new NonLinear(input);
+
+					// Draw results of analysis
+					SPMTool.Analysis.Results.Draw(analysis);
+				}
+
+				else
+					Application.ShowAlertDialog("Please set concrete parameters");
+			}
+
         }
     }
 }

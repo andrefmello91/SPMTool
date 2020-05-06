@@ -79,7 +79,7 @@ namespace SPMTool
             RibbonControl ribbonControl = ComponentManager.Ribbon;
 
             // Check if the tab already exists
-            RibbonTab tab = ribbonControl.FindTab(AutoCAD.appName);
+            RibbonTab tab = ribbonControl.FindTab(ACAD.Current.appName);
 
             if (tab != null)
             {
@@ -151,8 +151,8 @@ namespace SPMTool
             // Create the Ribbon Tab
             RibbonTab Tab = new RibbonTab()
             {
-                Title = AutoCAD.appName,
-                Id = AutoCAD.appName
+                Title = ACAD.Current.appName,
+                Id = ACAD.Current.appName
             };
             ribbonControl.Tabs.Add(Tab);
 
@@ -658,7 +658,7 @@ namespace SPMTool
                         //Make sure the command text either ends with ";", or a " "
                         string cmdText = ((string)button.CommandParameter).Trim();
                         if (!cmdText.EndsWith(";")) cmdText = cmdText + " ";
-                        AutoCAD.curDoc.SendStringToExecute(cmdText, true, false, true);
+                        ACAD.Current.doc.SendStringToExecute(cmdText, true, false, true);
                     }
                 }
             }
