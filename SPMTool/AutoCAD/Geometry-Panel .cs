@@ -5,10 +5,12 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using PanelData = SPMTool.XData.Panel;
+using NodeType  = SPMTool.Elements.Node.NodeType;
 
-[assembly: CommandClass(typeof(SPMTool.ACAD.Geometry.Panel))]
+[assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Panel))]
 
-namespace SPMTool.ACAD
+namespace SPMTool.AutoCAD
 {
 	// Geometry related commands
 	public partial class Geometry
@@ -17,8 +19,9 @@ namespace SPMTool.ACAD
 		public class Panel
 		{
 			// Properties
-			public Solid  SolidObject { get; }
-			public string Layer = Layers.panel;
+			public Solid         SolidObject { get; }
+			public string        LayerName  = Auxiliary.GetLayerName(Layers.Panel);
+			public static string Layer_Name = Auxiliary.GetLayerName(Layers.Panel);
 
 			// Constructor
 			public Panel((Point3d, Point3d, Point3d, Point3d) vertices,
@@ -38,7 +41,7 @@ namespace SPMTool.ACAD
 					SolidObject = new Solid(vertices.Item1, vertices.Item2, vertices.Item3, vertices.Item4)
 					{
 						// Set the layer to Panel
-						Layer = Layer
+						Layer = LayerName
 					};
 
 					// Add the object
@@ -50,7 +53,7 @@ namespace SPMTool.ACAD
 			public static void AddPanel()
 			{
 				// Check if the layer panel already exists in the drawing. If it doesn't, then it's created:
-				Auxiliary.CreateLayer(Layers.panel, (short) Colors.Grey, 80);
+				Auxiliary.CreateLayer(Layers.Panel, Colors.Grey, 80);
 
 				// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
 				Auxiliary.RegisterApp();
@@ -82,7 +85,7 @@ namespace SPMTool.ACAD
 								Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 								// Check if it is a external node
-								if (ent.Layer == Layers.extNode)
+								if (ent.Layer == Node.ExtLayerName)
 								{
 									// Read as a DBPoint and add to the collection
 									DBPoint nd = ent as DBPoint;
@@ -95,7 +98,7 @@ namespace SPMTool.ACAD
 						if (nds.Count == 4)
 						{
 							// Order the vertices in ascending Y and ascending X
-							List<Point3d> vrts = Auxiliary.OrderPoints(nds);
+							List<Point3d> vrts = SPMTool.GlobalAuxiliary.OrderPoints(nds);
 
 							// Create the panel if it doesn't exist
 							var pnlPts = (vrts[0], vrts[1], vrts[2], vrts[3]);
@@ -160,17 +163,18 @@ namespace SPMTool.ACAD
 							var pnlList = ListOfPanelVertices();
 
 							// Create lists of points for adding the nodes later
-							List<Point3d> newIntNds = new List<Point3d>(),
+							List<Point3d> 
+								newIntNds = new List<Point3d>(),
 								newExtNds = new List<Point3d>();
 
 							// Create a list of start and end points for adding the stringers later
 							var newStrList = new List<(Point3d start, Point3d end)>();
 
 							// Access the stringers in the model
-							ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.stringer);
+							ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.Stringer);
 
 							// Access the internal nodes in the model
-							ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNode);
+							ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
 
 							// Start a transaction
 							using (Transaction trans = Current.db.TransactionManager.StartTransaction())
@@ -192,7 +196,7 @@ namespace SPMTool.ACAD
 									Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 									// Check if the selected object is a node
-									if (ent.Layer == Layers.panel)
+									if (ent.Layer == Layer_Name)
 									{
 										// Read as a solid
 										Solid pnl = ent as Solid;
@@ -202,7 +206,7 @@ namespace SPMTool.ACAD
 										TypedValue[] data = rb.AsArray();
 
 										// Get the panel number
-										int pnlNum = Convert.ToInt32(data[(int) XData.Panel.Number].Value);
+										int pnlNum = Convert.ToInt32(data[(int) PanelData.Number].Value);
 
 										// Get the coordinates of the grip points
 										Point3dCollection grpPts = new Point3dCollection();
@@ -229,12 +233,12 @@ namespace SPMTool.ACAD
 												// Read as a line
 												Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
 
-												// Verify if the stringer starts and ends in a panel vertex
+												// Verify if the Stringer starts and ends in a panel vertex
 												if (grpPts.Contains(str.StartPoint) &&
 												    grpPts.Contains(str.EndPoint))
 												{
 													// Get the midpoint
-													Point3d midPt = Auxiliary.MidPoint(str.StartPoint,
+													Point3d midPt = SPMTool.GlobalAuxiliary.MidPoint(str.StartPoint,
 														str.EndPoint);
 
 													// Read the internal nodes
@@ -342,14 +346,14 @@ namespace SPMTool.ACAD
 								new Stringer(pts.start, pts.end, strList);
 
 								// Get the midpoint to add the external node
-								Point3d midPt = Auxiliary.MidPoint(pts.Item1, pts.Item2);
+								Point3d midPt = SPMTool.GlobalAuxiliary.MidPoint(pts.Item1, pts.Item2);
 								if (!newIntNds.Contains(midPt))
 									newIntNds.Add(midPt);
 							}
 
 							// Create the nodes
-							new Node(newExtNds, (int) Elements.Node.NodeType.External);
-							new Node(newIntNds, (int) Elements.Node.NodeType.Internal);
+							new Node(newExtNds, NodeType.External);
+							new Node(newIntNds, NodeType.Internal);
 
 							// Update the elements
 							Node.UpdateNodes();
@@ -380,7 +384,7 @@ namespace SPMTool.ACAD
 						// Get the selection
 						SelectionSet set = selRes.Value;
 
-						// Get default values from the first selected stringer
+						// Get default values from the first selected Stringer
 						double defWd = 100;
 						foreach (SelectedObject obj in set)
 						{
@@ -388,7 +392,7 @@ namespace SPMTool.ACAD
 							Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 							// Check if the selected object is a node
-							if (ent.Layer == Layers.panel)
+							if (ent.Layer == Layer_Name)
 							{
 								var panel = new Elements.Panel.Linear(obj.ObjectId);
 
@@ -421,7 +425,7 @@ namespace SPMTool.ACAD
 								Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 								// Check if the selected object is a node
-								if (ent.Layer == Layers.panel)
+								if (ent.Layer == Layer_Name)
 								{
 									// Upgrade the OpenMode
 									ent.UpgradeOpen();
@@ -431,7 +435,7 @@ namespace SPMTool.ACAD
 									TypedValue[] data = rb.AsArray();
 
 									// Set the new geometry and reinforcement (line 7 to 9 of the array)
-									data[(int) XData.Panel.Width] =
+									data[(int) PanelData.Width] =
 										new TypedValue((int) DxfCode.ExtendedDataReal, pnlW);
 
 									// Add the new XData
@@ -449,14 +453,11 @@ namespace SPMTool.ACAD
 			// Update the panel numbers on the XData of each panel in the model and return the collection of panels
 			public static ObjectIdCollection UpdatePanels()
 			{
-				// Definition for the Extended Data
-				string xdataStr = "Panel Data";
-
 				// Get the internal nodes of the model
-				ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNode);
+				ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
 
 				// Create the panels collection and initialize getting the elements on node layer
-				ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.panel);
+				ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.Panel);
 
 				// Create a point collection
 				List<Point3d> cntrPts = new List<Point3d>();
@@ -478,12 +479,12 @@ namespace SPMTool.ACAD
 						pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
 
 						// Get the approximate coordinates of the center point of the panel
-						Point3d cntrPt = Auxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
+						Point3d cntrPt = SPMTool.GlobalAuxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
 						cntrPts.Add(cntrPt);
 					}
 
 					// Get the list of center points ordered
-					List<Point3d> cntrPtsList = Auxiliary.OrderPoints(cntrPts);
+					List<Point3d> cntrPtsList = SPMTool.GlobalAuxiliary.OrderPoints(cntrPts);
 
 					// Bool to alert the user
 					bool userAlert = false;
@@ -498,7 +499,7 @@ namespace SPMTool.ACAD
 						TypedValue[] data;
 
 						// Get the Xdata size
-						int size = Enum.GetNames(typeof(XData.Panel)).Length;
+						int size = Enum.GetNames(typeof(PanelData)).Length;
 
 						// Check if the XData already exist. If not, create it
 						if (pnl.XData == null)
@@ -520,43 +521,19 @@ namespace SPMTool.ACAD
 							}
 						}
 
-						// Method to set panel data
-						TypedValue[] NewPanelXData()
-						{
-							TypedValue[] newData = new TypedValue[size];
-
-							// Set the initial parameters
-							newData[(int) XData.Panel.AppName]  =
-								new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
-							newData[(int) XData.Panel.XDataStr] =
-								new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-							newData[(int) XData.Panel.Width]    =
-								new TypedValue((int) DxfCode.ExtendedDataReal, 100);
-							newData[(int) XData.Panel.XDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-							newData[(int) XData.Panel.Sx]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-							newData[(int) XData.Panel.fyx]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-							newData[(int) XData.Panel.Esx]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-							newData[(int) XData.Panel.YDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-							newData[(int) XData.Panel.Sy]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-							newData[(int) XData.Panel.fyy]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-							newData[(int) XData.Panel.Esy]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-
-							return newData;
-						}
-
 						// Get the vertices
 						Point3dCollection pnlVerts = new Point3dCollection();
 						pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
 
 						// Get the approximate coordinates of the center point of the panel
-						Point3d cntrPt = Auxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
+						Point3d cntrPt = SPMTool.GlobalAuxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
 
 						// Get the coordinates of the panel DoFs in the necessary order
 						Point3dCollection pnlGrips = new Point3dCollection();
-						pnlGrips.Add(Auxiliary.MidPoint(pnlVerts[0], pnlVerts[1]));
-						pnlGrips.Add(Auxiliary.MidPoint(pnlVerts[1], pnlVerts[3]));
-						pnlGrips.Add(Auxiliary.MidPoint(pnlVerts[3], pnlVerts[2]));
-						pnlGrips.Add(Auxiliary.MidPoint(pnlVerts[2], pnlVerts[0]));
+						pnlGrips.Add(SPMTool.GlobalAuxiliary.MidPoint(pnlVerts[0], pnlVerts[1]));
+						pnlGrips.Add(SPMTool.GlobalAuxiliary.MidPoint(pnlVerts[1], pnlVerts[3]));
+						pnlGrips.Add(SPMTool.GlobalAuxiliary.MidPoint(pnlVerts[3], pnlVerts[2]));
+						pnlGrips.Add(SPMTool.GlobalAuxiliary.MidPoint(pnlVerts[2], pnlVerts[0]));
 
 						// Get the panel number
 						int pnlNum = cntrPtsList.IndexOf(cntrPt) + 1;
@@ -575,13 +552,13 @@ namespace SPMTool.ACAD
 						}
 
 						// Set the updated panel number
-						data[(int) XData.Panel.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, pnlNum);
+						data[(int) PanelData.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, pnlNum);
 
 						// Set the updated node numbers in the necessary order
-						data[(int) XData.Panel.Grip1] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[0]);
-						data[(int) XData.Panel.Grip2] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[1]);
-						data[(int) XData.Panel.Grip3] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[2]);
-						data[(int) XData.Panel.Grip4] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[3]);
+						data[(int) PanelData.Grip1] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[0]);
+						data[(int) PanelData.Grip2] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[1]);
+						data[(int) PanelData.Grip3] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[2]);
+						data[(int) PanelData.Grip4] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[3]);
 
 						// Add the new XData
 						pnl.XData = new ResultBuffer(data);
@@ -611,7 +588,7 @@ namespace SPMTool.ACAD
 			public static List<(Point3d, Point3d, Point3d, Point3d)> ListOfPanelVertices()
 			{
 				// Get the stringers in the model
-				ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.panel);
+				ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.Panel);
 
 				// Initialize a list
 				var pnlList = new List<(Point3d, Point3d, Point3d, Point3d)>();
@@ -639,6 +616,34 @@ namespace SPMTool.ACAD
 
 				return pnlList;
 			}
+
+			// Method to set panel data
+			private static TypedValue[] NewPanelXData()
+			{
+				// Definition for the Extended Data
+				string xdataStr = "Panel Data";
+
+				// Get the Xdata size
+				int size = Enum.GetNames(typeof(PanelData)).Length;
+
+				TypedValue[] newData = new TypedValue[size];
+
+				// Set the initial parameters
+				newData[(int)PanelData.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName);
+				newData[(int)PanelData.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+				newData[(int)PanelData.Width]    = new TypedValue((int)DxfCode.ExtendedDataReal, 100);
+				newData[(int)PanelData.XDiam]    = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				newData[(int)PanelData.Sx]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				newData[(int)PanelData.fyx]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				newData[(int)PanelData.Esx]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				newData[(int)PanelData.YDiam]    = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				newData[(int)PanelData.Sy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				newData[(int)PanelData.fyy]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				newData[(int)PanelData.Esy]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+
+				return newData;
+			}
+
 		}
 	}
 

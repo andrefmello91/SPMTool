@@ -2,19 +2,20 @@
 using System.Collections.Generic;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using SPMTool.ACAD;
+using SPMTool.AutoCAD;
+using SupportData = SPMTool.XData.Support;
 
 namespace SPMTool.Elements
 {
 	// Constraints related commands
 	public class Constraint
 	{
-		// Support conditions
-		public enum Support
+		// SupportDirection conditions
+		public enum SupportDirection
 		{
-			X  = 0,
-			Y  = 1,
-			XY = 2
+			X,
+			Y,
+			XY
 		}
 
 		// Properties
@@ -28,7 +29,7 @@ namespace SPMTool.Elements
 			SupportObject = supportObject;
 
 			// Start a transaction
-			using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Read the object as a blockreference
 				var sBlck = trans.GetObject(supportObject, OpenMode.ForRead) as BlockReference;
@@ -37,18 +38,18 @@ namespace SPMTool.Elements
 				Position = sBlck.Position;
 
 				// Read the XData and get the necessary data
-				ResultBuffer rb = sBlck.GetXDataForApplication(ACAD.Current.appName);
+				ResultBuffer rb = sBlck.GetXDataForApplication(Current.appName);
 				TypedValue[] data = rb.AsArray();
 
 				// Get the direction
-				int dir = Convert.ToInt32(data[(int) XData.Support.Direction].Value);
+				SupportDirection dir = (SupportDirection)Convert.ToInt32(data[(int) SupportData.Direction].Value);
 
 				var (x, y) = (false, false);
 
-				if (dir == (int) Support.X || dir == (int) Support.XY)
+				if (dir == SupportDirection.X || dir == SupportDirection.XY)
 					x = true;
 
-				if (dir == (int) Support.Y || dir == (int) Support.XY)
+				if (dir == SupportDirection.Y || dir == SupportDirection.XY)
 					y = true;
 
 				Direction = (x, y);
@@ -62,7 +63,7 @@ namespace SPMTool.Elements
 			var constraints = new List<Constraint>();
 
 			// Get force objects
-			var sObjs = Auxiliary.GetEntitiesOnLayer(Layers.support);
+			var sObjs = AutoCAD.Auxiliary.GetEntitiesOnLayer(Layers.Support);
 
 			foreach (ObjectId sObj in sObjs)
 				constraints.Add(new Constraint(sObj));

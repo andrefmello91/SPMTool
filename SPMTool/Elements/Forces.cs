@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using SPMTool.ACAD;
+using SPMTool.AutoCAD;
+using ForceData = SPMTool.XData.Force;
 
 namespace SPMTool.Elements
 {
@@ -12,15 +13,15 @@ namespace SPMTool.Elements
 		// Force directions
 		public enum ForceDirection
 		{
-			X = 0,
-			Y = 1
+			X,
+			Y
 		}
 
 		// Properties
-		public ObjectId ForceObject { get; }
-		public double   Value       { get; }
-		public Point3d  Position    { get; }
-		public int      Direction   { get; }
+		public ObjectId       ForceObject { get; }
+		public double         Value       { get; }
+		public Point3d        Position    { get; }
+		public ForceDirection Direction   { get; }
 
 		// Constructor
 		public Force(ObjectId forceObject)
@@ -28,7 +29,7 @@ namespace SPMTool.Elements
 			ForceObject = forceObject;
 
 			// Start a transaction
-			using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
 			{
 				// Read the object as a blockreference
 				var fBlck = trans.GetObject(ForceObject, OpenMode.ForRead) as BlockReference;
@@ -37,12 +38,12 @@ namespace SPMTool.Elements
 				Position = fBlck.Position;
 
 				// Read the XData and get the necessary data
-				ResultBuffer rb = fBlck.GetXDataForApplication(ACAD.Current.appName);
+				ResultBuffer rb   = fBlck.GetXDataForApplication(AutoCAD.Current.appName);
 				TypedValue[] data = rb.AsArray();
 
 				// Get value and direction
-				Value     = Convert.ToDouble(data[(int) XData.Force.Value].Value);
-				Direction = Convert.ToInt32(data[(int) XData.Force.Direction].Value);
+				Value     = Convert.ToDouble(data[(int) ForceData.Value].Value);
+				Direction = (ForceDirection)Convert.ToInt32(data[(int) ForceData.Direction].Value);
 			}
 		}
 
@@ -52,7 +53,7 @@ namespace SPMTool.Elements
 			var forces = new List<Force>();
 
 			// Get force objects
-			var fObjs = Auxiliary.GetEntitiesOnLayer(Layers.force);
+			var fObjs = AutoCAD.Auxiliary.GetEntitiesOnLayer(Layers.Force);
 
 			foreach (ObjectId fObj in fObjs)
 				forces.Add(new Force(fObj));

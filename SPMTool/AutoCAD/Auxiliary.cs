@@ -1,31 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System;
+using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
-using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.Colors;
-using MathNet.Numerics;
 
-namespace SPMTool
+namespace SPMTool.AutoCAD
 {
-    // Auxiliary Methods
     public static class Auxiliary
     {
         // Add the app to the Registered Applications Record
         public static void RegisterApp()
         {
             // Start a transaction
-            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Registered Applications table for read
-                RegAppTable regAppTbl = trans.GetObject(ACAD.Current.db.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-                if (!regAppTbl.Has(ACAD.Current.appName))
+                RegAppTable regAppTbl = trans.GetObject(AutoCAD.Current.db.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+                if (!regAppTbl.Has(AutoCAD.Current.appName))
                 {
                     using (RegAppTableRecord regAppTblRec = new RegAppTableRecord())
                     {
-                        regAppTblRec.Name = ACAD.Current.appName;
-                        trans.GetObject(ACAD.Current.db.RegAppTableId, OpenMode.ForWrite);
+                        regAppTblRec.Name = AutoCAD.Current.appName;
+                        trans.GetObject(AutoCAD.Current.db.RegAppTableId, OpenMode.ForWrite);
                         regAppTbl.Add(regAppTblRec);
                         trans.AddNewlyCreatedDBObject(regAppTblRec, true);
                     }
@@ -45,13 +40,16 @@ namespace SPMTool
         }
 
         // Method to create a layer given a name, a color and transparency
-        public static void CreateLayer(string layerName, short layerColor, int transparency = 0)
+        public static void CreateLayer(Layers layer, Colors color, int transparency = 0)
         {
+            // Get layer name
+            string layerName = GetLayerName(layer);
+
             // Start a transaction
-            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(ACAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
+                LayerTable lyrTbl = trans.GetObject(Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
 
                 if (!lyrTbl.Has(layerName))
                 {
@@ -59,10 +57,10 @@ namespace SPMTool
                     using (LayerTableRecord lyrTblRec = new LayerTableRecord())
                     {
                         // Assign the layer the ACI color and a name
-                        lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, layerColor);
+                        lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, (short)color);
 
                         // Upgrade the Layer table for write
-                        trans.GetObject(ACAD.Current.db.LayerTableId, OpenMode.ForWrite);
+                        trans.GetObject(AutoCAD.Current.db.LayerTableId, OpenMode.ForWrite);
 
                         // Append the new layer to the Layer table and the transaction
                         lyrTbl.Add(lyrTblRec);
@@ -71,8 +69,8 @@ namespace SPMTool
                         // Assign the name and transparency to the layer
                         lyrTblRec.Name = layerName;
 
-						if (transparency != 0)
-							lyrTblRec.Transparency = Transparency(transparency);
+                        if (transparency != 0)
+                            lyrTblRec.Transparency = Transparency(transparency);
                     }
                 }
 
@@ -81,14 +79,31 @@ namespace SPMTool
             }
         }
 
-        // Method to toogle view of a layer (on and off)
-        public static void ToogleLayer(string layerName)
+        // Get Layer name
+        public static string GetLayerName(Layers layer)
         {
+            return
+                Enum.GetName(typeof(Layers), layer);
+        }
+
+        // Get Block name
+        public static string GetBlockName(Blocks block)
+        {
+            return
+                Enum.GetName(typeof(Blocks), block);
+        }
+
+        // Method to toogle view of a layer (on and off)
+        public static void ToogleLayer(Layers layer)
+        {
+            // Get layer name
+            string layerName = Enum.GetName(typeof(Layers), layer);
+
             // Start a transaction
-            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(ACAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
+                LayerTable lyrTbl = trans.GetObject(AutoCAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
 
                 if (lyrTbl.Has(layerName))
                 {
@@ -112,13 +127,16 @@ namespace SPMTool
         }
 
         // Method to turn a layer Off
-        public static void LayerOff(string layerName)
+        public static void LayerOff(Layers layer)
         {
+            // Get layer name
+            string layerName = Enum.GetName(typeof(Layers), layer);
+
             // Start a transaction
-            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(ACAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
+                LayerTable lyrTbl = trans.GetObject(AutoCAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
 
                 if (lyrTbl.Has(layerName))
                 {
@@ -138,13 +156,16 @@ namespace SPMTool
         }
 
         // Method to turn a layer On
-        public static void LayerOn(string layerName)
+        public static void LayerOn(Layers layer)
         {
+            // Get layer name
+            string layerName = Enum.GetName(typeof(Layers), layer);
+
             // Start a transaction
-            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Layer table for read
-                LayerTable lyrTbl = trans.GetObject(ACAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
+                LayerTable lyrTbl = trans.GetObject(AutoCAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
 
                 if (lyrTbl.Has(layerName))
                 {
@@ -164,8 +185,11 @@ namespace SPMTool
         }
 
         // This method select all objects on a determined layer
-        public static ObjectIdCollection GetEntitiesOnLayer(string layerName)
+        public static ObjectIdCollection GetEntitiesOnLayer(Layers layer)
         {
+            // Get layer name
+            string layerName = Enum.GetName(typeof(Layers), layer);
+
             // Build a filter list so that only entities on the specified layer are selected
             TypedValue[] tvs =
             {
@@ -175,36 +199,12 @@ namespace SPMTool
             SelectionFilter selFt = new SelectionFilter(tvs);
 
             // Get the entities on the layername
-            PromptSelectionResult selRes = ACAD.Current.edtr.SelectAll(selFt);
+            PromptSelectionResult selRes = AutoCAD.Current.edtr.SelectAll(selFt);
 
             if (selRes.Status == PromptStatus.OK)
                 return new ObjectIdCollection(selRes.Value.GetObjectIds());
 
-	        return new ObjectIdCollection();
-        }
-
-        // This method calculates the midpoint between two points
-        public static Point3d MidPoint(Point3d point1, Point3d point2)
-        {
-            // Get the coordinates of the Midpoint
-            double x = (point1.X + point2.X) / 2;
-            double y = (point1.Y + point2.Y) / 2;
-            double z = (point1.Z + point2.Z) / 2;
-
-            // Create the point
-            Point3d midPoint = new Point3d(x, y, z);
-            return midPoint;
-        }
-
-        // This method order the elements in a collection in ascending yCoord, then ascending xCoord, returns the array of points ordered
-        public static List<Point3d> OrderPoints(List<Point3d> points)
-        {
-            // Order the point list
-            points = points.OrderBy(pt => pt.Y).ThenBy(pt => pt.X).ToList();
-
-            // Return the point list
-            return
-	            points;
+            return new ObjectIdCollection();
         }
 
         // Add objects to drawing
@@ -213,10 +213,10 @@ namespace SPMTool
             if (entity != null)
             {
                 // Start a transaction
-                using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
+                using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
                 {
                     // Open the Block table for read
-                    BlockTable blkTbl = trans.GetObject(ACAD.Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    BlockTable blkTbl = trans.GetObject(AutoCAD.Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                     // Open the Block table record Model space for write
                     BlockTableRecord blkTblRec = trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
@@ -235,7 +235,7 @@ namespace SPMTool
         public static void EraseObjects(ObjectIdCollection objects)
         {
             // Start a transaction
-            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
             {
                 foreach (ObjectId obj in objects)
                 {
@@ -252,75 +252,12 @@ namespace SPMTool
         }
 
         // Erase the objects in a layer
-        public static void EraseObjects(string layerName)
+        public static void EraseObjects(Layers layer)
         {
-			// Get objects
-			var objs = GetEntitiesOnLayer(layerName);
+            // Get objects
+            var objs = GetEntitiesOnLayer(layer);
 
-			if (objs.Count > 0)
-				EraseObjects(objs);
+            if (objs.Count > 0) EraseObjects(objs);
         }
-
-		// Get global indexes of a node
-		public static int[] GlobalIndexes(int nodeNumber)
-		{
-			return
-				new []
-				{
-					2 * nodeNumber - 2, 2 * nodeNumber - 1
-				};
-		}
-
-		// Get global indexes of an element's grips
-		public static int[] GlobalIndexes(int[] gripNumbers)
-		{
-			// Initialize the array
-			int[] ind = new int[2 * gripNumbers.Length];
-
-			// Get the indexes
-			for (int i = 0; i < gripNumbers.Length; i++)
-			{
-				int j = 2 * i;
-
-				ind[j]     = 2 * gripNumbers[i] - 2;
-				ind[j + 1] = 2 * gripNumbers[i] - 1;
-			}
-
-			return ind;
-		}
-
-        // Get the direction cosines of a vector
-        public static (double cos, double sin) DirectionCosines(double angle)
-        {
-            double 
-                cos = Trig.Cos(angle).CoerceZero(1E-6), 
-                sin = Trig.Sin(angle).CoerceZero(1E-6);
-
-            return (cos, sin);
-        }
-
-        public static double Tangent(double angle)
-        {
-	        double tan;
-
-	        // Calculate the tangent, return 0 if 90 or 270 degrees
-	        if (angle == Constants.PiOver2 || angle == Constants.Pi3Over2)
-		        tan = 1.633e16;
-
-	        else
-		        tan = Trig.Cos(angle).CoerceZero(1E-6);
-
-	        return tan;
-        }
-
-        // Function to verify if a number is not zero
-        public static Func<double, bool> NotZero => num =>
-        {
-            if (num != 0) 
-                return true;
-
-	        return false;
-        };
-
     }
 }

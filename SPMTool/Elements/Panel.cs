@@ -3,37 +3,41 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.Material;
+using PanelData = SPMTool.XData.Panel;
 
 namespace SPMTool.Elements
 {
-    public abstract partial class Panel
+    public abstract class Panel
     {
-        // Enum for setting stringer behavior
+        // Enum for panel Stringer behavior
         public enum Behavior
         {
-            Linear = 1,
-            NonLinear = 2
+            Linear,
+            MCFT,
+            DSFM
         }
 
         // Panel parameters
-        public ObjectId ObjectId { get; }
-        public int Number { get; }
-        public int[] Grips { get; }
-        public Point3d[] Vertices { get; }
-        public double Width { get; }
-        public Concrete Concrete { get; }
-        public Reinforcement.Panel Reinforcement { get; }
-        public abstract Matrix<double> LocalStiffness { get; }
-        public abstract Matrix<double> GlobalStiffness { get; }
-        public Vector<double> Displacements { get; set; }
-        public abstract Vector<double> Forces { get; }
-        public abstract Vector<double> AverageStresses { get; }
+        public Behavior                                      PanelBehavior     { get; }
+        public ObjectId                                      ObjectId          { get; }
+        public int                                           Number            { get; }
+        public int[]                                         Grips             { get; }
+        public Point3d[]                                     Vertices          { get; }
+        public double                                        Width             { get; }
+        public Concrete                                      Concrete          { get; }
+        public Reinforcement.Panel                           Reinforcement     { get; }
+        public abstract Matrix<double>                       LocalStiffness    { get; }
+        public abstract Matrix<double>                       GlobalStiffness   { get; }
+        public Vector<double>                                Displacements     { get; set; }
+        public abstract Vector<double>                       Forces            { get; }
+        public abstract Vector<double>                       AverageStresses   { get; }
         public abstract (Vector<double> sigma, double theta) PrincipalStresses { get; }
 
         // Constructor
-        public Panel(ObjectId panelObject, Material.Concrete concrete = null)
+        public Panel(ObjectId panelObject, Material.Concrete concrete = null, Behavior behavior = Behavior.Linear)
         {
-            ObjectId = panelObject;
+            ObjectId      = panelObject;
+            PanelBehavior = behavior;
 
             // Get concrete
             if (concrete == null)
@@ -42,7 +46,7 @@ namespace SPMTool.Elements
                 Concrete = concrete;
 
             // Start a transaction
-            using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
             {
                 // Read as a solid
                 Solid pnl = trans.GetObject(panelObject, OpenMode.ForWrite) as Solid;
@@ -59,20 +63,20 @@ namespace SPMTool.Elements
                     nd4 = pnlVerts[2];
 
                 // Read the XData and get the necessary data
-                ResultBuffer pnlRb = pnl.GetXDataForApplication(ACAD.Current.appName);
+                ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.Current.appName);
                 TypedValue[] pnlData = pnlRb.AsArray();
 
                 // Get the panel parameters
-                Number = Convert.ToInt32(pnlData[(int)XData.Panel.Number].Value);
-                Width = Convert.ToDouble(pnlData[(int)XData.Panel.Width].Value);
+                Number = Convert.ToInt32(pnlData[(int)PanelData.Number].Value);
+                Width = Convert.ToDouble(pnlData[(int)PanelData.Width].Value);
 
                 // Create the list of grips
                 Grips = new[]
                 {
-                    Convert.ToInt32(pnlData[(int) XData.Panel.Grip1].Value),
-                    Convert.ToInt32(pnlData[(int) XData.Panel.Grip2].Value),
-                    Convert.ToInt32(pnlData[(int) XData.Panel.Grip3].Value),
-                    Convert.ToInt32(pnlData[(int) XData.Panel.Grip4].Value)
+                    Convert.ToInt32(pnlData[(int) PanelData.Grip1].Value),
+                    Convert.ToInt32(pnlData[(int) PanelData.Grip2].Value),
+                    Convert.ToInt32(pnlData[(int) PanelData.Grip3].Value),
+                    Convert.ToInt32(pnlData[(int) PanelData.Grip4].Value)
                 };
 
                 // Create the list of vertices
@@ -83,17 +87,17 @@ namespace SPMTool.Elements
 
                 // Get reinforcement
                 double
-                    phiX = Convert.ToDouble(pnlData[(int)XData.Panel.XDiam].Value),
-                    phiY = Convert.ToDouble(pnlData[(int)XData.Panel.YDiam].Value),
-                    sx = Convert.ToDouble(pnlData[(int)XData.Panel.Sx].Value),
-                    sy = Convert.ToDouble(pnlData[(int)XData.Panel.Sy].Value);
+                    phiX = Convert.ToDouble(pnlData[(int)PanelData.XDiam].Value),
+                    phiY = Convert.ToDouble(pnlData[(int)PanelData.YDiam].Value),
+                    sx = Convert.ToDouble(pnlData[(int)PanelData.Sx].Value),
+                    sy = Convert.ToDouble(pnlData[(int)PanelData.Sy].Value);
 
                 // Get steel data
                 double
-                    fyx = Convert.ToDouble(pnlData[(int)XData.Panel.fyx].Value),
-                    Esx = Convert.ToDouble(pnlData[(int)XData.Panel.Esx].Value),
-                    fyy = Convert.ToDouble(pnlData[(int)XData.Panel.fyy].Value),
-                    Esy = Convert.ToDouble(pnlData[(int)XData.Panel.Esy].Value);
+                    fyx = Convert.ToDouble(pnlData[(int)PanelData.fyx].Value),
+                    Esx = Convert.ToDouble(pnlData[(int)PanelData.Esx].Value),
+                    fyy = Convert.ToDouble(pnlData[(int)PanelData.fyy].Value),
+                    Esy = Convert.ToDouble(pnlData[(int)PanelData.Esy].Value);
 
                 var steel =
                 (
@@ -107,7 +111,7 @@ namespace SPMTool.Elements
         }
 
         // Set global indexes from grips
-        public int[] DoFIndex => Auxiliary.GlobalIndexes(Grips);
+        public int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Grips);
 
         // Get X and Y coordinates of a panel vertices
         public (double[] x, double[] y) VertexCoordinates
@@ -154,9 +158,9 @@ namespace SPMTool.Elements
             get
             {
                 // Calculate the approximated center point
-                var Pt1 = Auxiliary.MidPoint(Vertices[0], Vertices[2]);
-                var Pt2 = Auxiliary.MidPoint(Vertices[1], Vertices[3]);
-                return Auxiliary.MidPoint(Pt1, Pt2);
+                var Pt1 = GlobalAuxiliary.MidPoint(Vertices[0], Vertices[2]);
+                var Pt2 = GlobalAuxiliary.MidPoint(Vertices[1], Vertices[3]);
+                return GlobalAuxiliary.MidPoint(Pt1, Pt2);
             }
         }
 
@@ -201,7 +205,7 @@ namespace SPMTool.Elements
                 var angles = Angles;
 
                 for (int i = 0; i < 4; i++)
-                    directionCosines[i] = Auxiliary.DirectionCosines(angles[i]);
+                    directionCosines[i] = GlobalAuxiliary.DirectionCosines(angles[i]);
 
                 return
                     directionCosines;
@@ -250,7 +254,7 @@ namespace SPMTool.Elements
             // Private properties
             private double Gc => Concrete.Ec / 2.4;
 
-            public Linear(ObjectId panelObject, Material.Concrete concrete = null) : base(panelObject, concrete)
+            public Linear(ObjectId panelObject, Concrete concrete = null, Behavior behavior = Behavior.Linear) : base(panelObject, concrete, behavior)
             {
                 // Get transformation matrix
                 TransMatrix = TransformationMatrix();
@@ -508,15 +512,15 @@ namespace SPMTool.Elements
         public class NonLinear : Panel
         {
             // Public Properties
-            public IntegrationPoint[] IntegrationPoints { get; set; }
-            public double[] StringerDimensions { get; }
+            public Membrane[] IntegrationPoints  { get; set; }
+            public double[]   StringerDimensions { get; }
 
             // Private Properties
             private int LoadStep { get; set; }
 
-            public NonLinear(ObjectId panelObject, Concrete concrete, Stringer[] stringers) : base(panelObject, concrete)
+            public NonLinear(ObjectId panelObject, Concrete concrete, Stringer[] stringers, Behavior behavior = Behavior.MCFT) : base(panelObject, concrete, behavior)
             {
-                // Get stringer dimensions and effective ratio
+                // Get Stringer dimensions and effective ratio
                 StringerDimensions = StringersDimensions(stringers);
 
                 // Calculate initial matrices
@@ -525,17 +529,21 @@ namespace SPMTool.Elements
                 PMatrix = MatrixP();
 
                 // Initiate integration points
-                IntegrationPoints = new IntegrationPoint[4];
+                IntegrationPoints = new Membrane[4];
 
-                for (int i = 0; i < 4; i++)
-	                IntegrationPoints[i] = new IntegrationPoint.MCFT(Concrete, Reinforcement, Width);
+                if (PanelBehavior == Behavior.MCFT)
+                    for (int i = 0; i < 4; i++)
+	                    IntegrationPoints[i] = new Membrane.MCFT(Concrete, Reinforcement, Width);
+                else
+                    for (int i = 0; i < 4; i++)
+                        IntegrationPoints[i] = new Membrane.DSFM(Concrete, Reinforcement, Width, 100);
 
             }
 
             // Get the dimensions of surrounding stringers
             public double[] StringersDimensions(Stringer[] stringers)
             {
-                // Initiate the stringer dimensions
+                // Initiate the Stringer dimensions
                 double[] hs = new double[4];
 
                 // Analyse panel grips
@@ -543,12 +551,12 @@ namespace SPMTool.Elements
                 {
                     int grip = Grips[i];
 
-                    // Verify if its an internal grip of a stringer
+                    // Verify if its an internal grip of a Stringer
                     foreach (var stringer in stringers)
                     {
                         if (grip == stringer.Grips[1])
                         {
-                            // The dimension is the half of stringer height
+                            // The dimension is the half of Stringer height
                             hs[i] = 0.5 * stringer.Height;
                             break;
                         }
@@ -741,7 +749,7 @@ namespace SPMTool.Elements
 		            var e = ev.SubVector(3 * i, 3);
 
 		            // Calculate stresses by MCFT
-		            IntegrationPoints[i].Membrane.Analysis(e);
+		            IntegrationPoints[i].Analysis(e);
 	            }
             }
 
@@ -749,7 +757,7 @@ namespace SPMTool.Elements
             public void Results()
             {
 	            foreach (var intPoint in IntegrationPoints)
-		            intPoint.Membrane.Results();
+		            intPoint.Results();
             }
 
             // Calculate DMatrix
@@ -763,8 +771,8 @@ namespace SPMTool.Elements
 		            for (int i = 0; i < 4; i++)
 		            {
 			            // Get the stiffness
-			            var Dci = IntegrationPoints[i].Membrane.ConcreteStiffness;
-			            var Dsi = IntegrationPoints[i].Membrane.ReinforcementStiffness;
+			            var Dci = IntegrationPoints[i].ConcreteStiffness;
+			            var Dsi = IntegrationPoints[i].ReinforcementStiffness;
 
 			            // Set to stiffness
 			            Dc.SetSubMatrix(3 * i, 3 * i, Dci);
@@ -782,7 +790,7 @@ namespace SPMTool.Elements
 	            get
 	            {
 		            var (Pc, Ps) = PMatrix;
-		            var (Dc, Ds) = MaterialStiffness;
+		            var (Dc, Ds) = InitialMaterialStiffness;
 		            var QPs = QMatrix * Ps;
 		            var QPc = QMatrix * Pc;
 
@@ -850,9 +858,9 @@ namespace SPMTool.Elements
 		            for (int i = 0; i < 4; i++)
 		            {
 			            // Get the stiffness
-			            var sig = IntegrationPoints[i].Membrane.Stresses;
-			            var sigC = IntegrationPoints[i].Membrane.ConcreteStresses;
-			            var sigS = IntegrationPoints[i].Membrane.ReinforcementStresses;
+			            var sig = IntegrationPoints[i].Stresses;
+			            var sigC = IntegrationPoints[i].ConcreteStresses;
+			            var sigS = IntegrationPoints[i].ReinforcementStresses;
 
 			            // Set to stiffness
 			            sigma.SetSubVector(3 * i, 3, sig);
@@ -890,7 +898,7 @@ namespace SPMTool.Elements
 		            var theta = Vector<double>.Build.Dense(4);
 
 		            for (int i = 0; i < 4; i++)
-			            theta[i] = IntegrationPoints[i].Membrane.PrincipalAngles.theta2;
+			            theta[i] = IntegrationPoints[i].PrincipalAngles.theta2;
 
 		            return theta;
 	            }
@@ -1016,8 +1024,8 @@ namespace SPMTool.Elements
 		            for (int i = 0; i < 4; i++)
 		            {
 			            // Get the stiffness
-			            var Dci = IntegrationPoints[i].Membrane.InitialConcreteStiffness;
-			            var Dsi = IntegrationPoints[i].Membrane.InitialReinforcementStiffness;
+			            var Dci = IntegrationPoints[i].InitialConcreteStiffness;
+			            var Dsi = IntegrationPoints[i].InitialReinforcementStiffness;
 
 			            // Set to stiffness
 			            Dc.SetSubMatrix(3 * i, 3 * i, Dci);

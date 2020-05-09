@@ -96,13 +96,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Analysis\InputData.cs" />
+    <Compile Include="AutoCAD\Analysis.cs" />
     <Compile Include="AutoCAD\Forces.cs" />
     <Compile Include="AutoCAD\Geometry-Panel .cs" />
     <Compile Include="AutoCAD\Geometry-Stringer .cs" />
     <Compile Include="AutoCAD\Geometry-Node.cs" />
+    <Compile Include="AutoCAD\Global.cs" />
+    <Compile Include="AutoCAD\Reinforcement.cs" />
     <Compile Include="AutoCAD\Supports.cs" />
-    <Compile Include="Elements\IntegrationPoint.cs" />
     <Compile Include="Elements\Membrane.cs" />
+    <Compile Include="AutoCAD\Auxiliary.cs" />
     <Compile Include="Material\Concrete.cs" />
     <Compile Include="Elements\Membrane-old.cs" />
     <Compile Include="Elements\Node.cs" />
@@ -116,9 +119,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Material\Reinforcement.cs" />
-    <Compile Include="Analysis\Results.cs" />
+    <Compile Include="AutoCAD\Results.cs" />
     <Compile Include="AutoCAD\Geometry.cs" />
-    <Compile Include="Global\Auxiliary.cs" />
+    <Compile Include="Global\GlobalAuxiliary.cs" />
     <Compile Include="Analysis\Analysis.cs" />
     <Compile Include="Material\Steel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

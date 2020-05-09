@@ -1,9 +1,9 @@
 ﻿using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 
-[assembly: CommandClass(typeof(SPMTool.ACAD.Geometry))]
+[assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry))]
 
-namespace SPMTool.ACAD
+namespace SPMTool.AutoCAD
 {
 	// Geometry related commands
 	public partial class Geometry
@@ -32,22 +32,22 @@ namespace SPMTool.ACAD
 		[CommandMethod("ToogleNodes")]
 		public static void ToogleNodes()
 		{
-			Auxiliary.ToogleLayer(Layers.extNode);
-			Auxiliary.ToogleLayer(Layers.intNode);
+			Auxiliary.ToogleLayer(Layers.ExtNode);
+			Auxiliary.ToogleLayer(Layers.IntNode);
 		}
 
 		// Toggle view for stringers
 		[CommandMethod("ToogleStringers")]
 		public static void ToogleStringers()
 		{
-			Auxiliary.ToogleLayer(Layers.stringer);
+			Auxiliary.ToogleLayer(Layers.Stringer);
 		}
 
 		// Toggle view for panels
 		[CommandMethod("TooglePanels")]
 		public static void TooglePanels()
 		{
-			Auxiliary.ToogleLayer(Layers.panel);
+			Auxiliary.ToogleLayer(Layers.Panel);
 		}
 	}
 

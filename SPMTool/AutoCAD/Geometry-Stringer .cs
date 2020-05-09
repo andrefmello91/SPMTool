@@ -5,10 +5,12 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using StringerData = SPMTool.XData.Stringer;
+using NodeType     = SPMTool.Elements.Node.NodeType;
 
-[assembly: CommandClass(typeof(SPMTool.ACAD.Geometry.Stringer))]
+[assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Stringer))]
 
-namespace SPMTool.ACAD
+namespace SPMTool.AutoCAD
 {
 	// Geometry related commands
 	public partial class Geometry
@@ -19,23 +21,22 @@ namespace SPMTool.ACAD
 			// Properties
 			public Line    LineObject { get; }
 
-			public Point3d StartPoint
-				=> LineObject.StartPoint;
+			public Point3d StartPoint => LineObject.StartPoint;
 
 			public Point3d EndPoint
 				=> LineObject.EndPoint;
 
-			public string  Layer = Layers.stringer;
+			public string        LayerName  = Auxiliary.GetLayerName(Layers.Stringer);
+			public static string Layer_Name = Auxiliary.GetLayerName(Layers.Stringer);
 
 			// Constructor
-			public Stringer(Point3d startPoint, Point3d endPoint,
-				List<(Point3d start, Point3d end)> stringerList = null)
+			public Stringer(Point3d startPoint, Point3d endPoint, List<(Point3d start, Point3d end)> stringerList = null)
 			{
 				// Get the list of stringers if it's not imposed
 				if (stringerList == null)
 					stringerList = ListOfStringerPoints();
 
-				// Check if a stringer already exist on that position. If not, create it
+				// Check if a Stringer already exist on that position. If not, create it
 				if (!stringerList.Contains((startPoint, endPoint)))
 				{
 					// Add to the list
@@ -44,7 +45,7 @@ namespace SPMTool.ACAD
 					// Create the line in Model space
 					LineObject = new Line(startPoint, endPoint)
 					{
-						Layer = Layer
+						Layer = LayerName
 					};
 
 					// Add the object
@@ -56,9 +57,9 @@ namespace SPMTool.ACAD
 			public static void AddStringer()
 			{
 				// Check if the layers already exists in the drawing. If it doesn't, then it's created:
-				Auxiliary.CreateLayer(Layers.extNode, (short) Colors.Red);
-				Auxiliary.CreateLayer(Layers.intNode, (short) Colors.Blue);
-				Auxiliary.CreateLayer(Layers.stringer, (short) Colors.Cyan);
+				Auxiliary.CreateLayer(Layers.ExtNode, Colors.Red);
+				Auxiliary.CreateLayer(Layers.IntNode, Colors.Blue);
+				Auxiliary.CreateLayer(Layers.Stringer, Colors.Cyan);
 
 				// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
 				Auxiliary.RegisterApp();
@@ -71,7 +72,7 @@ namespace SPMTool.ACAD
 					newIntNds = new List<Point3d>(),
 					newExtNds = new List<Point3d>();
 
-				// Prompt for the start point of stringer
+				// Prompt for the start point of Stringer
 				PromptPointOptions strStOp = new PromptPointOptions("\nEnter the start point: ");
 				PromptPointResult strStRes = Current.edtr.GetPoint(strStOp);
 
@@ -81,7 +82,7 @@ namespace SPMTool.ACAD
 					// Loop for creating infinite stringers (until user exits the command)
 					for ( ; ; )
 					{
-						// Create a point3d collection and add the stringer start point
+						// Create a point3d collection and add the Stringer start point
 						List<Point3d> nds = new List<Point3d>();
 						nds.Add(strStRes.Value);
 
@@ -98,13 +99,13 @@ namespace SPMTool.ACAD
 							nds.Add(strEndRes.Value);
 
 							// Get the points ordered in ascending Y and ascending X:
-							List<Point3d> extNds = Auxiliary.OrderPoints(nds);
+							List<Point3d> extNds = SPMTool.GlobalAuxiliary.OrderPoints(nds);
 
-							// Create the stringer and add to drawing
+							// Create the Stringer and add to drawing
 							new Stringer(extNds[0], extNds[1], strList);
 
 							// Get the midpoint
-							Point3d midPt = Auxiliary.MidPoint(extNds[0], extNds[1]);
+							Point3d midPt = SPMTool.GlobalAuxiliary.MidPoint(extNds[0], extNds[1]);
 
 							// Add the position of the nodes to the list
 							if (!newExtNds.Contains(extNds[0]))
@@ -116,7 +117,7 @@ namespace SPMTool.ACAD
 							if (!newIntNds.Contains(midPt))
 								newIntNds.Add(midPt);
 
-							// Set the start point of the new stringer
+							// Set the start point of the new Stringer
 							strStRes = strEndRes;
 						}
 
@@ -129,8 +130,8 @@ namespace SPMTool.ACAD
 				}
 
 				// Create the nodes
-				new Node(newExtNds, (int) Elements.Node.NodeType.External);
-				new Node(newIntNds, (int) Elements.Node.NodeType.Internal);
+				new Node(newExtNds, NodeType.External);
+				new Node(newIntNds, NodeType.Internal);
 
 				// Update the nodes and stringers
 				Node.UpdateNodes();
@@ -173,7 +174,7 @@ namespace SPMTool.ACAD
 								newExtNds = new List<Point3d>();
 
 							// Access the internal nodes in the model
-							ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNode);
+							ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
 
 							// Start a transaction
 							using (Transaction trans = Current.db.TransactionManager.StartTransaction())
@@ -183,8 +184,8 @@ namespace SPMTool.ACAD
 									// Open the selected object for read
 									Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
-									// Check if the selected object is a stringer
-									if (ent.Layer == Layers.stringer)
+									// Check if the selected object is a Stringer
+									if (ent.Layer == Layer_Name)
 									{
 										// Read as a line
 										Line str = ent as Line;
@@ -204,7 +205,7 @@ namespace SPMTool.ACAD
 										Point3d stPt = strSt;
 
 										// Get the midpoint
-										Point3d midPt = Auxiliary.MidPoint(strSt, strEnd);
+										Point3d midPt = SPMTool.GlobalAuxiliary.MidPoint(strSt, strEnd);
 
 										// Read the internal nodes
 										foreach (ObjectId intNd in intNds)
@@ -229,18 +230,18 @@ namespace SPMTool.ACAD
 											double yCrd = str.StartPoint.Y + i * distY;
 											Point3d endPt = new Point3d(xCrd, yCrd, 0);
 
-											// Create the stringer
+											// Create the Stringer
 											var newStr = new Stringer(stPt, endPt, strList);
 
 											// Get the line
 											var strLine = newStr.LineObject;
 
-											// Append the XData of the original stringer
+											// Append the XData of the original Stringer
 											if (strLine != null)
 												strLine.XData = rb;
 
 											// Get the mid point
-											midPt = Auxiliary.MidPoint(stPt, endPt);
+											midPt = SPMTool.GlobalAuxiliary.MidPoint(stPt, endPt);
 
 											// Add the position of the nodes to the list
 											if (!newExtNds.Contains(stPt))
@@ -252,11 +253,11 @@ namespace SPMTool.ACAD
 											if (!newIntNds.Contains(midPt))
 												newIntNds.Add(midPt);
 
-											// Set the start point of the next stringer
+											// Set the start point of the next Stringer
 											stPt = endPt;
 										}
 
-										// Erase the original stringer
+										// Erase the original Stringer
 										str.UpgradeOpen();
 										str.Erase();
 
@@ -270,8 +271,8 @@ namespace SPMTool.ACAD
 							}
 
 							// Create the nodes
-							new Node(newExtNds, (int) Elements.Node.NodeType.External);
-							new Node(newIntNds, (int) Elements.Node.NodeType.Internal);
+							new Node(newExtNds, NodeType.External);
+							new Node(newIntNds, NodeType.Internal);
 						}
 					}
 				}
@@ -281,14 +282,11 @@ namespace SPMTool.ACAD
 				UpdateStringers();
 			}
 
-			// Update the stringer numbers on the XData of each stringer in the model and return the collection of stringers
+			// Update the Stringer numbers on the XData of each Stringer in the model and return the collection of stringers
 			public static ObjectIdCollection UpdateStringers()
 			{
-				// Definition for the Extended Data
-				string xdataStr = "Stringer Data";
-
-				// Create the stringer collection and initialize getting the elements on layer
-				ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.stringer);
+				// Create the Stringer collection and initialize getting the elements on layer
+				ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.Stringer);
 
 				// Get all the nodes in the model
 				ObjectIdCollection nds = Node.AllNodes();
@@ -302,19 +300,19 @@ namespace SPMTool.ACAD
 					// Create a point collection
 					List<Point3d> midPts = new List<Point3d>();
 
-					// Add the midpoint of each stringer to the collection
+					// Add the midpoint of each Stringer to the collection
 					foreach (ObjectId strObj in strs)
 					{
 						// Read the object as a line
 						Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
 
 						// Get the midpoint and add to the collection
-						Point3d midPt = Auxiliary.MidPoint(str.StartPoint, str.EndPoint);
+						Point3d midPt = SPMTool.GlobalAuxiliary.MidPoint(str.StartPoint, str.EndPoint);
 						midPts.Add(midPt);
 					}
 
 					// Get the array of midpoints ordered
-					List<Point3d> midPtsList = Auxiliary.OrderPoints(midPts);
+					List<Point3d> midPtsList = SPMTool.GlobalAuxiliary.OrderPoints(midPts);
 
 					// Bool to alert the user
 					bool userAlert = false;
@@ -329,7 +327,7 @@ namespace SPMTool.ACAD
 						TypedValue[] data;
 
 						// Get the Xdata size
-						int size = Enum.GetNames(typeof(XData.Stringer)).Length;
+						int size = Enum.GetNames(typeof(StringerData)).Length;
 
 						// If XData does not exist, create it
 						if (str.XData == null)
@@ -351,36 +349,11 @@ namespace SPMTool.ACAD
 							}
 						}
 
-						// Method to create XData
-						TypedValue[] NewStringerXData()
-						{
-							var newData = new TypedValue[size];
 
-							// Set the initial parameters
-							newData[(int) XData.Stringer.AppName]   =
-								new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
-							newData[(int) XData.Stringer.XDataStr]  =
-								new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-							newData[(int) XData.Stringer.Width]     =
-								new TypedValue((int) DxfCode.ExtendedDataReal, 100);
-							newData[(int) XData.Stringer.Height]    =
-								new TypedValue((int) DxfCode.ExtendedDataReal, 100);
-							newData[(int) XData.Stringer.NumOfBars] =
-								new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-							newData[(int) XData.Stringer.BarDiam]   =
-								new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-							newData[(int) XData.Stringer.Steelfy]   =
-								new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-							newData[(int) XData.Stringer.SteelEs]   =
-								new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+						// Get the coordinates of the midpoint of the Stringer
+						Point3d midPt = SPMTool.GlobalAuxiliary.MidPoint(str.StartPoint, str.EndPoint);
 
-							return newData;
-						}
-
-						// Get the coordinates of the midpoint of the stringer
-						Point3d midPt = Auxiliary.MidPoint(str.StartPoint, str.EndPoint);
-
-						// Get the stringer number
+						// Get the Stringer number
 						int strNum = midPtsList.IndexOf(midPt) + 1;
 
 						// Get the start, mid and end nodes
@@ -389,11 +362,11 @@ namespace SPMTool.ACAD
 							strEnNd  = Node.GetNodeNumber(str.EndPoint, nds);
 
 						// Set the updated number and nodes in ascending number and length (line 2 to 6)
-						data[(int) XData.Stringer.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, strNum);
-						data[(int) XData.Stringer.Grip1]  = new TypedValue((int) DxfCode.ExtendedDataReal, strStNd);
-						data[(int) XData.Stringer.Grip2]  =
+						data[(int) StringerData.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, strNum);
+						data[(int) StringerData.Grip1]  = new TypedValue((int) DxfCode.ExtendedDataReal, strStNd);
+						data[(int) StringerData.Grip2]  =
 							new TypedValue((int) DxfCode.ExtendedDataReal, strMidNd);
-						data[(int) XData.Stringer.Grip3]  = new TypedValue((int) DxfCode.ExtendedDataReal, strEnNd);
+						data[(int) StringerData.Grip3]  = new TypedValue((int) DxfCode.ExtendedDataReal, strEnNd);
 
 						// Add the new XData
 						str.XData = new ResultBuffer(data);
@@ -401,7 +374,7 @@ namespace SPMTool.ACAD
 
 					// Alert the user
 					if (userAlert)
-						Application.ShowAlertDialog("Please set stringer geometry and reinforcement again");
+						Application.ShowAlertDialog("Please set Stringer geometry and reinforcement again");
 
 					// Commit and dispose the transaction
 					trans.Commit();
@@ -415,7 +388,7 @@ namespace SPMTool.ACAD
 			public static List<(Point3d start, Point3d end)> ListOfStringerPoints()
 			{
 				// Get the stringers in the model
-				ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.stringer);
+				ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.Stringer);
 
 				// Initialize a list
 				var strList = new List<(Point3d startPoint, Point3d endPoint)>();
@@ -455,7 +428,7 @@ namespace SPMTool.ACAD
 					{
 						SelectionSet set = selRes.Value;
 
-						// Get default values from the first selected stringer
+						// Get default values from the first selected Stringer
 						double defWd = 100, defH = 100;
 						foreach (SelectedObject obj in set)
 						{
@@ -463,7 +436,7 @@ namespace SPMTool.ACAD
 							Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 							// Check if the selected object is a node
-							if (ent.Layer == Layers.stringer)
+							if (ent.Layer == Layer_Name)
 							{
 								var stringer = new Elements.Stringer.Linear(obj.ObjectId);
 
@@ -475,7 +448,7 @@ namespace SPMTool.ACAD
 							}
 						}
 
-						// Ask the user to input the stringer width
+						// Ask the user to input the Stringer width
 						PromptDoubleOptions strWOp =
 							new PromptDoubleOptions("\nInput the width (in mm) for the selected stringers:")
 							{
@@ -491,7 +464,7 @@ namespace SPMTool.ACAD
 						{
 							double strW = strWRes.Value;
 
-							// Ask the user to input the stringer height
+							// Ask the user to input the Stringer height
 							PromptDoubleOptions strHOp =
 								new PromptDoubleOptions("\nInput the height (in mm) for the selected stringers:")
 								{
@@ -513,7 +486,7 @@ namespace SPMTool.ACAD
 									Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 									// Check if the selected object is a node
-									if (ent.Layer == Layers.stringer)
+									if (ent.Layer == Layer_Name)
 									{
 										// Upgrade the OpenMode
 										ent.UpgradeOpen();
@@ -523,9 +496,9 @@ namespace SPMTool.ACAD
 										TypedValue[] data = rb.AsArray();
 
 										// Set the new geometry and reinforcement (line 7 to 9 of the array)
-										data[(int) XData.Stringer.Width] =
+										data[(int) StringerData.Width] =
 											new TypedValue((int) DxfCode.ExtendedDataReal, strW);
-										data[(int) XData.Stringer.Height] =
+										data[(int) StringerData.Height] =
 											new TypedValue((int) DxfCode.ExtendedDataReal, strH);
 
 										// Add the new XData
@@ -540,6 +513,31 @@ namespace SPMTool.ACAD
 					}
 				}
 			}
+
+			// Method to create XData
+			private static TypedValue[] NewStringerXData()
+			{
+				// Definition for the Extended Data
+				string xdataStr = "Stringer Data";
+
+				// Get the Xdata size
+				int size = Enum.GetNames(typeof(StringerData)).Length;
+
+				var newData = new TypedValue[size];
+
+				// Set the initial parameters
+				newData[(int)StringerData.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName);
+				newData[(int)StringerData.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+				newData[(int)StringerData.Width]     = new TypedValue((int)DxfCode.ExtendedDataReal, 100);
+				newData[(int)StringerData.Height]    = new TypedValue((int)DxfCode.ExtendedDataReal, 100);
+				newData[(int)StringerData.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				newData[(int)StringerData.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				newData[(int)StringerData.Steelfy]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				newData[(int)StringerData.SteelEs]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+
+				return newData;
+			}
+
 		}
 	}
 

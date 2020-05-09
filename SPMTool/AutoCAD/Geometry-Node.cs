@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using SPMTool.Elements;
+using NodeType = SPMTool.Elements.Node.NodeType;
+using NodeData = SPMTool.XData.Node;
 
-[assembly: CommandClass(typeof(SPMTool.ACAD.Geometry.Node))]
+[assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Node))]
 
-namespace SPMTool.ACAD
+namespace SPMTool.AutoCAD
 {
 	// Geometry related commands
 	public partial class Geometry
@@ -18,32 +19,38 @@ namespace SPMTool.ACAD
 			// Properties
 			public DBPoint PointObject { get; }
 
-			public Point3d Position
-				=> PointObject.Position;
+			public Point3d Position => PointObject.Position;
 
-			public int Type { get; }
+			public NodeType Type { get; }
 
 			public string Layer
 			{
 				get
 				{
-					if (Type == (int)Elements.Node.NodeType.External)
-						return
-							Layers.extNode;
-					if (Type == (int)Elements.Node.NodeType.Internal)
-						return
-							Layers.intNode;
+					string layerName;
 
-					return
-						Layers.displacements;
+					if (Type == NodeType.External)
+						layerName = Auxiliary.GetLayerName(Layers.ExtNode);
+
+					else if (Type == NodeType.Internal)
+						layerName = Auxiliary.GetLayerName(Layers.IntNode);
+
+					else
+						layerName = Auxiliary.GetLayerName(Layers.Displacements);
+
+					return layerName;
 				}
 			}
 
+			public static string ExtLayerName  = Auxiliary.GetLayerName(Layers.ExtNode);
+			public static string IntLayerName  = Auxiliary.GetLayerName(Layers.IntNode);
+			public static string DispLayerName = Auxiliary.GetLayerName(Layers.Displacements);
+
 			// Constructor
-			public Node(Point3d position, int nodeType)
+			public Node(Point3d position, NodeType nodeType)
 			{
 				// Get the list of nodes
-				var ndList = NodePositions((int)Elements.Node.NodeType.All);
+				var ndList = NodePositions(NodeType.All);
 
 				// Check if a node already exists at the position. If not, its created
 				if (!ndList.Contains(position))
@@ -65,10 +72,10 @@ namespace SPMTool.ACAD
 				}
 			}
 
-			public Node(List<Point3d> positions, int nodeType)
+			public Node(List<Point3d> positions, NodeType nodeType)
 			{
 				// Get the list of nodes
-				var ndList = NodePositions((int) Elements.Node.NodeType.All);
+				var ndList = NodePositions(NodeType.All);
 
 				foreach (var position in positions)
 				{
@@ -106,7 +113,7 @@ namespace SPMTool.ACAD
 				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 				{
 					// Get the list of nodes ordered
-					var ndList = NodePositions((int) Elements.Node.NodeType.All);
+					var ndList = NodePositions(NodeType.All);
 
 					// Access the nodes on the document
 					foreach (ObjectId ndObj in nds)
@@ -121,7 +128,7 @@ namespace SPMTool.ACAD
 						TypedValue[] data;
 
 						// Get the Xdata size
-						int size = Enum.GetNames(typeof(XData.Node)).Length;
+						int size = Enum.GetNames(typeof(NodeData)).Length;
 
 						// If the Extended data does not exist, create it
 						if (nd.XData == null)
@@ -141,7 +148,7 @@ namespace SPMTool.ACAD
 						}
 
 						// Set the updated number
-						data[(int) XData.Node.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
+						data[(int)NodeData.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
 
 						// Add the new XData
 						nd.XData = new ResultBuffer(data);
@@ -159,18 +166,16 @@ namespace SPMTool.ACAD
 				TypedValue[] nodeXData()
 				{
 					// Get the Xdata size
-					int size = Enum.GetNames(typeof(XData.Node)).Length;
+					int size = Enum.GetNames(typeof(NodeData)).Length;
 
 					// Initialize the array of typed values for XData
 					var nData = new TypedValue[size];
 
 					// Set the initial parameters
-					nData[(int) XData.Node.AppName] =
-						new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
-					nData[(int) XData.Node.XDataStr] =
-						new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-					nData[(int) XData.Node.Ux] = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-					nData[(int) XData.Node.Uy] = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+					nData[(int) NodeData.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
+					nData[(int) NodeData.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
+					nData[(int) NodeData.Ux]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+					nData[(int) NodeData.Uy]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
 
 					return
 						nData;
@@ -181,20 +186,20 @@ namespace SPMTool.ACAD
 			}
 
 			// Get the list of node positions ordered
-			public static List<Point3d> NodePositions(int nodeType)
+			public static List<Point3d> NodePositions(NodeType nodeType)
 			{
 				// Initialize an object collection
 				ObjectIdCollection nds = new ObjectIdCollection();
 
 				// Select the node type
-				if (nodeType == (int) Elements.Node.NodeType.All)
+				if (nodeType == NodeType.All)
 					nds = AllNodes();
 
-				if (nodeType == (int) Elements.Node.NodeType.Internal)
-					nds = Auxiliary.GetEntitiesOnLayer(Layers.intNode);
+				if (nodeType == NodeType.Internal)
+					nds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
 
-				if (nodeType == (int) Elements.Node.NodeType.External)
-					nds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
+				if (nodeType == NodeType.External)
+					nds = Auxiliary.GetEntitiesOnLayer(Layers.ExtNode);
 
 				// Create a point collection
 				var pts = new List<Point3d>();
@@ -212,15 +217,15 @@ namespace SPMTool.ACAD
 
 				// Return the node list ordered
 				return
-					Auxiliary.OrderPoints(pts);
+					SPMTool.GlobalAuxiliary.OrderPoints(pts);
 			}
 
 			// Get the collection of all of the nodes
 			public static ObjectIdCollection AllNodes()
 			{
 				// Create the nodes collection and initialize getting the elements on node layer
-				ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.extNode);
-				ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.intNode);
+				ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.ExtNode);
+				ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
 
 				// Create a unique collection for all the nodes
 				ObjectIdCollection nds = new ObjectIdCollection();
@@ -259,7 +264,7 @@ namespace SPMTool.ACAD
 							TypedValue[] dataNd = ndRb.AsArray();
 
 							// Get the node number (line 2)
-							ndNum = Convert.ToInt32(dataNd[(int) XData.Node.Number].Value);
+							ndNum = Convert.ToInt32(dataNd[(int) NodeData.Number].Value);
 						}
 					}
 				}

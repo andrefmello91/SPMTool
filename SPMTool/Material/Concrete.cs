@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
-using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.Interpolation;
+using SPMTool.AutoCAD;
 
 [assembly: CommandClass(typeof(SPMTool.Material.Concrete))]
-[assembly: CommandClass(typeof(SPMTool.Material.Steel))]
 
 namespace SPMTool
 {
@@ -19,21 +17,35 @@ namespace SPMTool
 		// Concrete
 		public class Concrete
 		{
+			// Aggregate type
+			public enum AggregateType
+			{
+				Basalt,
+				Quartzite,
+				Limestone,
+				Sandstone
+			}
+
 			// Properties
-			public  double                  AggregateDiameter { get; }
+			public double                   AggregateDiameter { get; }
+			public AggregateType            Type              { get; }
 			public  double                  fc                { get; }
-			private double                  alphaE            { get; }
 			public (double ec1, double ec2) PrincipalStrains  { get; set; }
 			public (double fc1, double fc2) PrincipalStresses { get; set; }
 			public double                   ReferenceLength   { get; set; }
 
+			// Aggregate type names
+			private static string basalt    = Enum.GetName(typeof(AggregateType), AggregateType.Basalt);
+			private static string quartzite = Enum.GetName(typeof(AggregateType), AggregateType.Quartzite);
+			private static string limestone = Enum.GetName(typeof(AggregateType), AggregateType.Limestone);
+			private static string sandstone = Enum.GetName(typeof(AggregateType), AggregateType.Sandstone);
 
             // Read the concrete parameters
-            public Concrete(double fc, double aggregateDiameter, double alphaE = 0)
+            public Concrete(double fc, double aggregateDiameter, AggregateType aggregateType = AggregateType.Quartzite)
 			{
 				this.fc = fc;
 				AggregateDiameter = aggregateDiameter;
-				this.alphaE = alphaE;
+				Type = aggregateType;
 			}
 
 			// Verify if concrete was set
@@ -61,7 +73,7 @@ namespace SPMTool
 				}
 			}
 
-            // Calculate parameters according to FIB MC2010
+			// Calculate parameters according to FIB MC2010
             public virtual double fcr
 			{
 				get
@@ -72,7 +84,23 @@ namespace SPMTool
 					return 2.12 * Math.Log(1 + 0.1 * fc);
 				}
 			}
-			public virtual double Ec  => 21500 * alphaE * Math.Pow(fc / 10, 0.33333333);
+
+            public double alphaE
+            {
+	            get
+	            {
+		            if (Type == AggregateType.Basalt)
+			            return 1.2;
+
+		            if (Type == AggregateType.Quartzite)
+			            return 1;
+
+					// Limestone or sandstone
+		            return 0.9;
+				}
+			}
+
+            public virtual double Ec  => 21500 * alphaE * Math.Pow(fc / 10, 0.33333333);
 			public virtual double ec  => -1.6 / 1000 * Math.Pow(fc / 10, 0.25);
 			public double Ec1 => fc / ec;
 			public double k   => Ec / Ec1;
@@ -244,9 +272,9 @@ namespace SPMTool
 
             public class DSFM : Concrete
             {
-                public DSFM(double fc, double aggregateDiameter) : base(fc, aggregateDiameter)
+                public DSFM(double fc, double aggregateDiameter, double referenceLength) : base(fc, aggregateDiameter)
                 {
-
+	                ReferenceLength = referenceLength;
                 }
 
                 // DSFM parameters
@@ -281,8 +309,8 @@ namespace SPMTool
 
                         // Calculate coefficient for tension stiffening effect
                         double
-                            cosNx = Auxiliary.DirectionCosines(thetaNx).cos,
-                            cosNy = Auxiliary.DirectionCosines(thetaNy).cos,
+                            cosNx = GlobalAuxiliary.DirectionCosines(thetaNx).cos,
+                            cosNy = GlobalAuxiliary.DirectionCosines(thetaNy).cos,
                             m = 0.25 / (psx / phiX * Math.Abs(cosNx) + psy / phiY * Math.Abs(cosNy));
 
                         // Calculate concrete postcracking stress associated with tension stiffening
@@ -360,22 +388,22 @@ namespace SPMTool
 					};
 
 				// Get the result
-				PromptDoubleResult fcRes = ACAD.Current.edtr.GetDouble(fcOp);
+				PromptDoubleResult fcRes = AutoCAD.Current.edtr.GetDouble(fcOp);
 				if (fcRes.Status == PromptStatus.OK)
 				{
 					double fc = fcRes.Value;
 
 					// Ask the user choose the type of the agregate
 					PromptKeywordOptions agOp = new PromptKeywordOptions("\nChoose the type of the aggregate");
-					agOp.Keywords.Add("Basalt");
-					agOp.Keywords.Add("Quartzite");
-					agOp.Keywords.Add("Limestone");
-					agOp.Keywords.Add("Sandstone");
-					agOp.Keywords.Default = "Quartzite";
+					agOp.Keywords.Add(basalt);
+					agOp.Keywords.Add(quartzite);
+					agOp.Keywords.Add(limestone);
+					agOp.Keywords.Add(sandstone);
+					agOp.Keywords.Default = quartzite;
 					agOp.AllowNone = false;
 
 					// Get the result
-					PromptResult agRes = ACAD.Current.edtr.GetKeywords(agOp);
+					PromptResult agRes = AutoCAD.Current.edtr.GetKeywords(agOp);
 
 					if (agRes.Status == PromptStatus.OK)
 					{
@@ -390,55 +418,52 @@ namespace SPMTool
 							};
 
 						// Get the result
-						PromptDoubleResult phiAgRes = ACAD.Current.edtr.GetDouble(phiAgOp);
+						PromptDoubleResult phiAgRes = AutoCAD.Current.edtr.GetDouble(phiAgOp);
 
 						if (phiAgRes.Status == PromptStatus.OK)
 						{
 							double phiAg = phiAgRes.Value;
 
 							// Get the value of aE
-							double aE = 1;
-							switch (agrgt)
-							{
-								case "Basalt":
-									aE = 1.2;
-									break;
+							//double aE = 1;
+							//switch (agrgt)
+							//{
+							//	case "Basalt":
+							//		aE = 1.2;
+							//		break;
 
-								case "Quartzite":
-									// aE = 1 already
-									break;
+							//	case "Quartzite":
+							//		// aE = 1 already
+							//		break;
 
-								case "Limestone":
-									aE = 0.9;
-									break;
+							//	case "Limestone":
+							//		aE = 0.9;
+							//		break;
 
-								case "Sandstone":
-									aE = 0.9;
-									break;
-							}
+							//	case "Sandstone":
+							//		aE = 0.9;
+							//		break;
+							//}
+
+							// Aggregate type
+							var aggType = (AggregateType)Enum.Parse(typeof(AggregateType), agrgt);
 
 							// Start a transaction
-							using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
+							using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
 							{
 
 								// Get the NOD in the database
-								DBDictionary nod =
-									(DBDictionary) trans.GetObject(ACAD.Current.db.NamedObjectsDictionaryId,
+								DBDictionary nod = (DBDictionary) trans.GetObject(AutoCAD.Current.db.NamedObjectsDictionaryId,
 										OpenMode.ForWrite);
 
 								// Save the variables on the Xrecord
 								using (ResultBuffer rb = new ResultBuffer())
 								{
-									rb.Add(new TypedValue((int) DxfCode.ExtendedDataRegAppName,
-										ACAD.Current.appName));     // 0
-									rb.Add(new TypedValue((int) DxfCode.ExtendedDataAsciiString,
-										xdataStr));           // 1
-									rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal,
-										fc));                        // 2
-									rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal,
-										aE));                        // 3
-									rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal,
-										phiAg));                     // 4
+									rb.Add(new TypedValue((int) DxfCode.ExtendedDataRegAppName, AutoCAD.Current.appName));     // 0
+									rb.Add(new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr));           // 1
+									rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, fc));                        // 2
+									rb.Add(new TypedValue((int) DxfCode.ExtendedDataInteger32, (int)aggType));         // 3
+									rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, phiAg));                     // 4
 
 									// Create and add data to an Xrecord
 									Xrecord xRec = new Xrecord();
@@ -473,11 +498,11 @@ namespace SPMTool
 						"\nfctm = "   + Math.Round(concrete.fcr, 2)         + " MPa"  +
 						"\nEci = "    + Math.Round(concrete.Ec, 2)          + " MPa"  +
 						"\nεc1 = "    + Math.Round(1000 * concrete.ec, 2)   + " E-03" +
-						"\nεc,lim = " + Math.Round(1000 * concrete.ecu, 2) + " E-03" +
-						"\nφ,ag = "   + concrete.AggregateDiameter           + " mm";
+						"\nεc,lim = " + Math.Round(1000 * concrete.ecu, 2)  + " E-03" +
+						"\nφ,ag = "   + concrete.AggregateDiameter          + " mm";
 
 					// Display the values returned
-					Application.ShowAlertDialog(ACAD.Current.appName + "\n\n" + concmsg);
+					Application.ShowAlertDialog(Current.appName + "\n\n" + concmsg);
 				}
 			}
 
@@ -485,11 +510,11 @@ namespace SPMTool
 			public static Concrete ReadData()
 			{
 				// Start a transaction
-				using (Transaction trans = ACAD.Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
 				{
 					// Get the NOD in the database
 					DBDictionary nod =
-						(DBDictionary)trans.GetObject(ACAD.Current.db.NamedObjectsDictionaryId, OpenMode.ForRead);
+						(DBDictionary)trans.GetObject(AutoCAD.Current.db.NamedObjectsDictionaryId, OpenMode.ForRead);
 
 					// Check if it exists
 					if (nod.Contains("ConcreteParams"))
@@ -502,12 +527,12 @@ namespace SPMTool
 
 						// Get the parameters from XData
 						double
-							fc = Convert.ToDouble(concData[2].Value),
-							alphaE = Convert.ToDouble(concData[3].Value),
-							phiAg = Convert.ToDouble(concData[4].Value);
+							fc      = Convert.ToDouble(concData[2].Value), 
+							aggType = Convert.ToInt32(concData[3].Value),
+							phiAg   = Convert.ToDouble(concData[4].Value);
 
 						return
-							new Concrete(fc, phiAg, alphaE);
+							new Concrete(fc, phiAg, (AggregateType)aggType);
 					}
 					else
 					{

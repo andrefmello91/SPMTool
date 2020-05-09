@@ -5,69 +5,6 @@ using Autodesk.AutoCAD.Geometry;
 
 namespace SPMTool
 {
-	namespace ACAD
-	{
-		// AutoCAD variables
-		public static class Current
-		{
-			// Get the current document, database and editor
-			public static Document doc = Application.DocumentManager.MdiActiveDocument;
-			public static Database db = doc.Database;
-			public static Editor edtr = doc.Editor;
-
-			// Get the coordinate system for transformations
-			public static Matrix3d ucsMatrix = edtr.CurrentUserCoordinateSystem;
-			public static CoordinateSystem3d ucs = ucsMatrix.CoordinateSystem3d;
-
-			// Define the appName
-			public static string appName = "SPMTool";
-		}
-
-		// Color codes
-		public enum Colors : short
-		{
-			Red = 1,
-			Yellow = 2,
-			Yellow1 = 41,
-			Cyan = 4,
-			Blue1 = 5,
-			Blue = 150,
-			Green = 92,
-			Grey = 254
-		}
-
-		// Layer names
-		public static class Layers
-		{
-			public static string
-				extNode = "ExtNode",
-				intNode = "IntNode",
-				stringer = "Stringer",
-				panel = "Panel",
-				support = "Support",
-				force = "Force",
-				forceText = "ForceText",
-				stringerForce = "StringerForces",
-				panelForce = "PanelShear",
-				compressiveStress = "CompressivePanelStress",
-				tensileStress = "TensilePanelStress",
-				displacements = "Displacements";
-		}
-
-		// Block names
-		public static class Blocks
-		{
-			public static string
-				supportX = "SupportX",
-				supportY = "SupportY",
-				supportXY = "SupportXY",
-				forceBlock = "ForceBlock",
-				shearBlock = "ShearBlock",
-				CompressiveStress = "CompressiveStressBlock",
-				TensileStress = "NonLinearStressBlock";
-		}
-	}
-
     // Constants
     public static class Constants
     {
@@ -85,76 +22,76 @@ namespace SPMTool
         // Node indexers
         public enum Node
         {
-            AppName  = 0,
-            XDataStr = 1,
-            Number   = 2,
-            Ux       = 3,
-            Uy       = 4
+            AppName,
+            XDataStr,
+            Number,
+            Ux,
+            Uy
         }
 
         // Stringer indexers
         public enum Stringer
         {
-            AppName   = 0,
-            XDataStr  = 1,
-            Number    = 2,
-            Grip1     = 3,
-            Grip2     = 4,
-            Grip3     = 5,
-            Width     = 6,
-            Height    = 7,
-            NumOfBars = 8,
-            BarDiam   = 9,
-			Steelfy   = 10,
-			SteelEs   = 11
+            AppName,
+            XDataStr,
+            Number,
+            Grip1,
+            Grip2,
+            Grip3,
+            Width,
+            Height,
+            NumOfBars,
+            BarDiam,
+			Steelfy,
+			SteelEs
         }
 
         // Panel indexers
         public enum Panel
         {
-            AppName  = 0,
-            XDataStr = 1,
-            Number   = 2,
-            Grip1    = 3,
-            Grip2    = 4,
-            Grip3    = 5,
-            Grip4    = 6,
-            Width    = 7,
-            XDiam    = 8,
-            Sx       = 9,
-			fyx      = 10,
-			Esx      = 11,
-            YDiam    = 12,
-            Sy       = 13,
-			fyy      = 14,
-			Esy      = 15
+            AppName,
+            XDataStr,
+            Number,
+            Grip1,
+            Grip2,
+            Grip3,
+            Grip4,
+            Width,
+            XDiam,
+            Sx,
+			fyx,
+			Esx,
+            YDiam,
+            Sy,
+			fyy,
+			Esy
         }
 
         // Force indexers
         public enum Force
         {
-            AppName    = 0,
-            XDataStr   = 1,
-            Value      = 2,
-            Direction  = 3
+            AppName,
+            XDataStr,
+            Value,
+            Direction
         }
 
         // Force text indexers
         public enum ForceText
         {
-            AppName    = 0,
-            XDataStr   = 1,
-			XPosition  = 2,
-			YPosition  = 3,
-            Direction  = 4
+            AppName,
+            XDataStr,
+			XPosition,
+			YPosition,
+            Direction
         }
 
-        // Support Indexers
+        // SupportDirection Indexers
         public enum Support
         {
-            AppName   = 0,
-            XDataStr  = 1,
-            Direction = 2,
+            AppName,
+            XDataStr,
+            Direction,
         }
     }
 }

@@ -24,15 +24,15 @@ namespace SPMTool.Analysis
 		private ObjectIdCollection NodeObjects      { get; }
 		private ObjectIdCollection StringerObjects  { get; }
 		private ObjectIdCollection PanelObjects     { get; }
-		private int                StringerBehavior { get; }
-		private int                PanelBehavior    { get; }
+		private Stringer.Behavior  StringerBehavior { get; }
+		private Panel.Behavior     PanelBehavior    { get; }
 
-		public InputData(int stringerBehavior, int panelBehavior)
+		public InputData(Stringer.Behavior stringerBehavior, Panel.Behavior panelBehavior)
 		{
 			// Get the collection of elements in the model
-			NodeObjects     = ACAD.Geometry.Node.UpdateNodes();
-			StringerObjects = ACAD.Geometry.Stringer.UpdateStringers();
-			PanelObjects    = ACAD.Geometry.Panel.UpdatePanels();
+			NodeObjects     = AutoCAD.Geometry.Node.UpdateNodes();
+			StringerObjects = AutoCAD.Geometry.Stringer.UpdateStringers();
+			PanelObjects    = AutoCAD.Geometry.Panel.UpdatePanels();
 
             // Read forces and constraints
             Forces      = Force.ListOfForces();
@@ -41,7 +41,7 @@ namespace SPMTool.Analysis
 			// Get concrete data
 			Concrete = Concrete.ReadData();
 
-			// Set the behavior of elements
+			// Set the panelBehavior of elements
 			StringerBehavior = stringerBehavior;
 			PanelBehavior    = panelBehavior;
 
@@ -82,11 +82,11 @@ namespace SPMTool.Analysis
 	        {
 		        Stringer stringer;
 
-                // Verify the behavior
-                if (StringerBehavior == (int)Stringer.Behavior.Linear)
+                // Verify the panelBehavior
+                if (StringerBehavior == Stringer.Behavior.Linear)
 					stringer = new Stringer.Linear(strObj, Concrete);
 
-				else if (StringerBehavior == (int)Stringer.Behavior.NonLinearClassic)
+				else if (StringerBehavior == Stringer.Behavior.NonLinearClassic)
 					stringer = new Stringer.NonLinear.Classic(strObj, Concrete);
 
                 else
@@ -110,8 +110,8 @@ namespace SPMTool.Analysis
 	        {
 		        Panel panel;
 
-				// Verify the behavior
-				if (PanelBehavior == (int)Panel.Behavior.Linear)
+				// Verify the panelBehavior
+				if (PanelBehavior == Panel.Behavior.Linear)
 					panel = new Panel.Linear(pnlObj, Concrete);
 
 				else
@@ -135,7 +135,7 @@ namespace SPMTool.Analysis
 	        foreach (var nd in Nodes)
 	        {
 		        // Check if it's a external node
-		        if (nd.Type == (int)Node.NodeType.External && (nd.Force.X != 0 || nd.Force.Y != 0))
+		        if (nd.Type == Node.NodeType.External && (nd.Force.X != 0 || nd.Force.Y != 0))
 		        {
 			        // Get the position in the vector
 			        int i = 2 * nd.Number - 2;
@@ -163,7 +163,7 @@ namespace SPMTool.Analysis
 					j = index[1];
 
 				// Simplify the matrices removing the rows that have constraints (external nodes)
-				if (node.Type == (int) Node.NodeType.External)
+				if (node.Type == Node.NodeType.External)
 				{
 					if (node.Support.X)
 						// There is a support in X direction

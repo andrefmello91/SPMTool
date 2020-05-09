@@ -2,7 +2,9 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
-using SPMTool.ACAD;
+using SPMTool.AutoCAD;
+using NodeData       = SPMTool.XData.Node;
+using ForceDirection = SPMTool.Elements.Force.ForceDirection;
 
 namespace SPMTool.Elements
 {
@@ -11,16 +13,16 @@ namespace SPMTool.Elements
 	    // Node types
 	    public enum NodeType
 	    {
-		    All = 0,
-		    External  = 1,
-		    Internal  = 2,
-			Displaced = 3
+		    All,
+		    External,
+		    Internal,
+			Displaced
 	    }
 
 	    // Properties
         public ObjectId             ObjectId     { get; }
 	    public int                  Number       { get; }
-	    public int                  Type         { get; }
+	    public NodeType             Type         { get; }
 	    public Point3d              Position     { get; }
 	    public (bool X, bool Y)     Support      { get; }
 	    public (double X, double Y) Force        { get; }
@@ -44,14 +46,14 @@ namespace SPMTool.Elements
 	            DBPoint ndPt = trans.GetObject(nodeObject, OpenMode.ForRead) as DBPoint;
 
 	            // Read the XData and get the necessary data
-	            ResultBuffer rb = ndPt.GetXDataForApplication(Current.appName);
+	            ResultBuffer rb   = ndPt.GetXDataForApplication(Current.appName);
 	            TypedValue[] data = rb.AsArray();
 
 	            // Get the position
 	            Position = ndPt.Position;
 
 	            // Get the node number
-	            Number = Convert.ToInt32(data[(int) XData.Node.Number].Value);
+	            Number = Convert.ToInt32(data[(int)NodeData.Number].Value);
 
                 // Get type
                 Type = GetNodeType(ndPt);
@@ -64,25 +66,25 @@ namespace SPMTool.Elements
 
                 // Get displacements
                 double
-	                ux = Convert.ToDouble(data[(int)XData.Node.Ux].Value),
-	                uy = Convert.ToDouble(data[(int)XData.Node.Uy].Value);
+	                ux = Convert.ToDouble(data[(int)NodeData.Ux].Value),
+	                uy = Convert.ToDouble(data[(int)NodeData.Uy].Value);
 
                 Displacement = (ux, uy);
             }
         }
 
 		// Get index of DoFs
-		public int[] DoFIndex => Auxiliary.GlobalIndexes(Number);
+		public int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Number);
 
         // Get node type
-        private int GetNodeType(DBPoint nodePoint)
+        private NodeType GetNodeType(DBPoint nodePoint)
         {
-            if (nodePoint.Layer == Layers.extNode)
+            if (nodePoint.Layer == AutoCAD.Auxiliary.GetLayerName(Layers.ExtNode))
                 return
-                    (int)NodeType.External;
+                    NodeType.External;
 
             return
-                (int)NodeType.Internal;
+                NodeType.Internal;
         }
 
         // Get nodal displacements
@@ -115,10 +117,10 @@ namespace SPMTool.Elements
                 if (force.Position == Position)
                 {
                     // Read force
-                    if (force.Direction == (int)Elements.Force.ForceDirection.X)
+                    if (force.Direction == ForceDirection.X)
                         Fx = force.Value;
 
-                    if (force.Direction == (int)Elements.Force.ForceDirection.Y)
+                    if (force.Direction == ForceDirection.Y)
                         Fy = force.Value;
                 }
             }

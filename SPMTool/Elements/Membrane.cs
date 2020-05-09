@@ -11,44 +11,48 @@ namespace SPMTool.Elements
     public abstract class Membrane
     {
         // Properties
-        public Concrete Concrete { get; }
-        public Reinforcement.Panel Reinforcement { get; }
-        public (bool S, string Message) Stop { get; set; }
-        public int LSCrack { get; set; }
-        public (int X, int Y) LSYield { get; set; }
-        public int LSPeak { get; set; }
-        public Vector<double> Strains { get; set; }
-        public (double theta1, double theta2) PrincipalAngles { get; set; }
-        public Matrix<double> ConcreteStiffness { get; set; }
-        public Matrix<double> ReinforcementStiffness { get; set; }
-        public Matrix<double> TransformationMatrix { get; set; }
-        public Vector<double> ConcreteStresses { get; set; }
-        public Vector<double> ReinforcementStresses { get; set; }
-        private int LoadStep { get; set; }
-        public int Iteration { get; set; }
+        public Concrete                       Concrete               { get; set; }
+        public Reinforcement.Panel            Reinforcement          { get; }
+        public (bool S, string Message)       Stop                   { get; set; }
+        public int                            LSCrack                { get; set; }
+        public (int X, int Y)                 LSYield                { get; set; }
+        public int                            LSPeak                 { get; set; }
+        public Vector<double>                 Strains                { get; set; }
+        public (double theta1, double theta2) PrincipalAngles        { get; set; }
+        public Matrix<double>                 ConcreteStiffness      { get; set; }
+        public Matrix<double>                 ReinforcementStiffness { get; set; }
+        public Matrix<double>                 TransformationMatrix   { get; set; }
+        public Vector<double>                 ConcreteStresses       { get; set; }
+        public Vector<double>                 ReinforcementStresses  { get; set; }
+        private int                           LoadStep               { get; set; }
+        public int                            Iteration              { get; set; }
 
         // Constructor
-        public Membrane(Concrete concrete, Reinforcement.Panel reinforcement)
+        public Membrane(Concrete concrete, Reinforcement.Panel reinforcement, double panelWidth)
         {
-            // Get materials
-            Concrete = concrete;
-            Reinforcement = reinforcement;
+            // Get reinforcement
+            var diams = reinforcement.BarDiameter;
+            var spcs  = reinforcement.BarSpacing;
+            var steel = reinforcement.Steel;
+
+            // Initiate new materials
+            Reinforcement = new Reinforcement.Panel(diams, spcs, steel, panelWidth);
 
             // Set initial strains
             Strains = Vector<double>.Build.Dense(3);
         }
 
         // Get steel parameters
-        private double fyx => Reinforcement.Steel.X.YieldStress;
+        private double fyx  => Reinforcement.Steel.X.YieldStress;
         private double Esxi => Reinforcement.Steel.X.ElasticModule;
-        private double fyy => Reinforcement.Steel.Y.YieldStress;
+        private double fyy  => Reinforcement.Steel.Y.YieldStress;
         private double Esyi => Reinforcement.Steel.Y.ElasticModule;
 
         // Get reinforcement
         private double phiX => Reinforcement.BarDiameter.X;
         private double phiY => Reinforcement.BarDiameter.Y;
-        private double psx => Reinforcement.Ratio.X;
-        private double psy => Reinforcement.Ratio.Y;
+        private double psx  => Reinforcement.Ratio.X;
+        private double psy  => Reinforcement.Ratio.Y;
 
         // Calculate crack spacings
         private double smx => phiX / (5.4 * psx);
@@ -66,7 +70,7 @@ namespace SPMTool.Elements
             var ec2 = principalStrains.ec2;
 
             // Verify the strains
-            if (e.Exists(Auxiliary.NotZero))
+            if (e.Exists(GlobalAuxiliary.NotZero))
             {
                 // Calculate the strain slope
                 if (e[2] == 0)
@@ -116,7 +120,7 @@ namespace SPMTool.Elements
             get
             {
                 // Check if strains are set
-                if (Strains != null || Strains.Exists(Auxiliary.NotZero))
+                if (Strains != null || Strains.Exists(GlobalAuxiliary.NotZero))
                     return
                         ConcreteStiffness + ReinforcementStiffness;
 
@@ -252,8 +256,8 @@ namespace SPMTool.Elements
             double phiAg = Concrete.AggregateDiameter;
 
             // Calculate thetaC sine and cosine
-            var (cosTheta, sinTheta) = Auxiliary.DirectionCosines(theta2);
-            double tanTheta = Auxiliary.Tangent(theta2);
+            var (cosTheta, sinTheta) = GlobalAuxiliary.DirectionCosines(theta2);
+            double tanTheta = GlobalAuxiliary.Tangent(theta2);
 
             // Average crack spacing and opening
             double
@@ -328,8 +332,15 @@ namespace SPMTool.Elements
         public class MCFT : Membrane
         {
             // Constructor
-            public MCFT(Concrete concrete, Reinforcement.Panel reinforcement) : base(concrete, reinforcement)
+            public MCFT(Concrete concrete, Reinforcement.Panel reinforcement, double panelWidth) : base(concrete, reinforcement, panelWidth)
             {
+                // Get concrete parameters
+                double
+                    fc    = concrete.fc,
+                    phiAg = concrete.AggregateDiameter;
+
+                // Initiate new concrete
+                Concrete = new Concrete.MCFT(fc, phiAg);
             }
 
             // Tolerances
@@ -397,7 +408,7 @@ namespace SPMTool.Elements
             public override Matrix<double> Transformation_Matrix(double theta2)
             {
                 double psi = Constants.Pi - theta2;
-                var (cos, sin) = Auxiliary.DirectionCosines(psi);
+                var (cos, sin) = GlobalAuxiliary.DirectionCosines(psi);
                 double
                     cos2 = cos * cos,
                     sin2 = sin * sin,
@@ -419,7 +430,7 @@ namespace SPMTool.Elements
                 var (fc1, fc2) = Concrete.PrincipalStresses;
 
                 // Calculate theta2 (fc2 angle)
-                var (cos, sin) = Auxiliary.DirectionCosines(2 * theta2);
+                var (cos, sin) = GlobalAuxiliary.DirectionCosines(2 * theta2);
 
                 // Calculate stresses by Mohr's Circle
                 double
@@ -457,9 +468,9 @@ namespace SPMTool.Elements
                 double f1a = fcr / (1 + Math.Sqrt(500 * ec1));
 
                 // Calculate thetaC sine and cosine
-                var (cosTheta, sinTheta) = Auxiliary.DirectionCosines(theta);
+                var (cosTheta, sinTheta) = GlobalAuxiliary.DirectionCosines(theta);
                 double
-                    tanTheta = Auxiliary.Tangent(theta),
+                    tanTheta = GlobalAuxiliary.Tangent(theta),
                     cosTheta2 = cosTheta * cosTheta,
                     sinTheta2 = sinTheta * sinTheta;
 
@@ -531,10 +542,16 @@ namespace SPMTool.Elements
             public Vector<double> CrackSlipStrains { get; set; }
 
             // Constructor
-            public DSFM(Concrete concrete, Reinforcement.Panel reinforcement, double referenceLength) : base(concrete,
-                reinforcement)
+            public DSFM(Concrete concrete, Reinforcement.Panel reinforcement, double panelWidth, double referenceLength) : base(concrete,
+                reinforcement, panelWidth)
             {
-                concrete.ReferenceLength = referenceLength;
+                // Get concrete parameters
+                double
+                    fc    = concrete.fc,
+                    phiAg = concrete.AggregateDiameter;
+
+                // Initiate new concrete
+                Concrete = new Concrete.DSFM(fc, phiAg, referenceLength);
             }
 
             public override void Analysis(Vector<double> appliedStrains, int loadStep = 0)
@@ -617,7 +634,7 @@ namespace SPMTool.Elements
             // This matrix transforms from x-y to 1-2 coordinates
             public override Matrix<double> Transformation_Matrix(double thetaC1)
             {
-                var (cos, sin) = Auxiliary.DirectionCosines(thetaC1);
+                var (cos, sin) = GlobalAuxiliary.DirectionCosines(thetaC1);
                 double
                     cos2 = cos * cos,
                     sin2 = sin * sin,
@@ -666,8 +683,8 @@ namespace SPMTool.Elements
                 var (fsx, fsy) = Reinforcement.Stresses;
 
                 // Calculate cosines and sines
-                var (cosNx, sinNx) = Auxiliary.DirectionCosines(thetaNx);
-                var (cosNy, sinNy) = Auxiliary.DirectionCosines(thetaNy);
+                var (cosNx, sinNx) = GlobalAuxiliary.DirectionCosines(thetaNx);
+                var (cosNy, sinNy) = GlobalAuxiliary.DirectionCosines(thetaNy);
                 double
                     cosNx2 = cosNx * cosNx,
                     cosNy2 = cosNy * cosNy;
@@ -731,7 +748,7 @@ namespace SPMTool.Elements
                     yxy = apparentStrains[2];
 
                 // Get the angles
-                var (cosThetaC, sinThetaC) = Auxiliary.DirectionCosines(thetaC1);
+                var (cosThetaC, sinThetaC) = GlobalAuxiliary.DirectionCosines(thetaC1);
 
                 // Calculate crack spacings and width
                 double s = 1 / (sinThetaC / smx + cosThetaC / smy);
@@ -760,12 +777,12 @@ namespace SPMTool.Elements
                 double
                     thetaS = thetaIc + dThetaS;
 
-                var (cos2ThetaS, sin2ThetaS) = Auxiliary.DirectionCosines(2 * thetaS);
+                var (cos2ThetaS, sin2ThetaS) = GlobalAuxiliary.DirectionCosines(2 * thetaS);
 
                 double ysb = yxy * cos2ThetaS + (ey - ex) * sin2ThetaS;
 
                 // Calculate shear slip strains
-                var (cos2ThetaC, sin2ThetaC) = Auxiliary.DirectionCosines(2 * thetaC1);
+                var (cos2ThetaC, sin2ThetaC) = GlobalAuxiliary.DirectionCosines(2 * thetaC1);
 
                 double
                     ys = Math.Max(ysa, ysb),

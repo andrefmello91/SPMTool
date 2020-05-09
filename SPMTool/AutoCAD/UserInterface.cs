@@ -79,7 +79,7 @@ namespace SPMTool
             RibbonControl ribbonControl = ComponentManager.Ribbon;
 
             // Check if the tab already exists
-            RibbonTab tab = ribbonControl.FindTab(ACAD.Current.appName);
+            RibbonTab tab = ribbonControl.FindTab(AutoCAD.Current.appName);
 
             if (tab != null)
             {
@@ -151,8 +151,8 @@ namespace SPMTool
             // Create the Ribbon Tab
             RibbonTab Tab = new RibbonTab()
             {
-                Title = ACAD.Current.appName,
-                Id = ACAD.Current.appName
+                Title = AutoCAD.Current.appName,
+                Id = AutoCAD.Current.appName
             };
             ribbonControl.Tabs.Add(Tab);
 
@@ -180,8 +180,8 @@ namespace SPMTool
 
             RibbonButton button2 = new RibbonButton()
             {
-                Text = "Add stringer",
-                ToolTip = "Create a stringer conecting two nodes",
+                Text = "Add Stringer",
+                ToolTip = "Create a Stringer conecting two nodes",
                 ShowText = true,
                 ShowImage = true,
                 LargeImage = getBitmap(stringer),
@@ -258,8 +258,8 @@ namespace SPMTool
 
             RibbonButton button6 = new RibbonButton()
             {
-                Text = "Divide stringer",
-                ToolTip = "Divide a stringer into smaller ones",
+                Text = "Divide Stringer",
+                ToolTip = "Divide a Stringer into smaller ones",
                 ShowText = true,
                 ShowImage = true,
                 Image = getBitmap(divideStringer),
@@ -578,7 +578,7 @@ namespace SPMTool
             RibbonButton button1 = new RibbonButton()
             {
                 Text = "Stringer forces",
-                ToolTip = "Toogle view for stringer forces",
+                ToolTip = "Toogle view for Stringer forces",
                 ShowText = true,
                 ShowImage = true,
                 LargeImage = getBitmap(stringerF),
@@ -658,7 +658,7 @@ namespace SPMTool
                         //Make sure the command text either ends with ";", or a " "
                         string cmdText = ((string)button.CommandParameter).Trim();
                         if (!cmdText.EndsWith(";")) cmdText = cmdText + " ";
-                        ACAD.Current.doc.SendStringToExecute(cmdText, true, false, true);
+                        AutoCAD.Current.doc.SendStringToExecute(cmdText, true, false, true);
                     }
                 }
             }
