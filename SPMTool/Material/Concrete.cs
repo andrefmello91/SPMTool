@@ -143,7 +143,7 @@ namespace SPMTool.Material
 		}
 
 		// Calculate concrete stresses
-		public virtual double TensileStress(double ec1, Reinforcement.Panel reinforcement = null,
+		public virtual double TensileStress(double ec1, PanelReinforcement reinforcement = null,
 			(double x, double y) reinforcementAngles = default)
 		{
 			throw new NotImplementedException();
@@ -191,7 +191,7 @@ namespace SPMTool.Material
 		}
 
 		// Set concrete stresses given strains
-		public void SetStresses((double ec1, double ec2) principalStrains, Reinforcement.Panel reinforcement = null,
+		public void SetStresses((double ec1, double ec2) principalStrains, PanelReinforcement reinforcement = null,
 			(double x, double y) reinforcementAngles = default)
 		{
 			PrincipalStresses = (TensileStress(principalStrains.ec1, reinforcement, reinforcementAngles),
@@ -200,7 +200,7 @@ namespace SPMTool.Material
 
 		// Set concrete strains and stresses
 		public void SetStrainsAndStresses((double ec1, double ec2) principalStrains,
-			Reinforcement.Panel reinforcement = null, (double x, double y) reinforcementAngles = default)
+			PanelReinforcement reinforcement = null, (double x, double y) reinforcementAngles = default)
 		{
 			SetStrains(principalStrains);
 			SetStresses(principalStrains, reinforcement, reinforcementAngles);
@@ -247,7 +247,7 @@ namespace SPMTool.Material
 			}
 
 			// Calculate tensile stress in concrete
-			public override double TensileStress(double ec1, Reinforcement.Panel reinforcement = null,
+			public override double TensileStress(double ec1, PanelReinforcement reinforcement = null,
 				(double x, double y) reinforcementAngles = default)
 			{
 				// Constitutive relation
@@ -277,7 +277,7 @@ namespace SPMTool.Material
 			private double         Gf  = 0.075;
 			private double         ets => 2 * Gf / (fcr * ReferenceLength);
 
-			public override double TensileStress(double ec1, Reinforcement.Panel reinforcement, (double x, double y) reinforcementAngles)
+			public override double TensileStress(double ec1, PanelReinforcement reinforcement, (double x, double y) reinforcementAngles)
 			{
 				// Initiate fc1
 				double fc1;

@@ -108,19 +108,23 @@
     <Compile Include="AutoCAD\Supports.cs" />
     <Compile Include="Core\Membrane.cs" />
     <Compile Include="AutoCAD\Auxiliary.cs" />
+    <Compile Include="Core\Panel.NonLinear.cs" />
+    <Compile Include="Core\Panel.Linear.cs" />
+    <Compile Include="Core\Stringer.NonLinear .cs" />
+    <Compile Include="Core\Stringer.Linear.cs" />
     <Compile Include="Material\Concrete.cs" />
-    <Compile Include="Core\Membrane-old.cs" />
     <Compile Include="Core\Node.cs" />
     <Compile Include="Core\Panel.cs" />
     <Compile Include="Core\Stringer.cs" />
-    <Compile Include="Core\Forces.cs" />
+    <Compile Include="Core\Force.cs" />
     <Compile Include="Global\GlobalVariables.cs" />
+    <Compile Include="Material\PanelReinforcement.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Material\Reinforcement.cs" />
+    <Compile Include="Material\StringerReinforcement.cs" />
     <Compile Include="AutoCAD\Results.cs" />
     <Compile Include="AutoCAD\Geometry.cs" />
     <Compile Include="Global\GlobalAuxiliary.cs" />

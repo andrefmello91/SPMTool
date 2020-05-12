@@ -12,7 +12,7 @@ namespace SPMTool.Core
     {
         // Properties
         public Concrete                       Concrete               { get; set; }
-        public Reinforcement.Panel            Reinforcement          { get; }
+        public PanelReinforcement             Reinforcement          { get; }
         public (bool S, string Message)       Stop                   { get; set; }
         public int                            LSCrack                { get; set; }
         public (int X, int Y)                 LSYield                { get; set; }
@@ -28,7 +28,7 @@ namespace SPMTool.Core
         public int                            Iteration              { get; set; }
 
         // Constructor
-        public Membrane(Concrete concrete, Reinforcement.Panel reinforcement, double panelWidth)
+        public Membrane(Concrete concrete, PanelReinforcement reinforcement, double panelWidth)
         {
             // Get reinforcement
             var diams = reinforcement.BarDiameter;
@@ -36,7 +36,7 @@ namespace SPMTool.Core
             var steel = reinforcement.Steel;
 
             // Initiate new materials
-            Reinforcement = new Reinforcement.Panel(diams, spcs, steel, panelWidth);
+            Reinforcement = new PanelReinforcement(diams, spcs, steel, panelWidth);
 
             // Set initial strains
             Strains = Vector<double>.Build.Dense(3);
@@ -332,7 +332,7 @@ namespace SPMTool.Core
         public class MCFT : Membrane
         {
             // Constructor
-            public MCFT(Concrete concrete, Reinforcement.Panel reinforcement, double panelWidth) : base(concrete, reinforcement, panelWidth)
+            public MCFT(Concrete concrete, PanelReinforcement reinforcement, double panelWidth) : base(concrete, reinforcement, panelWidth)
             {
                 // Get concrete parameters
                 double
@@ -542,7 +542,7 @@ namespace SPMTool.Core
             public Vector<double> CrackSlipStrains { get; set; }
 
             // Constructor
-            public DSFM(Concrete concrete, Reinforcement.Panel reinforcement, double panelWidth, double referenceLength) : base(concrete,
+            public DSFM(Concrete concrete, PanelReinforcement reinforcement, double panelWidth, double referenceLength) : base(concrete,
                 reinforcement, panelWidth)
             {
                 // Get concrete parameters

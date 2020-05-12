@@ -53,7 +53,7 @@ namespace SPMTool.Core
 			var forces = new List<Force>();
 
 			// Get force objects
-			var fObjs = AutoCAD.Auxiliary.GetEntitiesOnLayer(Layers.Force);
+			var fObjs = Auxiliary.GetEntitiesOnLayer(Layers.Force);
 
 			foreach (ObjectId fObj in fObjs)
 				forces.Add(new Force(fObj));
