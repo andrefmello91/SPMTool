@@ -425,19 +425,17 @@ namespace SPMTool.AutoCAD
 								// Open the selected object for read
 								Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
-								// Check if the selected object is a node
+								// Check if the selected object is a panel
 								if (ent.Layer == PanelLayer)
 								{
 									// Upgrade the OpenMode
 									ent.UpgradeOpen();
 
 									// Access the XData as an array
-									ResultBuffer rb = ent.GetXDataForApplication(Current.appName);
-									TypedValue[] data = rb.AsArray();
+									TypedValue[] data = Auxiliary.ReadXData(ent);
 
 									// Set the new geometry and reinforcement (line 7 to 9 of the array)
-									data[(int) PanelData.Width] =
-										new TypedValue((int) DxfCode.ExtendedDataReal, pnlW);
+									data[(int) PanelData.Width] = new TypedValue((int) DxfCode.ExtendedDataReal, pnlW);
 
 									// Add the new XData
 									ent.XData = new ResultBuffer(data);

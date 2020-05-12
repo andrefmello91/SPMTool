@@ -11,6 +11,7 @@ namespace SPMTool.Core
     {
         // Public Properties
 		public Vector<double> DisplacementVector { get; set; }
+		public Matrix<double> GlobalStiffness    { get; set; }
 		public Node[]         Nodes              { get; }
         public Stringer[]     Stringers          { get; }
         public Panel[]        Panels             { get; }
@@ -32,7 +33,7 @@ namespace SPMTool.Core
 		private int numDoFs => 2 * Nodes.Length;
 
         // Calculate Global Stiffness
-        private Matrix<double> GlobalStiffness(Vector<double> forceVector = null)
+        private Matrix<double> Global_Stiffness(Vector<double> forceVector = null)
 		{
 			// Initialize the global stiffness matrix
 			var Kg = Matrix<double>.Build.Dense(numDoFs, numDoFs);
@@ -383,13 +384,13 @@ namespace SPMTool.Core
 	        public Linear(InputData inputData) : base(inputData)
             {
 	            // Get force Vector
-	            var forceVector = ForceVector;
+	            var f = ForceVector;
 
 	            // Calculate and simplify global stiffness and force vector
-	            var globalStiffness = GlobalStiffness(forceVector);
+	            GlobalStiffness = Global_Stiffness(f);
 
 	            // Solve
-	            DisplacementVector = globalStiffness.Solve(forceVector);
+	            DisplacementVector = GlobalStiffness.Solve(f);
 
 	            // Calculate element displacements
 	            StringerDisplacements(DisplacementVector);
@@ -401,7 +402,7 @@ namespace SPMTool.Core
         public class NonLinear : Analysis
         {
 			// Max iterations and load steps
-			private int maxIterations = 100;
+			private int maxIterations = 1000;
 			private int loadSteps     = 100;
 
             public NonLinear(InputData inputData) : base(inputData)
@@ -409,8 +410,12 @@ namespace SPMTool.Core
 				// Get force vector
 				var f = ForceVector;
 
-		        // Get the initial stiffness and force vector simplified
-		        var Kg = GlobalStiffness(f);
+				// Do a linear analysis to get initial elastic stiffness and displacements
+				var linAn = new Linear(inputData);
+				var Kg = linAn.GlobalStiffness;
+
+                // Get the initial stiffness and force vector simplified
+                //var Kg = Global_Stiffness(f);
 
 		        DelimitedWriter.Write("D:/Ki.csv", Kg, ";");
 
@@ -496,7 +501,7 @@ namespace SPMTool.Core
                     Results();
 
                     // Update stiffness
-                    //Kg = GlobalStiffness();
+                    //Kg = Global_Stiffness();
 
                     //if (loadStep < 56)
                     //{
@@ -547,8 +552,8 @@ namespace SPMTool.Core
 				double
 					maxForce = residualForces.AbsoluteMaximum(),
 					maxDisp  = residualDisplacements.AbsoluteMaximum(),
-					fTol     = MaxElementForce / 100,
-					uTol     = 0.001;
+					fTol     = 0.01,
+					uTol     = 0.01;
 
                 // Check convergence
                 if (maxForce <= fTol && maxDisp <= uTol && iteration > 1)

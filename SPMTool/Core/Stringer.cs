@@ -21,7 +21,6 @@ namespace SPMTool.Core
 
         // Stringer properties
         public ObjectId                ObjectId         { get; }
-		public Behavior                StringerBehavior { get; }
 		public int                     Number           { get; }
 		public int[]                   Grips            { get; }
 		public Point3d[]               PointsConnected  { get; }
@@ -36,10 +35,9 @@ namespace SPMTool.Core
 		public Vector<double>          Displacements    { get; set; }
 
 		// Constructor
-		public Stringer(ObjectId stringerObject, Concrete concrete = null, Behavior behavior = Behavior.Linear)
+		public Stringer(ObjectId stringerObject, Concrete concrete = null)
 		{
 			ObjectId         = stringerObject;
-			StringerBehavior = behavior;
 
 			// Get concrete
 			if (concrete == null)
@@ -175,7 +173,7 @@ namespace SPMTool.Core
             private double Ec => Concrete.Ec;
 
             // Constructor
-            public Linear(ObjectId stringerObject, Material.Concrete concrete = null, Behavior behavior = Behavior.Linear) : base(stringerObject, concrete, behavior)
+            public Linear(ObjectId stringerObject, Concrete concrete = null) : base(stringerObject, concrete)
             {
             }
 
@@ -224,7 +222,7 @@ namespace SPMTool.Core
 			public (double N1, double N3) GenStresses { get; set; }
 			public (double e1, double e3) GenStrains  { get; set; }
 
-			public NonLinear(ObjectId stringerObject, Material.Concrete concrete, Behavior behavior = Behavior.NonLinearClassic) : base(stringerObject, concrete, behavior)
+			public NonLinear(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
 			{
 			}
 
@@ -472,7 +470,7 @@ namespace SPMTool.Core
 				GenStrains  = genStrains;
 			}
 
-            // Calculate the total plastic generalized strain in a Stringer
+			// Calculate the total plastic generalized strain in a Stringer
             public (double ep1, double ep3) PlasticGenStrains
             {
 	            get
@@ -526,7 +524,7 @@ namespace SPMTool.Core
 			// Classic SPM model
 			public class Classic : NonLinear
 			{
-				public Classic(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
+				public Classic(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
 				{
 				}
 
@@ -667,7 +665,7 @@ namespace SPMTool.Core
             // MC2010 model for concrete
             public class MC2010 : NonLinear
             {
-	            public MC2010(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
+	            public MC2010(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
 	            {
 	            }
 
@@ -849,7 +847,6 @@ namespace SPMTool.Core
                     return
                         (e, de);
                 }
-
             }
         }
 	}

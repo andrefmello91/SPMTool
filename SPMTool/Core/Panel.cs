@@ -761,6 +761,11 @@ namespace SPMTool.Core
             {
 	            get
 	            {
+					// Verify if analysis was done
+		            if (IntegrationPoints[0].ConcreteStiffness == null)
+			            return
+				            InitialMaterialStiffness;
+
 		            var Dc = Matrix<double>.Build.Dense(12, 12);
 		            var Ds = Matrix<double>.Build.Dense(12, 12);
 
@@ -805,7 +810,7 @@ namespace SPMTool.Core
 	            var u = Displacements;
 
 	            // Set step size
-	            double d = 1E-12;
+	            double d = 2E-10;
 
 	            // Calculate elements of matrix
 	            var K = Matrix<double>.Build.Dense(8, 8);

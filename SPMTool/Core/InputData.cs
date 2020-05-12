@@ -83,7 +83,7 @@ namespace SPMTool.Core
 	        {
 		        Stringer stringer;
 
-                // Verify the panelBehavior
+                // Verify the stringer Behavior
                 if (StringerBehavior == Stringer.Behavior.Linear)
 					stringer = new Stringer.Linear(strObj, Concrete);
 

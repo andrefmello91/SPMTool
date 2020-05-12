@@ -35,27 +35,6 @@ namespace SPMTool
 						return As;
 					}
 				}
-
-				// Set steel strains
-				public void SetStrains(Vector<double> strains)
-				{
-					Steel.SetStrain(strains[0]);
-					Steel.SetStrain(strains[1]);
-				}
-
-				// Set steel stresses
-				public void SetStresses(Vector<double> strains)
-				{
-					Steel.SetStress(strains[0]);
-					Steel.SetStress(strains[1]);
-				}
-
-				// Set steel strain and stresses
-				public void SetStrainsAndStresses(Vector<double> strains)
-				{
-					SetStrains(strains);
-					SetStresses(strains);
-				}
 			}
 
             public class Panel : Reinforcement
