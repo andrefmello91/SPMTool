@@ -2,10 +2,12 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
+using SPMTool.AutoCAD;
 using SPMTool.Material;
+using Reinforcement = SPMTool.Material.Reinforcement;
 using StringerData = SPMTool.XData.Stringer;
 
-namespace SPMTool.Elements
+namespace SPMTool.Core
 {
 	public abstract class Stringer
 	{
@@ -34,10 +36,10 @@ namespace SPMTool.Elements
 		public Vector<double>          Displacements    { get; set; }
 
 		// Constructor
-		public Stringer(ObjectId stringerObject, Material.Concrete concrete = null, Behavior behavior = Behavior.Linear)
+		public Stringer(ObjectId stringerObject, Concrete concrete = null, Behavior behavior = Behavior.Linear)
 		{
 			ObjectId         = stringerObject;
-            StringerBehavior = behavior;
+			StringerBehavior = behavior;
 
 			// Get concrete
 			if (concrete == null)
@@ -45,59 +47,54 @@ namespace SPMTool.Elements
 			else
 				Concrete = concrete;
 
-            // Start a transaction
-            using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
+			// Read the object as a line
+			Line strLine = Geometry.Stringer.ReadStringer(stringerObject);
+
+			// Get the length and angles
+			Length = strLine.Length;
+			Angle  = strLine.Angle;
+
+			// Calculate midpoint
+			var midPt = GlobalAuxiliary.MidPoint(strLine.StartPoint, strLine.EndPoint);
+
+			// Get the points
+			PointsConnected = new[] { strLine.StartPoint, midPt, strLine.EndPoint };
+
+			// Read the XData and get the necessary data
+			TypedValue[] data = Auxiliary.ReadXData(strLine);
+
+			// Get the Stringer number
+			Number = Convert.ToInt32(data[(int) StringerData.Number].Value);
+
+			// Create the list of grips
+			Grips = new []
 			{
-				// Read the object as a line
-				Line strLine = trans.GetObject(stringerObject, OpenMode.ForRead) as Line;
+				Convert.ToInt32(data[(int) StringerData.Grip1].Value),
+				Convert.ToInt32(data[(int) StringerData.Grip2].Value),
+				Convert.ToInt32(data[(int) StringerData.Grip3].Value)
+			};
 
-				// Get the length and angles
-				Length = strLine.Length;
-				Angle  = strLine.Angle;
+			// Get geometry
+			Width  = Convert.ToDouble(data[(int) StringerData.Width].Value);
+			Height = Convert.ToDouble(data[(int) StringerData.Height].Value);
 
-				// Calculate midpoint
-				var midPt = GlobalAuxiliary.MidPoint(strLine.StartPoint, strLine.EndPoint);
+			// Get reinforcement
+			int numOfBars = Convert.ToInt32(data[(int) StringerData.NumOfBars].Value);
+			double phi    = Convert.ToDouble(data[(int) StringerData.BarDiam].Value);
 
-				// Get the points
-				PointsConnected = new[] { strLine.StartPoint, midPt, strLine.EndPoint };
+			// Get steel data
+			double
+				fy = Convert.ToDouble(data[(int) StringerData.Steelfy].Value),
+				Es = Convert.ToDouble(data[(int) StringerData.SteelEs].Value);
 
-				// Read the XData and get the necessary data
-				ResultBuffer rb = strLine.GetXDataForApplication(AutoCAD.Current.appName);
-				TypedValue[] data = rb.AsArray();
+			// Set steel data
+			var steel = new Steel(fy, Es);
 
-				// Get the Stringer number
-				Number = Convert.ToInt32(data[(int)StringerData.Number].Value);
+			// Set reinforcement
+			Reinforcement = new Reinforcement.Stringer(numOfBars, phi, steel);
 
-				// Create the list of grips
-				Grips = new []
-				{
-					Convert.ToInt32(data[(int)StringerData.Grip1].Value),
-					Convert.ToInt32(data[(int)StringerData.Grip2].Value),
-					Convert.ToInt32(data[(int)StringerData.Grip3].Value)
-				};
-
-				// Get geometry
-				Width  = Convert.ToDouble(data[(int) StringerData.Width].Value);
-				Height = Convert.ToDouble(data[(int) StringerData.Height].Value);
-
-				// Get reinforcement
-				int numOfBars = Convert.ToInt32(data[(int) StringerData.NumOfBars].Value);
-				double phi = Convert.ToDouble(data[(int) StringerData.BarDiam].Value);
-
-				// Get steel data
-				double
-					fy = Convert.ToDouble(data[(int) StringerData.Steelfy].Value),
-					Es = Convert.ToDouble(data[(int) StringerData.SteelEs].Value);
-
-				// Set steel data
-				var steel = new Material.Steel(fy, Es);
-
-				// Set reinforcement
-				Reinforcement = new Reinforcement.Stringer(numOfBars, phi, steel);
-			}
-
-            // Calculate transformation matrix
-            TransMatrix = TransformationMatrix();
+			// Calculate transformation matrix
+			TransMatrix = TransformationMatrix();
 		}
 
 		// Set global indexes from grips

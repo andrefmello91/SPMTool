@@ -6,7 +6,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using PanelData = SPMTool.XData.Panel;
-using NodeType  = SPMTool.Elements.Node.NodeType;
+using NodeType  = SPMTool.Core.Node.NodeType;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Panel))]
 
@@ -22,7 +22,7 @@ namespace SPMTool.AutoCAD
 			public Solid         SolidObject { get; }
 
 			// Layer name
-			public static readonly string LayerName = Layers.Panel.ToString();
+			public static readonly string PanelLayer = Layers.Panel.ToString();
 
 			// Constructor
 			public Panel((Point3d, Point3d, Point3d, Point3d) vertices,
@@ -42,7 +42,7 @@ namespace SPMTool.AutoCAD
 					SolidObject = new Solid(vertices.Item1, vertices.Item2, vertices.Item3, vertices.Item4)
 					{
 						// Set the layer to Panel
-						Layer = LayerName
+						Layer = PanelLayer
 					};
 
 					// Add the object
@@ -86,7 +86,7 @@ namespace SPMTool.AutoCAD
 								Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 								// Check if it is a external node
-								if (ent.Layer == Node.ExtLayerName)
+								if (ent.Layer == Node.ExtNodeLayer)
 								{
 									// Read as a DBPoint and add to the collection
 									DBPoint nd = ent as DBPoint;
@@ -164,7 +164,7 @@ namespace SPMTool.AutoCAD
 							var pnlList = ListOfPanelVertices();
 
 							// Create lists of points for adding the nodes later
-							List<Point3d> 
+							List<Point3d>
 								newIntNds = new List<Point3d>(),
 								newExtNds = new List<Point3d>();
 
@@ -197,7 +197,7 @@ namespace SPMTool.AutoCAD
 									Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 									// Check if the selected object is a node
-									if (ent.Layer == LayerName)
+									if (ent.Layer == PanelLayer)
 									{
 										// Read as a solid
 										Solid pnl = ent as Solid;
@@ -393,9 +393,9 @@ namespace SPMTool.AutoCAD
 							Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 							// Check if the selected object is a node
-							if (ent.Layer == LayerName)
+							if (ent.Layer == PanelLayer)
 							{
-								var panel = new Elements.Panel.Linear(obj.ObjectId);
+								var panel = new Core.Panel.Linear(obj.ObjectId);
 
 								// Get width and height
 								defWd = panel.Width;
@@ -426,7 +426,7 @@ namespace SPMTool.AutoCAD
 								Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 								// Check if the selected object is a node
-								if (ent.Layer == LayerName)
+								if (ent.Layer == PanelLayer)
 								{
 									// Upgrade the OpenMode
 									ent.UpgradeOpen();
@@ -630,22 +630,51 @@ namespace SPMTool.AutoCAD
 				TypedValue[] newData = new TypedValue[size];
 
 				// Set the initial parameters
-				newData[(int)PanelData.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName);
-				newData[(int)PanelData.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-				newData[(int)PanelData.Width]    = new TypedValue((int)DxfCode.ExtendedDataReal, 100);
-				newData[(int)PanelData.XDiam]    = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-				newData[(int)PanelData.Sx]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-				newData[(int)PanelData.fyx]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-				newData[(int)PanelData.Esx]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-				newData[(int)PanelData.YDiam]    = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-				newData[(int)PanelData.Sy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-				newData[(int)PanelData.fyy]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-				newData[(int)PanelData.Esy]      = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelData.AppName]  =
+					new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
+				newData[(int) PanelData.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
+				newData[(int) PanelData.Width]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
+				newData[(int) PanelData.XDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelData.Sx]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelData.fyx]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelData.Esx]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelData.YDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelData.Sy]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelData.fyy]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelData.Esy]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
 
 				return newData;
 			}
 
-		}
-	}
+			// Read a panel in the drawing
+			public static Solid ReadPanel(ObjectId objectId, OpenMode openMode = OpenMode.ForRead)
+			{
+				// Start a transaction
+				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				{
+					// Read as a solid
+					return 
+						trans.GetObject(objectId, openMode) as Solid;
+				}
+			}
 
+			// Read panel vertices in the order needed for calculations
+			public static Point3d[] PanelVertices(Solid panel)
+			{
+				// Get the vertices
+				Point3dCollection pnlVerts = new Point3dCollection();
+				panel.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+
+				// Get the vertices in the order needed for calculations
+				return 
+					new []
+					{
+						pnlVerts[0],
+						pnlVerts[1],
+						pnlVerts[3],
+						pnlVerts[2]
+					};
+			}
+        }
+	}
 }

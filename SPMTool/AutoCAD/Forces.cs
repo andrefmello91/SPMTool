@@ -3,10 +3,10 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
-using SPMTool.Elements;
+using SPMTool.Core;
 using ForceTextData  = SPMTool.XData.ForceText;
 using ForceData      = SPMTool.XData.Force;
-using ForceDirection = SPMTool.Elements.Force.ForceDirection;
+using ForceDirection = SPMTool.Core.Force.ForceDirection;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Forces))]
 
@@ -16,9 +16,9 @@ namespace SPMTool.AutoCAD
     {
         // Layer and block names
         public static readonly string
-	        LayerName    = Layers.Force.ToString(),
-			TxtLayerName = Layers.ForceText.ToString(),
-			BlockName    = Blocks.ForceBlock.ToString();
+	        ForceLayer = Layers.Force.ToString(),
+			TxtLayer   = Layers.ForceText.ToString(),
+			BlockName  = Blocks.ForceBlock.ToString();
 
         [CommandMethod("AddForce")]
         public static void AddForce()
@@ -91,7 +91,7 @@ namespace SPMTool.AutoCAD
                         Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                         // Check if the selected object is a node
-                        if (ent.Layer == Geometry.Node.ExtLayerName)
+                        if (ent.Layer == Geometry.Node.ExtNodeLayer)
                         {
                             // Read as a point and get the position
                             DBPoint nd = ent as DBPoint;
@@ -158,7 +158,7 @@ namespace SPMTool.AutoCAD
                                 using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
                                 {
                                     // Append the block to drawing
-                                    blkRef.Layer = LayerName;
+                                    blkRef.Layer = ForceLayer;
                                     Auxiliary.AddObject(blkRef);
 
                                     // Get the force absolute value
@@ -198,7 +198,7 @@ namespace SPMTool.AutoCAD
                                         TextString = xForceAbs.ToString(),
                                         Position = txtPos,
                                         Height = 30,
-                                        Layer = TxtLayerName
+                                        Layer = TxtLayer
                                     };
 
                                     // Append the text to drawing
@@ -215,7 +215,7 @@ namespace SPMTool.AutoCAD
                                 using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
                                 {
                                     // Append the block to drawing
-                                    blkRef.Layer = LayerName;
+                                    blkRef.Layer = ForceLayer;
                                     Auxiliary.AddObject(blkRef);
 
                                     // Get the force absolute value
@@ -254,7 +254,7 @@ namespace SPMTool.AutoCAD
                                         TextString = yForceAbs.ToString(),
                                         Position = txtPos,
                                         Height = 30,
-                                        Layer = TxtLayerName
+                                        Layer = TxtLayer
                                     };
 
                                     // Append the text to drawing

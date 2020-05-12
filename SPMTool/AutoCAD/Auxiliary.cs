@@ -79,20 +79,6 @@ namespace SPMTool.AutoCAD
             }
         }
 
-        //// Get Layer name
-        //public static string GetLayerName(Layers layer)
-        //{
-        //    return
-        //        Enum.GetName(typeof(Layers), layer);
-        //}
-
-        //// Get Block name
-        //public static string GetBlockName(Blocks block)
-        //{
-        //    return
-        //        Enum.GetName(typeof(Blocks), block);
-        //}
-
         // Method to toogle view of a layer (on and off)
         public static void ToogleLayer(Layers layer)
         {
@@ -259,5 +245,15 @@ namespace SPMTool.AutoCAD
 
             if (objs.Count > 0) EraseObjects(objs);
         }
+
+		// Read extended data
+		public static TypedValue[] ReadXData(Entity entity)
+		{
+			// Read the XData and get the necessary data
+			ResultBuffer rb = entity.GetXDataForApplication(Current.appName);
+
+			return
+				rb.AsArray();
+		}
     }
 }

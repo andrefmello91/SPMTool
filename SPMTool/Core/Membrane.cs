@@ -6,7 +6,7 @@ using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.RootFinding;
 using SPMTool.Material;
 
-namespace SPMTool.Elements
+namespace SPMTool.Core
 {
     public abstract class Membrane
     {

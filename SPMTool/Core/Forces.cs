@@ -5,7 +5,7 @@ using Autodesk.AutoCAD.Geometry;
 using SPMTool.AutoCAD;
 using ForceData = SPMTool.XData.Force;
 
-namespace SPMTool.Elements
+namespace SPMTool.Core
 {
 	// Constraints related commands
 	public class Force

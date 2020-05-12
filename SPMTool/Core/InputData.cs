@@ -2,11 +2,11 @@
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics.LinearAlgebra;
-using SPMTool.Elements;
+using SPMTool.Core;
 using SPMTool.Material;
 using SPMTool.AutoCAD;
 
-namespace SPMTool.Analysis
+namespace SPMTool.Core
 {
     public class InputData
     {

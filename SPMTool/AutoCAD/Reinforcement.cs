@@ -99,7 +99,7 @@ namespace SPMTool.AutoCAD
                     Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                     // Check if the selected object is a node
-                    if (ent.Layer == Geometry.Stringer.LayerName)
+                    if (ent.Layer == Geometry.Stringer.StringerLayer)
                     {
                         // Upgrade the OpenMode
                         ent.UpgradeOpen();
@@ -283,7 +283,7 @@ namespace SPMTool.AutoCAD
                     Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                     // Check if the selected object is a node
-                    if (ent.Layer == Geometry.Panel.LayerName)
+                    if (ent.Layer == Geometry.Panel.PanelLayer)
                     {
                         // Upgrade the OpenMode
                         ent.UpgradeOpen();

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using NodeType = SPMTool.Elements.Node.NodeType;
+using NodeType = SPMTool.Core.Node.NodeType;
 using NodeData = SPMTool.XData.Node;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Node))]
@@ -30,13 +30,13 @@ namespace SPMTool.AutoCAD
 					string layerName;
 
 					if (Type == NodeType.External)
-						layerName = ExtLayerName;
+						layerName = ExtNodeLayer;
 
 					else if (Type == NodeType.Internal)
-						layerName = IntLayerName;
+						layerName = IntNodeLayer;
 
 					else
-						layerName = DispLayerName;
+						layerName = DispNodeLayer;
 
 					return layerName;
 				}
@@ -44,9 +44,9 @@ namespace SPMTool.AutoCAD
 
 			// Layer names
 			public static readonly string
-				ExtLayerName  = Layers.ExtNode.ToString(),
-				IntLayerName  = Layers.IntNode.ToString(),
-				DispLayerName = Layers.Displacements.ToString();
+				ExtNodeLayer  = Layers.ExtNode.ToString(),
+				IntNodeLayer  = Layers.IntNode.ToString(),
+				DispNodeLayer = Layers.Displacements.ToString();
 
 			// Constructor
 			public Node(Point3d position, NodeType nodeType)
@@ -105,9 +105,6 @@ namespace SPMTool.AutoCAD
 			// Enumerate all the nodes in the model and return the collection of nodes
 			public static ObjectIdCollection UpdateNodes()
 			{
-				// Definition for the Extended Data
-				string xdataStr = "Node Data";
-
 				// Get all the nodes in the model
 				ObjectIdCollection nds = AllNodes();
 
@@ -135,22 +132,21 @@ namespace SPMTool.AutoCAD
 						// If the Extended data does not exist, create it
 						if (nd.XData == null)
 						{
-							data = nodeXData();
+							data = NewNodeXData();
 						}
 
 						else // Xdata exists
 						{
 							// Get the result buffer as an array
-							ResultBuffer rb = nd.GetXDataForApplication(Current.appName);
-							data = rb.AsArray();
+							data = Auxiliary.ReadXData(nd);
 
 							// Check length
 							if (data.Length != size)
-								data = nodeXData();
+								data = NewNodeXData();
 						}
 
 						// Set the updated number
-						data[(int)NodeData.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
+						data[(int) NodeData.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
 
 						// Add the new XData
 						nd.XData = new ResultBuffer(data);
@@ -162,25 +158,6 @@ namespace SPMTool.AutoCAD
 
 					// Commit and dispose the transaction
 					trans.Commit();
-				}
-
-				// Create node XData
-				TypedValue[] nodeXData()
-				{
-					// Get the Xdata size
-					int size = Enum.GetNames(typeof(NodeData)).Length;
-
-					// Initialize the array of typed values for XData
-					var nData = new TypedValue[size];
-
-					// Set the initial parameters
-					nData[(int) NodeData.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
-					nData[(int) NodeData.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-					nData[(int) NodeData.Ux]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-					nData[(int) NodeData.Uy]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-
-					return
-						nData;
 				}
 
 				// Return the collection of nodes
@@ -219,7 +196,7 @@ namespace SPMTool.AutoCAD
 
 				// Return the node list ordered
 				return
-					SPMTool.GlobalAuxiliary.OrderPoints(pts);
+					GlobalAuxiliary.OrderPoints(pts);
 			}
 
 			// Get the collection of all of the nodes
@@ -272,6 +249,39 @@ namespace SPMTool.AutoCAD
 				}
 
 				return ndNum;
+			}
+
+			// Create node XData
+			private static TypedValue[] NewNodeXData()
+			{
+				// Definition for the Extended Data
+				string xdataStr = "Node Data";
+
+                // Get the Xdata size
+                int size = Enum.GetNames(typeof(NodeData)).Length;
+
+				// Initialize the array of typed values for XData
+				var data = new TypedValue[size];
+
+				// Set the initial parameters
+				data[(int)NodeData.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName);
+				data[(int)NodeData.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+				data[(int)NodeData.Ux]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				data[(int)NodeData.Uy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+
+				return data;
+			}
+
+            // Read a node in the drawing
+            public static DBPoint ReadNode(ObjectId objectId, OpenMode openMode = OpenMode.ForRead)
+			{
+				// Start a transaction
+				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				{
+					// Read the object as a point
+					return
+						trans.GetObject(objectId, openMode) as DBPoint;
+				}
 			}
 		}
 	}

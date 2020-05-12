@@ -6,8 +6,7 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using SPMTool.Analysis;
-using SPMTool.Elements;
+using SPMTool.Core;
 using Auxiliary = SPMTool.AutoCAD.Auxiliary;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Results))]
@@ -28,7 +27,7 @@ namespace SPMTool.AutoCAD
 			TensileBlock     = Blocks.TensileStressBlock.ToString();
 
 		// Draw results
-		public static void Draw(SPMTool.Analysis.Analysis analysis)
+		public static void Draw(Analysis analysis)
 		{
 			SetDisplacements(analysis.Nodes);
 			DrawDisplacements(analysis.Stringers, analysis.Nodes);
@@ -849,7 +848,7 @@ namespace SPMTool.AutoCAD
 						Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
 
 						// If it's a node
-						if (ent.Layer == Geometry.Node.ExtLayerName || ent.Layer == Geometry.Node.IntLayerName)
+						if (ent.Layer == Geometry.Node.ExtNodeLayer || ent.Layer == Geometry.Node.IntNodeLayer)
 						{
 							// Get the node
 							Node nd = new Node(entRes.ObjectId);
@@ -902,7 +901,7 @@ namespace SPMTool.AutoCAD
                         }
 
                         // If it's a Stringer
-                        else if (ent.Layer == Geometry.Stringer.LayerName)
+                        else if (ent.Layer == Geometry.Stringer.StringerLayer)
 						{
 							// Get the Stringer
 							var str = new Stringer.Linear(entRes.ObjectId);
@@ -933,7 +932,7 @@ namespace SPMTool.AutoCAD
 						}
 
 						// If it's a panel
-						else if (ent.Layer == Geometry.Panel.LayerName)
+						else if (ent.Layer == Geometry.Panel.PanelLayer)
 						{
 							// Get the panel
 							var pnl = new Panel.Linear(entRes.ObjectId);

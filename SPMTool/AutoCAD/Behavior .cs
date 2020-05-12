@@ -3,11 +3,11 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
-using SPMTool.Elements;
+using SPMTool.Core;
 using SPMTool.Material;
 using AggregateType = SPMTool.Material.Concrete.AggregateType;
-using StringerBehavior = SPMTool.Elements.Stringer.Behavior;
-using PanelBehavior = SPMTool.Elements.Panel.Behavior;
+using StringerBehavior = SPMTool.Core.Stringer.Behavior;
+using PanelBehavior = SPMTool.Core.Panel.Behavior;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Behavior))]
 

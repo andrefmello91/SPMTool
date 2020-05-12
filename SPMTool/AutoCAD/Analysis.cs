@@ -1,7 +1,6 @@
 ﻿using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
-using SPMTool.Elements;
-using SPMTool.Analysis;
+using SPMTool.Core;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Results))]
 
@@ -18,7 +17,7 @@ namespace SPMTool.AutoCAD
 			if (input.Concrete.IsSet)
 			{
 				// Do a linear analysis
-				var analysis = new Analysis.Analysis.Linear(input);
+				var analysis = new Analysis.Linear(input);
 
 				// Draw results of analysis
 				Results.Draw(analysis);
@@ -40,7 +39,7 @@ namespace SPMTool.AutoCAD
 			if (input.Concrete.IsSet && (strBehavior, pnlBehavior) != default)
 			{
 				// Do a linear analysis
-				var analysis = new Analysis.Analysis.NonLinear(input);
+				var analysis = new Analysis.NonLinear(input);
 
 				// Draw results of analysis
 				AutoCAD.Results.Draw(analysis);

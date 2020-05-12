@@ -4,9 +4,8 @@ using System.Collections.Generic;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.Data.Text;
 using MathNet.Numerics.Statistics;
-using SPMTool.Elements;
 
-namespace SPMTool.Analysis
+namespace SPMTool.Core
 {
     public abstract class Analysis
     {

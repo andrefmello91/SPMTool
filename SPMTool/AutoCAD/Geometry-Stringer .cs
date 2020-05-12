@@ -6,7 +6,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using StringerData = SPMTool.XData.Stringer;
-using NodeType     = SPMTool.Elements.Node.NodeType;
+using NodeType     = SPMTool.Core.Node.NodeType;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Stringer))]
 
@@ -27,10 +27,11 @@ namespace SPMTool.AutoCAD
 				=> LineObject.EndPoint;
 
 			// Layer name
-			public static readonly string LayerName = Layers.Stringer.ToString();
+			public static readonly string StringerLayer = Layers.Stringer.ToString();
 
 			// Constructor
-			public Stringer(Point3d startPoint, Point3d endPoint, List<(Point3d start, Point3d end)> stringerList = null)
+			public Stringer(Point3d startPoint, Point3d endPoint,
+				List<(Point3d start, Point3d end)> stringerList = null)
 			{
 				// Get the list of stringers if it's not imposed
 				if (stringerList == null)
@@ -45,7 +46,7 @@ namespace SPMTool.AutoCAD
 					// Create the line in Model space
 					LineObject = new Line(startPoint, endPoint)
 					{
-						Layer = LayerName
+						Layer = StringerLayer
 					};
 
 					// Add the object
@@ -92,6 +93,7 @@ namespace SPMTool.AutoCAD
 							UseBasePoint = true,
 							BasePoint = strStRes.Value
 						};
+
 						PromptPointResult strEndRes = Current.edtr.GetPoint(strEndOp);
 
 						if (strEndRes.Status == PromptStatus.OK)
@@ -99,7 +101,7 @@ namespace SPMTool.AutoCAD
 							nds.Add(strEndRes.Value);
 
 							// Get the points ordered in ascending Y and ascending X:
-							List<Point3d> extNds = SPMTool.GlobalAuxiliary.OrderPoints(nds);
+							List<Point3d> extNds = GlobalAuxiliary.OrderPoints(nds);
 
 							// Create the Stringer and add to drawing
 							new Stringer(extNds[0], extNds[1], strList);
@@ -185,13 +187,13 @@ namespace SPMTool.AutoCAD
 									Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 									// Check if the selected object is a Stringer
-									if (ent.Layer == LayerName)
+									if (ent.Layer == StringerLayer)
 									{
 										// Read as a line
 										Line str = ent as Line;
 
 										// Access the XData as an array
-										ResultBuffer rb = str.GetXDataForApplication(Current.appName);
+										var data = Auxiliary.ReadXData(str);
 
 										// Get the coordinates of the initial and end points
 										Point3d strSt = str.StartPoint,
@@ -205,7 +207,7 @@ namespace SPMTool.AutoCAD
 										Point3d stPt = strSt;
 
 										// Get the midpoint
-										Point3d midPt = SPMTool.GlobalAuxiliary.MidPoint(strSt, strEnd);
+										Point3d midPt = GlobalAuxiliary.MidPoint(strSt, strEnd);
 
 										// Read the internal nodes
 										foreach (ObjectId intNd in intNds)
@@ -238,7 +240,7 @@ namespace SPMTool.AutoCAD
 
 											// Append the XData of the original Stringer
 											if (strLine != null)
-												strLine.XData = rb;
+												strLine.XData = new ResultBuffer(data);
 
 											// Get the mid point
 											midPt = SPMTool.GlobalAuxiliary.MidPoint(stPt, endPt);
@@ -294,9 +296,6 @@ namespace SPMTool.AutoCAD
 				// Start a transaction
 				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 				{
-					// Open the Block table for read
-					BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
-
 					// Create a point collection
 					List<Point3d> midPts = new List<Point3d>();
 
@@ -336,8 +335,7 @@ namespace SPMTool.AutoCAD
 						else // Xdata exists
 						{
 							// Get the result buffer as an array
-							ResultBuffer rb = str.GetXDataForApplication(Current.appName);
-							data = rb.AsArray();
+							data = Auxiliary.ReadXData(str);
 
 							// Verify the size of XData
 							if (data.Length != size)
@@ -435,9 +433,9 @@ namespace SPMTool.AutoCAD
 							Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 							// Check if the selected object is a node
-							if (ent.Layer == LayerName)
+							if (ent.Layer == StringerLayer)
 							{
-								var stringer = new Elements.Stringer.Linear(obj.ObjectId);
+								var stringer = new Core.Stringer.Linear(obj.ObjectId);
 
 								// Get width and height
 								defWd = stringer.Width;
@@ -485,14 +483,13 @@ namespace SPMTool.AutoCAD
 									Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 									// Check if the selected object is a node
-									if (ent.Layer == LayerName)
+									if (ent.Layer == StringerLayer)
 									{
 										// Upgrade the OpenMode
 										ent.UpgradeOpen();
 
 										// Access the XData as an array
-										ResultBuffer rb = ent.GetXDataForApplication(Current.appName);
-										TypedValue[] data = rb.AsArray();
+										TypedValue[] data = Auxiliary.ReadXData(ent);
 
 										// Set the new geometry and reinforcement (line 7 to 9 of the array)
 										data[(int) StringerData.Width] =
@@ -525,18 +522,29 @@ namespace SPMTool.AutoCAD
 				var newData = new TypedValue[size];
 
 				// Set the initial parameters
-				newData[(int)StringerData.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName);
-				newData[(int)StringerData.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-				newData[(int)StringerData.Width]     = new TypedValue((int)DxfCode.ExtendedDataReal, 100);
-				newData[(int)StringerData.Height]    = new TypedValue((int)DxfCode.ExtendedDataReal, 100);
-				newData[(int)StringerData.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-				newData[(int)StringerData.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-				newData[(int)StringerData.Steelfy]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-				newData[(int)StringerData.SteelEs]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				newData[(int) StringerData.AppName]   =
+					new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
+				newData[(int) StringerData.XDataStr]  = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
+				newData[(int) StringerData.Width]     = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
+				newData[(int) StringerData.Height]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
+				newData[(int) StringerData.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) StringerData.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) StringerData.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) StringerData.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
 
 				return newData;
 			}
 
+			// Read a stringer in the drawing
+			public static Line ReadStringer(ObjectId objectId, OpenMode openMode = OpenMode.ForRead)
+			{
+				using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
+				{
+					// Read the object as a line
+					return
+						trans.GetObject(objectId, openMode) as Line;
+				}
+			}
 		}
 	}
 

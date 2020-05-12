@@ -4,9 +4,9 @@ using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
 using NodeData       = SPMTool.XData.Node;
-using ForceDirection = SPMTool.Elements.Force.ForceDirection;
+using ForceDirection = SPMTool.Core.Force.ForceDirection;
 
-namespace SPMTool.Elements
+namespace SPMTool.Core
 {
     public class Node
     {
@@ -33,45 +33,40 @@ namespace SPMTool.Elements
 		{
 			ObjectId = nodeObject;
 
-            if (forces == null)
-                forces = Elements.Force.ListOfForces();
+			if (forces == null)
+				forces = Core.Force.ListOfForces();
 
-            if (constraints == null)
-                constraints = Constraint.ListOfConstraints();
+			if (constraints == null)
+				constraints = Constraint.ListOfConstraints();
 
-            // Start a transaction
-            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
-            {
-	            // Read the object as a point
-	            DBPoint ndPt = trans.GetObject(nodeObject, OpenMode.ForRead) as DBPoint;
+			// Read the object as a point
+			DBPoint ndPt =  Geometry.Node.ReadNode(nodeObject);
 
-	            // Read the XData and get the necessary data
-	            ResultBuffer rb   = ndPt.GetXDataForApplication(Current.appName);
-	            TypedValue[] data = rb.AsArray();
+			// Read the XData and get the necessary data
+			TypedValue[] data = Auxiliary.ReadXData(ndPt);
 
-	            // Get the position
-	            Position = ndPt.Position;
+			// Get the position
+			Position = ndPt.Position;
 
-	            // Get the node number
-	            Number = Convert.ToInt32(data[(int)NodeData.Number].Value);
+			// Get the node number
+			Number = Convert.ToInt32(data[(int) NodeData.Number].Value);
 
-                // Get type
-                Type = GetNodeType(ndPt);
+			// Get type
+			Type = GetNodeType(ndPt);
 
-                // Get support conditions
-                Support = GetSupportConditions(constraints);
+			// Get support conditions
+			Support = GetSupportConditions(constraints);
 
-	            // Get forces
-	            Force = GetNodalForces(forces);
+			// Get forces
+			Force = GetNodalForces(forces);
 
-                // Get displacements
-                double
-	                ux = Convert.ToDouble(data[(int)NodeData.Ux].Value),
-	                uy = Convert.ToDouble(data[(int)NodeData.Uy].Value);
+			// Get displacements
+			double
+				ux = Convert.ToDouble(data[(int) NodeData.Ux].Value),
+				uy = Convert.ToDouble(data[(int) NodeData.Uy].Value);
 
-                Displacement = (ux, uy);
-            }
-        }
+			Displacement = (ux, uy);
+		}
 
 		// Get index of DoFs
 		public int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Number);
@@ -79,7 +74,7 @@ namespace SPMTool.Elements
         // Get node type
         private NodeType GetNodeType(DBPoint nodePoint)
         {
-            if (nodePoint.Layer == Geometry.Node.ExtLayerName)
+            if (nodePoint.Layer == Geometry.Node.ExtNodeLayer)
                 return
                     NodeType.External;
 
@@ -117,10 +112,10 @@ namespace SPMTool.Elements
                 if (force.Position == Position)
                 {
                     // Read force
-                    if (force.Direction == ForceDirection.X)
+                    if (force.Direction == Core.Force.ForceDirection.X)
                         Fx = force.Value;
 
-                    if (force.Direction == ForceDirection.Y)
+                    if (force.Direction == Core.Force.ForceDirection.Y)
                         Fy = force.Value;
                 }
             }

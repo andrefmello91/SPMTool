@@ -3,7 +3,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
-using SupportDirection = SPMTool.Elements.Constraint.SupportDirection;
+using SupportDirection = SPMTool.Core.Constraint.SupportDirection;
 using SupportData      = SPMTool.XData.Support;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Supports))]
@@ -14,14 +14,14 @@ namespace SPMTool.AutoCAD
     {
         // Layer, block and direction names
         public static readonly string
-	        LayerName = Layers.Support.ToString(),
-			Free      = "Free",
-	        X         = SupportDirection.X.ToString(),
-	        Y         = SupportDirection.Y.ToString(),
-	        XY        = SupportDirection.XY.ToString(),
-	        BlockX    = Blocks.SupportX.ToString(),
-	        BlockY    = Blocks.SupportY.ToString(),
-	        BlockXY   = Blocks.SupportXY.ToString();
+	        SupportLayer = Layers.Support.ToString(),
+			Free         = "Free",
+	        X            = SupportDirection.X.ToString(),
+	        Y            = SupportDirection.Y.ToString(),
+	        XY           = SupportDirection.XY.ToString(),
+	        BlockX       = Blocks.SupportX.ToString(),
+	        BlockY       = Blocks.SupportY.ToString(),
+	        BlockXY      = Blocks.SupportXY.ToString();
 
         [CommandMethod("AddConstraint")]
         public static void AddConstraint()
@@ -82,7 +82,7 @@ namespace SPMTool.AutoCAD
                             Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                             // Check if the selected object is a node
-                            if (ent.Layer == Geometry.Node.ExtLayerName)
+                            if (ent.Layer == Geometry.Node.ExtNodeLayer)
                             {
                                 // Read as a point and get the position
                                 DBPoint nd = ent as DBPoint;
@@ -140,7 +140,7 @@ namespace SPMTool.AutoCAD
                                     // Insert the block into the current space
                                     using (BlockReference blkRef = new BlockReference(insPt, supBlock))
                                     {
-                                        blkRef.Layer = LayerName;
+                                        blkRef.Layer = SupportLayer;
                                         Auxiliary.AddObject(blkRef);
 
                                         // Set XData

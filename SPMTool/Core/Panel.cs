@@ -2,10 +2,12 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
+using SPMTool.AutoCAD;
 using SPMTool.Material;
 using PanelData = SPMTool.XData.Panel;
+using Reinforcement = SPMTool.Material.Reinforcement;
 
-namespace SPMTool.Elements
+namespace SPMTool.Core
 {
     public abstract class Panel
     {
@@ -36,78 +38,60 @@ namespace SPMTool.Elements
         // Constructor
         public Panel(ObjectId panelObject, Concrete concrete = null, Behavior behavior = Behavior.Linear)
         {
-            ObjectId      = panelObject;
-            PanelBehavior = behavior;
+	        ObjectId      = panelObject;
+	        PanelBehavior = behavior;
 
-            // Get concrete
-            if (concrete == null)
-                Concrete = AutoCAD.Material.ReadData();
-            else
-                Concrete = concrete;
+	        // Get concrete
+	        if (concrete == null)
+		        Concrete = AutoCAD.Material.ReadData();
+	        else
+		        Concrete = concrete;
 
-            // Start a transaction
-            using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
-            {
-                // Read as a solid
-                Solid pnl = trans.GetObject(panelObject, OpenMode.ForWrite) as Solid;
+	        // Read as a solid
+	        Solid pnl = Geometry.Panel.ReadPanel(panelObject);
 
-                // Get the vertices
-                Point3dCollection pnlVerts = new Point3dCollection();
-                pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+	        // Read the XData and get the necessary data
+	        TypedValue[] pnlData = Auxiliary.ReadXData(pnl);
 
-                // Get the vertices in the order needed for calculations
-                Point3d
-                    nd1 = pnlVerts[0],
-                    nd2 = pnlVerts[1],
-                    nd3 = pnlVerts[3],
-                    nd4 = pnlVerts[2];
+	        // Get the panel parameters
+	        Number = Convert.ToInt32 (pnlData[(int) PanelData.Number].Value);
+	        Width  = Convert.ToDouble(pnlData[(int) PanelData.Width] .Value);
 
-                // Read the XData and get the necessary data
-                ResultBuffer pnlRb = pnl.GetXDataForApplication(AutoCAD.Current.appName);
-                TypedValue[] pnlData = pnlRb.AsArray();
+	        // Create the list of grips
+	        Grips = new[]
+	        {
+		        Convert.ToInt32(pnlData[(int) PanelData.Grip1].Value),
+		        Convert.ToInt32(pnlData[(int) PanelData.Grip2].Value),
+		        Convert.ToInt32(pnlData[(int) PanelData.Grip3].Value),
+		        Convert.ToInt32(pnlData[(int) PanelData.Grip4].Value)
+	        };
 
-                // Get the panel parameters
-                Number = Convert.ToInt32(pnlData[(int)PanelData.Number].Value);
-                Width  = Convert.ToDouble(pnlData[(int)PanelData.Width].Value);
+	        // Create the list of vertices
+	        Vertices = Geometry.Panel.PanelVertices(pnl);
 
-                // Create the list of grips
-                Grips = new[]
-                {
-                    Convert.ToInt32(pnlData[(int) PanelData.Grip1].Value),
-                    Convert.ToInt32(pnlData[(int) PanelData.Grip2].Value),
-                    Convert.ToInt32(pnlData[(int) PanelData.Grip3].Value),
-                    Convert.ToInt32(pnlData[(int) PanelData.Grip4].Value)
-                };
+	        // Get reinforcement
+	        double
+		        phiX = Convert.ToDouble(pnlData[(int) PanelData.XDiam].Value),
+		        phiY = Convert.ToDouble(pnlData[(int) PanelData.YDiam].Value),
+		        sx   = Convert.ToDouble(pnlData[(int) PanelData.Sx].Value),
+		        sy   = Convert.ToDouble(pnlData[(int) PanelData.Sy].Value);
 
-                // Create the list of vertices
-                Vertices = new[]
-                {
-                    nd1, nd2, nd3, nd4
-                };
+	        // Get steel data
+	        double
+		        fyx = Convert.ToDouble(pnlData[(int) PanelData.fyx].Value),
+		        Esx = Convert.ToDouble(pnlData[(int) PanelData.Esx].Value),
+		        fyy = Convert.ToDouble(pnlData[(int) PanelData.fyy].Value),
+		        Esy = Convert.ToDouble(pnlData[(int) PanelData.Esy].Value);
 
-                // Get reinforcement
-                double
-                    phiX = Convert.ToDouble(pnlData[(int)PanelData.XDiam].Value),
-                    phiY = Convert.ToDouble(pnlData[(int)PanelData.YDiam].Value),
-                    sx   = Convert.ToDouble(pnlData[(int)PanelData.Sx].Value),
-                    sy   = Convert.ToDouble(pnlData[(int)PanelData.Sy].Value);
+	        var steel =
+	        (
+		        new Steel(fyx, Esx),
+		        new Steel(fyy, Esy)
+	        );
 
-                // Get steel data
-                double
-                    fyx = Convert.ToDouble(pnlData[(int)PanelData.fyx].Value),
-                    Esx = Convert.ToDouble(pnlData[(int)PanelData.Esx].Value),
-                    fyy = Convert.ToDouble(pnlData[(int)PanelData.fyy].Value),
-                    Esy = Convert.ToDouble(pnlData[(int)PanelData.Esy].Value);
+	        // Set reinforcement
+	        Reinforcement = new Reinforcement.Panel((phiX, phiY), (sx, sy), steel, Width);
 
-                var steel =
-                (
-                    new Steel(fyx, Esx),
-                    new Steel(fyy, Esy)
-                );
-
-                // Set reinforcement
-                Reinforcement = new Reinforcement.Panel((phiX, phiY), (sx, sy), steel, Width);
-            }
         }
 
         // Set global indexes from grips
