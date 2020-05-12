@@ -1,19 +1,31 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Globalization;
+using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using SPMTool.Core;
+using Auxiliary = SPMTool.AutoCAD.Auxiliary;
 
-[assembly: CommandClass(typeof(SPMTool.Results))]
+[assembly: CommandClass(typeof(SPMTool.AutoCAD.Results))]
 
-namespace SPMTool
+namespace SPMTool.AutoCAD
 {
-	public static class Results
+	public static partial class Results
 	{
+		// Layers and block names
+		public static readonly string
+			StrForceLayer    = Layers.StringerForce.ToString(),
+			PanelForceLayer  = Layers.PanelForce.ToString(),
+			DispLayer        = Layers.Displacements.ToString(),
+			CompStressLayer  = Layers.CompressivePanelStress.ToString(),
+			TenStressLayer   = Layers.TensilePanelStress.ToString(),
+			ShearBlock       = Blocks.ShearBlock.ToString(),
+			CompressiveBlock = Blocks.CompressiveStressBlock.ToString(),
+			TensileBlock     = Blocks.TensileStressBlock.ToString();
+
 		// Draw results
 		public static void Draw(Analysis analysis)
 		{
@@ -27,21 +39,21 @@ namespace SPMTool
 		private static void CreatePanelShearBlock()
 		{
 			// Start a transaction
-			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Open the Block table for read
-				BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+				BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
 				// Initialize the block Id
 				ObjectId shearBlock = ObjectId.Null;
 
 				// Check if the support blocks already exist in the drawing
-				if (!blkTbl.Has(Blocks.shearBlock))
+				if (!blkTbl.Has(ShearBlock))
 				{
 					// Create the X block
 					using (BlockTableRecord blkTblRec = new BlockTableRecord())
 					{
-						blkTblRec.Name = Blocks.shearBlock;
+						blkTblRec.Name = ShearBlock;
 
 						// Add the block table record to the block table and to the transaction
 						blkTbl.UpgradeOpen();
@@ -112,22 +124,22 @@ namespace SPMTool
 		private static void CreatePanelStressesBlock()
 		{
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
                 ObjectId compStressBlock = ObjectId.Null;
                 ObjectId tensStressBlock = ObjectId.Null;
 
                 // Check if the stress blocks already exist in the drawing
-                if (!blkTbl.Has(Blocks.CompressiveStress))
+                if (!blkTbl.Has(CompressiveBlock))
                 {
                     // Create the X block
                     using (BlockTableRecord blkTblRec = new BlockTableRecord())
                     {
-                        blkTblRec.Name = Blocks.CompressiveStress;
+                        blkTblRec.Name = CompressiveBlock;
 
                         // Add the block table record to the block table and to the transaction
                         blkTbl.UpgradeOpen();
@@ -206,12 +218,12 @@ namespace SPMTool
                 }
 
 				// Check if tensile stress block exists
-                if (!blkTbl.Has(Blocks.TensileStress))
+                if (!blkTbl.Has(TensileBlock))
                 {
                     // Create the X block
                     using (BlockTableRecord blkTblRec = new BlockTableRecord())
                     {
-                        blkTblRec.Name = Blocks.TensileStress;
+                        blkTblRec.Name = TensileBlock;
 
                         // Add the block table record to the block table and to the transaction
                         blkTbl.UpgradeOpen();
@@ -286,38 +298,37 @@ namespace SPMTool
         private static void DrawPanelStresses(Panel[] panels)
 		{
 			// Check if the layer already exists in the drawing. If it doesn't, then it's created:
-			Auxiliary.CreateLayer(Layers.panelForce, (short) AutoCAD.Colors.Green, 0);
-			Auxiliary.CreateLayer(Layers.compressiveStress, (short)AutoCAD.Colors.Blue1, 80);
-			Auxiliary.CreateLayer(Layers.tensileStress, (short)AutoCAD.Colors.Red, 80);
+			Auxiliary.CreateLayer(Layers.PanelForce, Colors.Green, 0);
+			Auxiliary.CreateLayer(Layers.CompressivePanelStress, Colors.Blue1, 80);
+			Auxiliary.CreateLayer(Layers.TensilePanelStress, Colors.Red, 80);
 
             // Check if the shear blocks already exist. If not, create the blocks
             CreatePanelShearBlock();
             CreatePanelStressesBlock();
 
-            // Erase all the panel forces in the drawing
-			Auxiliary.EraseObjects(Layers.panelForce);
-			Auxiliary.EraseObjects(Layers.compressiveStress);
-			Auxiliary.EraseObjects(Layers.tensileStress);
+			// Erase all the panel forces in the drawing
+			Auxiliary.EraseObjects(Layers.PanelForce);
+			Auxiliary.EraseObjects(Layers.CompressivePanelStress);
+			Auxiliary.EraseObjects(Layers.TensilePanelStress);
 
 			// Start a transaction
-			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+			using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
 			{
 				// Open the Block table for read
-				BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+				BlockTable blkTbl = trans.GetObject(AutoCAD.Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
 				// Read the object Ids of the support blocks
-				ObjectId shearBlock = blkTbl[Blocks.shearBlock];
-				ObjectId compStress = blkTbl[Blocks.CompressiveStress];
-				ObjectId tensStress = blkTbl[Blocks.TensileStress];
+				ObjectId shearBlock = blkTbl[ShearBlock];
+				ObjectId compStress = blkTbl[CompressiveBlock];
+				ObjectId tensStress = blkTbl[TensileBlock];
 
-				// Get the stringers stifness matrix and add to the global stifness matrix
 				foreach (var pnl in panels)
 				{
 					// Get panel data
-					var l     = pnl.Edges.Length;
+					var l      = pnl.Edges.Length;
 					var cntrPt = pnl.CenterPoint;
 
-					// Get the maximum lenght of the panel
+					// Get the maximum length of the panel
 					double lMax = l.Max();
 
 					// Get the average stress
@@ -330,8 +341,8 @@ namespace SPMTool
 					// Insert the block into the current space
 					using (BlockReference blkRef = new BlockReference(cntrPt, shearBlock))
 					{
-						blkRef.Layer = Layers.panelForce;
-						Auxiliary.AddObject(blkRef);
+						blkRef.Layer = PanelForceLayer;
+						AutoCAD.Auxiliary.AddObject(blkRef);
 
 						// Set the scale of the block
 						blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
@@ -339,7 +350,7 @@ namespace SPMTool
 						// If the shear is negative, mirror the block
 						if (tauAvg < 0)
 						{
-							blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, AutoCAD.curUCS.Yaxis, cntrPt));
+							blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, AutoCAD.Current.ucs.Yaxis, cntrPt));
 						}
 					}
 
@@ -350,7 +361,7 @@ namespace SPMTool
 						Point3d algnPt = new Point3d(cntrPt.X, cntrPt.Y, 0);
 
 						// Set the parameters
-						tauTxt.Layer = Layers.panelForce;
+						tauTxt.Layer = PanelForceLayer;
 						tauTxt.Height = 30 * scFctr;
 						tauTxt.TextString = Math.Abs(tauAvg).ToString();
 						tauTxt.Position = algnPt;
@@ -358,7 +369,7 @@ namespace SPMTool
 						tauTxt.AlignmentPoint = algnPt;
 
 						// Add the text to the drawing
-						Auxiliary.AddObject(tauTxt);
+						AutoCAD.Auxiliary.AddObject(tauTxt);
 					}
 
 					// Create stress block
@@ -369,9 +380,9 @@ namespace SPMTool
 						// Create compressive stress block
 						using (BlockReference blkRef = new BlockReference(cntrPt, compStress))
 						{
-							blkRef.Layer = Layers.compressiveStress;
-							blkRef.ColorIndex = (int)AutoCAD.Colors.Blue1;
-							Auxiliary.AddObject(blkRef);
+							blkRef.Layer = CompStressLayer;
+							blkRef.ColorIndex = (int)Colors.Blue1;
+							AutoCAD.Auxiliary.AddObject(blkRef);
 
 							// Set the scale of the block
 							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
@@ -379,7 +390,7 @@ namespace SPMTool
 							// Rotate the block in theta angle
 							if (theta != 0)
 							{
-								blkRef.TransformBy(Matrix3d.Rotation(theta, AutoCAD.curUCS.Zaxis, cntrPt));
+								blkRef.TransformBy(Matrix3d.Rotation(theta, AutoCAD.Current.ucs.Zaxis, cntrPt));
 							}
 						}
 
@@ -393,13 +404,13 @@ namespace SPMTool
 								EndPoint = new Point3d(cntrPt.X + 210 * scFctr, cntrPt.Y, 0)
 							};
 
-							ln.TransformBy(Matrix3d.Rotation(theta, AutoCAD.curUCS.Zaxis, cntrPt));
+							ln.TransformBy(Matrix3d.Rotation(theta, AutoCAD.Current.ucs.Zaxis, cntrPt));
 
                             // Set the alignment point
 							Point3d algnPt = ln.EndPoint;
 
 							// Set the parameters
-							sigTxt.Layer = Layers.compressiveStress;
+							sigTxt.Layer = CompStressLayer;
 							sigTxt.Height = 30 * scFctr;
 							sigTxt.TextString = Math.Round(Math.Abs(sigma[1]), 2).ToString();
 							sigTxt.Position = algnPt;
@@ -407,7 +418,7 @@ namespace SPMTool
                             sigTxt.AlignmentPoint = algnPt;
 
                             // Add the text to the drawing
-                            Auxiliary.AddObject(sigTxt);
+                            AutoCAD.Auxiliary.AddObject(sigTxt);
 						}
                     }
 
@@ -417,8 +428,8 @@ namespace SPMTool
 						// Create tensile stress block
 						using (BlockReference blkRef = new BlockReference(cntrPt, tensStress))
 						{
-							blkRef.Layer = Layers.tensileStress;
-							Auxiliary.AddObject(blkRef);
+							blkRef.Layer = TenStressLayer;
+							AutoCAD.Auxiliary.AddObject(blkRef);
 
 							// Set the scale of the block
 							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
@@ -426,7 +437,7 @@ namespace SPMTool
 							// Rotate the block in theta angle
 							if (theta != 0)
 							{
-								blkRef.TransformBy(Matrix3d.Rotation(theta, AutoCAD.curUCS.Zaxis, cntrPt));
+								blkRef.TransformBy(Matrix3d.Rotation(theta, AutoCAD.Current.ucs.Zaxis, cntrPt));
 							}
 						}
 
@@ -440,13 +451,13 @@ namespace SPMTool
 								EndPoint = new Point3d(cntrPt.X, cntrPt.Y + 210 * scFctr, 0)
 							};
 
-							ln.TransformBy(Matrix3d.Rotation(theta, AutoCAD.curUCS.Zaxis, cntrPt));
+							ln.TransformBy(Matrix3d.Rotation(theta, AutoCAD.Current.ucs.Zaxis, cntrPt));
 
                             // Set the alignment point
 							Point3d algnPt = ln.EndPoint;
 
 							// Set the parameters
-							sigTxt.Layer = Layers.tensileStress;
+							sigTxt.Layer = TenStressLayer;
 							sigTxt.Height = 30 * scFctr;
 							sigTxt.TextString = Math.Round(Math.Abs(sigma[1]), 2).ToString();
 							sigTxt.Position = algnPt;
@@ -454,7 +465,7 @@ namespace SPMTool
                             sigTxt.AlignmentPoint = algnPt;
 
                             // Add the text to the drawing
-                            Auxiliary.AddObject(sigTxt);
+                            AutoCAD.Auxiliary.AddObject(sigTxt);
 						}
                     }
                 }
@@ -464,29 +475,29 @@ namespace SPMTool
 			}
 
 			// Turn the layer on
-			Auxiliary.LayerOn(Layers.panelForce);
-			Auxiliary.LayerOff(Layers.compressiveStress);
-			Auxiliary.LayerOff(Layers.tensileStress);
+			Auxiliary.LayerOn(Layers.PanelForce);
+			Auxiliary.LayerOff(Layers.CompressivePanelStress);
+			Auxiliary.LayerOff(Layers.TensilePanelStress);
 		}
 
-		// Draw the stringer forces diagrams
+		// Draw the Stringer forces diagrams
 		private static void DrawStringerForces(Stringer[] stringers, double maxForce)
 		{
 			// Check if the layer already exists in the drawing. If it doesn't, then it's created:
-			Auxiliary.CreateLayer(Layers.stringerForce, (short) AutoCAD.Colors.Grey, 0);
+			Auxiliary.CreateLayer(Layers.StringerForce, Colors.Grey, 0);
 
-			// Erase all the stringer forces in the drawing
-			ObjectIdCollection strFs = Auxiliary.GetEntitiesOnLayer(Layers.stringerForce);
+			// Erase all the Stringer forces in the drawing
+			ObjectIdCollection strFs = Auxiliary.GetEntitiesOnLayer(Layers.StringerForce);
 			if (strFs.Count > 0) 
 				Auxiliary.EraseObjects(strFs);
 
 			// Start a transaction
-			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+			using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
 			{
 				// Get the stringers stifness matrix and add to the global stifness matrix
 				foreach (var str in stringers)
 				{
-					// Get the parameters of the stringer
+					// Get the parameters of the Stringer
 					double
 						l   = str.Length,
 						ang = str.Angle;
@@ -524,26 +535,26 @@ namespace SPMTool
 							using (Solid dgrm = new Solid(vrts[0], vrts[1], vrts[2], vrts[3]))
 							{
 								// Set the layer and transparency
-								dgrm.Layer = Layers.stringerForce;
+								dgrm.Layer = StrForceLayer;
 								dgrm.Transparency = Auxiliary.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
 								if (Math.Max(N1, N3) > 0)
-									dgrm.ColorIndex = (short) AutoCAD.Colors.Blue1;
+									dgrm.ColorIndex = (short) Colors.Blue1;
 								else
-									dgrm.ColorIndex = (short) AutoCAD.Colors.Red;
+									dgrm.ColorIndex = (short) Colors.Red;
 
 								// Add the diagram to the drawing
 								Auxiliary.AddObject(dgrm);
 
 								// Rotate the diagram
-								dgrm.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
+								dgrm.TransformBy(Matrix3d.Rotation(ang, AutoCAD.Current.ucs.Zaxis, stPt));
 							}
 						}
 
 						else // forces are in diferent directions
 						{
-							// Calculate the point where the stringer force will be zero
+							// Calculate the point where the Stringer force will be zero
 							double x = Math.Abs(h1) * l / (Math.Abs(h1) + Math.Abs(h3));
 							Point3d invPt = new Point3d(stPt.X + x, stPt.Y, 0);
 
@@ -566,35 +577,35 @@ namespace SPMTool
 							using (Solid dgrm1 = new Solid(vrts1[0], vrts1[1], vrts1[2]))
 							{
 								// Set the layer and transparency
-								dgrm1.Layer = Layers.stringerForce;
+								dgrm1.Layer = StrForceLayer;
 								dgrm1.Transparency = Auxiliary.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
-								if (N1 > 0) dgrm1.ColorIndex = (short) AutoCAD.Colors.Blue1;
-								else dgrm1.ColorIndex = (short) AutoCAD.Colors.Red;
+								if (N1 > 0) dgrm1.ColorIndex = (short) Colors.Blue1;
+								else dgrm1.ColorIndex = (short) Colors.Red;
 
 								// Add the diagram to the drawing
 								Auxiliary.AddObject(dgrm1);
 
 								// Rotate the diagram
-								dgrm1.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
+								dgrm1.TransformBy(Matrix3d.Rotation(ang, AutoCAD.Current.ucs.Zaxis, stPt));
 							}
 
 							using (Solid dgrm3 = new Solid(vrts3[0], vrts3[1], vrts3[2]))
 							{
 								// Set the layer and transparency
-								dgrm3.Layer = Layers.stringerForce;
+								dgrm3.Layer = StrForceLayer;
 								dgrm3.Transparency = Auxiliary.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
-								if (N3 > 0) dgrm3.ColorIndex = (short) AutoCAD.Colors.Blue1;
-								else dgrm3.ColorIndex = (short) AutoCAD.Colors.Red;
+								if (N3 > 0) dgrm3.ColorIndex = (short) Colors.Blue1;
+								else dgrm3.ColorIndex = (short) Colors.Red;
 
 								// Add the diagram to the drawing
 								Auxiliary.AddObject(dgrm3);
 
 								// Rotate the diagram
-								dgrm3.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
+								dgrm3.TransformBy(Matrix3d.Rotation(ang, AutoCAD.Current.ucs.Zaxis, stPt));
 							}
 						}
 
@@ -604,7 +615,7 @@ namespace SPMTool
 							using (DBText txt1 = new DBText())
 							{
 								// Set the parameters
-								txt1.Layer = Layers.stringerForce;
+								txt1.Layer = StrForceLayer;
 								txt1.Height = 30;
 
 								// Write force in kN
@@ -614,12 +625,12 @@ namespace SPMTool
 								// Set the color (blue to compression and red to tension) and position
 								if (N1 > 0)
 								{
-									txt1.ColorIndex = (short) AutoCAD.Colors.Blue1;
+									txt1.ColorIndex = (short) Colors.Blue1;
 									txt1.Position = new Point3d(stPt.X + 10, stPt.Y + h1 + 20, 0);
 								}
 								else
 								{
-									txt1.ColorIndex = (short) AutoCAD.Colors.Red;
+									txt1.ColorIndex = (short) Colors.Red;
 									txt1.Position = new Point3d(stPt.X + 10, stPt.Y + h1 - 50, 0);
 								}
 
@@ -627,7 +638,7 @@ namespace SPMTool
 								Auxiliary.AddObject(txt1);
 
 								// Rotate the text
-								txt1.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
+								txt1.TransformBy(Matrix3d.Rotation(ang, AutoCAD.Current.ucs.Zaxis, stPt));
 							}
 						}
 
@@ -636,7 +647,7 @@ namespace SPMTool
 							using (DBText txt3 = new DBText())
 							{
 								// Set the parameters
-								txt3.Layer = Layers.stringerForce;
+								txt3.Layer = StrForceLayer;
 								txt3.Height = 30;
 
 								// Write force in kN
@@ -646,12 +657,12 @@ namespace SPMTool
                                 // Set the color (blue to compression and red to tension) and position
                                 if (N3 > 0)
 								{
-									txt3.ColorIndex = (short) AutoCAD.Colors.Blue1;
+									txt3.ColorIndex = (short) Colors.Blue1;
 									txt3.Position = new Point3d(stPt.X + l - 10, stPt.Y + h3 + 20, 0);
 								}
 								else
 								{
-									txt3.ColorIndex = (short) AutoCAD.Colors.Red;
+									txt3.ColorIndex = (short) Colors.Red;
 									txt3.Position = new Point3d(stPt.X + l - 10, stPt.Y + h3 - 50, 0);
 								}
 
@@ -663,7 +674,7 @@ namespace SPMTool
 								Auxiliary.AddObject(txt3);
 
 								// Rotate the text
-								txt3.TransformBy(Matrix3d.Rotation(ang, AutoCAD.curUCS.Zaxis, stPt));
+								txt3.TransformBy(Matrix3d.Rotation(ang, AutoCAD.Current.ucs.Zaxis, stPt));
 							}
 						}
 					}
@@ -674,20 +685,20 @@ namespace SPMTool
 			}
 
 			// Turn the layer on
-			Auxiliary.LayerOn(Layers.stringerForce);
+			Auxiliary.LayerOn(Layers.StringerForce);
 		}
 
 		// Draw the displaced model
 		private static void DrawDisplacements(Stringer[] stringers, Node[] nodes)
 		{
 			// Create the layer
-			Auxiliary.CreateLayer(Layers.displacements, (short) AutoCAD.Colors.Yellow1, 0);
+			Auxiliary.CreateLayer(Layers.Displacements, Colors.Yellow1, 0);
 
 			// Turn the layer off
-			Auxiliary.LayerOff(Layers.displacements);
+			Auxiliary.LayerOff(Layers.Displacements);
 
 			// Erase all the displaced objects in the drawing
-			ObjectIdCollection dispObjs = Auxiliary.GetEntitiesOnLayer(Layers.displacements);
+			ObjectIdCollection dispObjs = Auxiliary.GetEntitiesOnLayer(Layers.Displacements);
 			if (dispObjs.Count > 0)
 				Auxiliary.EraseObjects(dispObjs);
 
@@ -698,7 +709,7 @@ namespace SPMTool
 			List<Point3d> dispNds = new List<Point3d>();
 
 			// Start a transaction
-			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+			using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
 			{
 				foreach (var str in stringers)
 				{
@@ -718,7 +729,7 @@ namespace SPMTool
 					foreach (var nd in nodes) // Initial node
 					{
 						// Verify if its an external node
-						if (nd.Type == (int) Node.NodeType.External)
+						if (nd.Type == Node.NodeType.External)
 						{
 							// Verify the start point
 							if (str.Grips[0] == nd.Number)
@@ -750,13 +761,13 @@ namespace SPMTool
 					Point3d
 						stPt = new Point3d(str.PointsConnected[0].X + ux1, str.PointsConnected[0].Y + uy1, 0),
 						enPt = new Point3d(str.PointsConnected[2].X + ux3, str.PointsConnected[2].Y + uy3, 0),
-						midPt = Auxiliary.MidPoint(stPt, enPt);
+						midPt = GlobalAuxiliary.MidPoint(stPt, enPt);
 
-					// Draw the displaced stringer
+					// Draw the displaced Stringer
 					using (Line newStr = new Line(stPt, enPt))
 					{
-						// Set the layer to stringer
-						newStr.Layer = Layers.displacements;
+						// Set the layer to Stringer
+						newStr.Layer = DispLayer;
 
 						// Add the line to the drawing
 						Auxiliary.AddObject(newStr);
@@ -778,14 +789,14 @@ namespace SPMTool
 			}
 
 			// Add the nodes
-			new Geometry.Node(dispNds, (int)SPMTool.Node.NodeType.Displaced);
+			new Geometry.Node(dispNds, Node.NodeType.Displaced);
 		}
 
 		// Set displacement to nodes
 		private static void SetDisplacements(Node[] nodes)
 		{
 			// Start a transaction
-			using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+			using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
 			{
 				// Get the stringers stifness matrix and add to the global stifness matrix
 				foreach (var nd in nodes)
@@ -797,7 +808,7 @@ namespace SPMTool
 					DBPoint ndPt = trans.GetObject(nd.ObjectId, OpenMode.ForWrite) as DBPoint;
 
 					// Get the result buffer as an array
-					ResultBuffer rb = ndPt.GetXDataForApplication(AutoCAD.appName);
+					ResultBuffer rb = ndPt.GetXDataForApplication(AutoCAD.Current.appName);
 					TypedValue[] data = rb.AsArray();
 
 					// Save the displacements on the XData
@@ -825,19 +836,19 @@ namespace SPMTool
 			{
 				// Request the object to be selected in the drawing area
 				PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to view data:");
-				PromptEntityResult entRes = AutoCAD.edtr.GetEntity(entOp);
+				PromptEntityResult entRes = AutoCAD.Current.edtr.GetEntity(entOp);
 
 				// If the prompt status is OK, objects were selected
 				if (entRes.Status == PromptStatus.OK)
 				{
 					// Start a transaction
-					using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+					using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
 					{
 						// Get the entity for read
 						Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
 
 						// If it's a node
-						if (ent.Layer == Layers.extNode || ent.Layer == Layers.intNode)
+						if (ent.Layer == Geometry.Node.ExtNodeLayer || ent.Layer == Geometry.Node.IntNodeLayer)
 						{
 							// Get the node
 							Node nd = new Node(entRes.ObjectId);
@@ -889,10 +900,10 @@ namespace SPMTool
 							}
                         }
 
-                        // If it's a stringer
-                        else if (ent.Layer == Layers.stringer)
+                        // If it's a Stringer
+                        else if (ent.Layer == Geometry.Stringer.StringerLayer)
 						{
-							// Get the stringer
+							// Get the Stringer
 							var str = new Stringer.Linear(entRes.ObjectId);
 
 							msgstr =
@@ -914,14 +925,14 @@ namespace SPMTool
 									"\n\nReinforcement: " + rf.NumberOfBars + " Ø " + rf.BarDiameter + " mm (" + As +
 									" mm²) \n\n" +
 									"Steel Parameters: " +
-									"\nfy = " + rf.Steel.fy + " MPa" +
-									"\nEs = " + rf.Steel.Es + " MPa" +
-									"\nεy = " + Math.Round(1000 * rf.Steel.ey, 2) + " E-03";
+									"\nfy = " + rf.Steel.YieldStress + " MPa" +
+									"\nEs = " + rf.Steel.ElasticModule + " MPa" +
+									"\nεy = " + Math.Round(1000 * rf.Steel.YieldStrain, 2) + " E-03";
 							}
 						}
 
 						// If it's a panel
-						else if (ent.Layer == Layers.panel)
+						else if (ent.Layer == Geometry.Panel.PanelLayer)
 						{
 							// Get the panel
 							var pnl = new Panel.Linear(entRes.ObjectId);
@@ -946,15 +957,15 @@ namespace SPMTool
                                 msgstr +=
 								"\n\nReinforcement (x): Ø " + rf.BarDiameter.X + " mm, s = " + rf.BarSpacing.X + " mm (ρsx = " + psx + ")\n" +
 								"Steel Parameters (x): " +
-								"\nfy = " + rf.Steel.X.fy + " MPa" +
-								"\nEs = " + rf.Steel.X.Es + " MPa" +
-								"\nεy = " + Math.Round(1000 * rf.Steel.X.ey, 2) + " E-03 \n\n" +
+								"\nfy = " + rf.Steel.X.YieldStress + " MPa" +
+								"\nEs = " + rf.Steel.X.ElasticModule + " MPa" +
+								"\nεy = " + Math.Round(1000 * rf.Steel.X.YieldStrain, 2) + " E-03 \n\n" +
 								"Reinforcement (y) = Ø " + rf.BarDiameter.Y + " mm, s = " + rf.BarSpacing.Y +
 								" mm (ρsy = " + psy + ")\n" +
 								"Steel Parameters (y): " +
-								"\nfy = " + rf.Steel.Y.fy + " MPa" +
-								"\nEs = " + rf.Steel.Y.Es + " MPa" +
-								"\nεy = " + Math.Round(1000 * rf.Steel.Y.ey, 2) + " E-03 \n\n";
+								"\nfy = " + rf.Steel.Y.YieldStress + " MPa" +
+								"\nEs = " + rf.Steel.Y.ElasticModule + " MPa" +
+								"\nεy = " + Math.Round(1000 * rf.Steel.Y.YieldStrain, 2) + " E-03 \n\n";
 							}
 						}
 
@@ -962,7 +973,7 @@ namespace SPMTool
 							msgstr = "NONE";
 
 						// Display the values returned
-						Application.ShowAlertDialog(AutoCAD.appName + "\n\n" + msgstr);
+						Application.ShowAlertDialog(AutoCAD.Current.appName + "\n\n" + msgstr);
 					}
 				}
 
@@ -971,33 +982,33 @@ namespace SPMTool
 			}
 		}
 
-		// Toggle view for stringer forces
+		// Toggle view for Stringer forces
 		[CommandMethod("ToogleStringerForces")]
 		public static void ToogleStringerForces()
 		{
-			Auxiliary.ToogleLayer(Layers.stringerForce);
+			Auxiliary.ToogleLayer(Layers.StringerForce);
 		}
 
 		// Toggle view for panel forces
 		[CommandMethod("TooglePanelForces")]
 		public static void TooglePanelForces()
 		{
-			Auxiliary.ToogleLayer(Layers.panelForce);
+			Auxiliary.ToogleLayer(Layers.PanelForce);
 		}
 
 		// Toggle view for panel forces
 		[CommandMethod("TooglePanelStresses")]
 		public static void TooglePanelStresses()
 		{
-			Auxiliary.ToogleLayer(Layers.compressiveStress);
-			Auxiliary.ToogleLayer(Layers.tensileStress);
+			Auxiliary.ToogleLayer(Layers.CompressivePanelStress);
+			Auxiliary.ToogleLayer(Layers.TensilePanelStress);
 		}
 
 		// Toggle view for displacements
 		[CommandMethod("ToogleDisplacements")]
 		public static void ToogleDisplacements()
 		{
-			Auxiliary.ToogleLayer(Layers.displacements);
+			Auxiliary.ToogleLayer(Layers.Displacements);
 		}
 	}
 }

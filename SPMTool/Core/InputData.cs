@@ -2,30 +2,33 @@
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics.LinearAlgebra;
+using SPMTool.Core;
+using SPMTool.Material;
+using SPMTool.AutoCAD;
 
-namespace SPMTool
+namespace SPMTool.Core
 {
     public class InputData
     {
 		// Properties
-		public Material.Concrete Concrete        { get; }
-        public Node[]            Nodes           { get; }
-	    public Stringer[]        Stringers       { get; }
-	    public Panel[]           Panels          { get; }
-	    public Force[]           Forces          { get; }
-	    public Constraint[]      Constraints     { get; }
-	    public Vector<double>    ForceVector     { get; }
-	    public int[]             ConstraintIndex { get; }
-	    public int               numDoFs         => 2 * Nodes.Length;
+		public Concrete       Concrete        { get; }
+        public Node[]         Nodes           { get; }
+	    public Stringer[]     Stringers       { get; }
+	    public Panel[]        Panels          { get; }
+	    public Force[]        Forces          { get; }
+	    public Constraint[]   Constraints     { get; }
+	    public Vector<double> ForceVector     { get; }
+	    public int[]          ConstraintIndex { get; }
+	    public int            numDoFs         => 2 * Nodes.Length;
 
 		// Private properties
 		private ObjectIdCollection NodeObjects      { get; }
 		private ObjectIdCollection StringerObjects  { get; }
 		private ObjectIdCollection PanelObjects     { get; }
-		private int                StringerBehavior { get; }
-		private int                PanelBehavior    { get; }
+		private Stringer.Behavior  StringerBehavior { get; }
+		private Panel.Behavior     PanelBehavior    { get; }
 
-		public InputData(int stringerBehavior, int panelBehavior)
+		public InputData(Stringer.Behavior stringerBehavior, Panel.Behavior panelBehavior)
 		{
 			// Get the collection of elements in the model
 			NodeObjects     = Geometry.Node.UpdateNodes();
@@ -37,9 +40,9 @@ namespace SPMTool
             Constraints = Constraint.ListOfConstraints();
 
 			// Get concrete data
-			Concrete = new Material.Concrete();
+			Concrete = AutoCAD.Material.ReadData();
 
-			// Set the behavior of elements
+			// Set the Behavior of elements
 			StringerBehavior = stringerBehavior;
 			PanelBehavior    = panelBehavior;
 
@@ -80,11 +83,11 @@ namespace SPMTool
 	        {
 		        Stringer stringer;
 
-                // Verify the behavior
-                if (StringerBehavior == (int)Stringer.Behavior.Linear)
+                // Verify the stringer Behavior
+                if (StringerBehavior == Stringer.Behavior.Linear)
 					stringer = new Stringer.Linear(strObj, Concrete);
 
-				else if (StringerBehavior == (int)Stringer.Behavior.NonLinearClassic)
+				else if (StringerBehavior == Stringer.Behavior.NonLinearClassic)
 					stringer = new Stringer.NonLinear.Classic(strObj, Concrete);
 
                 else
@@ -108,12 +111,15 @@ namespace SPMTool
 	        {
 		        Panel panel;
 
-				// Verify the behavior
-				if (PanelBehavior == (int)Panel.Behavior.Linear)
+				// Verify the panelBehavior
+				if (PanelBehavior == Panel.Behavior.Linear)
 					panel = new Panel.Linear(pnlObj, Concrete);
 
-				else
+				else if (PanelBehavior == Panel.Behavior.NonLinearMCFT)
 					panel = new Panel.NonLinear(pnlObj, Concrete, Stringers);
+
+				else
+					panel = new Panel.NonLinear(pnlObj, Concrete, Stringers, Panel.Behavior.NonLinearDSFM);
 
                 // Set to the array
                 int i     = panel.Number - 1;
@@ -133,7 +139,7 @@ namespace SPMTool
 	        foreach (var nd in Nodes)
 	        {
 		        // Check if it's a external node
-		        if (nd.Type == (int)Node.NodeType.External && (nd.Force.X != 0 || nd.Force.Y != 0))
+		        if (nd.Type == Node.NodeType.External && (nd.Force.X != 0 || nd.Force.Y != 0))
 		        {
 			        // Get the position in the vector
 			        int i = 2 * nd.Number - 2;
@@ -161,7 +167,7 @@ namespace SPMTool
 					j = index[1];
 
 				// Simplify the matrices removing the rows that have constraints (external nodes)
-				if (node.Type == (int) Node.NodeType.External)
+				if (node.Type == Node.NodeType.External)
 				{
 					if (node.Support.X)
 						// There is a support in X direction

@@ -2,24 +2,27 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
+using SPMTool.AutoCAD;
+using NodeData       = SPMTool.XData.Node;
+using ForceDirection = SPMTool.Core.Force.ForceDirection;
 
-namespace SPMTool
+namespace SPMTool.Core
 {
     public class Node
     {
 	    // Node types
 	    public enum NodeType
 	    {
-		    All = 0,
-		    External  = 1,
-		    Internal  = 2,
-			Displaced = 3
+		    All,
+		    External,
+		    Internal,
+			Displaced
 	    }
 
 	    // Properties
         public ObjectId             ObjectId     { get; }
 	    public int                  Number       { get; }
-	    public int                  Type         { get; }
+	    public NodeType             Type         { get; }
 	    public Point3d              Position     { get; }
 	    public (bool X, bool Y)     Support      { get; }
 	    public (double X, double Y) Force        { get; }
@@ -30,58 +33,53 @@ namespace SPMTool
 		{
 			ObjectId = nodeObject;
 
-            if (forces == null)
-                forces = SPMTool.Force.ListOfForces();
+			if (forces == null)
+				forces = Core.Force.ListOfForces();
 
-            if (constraints == null)
-                constraints = Constraint.ListOfConstraints();
+			if (constraints == null)
+				constraints = Constraint.ListOfConstraints();
 
-            // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-            {
-	            // Read the object as a point
-	            DBPoint ndPt = trans.GetObject(nodeObject, OpenMode.ForRead) as DBPoint;
+			// Read the object as a point
+			DBPoint ndPt =  Geometry.Node.ReadNode(nodeObject);
 
-	            // Read the XData and get the necessary data
-	            ResultBuffer rb = ndPt.GetXDataForApplication(AutoCAD.appName);
-	            TypedValue[] data = rb.AsArray();
+			// Read the XData and get the necessary data
+			TypedValue[] data = Auxiliary.ReadXData(ndPt);
 
-	            // Get the position
-	            Position = ndPt.Position;
+			// Get the position
+			Position = ndPt.Position;
 
-	            // Get the node number
-	            Number = Convert.ToInt32(data[(int) XData.Node.Number].Value);
+			// Get the node number
+			Number = Convert.ToInt32(data[(int) NodeData.Number].Value);
 
-                // Get type
-                Type = GetNodeType(ndPt);
+			// Get type
+			Type = GetNodeType(ndPt);
 
-                // Get support conditions
-                Support = GetSupportConditions(constraints);
+			// Get support conditions
+			Support = GetSupportConditions(constraints);
 
-	            // Get forces
-	            Force = GetNodalForces(forces);
+			// Get forces
+			Force = GetNodalForces(forces);
 
-                // Get displacements
-                double
-	                ux = Convert.ToDouble(data[(int)XData.Node.Ux].Value),
-	                uy = Convert.ToDouble(data[(int)XData.Node.Uy].Value);
+			// Get displacements
+			double
+				ux = Convert.ToDouble(data[(int) NodeData.Ux].Value),
+				uy = Convert.ToDouble(data[(int) NodeData.Uy].Value);
 
-                Displacement = (ux, uy);
-            }
-        }
+			Displacement = (ux, uy);
+		}
 
 		// Get index of DoFs
-		public int[] DoFIndex => Auxiliary.GlobalIndexes(Number);
+		public int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Number);
 
         // Get node type
-        private int GetNodeType(DBPoint nodePoint)
+        private NodeType GetNodeType(DBPoint nodePoint)
         {
-            if (nodePoint.Layer == Layers.extNode)
+            if (nodePoint.Layer == Geometry.Node.ExtNodeLayer)
                 return
-                    (int)NodeType.External;
+                    NodeType.External;
 
             return
-                (int)NodeType.Internal;
+                NodeType.Internal;
         }
 
         // Get nodal displacements
@@ -114,10 +112,10 @@ namespace SPMTool
                 if (force.Position == Position)
                 {
                     // Read force
-                    if (force.Direction == (int)SPMTool.Force.ForceDirection.X)
+                    if (force.Direction == Core.Force.ForceDirection.X)
                         Fx = force.Value;
 
-                    if (force.Direction == (int)SPMTool.Force.ForceDirection.Y)
+                    if (force.Direction == Core.Force.ForceDirection.Y)
                         Fy = force.Value;
                 }
             }

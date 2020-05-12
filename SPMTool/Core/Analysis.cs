@@ -1,22 +1,17 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.Data.Text;
 using MathNet.Numerics.Statistics;
 
-[assembly: CommandClass(typeof(SPMTool.Analysis))]
-[assembly: CommandClass(typeof(SPMTool.Analysis.Linear))]
-[assembly: CommandClass(typeof(SPMTool.Analysis.NonLinear))]
-
-namespace SPMTool
+namespace SPMTool.Core
 {
     public abstract class Analysis
     {
         // Public Properties
 		public Vector<double> DisplacementVector { get; set; }
+		public Matrix<double> GlobalStiffness    { get; set; }
 		public Node[]         Nodes              { get; }
         public Stringer[]     Stringers          { get; }
         public Panel[]        Panels             { get; }
@@ -38,12 +33,12 @@ namespace SPMTool
 		private int numDoFs => 2 * Nodes.Length;
 
         // Calculate Global Stiffness
-        private Matrix<double> GlobalStiffness(Vector<double> forceVector = null)
+        private Matrix<double> Global_Stiffness(Vector<double> forceVector = null)
 		{
 			// Initialize the global stiffness matrix
 			var Kg = Matrix<double>.Build.Dense(numDoFs, numDoFs);
 
-			// Add stringer stiffness to global stiffness
+			// Add Stringer stiffness to global stiffness
 			foreach (var stringer in Stringers)
 			{
 				// Get DoF indexes
@@ -117,14 +112,14 @@ namespace SPMTool
                 // Get DoF indexes
                 var index = node.DoFIndex;
 
-                // Simplification for internal nodes (There is only a displacement at the stringer direction, the perpendicular one will be zero)
-                if (node.Type == (int)Node.NodeType.Internal)
+                // Simplification for internal nodes (There is only a displacement at the Stringer direction, the perpendicular one will be zero)
+                if (node.Type == Node.NodeType.Internal)
                 {
                     // Verify rows
                     foreach (int i in index)
                     {
                         // Verify what line of the matrix is composed of zeroes
-                        if (!Kg.Row(i).Exists(Auxiliary.NotZero))
+                        if (!Kg.Row(i).Exists(GlobalAuxiliary.NotZero))
                         {
                             // The row is composed of only zeroes, so the displacement must be zero
                             // Set the diagonal element to 1
@@ -142,7 +137,7 @@ namespace SPMTool
 			Kg.CoerceZero(1E-9);
         }
 
-        // Set stringer displacements
+        // Set Stringer displacements
         private void StringerDisplacements(Vector<double> globalDisplacements)
         {
 	        foreach (var stringer in Stringers)
@@ -163,19 +158,19 @@ namespace SPMTool
 		        node.Displacements(globalDisplacements);
         }
 
-        // Calculate maximum stringer force
+        // Calculate maximum Stringer force
         public double MaxStringerForce
         {
 	        get
 	        {
-		        // Create a list to store the maximum stringer forces
+		        // Create a list to store the maximum Stringer forces
 		        var strForces = new List<double>();
 
                 foreach (var str in Stringers)
 			        // Add to the list of forces
 			        strForces.Add(str.MaxForce);
 
-		        // Verify the maximum stringer force
+		        // Verify the maximum Stringer force
 		        return
 			        strForces.MaximumAbsolute();
             }
@@ -227,10 +222,10 @@ namespace SPMTool
                     // Access the number
                     int num2 = str2.Number;
 
-                    // Verify if it's other stringer
+                    // Verify if it's other Stringer
                     if (num1 != num2)
                     {
-                        // Create a tuple with the minimum stringer number first
+                        // Create a tuple with the minimum Stringer number first
                         var contStr = (Math.Min(num1, num2), Math.Max(num1, num2));
 
                         // Verify if it's already on the list
@@ -248,14 +243,14 @@ namespace SPMTool
                                 double cont = l1 * l2 + m1 * m2;
 
                                 // Verify the condition
-                                if (cont < -par) // continued stringer
+                                if (cont < -par) // continued Stringer
                                 {
                                     // Add to the list
                                     contStrs.Add(contStr);
                                 }
                             }
 
-                            // Case 2: a stringer initiate and the other end at the same node
+                            // Case 2: a Stringer initiate and the other end at the same node
                             if (str1.Grips[0] == str2.Grips[2] || str1.Grips[2] == str2.Grips[0])
                             {
                                 // Get the direction cosines
@@ -266,7 +261,7 @@ namespace SPMTool
                                 double cont = l1 * l2 + m1 * m2;
 
                                 // Verify the condition
-                                if (cont > par) // continued stringer
+                                if (cont > par) // continued Stringer
                                 {
                                     // Add to the list
                                     contStrs.Add(contStr);
@@ -379,42 +374,23 @@ namespace SPMTool
         //      }
 
         //      // Write the message in the editor
-        //      AutoCAD.edtr.WriteMessage(msg);
+        //      ACAD.Current.edtr.WriteMessage(msg);
         //     }
 
         // Linear analysis methods
 
         public class Linear : Analysis
         {
-	        [CommandMethod("DoLinearAnalysis")]
-	        public static void DoLinearAnalysis()
-	        {
-		        // Get input data
-				InputData input = new InputData((int)Stringer.Behavior.Linear, (int)Panel.Behavior.Linear);
-
-		        if (input.Concrete.IsSet)
-		        {
-			        // Do a linear analysis
-			        Linear analysis = new Linear(input);
-
-                    // Draw results of analysis
-                    Results.Draw(analysis);
-		        }
-
-		        else
-			        Application.ShowAlertDialog("Please set concrete parameters");
-	        }
-
 	        public Linear(InputData inputData) : base(inputData)
             {
 	            // Get force Vector
-	            var forceVector = ForceVector;
+	            var f = ForceVector;
 
 	            // Calculate and simplify global stiffness and force vector
-	            var globalStiffness = GlobalStiffness(forceVector);
+	            GlobalStiffness = Global_Stiffness(f);
 
 	            // Solve
-	            DisplacementVector = globalStiffness.Solve(forceVector);
+	            DisplacementVector = GlobalStiffness.Solve(f);
 
 	            // Calculate element displacements
 	            StringerDisplacements(DisplacementVector);
@@ -426,40 +402,26 @@ namespace SPMTool
         public class NonLinear : Analysis
         {
 			// Max iterations and load steps
-			private int maxIterations = 100;
+			private int maxIterations = 1000;
 			private int loadSteps     = 100;
-
-			[CommandMethod("DoNonLinearAnalysis")]
-	        public static void DoNonLinearAnalysis()
-	        {
-		        // Get input data
-		        InputData input = new InputData((int)Stringer.Behavior.NonLinearClassic, (int)Panel.Behavior.NonLinear);
-
-		        if (input.Concrete.IsSet)
-		        {
-			        // Do a linear analysis
-			        NonLinear analysis = new NonLinear(input);
-
-                    // Draw results of analysis
-                    Results.Draw(analysis);
-                }
-
-                else
-			        Application.ShowAlertDialog("Please set concrete parameters");
-	        }
 
             public NonLinear(InputData inputData) : base(inputData)
 	        {
 				// Get force vector
 				var f = ForceVector;
 
-		        // Get the initial stiffness and force vector simplified
-		        var Kg = GlobalStiffness(f);
+				// Do a linear analysis to get initial elastic stiffness and displacements
+				var linAn = new Linear(inputData);
+				var Kg = linAn.GlobalStiffness;
+
+                // Get the initial stiffness and force vector simplified
+                //var Kg = Global_Stiffness(f);
 
 		        DelimitedWriter.Write("D:/Ki.csv", Kg, ";");
 
                 // Solve the initial displacements
-                var u = Kg.Solve(0.01 * f);
+                var u0 = Kg.Solve(0.01 * f);
+                var ui = u0;
 
                 var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
 		        var fiMatrix = Matrix<double>.Build.Dense(100, numDoFs);
@@ -490,8 +452,8 @@ namespace SPMTool
 					for (int it = 0; it < maxIterations; it++)
 					{
 						// Calculate element displacements and forces
-						StringerAnalysis(u);
-                        PanelAnalysis(u);
+						StringerAnalysis(ui);
+                        PanelAnalysis(ui);
 
                         // Get the internal force vector
                         fi = InternalForces();
@@ -500,57 +462,59 @@ namespace SPMTool
 						var fr = fs - fi;
 
 						// Check convergence
-						if (EquilibriumConvergence(fr, it))
+						if (EquilibriumConvergence(fr, ui - u0, it))
 						{
-							AutoCAD.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
+							AutoCAD.Current.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
 							break;
 						}
+
+						// Set initial displacements
+						u0 = ui;
 
 						// Calculate displacement increment
 						var du = Kg.Solve(fr);
 
 						// Increment displacements
-						u += du;
+						ui += du;
                     }
 
                     var pnl = Panels[0] as Panel.NonLinear;
 
                     fiMatrix.SetRow(loadStep - 1, fi);
-                    uMatrix.SetRow(loadStep - 1, u);
+                    uMatrix.SetRow(loadStep - 1, u0);
                     fPnl.SetRow(loadStep - 1, pnl.Forces);
                     sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
                     sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
                     epsPnl.SetRow(loadStep - 1, pnl.StrainVector);
                     uPnl.SetRow(loadStep - 1, pnl.Displacements);
-                    genStPnl.SetRow(loadStep - 1, pnl.GenStrains);
                     DcPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Dc);
                     DsPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Ds);
 
                     var thetaPnl = new double[4];
 
                     for (int i = 0; i < 4; i++)
-                        thetaPnl[i] = pnl.IntPointsMembrane[i].StrainAngle;
+                        thetaPnl[i] = pnl.IntegrationPoints[i].PrincipalAngles.theta2;
 
                     thetaPnl1.SetRow(loadStep - 1, thetaPnl);
 
-                    // Set the results to stringers
-                    StringerResults();
+                    // Set the results to elements
+                    Results();
 
                     // Update stiffness
-                    Kg = GlobalStiffness();
+                    //Kg = Global_Stiffness();
 
                     //if (loadStep < 56)
                     //{
-                    //    foreach (Stringer.NonLinear stringer in Stringers)
+                    //    foreach (Stringer.NonLinear Stringer in Stringers)
                     //    {
-                    //        fstr.SetRow(stringer.Number - 1, stringer.Forces);
-                    //        estr.SetRow(stringer.Number - 1, new[] { stringer.GenStrains.e1, stringer.GenStrains.e3 });
+                    //        fstr.SetRow(Stringer.Number - 1, Stringer.Forces);
+                    //        estr.SetRow(Stringer.Number - 1, new[] { Stringer.GenStrains.e1, Stringer.GenStrains.e3 });
                     //    }
                     //}
                 }
 
                 // Set nodal displacements
-                NodalDisplacements(u);
+                NodalDisplacements(u0);
 
                 DelimitedWriter.Write("D:/K.csv", Kg, ";");
                 DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");
@@ -582,30 +546,32 @@ namespace SPMTool
                 //DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");
             }
 
-			// Verify convergence
-			private bool EquilibriumConvergence(Vector<double> residualForces, int iteration)
+            // Verify convergence
+            private bool EquilibriumConvergence(Vector<double> residualForces, Vector<double> residualDisplacements, int iteration)
 			{
 				double
-					maxForce  = residualForces.AbsoluteMaximum(),
-					tolerance = MaxElementForce / 100;
+					maxForce = residualForces.AbsoluteMaximum(),
+					maxDisp  = residualDisplacements.AbsoluteMaximum(),
+					fTol     = 0.01,
+					uTol     = 0.01;
 
                 // Check convergence
-                if (maxForce <= tolerance && iteration > 4)
+                if (maxForce <= fTol && maxDisp <= uTol && iteration > 1)
 					return true;
 
 				// Else
 				return false;
 			}
 
-			// Calculate stringer forces
+			// Calculate Stringer forces
 			private void StringerAnalysis(Vector<double> globalDisplacements)
 			{
 				foreach (Stringer.NonLinear stringer in Stringers)
 				{
 					stringer.Displacement(globalDisplacements);
 					stringer.StringerForces();
-                    //DelimitedWriter.Write("D:/fs" + stringer.Number + ".csv", stringer.IterationForces.ToColumnMatrix(), ";");
-                    //DelimitedWriter.Write("D:/us" + stringer.Number + ".csv", stringer.LocalDisplacements.ToColumnMatrix(), ";");
+                    //DelimitedWriter.Write("D:/fs" + Stringer.Number + ".csv", Stringer.IterationForces.ToColumnMatrix(), ";");
+                    //DelimitedWriter.Write("D:/us" + Stringer.Number + ".csv", Stringer.LocalDisplacements.ToColumnMatrix(), ";");
                 }
             }
 
@@ -615,7 +581,7 @@ namespace SPMTool
 				foreach (Panel.NonLinear panel in Panels)
 				{
 					panel.Displacement(globalDisplacements);
-					panel.MCFTAnalysis();
+					panel.Analysis();
                     //DelimitedWriter.Write("D:/up" + panel.Number + ".csv", panel.Displacements.ToColumnMatrix(), ";");
                     //DelimitedWriter.Write("D:/fp" + panel.Number + ".csv", panel.Forces.ToColumnMatrix(), ";");
 				}
@@ -667,11 +633,14 @@ namespace SPMTool
                 return fi;
 			}
 
-			// Set the results for each stringer
-			private void StringerResults()
+			// Set the results for each Stringer
+			private void Results()
 			{
 				foreach (Stringer.NonLinear stringer in Stringers)
 					stringer.Results();
+
+				foreach (Panel.NonLinear panel in Panels)
+					panel.Results();
 			}
         }
     }

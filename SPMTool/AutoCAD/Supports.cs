@@ -1,117 +1,78 @@
 ﻿using System;
-using System.Collections.Generic;
-using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.Runtime;
+using SupportDirection = SPMTool.Core.Constraint.SupportDirection;
+using SupportData      = SPMTool.XData.Support;
 
-[assembly: CommandClass(typeof(SPMTool.Constraint))]
+[assembly: CommandClass(typeof(SPMTool.AutoCAD.Supports))]
 
-namespace SPMTool
+namespace SPMTool.AutoCAD
 {
-    // Constraints related commands
-    public class Constraint
+    public static class Supports
     {
-        // Support conditions
-        public enum Support
-        {
-            X  = 0,
-            Y  = 1,
-            XY = 2
-        }
-
-        // Properties
-        public ObjectId         SupportObject { get; }
-        public Point3d          Position      { get; }
-        public (bool X, bool Y) Direction     { get; }
-
-        // Constructor
-        public Constraint(ObjectId supportObject)
-        {
-            SupportObject = supportObject;
-
-            // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
-            {
-                // Read the object as a blockreference
-                var sBlck = trans.GetObject(supportObject, OpenMode.ForRead) as BlockReference;
-
-                // Get the position
-                Position = sBlck.Position;
-
-                // Read the XData and get the necessary data
-                ResultBuffer rb = sBlck.GetXDataForApplication(AutoCAD.appName);
-                TypedValue[] data = rb.AsArray();
-
-                // Get the direction
-                int dir = Convert.ToInt32(data[(int)XData.Support.Direction].Value);
-
-                var (x, y) = (false, false);
-
-                if (dir == (int)Support.X || dir == (int)Support.XY)
-                    x = true;
-
-                if (dir == (int)Support.Y || dir == (int)Support.XY)
-                    y = true;
-
-                Direction = (x, y);
-            }
-
-        }
+        // Layer, block and direction names
+        public static readonly string
+	        SupportLayer = Layers.Support.ToString(),
+			Free         = "Free",
+	        X            = SupportDirection.X.ToString(),
+	        Y            = SupportDirection.Y.ToString(),
+	        XY           = SupportDirection.XY.ToString(),
+	        BlockX       = Blocks.SupportX.ToString(),
+	        BlockY       = Blocks.SupportY.ToString(),
+	        BlockXY      = Blocks.SupportXY.ToString();
 
         [CommandMethod("AddConstraint")]
         public static void AddConstraint()
         {
             // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-            Auxiliary.CreateLayer(Layers.support, (short)AutoCAD.Colors.Red);
+            Auxiliary.CreateLayer(Layers.Support, Colors.Red);
 
             // Initialize variables
             PromptSelectionResult selRes;
             SelectionSet set;
 
-            // Definition for the Extended Data
-            string xdataStr = "Support Data";
-
             // Check if the support blocks already exist. If not, create the blocks
             CreateSupportBlocks();
 
             // Get all the supports in the model
-            ObjectIdCollection sprts = Auxiliary.GetEntitiesOnLayer(Layers.support);
+            ObjectIdCollection sprts = Auxiliary.GetEntitiesOnLayer(Layers.Support);
 
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Read the object Ids of the support blocks
-                ObjectId xBlock  = blkTbl[Blocks.supportX];
-                ObjectId yBlock  = blkTbl[Blocks.supportY];
-                ObjectId xyBlock = blkTbl[Blocks.supportXY];
+                ObjectId xBlock  = blkTbl[BlockX];
+                ObjectId yBlock  = blkTbl[BlockY];
+                ObjectId xyBlock = blkTbl[BlockXY];
 
                 // Request objects to be selected in the drawing area
-                AutoCAD.edtr.WriteMessage("\nSelect nodes to add support conditions:");
-                selRes = AutoCAD.edtr.GetSelection();
+                Current.edtr.WriteMessage("\nSelect nodes to add support conditions:");
+                selRes = Current.edtr.GetSelection();
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.OK)
                 {
                     // Get the objects selected
                     set = selRes.Value;
-                    
+
                     // Ask the user set the support conditions:
                     PromptKeywordOptions supOp = new PromptKeywordOptions("\nAdd support in which direction?");
-                    supOp.Keywords.Add("Free");
-                    supOp.Keywords.Add("X");
-                    supOp.Keywords.Add("Y");
-                    supOp.Keywords.Add("XY");
-                    supOp.Keywords.Default = "Free";
+                    supOp.Keywords.Add(Free);
+                    supOp.Keywords.Add(X);
+                    supOp.Keywords.Add(Y);
+                    supOp.Keywords.Add(XY);
+                    supOp.Keywords.Default = Free;
                     supOp.AllowNone = false;
 
                     // Get the result
-                    PromptResult supRes = AutoCAD.edtr.GetKeywords(supOp);
+                    PromptResult supRes = Current.edtr.GetKeywords(supOp);
                     if (supRes.Status == PromptStatus.OK)
-                    { 
+                    {
                         // Set the support
                         string support = supRes.StringResult;
 
@@ -121,7 +82,7 @@ namespace SPMTool
                             Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
                             // Check if the selected object is a node
-                            if (ent.Layer == Layers.extNode)
+                            if (ent.Layer == Geometry.Node.ExtNodeLayer)
                             {
                                 // Read as a point and get the position
                                 DBPoint nd = ent as DBPoint;
@@ -133,15 +94,13 @@ namespace SPMTool
                                     foreach (ObjectId spObj in sprts)
                                     {
                                         // Read as a block reference
-                                        BlockReference spBlk = trans.GetObject(spObj, OpenMode.ForRead) as BlockReference;
+                                        BlockReference spBlk =
+                                            trans.GetObject(spObj, OpenMode.ForRead) as BlockReference;
 
                                         // Check if the position is equal to the selected node
                                         if (spBlk.Position == ndPos)
                                         {
                                             spBlk.UpgradeOpen();
-
-                                            // Remove the event handler
-                                            //spBlk.Erased -= new ObjectErasedEventHandler(ConstraintErased);
 
                                             // Erase the support
                                             spBlk.Erase();
@@ -151,30 +110,41 @@ namespace SPMTool
                                 }
 
                                 // If the node is not Free, add the support blocks
-                                if (support != "Free")
+                                if (support != Free)
                                 {
                                     // Add the block to selected node at
                                     Point3d insPt = ndPos;
 
+                                    // Initiate direction
+                                    SupportDirection direction = SupportDirection.X;
+
                                     // Choose the block to insert
                                     ObjectId supBlock = new ObjectId();
-                                    if (support == "X" && xBlock != ObjectId.Null)
+                                    if (support == X && xBlock != ObjectId.Null)
+                                    {
                                         supBlock = xBlock;
+                                    }
 
-                                    if (support == "Y" && yBlock != ObjectId.Null)
+                                    if (support == Y && yBlock != ObjectId.Null)
+                                    {
                                         supBlock = yBlock;
+                                        direction = SupportDirection.Y;
+                                    }
 
-                                    if (support == "XY" && xyBlock != ObjectId.Null)
+                                    if (support == XY && xyBlock != ObjectId.Null)
+                                    {
                                         supBlock = xyBlock;
+                                        direction = SupportDirection.XY;
+                                    }
 
                                     // Insert the block into the current space
                                     using (BlockReference blkRef = new BlockReference(insPt, supBlock))
                                     {
-                                        blkRef.Layer = Layers.support;
+                                        blkRef.Layer = SupportLayer;
                                         Auxiliary.AddObject(blkRef);
 
                                         // Set XData
-                                        blkRef.XData = SupportData(support);
+                                        blkRef.XData = SupportXData(direction);
                                     }
                                 }
                             }
@@ -186,49 +156,29 @@ namespace SPMTool
                 trans.Commit();
             }
 
-            // Create XData for forces
-            ResultBuffer SupportData(string supportCondition)
-            {
-                // Get the Xdata size
-                int size  = Enum.GetNames(typeof(XData.Support)).Length;
-                var sData = new TypedValue[size];
-
-                // Get support enum as strings and get index
-                var names = Enum.GetNames(typeof(Support));
-                int index = Array.IndexOf(names, supportCondition);
-
-                // Set values
-                sData[(int)XData.Support.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, AutoCAD.appName);
-                sData[(int)XData.Support.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-                sData[(int)XData.Support.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32, index);
-
-                // Add XData to force block
-                return
-                    new ResultBuffer(sData);
-            }
         }
 
         // Method to create the support blocks
         public static void CreateSupportBlocks()
         {
             // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(AutoCAD.curDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
-                ObjectId xBlock  = ObjectId.Null;
-                ObjectId yBlock  = ObjectId.Null;
+                ObjectId xBlock = ObjectId.Null;
+                ObjectId yBlock = ObjectId.Null;
                 ObjectId xyBlock = ObjectId.Null;
 
                 // Check if the support blocks already exist in the drawing
-                if (!blkTbl.Has(Blocks.supportX))
+                if (!blkTbl.Has(BlockX))
                 {
                     // Create the X block
                     using (BlockTableRecord blkTblRec = new BlockTableRecord())
                     {
-                        blkTblRec.Name = Blocks.supportX;
+                        blkTblRec.Name = BlockX;
 
                         // Add the block table record to the block table and to the transaction
                         blkTbl.UpgradeOpen();
@@ -248,15 +198,15 @@ namespace SPMTool
                             // Define the points to add the lines
                             Point3d[] blkPts =
                             {
-                                origin,
-                                new Point3d(-100, 57.5,  0),
-                                origin,
-                                new Point3d(-100, -57.5, 0),
-                                new Point3d(-100,  75,   0),
-                                new Point3d(-100, -75,   0),
-                                new Point3d(-125,  75,   0),
-                                new Point3d(-125, -75,   0)
-                            };
+                                    origin,
+                                    new Point3d(-100, 57.5,  0),
+                                    origin,
+                                    new Point3d(-100, -57.5, 0),
+                                    new Point3d(-100,  75,   0),
+                                    new Point3d(-100, -75,   0),
+                                    new Point3d(-125,  75,   0),
+                                    new Point3d(-125, -75,   0)
+                                };
 
                             // Define the lines and add to the collection
                             for (int i = 0; i < 4; i++)
@@ -281,7 +231,7 @@ namespace SPMTool
                     // Create the Y block
                     using (BlockTableRecord blkTblRec = new BlockTableRecord())
                     {
-                        blkTblRec.Name = Blocks.supportY;
+                        blkTblRec.Name = BlockY;
 
                         // Set the insertion point for the block
                         Point3d origin = new Point3d(0, 0, 0);
@@ -301,15 +251,15 @@ namespace SPMTool
                             // Define the points to add the lines
                             Point3d[] blkPts =
                             {
-                                origin,
-                                new Point3d(-57.5, -100, 0),
-                                origin,
-                                new Point3d( 57.5, -100, 0),
-                                new Point3d(-75,   -100, 0),
-                                new Point3d( 75,   -100, 0),
-                                new Point3d(-75,   -125, 0),
-                                new Point3d( 75,   -125, 0)
-                            };
+                                    origin,
+                                    new Point3d(-57.5, -100, 0),
+                                    origin,
+                                    new Point3d( 57.5, -100, 0),
+                                    new Point3d(-75,   -100, 0),
+                                    new Point3d( 75,   -100, 0),
+                                    new Point3d(-75,   -125, 0),
+                                    new Point3d( 75,   -125, 0)
+                                };
 
                             // Define the lines and add to the collection
                             for (int i = 0; i < 4; i++)
@@ -334,7 +284,7 @@ namespace SPMTool
                     // Create the XY block
                     using (BlockTableRecord blkTblRec = new BlockTableRecord())
                     {
-                        blkTblRec.Name = Blocks.supportXY;
+                        blkTblRec.Name = BlockXY;
 
                         // Add the block table record to the block table and to the transaction
                         blkTbl.UpgradeOpen();
@@ -354,13 +304,13 @@ namespace SPMTool
                             // Define the points to add the lines
                             Point3d[] blkPts =
                             {
-                                origin,
-                                new Point3d(-57.5, -100, 0),
-                                origin,
-                                new Point3d( 57.5, -100, 0),
-                                new Point3d(-75,   -100, 0),
-                                new Point3d( 75,   -100, 0)
-                            };
+                                    origin,
+                                    new Point3d(-57.5, -100, 0),
+                                    origin,
+                                    new Point3d( 57.5, -100, 0),
+                                    new Point3d(-75,   -100, 0),
+                                    new Point3d( 75,   -100, 0)
+                                };
 
                             // Define the lines and add to the collection
                             for (int i = 0; i < 3; i++)
@@ -380,8 +330,8 @@ namespace SPMTool
 
                                 Line diagLine = new Line()
                                 {
-                                    StartPoint = new Point3d(-57.5 + xInc, -100,   0),
-                                    EndPoint =   new Point3d(-70   + xInc, -122.5, 0)
+                                    StartPoint = new Point3d(-57.5 + xInc, -100, 0),
+                                    EndPoint = new Point3d(-70 + xInc, -122.5, 0)
                                 };
 
                                 // Add to the collection
@@ -403,19 +353,25 @@ namespace SPMTool
             }
         }
 
-        // Get support list
-        public static Constraint[] ListOfConstraints()
+        // Create XData for forces
+        private static ResultBuffer SupportXData(SupportDirection direction)
         {
-            var constraints = new List<Constraint>();
+            // Definition for the Extended Data
+            string xdataStr = "SupportDirection Data";
 
-            // Get force objects
-            var sObjs = Auxiliary.GetEntitiesOnLayer(Layers.support);
+            // Get the Xdata size
+            int size = Enum.GetNames(typeof(SupportData)).Length;
+            var sData = new TypedValue[size];
 
-            foreach (ObjectId sObj in sObjs)
-                constraints.Add(new Constraint(sObj));
+            // Set values
+            sData[(int)SupportData.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName);
+            sData[(int)SupportData.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+            sData[(int)SupportData.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32, (int)direction);
 
+            // Add XData to force block
             return
-                constraints.ToArray();
+                new ResultBuffer(sData);
         }
+
     }
 }

@@ -1,19 +1,21 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.RootFinding;
+using SPMTool.AutoCAD;
+using SPMTool.Material;
+using Reinforcement = SPMTool.Material.Reinforcement;
+using StringerData = SPMTool.XData.Stringer;
 
-namespace SPMTool
+namespace SPMTool.Core
 {
 	public abstract class Stringer
 	{
-		// Enum for setting stringer behavior
+		// Enum for setting Stringer behavior
 		public enum Behavior
 		{
-			Linear = 1,
-			NonLinearClassic = 2,
+			Linear,
+			NonLinearClassic,
 			NonLinearMC2010
 		}
 
@@ -26,83 +28,78 @@ namespace SPMTool
 		public double                  Angle            { get; }
 		public double                  Width            { get; }
 		public double                  Height           { get; }
-		public Material.Concrete       Concrete         { get; }
+		public Concrete                Concrete         { get; }
         public Reinforcement.Stringer  Reinforcement    { get; }
         public abstract Matrix<double> LocalStiffness   { get; }
 		public abstract Vector<double> Forces           { get; }
 		public Vector<double>          Displacements    { get; set; }
 
 		// Constructor
-		public Stringer(ObjectId stringerObject, Material.Concrete concrete = null)
+		public Stringer(ObjectId stringerObject, Concrete concrete = null)
 		{
-			ObjectId = stringerObject;
+			ObjectId         = stringerObject;
 
 			// Get concrete
 			if (concrete == null)
-				Concrete = new Material.Concrete();
+				Concrete = AutoCAD.Material.ReadData();
 			else
 				Concrete = concrete;
 
-            // Start a transaction
-            using (Transaction trans = AutoCAD.curDb.TransactionManager.StartTransaction())
+			// Read the object as a line
+			Line strLine = Geometry.Stringer.ReadStringer(stringerObject);
+
+			// Get the length and angles
+			Length = strLine.Length;
+			Angle  = strLine.Angle;
+
+			// Calculate midpoint
+			var midPt = GlobalAuxiliary.MidPoint(strLine.StartPoint, strLine.EndPoint);
+
+			// Get the points
+			PointsConnected = new[] { strLine.StartPoint, midPt, strLine.EndPoint };
+
+			// Read the XData and get the necessary data
+			TypedValue[] data = Auxiliary.ReadXData(strLine);
+
+			// Get the Stringer number
+			Number = Convert.ToInt32(data[(int) StringerData.Number].Value);
+
+			// Create the list of grips
+			Grips = new []
 			{
-				// Read the object as a line
-				Line strLine = trans.GetObject(stringerObject, OpenMode.ForRead) as Line;
+				Convert.ToInt32(data[(int) StringerData.Grip1].Value),
+				Convert.ToInt32(data[(int) StringerData.Grip2].Value),
+				Convert.ToInt32(data[(int) StringerData.Grip3].Value)
+			};
 
-				// Get the length and angles
-				Length = strLine.Length;
-				Angle  = strLine.Angle;
+			// Get geometry
+			Width  = Convert.ToDouble(data[(int) StringerData.Width].Value);
+			Height = Convert.ToDouble(data[(int) StringerData.Height].Value);
 
-				// Calculate midpoint
-				var midPt = Auxiliary.MidPoint(strLine.StartPoint, strLine.EndPoint);
+			// Get reinforcement
+			int numOfBars = Convert.ToInt32(data[(int) StringerData.NumOfBars].Value);
+			double phi    = Convert.ToDouble(data[(int) StringerData.BarDiam].Value);
 
-				// Get the points
-				PointsConnected = new[] { strLine.StartPoint, midPt, strLine.EndPoint };
+			// Get steel data
+			double
+				fy = Convert.ToDouble(data[(int) StringerData.Steelfy].Value),
+				Es = Convert.ToDouble(data[(int) StringerData.SteelEs].Value);
 
-				// Read the XData and get the necessary data
-				ResultBuffer rb = strLine.GetXDataForApplication(AutoCAD.appName);
-				TypedValue[] data = rb.AsArray();
+			// Set steel data
+			var steel = new Steel(fy, Es);
 
-				// Get the stringer number
-				Number = Convert.ToInt32(data[(int) XData.Stringer.Number].Value);
+			// Set reinforcement
+			Reinforcement = new Reinforcement.Stringer(numOfBars, phi, steel);
 
-				// Create the list of grips
-				Grips = new []
-				{
-					Convert.ToInt32(data[(int) XData.Stringer.Grip1].Value),
-					Convert.ToInt32(data[(int) XData.Stringer.Grip2].Value),
-					Convert.ToInt32(data[(int) XData.Stringer.Grip3].Value)
-				};
-
-				// Get geometry
-				Width  = Convert.ToDouble(data[(int) XData.Stringer.Width].Value);
-				Height = Convert.ToDouble(data[(int) XData.Stringer.Height].Value);
-
-				// Get reinforcement
-				int numOfBars = Convert.ToInt32(data[(int) XData.Stringer.NumOfBars].Value);
-				double phi = Convert.ToDouble(data[(int) XData.Stringer.BarDiam].Value);
-
-				// Get steel data
-				double
-					fy = Convert.ToDouble(data[(int) XData.Stringer.Steelfy].Value),
-					Es = Convert.ToDouble(data[(int) XData.Stringer.SteelEs].Value);
-
-				// Set steel data
-				var steel = new Material.Steel(fy, Es);
-
-				// Set reinforcement
-				Reinforcement = new Reinforcement.Stringer(numOfBars, phi, steel);
-			}
-
-            // Calculate transformation matrix
-            TransMatrix = TransformationMatrix();
+			// Calculate transformation matrix
+			TransMatrix = TransformationMatrix();
 		}
 
 		// Set global indexes from grips
-		public int[] DoFIndex => Auxiliary.GlobalIndexes(Grips);
+		public int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Grips);
 
 		// Calculate direction cosines
-		public (double cos, double sin) DirectionCosines => Auxiliary.DirectionCosines(Angle);
+		public (double cos, double sin) DirectionCosines => GlobalAuxiliary.DirectionCosines(Angle);
 
 		// Calculate steel area
 		public double SteelArea => Reinforcement.Area;
@@ -138,7 +135,7 @@ namespace SPMTool
 			}
 		}
 
-		// Get stringer displacements from global displacement vector
+		// Get Stringer displacements from global displacement vector
 		public void Displacement(Vector<double> globalDisplacementVector)
 		{
 			var u = globalDisplacementVector;
@@ -162,10 +159,10 @@ namespace SPMTool
 		// Calculate local displacements
 		public Vector<double> LocalDisplacements => TransMatrix * Displacements;
 
-        // Global stringer forces
+        // Global Stringer forces
         public Vector<double> GlobalForces => TransMatrix.Transpose() * Forces;
 
-        // Maximum stringer force
+        // Maximum Stringer force
         public double MaxForce => Forces.AbsoluteMaximum();
 
         public class Linear : Stringer
@@ -173,10 +170,10 @@ namespace SPMTool
             // Private properties
             private double L  => Length;
             private double Ac => ConcreteArea;
-            private double Ec => Concrete.Eci;
+            private double Ec => Concrete.Ec;
 
             // Constructor
-            public Linear(ObjectId stringerObject, Material.Concrete concrete = null) : base(stringerObject, concrete)
+            public Linear(ObjectId stringerObject, Concrete concrete = null) : base(stringerObject, concrete)
             {
             }
 
@@ -199,7 +196,7 @@ namespace SPMTool
                 }
             }
 
-			// Calculate stringer forces
+			// Calculate Stringer forces
 			public override Vector<double> Forces
             {
                 get
@@ -225,7 +222,7 @@ namespace SPMTool
 			public (double N1, double N3) GenStresses { get; set; }
 			public (double e1, double e3) GenStrains  { get; set; }
 
-			public NonLinear(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
+			public NonLinear(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
 			{
 			}
 
@@ -238,9 +235,9 @@ namespace SPMTool
             public abstract double ecr { get; }
 
 				// Steel parameters
-			private double fy  => Reinforcement.Steel.fy;
-			private double ey  => Reinforcement.Steel.ey;
-			private double Es  => Reinforcement.Steel.Es;
+			private double fy  => Reinforcement.Steel.YieldStress;
+			private double ey  => Reinforcement.Steel.YieldStrain;
+			private double Es  => Reinforcement.Steel.ElasticModule;
 			private double esu => Reinforcement.Steel.esu;
 
 			// Constants
@@ -253,7 +250,7 @@ namespace SPMTool
 			private double t1    => EcAc + EsAs;
 			private double ey_ec => ey / ec;
 
-            // Maximum stringer forces
+            // Maximum Stringer forces
             private double Nc  => -fc * Ac;
 			private double Nyr =>  fy * As;
 			public abstract double Nyc { get; }
@@ -350,10 +347,10 @@ namespace SPMTool
 				}
 			}
 
-			// Global stringer forces for each iteration
+			// Global Stringer forces for each iteration
 			public Vector<double> IterationGlobalForces => TransMatrix.Transpose() * IterationForces;
 
-            // Calculate the effective stringer force
+            // Calculate the effective Stringer force
             public void StringerForces()
             {
                 // Get the initial forces (from previous load step)
@@ -426,7 +423,7 @@ namespace SPMTool
 				IterationGenStrains  = (e1, e3);
             }
 
-            // Calculate the stringer flexibility and generalized strains
+            // Calculate the Stringer flexibility and generalized strains
             public ((double e1, double e3) genStrains, Matrix<double> F) StringerGenStrains((double N1, double N3) genStresses)
             {
 	            var (N1, N3) = genStresses;
@@ -461,7 +458,7 @@ namespace SPMTool
             // Abstract method to calculate strain
             public abstract (double e, double de) StringerStrain(double N);
 
-			// Set stringer results (after reached convergence)
+			// Set Stringer results (after reached convergence)
 			public void Results()
 			{
 				// Get the values
@@ -473,7 +470,7 @@ namespace SPMTool
 				GenStrains  = genStrains;
 			}
 
-            // Calculate the total plastic generalized strain in a stringer
+			// Calculate the total plastic generalized strain in a Stringer
             public (double ep1, double ep3) PlasticGenStrains
             {
 	            get
@@ -506,7 +503,7 @@ namespace SPMTool
 	            }
             }
 
-            // Calculate the maximum plastic strain in a stringer for tension and compression
+            // Calculate the maximum plastic strain in a Stringer for tension and compression
             public (double eput, double epuc) MaxPlasticStrain
             {
 	            get
@@ -527,19 +524,19 @@ namespace SPMTool
 			// Classic SPM model
 			public class Classic : NonLinear
 			{
-				public Classic(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
+				public Classic(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
 				{
 				}
 
 				// Calculate concrete parameters
-				public override double fc  => Concrete.fcm;
+				public override double fc  => Concrete.Strength;
 				public override double ec  => -0.002;
 				public override double ecu => -0.0035;
 				public override double Ec  => -2 * fc / ec;
 				public override double fcr => 0.33 * Math.Sqrt(fc);
 				public override double ecr => fcr / Ec;
 
-                // Maximum stringer forces
+                // Maximum Stringer forces
                 public override double Nyc => -Nyr + Nc * (-2 * ey_ec - (-ey_ec) * (-ey_ec));
                 public override double Nt
                 {
@@ -554,11 +551,11 @@ namespace SPMTool
 	                }
                 }
 
-                // Calculate the strain and derivative on a stringer given a force N and the concrete parameters
+                // Calculate the strain and derivative on a Stringer given a force N and the concrete parameters
                 public override (double e, double de) StringerStrain(double N)
                 {
 	                // Verify the value of N
-	                // Tensioned stringer
+	                // Tensioned Stringer
 	                if (N >= 0)
 	                {
 		                if (N <= Ncr)
@@ -573,7 +570,7 @@ namespace SPMTool
 			                YieldingSteel(N);
 	                }
 
-	                // Compressed stringer
+	                // Compressed Stringer
 	                if (N > Nt)
 		                return
 			                ConcreteNotCrushed(N);
@@ -668,16 +665,16 @@ namespace SPMTool
             // MC2010 model for concrete
             public class MC2010 : NonLinear
             {
-	            public MC2010(ObjectId stringerObject, Material.Concrete concrete) : base(stringerObject, concrete)
+	            public MC2010(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
 	            {
 	            }
 
                 // Get concrete parameters
-                public override double fc     => Concrete.fcm;
-                public override double ec     => Concrete.ec1;
-                public override double ecu    => Concrete.eclim;
-                public override double Ec     => Concrete.Eci;
-                public override double fcr    => Concrete.fctm;
+                public override double fc     => Concrete.Strength;
+                public override double ec     => Concrete.ec;
+                public override double ecu    => Concrete.ecu;
+                public override double Ec     => Concrete.Ec;
+                public override double fcr    => Concrete.fcr;
                 public override double ecr    => Concrete.ecr;
                 public double          k      => Concrete.k;
                 private double         beta   =  0.6;
@@ -702,11 +699,11 @@ namespace SPMTool
 					}
                 }
 
-                // Calculate the strain and derivative on a stringer given a force N and the concrete parameters
+                // Calculate the strain and derivative on a Stringer given a force N and the concrete parameters
                 public override (double e, double de) StringerStrain(double N)
                 {
 	                // Verify the value of N
-	                if (N >= 0) // tensioned stringer
+	                if (N >= 0) // tensioned Stringer
 	                {
 		                if (N < Ncr)
 			                return
@@ -850,7 +847,6 @@ namespace SPMTool
                     return
                         (e, de);
                 }
-
             }
         }
 	}
