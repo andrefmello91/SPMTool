@@ -251,7 +251,7 @@ namespace SPMTool.Elements
             // Get the values
             double ec1 = Concrete.PrincipalStrains.ec1;
             var (fsx, fsy) = Reinforcement.Stresses;
-            double fc = Concrete.fc;
+            double fc = Concrete.Strength;
             double f1a = Concrete.PrincipalStresses.fc1;
             double phiAg = Concrete.AggregateDiameter;
 
@@ -336,7 +336,7 @@ namespace SPMTool.Elements
             {
                 // Get concrete parameters
                 double
-                    fc    = concrete.fc,
+                    fc    = concrete.Strength,
                     phiAg = concrete.AggregateDiameter;
 
                 // Initiate new concrete
@@ -460,7 +460,7 @@ namespace SPMTool.Elements
                 double ec1 = Concrete.PrincipalStrains.ec1;
                 double theta = PrincipalAngles.theta2;
                 var (fsx, fsy) = Reinforcement.Stresses;
-                double fc = Concrete.fc;
+                double fc = Concrete.Strength;
                 double fcr = Concrete.fcr;
                 double phiAg = Concrete.AggregateDiameter;
 
@@ -547,7 +547,7 @@ namespace SPMTool.Elements
             {
                 // Get concrete parameters
                 double
-                    fc    = concrete.fc,
+                    fc    = concrete.Strength,
                     phiAg = concrete.AggregateDiameter;
 
                 // Initiate new concrete
@@ -739,7 +739,7 @@ namespace SPMTool.Elements
             {
                 // Get concrete principal tensile strain
                 double ec1 = Concrete.PrincipalStrains.ec1;
-                double fc = Concrete.fc;
+                double fc = Concrete.Strength;
 
                 // Get the strains
                 double

@@ -54,7 +54,6 @@ namespace SPMTool.Elements
 
 				Direction = (x, y);
 			}
-
 		}
 
 		// Get support list
@@ -63,7 +62,7 @@ namespace SPMTool.Elements
 			var constraints = new List<Constraint>();
 
 			// Get force objects
-			var sObjs = AutoCAD.Auxiliary.GetEntitiesOnLayer(Layers.Support);
+			var sObjs = Auxiliary.GetEntitiesOnLayer(Layers.Support);
 
 			foreach (ObjectId sObj in sObjs)
 				constraints.Add(new Constraint(sObj));

@@ -16,10 +16,16 @@ namespace SPMTool.AutoCAD
 {
 	public static partial class Results
 	{
-		// Block names
-		public static string ShearBlock       = Auxiliary.GetBlockName(Blocks.ShearBlock);
-		public static string CompressiveBlock = Auxiliary.GetBlockName(Blocks.CompressiveStressBlock);
-		public static string TensileBlock     = Auxiliary.GetBlockName(Blocks.TensileStressBlock);
+		// Layers and block names
+		public static readonly string
+			StrForceLayer    = Layers.StringerForce.ToString(),
+			PanelForceLayer  = Layers.PanelForce.ToString(),
+			DispLayer        = Layers.Displacements.ToString(),
+			CompStressLayer  = Layers.CompressivePanelStress.ToString(),
+			TenStressLayer   = Layers.TensilePanelStress.ToString(),
+			ShearBlock       = Blocks.ShearBlock.ToString(),
+			CompressiveBlock = Blocks.CompressiveStressBlock.ToString(),
+			TensileBlock     = Blocks.TensileStressBlock.ToString();
 
 		// Draw results
 		public static void Draw(SPMTool.Analysis.Analysis analysis)
@@ -293,18 +299,18 @@ namespace SPMTool.AutoCAD
         private static void DrawPanelStresses(Panel[] panels)
 		{
 			// Check if the layer already exists in the drawing. If it doesn't, then it's created:
-			AutoCAD.Auxiliary.CreateLayer(Layers.PanelForce, Colors.Green, 0);
-			AutoCAD.Auxiliary.CreateLayer(Layers.CompressivePanelStress, Colors.Blue1, 80);
-			AutoCAD.Auxiliary.CreateLayer(Layers.TensilePanelStress, Colors.Red, 80);
+			Auxiliary.CreateLayer(Layers.PanelForce, Colors.Green, 0);
+			Auxiliary.CreateLayer(Layers.CompressivePanelStress, Colors.Blue1, 80);
+			Auxiliary.CreateLayer(Layers.TensilePanelStress, Colors.Red, 80);
 
             // Check if the shear blocks already exist. If not, create the blocks
             CreatePanelShearBlock();
             CreatePanelStressesBlock();
 
 			// Erase all the panel forces in the drawing
-			AutoCAD.Auxiliary.EraseObjects(Layers.PanelForce);
-			AutoCAD.Auxiliary.EraseObjects(Layers.CompressivePanelStress);
-			AutoCAD.Auxiliary.EraseObjects(Layers.TensilePanelStress);
+			Auxiliary.EraseObjects(Layers.PanelForce);
+			Auxiliary.EraseObjects(Layers.CompressivePanelStress);
+			Auxiliary.EraseObjects(Layers.TensilePanelStress);
 
 			// Start a transaction
 			using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
@@ -317,14 +323,13 @@ namespace SPMTool.AutoCAD
 				ObjectId compStress = blkTbl[CompressiveBlock];
 				ObjectId tensStress = blkTbl[TensileBlock];
 
-				// Get the stringers stifness matrix and add to the global stifness matrix
 				foreach (var pnl in panels)
 				{
 					// Get panel data
-					var l     = pnl.Edges.Length;
+					var l      = pnl.Edges.Length;
 					var cntrPt = pnl.CenterPoint;
 
-					// Get the maximum lenght of the panel
+					// Get the maximum length of the panel
 					double lMax = l.Max();
 
 					// Get the average stress
@@ -337,7 +342,7 @@ namespace SPMTool.AutoCAD
 					// Insert the block into the current space
 					using (BlockReference blkRef = new BlockReference(cntrPt, shearBlock))
 					{
-						blkRef.Layer = AutoCAD.Auxiliary.GetLayerName(Layers.PanelForce);
+						blkRef.Layer = PanelForceLayer;
 						AutoCAD.Auxiliary.AddObject(blkRef);
 
 						// Set the scale of the block
@@ -357,7 +362,7 @@ namespace SPMTool.AutoCAD
 						Point3d algnPt = new Point3d(cntrPt.X, cntrPt.Y, 0);
 
 						// Set the parameters
-						tauTxt.Layer = AutoCAD.Auxiliary.GetLayerName(Layers.PanelForce);
+						tauTxt.Layer = PanelForceLayer;
 						tauTxt.Height = 30 * scFctr;
 						tauTxt.TextString = Math.Abs(tauAvg).ToString();
 						tauTxt.Position = algnPt;
@@ -376,7 +381,7 @@ namespace SPMTool.AutoCAD
 						// Create compressive stress block
 						using (BlockReference blkRef = new BlockReference(cntrPt, compStress))
 						{
-							blkRef.Layer = AutoCAD.Auxiliary.GetLayerName(Layers.CompressivePanelStress);
+							blkRef.Layer = CompStressLayer;
 							blkRef.ColorIndex = (int)Colors.Blue1;
 							AutoCAD.Auxiliary.AddObject(blkRef);
 
@@ -406,7 +411,7 @@ namespace SPMTool.AutoCAD
 							Point3d algnPt = ln.EndPoint;
 
 							// Set the parameters
-							sigTxt.Layer = AutoCAD.Auxiliary.GetLayerName(Layers.CompressivePanelStress);
+							sigTxt.Layer = CompStressLayer;
 							sigTxt.Height = 30 * scFctr;
 							sigTxt.TextString = Math.Round(Math.Abs(sigma[1]), 2).ToString();
 							sigTxt.Position = algnPt;
@@ -424,7 +429,7 @@ namespace SPMTool.AutoCAD
 						// Create tensile stress block
 						using (BlockReference blkRef = new BlockReference(cntrPt, tensStress))
 						{
-							blkRef.Layer = AutoCAD.Auxiliary.GetLayerName(Layers.TensilePanelStress);
+							blkRef.Layer = TenStressLayer;
 							AutoCAD.Auxiliary.AddObject(blkRef);
 
 							// Set the scale of the block
@@ -453,7 +458,7 @@ namespace SPMTool.AutoCAD
 							Point3d algnPt = ln.EndPoint;
 
 							// Set the parameters
-							sigTxt.Layer = Auxiliary.GetLayerName(Layers.TensilePanelStress);
+							sigTxt.Layer = TenStressLayer;
 							sigTxt.Height = 30 * scFctr;
 							sigTxt.TextString = Math.Round(Math.Abs(sigma[1]), 2).ToString();
 							sigTxt.Position = algnPt;
@@ -531,7 +536,7 @@ namespace SPMTool.AutoCAD
 							using (Solid dgrm = new Solid(vrts[0], vrts[1], vrts[2], vrts[3]))
 							{
 								// Set the layer and transparency
-								dgrm.Layer = Auxiliary.GetLayerName(Layers.StringerForce);
+								dgrm.Layer = StrForceLayer;
 								dgrm.Transparency = Auxiliary.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
@@ -573,7 +578,7 @@ namespace SPMTool.AutoCAD
 							using (Solid dgrm1 = new Solid(vrts1[0], vrts1[1], vrts1[2]))
 							{
 								// Set the layer and transparency
-								dgrm1.Layer = Auxiliary.GetLayerName(Layers.StringerForce);
+								dgrm1.Layer = StrForceLayer;
 								dgrm1.Transparency = Auxiliary.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
@@ -590,7 +595,7 @@ namespace SPMTool.AutoCAD
 							using (Solid dgrm3 = new Solid(vrts3[0], vrts3[1], vrts3[2]))
 							{
 								// Set the layer and transparency
-								dgrm3.Layer = Auxiliary.GetLayerName(Layers.StringerForce);
+								dgrm3.Layer = StrForceLayer;
 								dgrm3.Transparency = Auxiliary.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
@@ -611,7 +616,7 @@ namespace SPMTool.AutoCAD
 							using (DBText txt1 = new DBText())
 							{
 								// Set the parameters
-								txt1.Layer = Auxiliary.GetLayerName(Layers.StringerForce);
+								txt1.Layer = StrForceLayer;
 								txt1.Height = 30;
 
 								// Write force in kN
@@ -643,7 +648,7 @@ namespace SPMTool.AutoCAD
 							using (DBText txt3 = new DBText())
 							{
 								// Set the parameters
-								txt3.Layer = Auxiliary.GetLayerName(Layers.StringerForce);
+								txt3.Layer = StrForceLayer;
 								txt3.Height = 30;
 
 								// Write force in kN
@@ -763,7 +768,7 @@ namespace SPMTool.AutoCAD
 					using (Line newStr = new Line(stPt, enPt))
 					{
 						// Set the layer to Stringer
-						newStr.Layer = Auxiliary.GetLayerName(Layers.Displacements);
+						newStr.Layer = DispLayer;
 
 						// Add the line to the drawing
 						Auxiliary.AddObject(newStr);
@@ -897,7 +902,7 @@ namespace SPMTool.AutoCAD
                         }
 
                         // If it's a Stringer
-                        else if (ent.Layer == Geometry.Stringer.Layer_Name)
+                        else if (ent.Layer == Geometry.Stringer.LayerName)
 						{
 							// Get the Stringer
 							var str = new Stringer.Linear(entRes.ObjectId);
@@ -928,7 +933,7 @@ namespace SPMTool.AutoCAD
 						}
 
 						// If it's a panel
-						else if (ent.Layer == Geometry.Panel.Layer_Name)
+						else if (ent.Layer == Geometry.Panel.LayerName)
 						{
 							// Get the panel
 							var pnl = new Panel.Linear(entRes.ObjectId);

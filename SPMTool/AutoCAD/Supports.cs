@@ -12,11 +12,16 @@ namespace SPMTool.AutoCAD
 {
     public static class Supports
     {
-        // Layer and block names
-        public static string LayerName = Auxiliary.GetLayerName(Layers.Support);
-        public static string BlockX    = Auxiliary.GetBlockName(Blocks.SupportX);
-        public static string BlockY    = Auxiliary.GetBlockName(Blocks.SupportY);
-        public static string BlockXY   = Auxiliary.GetBlockName(Blocks.SupportXY);
+        // Layer, block and direction names
+        public static readonly string
+	        LayerName = Layers.Support.ToString(),
+			Free      = "Free",
+	        X         = SupportDirection.X.ToString(),
+	        Y         = SupportDirection.Y.ToString(),
+	        XY        = SupportDirection.XY.ToString(),
+	        BlockX    = Blocks.SupportX.ToString(),
+	        BlockY    = Blocks.SupportY.ToString(),
+	        BlockXY   = Blocks.SupportXY.ToString();
 
         [CommandMethod("AddConstraint")]
         public static void AddConstraint()
@@ -57,11 +62,11 @@ namespace SPMTool.AutoCAD
 
                     // Ask the user set the support conditions:
                     PromptKeywordOptions supOp = new PromptKeywordOptions("\nAdd support in which direction?");
-                    supOp.Keywords.Add("Free");
-                    supOp.Keywords.Add("X");
-                    supOp.Keywords.Add("Y");
-                    supOp.Keywords.Add("XY");
-                    supOp.Keywords.Default = "Free";
+                    supOp.Keywords.Add(Free);
+                    supOp.Keywords.Add(X);
+                    supOp.Keywords.Add(Y);
+                    supOp.Keywords.Add(XY);
+                    supOp.Keywords.Default = Free;
                     supOp.AllowNone = false;
 
                     // Get the result
@@ -97,9 +102,6 @@ namespace SPMTool.AutoCAD
                                         {
                                             spBlk.UpgradeOpen();
 
-                                            // Remove the event handler
-                                            //spBlk.Erased -= new ObjectErasedEventHandler(ConstraintErased);
-
                                             // Erase the support
                                             spBlk.Erase();
                                             break;
@@ -108,7 +110,7 @@ namespace SPMTool.AutoCAD
                                 }
 
                                 // If the node is not Free, add the support blocks
-                                if (support != "Free")
+                                if (support != Free)
                                 {
                                     // Add the block to selected node at
                                     Point3d insPt = ndPos;
@@ -118,18 +120,18 @@ namespace SPMTool.AutoCAD
 
                                     // Choose the block to insert
                                     ObjectId supBlock = new ObjectId();
-                                    if (support == "X" && xBlock != ObjectId.Null)
+                                    if (support == X && xBlock != ObjectId.Null)
                                     {
                                         supBlock = xBlock;
                                     }
 
-                                    if (support == "Y" && yBlock != ObjectId.Null)
+                                    if (support == Y && yBlock != ObjectId.Null)
                                     {
                                         supBlock = yBlock;
                                         direction = SupportDirection.Y;
                                     }
 
-                                    if (support == "XY" && xyBlock != ObjectId.Null)
+                                    if (support == XY && xyBlock != ObjectId.Null)
                                     {
                                         supBlock = xyBlock;
                                         direction = SupportDirection.XY;

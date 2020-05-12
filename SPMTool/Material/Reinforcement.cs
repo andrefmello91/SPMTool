@@ -1,26 +1,20 @@
-﻿using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
-using MathNet.Numerics.LinearAlgebra;
-using SPMTool.AutoCAD;
-
-[assembly: CommandClass(typeof(SPMTool.Material.Reinforcement))]
+﻿using MathNet.Numerics.LinearAlgebra;
 
 namespace SPMTool
 {
 	namespace Material
 	{
-		public class Reinforcement
+		public abstract class Reinforcement
 		{
 			public class Stringer : Reinforcement
 			{
 				// Properties
-				public double         NumberOfBars  { get; }
-				public double         BarDiameter   { get; }
-				public Material.Steel Steel         { get; }
+				public double NumberOfBars  { get; }
+				public double BarDiameter   { get; }
+				public Steel  Steel         { get; }
 
 				// Constructor
-				public Stringer(double numberOfBars, double barDiameter, Material.Steel steel)
+				public Stringer(double numberOfBars, double barDiameter, Steel steel)
 				{
 					NumberOfBars = numberOfBars;
 					BarDiameter  = barDiameter;
@@ -67,10 +61,10 @@ namespace SPMTool
             public class Panel : Reinforcement
 			{
 				// Properties
-				public (double X, double Y)                 BarDiameter { get; }
-				public (double X, double Y)                 BarSpacing  { get; }
-				public (Material.Steel X, Material.Steel Y) Steel       { get; }
-				private double                              PanelWidth  { get; }
+				public (double X, double Y) BarDiameter { get; }
+				public (double X, double Y) BarSpacing  { get; }
+				public (Steel X, Steel Y)   Steel       { get; }
+				private double              PanelWidth  { get; }
 
 				// Constructor
 				public Panel((double X, double Y) barDiameter, (double X, double Y) barSpacing,

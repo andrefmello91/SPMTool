@@ -79,7 +79,7 @@ namespace SPMTool.Elements
         // Get node type
         private NodeType GetNodeType(DBPoint nodePoint)
         {
-            if (nodePoint.Layer == AutoCAD.Auxiliary.GetLayerName(Layers.ExtNode))
+            if (nodePoint.Layer == Geometry.Node.ExtLayerName)
                 return
                     NodeType.External;
 

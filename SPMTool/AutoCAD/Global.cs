@@ -64,18 +64,5 @@ namespace SPMTool
 			CompressiveStressBlock,
 			TensileStressBlock
 		}
-
-		// Block names
-		//public static class Blocks
-		//{
-		//	public static string
-		//		SupportX = "SupportX",
-		//		SupportY = "SupportY",
-		//		SupportXY = "SupportXY",
-		//		ForceBlock = "ForceBlock",
-		//		ShearBlock = "ShearBlock",
-		//		CompressiveStressBlock = "CompressiveStressBlock",
-		//		TensileStressBlock = "NonLinearStressBlock";
-		//}
 	}
 }

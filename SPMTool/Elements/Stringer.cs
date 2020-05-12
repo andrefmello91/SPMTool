@@ -27,7 +27,7 @@ namespace SPMTool.Elements
 		public double                  Angle            { get; }
 		public double                  Width            { get; }
 		public double                  Height           { get; }
-		public Material.Concrete       Concrete         { get; }
+		public Concrete                Concrete         { get; }
         public Reinforcement.Stringer  Reinforcement    { get; }
         public abstract Matrix<double> LocalStiffness   { get; }
 		public abstract Vector<double> Forces           { get; }
@@ -41,7 +41,7 @@ namespace SPMTool.Elements
 
 			// Get concrete
 			if (concrete == null)
-				Concrete = Concrete.ReadData();
+				Concrete = AutoCAD.Material.ReadData();
 			else
 				Concrete = concrete;
 
@@ -534,7 +534,7 @@ namespace SPMTool.Elements
 				}
 
 				// Calculate concrete parameters
-				public override double fc  => Concrete.fc;
+				public override double fc  => Concrete.Strength;
 				public override double ec  => -0.002;
 				public override double ecu => -0.0035;
 				public override double Ec  => -2 * fc / ec;
@@ -675,7 +675,7 @@ namespace SPMTool.Elements
 	            }
 
                 // Get concrete parameters
-                public override double fc     => Concrete.fc;
+                public override double fc     => Concrete.Strength;
                 public override double ec     => Concrete.ec;
                 public override double ecu    => Concrete.ecu;
                 public override double Ec     => Concrete.Ec;

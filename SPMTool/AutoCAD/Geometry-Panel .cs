@@ -20,8 +20,9 @@ namespace SPMTool.AutoCAD
 		{
 			// Properties
 			public Solid         SolidObject { get; }
-			public string        LayerName  = Auxiliary.GetLayerName(Layers.Panel);
-			public static string Layer_Name = Auxiliary.GetLayerName(Layers.Panel);
+
+			// Layer name
+			public static readonly string LayerName = Layers.Panel.ToString();
 
 			// Constructor
 			public Panel((Point3d, Point3d, Point3d, Point3d) vertices,
@@ -196,7 +197,7 @@ namespace SPMTool.AutoCAD
 									Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 									// Check if the selected object is a node
-									if (ent.Layer == Layer_Name)
+									if (ent.Layer == LayerName)
 									{
 										// Read as a solid
 										Solid pnl = ent as Solid;
@@ -392,7 +393,7 @@ namespace SPMTool.AutoCAD
 							Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 							// Check if the selected object is a node
-							if (ent.Layer == Layer_Name)
+							if (ent.Layer == LayerName)
 							{
 								var panel = new Elements.Panel.Linear(obj.ObjectId);
 
@@ -425,7 +426,7 @@ namespace SPMTool.AutoCAD
 								Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 								// Check if the selected object is a node
-								if (ent.Layer == Layer_Name)
+								if (ent.Layer == LayerName)
 								{
 									// Upgrade the OpenMode
 									ent.UpgradeOpen();

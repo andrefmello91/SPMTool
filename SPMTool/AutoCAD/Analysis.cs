@@ -31,10 +31,13 @@ namespace SPMTool.AutoCAD
 		[CommandMethod("DoNonLinearAnalysis")]
 		public static void DoNonLinearAnalysis()
 		{
-			// Get input data
-			InputData input = new InputData(Stringer.Behavior.NonLinearClassic, Panel.Behavior.MCFT);
+			// Get elements behavior
+			var (strBehavior, pnlBehavior) = Behavior.ReadData();
 
-			if (input.Concrete.IsSet)
+			// Get input data
+			InputData input = new InputData(strBehavior, pnlBehavior);
+
+			if (input.Concrete.IsSet && (strBehavior, pnlBehavior) != default)
 			{
 				// Do a linear analysis
 				var analysis = new Analysis.Analysis.NonLinear(input);
@@ -44,7 +47,7 @@ namespace SPMTool.AutoCAD
 			}
 
 			else
-				Application.ShowAlertDialog("Please set concrete parameters");
+				Application.ShowAlertDialog("Please set concrete parameters and elements behavior");
 		}
 
 

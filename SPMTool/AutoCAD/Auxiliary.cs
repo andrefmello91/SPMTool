@@ -43,7 +43,7 @@ namespace SPMTool.AutoCAD
         public static void CreateLayer(Layers layer, Colors color, int transparency = 0)
         {
             // Get layer name
-            string layerName = GetLayerName(layer);
+            string layerName = layer.ToString();
 
             // Start a transaction
             using (Transaction trans = Current.db.TransactionManager.StartTransaction())
@@ -79,28 +79,28 @@ namespace SPMTool.AutoCAD
             }
         }
 
-        // Get Layer name
-        public static string GetLayerName(Layers layer)
-        {
-            return
-                Enum.GetName(typeof(Layers), layer);
-        }
+        //// Get Layer name
+        //public static string GetLayerName(Layers layer)
+        //{
+        //    return
+        //        Enum.GetName(typeof(Layers), layer);
+        //}
 
-        // Get Block name
-        public static string GetBlockName(Blocks block)
-        {
-            return
-                Enum.GetName(typeof(Blocks), block);
-        }
+        //// Get Block name
+        //public static string GetBlockName(Blocks block)
+        //{
+        //    return
+        //        Enum.GetName(typeof(Blocks), block);
+        //}
 
         // Method to toogle view of a layer (on and off)
         public static void ToogleLayer(Layers layer)
         {
             // Get layer name
-            string layerName = Enum.GetName(typeof(Layers), layer);
+            string layerName = layer.ToString();
 
             // Start a transaction
-            using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Layer table for read
                 LayerTable lyrTbl = trans.GetObject(AutoCAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
@@ -130,7 +130,7 @@ namespace SPMTool.AutoCAD
         public static void LayerOff(Layers layer)
         {
             // Get layer name
-            string layerName = Enum.GetName(typeof(Layers), layer);
+            string layerName = layer.ToString();
 
             // Start a transaction
             using (Transaction trans = Current.db.TransactionManager.StartTransaction())
@@ -159,7 +159,7 @@ namespace SPMTool.AutoCAD
         public static void LayerOn(Layers layer)
         {
             // Get layer name
-            string layerName = Enum.GetName(typeof(Layers), layer);
+            string layerName = layer.ToString();
 
             // Start a transaction
             using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
@@ -188,7 +188,7 @@ namespace SPMTool.AutoCAD
         public static ObjectIdCollection GetEntitiesOnLayer(Layers layer)
         {
             // Get layer name
-            string layerName = Enum.GetName(typeof(Layers), layer);
+            string layerName = layer.ToString();
 
             // Build a filter list so that only entities on the specified layer are selected
             TypedValue[] tvs =

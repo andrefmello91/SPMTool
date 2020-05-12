@@ -15,9 +15,10 @@ namespace SPMTool.AutoCAD
     public static class Forces
     {
         // Layer and block names
-        public static string LayerName    = Auxiliary.GetLayerName(Layers.Force);
-        public static string TxtLayerName = Auxiliary.GetLayerName(Layers.ForceText);
-        public static string BlockName    = Auxiliary.GetBlockName(Blocks.ForceBlock);
+        public static readonly string
+	        LayerName    = Layers.Force.ToString(),
+			TxtLayerName = Layers.ForceText.ToString(),
+			BlockName    = Blocks.ForceBlock.ToString();
 
         [CommandMethod("AddForce")]
         public static void AddForce()

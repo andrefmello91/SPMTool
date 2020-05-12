@@ -26,8 +26,8 @@ namespace SPMTool.AutoCAD
 			public Point3d EndPoint
 				=> LineObject.EndPoint;
 
-			public string        LayerName  = Auxiliary.GetLayerName(Layers.Stringer);
-			public static string Layer_Name = Auxiliary.GetLayerName(Layers.Stringer);
+			// Layer name
+			public static readonly string LayerName = Layers.Stringer.ToString();
 
 			// Constructor
 			public Stringer(Point3d startPoint, Point3d endPoint, List<(Point3d start, Point3d end)> stringerList = null)
@@ -185,7 +185,7 @@ namespace SPMTool.AutoCAD
 									Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 									// Check if the selected object is a Stringer
-									if (ent.Layer == Layer_Name)
+									if (ent.Layer == LayerName)
 									{
 										// Read as a line
 										Line str = ent as Line;
@@ -331,7 +331,7 @@ namespace SPMTool.AutoCAD
 
 						// If XData does not exist, create it
 						if (str.XData == null)
-							data = NewStringerXData();
+							data = NewStringerData();
 
 						else // Xdata exists
 						{
@@ -342,7 +342,7 @@ namespace SPMTool.AutoCAD
 							// Verify the size of XData
 							if (data.Length != size)
 							{
-								data = NewStringerXData();
+								data = NewStringerData();
 
 								// Alert the user
 								userAlert = true;
@@ -351,7 +351,7 @@ namespace SPMTool.AutoCAD
 
 
 						// Get the coordinates of the midpoint of the Stringer
-						Point3d midPt = SPMTool.GlobalAuxiliary.MidPoint(str.StartPoint, str.EndPoint);
+						Point3d midPt = GlobalAuxiliary.MidPoint(str.StartPoint, str.EndPoint);
 
 						// Get the Stringer number
 						int strNum = midPtsList.IndexOf(midPt) + 1;
@@ -364,8 +364,7 @@ namespace SPMTool.AutoCAD
 						// Set the updated number and nodes in ascending number and length (line 2 to 6)
 						data[(int) StringerData.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, strNum);
 						data[(int) StringerData.Grip1]  = new TypedValue((int) DxfCode.ExtendedDataReal, strStNd);
-						data[(int) StringerData.Grip2]  =
-							new TypedValue((int) DxfCode.ExtendedDataReal, strMidNd);
+						data[(int) StringerData.Grip2]  = new TypedValue((int) DxfCode.ExtendedDataReal, strMidNd);
 						data[(int) StringerData.Grip3]  = new TypedValue((int) DxfCode.ExtendedDataReal, strEnNd);
 
 						// Add the new XData
@@ -436,7 +435,7 @@ namespace SPMTool.AutoCAD
 							Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 							// Check if the selected object is a node
-							if (ent.Layer == Layer_Name)
+							if (ent.Layer == LayerName)
 							{
 								var stringer = new Elements.Stringer.Linear(obj.ObjectId);
 
@@ -486,7 +485,7 @@ namespace SPMTool.AutoCAD
 									Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 									// Check if the selected object is a node
-									if (ent.Layer == Layer_Name)
+									if (ent.Layer == LayerName)
 									{
 										// Upgrade the OpenMode
 										ent.UpgradeOpen();
@@ -515,7 +514,7 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Method to create XData
-			private static TypedValue[] NewStringerXData()
+			private static TypedValue[] NewStringerData()
 			{
 				// Definition for the Extended Data
 				string xdataStr = "Stringer Data";

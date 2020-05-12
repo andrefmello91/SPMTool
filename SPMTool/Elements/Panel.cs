@@ -13,8 +13,8 @@ namespace SPMTool.Elements
         public enum Behavior
         {
             Linear,
-            MCFT,
-            DSFM
+            NonLinearMCFT,
+            NonLinearDSFM
         }
 
         // Panel parameters
@@ -34,14 +34,14 @@ namespace SPMTool.Elements
         public abstract (Vector<double> sigma, double theta) PrincipalStresses { get; }
 
         // Constructor
-        public Panel(ObjectId panelObject, Material.Concrete concrete = null, Behavior behavior = Behavior.Linear)
+        public Panel(ObjectId panelObject, Concrete concrete = null, Behavior behavior = Behavior.Linear)
         {
             ObjectId      = panelObject;
             PanelBehavior = behavior;
 
             // Get concrete
             if (concrete == null)
-                Concrete = Concrete.ReadData();
+                Concrete = AutoCAD.Material.ReadData();
             else
                 Concrete = concrete;
 
@@ -68,7 +68,7 @@ namespace SPMTool.Elements
 
                 // Get the panel parameters
                 Number = Convert.ToInt32(pnlData[(int)PanelData.Number].Value);
-                Width = Convert.ToDouble(pnlData[(int)PanelData.Width].Value);
+                Width  = Convert.ToDouble(pnlData[(int)PanelData.Width].Value);
 
                 // Create the list of grips
                 Grips = new[]
@@ -89,8 +89,8 @@ namespace SPMTool.Elements
                 double
                     phiX = Convert.ToDouble(pnlData[(int)PanelData.XDiam].Value),
                     phiY = Convert.ToDouble(pnlData[(int)PanelData.YDiam].Value),
-                    sx = Convert.ToDouble(pnlData[(int)PanelData.Sx].Value),
-                    sy = Convert.ToDouble(pnlData[(int)PanelData.Sy].Value);
+                    sx   = Convert.ToDouble(pnlData[(int)PanelData.Sx].Value),
+                    sy   = Convert.ToDouble(pnlData[(int)PanelData.Sy].Value);
 
                 // Get steel data
                 double
@@ -101,8 +101,8 @@ namespace SPMTool.Elements
 
                 var steel =
                 (
-                    new Material.Steel(fyx, Esx),
-                    new Material.Steel(fyy, Esy)
+                    new Steel(fyx, Esx),
+                    new Steel(fyy, Esy)
                 );
 
                 // Set reinforcement
@@ -152,6 +152,18 @@ namespace SPMTool.Elements
             }
         }
 
+		// Calculate reference length
+		public double ReferenceLength
+		{
+			get
+			{
+				var (a, b, _, _) = Dimensions;
+
+				return
+					Math.Min(a, b);
+			}
+		}
+
         // Set the center point
         public Point3d CenterPoint
         {
@@ -166,7 +178,7 @@ namespace SPMTool.Elements
 
         // Set edge lengths and angles
         private double[] Lengths => Edges.Length;
-        private double[] Angles => Edges.Angle;
+        private double[] Angles  => Edges.Angle;
         public (double[] Length, double[] Angle) Edges
         {
             get
@@ -518,25 +530,25 @@ namespace SPMTool.Elements
             // Private Properties
             private int LoadStep { get; set; }
 
-            public NonLinear(ObjectId panelObject, Concrete concrete, Stringer[] stringers, Behavior behavior = Behavior.MCFT) : base(panelObject, concrete, behavior)
+            public NonLinear(ObjectId panelObject, Concrete concrete, Stringer[] stringers, Behavior behavior = Behavior.NonLinearMCFT) : base(panelObject, concrete, behavior)
             {
                 // Get Stringer dimensions and effective ratio
                 StringerDimensions = StringersDimensions(stringers);
 
                 // Calculate initial matrices
                 BAMatrix = MatrixBA();
-                QMatrix = MatrixQ();
-                PMatrix = MatrixP();
+                QMatrix  = MatrixQ();
+                PMatrix  = MatrixP();
 
                 // Initiate integration points
                 IntegrationPoints = new Membrane[4];
 
-                if (PanelBehavior == Behavior.MCFT)
+                if (PanelBehavior == Behavior.NonLinearMCFT)
                     for (int i = 0; i < 4; i++)
 	                    IntegrationPoints[i] = new Membrane.MCFT(Concrete, Reinforcement, Width);
                 else
                     for (int i = 0; i < 4; i++)
-                        IntegrationPoints[i] = new Membrane.DSFM(Concrete, Reinforcement, Width, 100);
+                        IntegrationPoints[i] = new Membrane.DSFM(Concrete, Reinforcement, Width, ReferenceLength);
 
             }
 

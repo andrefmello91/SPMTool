@@ -546,10 +546,10 @@ namespace SPMTool.Analysis
             private bool EquilibriumConvergence(Vector<double> residualForces, Vector<double> residualDisplacements, int iteration)
 			{
 				double
-					maxForce  = residualForces.AbsoluteMaximum(),
+					maxForce = residualForces.AbsoluteMaximum(),
 					maxDisp  = residualDisplacements.AbsoluteMaximum(),
-					fTol = MaxElementForce / 100,
-					uTol = 0.001;
+					fTol     = MaxElementForce / 100,
+					uTol     = 0.001;
 
                 // Check convergence
                 if (maxForce <= fTol && maxDisp <= uTol && iteration > 1)

@@ -4,6 +4,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.Elements;
 using SPMTool.Material;
+using SPMTool.AutoCAD;
 
 namespace SPMTool.Analysis
 {
@@ -30,18 +31,18 @@ namespace SPMTool.Analysis
 		public InputData(Stringer.Behavior stringerBehavior, Panel.Behavior panelBehavior)
 		{
 			// Get the collection of elements in the model
-			NodeObjects     = AutoCAD.Geometry.Node.UpdateNodes();
-			StringerObjects = AutoCAD.Geometry.Stringer.UpdateStringers();
-			PanelObjects    = AutoCAD.Geometry.Panel.UpdatePanels();
+			NodeObjects     = Geometry.Node.UpdateNodes();
+			StringerObjects = Geometry.Stringer.UpdateStringers();
+			PanelObjects    = Geometry.Panel.UpdatePanels();
 
             // Read forces and constraints
             Forces      = Force.ListOfForces();
             Constraints = Constraint.ListOfConstraints();
 
 			// Get concrete data
-			Concrete = Concrete.ReadData();
+			Concrete = AutoCAD.Material.ReadData();
 
-			// Set the panelBehavior of elements
+			// Set the Behavior of elements
 			StringerBehavior = stringerBehavior;
 			PanelBehavior    = panelBehavior;
 
@@ -114,8 +115,11 @@ namespace SPMTool.Analysis
 				if (PanelBehavior == Panel.Behavior.Linear)
 					panel = new Panel.Linear(pnlObj, Concrete);
 
-				else
+				else if (PanelBehavior == Panel.Behavior.NonLinearMCFT)
 					panel = new Panel.NonLinear(pnlObj, Concrete, Stringers);
+
+				else
+					panel = new Panel.NonLinear(pnlObj, Concrete, Stringers, Panel.Behavior.NonLinearDSFM);
 
                 // Set to the array
                 int i     = panel.Number - 1;

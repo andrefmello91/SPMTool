@@ -30,21 +30,23 @@ namespace SPMTool.AutoCAD
 					string layerName;
 
 					if (Type == NodeType.External)
-						layerName = Auxiliary.GetLayerName(Layers.ExtNode);
+						layerName = ExtLayerName;
 
 					else if (Type == NodeType.Internal)
-						layerName = Auxiliary.GetLayerName(Layers.IntNode);
+						layerName = IntLayerName;
 
 					else
-						layerName = Auxiliary.GetLayerName(Layers.Displacements);
+						layerName = DispLayerName;
 
 					return layerName;
 				}
 			}
 
-			public static string ExtLayerName  = Auxiliary.GetLayerName(Layers.ExtNode);
-			public static string IntLayerName  = Auxiliary.GetLayerName(Layers.IntNode);
-			public static string DispLayerName = Auxiliary.GetLayerName(Layers.Displacements);
+			// Layer names
+			public static readonly string
+				ExtLayerName  = Layers.ExtNode.ToString(),
+				IntLayerName  = Layers.IntNode.ToString(),
+				DispLayerName = Layers.Displacements.ToString();
 
 			// Constructor
 			public Node(Point3d position, NodeType nodeType)
