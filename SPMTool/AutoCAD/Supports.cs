@@ -373,5 +373,11 @@ namespace SPMTool.AutoCAD
                 new ResultBuffer(sData);
         }
 
+        // Toggle view for supports
+        [CommandMethod("ToogleSupports")]
+        public static void ToogleSupports()
+        {
+	        Auxiliary.ToogleLayer(Layers.Support);
+        }
     }
 }

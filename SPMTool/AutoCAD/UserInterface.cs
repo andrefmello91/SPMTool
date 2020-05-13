@@ -68,7 +68,33 @@ namespace SPMTool
 
 	    public class UserInterface
 	    {
-		    public static BitmapImage getBitmap(Bitmap image)
+		    // Initialize the icons
+		    private static Bitmap
+			    strBmp,
+			    pnlBmp,
+			    setBmp,
+			    dvStrBmp,
+			    dvPnlBmp,
+			    updtBmp,
+			    strRefBmp,
+			    pnlRefBmp,
+			    cncrtBmp,
+			    suprtBmp,
+			    fcBmp,
+			    linBMP,
+			    nlinBMP,
+			    viewNdBmp,
+			    viewStrBmp,
+			    viewPnlBmp,
+				viewFBmp,
+				viewSupBmp,
+			    viewDtBmp,
+			    strFBMP,
+			    pnlFBMP,
+			    pnlSBMP,
+			    dispBMP;
+
+            public static BitmapImage getBitmap(Bitmap image)
 		    {
 			    MemoryStream stream = new MemoryStream();
 			    image.Save(stream, ImageFormat.Png);
@@ -95,100 +121,83 @@ namespace SPMTool
 			    // Check the current theme
 			    short theme = (short) Application.GetSystemVariable("COLORTHEME");
 
-			    // Initialize the icons
-			    Bitmap strBmp,
-				    pnlBmp,
-				    setBmp,
-				    dvStrBmp,
-				    dvPnlBmp,
-				    updtBmp,
-				    strRefBmp,
-				    pnlRefBmp,
-				    cncrtBmp,
-				    suprtBmp,
-				    fcBmp,
-				    linBMP,
-				    nlinBMP,
-				    viewNdBmp,
-				    viewStrBmp,
-				    viewPnlBmp,
-				    viewDtBmp,
-				    strFBMP,
-				    pnlFBMP,
-				    dispBMP;
-
 			    // If the theme is dark (0), get the light icons
 			    if (theme == 0)
 			    {
-				    strBmp = Properties.Resources.stringer_large_light;
-				    pnlBmp = Properties.Resources.panel_large_light;
-				    setBmp = Properties.Resources.set_small_light;
-				    dvStrBmp = Properties.Resources.divstr_small_light;
-				    dvPnlBmp = Properties.Resources.divpnl_small_light;
-				    updtBmp = Properties.Resources.update_small_light;
-				    viewDtBmp = Properties.Resources.elementdata_large_light;
-				    strRefBmp = Properties.Resources.stringerreinforcement_large_light;
-				    pnlRefBmp = Properties.Resources.panelreinforcement_large_light;
-				    cncrtBmp = Properties.Resources.concrete_large_light;
-				    suprtBmp = Properties.Resources.support_large_light;
-				    fcBmp = Properties.Resources.force_large_light;
-				    linBMP = Properties.Resources.linear_large_light;
-				    nlinBMP = Properties.Resources.nonlinear_large_light;
-				    viewNdBmp = Properties.Resources.viewnode_large_light;
+				    strBmp     = Properties.Resources.stringer_large_light;
+				    pnlBmp     = Properties.Resources.panel_large_light;
+				    setBmp     = Properties.Resources.set_small_light;
+				    dvStrBmp   = Properties.Resources.divstr_small_light;
+				    dvPnlBmp   = Properties.Resources.divpnl_small_light;
+				    updtBmp    = Properties.Resources.update_small_light;
+				    viewDtBmp  = Properties.Resources.elementdata_large_light;
+				    strRefBmp  = Properties.Resources.stringerreinforcement_large_light;
+				    pnlRefBmp  = Properties.Resources.panelreinforcement_large_light;
+				    cncrtBmp   = Properties.Resources.concrete_large_light;
+				    suprtBmp   = Properties.Resources.support_large_light;
+				    fcBmp      = Properties.Resources.force_large_light;
+				    linBMP     = Properties.Resources.linear_large_light;
+				    nlinBMP    = Properties.Resources.nonlinear_large_light;
+				    viewNdBmp  = Properties.Resources.viewnode_large_light;
 				    viewStrBmp = Properties.Resources.viewstringer_large_light;
 				    viewPnlBmp = Properties.Resources.viewpanel_large_light;
-				    strFBMP = Properties.Resources.stringerforces_large_light;
-				    pnlFBMP = Properties.Resources.panelforces_large_light;
-				    dispBMP = Properties.Resources.displacements_large_light;
+				    viewFBmp   = Properties.Resources.viewforce_large_light;
+				    viewSupBmp = Properties.Resources.viewsupport_large_light;
+				    strFBMP    = Properties.Resources.stringerforces_large_light;
+				    pnlFBMP    = Properties.Resources.panelforces_large_light;
+				    pnlSBMP    = Properties.Resources.panelstresses_large_light;
+				    dispBMP    = Properties.Resources.displacements_large_light;
 			    }
 			    else // If the theme is light
 			    {
-				    strBmp = Properties.Resources.stringer_large;
-				    pnlBmp = Properties.Resources.panel_large;
-				    setBmp = Properties.Resources.set_small;
-				    dvStrBmp = Properties.Resources.divstr_small;
-				    dvPnlBmp = Properties.Resources.divpnl_small;
-				    updtBmp = Properties.Resources.update_small;
-				    viewDtBmp = Properties.Resources.elementdata_large;
-				    strRefBmp = Properties.Resources.stringerreinforcement_large;
-				    pnlRefBmp = Properties.Resources.panelreinforcement_large;
-				    cncrtBmp = Properties.Resources.concrete_large;
-				    suprtBmp = Properties.Resources.support_large;
-				    fcBmp = Properties.Resources.force_large;
-				    linBMP = Properties.Resources.linear_large;
-				    nlinBMP = Properties.Resources.nonlinear_large;
-				    viewNdBmp = Properties.Resources.viewnode_large;
+				    strBmp     = Properties.Resources.stringer_large;
+				    pnlBmp     = Properties.Resources.panel_large;
+				    setBmp     = Properties.Resources.set_small;
+				    dvStrBmp   = Properties.Resources.divstr_small;
+				    dvPnlBmp   = Properties.Resources.divpnl_small;
+				    updtBmp    = Properties.Resources.update_small;
+				    viewDtBmp  = Properties.Resources.elementdata_large;
+				    strRefBmp  = Properties.Resources.stringerreinforcement_large;
+				    pnlRefBmp  = Properties.Resources.panelreinforcement_large;
+				    cncrtBmp   = Properties.Resources.concrete_large;
+				    suprtBmp   = Properties.Resources.support_large;
+				    fcBmp      = Properties.Resources.force_large;
+				    linBMP     = Properties.Resources.linear_large;
+				    nlinBMP    = Properties.Resources.nonlinear_large;
+				    viewNdBmp  = Properties.Resources.viewnode_large;
 				    viewStrBmp = Properties.Resources.viewstringer_large;
 				    viewPnlBmp = Properties.Resources.viewpanel_large;
-				    strFBMP = Properties.Resources.stringerforces_large;
-				    pnlFBMP = Properties.Resources.panelforces_large;
-				    dispBMP = Properties.Resources.displacements_large;
+				    viewFBmp   = Properties.Resources.viewforce_large;
+				    viewSupBmp = Properties.Resources.viewsupport_large;
+				    strFBMP    = Properties.Resources.stringerforces_large;
+				    pnlFBMP    = Properties.Resources.panelforces_large;
+				    pnlSBMP    = Properties.Resources.panelstresses_large;
+				    dispBMP    = Properties.Resources.displacements_large;
 			    }
 
 			    // Create the Ribbon Tab
 			    RibbonTab Tab = new RibbonTab()
 			    {
-				    Title = AutoCAD.Current.appName,
-				    Id = AutoCAD.Current.appName
+				    Title = Current.appName,
+				    Id    = Current.appName
 			    };
 			    ribbonControl.Tabs.Add(Tab);
 
 			    // Create the Ribbon panels
-			    GeometryPanel(Tab, strBmp, pnlBmp, setBmp, dvStrBmp, dvPnlBmp, updtBmp, viewDtBmp);
-			    MaterialPanel(Tab, cncrtBmp, viewDtBmp);
-			    ReinforcementPanel(Tab, strRefBmp, pnlRefBmp);
-			    ConditionsPanel(Tab, suprtBmp, fcBmp);
-			    AnalysisPanel(Tab, linBMP, nlinBMP);
-			    ViewPanel(Tab, viewNdBmp, viewStrBmp, viewPnlBmp, viewDtBmp);
-			    ResultsPanel(Tab, strFBMP, pnlFBMP, dispBMP);
+			    GeometryPanel(Tab);
+			    MaterialPanel(Tab);
+			    ReinforcementPanel(Tab);
+			    ConditionsPanel(Tab);
+			    AnalysisPanel(Tab);
+			    ViewPanel(Tab);
+			    ResultsPanel(Tab);
 
 			    // Activate tab
 			    Tab.IsActive = true;
 		    }
 
 		    // Create Geometry Panel
-		    public static void GeometryPanel(RibbonTab Tab, Bitmap stringer, Bitmap panel, Bitmap set,
-			    Bitmap divideStringer, Bitmap dividePanel, Bitmap update, Bitmap view)
+		    private static void GeometryPanel(RibbonTab Tab)
 		    {
 			    RibbonPanelSource pnlSrc = new RibbonPanelSource();
 			    pnlSrc.Title = "Geometry";
@@ -199,10 +208,10 @@ namespace SPMTool
 			    RibbonButton button2 = new RibbonButton()
 			    {
 				    Text = "Add Stringer",
-				    ToolTip = "Create a Stringer conecting two nodes",
+				    ToolTip = "Create a Stringer connecting two nodes",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(stringer),
+				    LargeImage = getBitmap(strBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "AddStringer"
 			    };
@@ -213,7 +222,7 @@ namespace SPMTool
 				    ToolTip = "Create a panel connecting four nodes",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(panel),
+				    LargeImage = getBitmap(pnlBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "AddPanel"
 			    };
@@ -242,7 +251,7 @@ namespace SPMTool
 				    ToolTip = "Set the geometry to a selection of stringers",
 				    ShowText = true,
 				    ShowImage = true,
-				    Image = getBitmap(set),
+				    Image = getBitmap(setBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "SetStringerGeometry"
 			    };
@@ -253,7 +262,7 @@ namespace SPMTool
 				    ToolTip = "Set the geometry to a selection of panels",
 				    ShowText = true,
 				    ShowImage = true,
-				    Image = getBitmap(set),
+				    Image = getBitmap(setBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "SetPanelGeometry"
 			    };
@@ -280,7 +289,7 @@ namespace SPMTool
 				    ToolTip = "Divide a Stringer into smaller ones",
 				    ShowText = true,
 				    ShowImage = true,
-				    Image = getBitmap(divideStringer),
+				    Image = getBitmap(dvStrBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "DivideStringer"
 			    };
@@ -291,7 +300,7 @@ namespace SPMTool
 				    ToolTip = "Divide a panel and surrounding stringers",
 				    ShowText = true,
 				    ShowImage = true,
-				    Image = getBitmap(dividePanel),
+				    Image = getBitmap(dvPnlBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "DividePanel"
 			    };
@@ -317,7 +326,7 @@ namespace SPMTool
 				    ToolTip = "Update the number of nodes, stringers and panels in the whole model",
 				    ShowText = true,
 				    ShowImage = true,
-				    Image = getBitmap(update),
+				    Image = getBitmap(updtBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "UpdateElements"
 			    };
@@ -328,7 +337,7 @@ namespace SPMTool
 		    }
 
 		    // Create Reinforcement Panel
-		    public static void ReinforcementPanel(RibbonTab Tab, Bitmap stringerRef, Bitmap panelRef)
+		    private static void ReinforcementPanel(RibbonTab Tab)
 		    {
 			    RibbonPanelSource pnlSrc = new RibbonPanelSource();
 			    pnlSrc.Title = "Reinforcement";
@@ -336,24 +345,27 @@ namespace SPMTool
 			    Panel.Source = pnlSrc;
 			    Tab.Panels.Add(Panel);
 
-			    RibbonButton button1 = new RibbonButton()
+			    RibbonButton[] buttons = new RibbonButton[2];
+
+			    // Material parameters buttons
+			    buttons[0] = new RibbonButton()
 			    {
-				    Text = "Stringer",
+                    Text = "Stringer",
 				    ToolTip = "Set reinforcement to a selection of stringers (only needed in nonlinear analysis)",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(stringerRef),
+				    LargeImage = getBitmap(strRefBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "SetStringerReinforcement"
 			    };
 
-			    RibbonButton button2 = new RibbonButton()
+			    buttons[1] = new RibbonButton()
 			    {
-				    Text = "Panel",
+                    Text = "Panel",
 				    ToolTip = "Set reinforcement to a selection of panels (only needed in nonlinear analysis)",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(panelRef),
+				    LargeImage = getBitmap(pnlRefBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "SetPanelReinforcement"
 			    };
@@ -366,15 +378,16 @@ namespace SPMTool
 				    Size = RibbonItemSize.Large,
 				    IsSynchronizedWithCurrentItem = true
 			    };
-			    rbSpBtn1.Items.Add(button1);
-			    rbSpBtn1.Items.Add(button2);
 
-			    // Add to the panel source
-			    pnlSrc.Items.Add(rbSpBtn1);
+			    foreach (var button in buttons)
+				    rbSpBtn1.Items.Add(button);
+
+                // Add to the panel source
+                pnlSrc.Items.Add(rbSpBtn1);
 		    }
 
 		    // Create Material Panel
-		    public static void MaterialPanel(RibbonTab Tab, Bitmap concrete, Bitmap view)
+		    private static void MaterialPanel(RibbonTab Tab)
 		    {
 			    RibbonPanelSource pnlSrc = new RibbonPanelSource();
 			    pnlSrc.Title = "Material";
@@ -382,25 +395,27 @@ namespace SPMTool
 			    Panel.Source = pnlSrc;
 			    Tab.Panels.Add(Panel);
 
-			    // Material parameters buttons
-			    RibbonButton button1 = new RibbonButton()
+			    RibbonButton[] buttons = new RibbonButton[2];
+
+                // Material parameters buttons
+                buttons[0] = new RibbonButton()
 			    {
 				    Text = "Concrete",
 				    ToolTip = "Set concrete compressive strength and elastic module",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(concrete),
+				    LargeImage = getBitmap(cncrtBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "SetConcreteParameters"
 			    };
 
-			    RibbonButton button2 = new RibbonButton()
+                buttons[1] = new RibbonButton()
 			    {
 				    Text = "View concrete parameters",
 				    ToolTip = "View concrete parameters",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(view),
+				    LargeImage = getBitmap(viewDtBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "ViewConcreteParameters"
 			    };
@@ -413,15 +428,16 @@ namespace SPMTool
 				    Size = RibbonItemSize.Large,
 				    IsSynchronizedWithCurrentItem = true
 			    };
-			    rbSpBtn1.Items.Add(button1);
-			    rbSpBtn1.Items.Add(button2);
 
-			    // Add to the panel source
-			    pnlSrc.Items.Add(rbSpBtn1);
+			    foreach (var button in buttons)
+				    rbSpBtn1.Items.Add(button);
+
+                // Add to the panel source
+                pnlSrc.Items.Add(rbSpBtn1);
 		    }
 
 		    // Create Conditions Panel
-		    public static void ConditionsPanel(RibbonTab Tab, Bitmap support, Bitmap force)
+		    private static void ConditionsPanel(RibbonTab Tab)
 		    {
 			    RibbonPanelSource pnlSrc = new RibbonPanelSource();
 			    pnlSrc.Title = "Conditions";
@@ -429,24 +445,26 @@ namespace SPMTool
 			    Panel.Source = pnlSrc;
 			    Tab.Panels.Add(Panel);
 
-			    RibbonButton button1 = new RibbonButton()
+			    RibbonButton[] buttons = new RibbonButton[2];
+
+			    buttons[0] = new RibbonButton()
 			    {
 				    Text = "Constraints",
 				    ToolTip = "Set constraint condition to a group of nodes",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(support),
+				    LargeImage = getBitmap(suprtBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "AddConstraint"
 			    };
 
-			    RibbonButton button2 = new RibbonButton()
+			    buttons[1] = new RibbonButton()
 			    {
 				    Text = "Force",
 				    ToolTip = "Add forces to a group of nodes",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(force),
+				    LargeImage = getBitmap(fcBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "AddForce"
 			    };
@@ -459,15 +477,16 @@ namespace SPMTool
 				    Size = RibbonItemSize.Large,
 				    IsSynchronizedWithCurrentItem = true
 			    };
-			    rbSpBtn1.Items.Add(button1);
-			    rbSpBtn1.Items.Add(button2);
 
-			    // Add to the panel source
-			    pnlSrc.Items.Add(rbSpBtn1);
+			    foreach (var button in buttons)
+				    rbSpBtn1.Items.Add(button);
+
+                // Add to the panel source
+                pnlSrc.Items.Add(rbSpBtn1);
 		    }
 
 		    // Create Analysis Panel
-		    public static void AnalysisPanel(RibbonTab Tab, Bitmap linear, Bitmap nonlinear)
+		    private static void AnalysisPanel(RibbonTab Tab)
 		    {
 			    RibbonPanelSource pnlSrc = new RibbonPanelSource();
 			    pnlSrc.Title = "Analysis";
@@ -475,24 +494,26 @@ namespace SPMTool
 			    Panel.Source = pnlSrc;
 			    Tab.Panels.Add(Panel);
 
-			    RibbonButton button1 = new RibbonButton()
+			    RibbonButton[] buttons = new RibbonButton[2];
+
+			    buttons[0] = new RibbonButton()
 			    {
 				    Text = "Linear analysis",
 				    ToolTip = "Do an elastic analysis of the model",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(linear),
+				    LargeImage = getBitmap(linBMP),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "DoLinearAnalysis"
 			    };
 
-			    RibbonButton button2 = new RibbonButton()
+			    buttons[1] = new RibbonButton()
 			    {
 				    Text = "Nonlinear Analysis",
 				    ToolTip = "Do nonlinear analysis of the model",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(nonlinear),
+				    LargeImage = getBitmap(nlinBMP),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "DoNonlinearAnalysis"
 			    };
@@ -505,16 +526,16 @@ namespace SPMTool
 				    Size = RibbonItemSize.Large,
 				    IsSynchronizedWithCurrentItem = true
 			    };
-			    rbSpBtn1.Items.Add(button1);
-			    rbSpBtn1.Items.Add(button2);
 
-			    // Add to the panel source
-			    pnlSrc.Items.Add(rbSpBtn1);
+			    foreach (var button in buttons)
+				    rbSpBtn1.Items.Add(button);
+
+                // Add to the panel source
+                pnlSrc.Items.Add(rbSpBtn1);
 		    }
 
 		    // Create View Panel
-		    public static void ViewPanel(RibbonTab Tab, Bitmap viewNode, Bitmap viewStringer, Bitmap viewPanel,
-			    Bitmap viewData)
+		    private static void ViewPanel(RibbonTab Tab)
 		    {
 			    RibbonPanelSource pnlSrc = new RibbonPanelSource();
 			    pnlSrc.Title = "View";
@@ -522,47 +543,71 @@ namespace SPMTool
 			    Panel.Source = pnlSrc;
 			    Tab.Panels.Add(Panel);
 
-			    RibbonButton button1 = new RibbonButton()
+			    RibbonButton[] buttons = new RibbonButton[6];
+
+                buttons[0] = new RibbonButton()
 			    {
 				    Text = "Nodes",
 				    ToolTip = "Toogle view for nodes",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(viewNode),
+				    LargeImage = getBitmap(viewNdBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "ToogleNodes"
 			    };
 
-			    RibbonButton button2 = new RibbonButton()
+                buttons[1] = new RibbonButton()
 			    {
 				    Text = "Stringers",
 				    ToolTip = "Toogle view for stringers",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(viewStringer),
+				    LargeImage = getBitmap(viewStrBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "ToogleStringers"
 			    };
 
-			    RibbonButton button3 = new RibbonButton()
+                buttons[2] = new RibbonButton()
 			    {
 				    Text = "Panels",
 				    ToolTip = "Toogle view for panels",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(viewPanel),
+				    LargeImage = getBitmap(viewPnlBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "TooglePanels"
 			    };
 
-			    // View element data button
-			    RibbonButton button4 = new RibbonButton()
+                buttons[3] = new RibbonButton()
+			    {
+				    Text = "Forces",
+				    ToolTip = "Toogle view for forces",
+				    ShowText = true,
+				    ShowImage = true,
+				    LargeImage = getBitmap(viewFBmp),
+				    CommandHandler = new CmdHandler(),
+				    CommandParameter = "ToogleForces"
+			    };
+
+                buttons[4] = new RibbonButton()
+			    {
+				    Text = "Supports",
+				    ToolTip = "Toogle view for supports",
+				    ShowText = true,
+				    ShowImage = true,
+				    LargeImage = getBitmap(viewSupBmp),
+				    CommandHandler = new CmdHandler(),
+				    CommandParameter = "ToogleSupports"
+			    };
+
+                // View element data button
+                buttons[5] = new RibbonButton()
 			    {
 				    Text = "Element data",
 				    ToolTip = "View data stored in a selected element",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(viewData),
+				    LargeImage = getBitmap(viewDtBmp),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "ViewElementData"
 			    };
@@ -575,10 +620,9 @@ namespace SPMTool
 				    Size = RibbonItemSize.Large,
 				    IsSynchronizedWithCurrentItem = true
 			    };
-			    rbSpBtn1.Items.Add(button1);
-			    rbSpBtn1.Items.Add(button2);
-			    rbSpBtn1.Items.Add(button3);
-			    rbSpBtn1.Items.Add(button4);
+
+			    foreach (var button in buttons)
+				    rbSpBtn1.Items.Add(button);
 
 			    // Add to the panel source
 			    pnlSrc.Items.Add(rbSpBtn1);
@@ -586,7 +630,7 @@ namespace SPMTool
 
 
 		    // Create Results Panel
-		    public static void ResultsPanel(RibbonTab Tab, Bitmap stringerF, Bitmap panelF, Bitmap displacements)
+		    private static void ResultsPanel(RibbonTab Tab)
 		    {
 			    RibbonPanelSource pnlSrc = new RibbonPanelSource();
 			    pnlSrc.Title = "Results";
@@ -600,7 +644,7 @@ namespace SPMTool
 				    ToolTip = "Toogle view for Stringer forces",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(stringerF),
+				    LargeImage = getBitmap(strFBMP),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "ToogleStringerForces"
 			    };
@@ -611,7 +655,7 @@ namespace SPMTool
 				    ToolTip = "Toogle view for panel shear stresses",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(panelF),
+				    LargeImage = getBitmap(pnlFBMP),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "TooglePanelForces"
 			    };
@@ -622,7 +666,7 @@ namespace SPMTool
 				    ToolTip = "Toogle view for panel principal stresses",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(panelF),
+				    LargeImage = getBitmap(pnlSBMP),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "TooglePanelStresses"
 			    };
@@ -633,7 +677,7 @@ namespace SPMTool
 				    ToolTip = "Toogle view for magnified displacements of the model",
 				    ShowText = true,
 				    ShowImage = true,
-				    LargeImage = getBitmap(displacements),
+				    LargeImage = getBitmap(dispBMP),
 				    CommandHandler = new CmdHandler(),
 				    CommandParameter = "ToogleDisplacements"
 			    };

@@ -320,6 +320,23 @@
   <ItemGroup>
     <None Include="Resources\panelreinforcement_large_light.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="Resources\panelstresses_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelstresses_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewforce_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewforce_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewsupport_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewsupport_large_light.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

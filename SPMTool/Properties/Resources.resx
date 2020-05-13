@@ -178,6 +178,12 @@
   <data name="panelreinforcement_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panelreinforcement_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="panelstresses_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\panelstresses_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="panelstresses_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\panelstresses_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="panel_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panel_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -229,6 +235,12 @@
   <data name="update_small_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\update_small_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="viewforce_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\viewforce_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="viewforce_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\viewforce_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="viewnode_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\viewnode_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -246,5 +258,11 @@
   </data>
   <data name="viewstringer_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\viewstringer_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="viewsupport_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\viewsupport_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="viewsupport_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\viewsupport_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

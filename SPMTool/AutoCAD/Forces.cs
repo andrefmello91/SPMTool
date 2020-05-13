@@ -378,5 +378,14 @@ namespace SPMTool.AutoCAD
                 new ResultBuffer(fData);
         }
 
+
+        // Toggle view for stringers
+        [CommandMethod("ToogleForces")]
+        public static void ToogleForces()
+        {
+	        Auxiliary.ToogleLayer(Layers.Force);
+	        Auxiliary.ToogleLayer(Layers.ForceText);
+        }
+
     }
 }

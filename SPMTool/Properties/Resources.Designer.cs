@@ -283,6 +283,26 @@ namespace SPMTool.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap panelstresses_large {
+            get {
+                object obj = ResourceManager.GetObject("panelstresses_large", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap panelstresses_large_light {
+            get {
+                object obj = ResourceManager.GetObject("panelstresses_large_light", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap set_small {
             get {
                 object obj = ResourceManager.GetObject("set_small", resourceCulture);
@@ -433,6 +453,26 @@ namespace SPMTool.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap viewforce_large {
+            get {
+                object obj = ResourceManager.GetObject("viewforce_large", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap viewforce_large_light {
+            get {
+                object obj = ResourceManager.GetObject("viewforce_large_light", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap viewnode_large {
             get {
                 object obj = ResourceManager.GetObject("viewnode_large", resourceCulture);
@@ -486,6 +526,26 @@ namespace SPMTool.Properties {
         internal static System.Drawing.Bitmap viewstringer_large_light {
             get {
                 object obj = ResourceManager.GetObject("viewstringer_large_light", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap viewsupport_large {
+            get {
+                object obj = ResourceManager.GetObject("viewsupport_large", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap viewsupport_large_light {
+            get {
+                object obj = ResourceManager.GetObject("viewsupport_large_light", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
