@@ -716,12 +716,38 @@ namespace SPMTool
 
 					    if (button != null)
 					    {
+							// Get escape command
+							string esc = CommandEscape();
+
 						    //Make sure the command text either ends with ";", or a " "
 						    string cmdText = ((string) button.CommandParameter).Trim();
-						    if (!cmdText.EndsWith(";")) cmdText = cmdText + " ";
-						    AutoCAD.Current.doc.SendStringToExecute(cmdText, true, false, true);
+
+						    if (!cmdText.EndsWith(";"))
+							    cmdText = cmdText + " ";
+
+						    Current.doc.SendStringToExecute(esc + cmdText, true, false, true);
 					    }
 				    }
+			    }
+
+				// Get the number of running commands to escape
+			    private string CommandEscape()
+			    {
+				    string esc = "";
+
+				    string cmds = (string)Application.GetSystemVariable("CMDNAMES");
+
+				    if (cmds.Length > 0)
+
+				    {
+					    int cmdNum = cmds.Split(new char[] { '\'' }).Length;
+
+					    for (int i = 0; i < cmdNum; i++)
+
+						    esc += '\x03';
+				    }
+
+				    return esc;
 			    }
 		    }
 	    }
