@@ -64,8 +64,6 @@ namespace SPMTool
 
     namespace AutoCAD
     {
-
-
 	    public class UserInterface
 	    {
 		    // Initialize the icons

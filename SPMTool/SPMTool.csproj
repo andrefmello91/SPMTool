@@ -31,44 +31,57 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AcCoreMgd, Version=23.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoCAD.NET.Core.23.1.0\lib\net47\AcCoreMgd.dll</HintPath>
+    <Reference Include="AcCoreMgd, Version=24.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoCAD.NET.Core.24.0.0\lib\net47\AcCoreMgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AcCui, Version=23.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoCAD.NET.23.1.0\lib\net47\AcCui.dll</HintPath>
+    <Reference Include="AcCui, Version=24.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoCAD.NET.24.0.0\lib\net47\AcCui.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AcDbMgd, Version=23.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoCAD.NET.Model.23.1.0\lib\net47\AcDbMgd.dll</HintPath>
+    <Reference Include="AcDbMgd, Version=24.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoCAD.NET.Model.24.0.0\lib\net47\AcDbMgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="acdbmgdbrep, Version=23.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoCAD.NET.Model.23.1.0\lib\net47\acdbmgdbrep.dll</HintPath>
+    <Reference Include="acdbmgdbrep, Version=24.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoCAD.NET.Model.24.0.0\lib\net47\acdbmgdbrep.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AcDx, Version=23.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoCAD.NET.23.1.0\lib\net47\AcDx.dll</HintPath>
+    <Reference Include="AcDx, Version=24.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoCAD.NET.24.0.0\lib\net47\AcDx.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AcMgd, Version=23.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoCAD.NET.23.1.0\lib\net47\AcMgd.dll</HintPath>
+    <Reference Include="AcMgd, Version=24.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoCAD.NET.24.0.0\lib\net47\AcMgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AcMr, Version=23.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoCAD.NET.23.1.0\lib\net47\AcMr.dll</HintPath>
+    <Reference Include="AcMr, Version=24.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoCAD.NET.24.0.0\lib\net47\AcMr.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AcSeamless, Version=23.1.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\AutoCAD.NET.23.1.0\lib\net47\AcSeamless.dll</HintPath>
+    <Reference Include="AcSeamless, Version=24.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <HintPath>..\packages\AutoCAD.NET.24.0.0\lib\net47\AcSeamless.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AcTcMgd, Version=23.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoCAD.NET.23.1.0\lib\net47\AcTcMgd.dll</HintPath>
+    <Reference Include="AcTcMgd, Version=24.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoCAD.NET.24.0.0\lib\net47\AcTcMgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AcWindows, Version=23.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoCAD.NET.23.1.0\lib\net47\AcWindows.dll</HintPath>
+    <Reference Include="AcWindows, Version=24.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoCAD.NET.24.0.0\lib\net47\AcWindows.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AdUIMgd, Version=23.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoCAD.NET.23.1.0\lib\net47\AdUIMgd.dll</HintPath>
+    <Reference Include="AdUIMgd, Version=24.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoCAD.NET.24.0.0\lib\net47\AdUIMgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AdUiPalettes, Version=23.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoCAD.NET.23.1.0\lib\net47\AdUiPalettes.dll</HintPath>
+    <Reference Include="AdUiPalettes, Version=24.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoCAD.NET.24.0.0\lib\net47\AdUiPalettes.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="AdWindows, Version=2018.11.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AutoCAD.NET.23.1.0\lib\net47\AdWindows.dll</HintPath>
+    <Reference Include="AdWindows, Version=3.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoCAD.NET.24.0.0\lib\net47\AdWindows.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="MathNet.Numerics, Version=4.8.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MathNet.Numerics.4.8.1\lib\net461\MathNet.Numerics.dll</HintPath>
@@ -141,22 +154,11 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\update_small.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\view_large.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\view_small.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\plus_small.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\plus_large.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\support_large.png" />
@@ -166,9 +168,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\set_small.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\node_large.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\panel_large.png" />
@@ -201,16 +200,7 @@
     <None Include="Resources\force_large_light.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\node_large_light.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\panel_large_light.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\plus_large_light.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\plus_small_light.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\set_small_light.png" />
@@ -228,12 +218,6 @@
     <None Include="Resources\update_small_light.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\view_large_light.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\view_small_light.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\linear_large.png" />
   </ItemGroup>
   <ItemGroup>
@@ -244,24 +228,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\nonlinear_large.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\stringerforces_small_light.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\displacements_small.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\displacements_small_light.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\panelforces_small.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\panelforces_small_light.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\stringerforces_small.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\viewpanel_large_light.png" />
@@ -283,9 +249,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\panelforces_large_light.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\stringerforces.svg" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\stringerforces_large.png" />
