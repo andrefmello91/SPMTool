@@ -31,85 +31,100 @@ namespace SPMTool.AutoCAD
 			// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
 			Auxiliary.RegisterApp();
 
+			// Initiate default values
+			double
+				fc    = 30,
+				phiAg = 20;
+
+			string agrgt = Quartzite;
+
+			// Read data
+			var concrete = ReadData();
+
+			if (concrete != null)
+			{
+				fc    = concrete.Strength;
+				phiAg = concrete.AggregateDiameter;
+				agrgt = concrete.Type.ToString();
+			}
+
 			// Ask the user to input the concrete compressive strength
-			PromptDoubleOptions fcOp =
-				new PromptDoubleOptions("\nInput the concrete mean compressive strength (fcm) in MPa:")
-				{
-					AllowZero = false,
-					AllowNegative = false
-				};
+			var fcOp = new PromptDoubleOptions("\nInput the concrete mean compressive strength (fcm) in MPa:")
+			{
+				AllowZero     = false,
+				AllowNegative = false,
+				DefaultValue  = fc
+			};
 
 			// Get the result
-			PromptDoubleResult fcRes = Current.edtr.GetDouble(fcOp);
-			if (fcRes.Status == PromptStatus.OK)
+			var fcRes = Current.edtr.GetDouble(fcOp);
+
+			if (fcRes.Status == PromptStatus.Cancel)
+				return;
+
+			fc = fcRes.Value;
+
+			// Ask the user choose the type of the aggregate
+			var agOp = new PromptKeywordOptions("\nChoose the type of the aggregate");
+			agOp.Keywords.Add(Basalt);
+			agOp.Keywords.Add(Quartzite);
+			agOp.Keywords.Add(Limestone);
+			agOp.Keywords.Add(Sandstone);
+			agOp.Keywords.Default = agrgt;
+			agOp.AllowNone = false;
+
+			// Get the result
+			PromptResult agRes = Current.edtr.GetKeywords(agOp);
+
+			if (agRes.Status == PromptStatus.Cancel)
+				return;
+
+			agrgt = agRes.StringResult;
+
+			// Ask the user to input the maximum aggregate diameter
+			var phiAgOp = new PromptDoubleOptions("\nInput the maximum diameter for concrete aggregate:")
 			{
-				double fc = fcRes.Value;
+				AllowZero     = false,
+				AllowNegative = false,
+				DefaultValue  = phiAg
+			};
 
-				// Ask the user choose the type of the aggregate
-				PromptKeywordOptions agOp = new PromptKeywordOptions("\nChoose the type of the aggregate");
-				agOp.Keywords.Add(Basalt);
-				agOp.Keywords.Add(Quartzite);
-				agOp.Keywords.Add(Limestone);
-				agOp.Keywords.Add(Sandstone);
-				agOp.Keywords.Default = Quartzite;
-				agOp.AllowNone = false;
+			// Get the result
+			PromptDoubleResult phiAgRes = Current.edtr.GetDouble(phiAgOp);
 
-				// Get the result
-				PromptResult agRes = Current.edtr.GetKeywords(agOp);
+			if (phiAgRes.Status == PromptStatus.Cancel)
+				return;
+			phiAg = phiAgRes.Value;
 
-				if (agRes.Status == PromptStatus.OK)
+			// Aggregate type
+			var aggType = (AggregateType) Enum.Parse(typeof(AggregateType), agrgt);
+
+			// Start a transaction
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			{
+				// Get the NOD in the database
+				var nod = (DBDictionary) trans.GetObject(Current.db.NamedObjectsDictionaryId, OpenMode.ForWrite);
+
+				// Save the variables on the Xrecord
+				using (ResultBuffer rb = new ResultBuffer())
 				{
-					string agrgt = agRes.StringResult;
+					rb.Add(new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName));     // 0
+					rb.Add(new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr));           // 1
+					rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, fc));                        // 2
+					rb.Add(new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) aggType));        // 3
+					rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, phiAg));                     // 4
 
-					// Ask the user to input the maximum aggregate diameter
-					PromptDoubleOptions phiAgOp =
-						new PromptDoubleOptions("\nInput the maximum diameter for concrete aggregate:")
-						{
-							AllowZero = false,
-							AllowNegative = false
-						};
+					// Create and add data to an Xrecord
+					Xrecord xRec = new Xrecord();
+					xRec.Data = rb;
 
-					// Get the result
-					PromptDoubleResult phiAgRes = Current.edtr.GetDouble(phiAgOp);
-
-					if (phiAgRes.Status == PromptStatus.OK)
-					{
-						double phiAg = phiAgRes.Value;
-
-						// Aggregate type
-						var aggType = (AggregateType) Enum.Parse(typeof(AggregateType), agrgt);
-
-						// Start a transaction
-						using (Transaction trans = Current.db.TransactionManager.StartTransaction())
-						{
-							// Get the NOD in the database
-							DBDictionary nod = (DBDictionary) trans.GetObject(
-								AutoCAD.Current.db.NamedObjectsDictionaryId,
-								OpenMode.ForWrite);
-
-							// Save the variables on the Xrecord
-							using (ResultBuffer rb = new ResultBuffer())
-							{
-								rb.Add(new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName));     // 0
-								rb.Add(new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr));           // 1
-								rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, fc));                        // 2
-								rb.Add(new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) aggType));        // 3
-								rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, phiAg));                     // 4
-
-								// Create and add data to an Xrecord
-								Xrecord xRec = new Xrecord();
-								xRec.Data = rb;
-
-								// Create the entry in the NOD and add to the transaction
-								nod.SetAt(ConcreteParams, xRec);
-								trans.AddNewlyCreatedDBObject(xRec, true);
-							}
-
-							// Save the new object to the database
-							trans.Commit();
-						}
-					}
+					// Create the entry in the NOD and add to the transaction
+					nod.SetAt(ConcreteParams, xRec);
+					trans.AddNewlyCreatedDBObject(xRec, true);
 				}
+
+				// Save the new object to the database
+				trans.Commit();
 			}
 		}
 
@@ -141,20 +156,19 @@ namespace SPMTool.AutoCAD
 		public static Concrete ReadData()
 		{
 			// Start a transaction
-			using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Get the NOD in the database
-				DBDictionary nod =
-					(DBDictionary) trans.GetObject(AutoCAD.Current.db.NamedObjectsDictionaryId, OpenMode.ForRead);
+				var nod = (DBDictionary) trans.GetObject(Current.db.NamedObjectsDictionaryId, OpenMode.ForRead);
 
 				// Check if it exists
 				if (nod.Contains(ConcreteParams))
 				{
 					// Read the concrete Xrecord
-					ObjectId concPar = nod.GetAt("ConcreteParams");
-					Xrecord concXrec = (Xrecord) trans.GetObject(concPar, OpenMode.ForRead);
-					ResultBuffer concRb = concXrec.Data;
-					TypedValue[] concData = concRb.AsArray();
+					var concPar  = nod.GetAt("ConcreteParams");
+					var concXrec = (Xrecord)trans.GetObject(concPar, OpenMode.ForRead);
+					var concRb   = concXrec.Data;
+					var concData = concRb.AsArray();
 
 					// Get the parameters from XData
 					double
