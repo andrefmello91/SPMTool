@@ -111,7 +111,7 @@
     <Compile Include="Core\InputData.cs" />
     <Compile Include="AutoCAD\Analysis.cs" />
     <Compile Include="AutoCAD\Behavior .cs" />
-    <Compile Include="AutoCAD\Material.cs" />
+    <Compile Include="AutoCAD\Concrete.cs" />
     <Compile Include="AutoCAD\Forces.cs" />
     <Compile Include="AutoCAD\Geometry-Panel .cs" />
     <Compile Include="AutoCAD\Geometry-Stringer .cs" />

@@ -40,7 +40,7 @@ namespace SPMTool.Core
             Constraints = Constraint.ListOfConstraints();
 
 			// Get concrete data
-			Concrete = AutoCAD.Material.ReadData();
+			Concrete = AutoCAD.Material.ReadConcreteData();
 
 			// Set the Behavior of elements
 			StringerBehavior = stringerBehavior;

@@ -42,7 +42,7 @@ namespace SPMTool.Core
 
 	        // Get concrete
 	        if (concrete == null)
-		        Concrete = AutoCAD.Material.ReadData();
+		        Concrete = AutoCAD.Material.ReadConcreteData();
 	        else
 		        Concrete = concrete;
 

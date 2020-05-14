@@ -5,12 +5,12 @@ namespace SPMTool.Material
 	public class StringerReinforcement
 	{
 		// Properties
-		public double NumberOfBars  { get; }
+		public int    NumberOfBars  { get; }
 		public double BarDiameter   { get; }
 		public Steel  Steel         { get; }
 
 		// Constructor
-		public StringerReinforcement(double numberOfBars, double barDiameter, Steel steel)
+		public StringerReinforcement(int numberOfBars, double barDiameter, Steel steel = null)
 		{
 			NumberOfBars = numberOfBars;
 			BarDiameter  = barDiameter;

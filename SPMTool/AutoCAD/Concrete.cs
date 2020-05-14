@@ -11,7 +11,7 @@ using AggregateType = SPMTool.Material.Concrete.AggregateType;
 namespace SPMTool.AutoCAD
 {
 	// Concrete
-	public static class Material
+	public static partial class Material
 	{
 		private static readonly string ConcreteParams = "ConcreteParams";
 
@@ -39,7 +39,7 @@ namespace SPMTool.AutoCAD
 			string agrgt = Quartzite;
 
 			// Read data
-			var concrete = ReadData();
+			var concrete = ReadConcreteData();
 
 			if (concrete != null)
 			{
@@ -132,7 +132,7 @@ namespace SPMTool.AutoCAD
 		public static void ViewConcreteParameters()
 		{
 			// Get the values
-			var concrete = ReadData();
+			var concrete = ReadConcreteData();
 
 			// Write the concrete parameters
 			if (concrete.IsSet)
@@ -153,7 +153,7 @@ namespace SPMTool.AutoCAD
 		}
 
 		// Read the concrete parameters
-		public static Concrete ReadData()
+		public static Concrete ReadConcreteData()
 		{
 			// Start a transaction
 			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
@@ -165,7 +165,7 @@ namespace SPMTool.AutoCAD
 				if (nod.Contains(ConcreteParams))
 				{
 					// Read the concrete Xrecord
-					var concPar  = nod.GetAt("ConcreteParams");
+					var concPar  = nod.GetAt(ConcreteParams);
 					var concXrec = (Xrecord)trans.GetObject(concPar, OpenMode.ForRead);
 					var concRb   = concXrec.Data;
 					var concData = concRb.AsArray();
