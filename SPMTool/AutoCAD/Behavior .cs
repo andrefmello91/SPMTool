@@ -101,7 +101,7 @@ namespace SPMTool.AutoCAD
 				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 				{
 					// Get the NOD in the database
-					DBDictionary nod = (DBDictionary) trans.GetObject(Current.db.NamedObjectsDictionaryId, OpenMode.ForWrite);
+					DBDictionary nod = (DBDictionary) trans.GetObject(Current.nod, OpenMode.ForWrite);
 
 					// Save the variables on the Xrecord
 					using (ResultBuffer rb = new ResultBuffer())
@@ -134,7 +134,7 @@ namespace SPMTool.AutoCAD
 				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 				{
 					// Get the NOD in the database
-					DBDictionary nod = (DBDictionary)trans.GetObject(Current.db.NamedObjectsDictionaryId, OpenMode.ForRead);
+					DBDictionary nod = (DBDictionary)trans.GetObject(Current.nod, OpenMode.ForRead);
 
 					// Check if it exists
 					if (nod.Contains(ElementsBehavior))
