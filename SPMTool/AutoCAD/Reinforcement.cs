@@ -28,9 +28,6 @@ namespace SPMTool.AutoCAD
 		        MessageForAdding = "Select the stringers to assign reinforcement (you can select other elements, the properties will be only applied to stringers)."
 	        };
 
-	        //Current.edtr.WriteMessage(
-	        //    "\nSelect the stringers to assign reinforcement (you can select other elements, the properties will be only applied to stringers).");
-
 	        PromptSelectionResult selRes = Current.edtr.GetSelection(selOp);
 
 	        // If the prompt status is OK, objects were selected
@@ -300,9 +297,12 @@ namespace SPMTool.AutoCAD
             using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
             {
                 // Request objects to be selected in the drawing area
-                Current.edtr.WriteMessage(
-                    "\nSelect the panels to assign reinforcement (you can select other elements, the properties will be only applied to elements with 'Panel' layer activated).");
-                PromptSelectionResult selRes = Current.edtr.GetSelection();
+                var selOp = new PromptSelectionOptions()
+                {
+	                MessageForAdding = "Select the panels to assign reinforcement (you can select other elements, the properties will be only applied to panels)."
+                };
+
+                PromptSelectionResult selRes = Current.edtr.GetSelection(selOp);
 
                 // If the prompt status is OK, objects were selected
                 if (selRes.Status == PromptStatus.Cancel)
@@ -477,55 +477,37 @@ namespace SPMTool.AutoCAD
         {
 	        if (steel != null)
 	        {
-		        //bool contains = false;
+		        // Get data
+		        double
+			        fy = steel.YieldStress,
+			        Es = steel.ElasticModule;
 
-		        //if (savedSteel != null)
-		        //{
-			       // foreach (var sSt in savedSteel)
-			       // {
-				      //  if (steel.YieldStress == sSt.YieldStress && steel.ElasticModule == sSt.ElasticModule)
-				      //  {
-					     //   contains = true;
-					     //   break;
-				      //  }
-			       // }
-		        //}
+		        // Start a transaction
+		        using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+		        {
+			        // Get the NOD in the database
+			        var nod = (DBDictionary) trans.GetObject(Current.nod, OpenMode.ForRead);
 
-		        //if (savedSteel == null || !contains)
-		        //{
-			        // Get data
-			        double
-				        fy = steel.YieldStress,
-				        Es = steel.ElasticModule;
+			        // Get the name to save
+			        string name = Steel + "f" + fy + "E" + Es;
 
-			        // Start a transaction
-			        using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			        if (!nod.Contains(name))
 			        {
-				        // Get the NOD in the database
-				        var nod = (DBDictionary) trans.GetObject(Current.nod, OpenMode.ForRead);
-
-				        // Get the name to save
-				        string name = Steel + "f" + fy + "E" + Es;
-
-				        if (!nod.Contains(name))
+				        // Save the variables on the Xrecord
+				        using (ResultBuffer rb = new ResultBuffer())
 				        {
-					        // Save the variables on the Xrecord
-					        using (ResultBuffer rb = new ResultBuffer())
-					        {
-						        rb.Add(new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName)); // 0
-						        rb.Add(new TypedValue((int) DxfCode.ExtendedDataAsciiString, name));           // 1
-						        rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, fy));                    // 2
-						        rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, Es));                    // 3
+					        rb.Add(new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName)); // 0
+					        rb.Add(new TypedValue((int) DxfCode.ExtendedDataAsciiString, name));           // 1
+					        rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, fy));                    // 2
+					        rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, Es));                    // 3
 
-						        // Create the entry in the NOD
-						        Auxiliary.SaveObjectDictionary(name, rb);
-					        }
-
-					        trans.Commit();
+					        // Create the entry in the NOD
+					        Auxiliary.SaveObjectDictionary(name, rb);
 				        }
 
-                    //}
-                }
+				        trans.Commit();
+			        }
+		        }
 	        }
         }
 
@@ -585,13 +567,6 @@ namespace SPMTool.AutoCAD
 		        {
 			        // Get the NOD in the database
 			        var nod = (DBDictionary) trans.GetObject(Current.nod, OpenMode.ForRead);
-
-			        //// Read the configurations saved and get the number to save config
-			        //int i = 0;
-
-			        //foreach (var entry in nod)
-			        // if (entry.Key.Contains(StrRef))
-			        //  i++;
 
 			        // Get the name to save
 			        string name = StrRef + "n" + num + "d" + phi;

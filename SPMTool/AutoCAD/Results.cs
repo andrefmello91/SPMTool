@@ -836,7 +836,7 @@ namespace SPMTool.AutoCAD
 			{
 				// Request the object to be selected in the drawing area
 				PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to view data:");
-				PromptEntityResult entRes = AutoCAD.Current.edtr.GetEntity(entOp);
+				PromptEntityResult entRes = Current.edtr.GetEntity(entOp);
 
 				// If the prompt status is OK, objects were selected
 				if (entRes.Status == PromptStatus.OK)

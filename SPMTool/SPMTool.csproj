@@ -113,9 +113,9 @@
     <Compile Include="AutoCAD\Behavior .cs" />
     <Compile Include="AutoCAD\Concrete.cs" />
     <Compile Include="AutoCAD\Forces.cs" />
-    <Compile Include="AutoCAD\Geometry-Panel .cs" />
-    <Compile Include="AutoCAD\Geometry-Stringer .cs" />
-    <Compile Include="AutoCAD\Geometry-Node.cs" />
+    <Compile Include="AutoCAD\Geometry.Panel .cs" />
+    <Compile Include="AutoCAD\Geometry.Stringer .cs" />
+    <Compile Include="AutoCAD\Geometry.Node.cs" />
     <Compile Include="AutoCAD\Global.cs" />
     <Compile Include="AutoCAD\Reinforcement.cs" />
     <Compile Include="AutoCAD\Supports.cs" />
