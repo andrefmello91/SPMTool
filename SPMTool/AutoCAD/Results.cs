@@ -921,13 +921,15 @@ namespace SPMTool.AutoCAD
 								// Approximate steel area
 								double As = Math.Round(str.SteelArea, 2);
 
+								char phi     = (char) Characters.Phi;
+								char epsilon = (char) Characters.Epsilon;
+
 								msgstr +=
-									"\n\nReinforcement: " + rf.NumberOfBars + " Ø " + rf.BarDiameter + " mm (" + As +
-									" mm²) \n\n" +
+									"\n\nReinforcement: " + rf.NumberOfBars + " " + phi + rf.BarDiameter + " mm (" + As + " mm²) \n\n" +
 									"Steel Parameters: " +
-									"\nfy = " + rf.Steel.YieldStress + " MPa" +
-									"\nEs = " + rf.Steel.ElasticModule + " MPa" +
-									"\nεy = " + Math.Round(1000 * rf.Steel.YieldStrain, 2) + " E-03";
+									"\nfy = "               + rf.Steel.YieldStress                       + " MPa" +
+									"\nEs = "               + rf.Steel.ElasticModule                     + " MPa" +
+									"\n" + epsilon + "y = " + Math.Round(1000 * rf.Steel.YieldStrain, 2) + " E-03";
 							}
 						}
 
@@ -939,13 +941,11 @@ namespace SPMTool.AutoCAD
 
 							msgstr =
 								"Panel " + pnl.Number + "\n\n" +
-								"Grips: (" + pnl.Grips[0] + " - " + pnl.Grips[1] + " - " + pnl.Grips[2] + " - " +
-								pnl.Grips[3] + ")" + "\n" +
+								"Grips: (" + pnl.Grips[0] + " - " + pnl.Grips[1] + " - " + pnl.Grips[2] + " - " + pnl.Grips[3] + ")" + "\n" +
 								"Width = " + pnl.Width + " mm";
 
 							// Get reinforcement
 							var rf = pnl.Reinforcement;
-
 
 							if (rf.BarDiameter != (0, 0))
                             {
@@ -954,18 +954,24 @@ namespace SPMTool.AutoCAD
 		                            psx = Math.Round(rf.Ratio.X, 3),
 		                            psy = Math.Round(rf.Ratio.Y, 3);
 
-                                msgstr +=
-								"\n\nReinforcement (x): Ø " + rf.BarDiameter.X + " mm, s = " + rf.BarSpacing.X + " mm (ρsx = " + psx + ")\n" +
+	                            char rho     = (char)Characters.Rho;
+	                            char phi     = (char)Characters.Phi;
+	                            char epsilon = (char)Characters.Epsilon;
+
+	                            msgstr +=
+								"\n\nReinforcement (x): " + phi + rf.BarDiameter.X + " mm, s = " + rf.BarSpacing.X + " mm (" + rho + "sx = " + psx + ")\n" +
+
 								"Steel Parameters (x): " +
-								"\nfy = " + rf.Steel.X.YieldStress + " MPa" +
-								"\nEs = " + rf.Steel.X.ElasticModule + " MPa" +
-								"\nεy = " + Math.Round(1000 * rf.Steel.X.YieldStrain, 2) + " E-03 \n\n" +
-								"Reinforcement (y) = Ø " + rf.BarDiameter.Y + " mm, s = " + rf.BarSpacing.Y +
-								" mm (ρsy = " + psy + ")\n" +
+								"\nfy = "               + rf.Steel.X.YieldStress                       + " MPa" +
+								"\nEs = "               + rf.Steel.X.ElasticModule                     + " MPa" +
+								"\n" + epsilon + "y = " + Math.Round(1000 * rf.Steel.X.YieldStrain, 2) + " E-03 \n\n" +
+
+								"Reinforcement (y) = " + phi + rf.BarDiameter.Y + " mm, s = " + rf.BarSpacing.Y + " mm (" + rho + "sy = " + psy + ")\n" +
+
 								"Steel Parameters (y): " +
-								"\nfy = " + rf.Steel.Y.YieldStress + " MPa" +
-								"\nEs = " + rf.Steel.Y.ElasticModule + " MPa" +
-								"\nεy = " + Math.Round(1000 * rf.Steel.Y.YieldStrain, 2) + " E-03 \n\n";
+								"\nfy = "               + rf.Steel.Y.YieldStress                       + " MPa" +
+								"\nEs = "               + rf.Steel.Y.ElasticModule                     + " MPa" +
+								"\n" + epsilon + "y = " + Math.Round(1000 * rf.Steel.Y.YieldStrain, 2) + " E-03 \n\n";
 							}
 						}
 
