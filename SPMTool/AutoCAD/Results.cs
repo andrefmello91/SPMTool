@@ -904,7 +904,7 @@ namespace SPMTool.AutoCAD
                         else if (ent.Layer == Geometry.Stringer.StringerLayer)
 						{
 							// Get the Stringer
-							var str = new Stringer.Linear(entRes.ObjectId);
+							var str = new Stringer(entRes.ObjectId);
 
 							msgstr =
 								"Stringer " + str.Number + "\n\n" +
@@ -937,7 +937,7 @@ namespace SPMTool.AutoCAD
 						else if (ent.Layer == Geometry.Panel.PanelLayer)
 						{
 							// Get the panel
-							var pnl = new Panel.Linear(entRes.ObjectId);
+							var pnl = new Panel(entRes.ObjectId);
 
 							msgstr =
 								"Panel " + pnl.Number + "\n\n" +

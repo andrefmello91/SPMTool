@@ -5,7 +5,7 @@ using SPMTool.Material;
 
 namespace SPMTool.Core
 {
-    public abstract partial class Panel
+    public partial class Panel
     {
         public class NonLinear : Panel
         {
@@ -158,15 +158,15 @@ namespace SPMTool.Core
 
                 // Calculate the components of Q matrix
                 double
-                    a2 = a * a,
-                    bc = b * c,
-                    bdMt4 = b * d - t4,
-                    ab = a * b,
+                    a2     = a * a,
+                    bc     = b * c,
+                    bdMt4  = b * d - t4,
+                    ab     = a * b,
                     MbdMt4 = -b * d - t4,
-                    Tt4 = 2 * t4,
-                    acMt4 = a * c - t4,
-                    ad = a * d,
-                    b2 = b * b,
+                    Tt4    = 2 * t4,
+                    acMt4  = a * c - t4,
+                    ad     = a * d,
+                    b2     = b * b,
                     MacMt4 = -a * c - t4;
 
                 // Create Q matrix
@@ -231,6 +231,48 @@ namespace SPMTool.Core
                     (Pc, Ps);
             }
 
+			// Calculate strains
+			private Vector<double> CalculateStrains()
+			{
+				// Get dimensions and displacements
+				var (a, b, c, d) = Dimensions;
+				var u = Displacements;
+
+				// Calculate constants
+				double
+					t1 = a * b - c * d,
+					t2 = a * a - c * c,
+					t3 = b * b - d * d,
+					t4 = 0.5 * t2 + t3,
+					t5 = 0.5 * t3 + t2;
+
+                // Calculate generalized strains
+                double
+	                e1 = ( d * u[0] + b * u[2] - d * u[4] - b * u[6]) / t1,
+	                e2 = (-a * u[1] - c * u[3] + a * u[5] + c * u[7]) / t1,
+	                e3 = (-a * u[0] + d * u[1] - c * u[2] + b * u[3] +
+	                       a * u[4] - d * u[5] + c * u[6] - b * u[7]) * 0.5 / t1,
+	                e4 = (-u[0] + u[2] - u[4] + u[6]) * a / t4,
+	                e5 = ( u[1] - u[3] + u[5] - u[7]) * b / t5;
+
+				return
+                    Vector<double>.Build.DenseOfArray(new []
+					{
+						e1 - c / a * e4,
+						e2 - e5,
+						2 * (e3 + b / a * e4 + c / b * e5),
+						e1 + e4,
+						e2 + d / b * e5,
+						2 * (e3 - d / a * e4 - a / b * e5),
+						e1 + c / a * e4,
+						e2 + e5,
+						2 * (e3 - b / a * e4 - c / b * e5),
+						e1 - e4,
+						e2 - d / b * e5,
+						2 * (e3 + d / a * e4 * a / b * e5)
+					});
+			}
+
             // Calculate panel strain vector
             public Vector<double> StrainVector => BAMatrix * Displacements;
 
@@ -238,7 +280,7 @@ namespace SPMTool.Core
             public void Analysis()
             {
 	            // Get the vector strains and stresses
-	            var ev = StrainVector;
+	            var ev = CalculateStrains();
 
 	            // Calculate the material matrix of each int. point by MCFT
 	            for (int i = 0; i < 4; i++)
@@ -423,6 +465,85 @@ namespace SPMTool.Core
 
 		            return sigma;
 	            }
+            }
+
+            // Calculate panel forces
+            public Vector<double> CalculateForces()
+            {
+	            double t0, t1, t2, t3, t4;
+
+	            // Get dimensions
+	            var (x, y) = VertexCoordinates;
+	            var (a, b, c, d) = Dimensions;
+	            var s = StringerDimensions;
+	            var t = Width;
+
+	            // Get stresses
+	            var (sig, sigC, sigS) = StressVector;
+	            var (sig1, sigC1, sigS1) = (sig.SubVector(0, 3), sigC.SubVector(0, 3), sigS.SubVector(0, 3));
+	            var (sig2, sigC2, sigS2) = (sig.SubVector(3, 3), sigC.SubVector(3, 3), sigS.SubVector(3, 3));
+	            var (sig3, sigC3, sigS3) = (sig.SubVector(6, 3), sigC.SubVector(6, 3), sigS.SubVector(6, 3));
+	            var (sig4, sigC4, sigS4) = (sig.SubVector(9, 3), sigC.SubVector(9, 3), sigS.SubVector(9, 3));
+
+	            // Calculate forces
+	            t1 = y[1] - y[0];
+	            t2 = x[1] - x[0];
+	            t3 = CheckT3(t2 - s[1] - s[3]);
+
+	            double
+		            f1 = ( sig1 [0] * t1 - sig1 [2] * t2) * t,
+		            f2 = (-sigC1[1] * t3 - sigS1[1] * t2 + sig1[2] * t1) * t;
+
+	            t1 = y[2] - y[1];
+	            t2 = x[2] - x[1];
+	            t3 = CheckT3(t1 - s[2] - s[0]);
+
+	            double
+		            f3 = ( sigC2[0] * t3 + sigS2[0] * t1 - sig2[2] * t2) * t,
+		            f4 = (-sig2 [1] * t2 + sig2 [2] * t1) * t;
+
+	            t1 = y[2] - y[3];
+	            t2 = x[2] - x[3];
+	            t3 = CheckT3(t2 - s[1] - s[3]);
+
+	            double
+		            f5 = (-sig3 [0] * t1 + sig3 [2] * t2) * t,
+		            f6 = ( sigC3[1] * t3 + sigS3[1] * t2 - sig3[2] * t1) * t;
+
+	            t1 = y[3] - y[0];
+	            t2 = x[3] - x[0];
+	            t3 = CheckT3(t1 - s[0] - s[2]);
+
+	            double
+		            f7 = (-sigC4[0] * t3 - sigS4[0] * t1 - sig4[2] * t2) * t,
+		            f8 = ( sig4 [1] * t2 - sig4 [2] * t1) * t;
+
+				// Correct forces
+				t0 = 2 * (a * a + b * b);
+				t1 = (a * (f1 - f5) - b * (f4 - f8)) / t0;
+				t2 = (c * (f2 - f6) + d * (f3 - f7)) / t0;
+				t3 = (f3 + f7) * 0.5;
+				t4 = (f2 + f6) * 0.5;
+
+				f1 =  a * t1 + b * t2 - t3;
+				f4 = -b * t1 + a * t2 - t4;
+				f5 = -a * t1 - b * t2 - t3;
+				f8 =  b * t1 - a * t2 - t4;
+
+				return
+					Vector<double>.Build.DenseOfArray(new []
+					{
+						f1, f2, f3, f4, f5, f6, f7, f8
+					});
+
+				// Check value of t3
+				double CheckT3(double value)
+				{
+					if (value < 0)
+						return 0;
+
+					return value;
+				}
             }
 
             // Calculate panel forces

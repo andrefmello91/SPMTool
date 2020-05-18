@@ -8,7 +8,7 @@ using StringerData = SPMTool.XData.Stringer;
 
 namespace SPMTool.Core
 {
-	public abstract partial class Stringer
+	public partial class Stringer
 	{
 		// Enum for setting Stringer behavior
 		public enum Behavior
@@ -29,8 +29,8 @@ namespace SPMTool.Core
 		public double                  Height           { get; }
 		public Concrete                Concrete         { get; }
         public StringerReinforcement   Reinforcement    { get; }
-        public abstract Matrix<double> LocalStiffness   { get; }
-		public abstract Vector<double> Forces           { get; }
+        public virtual Matrix<double>  LocalStiffness   { get; }
+		public virtual Vector<double>  Forces           { get; }
 		public Vector<double>          Displacements    { get; set; }
 
 		// Constructor

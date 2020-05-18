@@ -4,7 +4,7 @@ using SPMTool.Material;
 
 namespace SPMTool.Core
 {
-	public abstract partial class Stringer
+	public partial class Stringer
 	{
         public class Linear : Stringer
         {

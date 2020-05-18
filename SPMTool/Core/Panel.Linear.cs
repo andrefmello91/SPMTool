@@ -5,7 +5,7 @@ using SPMTool.Material;
 
 namespace SPMTool.Core
 {
-    public abstract partial class Panel
+    public partial class Panel
     {
         public class Linear : Panel
         {

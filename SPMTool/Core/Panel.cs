@@ -8,7 +8,7 @@ using PanelData = SPMTool.XData.Panel;
 
 namespace SPMTool.Core
 {
-    public abstract partial class Panel
+    public partial class Panel
     {
         // Enum for panel Stringer behavior
         public enum Behavior
@@ -27,12 +27,12 @@ namespace SPMTool.Core
         public double                                        Width             { get; }
         public Concrete                                      Concrete          { get; }
         public PanelReinforcement                            Reinforcement     { get; }
-        public abstract Matrix<double>                       LocalStiffness    { get; }
-        public abstract Matrix<double>                       GlobalStiffness   { get; }
+        public virtual Matrix<double>                        LocalStiffness    { get; }
+        public virtual Matrix<double>                        GlobalStiffness   { get; }
         public Vector<double>                                Displacements     { get; set; }
-        public abstract Vector<double>                       Forces            { get; }
-        public abstract Vector<double>                       AverageStresses   { get; }
-        public abstract (Vector<double> sigma, double theta) PrincipalStresses { get; }
+        public virtual Vector<double>                        Forces            { get; }
+        public virtual Vector<double>                        AverageStresses   { get; }
+        public virtual (Vector<double> sigma, double theta)  PrincipalStresses { get; }
 
         // Constructor
         public Panel(ObjectId panelObject, Concrete concrete = null, Behavior behavior = Behavior.Linear)
@@ -90,7 +90,6 @@ namespace SPMTool.Core
 
 	        // Set reinforcement
 	        Reinforcement = new PanelReinforcement((phiX, phiY), (sx, sy), steel, Width);
-
         }
 
         // Set global indexes from grips

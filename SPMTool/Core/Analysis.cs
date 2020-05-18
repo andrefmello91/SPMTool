@@ -603,15 +603,17 @@ namespace SPMTool.Core
                 }
 
 				if (Panels.Length > 0)
-	                foreach (Panel.NonLinear panel in Panels)
+				{
+					foreach (Panel.NonLinear panel in Panels)
 					{
 						// Get index and forces
 						int[] index = panel.DoFIndex;
-						var fp = panel.Forces;
+						var fp = panel.CalculateForces();
 
 						// Add values
 						AddForce(fp, index);
 					}
+				}
 
 				// Add element forces to global vector
                 void AddForce(Vector<double> elementForces, int[] dofIndex)
