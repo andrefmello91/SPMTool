@@ -108,6 +108,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AutoCAD\Units.cs" />
     <Compile Include="Core\InputData.cs" />
     <Compile Include="AutoCAD\Analysis.cs" />
     <Compile Include="AutoCAD\Behavior .cs" />
@@ -125,6 +126,7 @@
     <Compile Include="Core\Panel.Linear.cs" />
     <Compile Include="Core\Stringer.NonLinear .cs" />
     <Compile Include="Core\Stringer.Linear.cs" />
+    <Compile Include="Global\Units.cs" />
     <Compile Include="Material\Concrete.cs" />
     <Compile Include="Core\Node.cs" />
     <Compile Include="Core\Panel.cs" />

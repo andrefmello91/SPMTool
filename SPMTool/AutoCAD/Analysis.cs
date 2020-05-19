@@ -31,7 +31,7 @@ namespace SPMTool.AutoCAD
 		public static void DoNonLinearAnalysis()
 		{
 			// Get elements behavior
-			var (strBehavior, pnlBehavior) = Behavior.ReadData();
+			var (strBehavior, pnlBehavior) = Config.ReadBehavior();
 
 			// Get input data
 			InputData input = new InputData(strBehavior, pnlBehavior);

@@ -137,8 +137,8 @@ namespace SPMTool.Core
 			Kg.CoerceZero(1E-9);
         }
 
-        // Set Stringer displacements
-        private void ElementAnalysis(Vector<double> globalDisplacements)
+        // Set element displacements
+        public virtual void ElementAnalysis(Vector<double> globalDisplacements)
         {
 	        foreach (var stringer in Stringers)
 	        {
@@ -381,7 +381,7 @@ namespace SPMTool.Core
 
         // Linear analysis methods
 
-        public class Linear : Analysis
+        public sealed class Linear : Analysis
         {
 	        public Linear(InputData inputData) : base(inputData)
             {
@@ -402,7 +402,7 @@ namespace SPMTool.Core
             }
         }
 
-        public class NonLinear : Analysis
+        public sealed class NonLinear : Analysis
         {
 			// Max iterations and load steps
 			private int maxIterations = 1000;
@@ -410,17 +410,17 @@ namespace SPMTool.Core
 
             public NonLinear(InputData inputData) : base(inputData)
 	        {
-				// Get force vector
-				var f = ForceVector;
+                // Get force vector
+                var f = ForceVector;
 
-				// Do a linear analysis to get initial elastic stiffness and displacements
-				var linAn = new Linear(inputData);
-				var Kg = linAn.GlobalStiffness;
+                // Do a linear analysis to get initial elastic stiffness and displacements
+                var linAn = new Linear(inputData);
+                var Kg = linAn.GlobalStiffness;
 
                 // Get the initial stiffness and force vector simplified
                 //var Kg = Global_Stiffness(f);
 
-		        DelimitedWriter.Write("D:/Ki.csv", Kg, ";");
+                DelimitedWriter.Write("D:/Ki.csv", Kg, ";");
 
                 // Solve the initial displacements
                 var u0 = Kg.Solve(0.01 * f);
@@ -503,7 +503,7 @@ namespace SPMTool.Core
                     Results();
 
                     // Update stiffness
-                    Kg = Global_Stiffness();
+                    //Kg = Global_Stiffness();
 
                     //if (loadStep < 56)
                     //{
@@ -548,13 +548,29 @@ namespace SPMTool.Core
                 //DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");
             }
 
+            // Set element displacements
+            public override void ElementAnalysis(Vector<double> globalDisplacements)
+            {
+	            foreach (Stringer.NonLinear stringer in Stringers)
+	            {
+		            stringer.Displacement(globalDisplacements);
+		            stringer.Analysis();
+	            }
+
+	            foreach (Panel.NonLinear panel in Panels)
+	            {
+		            panel.Displacement(globalDisplacements);
+		            panel.Analysis();
+	            }
+            }
+
             // Verify convergence
             private bool EquilibriumConvergence(Vector<double> residualForces, Vector<double> residualDisplacements, int iteration)
 			{
 				double
 					maxForce = residualForces.AbsoluteMaximum(),
 					maxDisp  = residualDisplacements.AbsoluteMaximum(),
-					fTol     = 0.01,
+					fTol     = 0.001,
 					uTol     = 0.01;
 
                 // Check convergence
@@ -574,7 +590,7 @@ namespace SPMTool.Core
 				{
 					// Get index and forces
 					int[] index = stringer.DoFIndex;
-					var fs = stringer.GlobalForces;
+					var fs = stringer.IterationGlobalForces;
 
 					// Add values
 					AddForce(fs, index);
@@ -608,7 +624,7 @@ namespace SPMTool.Core
 
                 // Simplify for constraints
                 foreach (var i in Constraints)
-					fi[i] = 0;
+                    fi[i] = 0;
 
                 return fi;
 			}
@@ -616,10 +632,10 @@ namespace SPMTool.Core
 			// Set the results for each Stringer
 			private void Results()
 			{
-				//foreach (Stringer.NonLinear stringer in Stringers)
-				//	stringer.Results();
+                foreach (Stringer.NonLinear stringer in Stringers)
+                    stringer.Results();
 
-				foreach (Panel.NonLinear panel in Panels)
+                foreach (Panel.NonLinear panel in Panels)
 					panel.Results();
 			}
         }

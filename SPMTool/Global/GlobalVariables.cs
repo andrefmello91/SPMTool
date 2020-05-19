@@ -1,9 +1,4 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
-using Autodesk.AutoCAD.Geometry;
-
-namespace SPMTool
+﻿namespace SPMTool
 {
     // Constants
     public static class Constants

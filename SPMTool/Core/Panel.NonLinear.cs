@@ -1,5 +1,6 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Windows;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.Material;
 
@@ -334,19 +335,19 @@ namespace SPMTool.Core
             // Calculate stiffness
             public override Matrix<double> GlobalStiffness
             {
-	            get
-	            {
-		            var (Pc, Ps) = PMatrix;
-		            var (Dc, Ds) = MaterialStiffness;
-		            var QPs = QMatrix * Ps;
-		            var QPc = QMatrix * Pc;
+                get
+                {
+                    var (Pc, Ps) = PMatrix;
+                    var (Dc, Ds) = MaterialStiffness;
+                    var QPs = QMatrix * Ps;
+                    var QPc = QMatrix * Pc;
 
-		            var kc = QPc * Dc * BAMatrix;
-		            var ks = QPs * Ds * BAMatrix;
+                    var kc = QPc * Dc * BAMatrix;
+                    var ks = QPs * Ds * BAMatrix;
 
-		            return
-			            kc + ks;
-	            }
+                    return
+                        kc + ks;
+                }
             }
 
             // Calculate tangent stiffness
@@ -517,20 +518,20 @@ namespace SPMTool.Core
 		            f7 = (-sigC4[0] * t3 - sigS4[0] * t1 - sig4[2] * t2) * t,
 		            f8 = ( sig4 [1] * t2 - sig4 [2] * t1) * t;
 
-				// Correct forces
-				//t0 = 2 * (a * a + b * b);
-				//t1 = (a * (f1 - f5) - b * (f4 - f8)) / t0;
-				//t2 = (c * (f2 - f6) + d * (f3 - f7)) / t0;
-				//t3 = (f3 + f7) * 0.5;
-				//t4 = (f2 + f6) * 0.5;
+                // Correct forces
+                t0 = 2 * (a * a + b * b);
+                t1 = (a * (f1 - f5) - b * (f4 - f8)) / t0;
+                t2 = (c * (f2 - f6) + d * (f3 - f7)) / t0;
+                t3 = (f3 + f7) * 0.5;
+                t4 = (f2 + f6) * 0.5;
 
-				//f1 =  a * t1 + b * t2 - t3;
-				//f4 = -b * t1 + a * t2 - t4;
-				//f5 = -a * t1 - b * t2 - t3;
-				//f8 =  b * t1 - a * t2 - t4;
+                f1 = a * t1 + b * t2 - t3;
+                f4 = -b * t1 + a * t2 - t4;
+                f5 = -a * t1 - b * t2 - t3;
+                f8 = b * t1 - a * t2 - t4;
 
-				return
-					QMatrix * Vector<double>.Build.DenseOfArray(new []
+                return
+					Vector<double>.Build.DenseOfArray(new []
 					{
 						f1, f2, f3, f4, f5, f6, f7, f8
 					});
@@ -608,6 +609,41 @@ namespace SPMTool.Core
 	            return
 		            (Dc, Ds);
             }
+
+			// Initial stiffness
+			public Matrix<double> InitialStiffness()
+			{
+				var (a, b, _, _) = Dimensions;
+
+				// Calculate constants
+				double
+					a2  = a * a,
+					b2  = b * b,
+					ab  = a * b,
+					a_b = a / b,
+					b_a = b / a,
+					nu  = Concrete.nu,
+					t0  = Concrete.Ec * Width / (1 - nu * nu),
+					t1  = 2 * ab / (a2 + 2 * b2),
+					t2  = 2 * ab / (2 * a2 + b2),
+					t3  =  b_a * (3 * a2 + 2 * b2) / (a2 + 2 * b2),
+					t4  =  a_b * (2 * a2 + 3 * b2) / (2 * a2 + b2),
+					t5  =  b_a * (a2 - 2 * b2)     / (a2 + 2 * b2),
+					t6  = -a_b * (2 * a2 - b2)     / (2 * a2 + b2);
+
+				return
+					t0 * Matrix<double>.Build.DenseOfArray(new [,]
+					{
+						{  t1,   0, -t1,   0,  t1,   0, -t1,   0 },
+						{   0,  t4, -nu, -t2,   0,  t6,  nu, -t2 },
+						{ -t1, -nu,  t3,   0, -t1,  nu,  t5,   0 },
+						{   0, -t2,   0,  t2,   0, -t2,   0,  t2 },
+						{  t1,   0, -t1,   0,  t1,   0, -t1,   0 },
+						{   0,  t6,  nu, -t2,   0,  t4, -nu, -t2 },
+						{ -t1,  nu,  t5,   0, -t1, -nu,  t3,   0 },
+						{   0, -t2,   0,  t2,   0, -t2,   0,  t2 }
+					});
+			}
         }
     }
 }

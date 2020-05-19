@@ -2,7 +2,6 @@
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics.LinearAlgebra;
-using SPMTool.Core;
 using SPMTool.Material;
 using SPMTool.AutoCAD;
 
@@ -145,12 +144,14 @@ namespace SPMTool.Core
 			        int i = 2 * nd.Number - 2;
 
 			        // Read the forces in x and y (transform in N) and assign the values in the force vector at position (i) and (i + 1)
-			        f[i]     = nd.Force.X * 1000;
-			        f[i + 1] = nd.Force.Y * 1000;
+			        f[i]     = nd.Force.X;
+			        f[i + 1] = nd.Force.Y;
 		        }
 	        }
 
-	        return f;
+			// Transform forces in N
+	        return 
+		        1000 * f;
         }
 
 		// Get constraint list

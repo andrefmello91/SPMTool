@@ -1,4 +1,5 @@
 ﻿using System;
+using StressUnit = SPMTool.Units.Stress;
 
 namespace SPMTool
 {
@@ -18,12 +19,12 @@ namespace SPMTool
 			// Read the steel parameters
 			public Steel(double yieldStress, double elasticModule = 210000)
 			{
-				YieldStress   = yieldStress;
+				YieldStress = yieldStress;
 				ElasticModule = elasticModule;
 			}
 
-			// Maximum plastic strain on steel
-			public double esu = 0.01;
+            // Maximum plastic strain on steel
+            public double esu = 0.01;
 
 			// Set steel strain
 			public void SetStrain(double strain)

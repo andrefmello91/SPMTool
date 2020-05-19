@@ -17,9 +17,10 @@ namespace SPMTool.Material
 		}
 
 		// Properties
+		public Units                    Units             { get; }
 		public double                   AggregateDiameter { get; }
 		public AggregateType            Type              { get; }
-		public  double                  Strength                { get; }
+		public  double                  Strength          { get; }
 		public (double ec1, double ec2) PrincipalStrains  { get; set; }
 		public (double fc1, double fc2) PrincipalStresses { get; set; }
 		public double                   ReferenceLength   { get; set; }
@@ -27,7 +28,10 @@ namespace SPMTool.Material
 		// Read the concrete parameters
 		public Concrete(double strength, double aggregateDiameter, AggregateType aggregateType = AggregateType.Quartzite)
 		{
+			// Get stress in MPa
 			Strength          = strength;
+
+			// Get dimension in mm
 			AggregateDiameter = aggregateDiameter;
 			Type              = aggregateType;
 		}
@@ -91,6 +95,7 @@ namespace SPMTool.Material
 		public double Ec1         => Strength / ec;
 		public double k           => Ec / Ec1;
 		public double ecr         => fcr / Ec;
+		public double nu          => 0.2;
 
 		public virtual double ecu
 		{

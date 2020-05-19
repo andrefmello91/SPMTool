@@ -9,12 +9,12 @@ using AggregateType = SPMTool.Material.Concrete.AggregateType;
 using StringerBehavior = SPMTool.Core.Stringer.Behavior;
 using PanelBehavior = SPMTool.Core.Panel.Behavior;
 
-[assembly: CommandClass(typeof(SPMTool.AutoCAD.Behavior))]
+[assembly: CommandClass(typeof(SPMTool.AutoCAD.Config))]
 
 namespace SPMTool.AutoCAD
 {
 		// Concrete
-		public static class Behavior
+		public static partial class Config
 		{
 			// Behavior names
 			private static readonly string
@@ -128,7 +128,7 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Read the concrete parameters
-			public static (StringerBehavior stringer, PanelBehavior panel) ReadData()
+			public static (StringerBehavior stringer, PanelBehavior panel) ReadBehavior()
 			{
 				// Start a transaction
 				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
@@ -153,10 +153,9 @@ namespace SPMTool.AutoCAD
 							(strBehavior, pnlBehavior);
 					}
 
-					// If is not set
-					Application.ShowAlertDialog("Please set concrete parameters.");
-
-					return default;
+					// If is not set return default values
+					return
+						(StringerBehavior.NonLinearClassic, PanelBehavior.NonLinearMCFT);
 				}
 			}
         }

@@ -103,26 +103,26 @@ namespace SPMTool.Core
 			}
 
             // Generalized strains and stresses for each iteration
-            //private (double e1, double e3) IterationGenStrains  { get; set; }
-            //private (double N1, double N3) IterationGenStresses { get; set; }
+            private (double e1, double e3) IterationGenStrains { get; set; }
+            private (double N1, double N3) IterationGenStresses { get; set; }
 
-			// Forces from gen stresses for each iteration
-			//public Vector<double> IterationForces
-			//{
-			//	get
-			//	{
-			//		var (N1, N3) = IterationGenStresses;
+            // Forces from gen stresses for each iteration
+            public Vector<double> IterationForces
+            {
+                get
+                {
+                    var (N1, N3) = IterationGenStresses;
 
-			//		return
-   //                     Vector<double>.Build.DenseOfArray(new []
-			//		    {
-			//			    -N1, N1 - N3, N3
-			//		    });
-			//	}
-			//}
+                    return
+                                 Vector<double>.Build.DenseOfArray(new[]
+                        {
+                            -N1, N1 - N3, N3
+                        });
+                }
+            }
 
-			// Global Stringer forces for each iteration
-			//public Vector<double> IterationGlobalForces => TransMatrix.Transpose() * IterationForces;
+            // Global Stringer forces for each iteration
+            public Vector<double> IterationGlobalForces => TransMatrix.Transpose() * IterationForces;
 
             // Calculate the effective Stringer force
             public override void Analysis()
@@ -177,8 +177,8 @@ namespace SPMTool.Core
 
                 // Set values
                 FMatrix     = F;
-				GenStresses = (N1, N3);
-				GenStrains  = (e1, e3);
+				IterationGenStresses = (N1, N3);
+				IterationGenStrains  = (e1, e3);
             }
 
 			// Calculate plastic force
@@ -234,19 +234,19 @@ namespace SPMTool.Core
             // Abstract method to calculate strain
             public abstract (double e, double de) StringerStrain(double N);
 
-			// Set Stringer results (after reached convergence)
-			//public void Results()
-			//{
-			//	// Get the values
-			//	var genStresses = IterationGenStresses;
-			//	var genStrains  = IterationGenStrains;
-				
-			//	// Set the final values
-			//	GenStresses = genStresses;
-			//	GenStrains  = genStrains;
-			//}
+            // Set Stringer results (after reached convergence)
+            public void Results()
+            {
+                // Get the values
+                var genStresses = IterationGenStresses;
+                var genStrains = IterationGenStrains;
 
-			// Calculate the total plastic generalized strain in a Stringer
+                // Set the final values
+                GenStresses = genStresses;
+                GenStrains = genStrains;
+            }
+
+            // Calculate the total plastic generalized strain in a Stringer
             public (double ep1, double ep3) PlasticGenStrains
             {
 	            get

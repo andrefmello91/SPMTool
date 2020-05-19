@@ -77,7 +77,7 @@ namespace SPMTool.Core
 			Height = Convert.ToDouble(data[(int) StringerData.Height].Value);
 
 			// Get reinforcement
-			int numOfBars = Convert.ToInt32(data[(int) StringerData.NumOfBars].Value);
+			int numOfBars = Convert.ToInt32 (data[(int) StringerData.NumOfBars].Value);
 			double phi    = Convert.ToDouble(data[(int) StringerData.BarDiam].Value);
 
 			// Get steel data
