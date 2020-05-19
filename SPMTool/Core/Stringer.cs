@@ -29,8 +29,9 @@ namespace SPMTool.Core
 		public double                  Height           { get; }
 		public Concrete                Concrete         { get; }
         public StringerReinforcement   Reinforcement    { get; }
+        public Matrix<double>          TransMatrix      { get; }
         public virtual Matrix<double>  LocalStiffness   { get; }
-		public virtual Vector<double>  Forces           { get; }
+		public virtual Vector<double>  Forces           { get; set; }
 		public Vector<double>          Displacements    { get; set; }
 
 		// Constructor
@@ -107,7 +108,6 @@ namespace SPMTool.Core
 		public double ConcreteArea => Width * Height - SteelArea;
 
 		// Calculate the transformation matrix
-		public  Matrix<double> TransMatrix { get; }
 		private Matrix<double> TransformationMatrix()
 		{
 			// Get the direction cosines
@@ -123,16 +123,7 @@ namespace SPMTool.Core
 		}
 
 		// Calculate global stiffness
-		public Matrix<double> GlobalStiffness
-		{
-			get
-			{
-				var T = TransMatrix;
-
-				return
-					T.Transpose() * LocalStiffness * T;
-			}
-		}
+		public Matrix<double> GlobalStiffness => TransMatrix.Transpose() * LocalStiffness * TransMatrix;
 
 		// Get Stringer displacements from global displacement vector
 		public void Displacement(Vector<double> globalDisplacementVector)
@@ -163,6 +154,11 @@ namespace SPMTool.Core
 
         // Maximum Stringer force
         public double MaxForce => Forces.AbsoluteMaximum();
+
+		// Results
+		public virtual void Analysis()
+		{
+		}
 	}
 }
 

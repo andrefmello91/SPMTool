@@ -38,24 +38,27 @@ namespace SPMTool.Core
             }
 
 			// Calculate Stringer forces
-			public override Vector<double> Forces
-            {
-                get
-                {
-                    // Get the parameters
-                    var Kl = LocalStiffness;
-                    var ul = LocalDisplacements;
+			public Vector<double> CalculateForces()
+			{
+				// Get the parameters
+				var Kl = LocalStiffness;
+				var ul = LocalDisplacements;
 
-                    // Calculate the vector of normal forces
-                    var fl = Kl * ul;
+				// Calculate the vector of normal forces
+				var fl = Kl * ul;
 
-                    // Approximate small values to zero
-                    fl.CoerceZero(0.001);
+				// Approximate small values to zero
+				fl.CoerceZero(0.001);
 
-                    return fl;
-                }
-            }
-		}
+				return fl;
+			}
+
+			// Calculate forces
+			public override void Analysis()
+			{
+				Forces = CalculateForces();
+			}
+        }
 	}
 }
 

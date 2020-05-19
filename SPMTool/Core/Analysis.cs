@@ -138,25 +138,27 @@ namespace SPMTool.Core
         }
 
         // Set Stringer displacements
-        private void StringerDisplacements(Vector<double> globalDisplacements)
+        private void ElementAnalysis(Vector<double> globalDisplacements)
         {
 	        foreach (var stringer in Stringers)
+	        {
 		        stringer.Displacement(globalDisplacements);
-        }
+				stringer.Analysis();
+	        }
 
-        // Set panel displacements
-        private void PanelDisplacements(Vector<double> globalDisplacements)
-        {
 	        foreach (var panel in Panels)
+	        {
 		        panel.Displacement(globalDisplacements);
+				panel.Analysis();
+	        }
         }
 
-        // Get the nodal displacements and save to XData
-        private void NodalDisplacements(Vector<double> globalDisplacements)
-        {
-	        foreach (var node in Nodes)
-		        node.Displacements(globalDisplacements);
-        }
+		// Set nodal displacements
+		private void NodalDisplacements(Vector<double> globalDisplacements)
+		{
+			foreach (var node in Nodes)
+				node.Displacements(globalDisplacements);
+		}
 
         // Calculate maximum Stringer force
         public double MaxStringerForce
@@ -392,10 +394,11 @@ namespace SPMTool.Core
 	            // Solve
 	            DisplacementVector = GlobalStiffness.Solve(f);
 
-	            // Calculate element displacements
-	            StringerDisplacements(DisplacementVector);
-	            PanelDisplacements(DisplacementVector);
-	            NodalDisplacements(DisplacementVector);
+	            // Calculate element displacements and forces
+	            ElementAnalysis(DisplacementVector);
+
+				// Set nodal displacements
+				NodalDisplacements(DisplacementVector);
             }
         }
 
@@ -452,8 +455,7 @@ namespace SPMTool.Core
 					for (int it = 0; it < maxIterations; it++)
 					{
 						// Calculate element displacements and forces
-						StringerAnalysis(ui);
-                        PanelAnalysis(ui);
+						ElementAnalysis(ui);
 
                         // Get the internal force vector
                         fi = InternalForces();
@@ -501,7 +503,7 @@ namespace SPMTool.Core
                     Results();
 
                     // Update stiffness
-                    //Kg = Global_Stiffness();
+                    Kg = Global_Stiffness();
 
                     //if (loadStep < 56)
                     //{
@@ -563,30 +565,6 @@ namespace SPMTool.Core
 				return false;
 			}
 
-			// Calculate Stringer forces
-			private void StringerAnalysis(Vector<double> globalDisplacements)
-			{
-				foreach (Stringer.NonLinear stringer in Stringers)
-				{
-					stringer.Displacement(globalDisplacements);
-					stringer.StringerForces();
-                    //DelimitedWriter.Write("D:/fs" + Stringer.Number + ".csv", Stringer.IterationForces.ToColumnMatrix(), ";");
-                    //DelimitedWriter.Write("D:/us" + Stringer.Number + ".csv", Stringer.LocalDisplacements.ToColumnMatrix(), ";");
-                }
-            }
-
-			// Calculate panel stresses nd forces
-			private void PanelAnalysis(Vector<double> globalDisplacements)
-			{
-				foreach (Panel.NonLinear panel in Panels)
-				{
-					panel.Displacement(globalDisplacements);
-					panel.Analysis();
-                    //DelimitedWriter.Write("D:/up" + panel.Number + ".csv", panel.Displacements.ToColumnMatrix(), ";");
-                    //DelimitedWriter.Write("D:/fp" + panel.Number + ".csv", panel.Forces.ToColumnMatrix(), ";");
-				}
-			}
-
 			// Get the internal force vector
 			private Vector<double> InternalForces()
 			{
@@ -596,7 +574,7 @@ namespace SPMTool.Core
 				{
 					// Get index and forces
 					int[] index = stringer.DoFIndex;
-					var fs = stringer.IterationGlobalForces;
+					var fs = stringer.GlobalForces;
 
 					// Add values
 					AddForce(fs, index);
@@ -608,7 +586,7 @@ namespace SPMTool.Core
 					{
 						// Get index and forces
 						int[] index = panel.DoFIndex;
-						var fp = panel.CalculateForces();
+						var fp = panel.Forces;
 
 						// Add values
 						AddForce(fp, index);
@@ -638,8 +616,8 @@ namespace SPMTool.Core
 			// Set the results for each Stringer
 			private void Results()
 			{
-				foreach (Stringer.NonLinear stringer in Stringers)
-					stringer.Results();
+				//foreach (Stringer.NonLinear stringer in Stringers)
+				//	stringer.Results();
 
 				foreach (Panel.NonLinear panel in Panels)
 					panel.Results();

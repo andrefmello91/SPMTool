@@ -10,8 +10,8 @@ namespace SPMTool.Core
         public class Linear : Panel
         {
             // Private properties
-            private double Gc => Concrete.Ec / 2.4;
-
+            private Matrix<double> TransMatrix { get; }
+	        
             public Linear(ObjectId panelObject, Concrete concrete = null, Behavior behavior = Behavior.Linear) : base(panelObject, concrete, behavior)
             {
                 // Get transformation matrix
@@ -22,7 +22,6 @@ namespace SPMTool.Core
             }
 
             // Calculate transformation matrix
-            private Matrix<double> TransMatrix { get; }
             private Matrix<double> TransformationMatrix()
             {
                 // Get the transformation matrix
@@ -44,11 +43,10 @@ namespace SPMTool.Core
             }
 
             // Calculate panel stiffness
-            public override Matrix<double> LocalStiffness { get; }
             private Matrix<double> Stiffness()
             {
                 // If the panel is rectangular
-                if (RectangularPanel(Angles))
+                if (RectangularPanel(Edges.Angle))
                     return
                         RectangularPanelStiffness();
 
@@ -58,16 +56,7 @@ namespace SPMTool.Core
             }
 
             // Calculate global stiffness
-            public override Matrix<double> GlobalStiffness
-            {
-                get
-                {
-                    var T = TransMatrix;
-
-                    return
-                        T.Transpose() * LocalStiffness * T;
-                }
-            }
+            public override Matrix<double> GlobalStiffness => TransMatrix.Transpose() * LocalStiffness * TransMatrix;
 
             // Calculate local stiffness of a rectangular panel
             private Matrix<double> RectangularPanelStiffness()
@@ -75,22 +64,26 @@ namespace SPMTool.Core
                 // Get the dimensions
                 double
                     w = Width,
-                    a = Lengths[0],
-                    b = Lengths[1];
+                    a = Edges.Length[0],
+                    b = Edges.Length[1];
 
                 // Calculate the parameters of the stiffness matrix
                 double
-                    aOverb = a / b,
-                    bOvera = b / a;
+                    a_b = a / b,
+                    b_a = b / a;
+
+				// Calculate Gc
+				double Gc = Concrete.Ec / 2.4;
 
                 // Calculate the stiffness matrix
-                return Gc * w * Matrix<double>.Build.DenseOfArray(new[,]
-                {
-                        {aOverb, -1, aOverb, -1},
-                        {-1, bOvera, -1, bOvera},
-                        {aOverb, -1, aOverb, -1},
-                        {-1, bOvera, -1, bOvera}
-                });
+                return 
+	                Gc * w * Matrix<double>.Build.DenseOfArray(new[,]
+	                {
+		                {a_b,  -1, a_b,  -1},
+		                { -1, b_a,  -1, b_a},
+		                {a_b,  -1, a_b,  -1},
+		                { -1, b_a,  -1, b_a}
+	                });
             }
 
             // Calculate local stiffness of a nonrectangular panel
@@ -101,10 +94,13 @@ namespace SPMTool.Core
                 var (a, b, c, d) = Dimensions;
                 double
                     w = Width,
-                    l1 = Lengths[0],
-                    l2 = Lengths[1],
-                    l3 = Lengths[2],
-                    l4 = Lengths[3];
+                    l1 = Edges.Length[0],
+                    l2 = Edges.Length[1],
+                    l3 = Edges.Length[2],
+                    l4 = Edges.Length[3];
+
+                // Calculate Gc
+                double Gc = Concrete.Ec / 2.4;
 
                 // Equilibrium parameters
                 double
@@ -131,30 +127,30 @@ namespace SPMTool.Core
                 // Matrices to calculate the determinants
                 var km1 = Matrix<double>.Build.DenseOfArray(new double[,]
                 {
-                        {c2, c3, c4},
-                        {s2, s3, s4},
-                        {r2, r3, r4},
+	                {c2, c3, c4},
+	                {s2, s3, s4},
+	                {r2, r3, r4},
                 });
 
                 var km2 = Matrix<double>.Build.DenseOfArray(new double[,]
                 {
-                        {c1, c3, c4},
-                        {s1, s3, s4},
-                        {r1, r3, r4},
+	                {c1, c3, c4}, 
+	                {s1, s3, s4},
+	                {r1, r3, r4},
                 });
 
                 var km3 = Matrix<double>.Build.DenseOfArray(new double[,]
                 {
-                        {c1, c2, c4},
-                        {s1, s2, s4},
-                        {r1, r2, r4},
+	                {c1, c2, c4},
+	                {s1, s2, s4},
+	                {r1, r2, r4},
                 });
 
                 var km4 = Matrix<double>.Build.DenseOfArray(new double[,]
                 {
-                        {c1, c2, c3},
-                        {s1, s2, s3},
-                        {r1, r2, r3},
+	                {c1, c2, c3},
+	                {s1, s2, s3},
+	                {r1, r2, r3},
                 });
 
                 // Calculate the determinants
@@ -166,7 +162,7 @@ namespace SPMTool.Core
 
                 // Calculate kf and ku
                 double
-                    kf = k1 + k2 + k3 + k4,
+                    kf =  k1 + k2 + k3 + k4,
                     ku = -t1 * k1 + t2 * k2 - t3 * k3 + t4 * k4;
 
                 // Calculate D
@@ -175,34 +171,32 @@ namespace SPMTool.Core
                 // Get the vector B
                 var B = Vector<double>.Build.DenseOfArray(new double[]
                 {
-                        -k1 * l1, k2 * l2, -k3 * l3, k4 * l4
+	                -k1 * l1, k2 * l2, -k3 * l3, k4 * l4
                 });
 
                 // Get the stiffness matrix
-                return B.ToColumnMatrix() * D * B.ToRowMatrix();
+                return 
+	                B.ToColumnMatrix() * D * B.ToRowMatrix();
             }
 
             // Calculate panel forces
-            public override Vector<double> Forces
+            public Vector<double> CalculateForces()
             {
-                get
-                {
-                    // Get the parameters
-                    var up = Displacements;
-                    var T = TransMatrix;
-                    var Kl = LocalStiffness;
+	            // Get the parameters
+	            var up = Displacements;
+	            var T  = TransMatrix;
+	            var Kl = LocalStiffness;
 
-                    // Get the displacements in the direction of the edges
-                    var ul = T * up;
+	            // Get the displacements in the direction of the edges
+	            var ul = T * up;
 
-                    // Calculate the vector of forces
-                    var fl = Kl * ul;
+	            // Calculate the vector of forces
+	            var fl = Kl * ul;
 
-                    // Aproximate small values to zero
-                    fl.CoerceZero(0.000001);
+	            // Aproximate small values to zero
+	            fl.CoerceZero(0.000001);
 
-                    return fl;
-                }
+	            return fl;
             }
 
             // Calculate panel stresses
@@ -265,6 +259,12 @@ namespace SPMTool.Core
                         (sigma, theta);
                 }
             }
+
+			// Calculate forces
+			public override void Analysis()
+			{
+				Forces = CalculateForces();
+			}
         }
     }
 }

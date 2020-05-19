@@ -24,13 +24,16 @@ namespace SPMTool.Core
         public int                                           Number            { get; }
         public int[]                                         Grips             { get; }
         public Point3d[]                                     Vertices          { get; }
+        public (double[] x, double[] y)                      VertexCoordinates { get; }
+        public (double a, double b, double c, double d)      Dimensions        { get; }
+        public (double[] Length, double[] Angle)             Edges             { get; }
         public double                                        Width             { get; }
         public Concrete                                      Concrete          { get; }
         public PanelReinforcement                            Reinforcement     { get; }
-        public virtual Matrix<double>                        LocalStiffness    { get; }
+        public Matrix<double>                                LocalStiffness    { get; set; }
         public virtual Matrix<double>                        GlobalStiffness   { get; }
         public Vector<double>                                Displacements     { get; set; }
-        public virtual Vector<double>                        Forces            { get; }
+        public Vector<double>                                Forces            { get; set; }
         public virtual Vector<double>                        AverageStresses   { get; }
         public virtual (Vector<double> sigma, double theta)  PrincipalStresses { get; }
 
@@ -68,6 +71,11 @@ namespace SPMTool.Core
 	        // Create the list of vertices
 	        Vertices = Geometry.Panel.PanelVertices(pnl);
 
+			// Calculate vertex coordinates and dimensions
+			VertexCoordinates = Vertex_Coordinates();
+			Dimensions        = CalculateDimensions();
+			Edges             = EdgesLengthAndAngles();
+
 	        // Get reinforcement
 	        double
 		        phiX = Convert.ToDouble(pnlData[(int) PanelData.XDiam].Value),
@@ -96,45 +104,39 @@ namespace SPMTool.Core
         public int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Grips);
 
         // Get X and Y coordinates of a panel vertices
-        public (double[] x, double[] y) VertexCoordinates
+        public (double[] x, double[] y) Vertex_Coordinates()
         {
-            get
-            {
-                double[]
-                    x = new double[4],
-                    y = new double[4];
+	        double[]
+		        x = new double[4],
+		        y = new double[4];
 
-                // Get X and Y coordinates of the vertices
-                for (int i = 0; i < 4; i++)
-                {
-                    x[i] = Vertices[i].X;
-                    y[i] = Vertices[i].Y;
-                }
+	        // Get X and Y coordinates of the vertices
+	        for (int i = 0; i < 4; i++)
+	        {
+		        x[i] = Vertices[i].X;
+		        y[i] = Vertices[i].Y;
+	        }
 
-                return (x, y);
-            }
+	        return (x, y);
         }
 
         // Panel dimensions
-        public (double a, double b, double c, double d) Dimensions
+        public (double a, double b, double c, double d) CalculateDimensions()
         {
-            get
-            {
-                var (x, y) = VertexCoordinates;
+	        var (x, y) = VertexCoordinates;
 
-                // Calculate the necessary dimensions of the panel
-                double
-                    a = 0.5 * (x[1] + x[2] - x[0] - x[3]),
-                    b = 0.5 * (y[2] + y[3] - y[0] - y[1]),
-                    c = 0.5 * (x[2] + x[3] - x[0] - x[1]),
-                    d = 0.5 * (y[1] + y[2] - y[0] - y[3]);
+	        // Calculate the necessary dimensions of the panel
+	        double
+		        a = 0.5 * (x[1] + x[2] - x[0] - x[3]),
+		        b = 0.5 * (y[2] + y[3] - y[0] - y[1]),
+		        c = 0.5 * (x[2] + x[3] - x[0] - x[1]),
+		        d = 0.5 * (y[1] + y[2] - y[0] - y[3]);
 
-                return
-                    (a, b, c, d);
-            }
+	        return
+		        (a, b, c, d);
         }
 
-		// Calculate reference length
+        // Calculate reference length
 		public double ReferenceLength
 		{
 			get
@@ -146,7 +148,7 @@ namespace SPMTool.Core
 			}
 		}
 
-        // Set the center point
+        // Get the center point
         public Point3d CenterPoint
         {
             get
@@ -154,39 +156,36 @@ namespace SPMTool.Core
                 // Calculate the approximated center point
                 var Pt1 = GlobalAuxiliary.MidPoint(Vertices[0], Vertices[2]);
                 var Pt2 = GlobalAuxiliary.MidPoint(Vertices[1], Vertices[3]);
-                return GlobalAuxiliary.MidPoint(Pt1, Pt2);
+
+                return
+	                GlobalAuxiliary.MidPoint(Pt1, Pt2);
             }
         }
 
-        // Set edge lengths and angles
-        private double[] Lengths => Edges.Length;
-        private double[] Angles  => Edges.Angle;
-        public (double[] Length, double[] Angle) Edges
+        // Get edge lengths and angles
+        public (double[] Length, double[] Angle) EdgesLengthAndAngles()
         {
-            get
-            {
-                double[]
-                    l = new double[4],
-                    a = new double[4];
+	        double[]
+		        l = new double[4],
+		        a = new double[4];
 
-                // Create lines to measure the angles between the edges and dimensions
-                Line[] ln =
-                {
-                    new Line(Vertices[0], Vertices[1]),
-                    new Line(Vertices[1], Vertices[2]),
-                    new Line(Vertices[2], Vertices[3]),
-                    new Line(Vertices[3], Vertices[0])
-                };
+	        // Create lines to measure the angles between the edges and dimensions
+	        Line[] ln =
+	        {
+		        new Line(Vertices[0], Vertices[1]),
+		        new Line(Vertices[1], Vertices[2]),
+		        new Line(Vertices[2], Vertices[3]),
+		        new Line(Vertices[3], Vertices[0])
+	        };
 
-                // Create the list of dimensions
-                for (int i = 0; i < 4; i++)
-                {
-                    l[i] = ln[i].Length;
-                    a[i] = ln[i].Angle;
-                }
+	        // Create the list of dimensions
+	        for (int i = 0; i < 4; i++)
+	        {
+		        l[i] = ln[i].Length;
+		        a[i] = ln[i].Angle;
+	        }
 
-                return (l, a);
-            }
+	        return (l, a);
         }
 
         // Calculate direction cosines of each edge
@@ -196,7 +195,7 @@ namespace SPMTool.Core
             {
                 (double cos, double sin)[] directionCosines = new (double cos, double sin)[4];
 
-                var angles = Angles;
+                var angles = Edges.Angle;
 
                 for (int i = 0; i < 4; i++)
                     directionCosines[i] = GlobalAuxiliary.DirectionCosines(angles[i]);
@@ -242,5 +241,9 @@ namespace SPMTool.Core
 
             return false;
         };
+
+        public virtual void Analysis()
+        {
+	    }
     }
 }

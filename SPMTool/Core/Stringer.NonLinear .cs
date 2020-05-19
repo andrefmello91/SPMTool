@@ -12,9 +12,13 @@ namespace SPMTool.Core
 			// Public properties
 			public (double N1, double N3) GenStresses { get; set; }
 			public (double e1, double e3) GenStrains  { get; set; }
+			public Matrix<double>         FMatrix     { get; set; }
 
-			public NonLinear(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
+
+            public NonLinear(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
 			{
+				// Initiate F matrix
+				FMatrix = InitialFMatrix();
 			}
 
             // Concrete parameters
@@ -62,48 +66,27 @@ namespace SPMTool.Core
 			});
 
 			// Get the initial F matrix
-			public Matrix<double> InitialFMatrix
+			public Matrix<double> InitialFMatrix()
 			{
-				get
+				double de = 1 / t1;
+
+				// Calculate the flexibility matrix elements
+				double
+					de11 = de * Length / 3,
+					de12 = de11 / 2,
+					de22 = de11;
+
+				// Get the flexibility matrix
+				return Matrix<double>.Build.DenseOfArray(new [,]
 				{
-					double de = 1 / t1;
-
-					// Calculate the flexibility matrix elements
-					double
-						de11 = de * Length / 3,
-						de12 = de11 / 2,
-						de22 = de11;
-
-					// Get the flexibility matrix
-					return Matrix<double>.Build.DenseOfArray(new double[,]
-					{
-						{ de11, de12},
-						{ de12, de22}
-					});
-				}
+					{ de11, de12},
+					{ de12, de22}
+				});
 			}
 
-            // Flexibility and Stiffness matrices
-            public Matrix<double> FMatrix { get; set; }
-
 			// Calculate local stiffness
-            public override Matrix<double> LocalStiffness
-            {
-	            get
-	            {
-		            Matrix<double> F;
-
-		            if (FMatrix != null)
-			            F = FMatrix;
-		            else
-			            F = InitialFMatrix;
-
-					return
-						BMatrix.Transpose() * F.Inverse() * BMatrix;
-	            }
-
-            }
-
+            public override Matrix<double> LocalStiffness => BMatrix.Transpose() * FMatrix.Inverse() * BMatrix;
+            
             // Forces from gen stresses
             public override Vector<double> Forces
 			{
@@ -120,29 +103,29 @@ namespace SPMTool.Core
 			}
 
             // Generalized strains and stresses for each iteration
-            private (double e1, double e3) IterationGenStrains  { get; set; }
-            private (double N1, double N3) IterationGenStresses { get; set; }
+            //private (double e1, double e3) IterationGenStrains  { get; set; }
+            //private (double N1, double N3) IterationGenStresses { get; set; }
 
 			// Forces from gen stresses for each iteration
-			public Vector<double> IterationForces
-			{
-				get
-				{
-					var (N1, N3) = IterationGenStresses;
+			//public Vector<double> IterationForces
+			//{
+			//	get
+			//	{
+			//		var (N1, N3) = IterationGenStresses;
 
-					return
-                        Vector<double>.Build.DenseOfArray(new []
-					    {
-						    -N1, N1 - N3, N3
-					    });
-				}
-			}
+			//		return
+   //                     Vector<double>.Build.DenseOfArray(new []
+			//		    {
+			//			    -N1, N1 - N3, N3
+			//		    });
+			//	}
+			//}
 
 			// Global Stringer forces for each iteration
-			public Vector<double> IterationGlobalForces => TransMatrix.Transpose() * IterationForces;
+			//public Vector<double> IterationGlobalForces => TransMatrix.Transpose() * IterationForces;
 
             // Calculate the effective Stringer force
-            public void StringerForces()
+            public override void Analysis()
             {
                 // Get the initial forces (from previous load step)
                 var (N1, N3) = GenStresses;
@@ -191,27 +174,29 @@ namespace SPMTool.Core
                 // Verify the values of N1 and N3
                 N1 = PlasticForce(N1);
 				N3 = PlasticForce(N3);
-				double PlasticForce(double N)
-                {
-	                double Ni;
-
-	                // Check the value of N
-	                if (N < Nt)
-		                Ni = Nt;
-
-	                else if (N > Nyr)
-		                Ni = Nyr;
-
-	                else
-		                Ni = N;
-
-	                return Ni;
-                }
 
                 // Set values
-                FMatrix = F;
-				IterationGenStresses = (N1, N3);
-				IterationGenStrains  = (e1, e3);
+                FMatrix     = F;
+				GenStresses = (N1, N3);
+				GenStrains  = (e1, e3);
+            }
+
+			// Calculate plastic force
+            private double PlasticForce(double N)
+            {
+	            double Ni;
+
+	            // Check the value of N
+	            if (N < Nt)
+		            Ni = Nt;
+
+	            else if (N > Nyr)
+		            Ni = Nyr;
+
+	            else
+		            Ni = N;
+
+	            return Ni;
             }
 
             // Calculate the Stringer flexibility and generalized strains
@@ -250,16 +235,16 @@ namespace SPMTool.Core
             public abstract (double e, double de) StringerStrain(double N);
 
 			// Set Stringer results (after reached convergence)
-			public void Results()
-			{
-				// Get the values
-				var genStresses = IterationGenStresses;
-				var genStrains  = IterationGenStrains;
+			//public void Results()
+			//{
+			//	// Get the values
+			//	var genStresses = IterationGenStresses;
+			//	var genStrains  = IterationGenStrains;
 				
-				// Set the final values
-				GenStresses = genStresses;
-				GenStrains  = genStrains;
-			}
+			//	// Set the final values
+			//	GenStresses = genStresses;
+			//	GenStrains  = genStrains;
+			//}
 
 			// Calculate the total plastic generalized strain in a Stringer
             public (double ep1, double ep3) PlasticGenStrains
@@ -269,29 +254,29 @@ namespace SPMTool.Core
 		            // Get generalized strains
 		            var (e1, e3) = GenStrains;
 
-		            // Calculate plastic strains
-		            double PlasticStrain(double e)
-		            {
-			            // Initialize the plastic strain
-			            double ep = 0;
-
-			            // Case of tension
-			            if (e > ey)
-				            ep = Length / 8 * (e - ey);
-
-			            // Case of compression
-			            if (e < ec)
-				            ep = Length / 8 * (e - ec);
-
-			            return ep;
-		            }
-
 		            double
 			            ep1 = PlasticStrain(e1),
 			            ep3 = PlasticStrain(e3);
 
 		            return  (ep1, ep3);
 	            }
+            }
+
+            // Calculate plastic strains
+            private double PlasticStrain(double strain)
+            {
+	            // Initialize the plastic strain
+	            double ep = 0;
+
+	            // Case of tension
+	            if (strain > ey)
+		            ep = Length / 8 * (strain - ey);
+
+	            // Case of compression
+	            if (strain < ec)
+		            ep = Length / 8 * (strain - ec);
+
+	            return ep;
             }
 
             // Calculate the maximum plastic strain in a Stringer for tension and compression
