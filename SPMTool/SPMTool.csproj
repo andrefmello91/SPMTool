@@ -120,6 +120,8 @@
     <Compile Include="AutoCAD\Global.cs" />
     <Compile Include="AutoCAD\Reinforcement.cs" />
     <Compile Include="AutoCAD\Supports.cs" />
+    <Compile Include="Core\Membrane.DSFM.cs" />
+    <Compile Include="Core\Membrane.MCFT.cs" />
     <Compile Include="Core\Membrane.cs" />
     <Compile Include="AutoCAD\Auxiliary.cs" />
     <Compile Include="Core\Panel.NonLinear.cs" />

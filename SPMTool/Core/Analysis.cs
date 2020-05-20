@@ -504,24 +504,24 @@ namespace SPMTool.Core
 						ui += du;
                     }
 
-                    //var pnl = Panels[0] as Panel.NonLinear;
+                    var pnl = (Panel.NonLinear) Panels[0];
 
                     fiMatrix.SetRow(loadStep - 1, fi);
                     uMatrix.SetRow(loadStep - 1, u0);
-                    //fPnl.SetRow(loadStep - 1, pnl.Forces);
-                    //sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
-                    //sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
-                    //epsPnl.SetRow(loadStep - 1, pnl.StrainVector);
-                    //uPnl.SetRow(loadStep - 1, pnl.Displacements);
-                    //DcPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Dc);
-                    //DsPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Ds);
+                    fPnl.SetRow(loadStep - 1, pnl.Forces);
+                    sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
+                    sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
+                    epsPnl.SetRow(loadStep - 1, pnl.StrainVector);
+                    uPnl.SetRow(loadStep - 1, pnl.Displacements);
+                    DcPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Dc);
+                    DsPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Ds);
 
-                    //var thetaPnl = new double[4];
+                    var thetaPnl = new double[4];
 
-                    //for (int i = 0; i < 4; i++)
-                    //    thetaPnl[i] = pnl.IntegrationPoints[i].PrincipalAngles.theta2;
+                    for (int i = 0; i < 4; i++)
+                        thetaPnl[i] = pnl.IntegrationPoints[i].PrincipalAngles.theta2;
 
-                    //thetaPnl1.SetRow(loadStep - 1, thetaPnl);
+                    thetaPnl1.SetRow(loadStep - 1, thetaPnl);
 
                     // Set the results to elements
                     Results();
@@ -549,9 +549,9 @@ namespace SPMTool.Core
                 //DelimitedWriter.Write("D:/estr.csv", estr, ";");
                 DelimitedWriter.Write("D:/u.csv", uMatrix, ";");
                 //DelimitedWriter.Write("D:/genStPnl.csv", genStPnl, ";");
-                //DelimitedWriter.Write("D:/sigCPnl.csv", sigCPnl, ";");
-                //DelimitedWriter.Write("D:/sigSPnl.csv", sigSPnl, ";");
-                //DelimitedWriter.Write("D:/epsPnl.csv", epsPnl, ";");
+                DelimitedWriter.Write("D:/sigCPnl.csv", sigCPnl, ";");
+                DelimitedWriter.Write("D:/sigSPnl.csv", sigSPnl, ";");
+                DelimitedWriter.Write("D:/epsPnl.csv", epsPnl, ";");
 
                 //for (int i = 0; i < 4; i++)
                 //{
@@ -566,7 +566,7 @@ namespace SPMTool.Core
                 //DelimitedWriter.Write("D:/sigPnl1.csv", sigPnl, ";");
                 //DelimitedWriter.Write("D:/f1Pnl1.csv", f1Pnl, ";");
                 //DelimitedWriter.Write("D:/e1Pnl1.csv", e1Pnl, ";");
-                //DelimitedWriter.Write("D:/thetaPnl1.csv", thetaPnl1, ";");
+                DelimitedWriter.Write("D:/thetaPnl1.csv", thetaPnl1, ";");
                 //DelimitedWriter.Write("D:/DPnl1.csv", DPnl, ";");
 
                 //DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");
