@@ -20,10 +20,10 @@ namespace SPMTool.AutoCAD
 				var analysis = new Analysis.Linear(input);
 
 				// Draw results of analysis
-				Results.Draw(analysis);
+				Draw(analysis);
 			}
 
-			else
+            else
 				Application.ShowAlertDialog("Please set concrete parameters");
 		}
 
@@ -42,7 +42,7 @@ namespace SPMTool.AutoCAD
 				var analysis = new Analysis.NonLinear(input);
 
 				// Draw results of analysis
-				AutoCAD.Results.Draw(analysis);
+				Draw(analysis);
 			}
 
 			else

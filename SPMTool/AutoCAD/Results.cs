@@ -369,7 +369,7 @@ namespace SPMTool.AutoCAD
 						tauTxt.AlignmentPoint = algnPt;
 
 						// Add the text to the drawing
-						AutoCAD.Auxiliary.AddObject(tauTxt);
+						Auxiliary.AddObject(tauTxt);
 					}
 
 					// Create stress block
@@ -382,7 +382,7 @@ namespace SPMTool.AutoCAD
 						{
 							blkRef.Layer = CompStressLayer;
 							blkRef.ColorIndex = (int)Colors.Blue1;
-							AutoCAD.Auxiliary.AddObject(blkRef);
+							Auxiliary.AddObject(blkRef);
 
 							// Set the scale of the block
 							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));

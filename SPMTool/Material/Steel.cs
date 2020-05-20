@@ -19,7 +19,7 @@ namespace SPMTool
 			// Read the steel parameters
 			public Steel(double yieldStress, double elasticModule = 210000)
 			{
-				YieldStress = yieldStress;
+				YieldStress   = yieldStress;
 				ElasticModule = elasticModule;
 			}
 
