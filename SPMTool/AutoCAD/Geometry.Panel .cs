@@ -69,57 +69,32 @@ namespace SPMTool.AutoCAD
 				for ( ; ; )
 				{
                     // Prompt for user select 4 vertices of the panel
-                    var selOp = new PromptSelectionOptions()
+                    var nds = UserInput.SelectNodes("Select four nodes to be the vertices of the panel", NodeType.External);
+
+                    if (nds == null)
                     {
-	                    MessageForAdding = "Select four nodes to be the vertices of the panel"
-                    };
+	                    Application.ShowAlertDialog("Please select four external nodes.");
+	                    break;
+                    }
 
-					PromptSelectionResult selRes = Current.edtr.GetSelection(selOp);
-
-					if (selRes.Status == PromptStatus.OK)
+					// Check if there are four points
+					if (nds.Count == 4)
 					{
-						SelectionSet set = selRes.Value;
+						List<Point3d> vrts = new List<Point3d>();
 
-						// Create a point3d collection
-						List<Point3d> nds = new List<Point3d>();
+						foreach (DBPoint nd in nds)
+							vrts.Add(nd.Position);
 
-						// Start a transaction
-						using (Transaction trans = Current.db.TransactionManager.StartTransaction())
-						{
-							// Get the objects in the selection and add to the collection only the external nodes
-							foreach (SelectedObject obj in set)
-							{
-								// Read as entity
-								Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+						// Order the vertices in ascending Y and ascending X
+						vrts = GlobalAuxiliary.OrderPoints(vrts);
 
-								// Check if it is a external node
-								if (ent.Layer == Node.ExtNodeLayer)
-								{
-									// Read as a DBPoint and add to the collection
-									DBPoint nd = ent as DBPoint;
-									nds.Add(nd.Position);
-								}
-							}
-						}
-
-						// Check if there are four points
-						if (nds.Count == 4)
-						{
-							// Order the vertices in ascending Y and ascending X
-							List<Point3d> vrts = SPMTool.GlobalAuxiliary.OrderPoints(nds);
-
-							// Create the panel if it doesn't exist
-							var pnlPts = (vrts[0], vrts[1], vrts[2], vrts[3]);
-							new Panel(pnlPts, pnlList);
-						}
-
-						else
-							Application.ShowAlertDialog("Please select four external nodes.");
+						// Create the panel if it doesn't exist
+						var pnlPts = (vrts[0], vrts[1], vrts[2], vrts[3]);
+						new Panel(pnlPts, pnlList);
 					}
 
 					else
-						// Finish the command
-						break;
+						Application.ShowAlertDialog("Please select four external nodes.");
 				}
 
 				// Update nodes and panels
@@ -384,62 +359,47 @@ namespace SPMTool.AutoCAD
 			public static void SetPanelGeometry()
 			{
 				// Request objects to be selected in the drawing area
-				var selOp = new PromptSelectionOptions()
-				{
-					MessageForAdding = "Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)"
-				};
+				var pnls = UserInput.SelectObjects(
+					"Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)",
+					new [] {Layers.Panel});
 
-				PromptSelectionResult selRes = Current.edtr.GetSelection(selOp);
-
-				// If the prompt status is OK, objects were selected
-				if (selRes.Status == PromptStatus.Cancel)
+				if (pnls == null)
 					return;
 
-				// Get the selection
-				SelectionSet set = selRes.Value;
+				// Get width
+				var wn = GetPanelGeometry();
 
-				if (set.Count > 0)
+				if (!wn.HasValue)
+					return;
+
+				// Start a transaction
+				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 				{
-					// Get width
-					double w = GetPanelGeometry();
-
-					// Start a transaction
-					using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+					foreach (DBObject pnl in pnls)
 					{
-						foreach (SelectedObject obj in set)
-						{
-							// Open the selected object for read
-							Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+						// Open the selected object for read
+						Entity ent = (Entity) trans.GetObject(pnl.ObjectId, OpenMode.ForWrite);
 
-							// Check if the selected object is a panel
-							if (ent.Layer == PanelLayer)
-							{
-								// Upgrade the OpenMode
-								ent.UpgradeOpen();
+						// Access the XData as an array
+						TypedValue[] data = Auxiliary.ReadXData(ent);
 
-								// Access the XData as an array
-								TypedValue[] data = Auxiliary.ReadXData(ent);
+						// Set the new geometry and reinforcement (line 7 to 9 of the array)
+						data[(int) PanelData.Width] = new TypedValue((int) DxfCode.ExtendedDataReal, wn.Value);
 
-								// Set the new geometry and reinforcement (line 7 to 9 of the array)
-								if (w > 0)
-									data[(int) PanelData.Width] = new TypedValue((int) DxfCode.ExtendedDataReal, w);
-
-								// Add the new XData
-								ent.XData = new ResultBuffer(data);
-							}
-						}
-
-						// Save the new object to the database
-						trans.Commit();
+						// Add the new XData
+						ent.XData = new ResultBuffer(data);
 					}
+
+					// Save the new object to the database
+					trans.Commit();
 				}
 			}
 
 			// Get reinforcement parameters from user
-            private static double GetPanelGeometry()
+            private static double? GetPanelGeometry()
             {
                 // Initiate values
-                double width = 0;
+                double? widthn = null;
 
                 // Get saved reinforcement options
                 var savedGeo = ReadPanelGeometry();
@@ -447,67 +407,47 @@ namespace SPMTool.AutoCAD
                 // Get saved reinforcement options
                 if (savedGeo != null)
                 {
-                    // Ask the user to choose the options
-                    var options = new PromptKeywordOptions("Choose panel width (mm) or add a new one:")
-                    {
-	                    AllowNone = false
-                    };
+					// Get the options
+					var options = new List<string>();
 
-                    // Get the options
-                    for (int i = 0; i < savedGeo.Length; i++)
-                        options.Keywords.Add(savedGeo[i].ToString());
+					for (int i = 0; i < savedGeo.Length; i ++)
+						options.Add(savedGeo[i].ToString());
 
-                    // Add option to set new reinforcement
-                    options.Keywords.Add("New");
-
-                    // Set default
-                    options.Keywords.Default = options.Keywords[0].GlobalName;
-
-                    PromptResult result = Current.edtr.GetKeywords(options);
-
-                    if (result.Status == PromptStatus.Cancel)
-                        return 0;
+					// Add option to set new reinforcement
+					options.Add("New");
 
                     // Get string result
-                    string res = result.StringResult;
+                    string res = UserInput.SelectKeyword("Choose panel width (mm) or add a new one:", options.ToArray(), options[0]);
+
+                    if (res == null)
+	                    return null;
 
                     // Get the index
                     if (res != "New")
                     {
-                        for (int i = 0; i < options.Keywords.Count; i++)
+                        for (int i = 0; i < options.Count; i++)
                         {
-                            if (res == options.Keywords[i].GlobalName)
-                                width = savedGeo[i];
+                            if (res == options[i])
+                                widthn = savedGeo[i];
                         }
                     }
                 }
 
                 // New reinforcement
-                if (width == 0)
+                if (!widthn.HasValue)
                 {
-	                width = 100;
+                    widthn = UserInput.GetDouble("Input width (mm) for selected panels:", 100);
 
-                    // Ask the user to input the panel width
-                    var pnlWOp = new PromptDoubleOptions("\nInput width (mm) for selected panels:")
-                    {
-	                    DefaultValue  = width,
-	                    AllowZero     = false,
-	                    AllowNegative = false
-                    };
+                    if (!widthn.HasValue)
+	                    return null;
 
-                    // Get the result
-                    PromptDoubleResult pnlWRes = Current.edtr.GetDouble(pnlWOp);
-
-                    if (pnlWRes.Status == PromptStatus.Cancel)
-	                    return 0;
-
-                    width = pnlWRes.Value;
+                    var width = widthn.Value;
 
 	                // Save geometry
 	                SavePanelGeometry(width);
                 }
 
-                return width;
+                return widthn;
             }
 
             // Save geometry configuration on database

@@ -77,62 +77,55 @@ namespace SPMTool.AutoCAD
 					newExtNds = new List<Point3d>();
 
 				// Prompt for the start point of Stringer
-				PromptPointOptions strStOp = new PromptPointOptions("\nEnter the start point: ");
-				PromptPointResult strStRes = Current.edtr.GetPoint(strStOp);
+				var stPtn = UserInput.SelectPoint("Enter the start point:");
 
-				// Exit if the user presses ESC or cancels the command
-				if (strStRes.Status == PromptStatus.OK)
-				{
+				if (stPtn == null)
+					return;
+
+				var stPt = stPtn.Value;
+
 					// Loop for creating infinite stringers (until user exits the command)
 					for ( ; ; )
 					{
 						// Create a point3d collection and add the Stringer start point
 						List<Point3d> nds = new List<Point3d>();
-						nds.Add(strStRes.Value);
+						nds.Add(stPt);
 
-						// Prompt for the end point and add to the collection
-						PromptPointOptions strEndOp = new PromptPointOptions("\nEnter the end point: ")
+						// Prompt for the start point of Stringer
+						var endPtn = UserInput.SelectPoint("Enter the end point:", stPt);
+
+						if (endPtn == null)
 						{
-							UseBasePoint = true,
-							BasePoint = strStRes.Value
-						};
-
-						PromptPointResult strEndRes = Current.edtr.GetPoint(strEndOp);
-
-						if (strEndRes.Status == PromptStatus.OK)
-						{
-							nds.Add(strEndRes.Value);
-
-							// Get the points ordered in ascending Y and ascending X:
-							List<Point3d> extNds = GlobalAuxiliary.OrderPoints(nds);
-
-							// Create the Stringer and add to drawing
-							new Stringer(extNds[0], extNds[1], strList);
-
-							// Get the midpoint
-							Point3d midPt = SPMTool.GlobalAuxiliary.MidPoint(extNds[0], extNds[1]);
-
-							// Add the position of the nodes to the list
-							if (!newExtNds.Contains(extNds[0]))
-								newExtNds.Add(extNds[0]);
-
-							if (!newExtNds.Contains(extNds[1]))
-								newExtNds.Add(extNds[1]);
-
-							if (!newIntNds.Contains(midPt))
-								newIntNds.Add(midPt);
-
-							// Set the start point of the new Stringer
-							strStRes = strEndRes;
-						}
-
-						else
-						{
-							// Finish the command
+							// Finish command
 							break;
 						}
+
+						var endPt = endPtn.Value;
+
+						nds.Add(endPt);
+
+						// Get the points ordered in ascending Y and ascending X:
+						List<Point3d> extNds = GlobalAuxiliary.OrderPoints(nds);
+
+						// Create the Stringer and add to drawing
+						new Stringer(extNds[0], extNds[1], strList);
+
+						// Get the midpoint
+						Point3d midPt = GlobalAuxiliary.MidPoint(extNds[0], extNds[1]);
+
+						// Add the position of the nodes to the list
+						if (!newExtNds.Contains(extNds[0]))
+							newExtNds.Add(extNds[0]);
+
+						if (!newExtNds.Contains(extNds[1]))
+							newExtNds.Add(extNds[1]);
+
+						if (!newIntNds.Contains(midPt))
+							newIntNds.Add(midPt);
+
+						// Set the start point of the new Stringer
+						stPt = endPt;
 					}
-				}
 
 				// Create the nodes
 				new Node(newExtNds, NodeType.External);
@@ -419,51 +412,55 @@ namespace SPMTool.AutoCAD
 			public static void SetStringerGeometry()
 			{
                 // Request objects to be selected in the drawing area
-                var selOp = new PromptSelectionOptions()
-                {
-					MessageForAdding = "\nSelect the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)"
-                };
+                var strs = UserInput.SelectObjects(
+	                "Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)", new []{Layers.Stringer});
+    //            var selOp = new PromptSelectionOptions()
+    //            {
+				//	MessageForAdding = "\nSelect the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)"
+    //            };
 
-				PromptSelectionResult selRes = Current.edtr.GetSelection(selOp);
+				//PromptSelectionResult selRes = Current.edtr.GetSelection(selOp);
 
-				// If the prompt status is OK, objects were selected
-				if (selRes.Status == PromptStatus.Cancel)
-					return;
+				//// If the prompt status is OK, objects were selected
+				//if (selRes.Status == PromptStatus.Cancel)
+				//	return;
 
-				SelectionSet set = selRes.Value;
+				//SelectionSet set = selRes.Value;
 
-				if (set.Count > 0)
+				if (strs != null)
 				{
 					// Get geometry
-					var geometry = GetStringerGeometry();
+					var geometryn = GetStringerGeometry();
+
+					if (!geometryn.HasValue)
+						return;
+
+					var geometry = geometryn.Value;
 
 					// Start a transaction
 					using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 					{
-						foreach (SelectedObject obj in set)
+						foreach (DBObject obj in strs)
 						{
 							// Open the selected object for read
-							Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+							Entity ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForWrite);
 
 							// Check if the selected object is a node
-							if (ent.Layer == StringerLayer)
-							{
-								// Upgrade the OpenMode
-								ent.UpgradeOpen();
+							//if (ent.Layer == StringerLayer)
+							//{
+							//	// Upgrade the OpenMode
+							//	ent.UpgradeOpen();
 
 								// Access the XData as an array
 								TypedValue[] data = Auxiliary.ReadXData(ent);
 
 								// Set the new geometry and reinforcement (line 7 to 9 of the array)
-								if (geometry != default)
-								{
-									data[(int) StringerData.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.width);
-									data[(int) StringerData.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.height);
-								}
+								data[(int) StringerData.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.width);
+								data[(int) StringerData.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.height);
 
 								// Add the new XData
 								ent.XData = new ResultBuffer(data);
-							}
+							//}
 						}
 
 						// Save the new object to the database
@@ -473,10 +470,10 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Get reinforcement parameters from user
-            private static (double width, double height) GetStringerGeometry()
+            private static (double width, double height)? GetStringerGeometry()
             {
                 // Initiate values
-                (double width, double height) geometry = default;
+                (double width, double height)? geometry = null;
 
                 // Get saved reinforcement options
                 var savedGeo = ReadStringerGeometry();
@@ -484,93 +481,61 @@ namespace SPMTool.AutoCAD
                 // Get saved reinforcement options
                 if (savedGeo != null)
                 {
-                    // Ask the user to choose the options
-                    var options = new PromptKeywordOptions("Choose a geometry option (mm x mm) or add a new one:")
-                    {
-	                    AllowNone = false
-                    };
+	                // Get the options
+	                var options = new List<string>();
 
-                    // Get the options
-                    for (int i = 0; i < savedGeo.Length; i++)
-                    {
-	                    double
-		                    w = savedGeo[i].width,
-		                    h = savedGeo[i].height;
+	                for (int i = 0; i < savedGeo.Length; i++)
+	                {
+		                double
+			                w = savedGeo[i].width,
+			                h = savedGeo[i].height;
 
-	                    char times = (char) Characters.Times;
+		                char times = (char)Characters.Times;
 
-                        string name = w.ToString() + times + h;
+		                string name = w.ToString() + times + h;
 
-                        options.Keywords.Add(name);
-                    }
+		                options.Add(name);
+	                }
 
                     // Add option to set new reinforcement
-                    options.Keywords.Add("New");
+                    options.Add("New");
 
-                    // Set default
-                    options.Keywords.Default = options.Keywords[0].GlobalName;
+	                // Get string result
+	                string res = UserInput.SelectKeyword("Choose a geometry option (mm x mm) or add a new one:", options.ToArray(), options[0]);
 
-                    PromptResult result = Current.edtr.GetKeywords(options);
-
-                    if (result.Status == PromptStatus.Cancel)
-                        return default;
-
-                    // Get string result
-                    string res = result.StringResult;
+                    if (res == null)
+	                    return null;
 
                     // Get the index
                     if (res != "New")
                     {
-                        for (int i = 0; i < options.Keywords.Count; i++)
+                        for (int i = 0; i < options.Count; i++)
                         {
-                            if (res == options.Keywords[i].GlobalName)
+                            if (res == options[i])
                                 geometry = savedGeo[i];
                         }
                     }
                 }
 
                 // New reinforcement
-                if (geometry == default)
+                if (!geometry.HasValue)
                 {
-	                double
-		                w = 100,
-		                h = 100;
-
 	                // Ask the user to input the Stringer width
-	                var strWOp = new PromptDoubleOptions("\nInput width (mm) for selected stringers:")
+	                var wn = UserInput.GetDouble("Input width (mm) for selected stringers:", 100);
+
+                    // Ask the user to input the Stringer height
+                    var hn = UserInput.GetDouble("Input height (mm) for selected stringers:", 100);
+
+	                if (wn.HasValue && hn.HasValue)
 	                {
-		                DefaultValue  = w,
-		                AllowZero     = false,
-		                AllowNegative = false
-	                };
+		                double
+			                w = wn.Value,
+			                h = hn.Value;
 
-	                // Get the result
-	                PromptDoubleResult strWRes = Current.edtr.GetDouble(strWOp);
-
-	                if (strWRes.Status == PromptStatus.Cancel)
-		                return default;
-
-	                w = strWRes.Value;
-
-	                // Ask the user to input the Stringer height
-	                var strHOp = new PromptDoubleOptions("\nInput height (mm) for selected stringers:")
-	                {
-		                DefaultValue  = h, 
-		                AllowZero     = false,
-		                AllowNegative = false
-	                };
-
-	                // Get the result
-	                PromptDoubleResult strHRes = Current.edtr.GetDouble(strHOp);
-
-	                if (strHRes.Status == PromptStatus.Cancel)
-		                return default;
-
-	                h = strHRes.Value;
-					
-	                // Save geometry
-	                geometry = (w, h);
-	                SaveStringerGeometry(w, h);
+                        // Save geometry
+                        geometry = (w, h);
+		                SaveStringerGeometry(w, h);
+	                }
                 }
 
                 return geometry;

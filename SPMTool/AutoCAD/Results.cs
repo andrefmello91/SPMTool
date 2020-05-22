@@ -834,157 +834,149 @@ namespace SPMTool.AutoCAD
 			// Start a loop for viewing continuous elements
 			for ( ; ; )
 			{
-				// Request the object to be selected in the drawing area
-				PromptEntityOptions entOp = new PromptEntityOptions("\nSelect an element to view data:");
-				PromptEntityResult entRes = Current.edtr.GetEntity(entOp);
+				// Get the entity for read
+				Entity ent = UserInput.SelectEntity("Select an element to view data:");
 
-				// If the prompt status is OK, objects were selected
-				if (entRes.Status == PromptStatus.OK)
+				if (ent == null)
+					return;
+
+				// If it's a node
+				if (ent.Layer == Geometry.Node.ExtNodeLayer || ent.Layer == Geometry.Node.IntNodeLayer)
 				{
-					// Start a transaction
-					using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
+					// Get the node
+					Node nd = new Node(ent.ObjectId);
+
+					// Get the position
+					double
+						xPos = Math.Round(nd.Position.X, 2),
+						yPos = Math.Round(nd.Position.Y, 2);
+
+					msgstr =
+						"Node " + nd.Number + "\n\n" +
+						"Position: (" + xPos + ", " + yPos + ")";
+
+					// Read applied forces
+					if (nd.Force != (0, 0))
+						msgstr +=
+							"\n\nApplied forces:\n" +
+							"Fx = " + nd.Force.X + " kN" + "\n" +
+							"Fy = " + nd.Force.Y + " kN" + "\n";
+
+					// Get supports
+					if (nd.Support != (false, false))
 					{
-						// Get the entity for read
-						Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
+						string sup = "";
 
-						// If it's a node
-						if (ent.Layer == Geometry.Node.ExtNodeLayer || ent.Layer == Geometry.Node.IntNodeLayer)
-						{
-							// Get the node
-							Node nd = new Node(entRes.ObjectId);
+						if (nd.Support.X)
+							sup += "X";
 
-							// Get the position
-							double
-								xPos = Math.Round(nd.Position.X, 2),
-								yPos = Math.Round(nd.Position.Y, 2);
+						if (nd.Support.Y)
+							sup += "Y";
 
-							msgstr =
-								"Node " + nd.Number + "\n\n" +
-								"Position: (" + xPos + ", " + yPos + ")";
+						msgstr +=
+							"\n\nSupport conditions: " + sup;
 
-							// Read applied forces
-							if (nd.Force != (0, 0))
-								msgstr +=
-									"\n\nApplied forces:\n" +
-									"Fx = " + nd.Force.X + " kN" + "\n" +
-									"Fy = " + nd.Force.Y + " kN" + "\n";
+					}
 
-							// Get supports
-							if (nd.Support != (false, false))
-							{
-								string sup = "";
+					// Get displacements
+					if (nd.Displacement != (0, 0))
+					{
+						// Approximate displacements
+						double
+							ux = Math.Round(nd.Displacement.X, 2),
+							uy = Math.Round(nd.Displacement.Y, 2);
 
-								if (nd.Support.X)
-									sup += "X";
+						msgstr +=
+							"\n\nDisplacements:\n" +
+							"ux = " + ux + " mm" + "\n" +
+							"uy = " + uy + " mm";
+					}
+				}
 
-								if (nd.Support.Y)
-									sup += "Y";
+				// If it's a Stringer
+				else if (ent.Layer == Geometry.Stringer.StringerLayer)
+				{
+					// Get the Stringer
+					var str = new Stringer(ent.ObjectId);
 
-								msgstr +=
-									"\n\nSupport conditions: " + sup;
+					msgstr =
+						"Stringer " + str.Number + "\n\n" +
+						"Grips: (" + str.Grips[0] + " - " + str.Grips[1] + " - " + str.Grips[2] + ")" + "\n" +
+						"Lenght = " + str.Length + " mm" + "\n" +
+						"Width = " + str.Width + " mm" + "\n" +
+						"Height = " + str.Height + " mm";
 
-							}
+					// Get reinforcement
+					var rf = str.Reinforcement;
 
-							// Get displacements
-							if (nd.Displacement != (0, 0))
-							{
-								// Approximate displacements
-								double
-									ux = Math.Round(nd.Displacement.X, 2),
-									uy = Math.Round(nd.Displacement.Y, 2);
+					if (rf.NumberOfBars > 0)
+					{
+						// Approximate steel area
+						double As = Math.Round(str.SteelArea, 2);
 
-								msgstr +=
-									"\n\nDisplacements:\n" +
-									"ux = " + ux + " mm" + "\n" +
-									"uy = " + uy + " mm";
-							}
-                        }
+						char phi     = (char) Characters.Phi;
+						char epsilon = (char) Characters.Epsilon;
 
-                        // If it's a Stringer
-                        else if (ent.Layer == Geometry.Stringer.StringerLayer)
-						{
-							// Get the Stringer
-							var str = new Stringer(entRes.ObjectId);
+						msgstr +=
+							"\n\nReinforcement: " + rf.NumberOfBars + " " + phi + rf.BarDiameter + " mm (" + As +
+							" mm²) \n\n" +
+							"Steel Parameters: " +
+							"\nfy = "               + rf.Steel.YieldStress                       + " MPa" +
+							"\nEs = "               + rf.Steel.ElasticModule                     + " MPa" +
+							"\n" + epsilon + "y = " + Math.Round(1000 * rf.Steel.YieldStrain, 2) + " E-03";
+					}
+				}
 
-							msgstr =
-								"Stringer " + str.Number + "\n\n" +
-								"Grips: (" + str.Grips[0] + " - " + str.Grips[1] + " - " + str.Grips[2] + ")" + "\n" +
-								"Lenght = " + str.Length + " mm" + "\n" +
-								"Width = " + str.Width + " mm" + "\n" +
-								"Height = " + str.Height + " mm";
+				// If it's a panel
+				else if (ent.Layer == Geometry.Panel.PanelLayer)
+				{
+					// Get the panel
+					var pnl = new Panel(ent.ObjectId);
 
-							// Get reinforcement
-							var rf = str.Reinforcement;
+					msgstr =
+						"Panel " + pnl.Number + "\n\n" +
+						"Grips: (" + pnl.Grips[0] + " - " + pnl.Grips[1] + " - " + pnl.Grips[2] + " - " + pnl.Grips[3] +
+						")" + "\n" +
+						"Width = " + pnl.Width + " mm";
 
-							if (rf.NumberOfBars > 0)
-							{
-								// Approximate steel area
-								double As = Math.Round(str.SteelArea, 2);
+					// Get reinforcement
+					var rf = pnl.Reinforcement;
 
-								char phi     = (char) Characters.Phi;
-								char epsilon = (char) Characters.Epsilon;
+					if (rf.BarDiameter != (0, 0))
+					{
+						// Approximate reinforcement ratio
+						double
+							psx = Math.Round(rf.Ratio.X, 3),
+							psy = Math.Round(rf.Ratio.Y, 3);
 
-								msgstr +=
-									"\n\nReinforcement: " + rf.NumberOfBars + " " + phi + rf.BarDiameter + " mm (" + As + " mm²) \n\n" +
-									"Steel Parameters: " +
-									"\nfy = "               + rf.Steel.YieldStress                       + " MPa" +
-									"\nEs = "               + rf.Steel.ElasticModule                     + " MPa" +
-									"\n" + epsilon + "y = " + Math.Round(1000 * rf.Steel.YieldStrain, 2) + " E-03";
-							}
-						}
+						char rho     = (char) Characters.Rho;
+						char phi     = (char) Characters.Phi;
+						char epsilon = (char) Characters.Epsilon;
 
-						// If it's a panel
-						else if (ent.Layer == Geometry.Panel.PanelLayer)
-						{
-							// Get the panel
-							var pnl = new Panel(entRes.ObjectId);
+						msgstr +=
+							"\n\nReinforcement (x): " + phi + rf.BarDiameter.X + " mm, s = " + rf.BarSpacing.X +
+							" mm (" + rho + "sx = " + psx + ")\n" +
 
-							msgstr =
-								"Panel " + pnl.Number + "\n\n" +
-								"Grips: (" + pnl.Grips[0] + " - " + pnl.Grips[1] + " - " + pnl.Grips[2] + " - " + pnl.Grips[3] + ")" + "\n" +
-								"Width = " + pnl.Width + " mm";
+							"Steel Parameters (x): " +
+							"\nfy = "               + rf.Steel.X.YieldStress                       + " MPa" +
+							"\nEs = "               + rf.Steel.X.ElasticModule                     + " MPa" +
+							"\n" + epsilon + "y = " + Math.Round(1000 * rf.Steel.X.YieldStrain, 2) + " E-03 \n\n" +
 
-							// Get reinforcement
-							var rf = pnl.Reinforcement;
+							"Reinforcement (y) = " + phi + rf.BarDiameter.Y + " mm, s = " + rf.BarSpacing.Y + " mm (" +
+							rho + "sy = " + psy + ")\n" +
 
-							if (rf.BarDiameter != (0, 0))
-                            {
-	                            // Approximate reinforcement ratio
-	                            double
-		                            psx = Math.Round(rf.Ratio.X, 3),
-		                            psy = Math.Round(rf.Ratio.Y, 3);
-
-	                            char rho     = (char)Characters.Rho;
-	                            char phi     = (char)Characters.Phi;
-	                            char epsilon = (char)Characters.Epsilon;
-
-	                            msgstr +=
-								"\n\nReinforcement (x): " + phi + rf.BarDiameter.X + " mm, s = " + rf.BarSpacing.X + " mm (" + rho + "sx = " + psx + ")\n" +
-
-								"Steel Parameters (x): " +
-								"\nfy = "               + rf.Steel.X.YieldStress                       + " MPa" +
-								"\nEs = "               + rf.Steel.X.ElasticModule                     + " MPa" +
-								"\n" + epsilon + "y = " + Math.Round(1000 * rf.Steel.X.YieldStrain, 2) + " E-03 \n\n" +
-
-								"Reinforcement (y) = " + phi + rf.BarDiameter.Y + " mm, s = " + rf.BarSpacing.Y + " mm (" + rho + "sy = " + psy + ")\n" +
-
-								"Steel Parameters (y): " +
-								"\nfy = "               + rf.Steel.Y.YieldStress                       + " MPa" +
-								"\nEs = "               + rf.Steel.Y.ElasticModule                     + " MPa" +
-								"\n" + epsilon + "y = " + Math.Round(1000 * rf.Steel.Y.YieldStrain, 2) + " E-03 \n\n";
-							}
-						}
-
-						else
-							msgstr = "NONE";
-
-						// Display the values returned
-						Application.ShowAlertDialog(AutoCAD.Current.appName + "\n\n" + msgstr);
+							"Steel Parameters (y): " +
+							"\nfy = "               + rf.Steel.Y.YieldStress                       + " MPa" +
+							"\nEs = "               + rf.Steel.Y.ElasticModule                     + " MPa" +
+							"\n" + epsilon + "y = " + Math.Round(1000 * rf.Steel.Y.YieldStrain, 2) + " E-03 \n\n";
 					}
 				}
 
 				else
-					break;
+					msgstr = "NONE";
+
+				// Display the values returned
+				Application.ShowAlertDialog(Current.appName + "\n\n" + msgstr);
 			}
 		}
 

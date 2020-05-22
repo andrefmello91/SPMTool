@@ -23,7 +23,7 @@ namespace SPMTool
 
         public void on_ApplicationIdle(object sender, EventArgs e)
         {
-            UserInterface.RibbonButtons();
+            AutoCAD.UserInterface.RibbonButtons();
             Autodesk.AutoCAD.ApplicationServices.Application.Idle -= on_ApplicationIdle;
         }
 
@@ -57,7 +57,7 @@ namespace SPMTool
             if (sysVarChEvtArgs.Name == "COLORTHEME")
             {
                 // Reinitialize the ribbon buttons
-                UserInterface.RibbonButtons();
+                AutoCAD.UserInterface.RibbonButtons();
             }
         }
     }

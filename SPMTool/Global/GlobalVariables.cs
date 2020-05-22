@@ -10,6 +10,16 @@
             Pi3Over2 = MathNet.Numerics.Constants.Pi3Over2;
     }
 
+	// Element names
+	public enum Elements
+	{
+		Default,
+		Node,
+		Stringer,
+		Panel,
+		Support,
+		Force
+	}
 
     // XData indexers
     public static class XData

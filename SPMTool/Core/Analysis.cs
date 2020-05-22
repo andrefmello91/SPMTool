@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using Autodesk.AutoCAD.ApplicationServices;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.Data.Text;
 using MathNet.Numerics.Statistics;
+using SPMTool.UserInterface;
 
 namespace SPMTool.Core
 {
@@ -430,7 +432,7 @@ namespace SPMTool.Core
 			private int maxIterations = 1000;
 			private int loadSteps     = 100;
 
-            public NonLinear(InputData inputData) : base(inputData)
+            public NonLinear(InputData inputData, GraphWindow uWindow) : base(inputData)
 	        {
                 // Get force vector
                 var f = ForceVector;
@@ -450,7 +452,7 @@ namespace SPMTool.Core
 
                 DelimitedWriter.Write("D:/u0.csv", u0.ToColumnMatrix(), ";");
 
-                var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
+				var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
 		        var fiMatrix = Matrix<double>.Build.Dense(100, numDoFs);
                 var fstr = Matrix<double>.Build.Dense(4, 3);
                 var estr = Matrix<double>.Build.Dense(4, 2);
@@ -463,6 +465,9 @@ namespace SPMTool.Core
                 var DcPnl = Matrix<double>.Build.Dense(1200, 12);
                 var DsPnl = Matrix<double>.Build.Dense(1200, 12);
                 var thetaPnl1 = Matrix<double>.Build.Dense(100, 4);
+
+				var uList = new List<double>();
+				var lfList = new List<double>();
 
                 // Initialize a loop for load steps
                 for (int loadStep = 1; loadStep <= loadSteps; loadStep++)
@@ -491,7 +496,10 @@ namespace SPMTool.Core
 						if (EquilibriumConvergence(fr, ui - u0, it))
 						{
 							AutoCAD.Current.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
-							break;
+                            uWindow.AddPoint(ui[14], lf);
+                            //uList.Add(ui[14]);
+                            //lfList.Add(lf);
+                            break;
 						}
 
 						// Set initial displacements
@@ -507,7 +515,7 @@ namespace SPMTool.Core
                     var pnl = (Panel.NonLinear) Panels[0];
 
                     fiMatrix.SetRow(loadStep - 1, fi);
-                    uMatrix.SetRow(loadStep - 1, u0);
+                    uMatrix.SetRow(loadStep - 1, ui);
                     fPnl.SetRow(loadStep - 1, pnl.Forces);
                     sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
                     sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
@@ -529,6 +537,7 @@ namespace SPMTool.Core
                     // Update stiffness
                     Kg = Global_Stiffness();
 
+
                     //if (loadStep < 56)
                     //{
                     //    foreach (Stringer.NonLinear Stringer in Stringers)
@@ -539,8 +548,10 @@ namespace SPMTool.Core
                     //}
                 }
 
+                //uWindow.AddRange(uList.ToArray(), lfList.ToArray());
+
                 // Set nodal displacements
-                NodalDisplacements(u0);
+                NodalDisplacements(ui);
 
                 DelimitedWriter.Write("D:/K.csv", Kg, ";");
                 DelimitedWriter.Write("D:/f.csv", f.ToColumnMatrix(), ";");

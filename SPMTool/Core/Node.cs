@@ -10,8 +10,8 @@ namespace SPMTool.Core
 {
     public class Node
     {
-	    // Node types
-	    public enum NodeType
+        // Node types (All excludes displaced)
+        public enum NodeType
 	    {
 		    All,
 		    External,
