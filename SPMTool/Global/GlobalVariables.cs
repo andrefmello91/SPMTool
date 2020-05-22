@@ -21,6 +21,14 @@
 		Force
 	}
 
+	// Direction names
+	public enum Directions
+	{
+		X,
+		Y,
+		XY
+	}
+
     // XData indexers
     public static class XData
     {

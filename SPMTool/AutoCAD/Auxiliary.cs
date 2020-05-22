@@ -189,10 +189,11 @@ namespace SPMTool.AutoCAD
 			SelectionFilter selFt = new SelectionFilter(tvs);
 
 			// Get the entities on the layername
-			PromptSelectionResult selRes = AutoCAD.Current.edtr.SelectAll(selFt);
+			PromptSelectionResult selRes = Current.edtr.SelectAll(selFt);
 
 			if (selRes.Status == PromptStatus.OK)
-				return new ObjectIdCollection(selRes.Value.GetObjectIds());
+				return
+					new ObjectIdCollection(selRes.Value.GetObjectIds());
 
 			return new ObjectIdCollection();
 		}

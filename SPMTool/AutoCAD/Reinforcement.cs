@@ -19,89 +19,68 @@ namespace SPMTool.AutoCAD
         private static string StrRef = "StrRef";
 	    private static string Steel  = "Steel";
 
-        [CommandMethod("SetStringerReinforcement")]
-        public static void SetStringerReinforcement()
-        {
-	        // Request objects to be selected in the drawing area
-	        var selOp = new PromptSelectionOptions()
-	        {
-		        MessageForAdding = "Select the stringers to assign reinforcement (you can select other elements, the properties will be only applied to stringers)."
-	        };
+	    [CommandMethod("SetStringerReinforcement")]
+	    public static void SetStringerReinforcement()
+	    {
+		    // Request objects to be selected in the drawing area
+		    var strs = UserInput.SelectObjects(
+			    "Select the stringers to assign reinforcement (you can select other elements, the properties will be only applied to stringers).",
+			    new[] { Layers.Stringer });
 
-	        PromptSelectionResult selRes = Current.edtr.GetSelection(selOp);
+		    if (strs == null)
+			    return;
 
-	        // If the prompt status is OK, objects were selected
-	        if (selRes.Status == PromptStatus.Cancel)
-		        return;
+		    // Get steel parameters and reinforcement from user
+		    var reinforcement = GetStringerReinforcement();
+		    var steel         = GetSteel();
 
-	        SelectionSet set = selRes.Value;
+			if (reinforcement == null && steel == null)
+				return;
 
-	        if (set.Count > 0)
-	        {
-		        // Get steel parameters and reinforcement from user
-		        var reinforcement = GetStringerReinforcement();
-		        var steel         = GetSteel();
+		    // Start a transaction
+		    using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+		    {
+			    // Save the properties
+			    foreach (DBObject obj in strs)
+			    {
+				    // Open the selected object for read
+				    Entity ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForWrite);
 
-                // Start a transaction
-                using (Transaction trans = Current.db.TransactionManager.StartTransaction())
-		        {
-			        // Save the properties
-			        foreach (SelectedObject obj in set)
-			        {
-				        // Open the selected object for read
-				        Entity ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForRead);
+				    // Access the XData as an array
+				    var data = Auxiliary.ReadXData(ent);
 
-				        // Check if the selected object is a stringer
-				        if (ent.Layer == Geometry.Stringer.StringerLayer)
-				        {
-					        // Upgrade the OpenMode
-					        ent.UpgradeOpen();
+				    // Set values
+				    if (reinforcement != null)
+				    {
+					    data[(int) XData.Stringer.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, reinforcement.NumberOfBars);
+					    data[(int) XData.Stringer.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal, reinforcement.BarDiameter);
+				    }
 
-					        // Access the XData as an array
-					        var data = Auxiliary.ReadXData(ent);
+				    if (steel != null)
+				    {
+					    data[(int) XData.Stringer.Steelfy] = new TypedValue((int) DxfCode.ExtendedDataReal, steel.YieldStress);
+					    data[(int) XData.Stringer.SteelEs] = new TypedValue((int) DxfCode.ExtendedDataReal, steel.ElasticModule);
+				    }
 
-							// Set values
-							if (reinforcement != null)
-							{
-								data[(int) XData.Stringer.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, reinforcement.NumberOfBars);
-								data[(int) XData.Stringer.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement.BarDiameter);
-							}
+				    // Add the new XData
+				    ent.XData = new ResultBuffer(data);
+			    }
 
-							if (steel != null)
-							{
-								data[(int) XData.Stringer.Steelfy] = new TypedValue((int) DxfCode.ExtendedDataReal, steel.YieldStress);
-								data[(int) XData.Stringer.SteelEs] = new TypedValue((int) DxfCode.ExtendedDataReal, steel.ElasticModule);
-							}
+			    // Save the new object to the database
+			    trans.Commit();
+		    }
+	    }
 
-							// Add the new XData
-					        ent.XData = new ResultBuffer(data);
-				        }
-			        }
-
-			        // Save the new object to the database
-			        trans.Commit();
-		        }
-	        }
-        }
-
-		// Get reinforcement parameters from user
+	    // Get reinforcement parameters from user
 		private static StringerReinforcement GetStringerReinforcement()
 		{
-			// Initiate values
-			StringerReinforcement reinforcement = null;
-
 			// Get saved reinforcement options
 			var savedRef = ReadStringerReinforcement();
 
 			// Get saved reinforcement options
 			if (savedRef != null)
 			{
-				// Ask the user to choose the options
-				PromptKeywordOptions options =
-					new PromptKeywordOptions("Choose a reinforcement option or add a new one:")
-					{
-						AllowNone = false
-					};
+				var options = new List<string>();
 
 				// Get the options
 				for (int i = 0; i < savedRef.Length; i++)
@@ -111,78 +90,56 @@ namespace SPMTool.AutoCAD
 
 					string name = n.ToString() + Phi + d;
 
-					options.Keywords.Add(name);
+					options.Add(name);
 				}
 
 				// Add option to set new reinforcement
-				options.Keywords.Add("New");
+				options.Add("New");
 
-				// Set default
-				options.Keywords.Default = options.Keywords[0].GlobalName;
+				// Ask the user to choose the options
+				var res = UserInput.SelectKeyword("Choose a reinforcement option or add a new one:", options.ToArray(),
+					options[0]);
 
-				PromptResult result = Current.edtr.GetKeywords(options);
-
-				if (result.Status == PromptStatus.Cancel)
+				if (!res.HasValue)
 					return null;
 
 				// Get string result
-				string res = result.StringResult;
+				var (index, keyword) = res.Value;
 
 				// Get the index
-				if (res != "New")
+				if (keyword != "New")
 				{
-					for (int i = 0; i < options.Keywords.Count; i++)
-					{
-						if (res == options.Keywords[i].GlobalName)
-							reinforcement = savedRef[i];
-					}
+					return savedRef[index];
+					//for (int i = 0; i < options.Keywords.Count; i++)
+					//{
+					//	if (res == options.Keywords[i].GlobalName)
+					//		reinforcement = savedRef[i];
+					//}
 				}
 			}
 
 			// New reinforcement
-			if (reinforcement == null)
-			{
-				int    num = 2;
-				double phi = 10;
+			// Ask the user to input the number of bars
+			var numn = UserInput.GetInteger(
+				"Input the number of Stringer reinforcement bars (only needed for nonlinear analysis):", 2);
 
-                // Ask the user to input the number of bars
-                PromptIntegerOptions nBarsOp =
-					new PromptIntegerOptions(
-						"\nInput the number of Stringer reinforcement bars (only needed for nonlinear analysis):")
-					{
-						DefaultValue  = num,
-						AllowNegative = false
-					};
+			if (!numn.HasValue)
+				return null;
 
-				// Get the result
-				PromptIntegerResult nBarsRes = Current.edtr.GetInteger(nBarsOp);
+			// Ask the user to input the Stringer height
+			var phin = UserInput.GetDouble("Input the diameter (in mm) of Stringer reinforcement bars:", 10);
 
-				if (nBarsRes.Status == PromptStatus.Cancel)
-					return null;
+			if (!phin.HasValue)
+				return null;
 
-				num = nBarsRes.Value;
+			// Get reinforcement
+			int num    = numn.Value;
+			double phi = phin.Value;
 
-				// Ask the user to input the Stringer height
-				PromptDoubleOptions phiOp =
-					new PromptDoubleOptions("\nInput the diameter (in mm) of Stringer reinforcement bars:")
-					{
-						DefaultValue  = phi,
-						AllowNegative = false
-					};
+			var reinforcement = new StringerReinforcement(num, phi);
 
-				// Get the result
-				PromptDoubleResult phiRes = AutoCAD.Current.edtr.GetDouble(phiOp);
-
-				if (phiRes.Status == PromptStatus.Cancel)
-					return null;
-
-				phi = phiRes.Value;
-
-				reinforcement = new StringerReinforcement(num, phi);
-
-				// Save the reinforcement
-				SaveStringerReinforcement(reinforcement);
-			}
+			// Save the reinforcement
+			SaveStringerReinforcement(reinforcement);
 
 			return reinforcement;
 		}
@@ -190,20 +147,13 @@ namespace SPMTool.AutoCAD
 		// Get steel parameters from user
 		private static Steel GetSteel()
 		{
-			// Initiate values
-			Steel steel = null;
-
 			// Get steel data saved on database
 			var savedSteel = ReadSteel();
 
 			// Get saved reinforcement options
 			if (savedSteel != null)
 			{
-				// Ask the user to choose the options
-				PromptKeywordOptions options = new PromptKeywordOptions("Choose a steel option (fy | Es) or add a new one:")
-				{
-					AllowNone = false
-				};
+				var options = new List<string>();
 
 				// Get the options
 				for (int i = 0; i < savedSteel.Length; i++)
@@ -214,78 +164,58 @@ namespace SPMTool.AutoCAD
 
 					string name = f + "|" + E;
 
-					options.Keywords.Add(name);
+					options.Add(name);
 				}
 
 				// Add option to set new reinforcement
-				options.Keywords.Add("New");
+				options.Add("New");
 
-				// Set default
-				options.Keywords.Default = options.Keywords[0].GlobalName;
+				// Ask the user to choose the options
+				var res = UserInput.SelectKeyword("Choose a steel option (fy | Es) or add a new one:", options.ToArray(),
+					options[0]);
 
-                PromptResult result = Current.edtr.GetKeywords(options);
-
-				if (result.Status == PromptStatus.Cancel)
+				if (!res.HasValue)
 					return null;
 
 				// Get string result
-				string res = result.StringResult;
+				var (index, keyword) = res.Value;
 
 				// Get the index
-				if (res != "New")
+				if (keyword != "New")
 				{
-					for (int i = 0; i < options.Keywords.Count; i++)
-					{
-						if (res == options.Keywords[i].GlobalName)
-							steel = savedSteel[i];
-					}
+					return savedSteel[index];
+					//for (int i = 0; i < options.Keywords.Count; i++)
+					//{
+					//	if (res == options.Keywords[i].GlobalName)
+					//		steel = savedSteel[i];
+					//}
 				}
 			}
 
 			// If it's a new steel
-			if (steel == null)
-			{
-				double
-					fy = 500,
-					Es = 210000;
-
+			//if (steel == null)
+			//{
                 // Ask the user to input the Steel yield strength
-                PromptDoubleOptions fyOp =
-					new PromptDoubleOptions("\nInput the yield strength (MPa) of Steel:")
-					{
-						DefaultValue  = fy,
-						AllowNegative = false
-					};
+                var fyn = UserInput.GetDouble("Input the yield strength (MPa) of Steel:", 500);
 
-				// Get the result
-				PromptDoubleResult fyRes = Current.edtr.GetDouble(fyOp);
-
-				if (fyRes.Status == PromptStatus.Cancel)
+				if (!fyn.HasValue)
 					return null;
-
-				fy = fyRes.Value;
 
 				// Ask the user to input the Steel elastic modulus
-				PromptDoubleOptions EsOp =
-					new PromptDoubleOptions("\nInput the elastic modulus (MPa) of Steel:")
-					{
-						DefaultValue  = Es,
-						AllowNegative = false
-					};
+            var Esn = UserInput.GetDouble("Input the elastic modulus (MPa) of Steel:", 210000);
 
-				// Get the result
-				PromptDoubleResult EsRes = Current.edtr.GetDouble(EsOp);
-
-				if (EsRes.Status == PromptStatus.Cancel)
+				if (!Esn.HasValue)
 					return null;
 
-				Es = EsRes.Value;
+				double
+					fy = fyn.Value,
+					Es = Esn.Value;
 
-				steel = new Steel(fy, Es);
+				var steel = new Steel(fy, Es);
 
 				// Save steel
 				SaveSteel(steel);
-			}
+			//}
 
 			return steel;
 		}
@@ -293,183 +223,141 @@ namespace SPMTool.AutoCAD
 		[CommandMethod("SetPanelReinforcement")]
         public static void SetPanelReinforcement()
         {
-            // Start a transaction
-            using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
-            {
-                // Request objects to be selected in the drawing area
-                var selOp = new PromptSelectionOptions()
+	        // Request objects to be selected in the drawing area
+	        var pnls = UserInput.SelectObjects(
+		        "Select the panels to assign reinforcement (you can select other elements, the properties will be only applied to panels).",
+		        new[] { Layers.Panel });
+
+	        if (pnls == null)
+		        return;
+
+	        // Get the values
+	        var refX   = GetPanelReinforcement(Directions.X);
+	        var steelX = GetSteel();
+	        var refY   = GetPanelReinforcement(Directions.Y);
+	        var steelY = GetSteel();
+
+			if (!refX.HasValue && !refY.HasValue && steelX == null && steelY == null)
+				return;
+
+                // Start a transaction
+                using (Transaction trans = Current.db.TransactionManager.StartTransaction())
                 {
-	                MessageForAdding = "Select the panels to assign reinforcement (you can select other elements, the properties will be only applied to panels)."
-                };
-
-                PromptSelectionResult selRes = Current.edtr.GetSelection(selOp);
-
-                // If the prompt status is OK, objects were selected
-                if (selRes.Status == PromptStatus.Cancel)
-                    return;
-
-                // Get the selection
-                SelectionSet set = selRes.Value;
-
-                if (set.Count > 0)
-                {
-	                // Get the values
-	                var refX   = GetPanelReinforcement("X");
-	                var steelX = GetSteel();
-	                var refY   = GetPanelReinforcement("Y");
-	                var steelY = GetSteel();
-
-	                foreach (SelectedObject obj in set)
+	                foreach (DBObject obj in pnls)
 	                {
 		                // Open the selected object for read
-		                Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+		                Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForWrite) as Entity;
 
-		                // Check if the selected object is a node
-		                if (ent.Layer == Geometry.Panel.PanelLayer)
+		                // Access the XData as an array
+		                ResultBuffer rb = ent.GetXDataForApplication(Current.appName);
+		                TypedValue[] data = rb.AsArray();
+
+		                // Set the new reinforcement (line 7 to 9 of the array)
+		                if (refX.HasValue)
 		                {
-			                // Upgrade the OpenMode
-			                ent.UpgradeOpen();
-
-			                // Access the XData as an array
-			                ResultBuffer rb = ent.GetXDataForApplication(AutoCAD.Current.appName);
-			                TypedValue[] data = rb.AsArray();
-
-			                // Set the new reinforcement (line 7 to 9 of the array)
-			                if (refX != default)
-			                {
-				                data[(int) XData.Panel.XDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, refX.diameter);
-				                data[(int) XData.Panel.Sx]    = new TypedValue((int) DxfCode.ExtendedDataReal, refX.spacing);
-			                }
-
-			                if (steelX != null)
-			                {
-				                data[(int) XData.Panel.fyx]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelX.YieldStress);
-				                data[(int) XData.Panel.Esx]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelX.ElasticModule);
-			                }
-
-			                if (refY != default)
-			                {
-				                data[(int) XData.Panel.YDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, refY.diameter);
-				                data[(int) XData.Panel.Sy]    = new TypedValue((int) DxfCode.ExtendedDataReal, refY.spacing);
-			                }
-
-			                if (steelY != null)
-			                {
-				                data[(int) XData.Panel.fyy]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelY.YieldStress);
-				                data[(int) XData.Panel.Esy]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelY.ElasticModule);
-			                }
-
-			                // Add the new XData
-			                ent.XData = new ResultBuffer(data);
+			                data[(int) XData.Panel.XDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, refX.Value.diameter);
+			                data[(int) XData.Panel.Sx]    = new TypedValue((int) DxfCode.ExtendedDataReal, refX.Value.spacing);
 		                }
-	                }
-                }
 
-                // Save the new object to the database
-                trans.Commit();
-            }
+		                if (steelX != null)
+		                {
+			                data[(int) XData.Panel.fyx]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelX.YieldStress);
+			                data[(int) XData.Panel.Esx]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelX.ElasticModule);
+		                }
+
+		                if (refY.HasValue)
+		                {
+			                data[(int) XData.Panel.YDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, refY.Value.diameter);
+			                data[(int) XData.Panel.Sy]    = new TypedValue((int) DxfCode.ExtendedDataReal, refY.Value.spacing);
+		                }
+
+		                if (steelY != null)
+		                {
+			                data[(int) XData.Panel.fyy]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelY.YieldStress);
+			                data[(int) XData.Panel.Esy]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelY.ElasticModule);
+		                }
+
+		                // Add the new XData
+		                ent.XData = new ResultBuffer(data);
+	                }
+
+	                // Save the new object to the database
+	                trans.Commit();
+                }
         }
 
         // Get reinforcement parameters from user
-        private static (double diameter, double spacing) GetPanelReinforcement(string direction)
+        private static (double diameter, double spacing)? GetPanelReinforcement(Directions direction)
         {
-            // Initiate values
-            (double phi, double s) reinforcement = default;
-
             // Get saved reinforcement options
             var savedRef = ReadPanelReinforcement();
 
             // Get saved reinforcement options
             if (savedRef != null)
             {
-                // Ask the user to choose the options
-                PromptKeywordOptions options =
-                    new PromptKeywordOptions("Choose a reinforcement option (" + Phi + "|s) for " + direction + " direction or add a new one:")
-                    {
-                        AllowNone = false
-                    };
+	            var options = new List<string>();
 
                 // Get the options
                 for (int i = 0; i < savedRef.Length; i++)
                 {
 	                double
-		                d = savedRef[i].diameter,
-		                s = savedRef[i].spacing;
+		                d  = savedRef[i].diameter,
+		                si = savedRef[i].spacing;
 
-                    string name = Phi.ToString() + d + "|" + s;
+                    string name = Phi.ToString() + d + "|" + si;
 
-                    options.Keywords.Add(name);
+                    options.Add(name);
                 }
 
                 // Add option to set new reinforcement
-                options.Keywords.Add("New");
+                options.Add("New");
 
-                // Set default
-                options.Keywords.Default = options.Keywords[0].GlobalName;
+                // Ask the user to choose the options
+                var res = UserInput.SelectKeyword("Choose a reinforcement option (" + Phi + "|s) for " + direction + " direction or add a new one:", options.ToArray(),
+	                options[0]);
 
-                PromptResult result = Current.edtr.GetKeywords(options);
-
-                if (result.Status == PromptStatus.Cancel)
-                    return default;
+                if (!res.HasValue)
+                    return null;
 
                 // Get string result
-                string res = result.StringResult;
+                var (index, keyword) = res.Value;
 
                 // Get the index
-                if (res != "New")
+                if (keyword != "New")
                 {
-                    for (int i = 0; i < options.Keywords.Count; i++)
-                    {
-                        if (res == options.Keywords[i].GlobalName)
-                            reinforcement = savedRef[i];
-                    }
+	                return savedRef[index];
+	                //for (int i = 0; i < options.Keywords.Count; i++)
+	                //{
+	                //    if (res == options.Keywords[i].GlobalName)
+	                //        reinforcement = savedRef[i];
+	                //}
                 }
             }
 
             // New reinforcement
-            if (reinforcement == default)
-            {
-	            double
-		            phi = 10,
-		            s = 100;
+            // Ask the user to input the diameter of bars
+	            var phin = UserInput.GetDouble(
+		            "Input the reinforcement bar diameter (in mm) for " + direction +
+		            " direction for selected panels (only needed for nonlinear analysis):", 10);
 
-	            // Ask the user to input the diameter of bars
-	            PromptDoubleOptions phiOp = new PromptDoubleOptions(
-			            "\nInput the reinforcement bar diameter (in mm) for " + direction + " direction for selected panels (only needed for nonlinear analysis):")
-		            {
-			            DefaultValue = phi,
-			            AllowNegative = false
-		            };
+	            if (!phin.HasValue)
+		            return null;
 
-	            // Get the result
-	            PromptDoubleResult phiRes = AutoCAD.Current.edtr.GetDouble(phiOp);
+            // Ask the user to input the bar spacing
+            var sn = UserInput.GetDouble(
+	            "Input the bar spacing (in mm) for " + direction + " direction:", 100);
 
-	            if (phiRes.Status == PromptStatus.Cancel)
-		            return default;
+	            if (!sn.HasValue)
+		            return null;
 
-	            phi = phiRes.Value;
+            // Save the reinforcement
+            double
+	            phi = phin.Value,
+	            s   = sn.Value;
 
-	            // Ask the user to input the bar spacing
-	            PromptDoubleOptions sOp =
-		            new PromptDoubleOptions("\nInput the bar spacing (in mm) for " + direction + " direction:")
-		            {
-			            DefaultValue = s,
-			            AllowNegative = false
-		            };
+            SavePanelReinforcement(phi, s);
 
-	            // Get the result
-	            PromptDoubleResult sRes = AutoCAD.Current.edtr.GetDouble(sOp);
-
-	            if (sRes.Status == PromptStatus.Cancel)
-		            return default;
-
-	            s = sRes.Value;
-
-                // Save the reinforcement
-                SavePanelReinforcement(phi, s);
-            }
-
-            return reinforcement;
+            return (phi, s);
         }
 
         // Save steel configuration on database

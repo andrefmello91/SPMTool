@@ -161,7 +161,7 @@ namespace SPMTool.AutoCAD
 		}
 
 		// Get keyword from user
-		public static string SelectKeyword(string message, string[] options, string defaultKeyword = null, bool allowNone = false)
+		public static (int index, string keyword)? SelectKeyword(string message, string[] options, string defaultKeyword = null, bool allowNone = false)
 		{
 			// Ask the user to choose the options
 			var keyOp = new PromptKeywordOptions("\n" + message)
@@ -179,10 +179,14 @@ namespace SPMTool.AutoCAD
 
 			PromptResult result = Current.edtr.GetKeywords(keyOp);
 
-			if (result.Status == PromptStatus.OK)
-				return result.StringResult;
+			if (result.Status == PromptStatus.Cancel)
+				return null;
 
-			return null;
+			string keyword = result.StringResult;
+			int index = Array.IndexOf(options, keyword);
+
+			return
+				(index, keyword);
 		}
     }
 }

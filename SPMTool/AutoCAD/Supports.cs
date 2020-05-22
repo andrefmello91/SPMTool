@@ -3,7 +3,8 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
-using SupportDirection = SPMTool.Core.Constraint.SupportDirection;
+using SPMTool.Core;
+using SupportDirection = SPMTool.Directions;
 using SupportData      = SPMTool.XData.Support;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Supports))]
@@ -26,141 +27,116 @@ namespace SPMTool.AutoCAD
         [CommandMethod("AddConstraint")]
         public static void AddConstraint()
         {
-            // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-            Auxiliary.CreateLayer(Layers.Support, Colors.Red);
+	        // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
+	        Auxiliary.CreateLayer(Layers.Support, Colors.Red);
 
-            // Initialize variables
-            PromptSelectionResult selRes;
-            SelectionSet set;
+	        // Check if the support blocks already exist. If not, create the blocks
+	        CreateSupportBlocks();
 
-            // Check if the support blocks already exist. If not, create the blocks
-            CreateSupportBlocks();
+	        // Get all the supports in the model
+	        ObjectIdCollection sprts = Auxiliary.GetEntitiesOnLayer(Layers.Support);
 
-            // Get all the supports in the model
-            ObjectIdCollection sprts = Auxiliary.GetEntitiesOnLayer(Layers.Support);
+	        // Request objects to be selected in the drawing area
+	        var nds = UserInput.SelectNodes("Select nodes to add support conditions:", Node.NodeType.External);
 
-            // Request objects to be selected in the drawing area
-            var selOp = new PromptSelectionOptions()
-            {
-	            MessageForAdding = "Select nodes to add support conditions:"
-            };
+	        if (nds == null)
+		        return;
 
-            selRes = Current.edtr.GetSelection(selOp);
+	        // Ask the user set the support conditions:
+	        var options = new[]
+	        {
+		        Free,
+		        X,
+		        Y,
+		        XY
+	        };
 
-            // If the prompt status is OK, objects were selected
-            if (selRes.Status == PromptStatus.Cancel)
-	            return;
+	        var supn = UserInput.SelectKeyword("Add support in which direction?", options, Free);
 
-            // Get the objects selected
-            set = selRes.Value;
+	        if (!supn.HasValue)
+		        return;
 
-            // Ask the user set the support conditions:
-            PromptKeywordOptions supOp = new PromptKeywordOptions("\nAdd support in which direction?");
-            supOp.Keywords.Add(Free);
-            supOp.Keywords.Add(X);
-            supOp.Keywords.Add(Y);
-            supOp.Keywords.Add(XY);
-            supOp.Keywords.Default = Free;
-            supOp.AllowNone = false;
+	        // Set the support
+	        string support = supn.Value.keyword;
 
-            // Get the result
-            PromptResult supRes = Current.edtr.GetKeywords(supOp);
+	        // Start a transaction
+	        using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+	        {
+		        // Open the Block table for read
+		        BlockTable blkTbl = (BlockTable) trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead);
 
-            if (supRes.Status == PromptStatus.Cancel)
-	            return;
+		        // Read the object Ids of the support blocks
+		        ObjectId xBlock  = blkTbl[BlockX];
+		        ObjectId yBlock  = blkTbl[BlockY];
+		        ObjectId xyBlock = blkTbl[BlockXY];
 
-            // Set the support
-            string support = supRes.StringResult;
+		        foreach (DBPoint nd in nds)
+		        {
+			        Point3d ndPos = nd.Position;
 
-            // Start a transaction
-            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
-            {
-	            // Open the Block table for read
-	            BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
+			        // Check if there is a support block at the node position
+			        if (sprts.Count > 0)
+			        {
+				        foreach (ObjectId spObj in sprts)
+				        {
+					        // Read as a block reference
+					        BlockReference spBlk = (BlockReference) trans.GetObject(spObj, OpenMode.ForRead);
 
-	            // Read the object Ids of the support blocks
-	            ObjectId xBlock  = blkTbl[BlockX];
-	            ObjectId yBlock  = blkTbl[BlockY];
-	            ObjectId xyBlock = blkTbl[BlockXY];
+					        // Check if the position is equal to the selected node
+					        if (spBlk.Position == ndPos)
+					        {
+						        spBlk.UpgradeOpen();
 
+						        // Erase the support
+						        spBlk.Erase();
+						        break;
+					        }
+				        }
+			        }
 
+			        // If the node is not Free, add the support blocks
+			        if (support != Free)
+			        {
+				        // Add the block to selected node at
+				        Point3d insPt = ndPos;
 
-	            foreach (SelectedObject obj in set)
-	            {
-		            // Open the selected object for read
-		            Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+				        // Initiate direction
+				        SupportDirection direction = SupportDirection.X;
 
-		            // Check if the selected object is a node
-		            if (ent.Layer == Geometry.Node.ExtNodeLayer)
-		            {
-			            // Read as a point and get the position
-			            DBPoint nd = ent as DBPoint;
-			            Point3d ndPos = nd.Position;
+				        // Choose the block to insert
+				        ObjectId supBlock = new ObjectId();
+				        if (support == X && xBlock != ObjectId.Null)
+				        {
+					        supBlock = xBlock;
+				        }
 
-			            // Check if there is a support block at the node position
-			            if (sprts.Count > 0)
-			            {
-				            foreach (ObjectId spObj in sprts)
-				            {
-					            // Read as a block reference
-					            BlockReference spBlk = trans.GetObject(spObj, OpenMode.ForRead) as BlockReference;
+				        if (support == Y && yBlock != ObjectId.Null)
+				        {
+					        supBlock = yBlock;
+					        direction = SupportDirection.Y;
+				        }
 
-					            // Check if the position is equal to the selected node
-					            if (spBlk.Position == ndPos)
-					            {
-						            spBlk.UpgradeOpen();
+				        if (support == XY && xyBlock != ObjectId.Null)
+				        {
+					        supBlock = xyBlock;
+					        direction = SupportDirection.XY;
+				        }
 
-						            // Erase the support
-						            spBlk.Erase();
-						            break;
-					            }
-				            }
-			            }
+				        // Insert the block into the current space
+				        using (BlockReference blkRef = new BlockReference(insPt, supBlock))
+				        {
+					        blkRef.Layer = SupportLayer;
+					        Auxiliary.AddObject(blkRef);
 
-			            // If the node is not Free, add the support blocks
-			            if (support != Free)
-			            {
-				            // Add the block to selected node at
-				            Point3d insPt = ndPos;
+					        // Set XData
+					        blkRef.XData = SupportXData(direction);
+				        }
+			        }
+		        }
 
-				            // Initiate direction
-				            SupportDirection direction = SupportDirection.X;
-
-				            // Choose the block to insert
-				            ObjectId supBlock = new ObjectId();
-				            if (support == X && xBlock != ObjectId.Null)
-				            {
-					            supBlock = xBlock;
-				            }
-
-				            if (support == Y && yBlock != ObjectId.Null)
-				            {
-					            supBlock = yBlock;
-					            direction = SupportDirection.Y;
-				            }
-
-				            if (support == XY && xyBlock != ObjectId.Null)
-				            {
-					            supBlock = xyBlock;
-					            direction = SupportDirection.XY;
-				            }
-
-				            // Insert the block into the current space
-				            using (BlockReference blkRef = new BlockReference(insPt, supBlock))
-				            {
-					            blkRef.Layer = SupportLayer;
-					            Auxiliary.AddObject(blkRef);
-
-					            // Set XData
-					            blkRef.XData = SupportXData(direction);
-				            }
-			            }
-		            }
-	            }
-
-	            // Save the new object to the database
-	            trans.Commit();
-            }
+		        // Save the new object to the database
+		        trans.Commit();
+	        }
         }
 
         // Method to create the support blocks
@@ -170,7 +146,7 @@ namespace SPMTool.AutoCAD
             using (Transaction trans = Current.db.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = (BlockTable) trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead);
 
                 // Initialize the block Ids
                 ObjectId xBlock = ObjectId.Null;

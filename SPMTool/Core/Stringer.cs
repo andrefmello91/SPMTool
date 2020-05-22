@@ -95,6 +95,11 @@ namespace SPMTool.Core
 			TransMatrix = TransformationMatrix();
 		}
 
+		// Get points
+		public Point3d StartPoint => PointsConnected[0];
+		public Point3d MidPoint   => PointsConnected[1];
+		public Point3d EndPoint   => PointsConnected[2];
+
 		// Set global indexes from grips
 		public int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Grips);
 

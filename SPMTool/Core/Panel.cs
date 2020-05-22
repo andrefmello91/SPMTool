@@ -230,17 +230,20 @@ namespace SPMTool.Core
         public double MaxForce => Forces.AbsoluteMaximum();
 
         // Function to verify if a panel is rectangular
-        private readonly Func<double[], bool> RectangularPanel = angles =>
+        public bool Rectangular
         {
-            // Calculate the angles between the edges
-            double ang2 = angles[1] - angles[0];
-            double ang4 = angles[3] - angles[2];
+	        get
+	        {
+		        // Calculate the angles between the edges
+		        double ang2 = Edges.Angle[1] - Edges.Angle[0];
+		        double ang4 = Edges.Angle[3] - Edges.Angle[2];
 
-            if (ang2 == Constants.PiOver2 && ang4 == Constants.PiOver2)
-                return true;
+		        if (ang2 == Constants.PiOver2 && ang4 == Constants.PiOver2)
+			        return true;
 
-            return false;
-        };
+		        return false;
+	        }
+        }
 
         public virtual void Analysis()
         {

@@ -46,7 +46,7 @@ namespace SPMTool.Core
             private Matrix<double> Stiffness()
             {
                 // If the panel is rectangular
-                if (RectangularPanel(Edges.Angle))
+                if (Rectangular)
                     return
                         RectangularPanelStiffness();
 

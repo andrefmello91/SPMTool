@@ -4,20 +4,13 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.AutoCAD;
 using SupportData = SPMTool.XData.Support;
+using SupportDirection = SPMTool.Directions;
 
 namespace SPMTool.Core
 {
 	// Constraints related commands
 	public class Constraint
 	{
-		// SupportDirection conditions
-		public enum SupportDirection
-		{
-			X,
-			Y,
-			XY
-		}
-
 		// Properties
 		public ObjectId         SupportObject { get; }
 		public Point3d          Position      { get; }

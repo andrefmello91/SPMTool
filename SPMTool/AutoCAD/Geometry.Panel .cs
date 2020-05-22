@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
@@ -106,47 +107,27 @@ namespace SPMTool.AutoCAD
 			public static void DividePanel()
 			{
 				// Prompt for select panels
-				var selOp = new PromptSelectionOptions()
-				{
-					MessageForAdding = "Select panels to divide"
-				};
+				var pnls = UserInput.SelectObjects("Select panels to divide", new [] {Layers.Panel});
 
-				PromptSelectionResult selRes = Current.edtr.GetSelection(selOp);
-
-				if (selRes.Status == PromptStatus.Cancel)
+				if (pnls == null)
 					return;
 
 				// Prompt for the number of rows
-				PromptIntegerOptions rowOp =
-					new PromptIntegerOptions("\nEnter the number of rows for division:")
-					{
-						AllowNegative = false,
-						AllowZero = false
-					};
+				var rown = UserInput.GetInteger("Enter the number of rows for division:", 2);
 
-				// Get the number
-				PromptIntegerResult rowRes = Current.edtr.GetInteger(rowOp);
-
-				if (rowRes.Status == PromptStatus.Cancel)
+				if (!rown.HasValue)
 					return;
 
-				int row = rowRes.Value;
+                // Prompt for the number of columns
+                var clnn = UserInput.GetInteger("Enter the number of columns for division:", 2);
 
-				// Prompt for the number of columns
-				PromptIntegerOptions clmnOp =
-					new PromptIntegerOptions("\nEnter the number of columns for division:")
-					{
-						AllowNegative = false,
-						AllowZero = false
-					};
-
-				// Get the number
-				PromptIntegerResult clmnRes = Current.edtr.GetInteger(clmnOp);
-
-				if (clmnRes.Status == PromptStatus.Cancel)
+				if (!clnn.HasValue)
 					return;
 
-				int clmn = clmnRes.Value;
+				// Get values
+				int 
+					row = rown.Value,
+					cln = clnn.Value;
 
 				// Get the list of start and endpoints
 				var strList = Stringer.ListOfStringerPoints();
@@ -171,76 +152,41 @@ namespace SPMTool.AutoCAD
 				// Start a transaction
 				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 				{
-					// Open the Block table for read
-					BlockTable blkTbl =
-						trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-					// Open the Block table record Model space for write
-					BlockTableRecord blkTblRec =
-						trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as
-							BlockTableRecord;
-
 					// Get the selection set and analyse the elements
-					SelectionSet set = selRes.Value;
-					foreach (SelectedObject obj in set)
+					foreach (DBObject obj in pnls)
 					{
-						// Open the selected object for read
-						Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+                        // Open the selected object for read
+                        Solid pnl = (Solid) trans.GetObject(obj.ObjectId, OpenMode.ForWrite);
 
-						// Check if the selected object is a node
-						if (ent.Layer == PanelLayer)
-						{
-							// Read as a solid
-							Solid pnl = ent as Solid;
+                        // Get the panel
+						var panel = new Core.Panel(obj.ObjectId);
 
-							// Access the XData as an array
-							ResultBuffer rb = pnl.GetXDataForApplication(Current.appName);
-							TypedValue[] data = rb.AsArray();
+						// Get vertices
+						var grpPts = panel.Vertices;
 
-							// Get the panel number
-							int pnlNum = Convert.ToInt32(data[(int) PanelData.Number].Value);
-
-							// Get the coordinates of the grip points
-							Point3dCollection grpPts = new Point3dCollection();
-							pnl.GetGripPoints(grpPts, new IntegerCollection(), new IntegerCollection());
-
-							// Create lines to measure the angles between the edges
-							Line
-								ln1 = new Line(grpPts[0], grpPts[1]),
-								ln2 = new Line(grpPts[0], grpPts[2]),
-								ln3 = new Line(grpPts[2], grpPts[3]),
-								ln4 = new Line(grpPts[1], grpPts[3]);
-
-							// Get the angles
-							double ang1 = ln2.Angle - ln1.Angle;
-							double ang4 = ln4.Angle - ln3.Angle;
+						// Get the panel number
+						int pnlNum = panel.Number;
 
 							// Verify if the panel is rectangular
-							if (ang1 == Constants.PiOver2 && ang4 == Constants.PiOver2) // panel is rectangular
+							if (panel.Rectangular) // panel is rectangular
 							{
 								// Get the surrounding stringers to erase
 								foreach (ObjectId strObj in strs)
 								{
-									// Read as a line
-									Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
+									// Read as a stringer
+									var str = new Core.Stringer(strObj);
 
 									// Verify if the Stringer starts and ends in a panel vertex
-									if (grpPts.Contains(str.StartPoint) &&
-									    grpPts.Contains(str.EndPoint))
+									if (grpPts.Contains(str.StartPoint) && grpPts.Contains(str.EndPoint))
 									{
-										// Get the midpoint
-										Point3d midPt = SPMTool.GlobalAuxiliary.MidPoint(str.StartPoint,
-											str.EndPoint);
-
 										// Read the internal nodes
 										foreach (ObjectId intNd in intNds)
 										{
 											// Read as point
-											DBPoint nd =
-												trans.GetObject(intNd, OpenMode.ForRead) as DBPoint;
+											DBPoint nd = (DBPoint) trans.GetObject(intNd, OpenMode.ForRead);
 
 											// Erase the internal node and remove from the list
-											if (nd.Position == midPt)
+											if (nd.Position == str.MidPoint)
 											{
 												nd.UpgradeOpen();
 												nd.Erase();
@@ -250,14 +196,15 @@ namespace SPMTool.AutoCAD
 
 										// Erase and remove from the list
 										strList.Remove((str.StartPoint, str.EndPoint));
-										str.UpgradeOpen();
-										str.Erase();
+
+										var strEnt = (Entity) trans.GetObject(strObj, OpenMode.ForWrite);
+										strEnt.Erase();
 									}
 								}
 
 								// Calculate the distance of the points in X and Y
-								double distX = (grpPts[1].X - grpPts[0].X) / clmn;
-								double distY = (grpPts[2].Y - grpPts[0].Y) / row;
+								double distX = (panel.Edges.Length[0]) / cln;
+								double distY = (panel.Edges.Length[1]) / row;
 
 								// Initialize the start point
 								Point3d stPt = grpPts[0];
@@ -265,7 +212,7 @@ namespace SPMTool.AutoCAD
 								// Create the new panels
 								for (int i = 0; i < row; i++)
 								{
-									for (int j = 0; j < clmn; j++)
+									for (int j = 0; j < cln; j++)
 									{
 										// Get the vertices of the panel and add to a list
 										var verts = new List<Point3d>();
@@ -287,7 +234,7 @@ namespace SPMTool.AutoCAD
 
 										// Append the XData of the original panel
 										if (pnlSolid != null)
-											pnlSolid.XData = rb;
+											pnlSolid.XData = pnl.XData;
 
 										// Add the vertices to the list for creating external nodes
 										foreach (Point3d pt in verts)
@@ -324,7 +271,6 @@ namespace SPMTool.AutoCAD
 
 							else // panel is not rectangular
 								Current.edtr.WriteMessage("\nPanel " + pnlNum + " is not rectangular");
-						}
 					}
 
 					// Save the new object to the database
@@ -399,7 +345,7 @@ namespace SPMTool.AutoCAD
             private static double? GetPanelGeometry()
             {
                 // Initiate values
-                double? widthn = null;
+                //double? widthn = null;
 
                 // Get saved reinforcement options
                 var savedGeo = ReadPanelGeometry();
@@ -417,37 +363,30 @@ namespace SPMTool.AutoCAD
 					options.Add("New");
 
                     // Get string result
-                    string res = UserInput.SelectKeyword("Choose panel width (mm) or add a new one:", options.ToArray(), options[0]);
+                    var res = UserInput.SelectKeyword("Choose panel width (mm) or add a new one:", options.ToArray(), options[0]);
 
-                    if (res == null)
+                    if (!res.HasValue)
 	                    return null;
 
+                    var (index, keyword) = res.Value;
+
                     // Get the index
-                    if (res != "New")
-                    {
-                        for (int i = 0; i < options.Count; i++)
-                        {
-                            if (res == options[i])
-                                widthn = savedGeo[i];
-                        }
-                    }
+                    if (keyword != "New")
+	                    return savedGeo[index];
                 }
 
                 // New reinforcement
-                if (!widthn.HasValue)
-                {
-                    widthn = UserInput.GetDouble("Input width (mm) for selected panels:", 100);
+	            var widthn = UserInput.GetDouble("Input width (mm) for selected panels:", 100);
 
-                    if (!widthn.HasValue)
-	                    return null;
+	            if (!widthn.HasValue)
+		            return null;
 
-                    var width = widthn.Value;
+	            var width = widthn.Value;
 
-	                // Save geometry
-	                SavePanelGeometry(width);
-                }
+	            // Save geometry
+	            SavePanelGeometry(width);
 
-                return widthn;
+	            return width;
             }
 
             // Save geometry configuration on database

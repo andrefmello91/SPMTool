@@ -49,55 +49,36 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Ask the user to input the concrete compressive strength
-			var fcOp = new PromptDoubleOptions("\nInput the concrete mean compressive strength (fcm) in MPa:")
-			{
-				AllowZero     = false,
-				AllowNegative = false,
-				DefaultValue  = fc
-			};
+			var fcn = UserInput.GetDouble("Input the concrete mean compressive strength (fcm) in MPa:", fc);
 
-			// Get the result
-			var fcRes = Current.edtr.GetDouble(fcOp);
-
-			if (fcRes.Status == PromptStatus.Cancel)
+			if (!fcn.HasValue)
 				return;
-
-			fc = fcRes.Value;
 
 			// Ask the user choose the type of the aggregate
-			var agOp = new PromptKeywordOptions("\nChoose the type of the aggregate");
-			agOp.Keywords.Add(Basalt);
-			agOp.Keywords.Add(Quartzite);
-			agOp.Keywords.Add(Limestone);
-			agOp.Keywords.Add(Sandstone);
-			agOp.Keywords.Default = agrgt;
-			agOp.AllowNone = false;
-
-			// Get the result
-			PromptResult agRes = Current.edtr.GetKeywords(agOp);
-
-			if (agRes.Status == PromptStatus.Cancel)
-				return;
-
-			agrgt = agRes.StringResult;
-
-			// Ask the user to input the maximum aggregate diameter
-			var phiAgOp = new PromptDoubleOptions("\nInput the maximum diameter for concrete aggregate:")
+			var options = new[]
 			{
-				AllowZero     = false,
-				AllowNegative = false,
-				DefaultValue  = phiAg
+				Basalt,
+				Quartzite,
+				Limestone,
+				Sandstone
 			};
 
-			// Get the result
-			PromptDoubleResult phiAgRes = Current.edtr.GetDouble(phiAgOp);
+			var agn = UserInput.SelectKeyword("Choose the type of the aggregate", options, agrgt);
 
-			if (phiAgRes.Status == PromptStatus.Cancel)
+			if (!agn.HasValue)
 				return;
-			phiAg = phiAgRes.Value;
 
-			// Aggregate type
-			var aggType = (AggregateType) Enum.Parse(typeof(AggregateType), agrgt);
+            // Ask the user to input the maximum aggregate diameter
+            var phin = UserInput.GetDouble("Input the maximum diameter for concrete aggregate:", phiAg);
+
+			if (!phin.HasValue)
+				return;
+
+            // Get values
+            fc    = fcn.Value;
+            agrgt = agn.Value.keyword;
+            phiAg = phin.Value;
+            var aggType = (AggregateType) Enum.Parse(typeof(AggregateType), agrgt);
 
 			// Start a transaction
 			using (Transaction trans = Current.db.TransactionManager.StartTransaction())

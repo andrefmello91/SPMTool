@@ -41,20 +41,19 @@ namespace SPMTool.AutoCAD
 				var pnlBehavior = PanelBehavior.NonLinearDSFM;
 
 				// Ask the user choose the general behavior
-				PromptKeywordOptions bhOp = new PromptKeywordOptions("\nChoose general behavior of Stringer-Panel Model");
-				bhOp.Keywords.Add(Default);
-				bhOp.Keywords.Add(Classic);
-				bhOp.Keywords.Add(Custom);
-				bhOp.Keywords.Default = Default;
-				bhOp.AllowNone = false;
+				var bhOps = new[]
+				{
+					Default,
+					Classic,
+					Custom
+				};
 
-				// Get the result
-				PromptResult bhRes = Current.edtr.GetKeywords(bhOp);
+				var bh = UserInput.SelectKeyword("Choose general behavior of Stringer-Panel Model", bhOps, Default);
 
-				if (bhRes.Status == PromptStatus.Cancel)
+				if (!bh.HasValue)
 					return;
 
-				string behavior = bhRes.StringResult;
+				string behavior = bh.Value.keyword;
 
 				// Set classic behavior
 				if (behavior == Classic)
@@ -67,34 +66,32 @@ namespace SPMTool.AutoCAD
 				else if (behavior == Custom)
 				{
 					// Ask the user choose stringer behavior
-					PromptKeywordOptions strOp = new PromptKeywordOptions("\nChoose stringer behavior:");
-					strOp.Keywords.Add(StrMC2010);
-					strOp.Keywords.Add(StrClassic);
-					strOp.Keywords.Default = StrMC2010;
-					strOp.AllowNone = false;
+					var strBhOps = new[]
+					{
+						StrMC2010,
+						StrClassic
+					};
 
-					// Get the result
-					PromptResult strRes = Current.edtr.GetKeywords(strOp);
+					var strBh = UserInput.SelectKeyword("Choose stringer behavior:", strBhOps, StrClassic);
 
-					if (strRes.Status == PromptStatus.Cancel)
+					if (!strBh.HasValue)
 						return;
 
 					// Ask the user choose panel behavior
-					PromptKeywordOptions pnlOp = new PromptKeywordOptions("\nChoose panel behavior:");
-					pnlOp.Keywords.Add(PnlDSFM);
-					pnlOp.Keywords.Add(PnlMCFT);
-					pnlOp.Keywords.Default = PnlDSFM;
-					pnlOp.AllowNone = false;
+					var pnlBhOps = new[]
+					{
+						PnlDSFM,
+						PnlMCFT
+					};
 
-					// Get the result
-					PromptResult pnlRes = Current.edtr.GetKeywords(pnlOp);
+					var pnlBh = UserInput.SelectKeyword("Choose panel behavior:", pnlBhOps, PnlMCFT);
 
-					if (pnlRes.Status == PromptStatus.Cancel)
+					if (!pnlBh.HasValue)
 						return;
 
 					// Get the values
-					strBehavior = (StringerBehavior) Enum.Parse(typeof(StringerBehavior), strRes.StringResult);
-					pnlBehavior = (PanelBehavior)    Enum.Parse(typeof(PanelBehavior),    pnlRes.StringResult);
+					strBehavior = (StringerBehavior) Enum.Parse(typeof(StringerBehavior), strBh.Value.keyword);
+					pnlBehavior = (PanelBehavior)    Enum.Parse(typeof(PanelBehavior),    pnlBh.Value.keyword);
 				}
 
 				// Start a transaction

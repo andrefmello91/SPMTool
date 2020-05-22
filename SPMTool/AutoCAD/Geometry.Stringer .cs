@@ -140,143 +140,124 @@ namespace SPMTool.AutoCAD
 			public static void DivideStringer()
 			{
 				// Prompt for select stringers
-				var selOp = new PromptSelectionOptions()
-				{
-					MessageForAdding = "Select stringers to divide"
-				};
+				var strs = UserInput.SelectObjects("Select stringers to divide", new [] { Layers.Stringer });
 
-				PromptSelectionResult selRes = Current.edtr.GetSelection(selOp);
-
-				if (selRes.Status == PromptStatus.Cancel)
+				if (strs == null)
 					return;
+
 				// Prompt for the number of segments
-				PromptIntegerOptions strNumOp = new PromptIntegerOptions("\nEnter the number of stringers:")
-				{
-					AllowNegative = false,
-					AllowZero = false
-				};
+				var numn = UserInput.GetInteger("Enter the number of new stringers:", 2);
 
-				// Get the number
-				PromptIntegerResult strNumRes = Current.edtr.GetInteger(strNumOp);
-				if (strNumRes.Status == PromptStatus.Cancel)
+				if (!numn.HasValue)
 					return;
 
-				int strNum = strNumRes.Value;
+				int num = numn.Value;
 
 				// Get the list of start and endpoints
 				var strList = ListOfStringerPoints();
 
-				// Get the selection set and analyze the elements
-				SelectionSet set = selRes.Value;
-
 				// Divide the stringers
-				if (set.Count > 0)
+				// Create lists of points for adding the nodes later
+				List<Point3d>
+					newIntNds = new List<Point3d>(),
+					newExtNds = new List<Point3d>();
+
+				// Access the internal nodes in the model
+				ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
+
+				// Start a transaction
+				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 				{
-					// Create lists of points for adding the nodes later
-					List<Point3d> newIntNds = new List<Point3d>(),
-						newExtNds = new List<Point3d>();
-
-					// Access the internal nodes in the model
-					ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
-
-					// Start a transaction
-					using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+					foreach (DBObject obj in strs)
 					{
-						foreach (SelectedObject obj in set)
+						// Open the selected object for read
+						Line str = (Line) trans.GetObject(obj.ObjectId, OpenMode.ForRead);
+
+
+						// Access the XData as an array
+						var data = Auxiliary.ReadXData(str);
+
+						// Get the coordinates of the initial and end points
+						Point3d
+							strSt  = str.StartPoint,
+							strEnd = str.EndPoint;
+
+						// Calculate the distance of the points in X and Y
+						double
+							distX = (strEnd.X - strSt.X) / num,
+							distY = (strEnd.Y - strSt.Y) / num;
+
+						// Initialize the start point
+						Point3d stPt = strSt;
+
+						// Get the midpoint
+						Point3d midPt = GlobalAuxiliary.MidPoint(strSt, strEnd);
+
+						// Read the internal nodes
+						foreach (ObjectId intNd in intNds)
 						{
-							// Open the selected object for read
-							Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
+							// Read as point
+							DBPoint nd = trans.GetObject(intNd, OpenMode.ForRead) as DBPoint;
 
-							// Check if the selected object is a Stringer
-							if (ent.Layer == StringerLayer)
+							// Erase the internal node and remove from the list
+							if (nd.Position == midPt)
 							{
-								// Read as a line
-								Line str = ent as Line;
-
-								// Access the XData as an array
-								var data = Auxiliary.ReadXData(str);
-
-								// Get the coordinates of the initial and end points
-								Point3d strSt = str.StartPoint,
-									strEnd = str.EndPoint;
-
-								// Calculate the distance of the points in X and Y
-								double distX = (strEnd.X - strSt.X) / strNum,
-									distY = (strEnd.Y - strSt.Y) / strNum;
-
-								// Initialize the start point
-								Point3d stPt = strSt;
-
-								// Get the midpoint
-								Point3d midPt = GlobalAuxiliary.MidPoint(strSt, strEnd);
-
-								// Read the internal nodes
-								foreach (ObjectId intNd in intNds)
-								{
-									// Read as point
-									DBPoint nd = trans.GetObject(intNd, OpenMode.ForRead) as DBPoint;
-
-									// Erase the internal node and remove from the list
-									if (nd.Position == midPt)
-									{
-										nd.UpgradeOpen();
-										nd.Erase();
-										break;
-									}
-								}
-
-								// Create the new stringers
-								for (int i = 1; i <= strNum; i++)
-								{
-									// Get the coordinates of the other points
-									double xCrd = str.StartPoint.X + i * distX;
-									double yCrd = str.StartPoint.Y + i * distY;
-									Point3d endPt = new Point3d(xCrd, yCrd, 0);
-
-									// Create the Stringer
-									var newStr = new Stringer(stPt, endPt, strList);
-
-									// Get the line
-									var strLine = newStr.LineObject;
-
-									// Append the XData of the original Stringer
-									if (strLine != null)
-										strLine.XData = new ResultBuffer(data);
-
-									// Get the mid point
-									midPt = GlobalAuxiliary.MidPoint(stPt, endPt);
-
-									// Add the position of the nodes to the list
-									if (!newExtNds.Contains(stPt))
-										newExtNds.Add(stPt);
-
-									if (!newExtNds.Contains(endPt))
-										newExtNds.Add(endPt);
-
-									if (!newIntNds.Contains(midPt))
-										newIntNds.Add(midPt);
-
-									// Set the start point of the next Stringer
-									stPt = endPt;
-								}
-
-								// Erase the original Stringer
-								str.UpgradeOpen();
-								str.Erase();
-
-								// Remove from the list
-								strList.Remove((strSt, strEnd));
+								nd.UpgradeOpen();
+								nd.Erase();
+								break;
 							}
 						}
 
-						// Commit changes
-						trans.Commit();
+						// Create the new stringers
+						for (int i = 1; i <= num; i++)
+						{
+							// Get the coordinates of the other points
+							double xCrd = str.StartPoint.X + i * distX;
+							double yCrd = str.StartPoint.Y + i * distY;
+							Point3d endPt = new Point3d(xCrd, yCrd, 0);
+
+							// Create the Stringer
+							var newStr = new Stringer(stPt, endPt, strList);
+
+							// Get the line
+							var strLine = newStr.LineObject;
+
+							// Append the XData of the original Stringer
+							if (strLine != null)
+								strLine.XData = new ResultBuffer(data);
+
+							// Get the mid point
+							midPt = GlobalAuxiliary.MidPoint(stPt, endPt);
+
+							// Add the position of the nodes to the list
+							if (!newExtNds.Contains(stPt))
+								newExtNds.Add(stPt);
+
+							if (!newExtNds.Contains(endPt))
+								newExtNds.Add(endPt);
+
+							if (!newIntNds.Contains(midPt))
+								newIntNds.Add(midPt);
+
+							// Set the start point of the next Stringer
+							stPt = endPt;
+						}
+
+						// Erase the original Stringer
+						str.UpgradeOpen();
+						str.Erase();
+
+						// Remove from the list
+						strList.Remove((strSt, strEnd));
 					}
 
-					// Create the nodes
-					new Node(newExtNds, NodeType.External);
-					new Node(newIntNds, NodeType.Internal);
+					// Commit changes
+					trans.Commit();
 				}
+
+				// Create the nodes
+				new Node(newExtNds, NodeType.External);
+				new Node(newIntNds, NodeType.Internal);
 
 				// Update nodes and stringers
 				Node.UpdateNodes();
@@ -414,18 +395,6 @@ namespace SPMTool.AutoCAD
                 // Request objects to be selected in the drawing area
                 var strs = UserInput.SelectObjects(
 	                "Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)", new []{Layers.Stringer});
-    //            var selOp = new PromptSelectionOptions()
-    //            {
-				//	MessageForAdding = "\nSelect the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)"
-    //            };
-
-				//PromptSelectionResult selRes = Current.edtr.GetSelection(selOp);
-
-				//// If the prompt status is OK, objects were selected
-				//if (selRes.Status == PromptStatus.Cancel)
-				//	return;
-
-				//SelectionSet set = selRes.Value;
 
 				if (strs != null)
 				{
@@ -445,22 +414,15 @@ namespace SPMTool.AutoCAD
 							// Open the selected object for read
 							Entity ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForWrite);
 
-							// Check if the selected object is a node
-							//if (ent.Layer == StringerLayer)
-							//{
-							//	// Upgrade the OpenMode
-							//	ent.UpgradeOpen();
+							// Access the XData as an array
+							TypedValue[] data = Auxiliary.ReadXData(ent);
 
-								// Access the XData as an array
-								TypedValue[] data = Auxiliary.ReadXData(ent);
+							// Set the new geometry and reinforcement (line 7 to 9 of the array)
+							data[(int) StringerData.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.width);
+							data[(int) StringerData.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.height);
 
-								// Set the new geometry and reinforcement (line 7 to 9 of the array)
-								data[(int) StringerData.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.width);
-								data[(int) StringerData.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.height);
-
-								// Add the new XData
-								ent.XData = new ResultBuffer(data);
-							//}
+							// Add the new XData
+							ent.XData = new ResultBuffer(data);
 						}
 
 						// Save the new object to the database
@@ -470,78 +432,67 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Get reinforcement parameters from user
-            private static (double width, double height)? GetStringerGeometry()
-            {
-                // Initiate values
-                (double width, double height)? geometry = null;
+			private static (double width, double height)? GetStringerGeometry()
+			{
+				// Get saved reinforcement options
+				var savedGeo = ReadStringerGeometry();
 
-                // Get saved reinforcement options
-                var savedGeo = ReadStringerGeometry();
+				// Get saved reinforcement options
+				if (savedGeo != null)
+				{
+					// Get the options
+					var options = new List<string>();
 
-                // Get saved reinforcement options
-                if (savedGeo != null)
-                {
-	                // Get the options
-	                var options = new List<string>();
+					for (int i = 0; i < savedGeo.Length; i++)
+					{
+						double
+							wi = savedGeo[i].width,
+							hi = savedGeo[i].height;
 
-	                for (int i = 0; i < savedGeo.Length; i++)
-	                {
-		                double
-			                w = savedGeo[i].width,
-			                h = savedGeo[i].height;
+						char times = (char) Characters.Times;
 
-		                char times = (char)Characters.Times;
+						string name = wi.ToString() + times + hi;
 
-		                string name = w.ToString() + times + h;
+						options.Add(name);
+					}
 
-		                options.Add(name);
-	                }
+					// Add option to set new reinforcement
+					options.Add("New");
 
-                    // Add option to set new reinforcement
-                    options.Add("New");
+					// Get string result
+					var res = UserInput.SelectKeyword("Choose a geometry option (mm x mm) or add a new one:",
+						options.ToArray(), options[0]);
 
-	                // Get string result
-	                string res = UserInput.SelectKeyword("Choose a geometry option (mm x mm) or add a new one:", options.ToArray(), options[0]);
+					if (!res.HasValue)
+						return null;
 
-                    if (res == null)
-	                    return null;
+					var (index, keyword) = res.Value;
 
-                    // Get the index
-                    if (res != "New")
-                    {
-                        for (int i = 0; i < options.Count; i++)
-                        {
-                            if (res == options[i])
-                                geometry = savedGeo[i];
-                        }
-                    }
-                }
+					// Get the index
+					if (keyword != "New")
+						return savedGeo[index];
+				}
 
-                // New reinforcement
-                if (!geometry.HasValue)
-                {
-	                // Ask the user to input the Stringer width
-	                var wn = UserInput.GetDouble("Input width (mm) for selected stringers:", 100);
+				// New reinforcement
+				// Ask the user to input the Stringer width
+				var wn = UserInput.GetDouble("Input width (mm) for selected stringers:", 100);
 
-                    // Ask the user to input the Stringer height
-                    var hn = UserInput.GetDouble("Input height (mm) for selected stringers:", 100);
+				// Ask the user to input the Stringer height
+				var hn = UserInput.GetDouble("Input height (mm) for selected stringers:", 100);
 
-	                if (wn.HasValue && hn.HasValue)
-	                {
-		                double
-			                w = wn.Value,
-			                h = hn.Value;
+				if (!wn.HasValue && !hn.HasValue)
+					return null;
 
-                        // Save geometry
-                        geometry = (w, h);
-		                SaveStringerGeometry(w, h);
-	                }
-                }
+				double
+					w = wn.Value,
+					h = hn.Value;
 
-                return geometry;
-            }
+				// Save geometry
+				SaveStringerGeometry(w, h);
+				return (w, h);
+			}
 
-            // Save geometry configuration on database
+			// Save geometry configuration on database
             private static void SaveStringerGeometry(double width, double height)
 			{
 					// Start a transaction
