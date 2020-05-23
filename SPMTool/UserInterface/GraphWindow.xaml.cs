@@ -25,9 +25,16 @@ namespace SPMTool.UserInterface
         // Properties
 		public SeriesCollection LoadDisplacement { get; set; }
 
-        public GraphWindow()
+        public GraphWindow(double[] displacements = null, double[] loadFactor = null)
         {
             InitializeComponent();
+
+            ChartValues<ObservablePoint> values;
+
+            if (displacements == null || loadFactor == null)
+	            values = new ChartValues<ObservablePoint> { new ObservablePoint(0, 0) };
+            else
+	            values = GetValues(displacements, loadFactor);
 
 			// Initiate series
 			LoadDisplacement = new SeriesCollection
@@ -35,12 +42,13 @@ namespace SPMTool.UserInterface
 				new LineSeries()
 				{
 					Title = "Load Factor x Displacement", 
-					Values = new ChartValues<ObservablePoint>{ new ObservablePoint(0, 0) }, 
+					Values = values, 
 					PointGeometry = null,
 					StrokeThickness = 3,
 					Stroke = Brushes.LightSkyBlue,
 					Fill = Brushes.Transparent,
 					DataLabels = false,
+					LabelPoint = Label
 				}
 			};
 
@@ -63,6 +71,28 @@ namespace SPMTool.UserInterface
 				points[i] = new ObservablePoint(displacements[i], loadFactor[i]);
 
 			LoadDisplacement[0].Values.AddRange(points);
+		}
+
+		// Get values to plot
+		private ChartValues<ObservablePoint> GetValues(double[] displacements, double[] loadFactor)
+		{
+			var values = new ChartValues<ObservablePoint>{ new ObservablePoint(0, 0) };
+			var points = new ObservablePoint[displacements.Length];
+
+			for (int i = 0; i < displacements.Length; i++)
+				points[i] = new ObservablePoint(displacements[i], loadFactor[i]);
+
+			values.AddRange(points);
+
+			return values;
+		}
+
+		// Get label
+		private string Label(ChartPoint point)
+		{
+			return
+				"LF = "  + Math.Round(point.Y, 2) + "\n" +
+				"u  = "  + Math.Round(point.X, 4) + " mm";
 		}
 
         // When a point is clicked

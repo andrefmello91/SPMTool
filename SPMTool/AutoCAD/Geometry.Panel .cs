@@ -107,7 +107,7 @@ namespace SPMTool.AutoCAD
 			public static void DividePanel()
 			{
 				// Prompt for select panels
-				var pnls = UserInput.SelectObjects("Select panels to divide", new [] {Layers.Panel});
+				var pnls = UserInput.SelectPanels("Select panels to divide");
 
 				if (pnls == null)
 					return;
@@ -305,9 +305,8 @@ namespace SPMTool.AutoCAD
 			public static void SetPanelGeometry()
 			{
 				// Request objects to be selected in the drawing area
-				var pnls = UserInput.SelectObjects(
-					"Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)",
-					new [] {Layers.Panel});
+				var pnls = UserInput.SelectPanels(
+					"Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)");
 
 				if (pnls == null)
 					return;
@@ -344,9 +343,6 @@ namespace SPMTool.AutoCAD
 			// Get reinforcement parameters from user
             private static double? GetPanelGeometry()
             {
-                // Initiate values
-                //double? widthn = null;
-
                 // Get saved reinforcement options
                 var savedGeo = ReadPanelGeometry();
 
@@ -392,31 +388,19 @@ namespace SPMTool.AutoCAD
             // Save geometry configuration on database
             private static void SavePanelGeometry(double width)
             {
-                // Start a transaction
-                using (Transaction trans = Current.db.TransactionManager.StartTransaction())
-                {
-                    // Get the NOD in the database
-                    var nod = (DBDictionary)trans.GetObject(Current.nod, OpenMode.ForRead);
+	            // Get the name to save
+	            string name = PnlW + width;
 
-                    // Get the name to save
-                    string name = PnlW + width;
+	            // Save the variables on the Xrecord
+	            using (ResultBuffer rb = new ResultBuffer())
+	            {
+		            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName)); // 0
+		            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));           // 1
+		            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, width));            // 2
 
-                    if (!nod.Contains(name))
-                    {
-                        // Save the variables on the Xrecord
-                        using (ResultBuffer rb = new ResultBuffer())
-                        {
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName,  Current.appName)); // 0
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));            // 1
-                            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32,   width));           // 2
-
-                            // Create the entry in the NOD
-                            Auxiliary.SaveObjectDictionary(name, rb);
-                        }
-
-                        trans.Commit();
-                    }
-                }
+		            // Create the entry in the NOD if it doesn't exist
+		            Auxiliary.SaveObjectDictionary(name, rb, false);
+	            }
             }
 
             // Read stringer geometry on database
@@ -425,29 +409,23 @@ namespace SPMTool.AutoCAD
                 // Create a list of reinforcement
                 var geoList = new List<double>();
 
-                // Start a transaction
-                using (Transaction trans = Current.db.TransactionManager.StartTransaction())
-                {
-                    // Get the NOD in the database
-                    var nod = (DBDictionary)trans.GetObject(Current.nod, OpenMode.ForRead);
+				// Get dictionary entries
+				var entries = Auxiliary.ReadDictionaryEntries(PnlW);
 
-                    // Check saved reinforcements
-                    foreach (var entry in nod)
-                    {
-                        if (entry.Key.Contains(PnlW))
-                        {
-                            // Read data
-                            var refXrec = (Xrecord)trans.GetObject(entry.Value, OpenMode.ForRead);
-                            var refDAta = refXrec.Data.AsArray();
+				if (entries == null)
+					return null;
 
-                            double
-	                            w = Convert.ToDouble(refDAta[2].Value);
+				foreach (var entry in entries)
+				{
+					// Read data
+					var data = entry.AsArray();
 
-                            // Add to the list
-                            geoList.Add(w);
-                        }
-                    }
-                }
+					double
+						w = Convert.ToDouble(data[2].Value);
+
+					// Add to the list
+					geoList.Add(w);
+				}
 
                 if (geoList.Count > 0)
                     return

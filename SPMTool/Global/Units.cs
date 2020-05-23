@@ -49,6 +49,9 @@
 		// Get stress unit related to MPa
 		public double StressToMPa => Stress_to_MPa(StressUnit);
 
+		// Get stress unit from MPa
+		public double StressFromMPa => Stress_from_MPa(StressUnit);
+
 		// Get stress unit related to MPa
 		public static double Stress_to_MPa(Stress unit)
 		{
@@ -63,6 +66,22 @@
 
 			// If GPa
 			return 1000;
+        }
+
+		// Transform stress from MPa to unit
+		public static double Stress_from_MPa(Stress unit)
+		{
+			if (unit == Stress.Pa)
+				return 1E6;
+
+			if (unit == Stress.kPa)
+				return 1E3;
+
+			if (unit == Stress.MPa)
+				return 1;
+
+			// If GPa
+			return 1E-3;
         }
     }
 }

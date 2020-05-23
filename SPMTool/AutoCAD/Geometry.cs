@@ -12,15 +12,15 @@ namespace SPMTool.AutoCAD
 		public static void UpdateElements()
 		{
 			// Enumerate and get the number of nodes
-			ObjectIdCollection nds = Node.UpdateNodes();
+			var nds = Node.UpdateNodes();
 			int numNds = nds.Count;
 
 			// Update and get the number of stringers
-			ObjectIdCollection strs = Stringer.UpdateStringers();
+			var strs = Stringer.UpdateStringers();
 			int numStrs = strs.Count;
 
 			// Update and get the number of panels
-			ObjectIdCollection pnls = Panel.UpdatePanels();
+			var pnls = Panel.UpdatePanels();
 			int numPnls = pnls.Count;
 
 			// Display the number of updated elements

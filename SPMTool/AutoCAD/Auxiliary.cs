@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
@@ -11,17 +12,17 @@ namespace SPMTool.AutoCAD
 		public static void RegisterApp()
 		{
 			// Start a transaction
-			using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Open the Registered Applications table for read
 				RegAppTable regAppTbl =
-					trans.GetObject(AutoCAD.Current.db.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-				if (!regAppTbl.Has(AutoCAD.Current.appName))
+					trans.GetObject(Current.db.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+				if (!regAppTbl.Has(Current.appName))
 				{
 					using (RegAppTableRecord regAppTblRec = new RegAppTableRecord())
 					{
-						regAppTblRec.Name = AutoCAD.Current.appName;
-						trans.GetObject(AutoCAD.Current.db.RegAppTableId, OpenMode.ForWrite);
+						regAppTblRec.Name = Current.appName;
+						trans.GetObject(Current.db.RegAppTableId, OpenMode.ForWrite);
 						regAppTbl.Add(regAppTblRec);
 						trans.AddNewlyCreatedDBObject(regAppTblRec, true);
 					}
@@ -90,7 +91,7 @@ namespace SPMTool.AutoCAD
 			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Open the Layer table for read
-				LayerTable lyrTbl = trans.GetObject(AutoCAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
+				LayerTable lyrTbl = trans.GetObject(Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
 
 				if (lyrTbl.Has(layerName))
 				{
@@ -124,7 +125,7 @@ namespace SPMTool.AutoCAD
 			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Open the Layer table for read
-				LayerTable lyrTbl = trans.GetObject(AutoCAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
+				LayerTable lyrTbl = trans.GetObject(Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
 
 				if (lyrTbl.Has(layerName))
 				{
@@ -204,7 +205,7 @@ namespace SPMTool.AutoCAD
 			if (entity != null)
 			{
 				// Start a transaction
-				using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 				{
 					// Open the Block table for read
 					BlockTable blkTbl =
@@ -263,8 +264,23 @@ namespace SPMTool.AutoCAD
 				rb.AsArray();
 		}
 
+		public static TypedValue[] ReadXData(ObjectId objectId)
+		{
+			// Start a transaction
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			{
+				// Get the NOD in the database
+				var entity = (Entity) trans.GetObject(Current.nod, OpenMode.ForRead);
+
+				return
+					ReadXData(entity);
+			}
+		}
+
+		
+
 		// Save object on database dictionary
-		public static void SaveObjectDictionary(string name, ResultBuffer data)
+		public static void SaveObjectDictionary(string name, ResultBuffer data, bool overwrite = true)
 		{
 			// Start a transaction
 			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
@@ -276,6 +292,10 @@ namespace SPMTool.AutoCAD
 				Xrecord xRec = new Xrecord();
 				xRec.Data    = data;
 
+				// Verify if object exists and must be overwrote
+				if (!overwrite && nod.Contains(name))
+					return;
+
 				// Create the entry in the NOD and add to the transaction
 				nod.SetAt(name, xRec);
 				trans.AddNewlyCreatedDBObject(xRec, true);
@@ -284,5 +304,75 @@ namespace SPMTool.AutoCAD
 				trans.Commit();
 			}
         }
-	}
+
+		// Read data on a dictionary entry (full name or if name contains string passed)
+		public static TypedValue[] ReadDictionaryEntry(string name, bool fullName = true)
+		{
+			// Start a transaction
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			{
+				// Get the NOD in the database
+				var nod = (DBDictionary) trans.GetObject(Current.nod, OpenMode.ForRead);
+
+				// Check if it exists as full name
+				if (fullName && nod.Contains(name))
+				{
+					// Read the concrete Xrecord
+					var objectId = nod.GetAt(name);
+					var xrec = (Xrecord) trans.GetObject(objectId, OpenMode.ForRead);
+
+					// Get the parameters from XData
+					return
+						xrec.Data.AsArray();
+				}
+
+				// Check if name contains
+				foreach (var entry in nod)
+				{
+					if (entry.Key.Contains(name))
+					{
+						// Read data
+						var refXrec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+
+						return
+							refXrec.Data.AsArray();
+					}
+				}
+
+				// Not set
+				return null;
+			}
+		}
+
+		// Read all the entries in dictionary that contain name
+		public static ResultBuffer[] ReadDictionaryEntries(string name)
+		{
+			var resList = new List<ResultBuffer>();
+
+			// Start a transaction
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			{
+				// Get the NOD in the database
+				var nod = (DBDictionary)trans.GetObject(Current.nod, OpenMode.ForRead);
+
+				// Check if name contains
+				foreach (var entry in nod)
+				{
+					if (entry.Key.Contains(name))
+					{
+						var xRec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+
+                        // Add data
+                        resList.Add(xRec.Data);
+					}
+				}
+			}
+
+			if (resList.Count > 0)
+				return
+					resList.ToArray();
+
+			return null;
+		}
+    }
 }

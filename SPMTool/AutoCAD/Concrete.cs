@@ -80,33 +80,18 @@ namespace SPMTool.AutoCAD
             phiAg = phin.Value;
             var aggType = (AggregateType) Enum.Parse(typeof(AggregateType), agrgt);
 
-			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
-			{
-				// Get the NOD in the database
-				var nod = (DBDictionary) trans.GetObject(Current.nod, OpenMode.ForWrite);
+            // Save the variables on the Xrecord
+            using (ResultBuffer rb = new ResultBuffer())
+            {
+	            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName,  Current.appName));    // 0
+	            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));           // 1
+	            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal,        fc));                 // 2
+	            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32,  (int)aggType));        // 3
+	            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal,        phiAg));              // 4
 
-				// Save the variables on the Xrecord
-				using (ResultBuffer rb = new ResultBuffer())
-				{
-					rb.Add(new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName));     // 0
-					rb.Add(new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr));           // 1
-					rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, fc));                        // 2
-					rb.Add(new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) aggType));        // 3
-					rb.Add(new TypedValue((int) DxfCode.ExtendedDataReal, phiAg));                     // 4
-
-					// Create and add data to an Xrecord
-					Xrecord xRec = new Xrecord();
-					xRec.Data = rb;
-
-					// Create the entry in the NOD and add to the transaction
-					nod.SetAt(ConcreteParams, xRec);
-					trans.AddNewlyCreatedDBObject(xRec, true);
-				}
-
-				// Save the new object to the database
-				trans.Commit();
-			}
+	            // Create the entry in the NOD and add to the transaction
+	            Auxiliary.SaveObjectDictionary(ConcreteParams, rb);
+            }
 		}
 
 		[CommandMethod("ViewConcreteParameters")]
@@ -115,56 +100,44 @@ namespace SPMTool.AutoCAD
 			// Get the values
 			var concrete = ReadConcreteData();
 
-			// Write the concrete parameters
-			if (concrete.IsSet)
-			{
-				// Get the parameters
-				string concmsg =
-					"\nConcrete Parameters:\n"                                    +
-					"\nfcm = "    + concrete.Strength                   + " MPa"  +
-					"\nfctm = "   + Math.Round(concrete.fcr, 2)         + " MPa"  +
-					"\nEci = "    + Math.Round(concrete.Ec, 2)          + " MPa"  +
-					"\nεc1 = "    + Math.Round(1000 * concrete.ec, 2)   + " E-03" +
-					"\nεc,lim = " + Math.Round(1000 * concrete.ecu, 2)  + " E-03" +
-					"\nφ,ag = "   + concrete.AggregateDiameter          + " mm";
+			string concmsg;
+            // Write the concrete parameters
+            if (concrete != null)
+            {
+	            // Get the parameters
+	            concmsg =
+		            "\nConcrete Parameters:\n"                                    +
+		            "\nfcm = "    + concrete.Strength                   + " MPa"  +
+		            "\nfctm = "   + Math.Round(concrete.fcr, 2)         + " MPa"  +
+		            "\nEci = "    + Math.Round(concrete.Ec, 2)          + " MPa"  +
+		            "\nεc1 = "    + Math.Round(1000 * concrete.ec, 2)   + " E-03" +
+		            "\nεc,lim = " + Math.Round(1000 * concrete.ecu, 2)  + " E-03" +
+		            "\nφ,ag = "   + concrete.AggregateDiameter          + " mm";
 
-				// Display the values returned
-				Application.ShowAlertDialog(Current.appName + "\n\n" + concmsg);
-			}
-		}
+            }
+            else
+	            concmsg = "Concrete parameters not set";
 
-		// Read the concrete parameters
-		public static Concrete ReadConcreteData()
+			// Display the values returned
+			Application.ShowAlertDialog(Current.appName + "\n\n" + concmsg);
+        }
+
+        // Read the concrete parameters
+        public static Concrete ReadConcreteData()
 		{
-			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
-			{
-				// Get the NOD in the database
-				var nod = (DBDictionary) trans.GetObject(Current.nod, OpenMode.ForRead);
+			var concData = Auxiliary.ReadDictionaryEntry(ConcreteParams);
 
-				// Check if it exists
-				if (nod.Contains(ConcreteParams))
-				{
-					// Read the concrete Xrecord
-					var concPar  = nod.GetAt(ConcreteParams);
-					var concXrec = (Xrecord)trans.GetObject(concPar, OpenMode.ForRead);
-					var concRb   = concXrec.Data;
-					var concData = concRb.AsArray();
-
-					// Get the parameters from XData
-					double
-						fc      = Convert.ToDouble(concData[2].Value),
-						aggType = Convert.ToInt32(concData[3].Value),
-						phiAg   = Convert.ToDouble(concData[4].Value);
-
-					return
-						new Concrete(fc, phiAg, (AggregateType) aggType);
-				}
-
-				//Application.ShowAlertDialog("Please set concrete parameters.");
-				// Not set
+			if (concData == null)
 				return null;
-			}
+
+			// Get the parameters from XData
+			double
+				fc      = Convert.ToDouble(concData[2].Value),
+				aggType = Convert.ToInt32 (concData[3].Value),
+				phiAg   = Convert.ToDouble(concData[4].Value);
+
+			return
+				new Concrete(fc, phiAg, (AggregateType)aggType);
 		}
 	}
 }

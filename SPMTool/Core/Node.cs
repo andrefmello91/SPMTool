@@ -40,7 +40,7 @@ namespace SPMTool.Core
 				constraints = Constraint.ListOfConstraints();
 
 			// Read the object as a point
-			DBPoint ndPt =  Geometry.Node.ReadNode(nodeObject);
+			DBPoint ndPt = Geometry.Node.ReadNode(nodeObject);
 
 			// Read the XData and get the necessary data
 			TypedValue[] data = Auxiliary.ReadXData(ndPt);

@@ -81,32 +81,17 @@ namespace SPMTool.AutoCAD
 				var f   = (ForceUnits)     Enum.Parse(typeof(ForceUnits),     fRes.StringResult);
 				var sig = (StressUnits)    Enum.Parse(typeof(StressUnits),    sRes.StringResult);
 
-				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				// Save the variables on the Xrecord
+				using (ResultBuffer rb = new ResultBuffer())
 				{
-					// Get the NOD in the database
-					DBDictionary nod = (DBDictionary) trans.GetObject(Current.nod, OpenMode.ForWrite);
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName));  // 0
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, Units));           // 1
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, (int)dim));          // 2
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, (int)f));            // 3
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, (int)sig));          // 4
 
-					// Save the variables on the Xrecord
-					using (ResultBuffer rb = new ResultBuffer())
-					{
-						rb.Add(new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName));  // 0
-						rb.Add(new TypedValue((int) DxfCode.ExtendedDataAsciiString, Units));           // 1
-						rb.Add(new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) dim));         // 2
-						rb.Add(new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) f));           // 3
-						rb.Add(new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) sig));         // 4
-
-						// Create and add data to an Xrecord
-						Xrecord xRec = new Xrecord();
-						xRec.Data = rb;
-
-						// Create the entry in the NOD and add to the transaction
-						nod.SetAt(Units, xRec);
-						trans.AddNewlyCreatedDBObject(xRec, true);
-					}
-
-					// Save the new object to the database
-					trans.Commit();
+					// Create the entry in the NOD and add to the transaction
+					Auxiliary.SaveObjectDictionary(Units, rb);
 				}
 
 				Current.edtr.WriteMessage("\nUnits set: " + dim + ", " + f + ", " + sig);
@@ -114,34 +99,19 @@ namespace SPMTool.AutoCAD
 
 			public static Units ReadUnits()
 			{
-				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
-				{
-					// Get the NOD in the database
-					DBDictionary nod = (DBDictionary)trans.GetObject(Current.nod, OpenMode.ForRead);
+				TypedValue[] data = Auxiliary.ReadDictionaryEntry(Units);
 
-					// Check if it exists
-					if (nod.Contains(Units))
-					{
-						// Read the concrete Xrecord
-						ObjectId elPar = nod.GetAt(Units);
-						Xrecord elXrec = (Xrecord)trans.GetObject(elPar, OpenMode.ForRead);
-						ResultBuffer elRb = elXrec.Data;
-						TypedValue[] data = elRb.AsArray();
-
-						// Get the parameters from XData
-						var dim = (DimensionUnits) Convert.ToInt32(data[2].Value);
-						var f   = (ForceUnits)     Convert.ToInt32(data[3].Value);
-						var sig = (StressUnits)    Convert.ToInt32(data[4].Value);
-
-						return
-							new Units(dim, f, sig);
-					}
-
-					// If is not set return default values
+				if (data == null)
 					return
 						new Units();
-				}
+
+				// Get the parameters from XData
+				var dim = (DimensionUnits) Convert.ToInt32(data[2].Value);
+				var f   = (ForceUnits)     Convert.ToInt32(data[3].Value);
+				var sig = (StressUnits)    Convert.ToInt32(data[4].Value);
+
+				return
+					new Units(dim, f, sig);
 			}
-        }
+		}
 	}

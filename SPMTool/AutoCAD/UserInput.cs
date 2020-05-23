@@ -35,8 +35,9 @@ namespace SPMTool.AutoCAD
 		}
 
         // Ask user to select an entity
-        public static Entity SelectEntity(string message, Elements element = default, Layers[] layers = null)
+        public static Entity SelectEntity(string message, Layers[] layers = null)
 		{
+			// Get element
 			for ( ; ; )
 			{
 				// Request the object to be selected in the drawing area
@@ -59,7 +60,7 @@ namespace SPMTool.AutoCAD
 						return ent;
 				}
 
-				Application.ShowAlertDialog("Selected object is not a " + element.ToString());
+				Application.ShowAlertDialog("Selected object is not the requested.");
 			}
 		}
 
@@ -99,16 +100,14 @@ namespace SPMTool.AutoCAD
 				}
 			}
 
-			if (collection.Count > 0)
-				return collection;
-
-			return null;
+			return collection;
 		}
 
 		// Ask user to select nodes
 		public static DBObjectCollection SelectNodes(string message, NodeType nodeType)
 		{
-			var layers = new List<Layers>();
+			DBObjectCollection nds;
+            var layers = new List<Layers>();
 
 			if (nodeType == NodeType.External || nodeType == NodeType.All)
 				layers.Add(Layers.ExtNode);
@@ -116,8 +115,62 @@ namespace SPMTool.AutoCAD
 			if (nodeType == NodeType.Internal || nodeType == NodeType.All)
 				layers.Add(Layers.IntNode);
 
-			return
-				SelectObjects(message, layers.ToArray());
+			// Create an infinite loop for selecting elements
+			for ( ; ; )
+			{
+				nds = SelectObjects(message, layers.ToArray());
+
+				if (nds == null)
+					return null;
+
+				if (nds.Count > 0)
+					return nds;
+
+                // No nodes selected
+                Application.ShowAlertDialog("Please select at least one " + nodeType + " nodes.");
+			}
+		}
+
+		// Ask user to select stringers
+		public static DBObjectCollection SelectStringers(string message)
+		{
+			DBObjectCollection strs;
+			var layers = new[] { Layers.Stringer };
+
+            // Create an infinite loop for selecting elements
+            for ( ; ; )
+			{
+				strs = SelectObjects(message, layers);
+
+				if (strs == null)
+					return null;
+
+				if (strs.Count > 0)
+					return strs;
+
+                Application.ShowAlertDialog("Please select at least one stringer.");
+			}
+		}
+
+		// Ask user to select panels
+		public static DBObjectCollection SelectPanels(string message)
+		{
+			DBObjectCollection pnls;
+			var layers = new[] { Layers.Panel };
+
+            // Create an infinite loop for selecting elements
+            for ( ; ; )
+			{
+				pnls = SelectObjects(message, layers);
+
+				if (pnls == null)
+					return null;
+
+				if (pnls.Count > 0)
+					return pnls;
+
+                Application.ShowAlertDialog("Please select at least one panel.");
+			}
 		}
 
 		// Get an integer from user (nullable)

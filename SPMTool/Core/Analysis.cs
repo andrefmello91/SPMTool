@@ -428,26 +428,31 @@ namespace SPMTool.Core
 
         public sealed class NonLinear : Analysis
         {
-			// Max iterations and load steps
-			private int maxIterations = 1000;
-			private int loadSteps     = 100;
+            // Properties
+            public List<double> MonitoredDisplacements { get; set; }
+            public List<double> MonitoredLoadFactor    { get; set; }
 
-            public NonLinear(InputData inputData, GraphWindow uWindow) : base(inputData)
+            // Max iterations and load steps
+            private int maxIterations = 1000;
+			private int loadSteps     = 50;
+
+            public NonLinear(InputData inputData) : base(inputData)
 	        {
+				// Initiate lists
+				MonitoredDisplacements = new List<double>();
+				MonitoredLoadFactor    = new List<double>();
+
                 // Get force vector
                 var f = ForceVector;
-
-                // Do a linear analysis to get reactions
-
-                DelimitedWriter.Write("D:/f0.csv", f.ToColumnMatrix(), ";");
 
                 // Get the initial stiffness and force vector simplified
                 var Kg = Global_Stiffness(f);
 
-                DelimitedWriter.Write("D:/Ki.csv", Kg, ";");
+                //DelimitedWriter.Write("D:/Ki.csv", Kg, ";");
 
                 // Solve the initial displacements
-                var u0 = Kg.Solve(0.01 * f);
+                double lf0 = (double) 1 / loadSteps;
+                var u0 = Kg.Solve(lf0 * f);
                 var ui = u0;
 
                 DelimitedWriter.Write("D:/u0.csv", u0.ToColumnMatrix(), ";");
@@ -465,9 +470,6 @@ namespace SPMTool.Core
                 var DcPnl = Matrix<double>.Build.Dense(1200, 12);
                 var DsPnl = Matrix<double>.Build.Dense(1200, 12);
                 var thetaPnl1 = Matrix<double>.Build.Dense(100, 4);
-
-				var uList = new List<double>();
-				var lfList = new List<double>();
 
                 // Initialize a loop for load steps
                 for (int loadStep = 1; loadStep <= loadSteps; loadStep++)
@@ -496,9 +498,8 @@ namespace SPMTool.Core
 						if (EquilibriumConvergence(fr, ui - u0, it))
 						{
 							AutoCAD.Current.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
-                            uWindow.AddPoint(ui[14], lf);
-                            //uList.Add(ui[14]);
-                            //lfList.Add(lf);
+                            MonitoredDisplacements.Add(ui[14]);
+                            MonitoredLoadFactor.Add(lf);
                             break;
 						}
 

@@ -94,31 +94,20 @@ namespace SPMTool.AutoCAD
 					pnlBehavior = (PanelBehavior)    Enum.Parse(typeof(PanelBehavior),    pnlBh.Value.keyword);
 				}
 
-				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				// Save the variables on the Xrecord
+				using (ResultBuffer rb = new ResultBuffer())
 				{
-					// Get the NOD in the database
-					DBDictionary nod = (DBDictionary) trans.GetObject(Current.nod, OpenMode.ForWrite);
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName));     // 0
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));           // 1
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, (int)strBehavior));    // 2
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, (int)pnlBehavior));    // 3
 
-					// Save the variables on the Xrecord
-					using (ResultBuffer rb = new ResultBuffer())
-					{
-						rb.Add(new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName));     // 0
-						rb.Add(new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr));           // 1
-						rb.Add(new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) strBehavior));    // 2
-						rb.Add(new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) pnlBehavior));    // 3
+					// Create and add data to an Xrecord
+					Xrecord xRec = new Xrecord();
+					xRec.Data = rb;
 
-						// Create and add data to an Xrecord
-						Xrecord xRec = new Xrecord();
-						xRec.Data = rb;
-
-						// Create the entry in the NOD and add to the transaction
-						nod.SetAt(ElementsBehavior, xRec);
-						trans.AddNewlyCreatedDBObject(xRec, true);
-					}
-
-					// Save the new object to the database
-					trans.Commit();
+					// Create the entry in the NOD
+					Auxiliary.SaveObjectDictionary(ElementsBehavior, rb);
 				}
 
 				Current.edtr.WriteMessage("\nStringer behavior: " + strBehavior + "\nPanel behavior: " + pnlBehavior);
@@ -127,33 +116,18 @@ namespace SPMTool.AutoCAD
 			// Read the concrete parameters
 			public static (StringerBehavior stringer, PanelBehavior panel) ReadBehavior()
 			{
-				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
-				{
-					// Get the NOD in the database
-					DBDictionary nod = (DBDictionary)trans.GetObject(Current.nod, OpenMode.ForRead);
+				TypedValue[] data = Auxiliary.ReadDictionaryEntry(ElementsBehavior);
 
-					// Check if it exists
-					if (nod.Contains(ElementsBehavior))
-					{
-						// Read the concrete Xrecord
-						ObjectId elPar = nod.GetAt(ElementsBehavior);
-						Xrecord elXrec = (Xrecord)trans.GetObject(elPar, OpenMode.ForRead);
-						ResultBuffer elRb = elXrec.Data;
-						TypedValue[] data = elRb.AsArray();
-
-						// Get the parameters from XData
-						var strBehavior = (StringerBehavior) Convert.ToInt32(data[2].Value);
-						var pnlBehavior = (PanelBehavior)    Convert.ToInt32(data[3].Value);
-
-						return
-							(strBehavior, pnlBehavior);
-					}
-
-					// If is not set return default values
+				if (data == null)
 					return
 						(StringerBehavior.NonLinearClassic, PanelBehavior.NonLinearMCFT);
-				}
+
+				// Get the parameters from XData
+				var strBehavior = (StringerBehavior) Convert.ToInt32(data[2].Value);
+				var pnlBehavior = (PanelBehavior)    Convert.ToInt32(data[3].Value);
+
+				return
+					(strBehavior, pnlBehavior);
 			}
-        }
+		}
 	}

@@ -140,7 +140,7 @@ namespace SPMTool.AutoCAD
 			public static void DivideStringer()
 			{
 				// Prompt for select stringers
-				var strs = UserInput.SelectObjects("Select stringers to divide", new [] { Layers.Stringer });
+				var strs = UserInput.SelectStringers("Select stringers to divide");
 
 				if (strs == null)
 					return;
@@ -393,8 +393,7 @@ namespace SPMTool.AutoCAD
 			public static void SetStringerGeometry()
 			{
                 // Request objects to be selected in the drawing area
-                var strs = UserInput.SelectObjects(
-	                "Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)", new []{Layers.Stringer});
+                var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)");
 
 				if (strs != null)
 				{
@@ -495,63 +494,45 @@ namespace SPMTool.AutoCAD
 			// Save geometry configuration on database
             private static void SaveStringerGeometry(double width, double height)
 			{
-					// Start a transaction
-					using (Transaction trans = Current.db.TransactionManager.StartTransaction())
-					{
-						// Get the NOD in the database
-						var nod = (DBDictionary)trans.GetObject(Current.nod, OpenMode.ForRead);
+				// Get the name to save
+				string name = StrGeo + "W" + width + "H" + height;
 
-						// Get the name to save
-						string name = StrGeo + "W" + width + "H" + height;
+				// Save the variables on the Xrecord
+				using (ResultBuffer rb = new ResultBuffer())
+				{
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName)); // 0
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));            // 1
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, width));           // 2
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, height));          // 3
 
-						if (!nod.Contains(name))
-						{
-							// Save the variables on the Xrecord
-							using (ResultBuffer rb = new ResultBuffer())
-							{
-								rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName,  Current.appName)); // 0
-								rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));            // 1
-								rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32,   width));           // 2
-								rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal,        height));          // 3
-
-								// Create the entry in the NOD
-								Auxiliary.SaveObjectDictionary(name, rb);
-							}
-
-							trans.Commit();
-						}
-					}
+					// Save on NOD if it doesn't exist
+					Auxiliary.SaveObjectDictionary(name, rb, false);
+				}
 			}
 
-			// Read stringer geometry on database
-			private static (double width, double height)[] ReadStringerGeometry()
+            // Read stringer geometry on database
+            private static (double width, double height)[] ReadStringerGeometry()
 			{
 				// Create a list of reinforcement
 				var geoList = new List<(double width, double height)>();
 
-				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				// Get dictionary entries
+				var entries = Auxiliary.ReadDictionaryEntries(StrGeo);
+
+				if (entries == null)
+					return null;
+
+				foreach (var entry in entries)
 				{
-					// Get the NOD in the database
-					var nod = (DBDictionary)trans.GetObject(Current.nod, OpenMode.ForRead);
+					// Read data
+					var data = entry.AsArray();
 
-					// Check saved reinforcements
-					foreach (var entry in nod)
-					{
-						if (entry.Key.Contains(StrGeo))
-						{
-							// Read data
-							var refXrec = (Xrecord)trans.GetObject(entry.Value, OpenMode.ForRead);
-							var refDAta = refXrec.Data.AsArray();
+					double
+						w = Convert.ToDouble(data[2].Value),
+						h = Convert.ToDouble(data[3].Value);
 
-							double
-								w = Convert.ToDouble(refDAta[2].Value),
-								h = Convert.ToDouble(refDAta[3].Value);
-
-							// Add to the list
-							geoList.Add((w, h));
-						}
-					}
+					// Add to the list
+					geoList.Add((w, h));
 				}
 
 				if (geoList.Count > 0)
@@ -574,8 +555,7 @@ namespace SPMTool.AutoCAD
 				var newData = new TypedValue[size];
 
 				// Set the initial parameters
-				newData[(int) StringerData.AppName]   =
-					new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
+				newData[(int) StringerData.AppName]   = new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
 				newData[(int) StringerData.XDataStr]  = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
 				newData[(int) StringerData.Width]     = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
 				newData[(int) StringerData.Height]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
@@ -599,5 +579,4 @@ namespace SPMTool.AutoCAD
 			}
 		}
 	}
-
 }

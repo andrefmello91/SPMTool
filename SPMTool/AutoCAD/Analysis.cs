@@ -41,15 +41,16 @@ namespace SPMTool.AutoCAD
 
 			if (input.Concrete.IsSet && (strBehavior, pnlBehavior) != default)
 			{
-                // Initiate the load-displacement diagram
-                var uWindow = new GraphWindow();
-                Application.ShowModelessWindow(Application.MainWindow.Handle, uWindow);
-
                 // Do analysis
-                var analysis = new Analysis.NonLinear(input, uWindow);
+                var analysis = new Analysis.NonLinear(input);
 
-				// Draw results of analysis
-				Draw(analysis);
+                // Show load-displacement diagram
+                var u  = analysis.MonitoredDisplacements.ToArray();
+                var lf = analysis.MonitoredLoadFactor.ToArray();
+                Application.ShowModelessWindow(Application.MainWindow.Handle, new GraphWindow(u, lf));
+
+                // Draw results of analysis
+                Draw(analysis);
 			}
 
 			else

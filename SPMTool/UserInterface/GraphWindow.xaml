@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="Load x Displacement" Height="400" Width="500">
     <Grid>
-        <lvc:CartesianChart Series="{Binding LoadDisplacement}" Background="#282c34" DisableAnimations="true" Hoverable="False">
+        <lvc:CartesianChart Series="{Binding LoadDisplacement}" Background="#282c34" DisableAnimations="True" Hoverable="False">
             <lvc:CartesianChart.AxisX>
                 <lvc:Axis Title="Displacement (mm)">
                     <lvc:Axis.Separator>
