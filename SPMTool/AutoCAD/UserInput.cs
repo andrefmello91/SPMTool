@@ -15,7 +15,7 @@ namespace SPMTool.AutoCAD
 	public static class UserInput
 	{
 		// Ask user to select a point (nullable)
-		public static Point3d? SelectPoint(string message, Point3d? basePoint = null)
+		public static Point3d? GetPoint(string message, Point3d? basePoint = null)
 		{
 			// Prompt for the start point of Stringer
 			PromptPointOptions ptOp = new PromptPointOptions("\n" + message);

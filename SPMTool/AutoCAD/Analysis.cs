@@ -41,8 +41,16 @@ namespace SPMTool.AutoCAD
 
 			if (input.Concrete.IsSet && (strBehavior, pnlBehavior) != default)
 			{
+				// Get the index of node to monitor displacement
+				var uIndexn = MonitoredIndex();
+
+				if(!uIndexn.HasValue)
+					return;
+
+				int uIndex = uIndexn.Value;
+
                 // Do analysis
-                var analysis = new Analysis.NonLinear(input);
+                var analysis = new Analysis.NonLinear(input, uIndex);
 
                 // Show load-displacement diagram
                 var u  = analysis.MonitoredDisplacements.ToArray();
@@ -57,6 +65,35 @@ namespace SPMTool.AutoCAD
 				Application.ShowAlertDialog("Please set concrete parameters and elements behavior");
 		}
 
+		// Select node to monitor and return index
+		private static int? MonitoredIndex()
+		{
+			// Ask user to select a node
+			var nd = UserInput.SelectEntity("Select a node to monitor displacement:", new [] { Layers.ExtNode, Layers.IntNode });
 
+			if (nd == null)
+				return null;
+
+			// Ask direction to monitor
+			var options = new []
+			{
+				Directions.X.ToString(),
+				Directions.Y.ToString()
+			};
+			var res = UserInput.SelectKeyword("Select a direction to monitor displacement:", options, options[0]);
+
+			if (!res.HasValue)
+				return null;
+
+			// Get the node global indexes
+			var node  = new Node(nd.ObjectId);
+			var index = node.DoFIndex;
+
+			// Verify selected direction
+			int dirIndex = res.Value.index;
+
+			return
+				index[dirIndex];
+		}
 	}
 }

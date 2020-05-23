@@ -436,7 +436,7 @@ namespace SPMTool.Core
             private int maxIterations = 1000;
 			private int loadSteps     = 50;
 
-            public NonLinear(InputData inputData) : base(inputData)
+            public NonLinear(InputData inputData, int monitoredIndex) : base(inputData)
 	        {
 				// Initiate lists
 				MonitoredDisplacements = new List<double>();
@@ -498,7 +498,7 @@ namespace SPMTool.Core
 						if (EquilibriumConvergence(fr, ui - u0, it))
 						{
 							AutoCAD.Current.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
-                            MonitoredDisplacements.Add(ui[14]);
+                            MonitoredDisplacements.Add(ui[monitoredIndex]);
                             MonitoredLoadFactor.Add(lf);
                             break;
 						}

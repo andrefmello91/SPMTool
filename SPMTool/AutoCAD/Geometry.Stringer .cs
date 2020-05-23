@@ -77,7 +77,7 @@ namespace SPMTool.AutoCAD
 					newExtNds = new List<Point3d>();
 
 				// Prompt for the start point of Stringer
-				var stPtn = UserInput.SelectPoint("Enter the start point:");
+				var stPtn = UserInput.GetPoint("Enter the start point:");
 
 				if (stPtn == null)
 					return;
@@ -92,7 +92,7 @@ namespace SPMTool.AutoCAD
 						nds.Add(stPt);
 
 						// Prompt for the start point of Stringer
-						var endPtn = UserInput.SelectPoint("Enter the end point:", stPt);
+						var endPtn = UserInput.GetPoint("Enter the end point:", stPt);
 
 						if (endPtn == null)
 						{

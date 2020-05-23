@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
+using Autodesk.AutoCAD.Runtime;
+
+[assembly: CommandClass(typeof(SPMTool.AutoCAD.Auxiliary))]
 
 namespace SPMTool.AutoCAD
 {
@@ -31,6 +35,13 @@ namespace SPMTool.AutoCAD
 				// Commit and dispose the transaction
 				trans.Commit();
 			}
+		}
+
+        // Get folder path of current file
+        public static string GetFilePath()
+		{
+			return
+				Application.GetSystemVariable("DWGPREFIX").ToString();
 		}
 
 		// Method to assign transparency to an object

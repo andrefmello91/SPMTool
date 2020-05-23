@@ -1,19 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using LiveCharts;
 using LiveCharts.Defaults;
 using LiveCharts.Wpf;
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.Data.Text;
+using SPMTool.AutoCAD;
 
 namespace SPMTool.UserInterface
 {
@@ -24,31 +21,31 @@ namespace SPMTool.UserInterface
     {
         // Properties
 		public SeriesCollection LoadDisplacement { get; set; }
+		public double[]         Displacements { get; }
+		public double[]         LoadFactors   { get; }
 
-        public GraphWindow(double[] displacements = null, double[] loadFactor = null)
+        public GraphWindow(double[] displacements = null, double[] loadFactors = null)
         {
             InitializeComponent();
 
-            ChartValues<ObservablePoint> values;
+            Displacements = displacements;
+            LoadFactors   = loadFactors;
 
-            if (displacements == null || loadFactor == null)
-	            values = new ChartValues<ObservablePoint> { new ObservablePoint(0, 0) };
-            else
-	            values = GetValues(displacements, loadFactor);
+            var values = GetValues();
 
 			// Initiate series
 			LoadDisplacement = new SeriesCollection
 			{
 				new LineSeries()
 				{
-					Title = "Load Factor x Displacement", 
-					Values = values, 
-					PointGeometry = null,
+					Title           = "Load Factor x Displacement", 
+					Values          = values, 
+					PointGeometry   = null,
 					StrokeThickness = 3,
-					Stroke = Brushes.LightSkyBlue,
-					Fill = Brushes.Transparent,
-					DataLabels = false,
-					LabelPoint = Label
+					Stroke          = Brushes.LightSkyBlue,
+					Fill            = Brushes.Transparent,
+					DataLabels      = false,
+					LabelPoint      = Label
 				}
 			};
 
@@ -74,13 +71,17 @@ namespace SPMTool.UserInterface
 		}
 
 		// Get values to plot
-		private ChartValues<ObservablePoint> GetValues(double[] displacements, double[] loadFactor)
+		private ChartValues<ObservablePoint> GetValues()
 		{
-			var values = new ChartValues<ObservablePoint>{ new ObservablePoint(0, 0) };
-			var points = new ObservablePoint[displacements.Length];
+			var values = new ChartValues<ObservablePoint> { new ObservablePoint(0, 0) };
 
-			for (int i = 0; i < displacements.Length; i++)
-				points[i] = new ObservablePoint(displacements[i], loadFactor[i]);
+            if (Displacements == null || LoadFactors == null)
+				return values;
+
+			var points = new ObservablePoint[Displacements.Length];
+
+			for (int i = 0; i < Displacements.Length; i++)
+				points[i] = new ObservablePoint(Displacements[i], LoadFactors[i]);
 
 			values.AddRange(points);
 
@@ -104,5 +105,34 @@ namespace SPMTool.UserInterface
 	        MessageBox.Show("LF: " + point.X + " , Displacement: " + point.Y);
         }
 
+        private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
+        {
+	        Close();
+        }
+
+        private void ButtonExport_OnClick(object sender, RoutedEventArgs e)
+        {
+			// Get displacements and loadfactors as vectors
+			var u  = Vector<double>.Build.DenseOfArray(Displacements);
+			var lf = Vector<double>.Build.DenseOfArray(LoadFactors);
+
+			// Get matrix
+			var result = Matrix<double>.Build.DenseOfColumnVectors(lf, u);
+
+			// Create headers
+			var headers = new[] { "Load Factor", "Displacement" };
+			var headerList = headers.ToList();
+
+			// Get location and name
+			string
+				path   = Auxiliary.GetFilePath(),
+				name   = Path.GetFileNameWithoutExtension(Current.doc.Name),
+				svName = path + name + "_SPMResult.csv";
+
+            // Export
+            DelimitedWriter.Write(svName, result, ";", headerList);
+
+            MessageBox.Show("Data exported to file location.");
+        }
     }
 }
