@@ -626,7 +626,7 @@ namespace SPMTool.Core
 				{
 					// Get index and forces
 					int[] index = stringer.DoFIndex;
-					var fs = stringer.GlobalForces;
+					var fs = stringer.IterationGlobalForces;
 
 					// Add values
 					AddForce(fs, index);
@@ -668,8 +668,8 @@ namespace SPMTool.Core
 			// Set the results for each Stringer
 			private void Results()
 			{
-                //foreach (Stringer.NonLinear stringer in Stringers)
-                //    stringer.Results();
+                foreach (Stringer.NonLinear stringer in Stringers)
+                    stringer.Results();
 
                 foreach (Panel.NonLinear panel in Panels)
 					panel.Results();

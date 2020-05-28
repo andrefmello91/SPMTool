@@ -106,26 +106,26 @@ namespace SPMTool.Core
 			}
 
             // Generalized strains and stresses for each iteration
-            //private (double e1, double e3) IterationGenStrains { get; set; }
-            //private (double N1, double N3) IterationGenStresses { get; set; }
+            private (double e1, double e3) IterationGenStrains { get; set; }
+            private (double N1, double N3) IterationGenStresses { get; set; }
 
             // Forces from gen stresses for each iteration
-            //public Vector<double> IterationForces
-            //{
-            //    get
-            //    {
-            //        var (N1, N3) = IterationGenStresses;
+            public Vector<double> IterationForces
+            {
+                get
+                {
+                    var (N1, N3) = IterationGenStresses;
 
-            //        return
-            //                     Vector<double>.Build.DenseOfArray(new[]
-            //            {
-            //                -N1, N1 - N3, N3
-            //            });
-            //    }
-            //}
+                    return
+                                 Vector<double>.Build.DenseOfArray(new[]
+                        {
+                            -N1, N1 - N3, N3
+                        });
+                }
+            }
 
             // Global Stringer forces for each iteration
-            //public Vector<double> IterationGlobalForces => TransMatrix.Transpose() * IterationForces;
+            public Vector<double> IterationGlobalForces => TransMatrix.Transpose() * IterationForces;
 
             // Calculate the effective Stringer force
             public override void Analysis()
@@ -180,8 +180,8 @@ namespace SPMTool.Core
 
                 // Set values
                 FMatrix     = F;
-				GenStresses = (N1, N3); 
-				GenStrains  = (e1, e3);
+				IterationGenStresses = (N1, N3); 
+				IterationGenStrains  = (e1, e3);
             }
 
 			// Calculate plastic force
@@ -238,16 +238,16 @@ namespace SPMTool.Core
             public abstract (double e, double de) StringerStrain(double N);
 
             // Set Stringer results (after reached convergence)
-            //public void Results()
-            //{
-            //    // Get the values
-            //    var genStresses = IterationGenStresses;
-            //    var genStrains = IterationGenStrains;
+            public void Results()
+            {
+                // Get the values
+                var genStresses = IterationGenStresses;
+                var genStrains = IterationGenStrains;
 
-            //    // Set the final values
-            //    GenStresses = genStresses;
-            //    GenStrains = genStrains;
-            //}
+                // Set the final values
+                GenStresses = genStresses;
+                GenStrains = genStrains;
+            }
 
             // Calculate the total plastic generalized strain in a Stringer
             public (double ep1, double ep3) PlasticGenStrains
@@ -337,20 +337,25 @@ namespace SPMTool.Core
 	                // Tensioned Stringer
 	                if (N >= 0)
 	                {
-		                if (N <= Ncr)
-			                return
-				                Uncracked(N);
+		                // Calculate uncracked
+		                var res = Uncracked(N);
 
-		                if (N <= Nyr)
-			                return
-				                Cracked(N);
+		                if (res.e <= ecr)
+			                return res;
 
-		                return
-			                YieldingSteel(N);
+						// Calculate cracked
+		                res = Cracked(N);
+
+		                if (res.e <= ey)
+			                return res;
+
+						// Steel is yielding
+                        return
+                            YieldingSteel(N);
 	                }
 
-	                // Compressed Stringer
-	                if (N > Nt)
+                    // Compressed Stringer
+                    if (N > Nt)
 		                return
 			                ConcreteNotCrushed(N);
 
@@ -360,7 +365,7 @@ namespace SPMTool.Core
 
                 // Tension Cases
                 // Case T.1: Uncracked
-                private (double e, double de) Uncracked(double N)
+                public (double e, double de) Uncracked(double N)
                 {
                     double
                         e  = N / t1,
@@ -371,7 +376,7 @@ namespace SPMTool.Core
                 }
 
                 // Case T.2: Cracked with not yielding steel
-                private (double e, double de) Cracked(double N)
+                public virtual (double e, double de) Cracked(double N)
                 {
                     double
                         e  = (N * N - Nr * Nr) / (EsAs * N),
@@ -382,7 +387,7 @@ namespace SPMTool.Core
                 }
 
                 // Case T.3: Cracked with yielding steel
-                private (double e, double de) YieldingSteel(double N)
+                public (double e, double de) YieldingSteel(double N)
                 {
 
                     double
@@ -396,7 +401,7 @@ namespace SPMTool.Core
 
                 // Compression Cases
                 // Case C.1: concrete not crushed
-                private (double e, double de) ConcreteNotCrushed(double N)
+                public (double e, double de) ConcreteNotCrushed(double N)
                 {
                     // Calculate the strain for steel not yielding
                     double
@@ -419,7 +424,7 @@ namespace SPMTool.Core
                 }
 
                 // Case C.2: Concrete crushing
-                private (double e, double de) ConcreteCrushing(double N)
+                public (double e, double de) ConcreteCrushing(double N)
                 {
                     // Calculate the strain for steel not yielding
                     double
@@ -442,34 +447,11 @@ namespace SPMTool.Core
             }
 
 			// MCFT model
-			public class MCFT : NonLinear
+			public class MCFT : Classic
 			{
 				public MCFT(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
 				{
 				}
-
-				// Calculate concrete parameters
-				public override double fc  => Concrete.Strength;
-				public override double ec  => -0.002;
-				public override double ecu => -0.0035;
-				public override double Ec  => -2 * fc / ec;
-				public override double fcr => 0.33 * Math.Sqrt(fc);
-				public override double ecr => fcr / Ec;
-
-                // Maximum Stringer forces
-                public override double Nyc => -Nyr + Nc * (-2 * ey_ec - (-ey_ec) * (-ey_ec));
-                public override double Nt
-                {
-	                get
-	                {
-		                double
-			                Nt1 = Nc * (1 + xi) * (1 + xi),
-			                Nt2 = Nc - Nyr;
-
-		                return
-			                Math.Max(Nt1, Nt2);
-	                }
-                }
 
                 // Calculate the strain and derivative on a Stringer given a force N and the concrete parameters
                 public override (double e, double de) StringerStrain(double N)
@@ -497,20 +479,8 @@ namespace SPMTool.Core
 		                ConcreteCrushing(N);
                 }
 
-                // Tension Cases
-                // Case T.1: Uncracked
-                private (double e, double de) Uncracked(double N)
-                {
-                    double
-                        e  = N / t1,
-                        de = 1 / t1;
-
-                    return
-                        (e, de);
-                }
-
                 // Case T.2: Cracked with yielding or not yielding steel
-                private (double e, double de) Cracked(double N)
+                public override (double e, double de) Cracked(double N)
                 {
 					// Iterate to find strain
 					double e = FindRoots.OfFunction(eps => N - CrackedForce(eps), ecr, 3E-3);
@@ -519,19 +489,6 @@ namespace SPMTool.Core
 					double
 						dN = Differentiate.FirstDerivative(CrackedForce, e),
 						de = 1 / dN;
-
-                    return
-                        (e, de);
-                }
-
-
-	            // Case T.3: Cracked with yielding steel
-	            private (double e, double de) YieldingSteel(double N)
-                {
-
-                    double
-                        e = (Nyr * Nyr - Nr * Nr) / (EsAs * Nyr) + (N - Nyr) / t1,
-                        de = 1 / t1;
 
                     return
                         (e, de);
@@ -549,52 +506,6 @@ namespace SPMTool.Core
 
 	                return
 		                fcr * Ac / (1 + Math.Sqrt(500 * e)) + Ns;
-                }
-
-                // Compression Cases
-                // Case C.1: concrete not crushed
-                private (double e, double de) ConcreteNotCrushed(double N)
-                {
-                    // Calculate the strain for steel not yielding
-                    double
-                        t2 = Math.Sqrt((1 + xi) * (1 + xi) - N / Nc),
-                        e = ec * (1 + xi - t2);
-
-                    // Check the strain
-                    if (e < -ey)
-                    {
-                        // Recalculate the strain for steel yielding
-                        t2 = Math.Sqrt(1 - (N + Nyr) / Nc);
-                        e = ec * (1 - t2);
-                    }
-
-                    // Calculate de
-                    double de = 1 / (EcAc * t2);
-
-                    return
-                        (e, de);
-                }
-
-                // Case C.2: Concrete crushing
-                private (double e, double de) ConcreteCrushing(double N)
-                {
-                    // Calculate the strain for steel not yielding
-                    double
-                        t2 = Math.Sqrt((1 + xi) * (1 + xi) - Nt / Nc),
-                        e = ec * ((1 + xi) - t2) + (N - Nt) / t1;
-
-                    // Check the strain
-                    if (e < -ey)
-                    {
-                        // Recalculate the strain for steel yielding
-                        e = ec * (1 - Math.Sqrt(1 - (Nyr + Nt) / Nc)) + (N - Nt) / t1;
-                    }
-
-                    // Calculate de
-                    double de = 1 / t1;
-
-                    return
-                        (e, de);
                 }
             }
 
