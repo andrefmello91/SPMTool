@@ -1,6 +1,9 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
+using MathNet.Numerics;
+using MathNet.Numerics.Differentiation;
 using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.RootFinding;
 using SPMTool.Material;
 
 namespace SPMTool.Core
@@ -390,6 +393,163 @@ namespace SPMTool.Core
                         (e, de);
                 }
 
+
+                // Compression Cases
+                // Case C.1: concrete not crushed
+                private (double e, double de) ConcreteNotCrushed(double N)
+                {
+                    // Calculate the strain for steel not yielding
+                    double
+                        t2 = Math.Sqrt((1 + xi) * (1 + xi) - N / Nc),
+                        e = ec * (1 + xi - t2);
+
+                    // Check the strain
+                    if (e < -ey)
+                    {
+                        // Recalculate the strain for steel yielding
+                        t2 = Math.Sqrt(1 - (N + Nyr) / Nc);
+                        e = ec * (1 - t2);
+                    }
+
+                    // Calculate de
+                    double de = 1 / (EcAc * t2);
+
+                    return
+                        (e, de);
+                }
+
+                // Case C.2: Concrete crushing
+                private (double e, double de) ConcreteCrushing(double N)
+                {
+                    // Calculate the strain for steel not yielding
+                    double
+                        t2 = Math.Sqrt((1 + xi) * (1 + xi) - Nt / Nc),
+                        e = ec * ((1 + xi) - t2) + (N - Nt) / t1;
+
+                    // Check the strain
+                    if (e < -ey)
+                    {
+                        // Recalculate the strain for steel yielding
+                        e = ec * (1 - Math.Sqrt(1 - (Nyr + Nt) / Nc)) + (N - Nt) / t1;
+                    }
+
+                    // Calculate de
+                    double de = 1 / t1;
+
+                    return
+                        (e, de);
+                }
+            }
+
+			// MCFT model
+			public class MCFT : NonLinear
+			{
+				public MCFT(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
+				{
+				}
+
+				// Calculate concrete parameters
+				public override double fc  => Concrete.Strength;
+				public override double ec  => -0.002;
+				public override double ecu => -0.0035;
+				public override double Ec  => -2 * fc / ec;
+				public override double fcr => 0.33 * Math.Sqrt(fc);
+				public override double ecr => fcr / Ec;
+
+                // Maximum Stringer forces
+                public override double Nyc => -Nyr + Nc * (-2 * ey_ec - (-ey_ec) * (-ey_ec));
+                public override double Nt
+                {
+	                get
+	                {
+		                double
+			                Nt1 = Nc * (1 + xi) * (1 + xi),
+			                Nt2 = Nc - Nyr;
+
+		                return
+			                Math.Max(Nt1, Nt2);
+	                }
+                }
+
+                // Calculate the strain and derivative on a Stringer given a force N and the concrete parameters
+                public override (double e, double de) StringerStrain(double N)
+                {
+	                // Verify the value of N
+	                // Tensioned Stringer
+	                if (N > 0)
+	                {
+						// Calculate uncracked
+						var unc = Uncracked(N);
+
+		                if (unc.e <= ecr)
+			                return unc;
+
+		                return
+			                Cracked(N);
+	                }
+
+	                // Compressed Stringer
+	                if (N > Nt)
+		                return
+			                ConcreteNotCrushed(N);
+
+	                return
+		                ConcreteCrushing(N);
+                }
+
+                // Tension Cases
+                // Case T.1: Uncracked
+                private (double e, double de) Uncracked(double N)
+                {
+                    double
+                        e  = N / t1,
+                        de = 1 / t1;
+
+                    return
+                        (e, de);
+                }
+
+                // Case T.2: Cracked with yielding or not yielding steel
+                private (double e, double de) Cracked(double N)
+                {
+					// Iterate to find strain
+					double e = FindRoots.OfFunction(eps => N - CrackedForce(eps), ecr, 3E-3);
+
+					// Calculate derivative of function
+					double
+						dN = Differentiate.FirstDerivative(CrackedForce, e),
+						de = 1 / dN;
+
+                    return
+                        (e, de);
+                }
+
+
+	            // Case T.3: Cracked with yielding steel
+	            private (double e, double de) YieldingSteel(double N)
+                {
+
+                    double
+                        e = (Nyr * Nyr - Nr * Nr) / (EsAs * Nyr) + (N - Nyr) / t1,
+                        de = 1 / t1;
+
+                    return
+                        (e, de);
+                }
+
+				// Calculate cracked force based on strain
+                private double CrackedForce(double e)
+                {
+	                double Ns;
+
+	                if (e < ey)
+		                Ns = EsAs * e;
+	                else
+		                Ns = Nyr;
+
+	                return
+		                fcr * Ac / (1 + Math.Sqrt(500 * e)) + Ns;
+                }
 
                 // Compression Cases
                 // Case C.1: concrete not crushed
