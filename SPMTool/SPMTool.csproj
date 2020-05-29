@@ -140,6 +140,7 @@
     <Compile Include="Core\Stringer.NonLinear .cs" />
     <Compile Include="Core\Stringer.Linear.cs" />
     <Compile Include="Global\Units.cs" />
+    <Compile Include="Material\ConcreteParameters.cs" />
     <Compile Include="Material\Concrete.cs" />
     <Compile Include="Core\Node.cs" />
     <Compile Include="Core\Panel.cs" />

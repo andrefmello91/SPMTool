@@ -6,16 +6,8 @@ using SPMTool.Core;
 namespace SPMTool.Material
 {
 	// Concrete
-	public class Concrete
+	public partial class Concrete
 	{
-		// Aggregate type
-		public enum AggregateType
-		{
-			Basalt,
-			Quartzite,
-			Limestone,
-			Sandstone
-		}
 
 		// Properties
 		public Units                    Units             { get; }
@@ -38,32 +30,13 @@ namespace SPMTool.Material
 		}
 
 		// Verify if concrete was set
-		public bool IsSet
-		{
-			get
-			{
-				if (Strength > 0)
-					return true;
-
-				// Else
-				return false;
-			}
-		}
+		public bool IsSet => Strength > 0;
 
 		// Verify if concrete is cracked
-		public bool Cracked
-		{
-			get
-			{
-				if (PrincipalStrains.ec1 > ecr)
-					return true;
+		public bool Cracked => PrincipalStrains.ec1 > ecr;
 
-				return false;
-			}
-		}
-
-		// Calculate parameters according to FIB MC2010
-		public virtual double fcr
+        // Calculate parameters according to FIB MC2010
+        public virtual double fcr
 		{
 			get
 			{
@@ -80,11 +53,14 @@ namespace SPMTool.Material
 		{
 			get
 			{
-				if (Type == AggregateType.Basalt)
-					return 1.2;
+				switch (Type)
+				{
+                    case AggregateType.Basalt:
+	                    return 1.2;
 
-				if (Type == AggregateType.Quartzite)
-					return 1;
+                    case AggregateType.Quartzite:
+	                    return 1;
+                }
 
 				// Limestone or sandstone
 				return 0.9;

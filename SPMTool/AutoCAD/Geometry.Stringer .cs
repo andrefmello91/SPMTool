@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -32,19 +33,28 @@ namespace SPMTool.AutoCAD
 			// Database string configurations
 			private static string StrGeo = "StrGeo";
 
+            // Implementation of stringer connected points
+            public class PointsConnected : Tuple<Point3d, Point3d>
+            {
+	            public PointsConnected(Point3d startPoint, Point3d endPoint) : base(startPoint, endPoint)
+	            {
+	            }
+            }
+
             // Constructor
-            public Stringer(Point3d startPoint, Point3d endPoint,
-				List<(Point3d start, Point3d end)> stringerList = null)
+            public Stringer(Point3d startPoint, Point3d endPoint, List<PointsConnected> stringerList = null)
 			{
 				// Get the list of stringers if it's not imposed
 				if (stringerList == null)
 					stringerList = ListOfStringerPoints();
 
+				var points = new PointsConnected(startPoint, endPoint);
+
 				// Check if a Stringer already exist on that position. If not, create it
-				if (!stringerList.Contains((startPoint, endPoint)))
+				if (!stringerList.Contains(points))
 				{
 					// Add to the list
-					stringerList.Add((startPoint, endPoint));
+					stringerList.Add(points);
 
 					// Create the line in Model space
 					LineObject = new Line(startPoint, endPoint)
@@ -248,7 +258,7 @@ namespace SPMTool.AutoCAD
 						str.Erase();
 
 						// Remove from the list
-						strList.Remove((strSt, strEnd));
+						strList.Remove(new PointsConnected(strSt, strEnd));
 					}
 
 					// Commit changes
@@ -362,13 +372,13 @@ namespace SPMTool.AutoCAD
 			}
 
 			// List of stringers (start and end points)
-			public static List<(Point3d start, Point3d end)> ListOfStringerPoints()
+			public static List<PointsConnected> ListOfStringerPoints()
 			{
 				// Get the stringers in the model
 				ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.Stringer);
 
 				// Initialize a list
-				var strList = new List<(Point3d startPoint, Point3d endPoint)>();
+				var strList = new List<PointsConnected>();
 
 				if (strs.Count > 0)
 				{
@@ -381,7 +391,7 @@ namespace SPMTool.AutoCAD
 							Line str = trans.GetObject(obj, OpenMode.ForRead) as Line;
 
 							// Add to the list
-							strList.Add((str.StartPoint, str.EndPoint));
+							strList.Add(new PointsConnected(str.StartPoint, str.EndPoint));
 						}
 					}
 				}

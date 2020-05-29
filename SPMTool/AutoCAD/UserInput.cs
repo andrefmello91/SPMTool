@@ -82,21 +82,24 @@ namespace SPMTool.AutoCAD
 
 			var collection = new DBObjectCollection();
 
-			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			if (set.Count > 0)
 			{
-				// Get the objects in the selection and add to the collection only the external nodes
-				foreach (SelectedObject obj in set)
+				// Start a transaction
+				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 				{
-					// Read as entity
-					Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
-					
-					// Get layername
-					var layer = (Layers)Enum.Parse(typeof(Layers), ent.Layer);
+					// Get the objects in the selection and add to the collection only the external nodes
+					foreach (SelectedObject obj in set)
+					{
+						// Read as entity
+						Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
-                    // Check if it is a external node
-                    if (layers == null || layers.Contains(layer))
-	                    collection.Add(ent);
+						// Get layername
+						var layer = (Layers) Enum.Parse(typeof(Layers), ent.Layer);
+
+						// Check if it is a external node
+						if (layers == null || layers.Contains(layer))
+							collection.Add(ent);
+					}
 				}
 			}
 

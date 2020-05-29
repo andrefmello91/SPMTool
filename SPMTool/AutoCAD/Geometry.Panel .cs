@@ -28,9 +28,20 @@ namespace SPMTool.AutoCAD
 			// Width database
 			private static string PnlW = "PnlW";
 
+			// Vertices implementation
+			public class Vertices : Tuple<Point3d, Point3d, Point3d, Point3d>
+			{
+				public Vertices(Point3d vertex1, Point3d vertex2, Point3d vertex3, Point3d vertex4) : base(vertex1, vertex2, vertex3, vertex4)
+				{
+				}
+
+				public Vertices(Point3dCollection vertices) : base(vertices[0], vertices[1], vertices[2], vertices[3])
+				{
+				}
+			}
+
 			// Constructor
-			public Panel((Point3d, Point3d, Point3d, Point3d) vertices,
-				List<(Point3d, Point3d, Point3d, Point3d)> panelList = null)
+			public Panel(Vertices vertices, List<Vertices> panelList = null)
 			{
 				// Check if list of panels is null
 				if (panelList == null)
@@ -73,10 +84,7 @@ namespace SPMTool.AutoCAD
                     var nds = UserInput.SelectNodes("Select four nodes to be the vertices of the panel", NodeType.External);
 
                     if (nds == null)
-                    {
-	                    Application.ShowAlertDialog("Please select four external nodes.");
 	                    break;
-                    }
 
 					// Check if there are four points
 					if (nds.Count == 4)
@@ -90,7 +98,7 @@ namespace SPMTool.AutoCAD
 						vrts = GlobalAuxiliary.OrderPoints(vrts);
 
 						// Create the panel if it doesn't exist
-						var pnlPts = (vrts[0], vrts[1], vrts[2], vrts[3]);
+						var pnlPts = new Vertices(vrts[0], vrts[1], vrts[2], vrts[3]);
 						new Panel(pnlPts, pnlList);
 					}
 
@@ -195,7 +203,7 @@ namespace SPMTool.AutoCAD
 										}
 
 										// Erase and remove from the list
-										strList.Remove((str.StartPoint, str.EndPoint));
+										strList.Remove(new Stringer.PointsConnected(str.StartPoint, str.EndPoint));
 
 										var strEnt = (Entity) trans.GetObject(strObj, OpenMode.ForWrite);
 										strEnt.Erase();
@@ -226,7 +234,7 @@ namespace SPMTool.AutoCAD
 											stPt.Y + (i + 1) * distY, 0));
 
 										// Create the panel
-										var pnlPts = (verts[0], verts[1], verts[2], verts[3]);
+										var pnlPts = new Vertices(verts[0], verts[1], verts[2], verts[3]);
 										var newPnl = new Panel(pnlPts, pnlList);
 
 										// Get the solid object
@@ -266,7 +274,7 @@ namespace SPMTool.AutoCAD
 								pnl.Erase();
 
 								// Remove from the list
-								pnlList.Remove((grpPts[0], grpPts[1], grpPts[2], grpPts[3]));
+								pnlList.Remove(new Vertices(grpPts[0], grpPts[1], grpPts[2], grpPts[3]));
 							}
 
 							else // panel is not rectangular
@@ -570,13 +578,13 @@ namespace SPMTool.AutoCAD
 			}
 
 			// List of panels (collection of vertices)
-			public static List<(Point3d, Point3d, Point3d, Point3d)> ListOfPanelVertices()
+			public static List<Vertices> ListOfPanelVertices()
 			{
 				// Get the stringers in the model
 				ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.Panel);
 
 				// Initialize a list
-				var pnlList = new List<(Point3d, Point3d, Point3d, Point3d)>();
+				var pnlList = new List<Vertices>();
 
 				if (pnls.Count > 0)
 				{
@@ -593,8 +601,7 @@ namespace SPMTool.AutoCAD
 							pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
 
 							// Add to the list
-							var pnlPts = (pnlVerts[0], pnlVerts[1], pnlVerts[2], pnlVerts[3]);
-							pnlList.Add(pnlPts);
+							pnlList.Add(new Vertices(pnlVerts));
 						}
 					}
 				}
