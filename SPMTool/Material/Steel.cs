@@ -1,5 +1,4 @@
 ﻿using System;
-using StressUnit = SPMTool.Units.Stress;
 
 namespace SPMTool
 {
@@ -61,6 +60,19 @@ namespace SPMTool
 						Math.Min(Stress / Strain, ElasticModule);
 				}
 			}
-		}
+
+			public override string ToString()
+			{
+				char epsilon = (char)Characters.Epsilon;
+
+				double ey = Math.Round(1000 * YieldStrain, 2);
+
+                return
+                    "Steel Parameters: " +
+					"\nfy = " + YieldStress      + " MPa" +
+					"\nEs = " + ElasticModule    + " MPa" +
+					"\n" + epsilon + "y = " + ey + " E-03";
+            }
+        }
 	}
 }

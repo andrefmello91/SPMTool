@@ -8,7 +8,7 @@ using PanelData = SPMTool.XData.Panel;
 
 namespace SPMTool.Core
 {
-    public partial class Panel
+    public partial class Panel : SPMElement
     {
         // Enum for panel Stringer behavior
         public enum Behavior
@@ -20,8 +20,6 @@ namespace SPMTool.Core
 
         // Panel parameters
         public Behavior                                      PanelBehavior     { get; }
-        public ObjectId                                      ObjectId          { get; }
-        public int                                           Number            { get; }
         public int[]                                         Grips             { get; }
         public Point3d[]                                     Vertices          { get; }
         public (double[] x, double[] y)                      VertexCoordinates { get; }
@@ -44,10 +42,7 @@ namespace SPMTool.Core
 	        PanelBehavior = behavior;
 
 	        // Get concrete
-	        if (concrete == null)
-		        Concrete = AutoCAD.Material.ReadConcreteData();
-	        else
-		        Concrete = concrete;
+	        Concrete = concrete;
 
 	        // Read as a solid
 	        Solid pnl = Geometry.Panel.ReadPanel(panelObject);
@@ -101,7 +96,7 @@ namespace SPMTool.Core
         }
 
         // Set global indexes from grips
-        public int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Grips);
+        public override  int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Grips);
 
         // Get X and Y coordinates of a panel vertices
         public (double[] x, double[] y) Vertex_Coordinates()
@@ -248,5 +243,19 @@ namespace SPMTool.Core
         public virtual void Analysis()
         {
 	    }
+
+        public override string ToString()
+        {
+            string msgstr =
+                "Panel " + Number + "\n\n" +
+                "Grips: (" + Grips[0] + " - " + Grips[1] + " - " + Grips[2] + " - " + Grips[3] +
+                ")" + "\n" +
+                "Width = " + Width + " mm";
+
+            if (Reinforcement.IsSet)
+	            msgstr += "\n\n" + Reinforcement;
+
+            return msgstr;
+        }
     }
 }

@@ -8,7 +8,7 @@ using ForceDirection = SPMTool.Core.Force.ForceDirection;
 
 namespace SPMTool.Core
 {
-    public class Node
+    public class Node : SPMElement
     {
         // Node types (All excludes displaced)
         public enum NodeType
@@ -20,12 +20,10 @@ namespace SPMTool.Core
 	    }
 
 	    // Properties
-        public ObjectId             ObjectId     { get; }
-	    public int                  Number       { get; }
 	    public NodeType             Type         { get; }
 	    public Point3d              Position     { get; }
-	    public (bool X, bool Y)     Support      { get; }
-	    public (double X, double Y) Force        { get; }
+		public Constraint	        Constraint   { get; }
+		public (Force X, Force Y)	Forces       { get; }
 	    public (double X, double Y) Displacement { get; set; }
 
 		// Constructor
@@ -54,11 +52,11 @@ namespace SPMTool.Core
 			// Get type
 			Type = GetNodeType(ndPt);
 
-			// Get support conditions
-			Support = GetSupportConditions(constraints);
+            // Get support conditions
+            Constraint = GetSupportConditions(constraints);
 
 			// Get forces
-			Force = GetNodalForces(forces);
+			Forces = GetNodalForces(forces);
 
 			// Get displacements
 			double
@@ -68,8 +66,50 @@ namespace SPMTool.Core
 			Displacement = (ux, uy);
 		}
 
-		// Get index of DoFs
-		public int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Number);
+        // Get support condition
+        public (bool X, bool Y) Support
+        {
+	        get
+	        {
+		        if (Constraint == null)
+			        return
+				        (false, false);
+
+		        return
+			        Constraint.Direction;
+	        }
+        }
+
+		// Verify if node is free
+		public bool IsFree => Support == (false, false);
+
+		// Verify if displacement is set
+		public bool DisplacementSet => Displacement != (0, 0);
+
+		// Read Forces
+		public (double X, double Y) Force
+		{
+			get
+			{
+				double
+					Fx = 0,
+					Fy = 0;
+
+				if (Forces.X != null)
+					Fx = Forces.X.Value;
+
+				if (Forces.Y != null)
+					Fy = Forces.Y.Value;
+
+				return (Fx, Fy);
+			}
+		}
+
+        // Verify if forces are not zero
+        public bool ForcesSet => Force != (0, 0);
+
+        // Get index of DoFs
+        public override int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Number);
 
         // Get node type
         private NodeType GetNodeType(DBPoint nodePoint)
@@ -103,20 +143,21 @@ namespace SPMTool.Core
         }
 
         // Get forces
-        private (double X, double Y) GetNodalForces(Force[] forces)
+        private (Force X, Force Y) GetNodalForces(Force[] forces)
         {
-            (double Fx, double Fy) = (0, 0);
+	        Force Fx = null;
+	        Force Fy = null;
 
             foreach (var force in forces)
             {
                 if (force.Position == Position)
                 {
                     // Read force
-                    if (force.Direction == Core.Force.ForceDirection.X)
-                        Fx = force.Value;
+                    if (force.Direction == ForceDirection.X)
+                        Fx = force;
 
-                    if (force.Direction == Core.Force.ForceDirection.Y)
-                        Fy = force.Value;
+                    if (force.Direction == ForceDirection.Y)
+                        Fy = force;
                 }
             }
 
@@ -125,21 +166,66 @@ namespace SPMTool.Core
         }
 
         // Get support conditions
-        private (bool X, bool Y) GetSupportConditions(Constraint[] constraints)
+        Constraint GetSupportConditions(Constraint[] constraints)
         {
-            var support = (false, false);
+	        Constraint support = null;
 
             foreach (var constraint in constraints)
             {
                 if (constraint.Position == Position)
                 {
-                    support = constraint.Direction;
+                    support = constraint;
                     break;
                 }
             }
 
             return
                 support;
+        }
+
+        public override string ToString()
+        {
+	        // Get the position
+	        double
+		        x = Math.Round(Position.X, 2),
+		        y = Math.Round(Position.Y, 2);
+
+	        string msgstr =
+		        "Node " + Number + "\n\n" +
+		        "Position: (" + x + ", " + y + ")";
+
+	        // Read applied forces
+	        if (ForcesSet)
+	        {
+		        msgstr +=
+			        "\n\nApplied forces:";
+
+		        if (Forces.X != null)
+			        msgstr += "\n" + Forces.X;
+
+		        if (Forces.Y != null)
+			        msgstr += "\n" + Forces.Y;
+	        }
+
+	        // Get supports
+	        if (!IsFree)
+		        msgstr += "\n\n" + Constraint;
+
+	        // Get displacements
+	        if (DisplacementSet)
+	        {
+		        // Approximate displacements
+		        double
+			        ux = Math.Round(Displacement.X, 2),
+			        uy = Math.Round(Displacement.Y, 2);
+
+		        msgstr +=
+			        "\n\nDisplacements:\n" +
+			        "ux = " + ux + " mm" + "\n" +
+			        "uy = " + uy + " mm";
+	        }
+
+	        return msgstr;
         }
     }
 }

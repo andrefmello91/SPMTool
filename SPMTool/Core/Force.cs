@@ -8,7 +8,7 @@ using ForceData = SPMTool.XData.Force;
 namespace SPMTool.Core
 {
 	// Constraints related commands
-	public class Force
+	public class Force : SPMElement
 	{
 		// Force directions
 		public enum ForceDirection
@@ -61,6 +61,18 @@ namespace SPMTool.Core
 			return
 				forces.ToArray();
 		}
+
+		public override string ToString()
+		{
+			if (Direction == ForceDirection.X)
+				return
+					"Fx = " + Value + " kN";
+
+			return
+				"Fy = " + Value + " kN";
+		}
+
+		public override int[] DoFIndex { get; }
 	}
 
 }

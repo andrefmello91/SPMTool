@@ -136,6 +136,7 @@
     <Compile Include="AutoCAD\Auxiliary.cs" />
     <Compile Include="Core\Panel.NonLinear.cs" />
     <Compile Include="Core\Panel.Linear.cs" />
+    <Compile Include="Core\SPMElement.cs" />
     <Compile Include="Core\Stringer.NonLinear .cs" />
     <Compile Include="Core\Stringer.Linear.cs" />
     <Compile Include="Global\Units.cs" />

@@ -9,7 +9,7 @@ using SupportDirection = SPMTool.Directions;
 namespace SPMTool.Core
 {
 	// Constraints related commands
-	public class Constraint
+	public class Constraint : SPMElement
 	{
 		// Properties
 		public ObjectId         SupportObject { get; }
@@ -49,6 +49,9 @@ namespace SPMTool.Core
 			}
 		}
 
+		// Verify if support is not free
+		public bool IsNotFree => Direction != (false, false);
+
 		// Get support list
 		public static Constraint[] ListOfConstraints()
 		{
@@ -63,6 +66,25 @@ namespace SPMTool.Core
 			return
 				constraints.ToArray();
 		}
+
+		public override string ToString()
+		{
+			string sup = "";
+
+			if (Direction.X)
+				sup += "X";
+
+			if (Direction.Y)
+				sup += "Y";
+
+			if (!IsNotFree)
+				sup = "Free";
+
+			return 
+				"Support conditions: " + sup;
+        }
+
+		public override int[] DoFIndex { get; }
 	}
 
 }

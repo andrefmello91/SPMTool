@@ -8,7 +8,7 @@ using StringerData = SPMTool.XData.Stringer;
 
 namespace SPMTool.Core
 {
-	public partial class Stringer
+	public partial class Stringer : SPMElement
 	{
 		// Enum for setting Stringer behavior
 		public enum Behavior
@@ -19,8 +19,6 @@ namespace SPMTool.Core
 		}
 
         // Stringer properties
-        public ObjectId                ObjectId         { get; }
-		public int                     Number           { get; }
 		public int[]                   Grips            { get; }
 		public Point3d[]               PointsConnected  { get; }
 		public double                  Length           { get; }
@@ -40,10 +38,7 @@ namespace SPMTool.Core
 			ObjectId = stringerObject;
 
 			// Get concrete
-			if (concrete == null)
-				Concrete = AutoCAD.Material.ReadConcreteData();
-			else
-				Concrete = concrete;
+			Concrete = concrete;
 
 			// Read the object as a line
 			Line strLine = Geometry.Stringer.ReadStringer(stringerObject);
@@ -101,7 +96,7 @@ namespace SPMTool.Core
 		public Point3d EndPoint   => PointsConnected[2];
 
 		// Set global indexes from grips
-		public int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Grips);
+		public override int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Grips);
 
 		// Calculate direction cosines
 		public (double cos, double sin) DirectionCosines => GlobalAuxiliary.DirectionCosines(Angle);
@@ -164,6 +159,24 @@ namespace SPMTool.Core
 		public virtual void Analysis()
 		{
 		}
-	}
+
+		// Custom string return
+		public override string ToString()
+		{
+			string msgstr =
+				"Stringer " + Number + "\n\n" +
+				"Grips: (" + Grips[0] + " - " + Grips[1] + " - " + Grips[2] + ")" + "\n" +
+				"Lenght = " + Length + " mm" + "\n" +
+				"Width = " + Width + " mm" + "\n" +
+				"Height = " + Height + " mm";
+
+			if (Reinforcement.IsSet)
+			{
+				msgstr += "\n\n" + Reinforcement;
+			}
+
+			return msgstr;
+		}
+    }
 }
 

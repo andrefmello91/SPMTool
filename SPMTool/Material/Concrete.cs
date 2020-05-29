@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using MathNet.Numerics.Interpolation;
+using SPMTool.Core;
 
 namespace SPMTool.Material
 {

@@ -1,4 +1,5 @@
-﻿using MathNet.Numerics.LinearAlgebra;
+﻿using System;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace SPMTool.Material
 {
@@ -20,8 +21,13 @@ namespace SPMTool.Material
 			PanelWidth  = panelWidth;
 		}
 
-		// Calculate the panel reinforcement ratio
-		public (double X, double Y) Ratio
+		// Verify if reinforcement is set
+		public bool xSet  => BarDiameter.X > 0 && BarSpacing.X > 0;
+		public bool ySet  => BarDiameter.Y > 0 && BarSpacing.Y > 0;
+		public bool IsSet => xSet || ySet;
+
+        // Calculate the panel reinforcement ratio
+        public (double X, double Y) Ratio
 		{
 			get
 			{
@@ -30,10 +36,10 @@ namespace SPMTool.Material
 					psx = 0,
 					psy = 0;
 
-				if (BarDiameter.X > 0 && BarSpacing.X > 0)
+				if (xSet)
 					psx = 0.5 * Constants.Pi * BarDiameter.X * BarDiameter.X / (BarSpacing.X * PanelWidth);
 
-				if (BarDiameter.Y > 0 && BarSpacing.Y > 0)
+				if (ySet)
 					psy = 0.5 * Constants.Pi * BarDiameter.Y * BarDiameter.Y / (BarSpacing.Y * PanelWidth);
 
 				return
@@ -67,5 +73,23 @@ namespace SPMTool.Material
 			SetStrains(strains);
 			SetStresses(strains);
 		}
-	}
+
+		public override string ToString()
+		{
+			// Approximate reinforcement ratio
+			double
+				psx = Math.Round(Ratio.X, 3),
+				psy = Math.Round(Ratio.Y, 3);
+
+			char rho = (char)Characters.Rho;
+			char phi = (char)Characters.Phi;
+
+			return
+				"Reinforcement (x): " + phi + BarDiameter.X + " mm, s = " + BarSpacing.X +
+				" mm (" + rho + "sx = " + psx + ")\n" + Steel.X +
+
+				"\n\nReinforcement (y) = " + phi + BarDiameter.Y + " mm, s = " + BarSpacing.Y + " mm (" +
+				rho + "sy = " + psy + ")\n" + Steel.Y;
+		}
+    }
 }

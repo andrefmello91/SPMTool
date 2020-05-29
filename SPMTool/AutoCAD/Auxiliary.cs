@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Runtime;
+using SPMTool.Core;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Auxiliary))]
 
@@ -288,7 +289,31 @@ namespace SPMTool.AutoCAD
 			}
 		}
 
-		
+		// Read SPM element
+		public static SPMElement ReadElement(Entity entity)
+		{
+			if (entity.Layer == Layers.ExtNode.ToString() || entity.Layer == Layers.IntNode.ToString())
+				return
+					new Node(entity.ObjectId);
+
+			if (entity.Layer == Layers.Stringer.ToString())
+				return
+					new Stringer(entity.ObjectId);
+
+			if (entity.Layer == Layers.Panel.ToString())
+				return
+					new Panel(entity.ObjectId);
+
+			if (entity.Layer == Layers.Force.ToString())
+				return
+					new Force(entity.ObjectId);
+
+			if (entity.Layer == Layers.Support.ToString())
+				return
+					new Constraint(entity.ObjectId);
+
+			return null;
+		}
 
 		// Save object on database dictionary
 		public static void SaveObjectDictionary(string name, ResultBuffer data, bool overwrite = true)

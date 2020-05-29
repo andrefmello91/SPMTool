@@ -1,4 +1,6 @@
-﻿using MathNet.Numerics.LinearAlgebra;
+﻿using System;
+using MathNet.Numerics.LinearAlgebra;
+using SPMTool.AutoCAD;
 
 namespace SPMTool.Material
 {
@@ -17,19 +19,32 @@ namespace SPMTool.Material
 			Steel        = steel;
 		}
 
+		// Verify if reinforcement is set
+		public bool IsSet => NumberOfBars > 0 && BarDiameter > 0;
+
 		// Calculated reinforcement area
 		public double Area
 		{
 			get
 			{
-				// Initialize As
-				double As = 0;
+				if (IsSet)
+					return
+						0.25 * NumberOfBars * Constants.Pi * BarDiameter * BarDiameter;
 
-				if (NumberOfBars > 0 && BarDiameter > 0)
-					As = 0.25 * NumberOfBars * Constants.Pi * BarDiameter * BarDiameter;
-
-				return As;
+				return 0;
 			}
 		}
-	}
+
+		public override string ToString()
+		{
+			// Approximate steel area
+			double As = Math.Round(Area, 2);
+
+            char phi = (char)Characters.Phi;
+
+            return
+                "Reinforcement: " + NumberOfBars + " " + phi + BarDiameter + " mm (" + As +
+				" mm²)\n\n" + Steel;
+		}
+    }
 }

@@ -14,7 +14,7 @@ namespace SPMTool.Core
             private double Ec => Concrete.Ec;
 
             // Constructor
-            public Linear(ObjectId stringerObject, Concrete concrete = null) : base(stringerObject, concrete)
+            public Linear(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
             {
             }
 
