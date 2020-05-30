@@ -11,24 +11,21 @@ namespace SPMTool.Material
 
 		// Properties
 		public Units                    Units              { get; }
-		public Model                    ConcreteModel { get; }
+		public Model                    ConcreteModel      { get; }
 		public Parameters               ConcreteParameters { get; }
-		public AggregateType            Type               { get; }
-		public double                   AggregateDiameter  { get; }
-		public (double ec1, double ec2) PrincipalStrains  { get; set; }
-		public (double fc1, double fc2) PrincipalStresses { get; set; }
-		public double                   ReferenceLength   { get; set; }
+		public (double ec1, double ec2) PrincipalStrains   { get; set; }
+		public (double fc1, double fc2) PrincipalStresses  { get; set; }
+		public double                   ReferenceLength    { get; set; }
 
-		// Read the concrete parameters
-		public Concrete(double strength, double aggregateDiameter, Model model, AggregateType aggregateType = AggregateType.Quartzite, double tensileStrength = 0, double elasticModule = 0, double plasticStrain = 0, double ultimateStrain = 0)
+		public AggregateType Type              => ConcreteParameters.Type;
+		public double        AggregateDiameter => ConcreteParameters.AggregateDiameter;
+
+        // Read the concrete parameters
+        public Concrete(double strength, double aggregateDiameter, Model model, AggregateType aggregateType = AggregateType.Quartzite, double tensileStrength = 0, double elasticModule = 0, double plasticStrain = 0, double ultimateStrain = 0)
 		{
 			// Initiate parameters
 			ConcreteModel      = model;
 			ConcreteParameters = Concrete_Parameters(strength, aggregateDiameter, aggregateType, tensileStrength, elasticModule, plasticStrain, ultimateStrain);
-
-			// Get dimension in mm
-			AggregateDiameter = aggregateDiameter;
-			Type              = aggregateType;
 		}
 
 		// Get parameters
