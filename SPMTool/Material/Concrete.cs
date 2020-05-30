@@ -10,119 +10,64 @@ namespace SPMTool.Material
 	{
 
 		// Properties
-		public Units                    Units             { get; }
-		public double                   AggregateDiameter { get; }
-		public AggregateType            Type              { get; }
-		public  double                  Strength          { get; }
+		public Units                    Units              { get; }
+		public Model                    ConcreteModel { get; }
+		public Parameters               ConcreteParameters { get; }
+		public AggregateType            Type               { get; }
+		public double                   AggregateDiameter  { get; }
 		public (double ec1, double ec2) PrincipalStrains  { get; set; }
 		public (double fc1, double fc2) PrincipalStresses { get; set; }
 		public double                   ReferenceLength   { get; set; }
 
 		// Read the concrete parameters
-		public Concrete(double strength, double aggregateDiameter, AggregateType aggregateType = AggregateType.Quartzite)
+		public Concrete(double strength, double aggregateDiameter, Model model, AggregateType aggregateType = AggregateType.Quartzite, double tensileStrength = 0, double elasticModule = 0, double plasticStrain = 0, double ultimateStrain = 0)
 		{
-			// Get stress in MPa
-			Strength          = strength;
+			// Initiate parameters
+			ConcreteModel      = model;
+			ConcreteParameters = Concrete_Parameters(strength, aggregateDiameter, aggregateType, tensileStrength, elasticModule, plasticStrain, ultimateStrain);
 
 			// Get dimension in mm
 			AggregateDiameter = aggregateDiameter;
 			Type              = aggregateType;
 		}
 
-		// Verify if concrete was set
-		public bool IsSet => Strength > 0;
+		// Get parameters
+		private Parameters Concrete_Parameters(double strength, double aggregateDiameter, AggregateType aggregateType, double tensileStrength, double elasticModule, double plasticStrain, double ultimateStrain)
+		{
+			switch (ConcreteModel)
+			{
+                case Model.MC2010:
+					return new Parameters.MC2010(strength, aggregateDiameter, aggregateType);
+
+                case Model.NBR6118:
+					return new Parameters.NBR6118(strength, aggregateDiameter, aggregateType);
+
+                case Model.MCFT:
+					return new Parameters.MCFT(strength, aggregateDiameter, aggregateType);
+
+                case Model.DSFM:
+					return new Parameters.DSFM(strength, aggregateDiameter, aggregateType);
+			}
+
+            // Custom parameters
+            return new Parameters.Custom(strength, aggregateDiameter, tensileStrength, elasticModule, plasticStrain, ultimateStrain);
+		}
+
+        // Verify if concrete was set
+        public bool IsSet => fc > 0;
 
 		// Verify if concrete is cracked
 		public bool Cracked => PrincipalStrains.ec1 > ecr;
 
-        // Calculate parameters according to FIB MC2010
-        public virtual double fcr
-		{
-			get
-			{
-				if (Strength <= 50)
-					return
-						0.3 * Math.Pow(Strength, 0.66666667);
-				//else
-				return
-					2.12 * Math.Log(1 + 0.1 * Strength);
-			}
-		}
-
-		public double alphaE
-		{
-			get
-			{
-				switch (Type)
-				{
-                    case AggregateType.Basalt:
-	                    return 1.2;
-
-                    case AggregateType.Quartzite:
-	                    return 1;
-                }
-
-				// Limestone or sandstone
-				return 0.9;
-			}
-		}
-
-		public virtual double Ec  => 21500 * alphaE * Math.Pow(Strength / 10, 0.33333333);
-		public virtual double ec  => -1.6 / 1000 * Math.Pow(Strength / 10, 0.25);
-		public double Ec1         => Strength / ec;
-		public double k           => Ec / Ec1;
-		public double ecr         => fcr / Ec;
-		public double nu          => 0.2;
-
-		public virtual double ecu
-		{
-			get
-			{
-				// Verify fcm
-				if (Strength < 50)
-					return
-						-0.0035;
-
-				if (Strength >= 90)
-					return
-						-0.003;
-
-				// Get classes and ultimate strains
-				if (classes.Contains(Strength))
-				{
-					int i = Array.IndexOf(classes, Strength);
-
-					return
-						ultimateStrain[i];
-				}
-
-				// Interpolate values
-				var spline = ultStrainSpline.Value;
-
-				return
-					spline.Interpolate(Strength);
-			}
-		}
-
-		// Array of high strength concrete classes, C50 to C90 (MC2010)
-		private double[] classes =
-		{
-			50, 55, 60, 70, 80, 90
-		};
-
-		// Array of ultimate strains for each concrete class, C50 to C90 (MC2010)
-		private double[] ultimateStrain =
-		{
-			-0.0034, -0.0034, -0.0033, -0.0032, -0.0031, -0.003
-		};
-
-		// Interpolation for ultimate strains
-		private Lazy<CubicSpline> ultStrainSpline => new Lazy<CubicSpline>(UltimateStrainSpline);
-		private CubicSpline UltimateStrainSpline()
-		{
-			return
-				CubicSpline.InterpolateAkimaSorted(classes, ultimateStrain);
-		}
+        // Get parameters
+        public double fc  => ConcreteParameters.Strength;
+        public double fcr => ConcreteParameters.TensileStrength;
+        public double Ec  => ConcreteParameters.InitialModule;
+		public double ec  => ConcreteParameters.PlasticStrain;
+		public double ecu => ConcreteParameters.UltimateStrain;
+		public double Ecs => ConcreteParameters.SecantModule;
+		public double ecr => ConcreteParameters.CrackStrain;
+		public double nu  => ConcreteParameters.Poisson;
 
 		// Calculate concrete stresses
 		public virtual double TensileStress(double ec1, PanelReinforcement reinforcement = null,
@@ -198,17 +143,23 @@ namespace SPMTool.Material
 			PrincipalStresses = (fc1, fc2);
 		}
 
-		public class MCFT : Concrete
+		public override string ToString()
 		{
-			public MCFT(double strength, double aggregateDiameter) : base(strength, aggregateDiameter)
+			return
+				"Concrete Parameters:\n"                +
+				"\nfc = "   + fc                        + " MPa" +
+				"\nfcr = "  + Math.Round(fcr, 2)        + " MPa"  +
+				"\nEc = "   + Math.Round(Ec, 2)         + " MPa"  +
+				"\nεc = "   + Math.Round(1000 * ec, 2)  + " E-03" +
+				"\nεcu = "  + Math.Round(1000 * ecu, 2) + " E-03" +
+				"\nφ,ag = " + AggregateDiameter         + " mm";
+        }
+
+        public class MCFT : Concrete
+		{
+			public MCFT(double fc, double aggregateDiameter, Model model = Model.MCFT) : base(fc, aggregateDiameter, model)
 			{
 			}
-
-			// MCFT parameters
-			public override double fcr => 0.33 * Math.Sqrt(Strength);
-			public override double ec => -0.002;
-			public override double ecu => -0.0035;
-			public override double Ec => -2 * Strength / ec;
 
 			// Principal stresses by classic formulation
 			public override double CompressiveStress((double ec1, double ec2) principalStrains)
@@ -218,8 +169,8 @@ namespace SPMTool.Material
 
 				// Calculate the maximum concrete compressive stress
 				double
-					f2maxA = -Strength / (0.8 - 0.34 * ec1 / ec),
-					f2max = Math.Max(f2maxA, -Strength);
+					f2maxA = -fc / (0.8 - 0.34 * ec1 / ec),
+					f2max = Math.Max(f2maxA, -fc);
 
 				// Calculate the principal compressive stress in concrete
 				double n = ec2 / ec;
@@ -246,18 +197,14 @@ namespace SPMTool.Material
 
 		public class DSFM : Concrete
 		{
-			public DSFM(double strength, double aggregateDiameter, double referenceLength) : base(strength, aggregateDiameter)
+			public DSFM(double fc, double aggregateDiameter, double referenceLength, Model model = Model.DSFM) : base(fc, aggregateDiameter, model)
 			{
 				ReferenceLength = referenceLength;
 			}
 
 			// DSFM parameters
-			public override double fcr => 0.65 * Math.Pow(Strength, 0.33);
-			public override double ec  => -0.002;
-			public override double ecu => -0.0035;
-			public override double Ec  => -2 * Strength / ec;
-			private double         Gf  = 0.075;
-			private double         ets => 2 * Gf / (fcr * ReferenceLength);
+			private double Gf  = 0.075;
+			private double ets => 2 * Gf / (fcr * ReferenceLength);
 
 			public override double TensileStress(double ec1, PanelReinforcement reinforcement, (double x, double y) reinforcementAngles)
 			{
@@ -323,7 +270,7 @@ namespace SPMTool.Material
 
 				// Calculate fp and ep
 				double
-					fp = -betaD * Strength,
+					fp = -betaD * fc,
 					ep = betaD * ec;
 
 				// Calculate parameters of concrete

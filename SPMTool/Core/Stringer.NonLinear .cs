@@ -308,7 +308,7 @@ namespace SPMTool.Core
 				}
 
 				// Calculate concrete parameters
-				public override double fc  => Concrete.Strength;
+				public override double fc  => Concrete.fc;
 				public override double ec  => -0.002;
 				public override double ecu => -0.0035;
 				public override double Ec  => -2 * fc / ec;
@@ -517,13 +517,13 @@ namespace SPMTool.Core
 	            }
 
                 // Get concrete parameters
-                public override double fc     => Concrete.Strength;
+                public override double fc     => Concrete.fc;
                 public override double ec     => Concrete.ec;
                 public override double ecu    => Concrete.ecu;
                 public override double Ec     => Concrete.Ec;
                 public override double fcr    => Concrete.fcr;
                 public override double ecr    => Concrete.ecr;
-                public double          k      => Concrete.k;
+                public double          k      => Concrete.Ec / Concrete.Ecs;
                 private double         beta   =  0.6;
                 private double         sigSr  => fcr * (1 + xi) / ps;
 

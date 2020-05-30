@@ -251,7 +251,7 @@ namespace SPMTool.Core
             // Get the values
             double ec1 = Concrete.PrincipalStrains.ec1;
             var (fsx, fsy) = Reinforcement.Stresses;
-            double fc = Concrete.Strength;
+            double fc = Concrete.fc;
             double f1a = Concrete.PrincipalStresses.fc1;
             double phiAg = Concrete.AggregateDiameter;
 

@@ -117,5 +117,20 @@
             XDataStr,
             Direction,
         }
+
+		// Concrete indexers
+		public enum Concrete
+		{
+			AppName,
+			XDataStr,
+			Model,
+			fc,
+			AggType,
+			AggDiam,
+			fcr,
+			Ec,
+			ec,
+			ecu
+		}
     }
 }

@@ -22,7 +22,7 @@ namespace SPMTool.Core
             {
                 // Get concrete parameters
                 double
-                    fc    = concrete.Strength,
+                    fc    = concrete.fc,
                     phiAg = concrete.AggregateDiameter;
 
                 // Initiate new concrete
@@ -214,7 +214,7 @@ namespace SPMTool.Core
             {
                 // Get concrete principal tensile strain
                 double ec1 = Concrete.PrincipalStrains.ec1;
-                double fc = Concrete.Strength;
+                double fc = Concrete.fc;
 
                 // Get the strains
                 double

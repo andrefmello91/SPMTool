@@ -4,7 +4,9 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using SPMTool.Material;
+using ConcreteData  = SPMTool.XData.Concrete;
 using AggregateType = SPMTool.Material.Concrete.AggregateType;
+using Model         = SPMTool.Material.Concrete.Model;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Material))]
 
@@ -15,12 +17,15 @@ namespace SPMTool.AutoCAD
 	{
 		private static readonly string ConcreteParams = "ConcreteParams";
 
-		// Aggregate type names
+		// Aggregate type and model names
 		private static readonly string
 			Basalt    = AggregateType.Basalt.ToString(),
 			Quartzite = AggregateType.Quartzite.ToString(),
 			Limestone = AggregateType.Limestone.ToString(),
-			Sandstone = AggregateType.Sandstone.ToString();
+			Sandstone = AggregateType.Sandstone.ToString(),
+			MC2010    = Model.MC2010.ToString(),
+			NBR6118   = Model.NBR6118.ToString(),
+			Custom    = Model.Custom.ToString();
 
 		[CommandMethod("SetConcreteParameters")]
 		public static void SetConcreteParameters()
@@ -34,28 +39,52 @@ namespace SPMTool.AutoCAD
 			// Initiate default values
 			double
 				fc    = 30,
-				phiAg = 20;
+				phiAg = 20,
+				fcr   = 2,
+				Ec    = 30000,
+				ec    = 0.002,
+				ecu   = 0.0035;
 
-			string agrgt = Quartzite;
+			string
+				model = MC2010,
+				agrgt = Quartzite;
 
-			// Read data
-			var concrete = ReadConcreteData();
+            // Read data
+            var concrete = ReadConcreteData();
 
-			if (concrete != null)
+            if (concrete != null)
+            {
+                fc    = concrete.fc;
+                phiAg = concrete.AggregateDiameter;
+                fcr   = concrete.fcr;
+                Ec    = concrete.Ec;
+                ec    = concrete.ec;
+                ecu   = concrete.ecu;
+                model = concrete.ConcreteModel.ToString();
+                agrgt = concrete.Type.ToString();
+            }
+
+            // Ask the user choose concrete model parameters
+            var modelOptions = new[]
 			{
-				fc    = concrete.Strength;
-				phiAg = concrete.AggregateDiameter;
-				agrgt = concrete.Type.ToString();
-			}
+				MC2010,
+				NBR6118,
+				Custom
+			};
 
-			// Ask the user to input the concrete compressive strength
-			var fcn = UserInput.GetDouble("Input the concrete mean compressive strength (fcm) in MPa:", fc);
+			var mOp = UserInput.SelectKeyword("Choose model of concrete parameters:", modelOptions, model);
+
+			if (!mOp.HasValue)
+				return;
+
+            // Ask the user to input the concrete compressive strength
+            var fcn = UserInput.GetDouble("Input concrete compressive strength (fc) in MPa:", fc);
 
 			if (!fcn.HasValue)
 				return;
 
 			// Ask the user choose the type of the aggregate
-			var options = new[]
+			var agOptions = new[]
 			{
 				Basalt,
 				Quartzite,
@@ -63,7 +92,7 @@ namespace SPMTool.AutoCAD
 				Sandstone
 			};
 
-			var agn = UserInput.SelectKeyword("Choose the type of the aggregate", options, agrgt);
+			var agn = UserInput.SelectKeyword("Choose the type of the aggregate", agOptions, agrgt);
 
 			if (!agn.HasValue)
 				return;
@@ -75,23 +104,60 @@ namespace SPMTool.AutoCAD
 				return;
 
             // Get values
+            model = mOp.Value.keyword;
             fc    = fcn.Value;
             agrgt = agn.Value.keyword;
             phiAg = phin.Value;
-            var aggType = (AggregateType) Enum.Parse(typeof(AggregateType), agrgt);
+            var aggType   = (AggregateType) Enum.Parse(typeof(AggregateType), agrgt);
+            var modelType = (Model) Enum.Parse(typeof(Model), model);
 
-            // Save the variables on the Xrecord
-            using (ResultBuffer rb = new ResultBuffer())
+			// Get custom values from user
+            if (modelType == Model.Custom)
             {
-	            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName,  Current.appName));    // 0
-	            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr));           // 1
-	            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal,        fc));                 // 2
-	            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32,  (int)aggType));        // 3
-	            rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal,        phiAg));              // 4
+	            var fcrn = UserInput.GetDouble("Input concrete tensile strength (fcr) in MPa:", fcr);
 
-	            // Create the entry in the NOD and add to the transaction
-	            Auxiliary.SaveObjectDictionary(ConcreteParams, rb);
+	            if (!fcrn.HasValue)
+		            return;
+
+	            var Ecn = UserInput.GetDouble("Input concrete elastic module (Ec) in MPa:", Ec);
+
+	            if (!Ecn.HasValue)
+		            return;
+
+	            var ecn = UserInput.GetDouble("Input concrete plastic strain (ec):", ec);
+
+	            if (!ecn.HasValue)
+		            return;
+
+	            var ecun = UserInput.GetDouble("Input concrete ultimate strain (ecu):", ecu);
+
+	            if (!ecun.HasValue)
+		            return;
+
+                // Get custom values
+                fcr = fcrn.Value;
+                Ec  = Ecn.Value;
+                ec  = ecn.Value;
+                ecu = ecun.Value;
             }
+
+            // Get the Xdata size
+            int size = Enum.GetNames(typeof(ConcreteData)).Length;
+            var data = new TypedValue[size];
+
+            data[(int)ConcreteData.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
+            data[(int)ConcreteData.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+            data[(int)ConcreteData.Model]    = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)modelType);
+            data[(int)ConcreteData.fc]       = new TypedValue((int)DxfCode.ExtendedDataReal,        fc);
+            data[(int)ConcreteData.AggType]  = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)aggType);
+            data[(int)ConcreteData.AggDiam]  = new TypedValue((int)DxfCode.ExtendedDataReal,        phiAg);
+            data[(int)ConcreteData.fcr]      = new TypedValue((int)DxfCode.ExtendedDataReal,        fcr);
+            data[(int)ConcreteData.Ec]       = new TypedValue((int)DxfCode.ExtendedDataReal,        Ec);
+            data[(int)ConcreteData.ec]       = new TypedValue((int)DxfCode.ExtendedDataReal,        ec);
+            data[(int)ConcreteData.ecu]      = new TypedValue((int)DxfCode.ExtendedDataReal,        ecu);
+
+            // Create the entry in the NOD and add to the transaction
+            Auxiliary.SaveObjectDictionary(ConcreteParams, new ResultBuffer(data));
 		}
 
 		[CommandMethod("ViewConcreteParameters")]
@@ -101,20 +167,11 @@ namespace SPMTool.AutoCAD
 			var concrete = ReadConcreteData();
 
 			string concmsg;
+
             // Write the concrete parameters
             if (concrete != null)
-            {
-	            // Get the parameters
-	            concmsg =
-		            "\nConcrete Parameters:\n"                                    +
-		            "\nfcm = "    + concrete.Strength                   + " MPa"  +
-		            "\nfctm = "   + Math.Round(concrete.fcr, 2)         + " MPa"  +
-		            "\nEci = "    + Math.Round(concrete.Ec, 2)          + " MPa"  +
-		            "\nεc1 = "    + Math.Round(1000 * concrete.ec, 2)   + " E-03" +
-		            "\nεc,lim = " + Math.Round(1000 * concrete.ecu, 2)  + " E-03" +
-		            "\nφ,ag = "   + concrete.AggregateDiameter          + " mm";
+	            concmsg = concrete.ToString();
 
-            }
             else
 	            concmsg = "Concrete parameters not set";
 
@@ -125,19 +182,32 @@ namespace SPMTool.AutoCAD
         // Read the concrete parameters
         public static Concrete ReadConcreteData()
 		{
-			var concData = Auxiliary.ReadDictionaryEntry(ConcreteParams);
+			var data = Auxiliary.ReadDictionaryEntry(ConcreteParams);
 
-			if (concData == null)
+			if (data == null)
 				return null;
 
 			// Get the parameters from XData
+			var model = (Model)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
+
+            double
+				fc      = Convert.ToDouble(data[(int)ConcreteData.fc].Value),
+				aggType = Convert.ToInt32 (data[(int)ConcreteData.AggType].Value),
+				phiAg   = Convert.ToDouble(data[(int)ConcreteData.AggDiam].Value);
+
+			if (model != Model.Custom)
+				return
+					new Concrete(fc, phiAg, (AggregateType)aggType, model);
+
+			// Get additional parameters
 			double
-				fc      = Convert.ToDouble(concData[2].Value),
-				aggType = Convert.ToInt32 (concData[3].Value),
-				phiAg   = Convert.ToDouble(concData[4].Value);
+				fcr = Convert.ToDouble(data[(int) ConcreteData.fcr].Value),
+				Ec  = Convert.ToDouble(data[(int) ConcreteData.Ec].Value),
+				ec  = Convert.ToDouble(data[(int) ConcreteData.ec].Value),
+				ecu = Convert.ToDouble(data[(int) ConcreteData.ecu].Value);
 
 			return
-				new Concrete(fc, phiAg, (AggregateType)aggType);
+				new Concrete(fc, phiAg, (AggregateType)aggType, model, fcr, Ec, ec, ecu);
 		}
-	}
+    }
 }
