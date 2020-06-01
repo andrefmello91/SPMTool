@@ -58,8 +58,8 @@ namespace SPMTool.AutoCAD
                 phiAg = concrete.AggregateDiameter;
                 fcr   = concrete.fcr;
                 Ec    = concrete.Ec;
-                ec    = concrete.ec;
-                ecu   = concrete.ecu;
+                ec    = -concrete.ec;
+                ecu   = -concrete.ecu;
                 model = concrete.ConcreteModel.ToString();
                 agrgt = concrete.Type.ToString();
             }
@@ -124,12 +124,12 @@ namespace SPMTool.AutoCAD
 	            if (!Ecn.HasValue)
 		            return;
 
-	            var ecn = UserInput.GetDouble("Input concrete plastic strain (ec):", ec);
+	            var ecn = UserInput.GetDouble("Input concrete plastic strain (ec) (positive value):", ec);
 
 	            if (!ecn.HasValue)
 		            return;
 
-	            var ecun = UserInput.GetDouble("Input concrete ultimate strain (ecu):", ecu);
+	            var ecun = UserInput.GetDouble("Input concrete ultimate strain (ecu) (positive value):", ecu);
 
 	            if (!ecun.HasValue)
 		            return;
@@ -188,26 +188,26 @@ namespace SPMTool.AutoCAD
 				return null;
 
 			// Get the parameters from XData
-			var model = (Model)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
+			var model   = (Model)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
+			var aggType = (AggregateType)Convert.ToInt32(data[(int) ConcreteData.AggType].Value);
 
-            double
-				fc      = Convert.ToDouble(data[(int)ConcreteData.fc].Value),
-				aggType = Convert.ToInt32 (data[(int)ConcreteData.AggType].Value),
+			double
+                fc      = Convert.ToDouble(data[(int)ConcreteData.fc].Value),
 				phiAg   = Convert.ToDouble(data[(int)ConcreteData.AggDiam].Value);
 
 			if (model != Model.Custom)
 				return
-					new Concrete(fc, phiAg, (AggregateType)aggType, model);
+					new Concrete(fc, phiAg, model, aggType);
 
 			// Get additional parameters
 			double
-				fcr = Convert.ToDouble(data[(int) ConcreteData.fcr].Value),
-				Ec  = Convert.ToDouble(data[(int) ConcreteData.Ec].Value),
-				ec  = Convert.ToDouble(data[(int) ConcreteData.ec].Value),
-				ecu = Convert.ToDouble(data[(int) ConcreteData.ecu].Value);
+				fcr =  Convert.ToDouble(data[(int) ConcreteData.fcr].Value),
+				Ec  =  Convert.ToDouble(data[(int) ConcreteData.Ec].Value),
+				ec  = -Convert.ToDouble(data[(int) ConcreteData.ec].Value),
+				ecu = -Convert.ToDouble(data[(int) ConcreteData.ecu].Value);
 
 			return
-				new Concrete(fc, phiAg, (AggregateType)aggType, model, fcr, Ec, ec, ecu);
+				new Concrete(fc, phiAg, model, aggType, fcr, Ec, ec, ecu);
 		}
     }
 }

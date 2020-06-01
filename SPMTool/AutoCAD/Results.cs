@@ -835,7 +835,7 @@ namespace SPMTool.AutoCAD
 			for ( ; ; )
 			{
 				// Get the entity for read
-				Entity ent = UserInput.SelectEntity("Select an element to view data:", SPMElement.ElementLayers);
+				Entity ent = UserInput.SelectEntity("Select an element to view data:", SPMElement.layers);
 
 				if (ent == null)
 					return;
