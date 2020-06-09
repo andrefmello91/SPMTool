@@ -43,6 +43,7 @@ namespace SPMTool.Material
 	        // Automatic calculated properties
 	        public double CrackStrain       => TensileStrength / InitialModule;
 	        public double TransversalModule => SecantModule / 2.4;
+	        public double FractureParameter => 0.075;
 
 	        public Parameters(double strength, double aggregateDiameter,
 		        AggregateType aggregateType = AggregateType.Quartzite)

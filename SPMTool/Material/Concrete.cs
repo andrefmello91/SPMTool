@@ -8,11 +8,11 @@ namespace SPMTool.Material
 	// Concrete
 	public partial class Concrete
 	{
-
 		// Properties
 		public Units                    Units              { get; }
 		public Model                    ConcreteModel      { get; }
 		public Parameters               ConcreteParameters { get; }
+		public Behavior                 ConcreteBehavior   { get; }
 		public (double ec1, double ec2) PrincipalStrains   { get; set; }
 		public (double fc1, double fc2) PrincipalStresses  { get; set; }
 		public double                   ReferenceLength    { get; set; }
@@ -26,6 +26,7 @@ namespace SPMTool.Material
 			// Initiate parameters
 			ConcreteModel      = model;
 			ConcreteParameters = Concrete_Parameters(strength, aggregateDiameter, aggregateType, tensileStrength, elasticModule, plasticStrain, ultimateStrain);
+			ConcreteBehavior   = Concrete_Behavior();
 		}
 
 		// Get parameters
@@ -49,6 +50,18 @@ namespace SPMTool.Material
             // Custom parameters
             return new Parameters.Custom(strength, aggregateDiameter, tensileStrength, elasticModule, plasticStrain, ultimateStrain);
 		}
+
+		// Get parameters
+		private Behavior Concrete_Behavior()
+		{
+			if (ConcreteModel == Model.MCFT)
+				return
+					new Behavior.MCFT(ConcreteParameters);
+
+			return
+				new Behavior.DSFM(ConcreteParameters);
+		}
+
 
         // Verify if concrete was set
         public bool IsSet => fc > 0;
@@ -142,14 +155,18 @@ namespace SPMTool.Material
 
 		public override string ToString()
 		{
+			char
+				phi = (char) Characters.Phi,
+				eps = (char) Characters.Epsilon;
+
 			return
-				"Concrete Parameters:\n"                +
-				"\nfc = "   + fc                        + " MPa" +
-				"\nfcr = "  + Math.Round(fcr, 2)        + " MPa"  +
-				"\nEc = "   + Math.Round(Ec, 2)         + " MPa"  +
-				"\nεc = "   + Math.Round(1000 * ec, 2)  + " E-03" +
-				"\nεcu = "  + Math.Round(1000 * ecu, 2) + " E-03" +
-				"\nφ,ag = " + AggregateDiameter         + " mm";
+				"Concrete Parameters:\n"                          +
+				"\nfc = "             + fc                        + " MPa" +
+				"\nfcr = "            + Math.Round(fcr, 2)        + " MPa"  +
+				"\nEc = "             + Math.Round(Ec, 2)         + " MPa"  +
+				"\n" + eps + "c = "   + Math.Round(1000 * ec, 2)  + " E-03" +
+                "\n" + eps + "cu = "  + Math.Round(1000 * ecu, 2) + " E-03" +
+				"\n" + phi + ",ag = " + AggregateDiameter         + " mm";
         }
 
         public class MCFT : Concrete

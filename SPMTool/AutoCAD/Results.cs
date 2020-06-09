@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Core;
+using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using Auxiliary = SPMTool.AutoCAD.Auxiliary;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Results))]
@@ -843,8 +842,8 @@ namespace SPMTool.AutoCAD
 				// Read the element
 				var element = Auxiliary.ReadElement(ent);
 
-				// Display the values returned
-				Application.ShowAlertDialog(Current.appName + "\n\n" + element);
+                // Display the values returned
+                Application.ShowAlertDialog(Current.appName + "\n\n" + element);
 			}
 		}
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using MathNet.Numerics.LinearAlgebra;
+using SPMTool.AutoCAD;
 
 namespace SPMTool.Material
 {
@@ -9,6 +10,7 @@ namespace SPMTool.Material
 		public (double X, double Y) BarDiameter { get; }
 		public (double X, double Y) BarSpacing  { get; }
 		public (Steel X, Steel Y)   Steel       { get; }
+		public (double X, double Y) Ratio       { get; }
 		private double              PanelWidth  { get; }
 
 		// Constructor
@@ -19,6 +21,7 @@ namespace SPMTool.Material
 			BarSpacing  = barSpacing;
 			Steel       = steel;
 			PanelWidth  = panelWidth;
+			Ratio       = CalculateRatio();
 		}
 
 		// Verify if reinforcement is set
@@ -27,34 +30,83 @@ namespace SPMTool.Material
 		public bool IsSet => xSet || ySet;
 
         // Calculate the panel reinforcement ratio
-        public (double X, double Y) Ratio
-		{
-			get
-			{
-				// Initialize psx and psy
-				double
-					psx = 0,
-					psy = 0;
+        public (double X, double Y) CalculateRatio()
+        {
+	        // Initialize psx and psy
+	        double
+		        psx = 0,
+		        psy = 0;
 
-				if (xSet)
-					psx = 0.5 * Constants.Pi * BarDiameter.X * BarDiameter.X / (BarSpacing.X * PanelWidth);
+	        if (xSet)
+		        psx = 0.5 * Constants.Pi * BarDiameter.X * BarDiameter.X / (BarSpacing.X * PanelWidth);
 
-				if (ySet)
-					psy = 0.5 * Constants.Pi * BarDiameter.Y * BarDiameter.Y / (BarSpacing.Y * PanelWidth);
+	        if (ySet)
+		        psy = 0.5 * Constants.Pi * BarDiameter.Y * BarDiameter.Y / (BarSpacing.Y * PanelWidth);
 
-				return
-					(psx, psy);
-			}
-		}
+	        return
+		        (psx, psy);
+        }
 
-		// Get reinforcement stresses
+        // Get reinforcement stresses
 		public (double fsx, double fsy) Stresses => (Steel.X.Stress, Steel.Y.Stress);
 
 		// Get reinforcement secant module
 		public (double Esx, double Esy) SecantModule => (Steel.X.SecantModule, Steel.Y.SecantModule);
 
-		// Set steel strains
-		public void SetStrains(Vector<double> strains)
+		// Calculate angles related to crack
+		public (double X, double Y) Angles(double theta1)
+		{
+			// Calculate angles
+			double
+				thetaNx = theta1,
+				thetaNy = theta1 - Constants.PiOver2;
+
+			return
+				(thetaNx, thetaNy);
+		}
+
+		// Calculate tension stiffening coefficient
+		public double TensionStiffeningCoefficient(double theta1)
+		{
+			// Get reinforcement angles and stresses
+			var (thetaNx, thetaNy)     = Angles(theta1);
+			(double psx, double psy)   = Ratio;
+			(double phiX, double phiY) = BarDiameter;
+
+			double
+				cosNx = Math.Abs(GlobalAuxiliary.DirectionCosines(thetaNx).cos),
+				cosNy = Math.Abs(GlobalAuxiliary.DirectionCosines(thetaNy).cos);
+
+			// Calculate coefficient for tension stiffening effect
+			return
+				0.25 / (psx / phiX * cosNx + psy / phiY * cosNy);
+		}
+
+		// Calculate maximum value of fc1 that can be transmitted across cracks
+		public double MaximumPrincipalTensileStress(double theta1)
+		{
+			// Get reinforcement angles and stresses
+			var (thetaNx, thetaNy) = Angles(theta1);
+			(double psx, double psy) = Ratio;
+			(double fsx, double fsy) = Stresses;
+			double fyx = Steel.X.YieldStress;
+			double fyy = Steel.Y.YieldStress;
+
+			double
+				cosNx = Math.Abs(GlobalAuxiliary.DirectionCosines(thetaNx).cos),
+				cosNy = Math.Abs(GlobalAuxiliary.DirectionCosines(thetaNy).cos);
+
+			// Check the maximum value of fc1 that can be transmitted across cracks
+			double
+				cos2x = cosNx * cosNx,
+				cos2y = cosNy * cosNy;
+
+			return
+				psx * (fyx - fsx) * cos2x + psy * (fyy - fsy) * cos2y;
+		}
+
+        // Set steel strains
+        public void SetStrains(Vector<double> strains)
 		{
 			Steel.X.SetStrain(strains[0]);
 			Steel.Y.SetStrain(strains[1]);

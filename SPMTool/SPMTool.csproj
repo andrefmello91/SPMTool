@@ -140,6 +140,9 @@
     <Compile Include="Core\Stringer.NonLinear .cs" />
     <Compile Include="Core\Stringer.Linear.cs" />
     <Compile Include="Global\Units.cs" />
+    <Compile Include="Material\ConcreteUniaxial.cs" />
+    <Compile Include="Material\ConcreteBiaxial.cs" />
+    <Compile Include="Material\ConcreteBehavior.cs" />
     <Compile Include="Material\ConcreteParameters.cs" />
     <Compile Include="Material\Concrete.cs" />
     <Compile Include="Core\Node.cs" />
@@ -161,6 +164,8 @@
     <Compile Include="Material\Steel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\Constraints.cs" />
+    <Compile Include="Stress and Strain\StressRelations.cs" />
+    <Compile Include="Stress and Strain\StrainRelations.cs" />
     <Compile Include="UserInterface\GraphWindow.xaml.cs">
       <DependentUpon>GraphWindow.xaml</DependentUpon>
     </Compile>
@@ -324,5 +329,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
