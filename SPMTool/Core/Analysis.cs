@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using Autodesk.AutoCAD.ApplicationServices;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.Data.Text;
 using MathNet.Numerics.Statistics;
-using SPMTool.UserInterface;
 
 namespace SPMTool.Core
 {
@@ -528,7 +526,7 @@ namespace SPMTool.Core
                     var thetaPnl = new double[4];
 
                     for (int i = 0; i < 4; i++)
-                        thetaPnl[i] = pnl.IntegrationPoints[i].PrincipalAngles.theta2;
+                        thetaPnl[i] = pnl.IntegrationPoints[i].Concrete.PrincipalAngles.theta2;
 
                     thetaPnl1.SetRow(loadStep - 1, thetaPnl);
 

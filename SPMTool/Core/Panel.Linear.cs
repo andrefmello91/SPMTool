@@ -1,7 +1,9 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics.LinearAlgebra;
-using SPMTool.Material;
+using Concrete           = Material.Concrete.Biaxial;
+using ConcreteParameters = Material.Concrete.Parameters;
+using Reinforcement      = Material.Reinforcement.Biaxial;
 
 namespace SPMTool.Core
 {
@@ -12,7 +14,7 @@ namespace SPMTool.Core
             // Private properties
             private Matrix<double> TransMatrix { get; }
 	        
-            public Linear(ObjectId panelObject, Concrete concrete = null, Behavior behavior = Behavior.Linear) : base(panelObject, concrete, behavior)
+            public Linear(ObjectId panelObject, ConcreteParameters concreteParameters = null, Behavior behavior = Behavior.Linear) : base(panelObject, concreteParameters, behavior)
             {
                 // Get transformation matrix
                 TransMatrix = TransformationMatrix();

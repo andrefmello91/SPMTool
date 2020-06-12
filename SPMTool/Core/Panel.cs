@@ -3,8 +3,11 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
-using SPMTool.Material;
-using PanelData = SPMTool.XData.Panel;
+using Material;
+using Concrete           = Material.Concrete.Biaxial;
+using ConcreteParameters = Material.Concrete.Parameters;
+using Reinforcement      = Material.Reinforcement.Biaxial;
+using PanelData          = SPMTool.XData.Panel;
 
 namespace SPMTool.Core
 {
@@ -27,7 +30,7 @@ namespace SPMTool.Core
         public (double[] Length, double[] Angle)             Edges             { get; }
         public double                                        Width             { get; }
         public Concrete                                      Concrete          { get; }
-        public PanelReinforcement                            Reinforcement     { get; }
+        public Reinforcement                                 Reinforcement     { get; }
         public Matrix<double>                                LocalStiffness    { get; set; }
         public virtual Matrix<double>                        GlobalStiffness   { get; }
         public Vector<double>                                Displacements     { get; set; }
@@ -36,13 +39,13 @@ namespace SPMTool.Core
         public virtual (Vector<double> sigma, double theta)  PrincipalStresses { get; }
 
         // Constructor
-        public Panel(ObjectId panelObject, Concrete concrete = null, Behavior behavior = Behavior.Linear)
+        public Panel(ObjectId panelObject, ConcreteParameters concreteParameters = null, Behavior behavior = Behavior.Linear)
         {
 	        ObjectId      = panelObject;
 	        PanelBehavior = behavior;
 
 	        // Get concrete
-	        Concrete = concrete;
+	        Concrete = new Concrete(concreteParameters);
 
 	        // Read as a solid
 	        Solid pnl = Geometry.Panel.ReadPanel(panelObject);
@@ -92,11 +95,11 @@ namespace SPMTool.Core
 	        );
 
 	        // Set reinforcement
-	        Reinforcement = new PanelReinforcement((phiX, phiY), (sx, sy), steel, Width);
+	        Reinforcement = new Reinforcement((phiX, phiY), (sx, sy), steel, Width);
         }
 
         // Set global indexes from grips
-        public override  int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Grips);
+        public override int[] DoFIndex => GlobalAuxiliary.GlobalIndexes(Grips);
 
         // Get X and Y coordinates of a panel vertices
         public (double[] x, double[] y) Vertex_Coordinates()

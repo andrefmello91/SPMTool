@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
-using SPMTool.Material;
+using Material;
+using Reinforcement = Material.Reinforcement.Uniaxial;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Material))]
 
@@ -71,7 +70,7 @@ namespace SPMTool.AutoCAD
 	    }
 
 	    // Get reinforcement parameters from user
-		private static StringerReinforcement GetStringerReinforcement()
+		private static Reinforcement GetStringerReinforcement()
 		{
 			// Get saved reinforcement options
 			var savedRef = ReadStringerReinforcement();
@@ -128,7 +127,7 @@ namespace SPMTool.AutoCAD
 			int num    = numn.Value;
 			double phi = phin.Value;
 
-			var reinforcement = new StringerReinforcement(num, phi);
+			var reinforcement = new Reinforcement(num, phi);
 
 			// Save the reinforcement
 			SaveStringerReinforcement(reinforcement);
@@ -408,7 +407,7 @@ namespace SPMTool.AutoCAD
         }
 
         // Save reinforcement configuration on database
-        private static void SaveStringerReinforcement(StringerReinforcement reinforcement)
+        private static void SaveStringerReinforcement(Reinforcement reinforcement)
         {
 	        if (reinforcement != null)
 	        {
@@ -434,10 +433,10 @@ namespace SPMTool.AutoCAD
         }
 
 		// Read stringer reinforcement on database
-		private static StringerReinforcement[] ReadStringerReinforcement()
+		private static Reinforcement[] ReadStringerReinforcement()
 		{
 			// Create a list of reinforcement
-			var refList = new List<StringerReinforcement>();
+			var refList = new List<Reinforcement>();
 
 			// Get dictionary entries
 			var entries = Auxiliary.ReadDictionaryEntries(StrRef);
@@ -454,7 +453,7 @@ namespace SPMTool.AutoCAD
 				double phi = Convert.ToDouble(data[3].Value);
 
 				// Create new reinforcement
-				var reinforcement = new StringerReinforcement(num, phi);
+				var reinforcement = new Reinforcement(num, phi);
 
 				// Add to the list
 				refList.Add(reinforcement);

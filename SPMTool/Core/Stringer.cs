@@ -3,8 +3,11 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
-using SPMTool.Material;
-using StringerData = SPMTool.XData.Stringer;
+using Material;
+using ConcreteParameters = Material.Concrete.Parameters;
+using Concrete           = Material.Concrete.Uniaxial;
+using Reinforcement      = Material.Reinforcement.Uniaxial;
+using StringerData       = SPMTool.XData.Stringer;
 
 namespace SPMTool.Core
 {
@@ -26,19 +29,19 @@ namespace SPMTool.Core
 		public double                  Width            { get; }
 		public double                  Height           { get; }
 		public Concrete                Concrete         { get; }
-        public StringerReinforcement   Reinforcement    { get; }
+        public Reinforcement           Reinforcement    { get; }
         public Matrix<double>          TransMatrix      { get; }
         public virtual Matrix<double>  LocalStiffness   { get; }
 		public virtual Vector<double>  Forces           { get; set; }
 		public Vector<double>          Displacements    { get; set; }
 
 		// Constructor
-		public Stringer(ObjectId stringerObject, Concrete concrete = null)
+		public Stringer(ObjectId stringerObject, ConcreteParameters concreteParameters = null)
 		{
 			ObjectId = stringerObject;
 
 			// Get concrete
-			Concrete = concrete;
+			Concrete = new Concrete(concreteParameters);
 
 			// Read the object as a line
 			Line strLine = Geometry.Stringer.ReadStringer(stringerObject);
@@ -84,7 +87,7 @@ namespace SPMTool.Core
 			var steel = new Steel(fy, Es);
 
 			// Set reinforcement
-			Reinforcement = new StringerReinforcement(numOfBars, phi, steel);
+			Reinforcement = new Reinforcement(numOfBars, phi, Area, steel);
 
 			// Calculate transformation matrix
 			TransMatrix = TransformationMatrix();
@@ -105,7 +108,8 @@ namespace SPMTool.Core
 		public double SteelArea => Reinforcement.Area;
 
 		// Calculate concrete area
-		public double ConcreteArea => Width * Height - SteelArea;
+		public double Area         => Width * Height;
+        public double ConcreteArea => Area - SteelArea;
 
 		// Calculate the transformation matrix
 		private Matrix<double> TransformationMatrix()

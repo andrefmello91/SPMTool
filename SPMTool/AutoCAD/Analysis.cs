@@ -17,7 +17,7 @@ namespace SPMTool.AutoCAD
             // Get input data
             InputData input = new InputData(Stringer.Behavior.Linear, Panel.Behavior.Linear);
 
-			if (input.Concrete.IsSet)
+			if (input.ConcreteParameters.IsSet)
 			{
 				// Do a linear analysis
 				var analysis = new Analysis.Linear(input);
@@ -39,7 +39,7 @@ namespace SPMTool.AutoCAD
 			// Get input data
 			InputData input = new InputData(strBehavior, pnlBehavior);
 
-			if (input.Concrete.IsSet && (strBehavior, pnlBehavior) != default)
+			if (input.ConcreteParameters.IsSet && (strBehavior, pnlBehavior) != default)
 			{
 				// Get the index of node to monitor displacement
 				var uIndexn = MonitoredIndex();

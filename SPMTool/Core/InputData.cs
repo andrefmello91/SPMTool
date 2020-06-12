@@ -2,23 +2,24 @@
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics.LinearAlgebra;
-using SPMTool.Material;
+using Material;
 using SPMTool.AutoCAD;
+using ConcreteParameters = Material.Concrete.Parameters;
 
 namespace SPMTool.Core
 {
     public class InputData
     {
 		// Properties
-		public Concrete       Concrete        { get; }
-        public Node[]         Nodes           { get; }
-	    public Stringer[]     Stringers       { get; }
-	    public Panel[]        Panels          { get; }
-	    public Force[]        Forces          { get; }
-	    public Constraint[]   Constraints     { get; }
-	    public Vector<double> ForceVector     { get; }
-	    public int[]          ConstraintIndex { get; }
-	    public int            numDoFs         => 2 * Nodes.Length;
+		public ConcreteParameters ConcreteParameters        { get; }
+        public Node[]             Nodes           { get; }
+	    public Stringer[]         Stringers       { get; }
+	    public Panel[]            Panels          { get; }
+	    public Force[]            Forces          { get; }
+	    public Constraint[]       Constraints     { get; }
+	    public Vector<double>     ForceVector     { get; }
+	    public int[]              ConstraintIndex { get; }
+	    public int                numDoFs         => 2 * Nodes.Length;
 
 		// Private properties
 		private ObjectIdCollection NodeObjects      { get; }
@@ -39,7 +40,7 @@ namespace SPMTool.Core
             Constraints = Constraint.ListOfConstraints();
 
 			// Get concrete data
-			Concrete = AutoCAD.Material.ReadConcreteData();
+			ConcreteParameters = AutoCAD.Material.ReadConcreteData();
 
 			// Set the Behavior of elements
 			StringerBehavior = stringerBehavior;
@@ -84,13 +85,13 @@ namespace SPMTool.Core
 
                 // Verify the stringer Behavior
                 if (StringerBehavior == Stringer.Behavior.Linear)
-					stringer = new Stringer.Linear(strObj, Concrete);
+					stringer = new Stringer.Linear(strObj, ConcreteParameters);
 
 				else if (StringerBehavior == Stringer.Behavior.NonLinearClassic)
-					stringer = new Stringer.NonLinear.Classic(strObj, Concrete);
+					stringer = new Stringer.NonLinear.Classic(strObj, ConcreteParameters);
 
                 else
-					stringer = new Stringer.NonLinear.MC2010(strObj, Concrete);
+					stringer = new Stringer.NonLinear.MC2010(strObj, ConcreteParameters);
 
 				// Set to the array
                 int i = stringer.Number - 1;
@@ -112,13 +113,13 @@ namespace SPMTool.Core
 
 				// Verify the panelBehavior
 				if (PanelBehavior == Panel.Behavior.Linear)
-					panel = new Panel.Linear(pnlObj, Concrete);
+					panel = new Panel.Linear(pnlObj, ConcreteParameters);
 
 				else if (PanelBehavior == Panel.Behavior.NonLinearMCFT)
-					panel = new Panel.NonLinear(pnlObj, Concrete, Stringers);
+					panel = new Panel.NonLinear(pnlObj, ConcreteParameters, Stringers);
 
 				else
-					panel = new Panel.NonLinear(pnlObj, Concrete, Stringers, Panel.Behavior.NonLinearDSFM);
+					panel = new Panel.NonLinear(pnlObj, ConcreteParameters, Stringers, Panel.Behavior.NonLinearDSFM);
 
                 // Set to the array
                 int i     = panel.Number - 1;

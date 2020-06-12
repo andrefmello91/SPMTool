@@ -1,6 +1,7 @@
 ﻿using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics.LinearAlgebra;
-using SPMTool.Material;
+using Concrete           = Material.Concrete.Uniaxial;
+using ConcreteParameters = Material.Concrete.Parameters;
 
 namespace SPMTool.Core
 {
@@ -14,7 +15,7 @@ namespace SPMTool.Core
             private double Ec => Concrete.Ec;
 
             // Constructor
-            public Linear(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
+            public Linear(ObjectId stringerObject, ConcreteParameters concreteParameters) : base(stringerObject, concreteParameters)
             {
             }
 

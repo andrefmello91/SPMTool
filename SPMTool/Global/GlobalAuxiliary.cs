@@ -86,13 +86,6 @@ namespace SPMTool
         }
 
         // Function to verify if a number is not zero
-        public static Func<double, bool> NotZero => num =>
-        {
-            if (num != 0) 
-                return true;
-
-	        return false;
-        };
-
+        public static bool NotZero(double num) => num != 0;
     }
 }

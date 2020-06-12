@@ -1,8 +1,10 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Windows;
 using MathNet.Numerics.LinearAlgebra;
-using SPMTool.Material;
+using RCMembrane;
+using Concrete           = Material.Concrete.Biaxial;
+using ConcreteParameters = Material.Concrete.Parameters;
+using Reinforcement      = Material.Reinforcement.Biaxial;
 
 namespace SPMTool.Core
 {
@@ -22,7 +24,7 @@ namespace SPMTool.Core
             // Private Properties
             private int LoadStep { get; set; }
 
-            public NonLinear(ObjectId panelObject, Concrete concrete, Stringer[] stringers, Behavior behavior = Behavior.NonLinearMCFT) : base(panelObject, concrete, behavior)
+            public NonLinear(ObjectId panelObject, ConcreteParameters concreteParameters, Stringer[] stringers, Behavior behavior = Behavior.NonLinearMCFT) : base(panelObject, concreteParameters, behavior)
             {
                 // Get Stringer dimensions and effective ratio
                 StringerDimensions = StringersDimensions(stringers);
@@ -33,18 +35,27 @@ namespace SPMTool.Core
                 PMatrix  = MatrixP();
 
                 // Initiate integration points
-                IntegrationPoints = new Membrane[4];
-
-                if (PanelBehavior == Behavior.NonLinearMCFT)
-                    for (int i = 0; i < 4; i++)
-	                    IntegrationPoints[i] = new Membrane.MCFT(Concrete, Reinforcement, Width);
-                else
-                    for (int i = 0; i < 4; i++)
-                        IntegrationPoints[i] = new Membrane.DSFM(Concrete, Reinforcement, Width, ReferenceLength);
+                IntegrationPoints = IntPoints();
 
 				// Initiate stiffness
 				MaterialStiffness = InitialMaterialStiffness();
             }
+
+			// Get integration points
+			private Membrane[] IntPoints()
+			{
+				// Initiate integration points
+				var intPts = new Membrane[4];
+
+				if (PanelBehavior == Behavior.NonLinearMCFT)
+					for (int i = 0; i < 4; i++)
+						intPts[i] = new MCFT(Concrete, Reinforcement, Width);
+				else
+					for (int i = 0; i < 4; i++)
+						intPts[i] = new DSFM(Concrete, Reinforcement, Width);
+
+				return intPts;
+			}
 
             // Get the dimensions of surrounding stringers
             public double[] StringersDimensions(Stringer[] stringers)
@@ -294,7 +305,7 @@ namespace SPMTool.Core
 		            var e = ev.SubVector(3 * i, 3);
 
 		            // Calculate stresses by MCFT
-		            IntegrationPoints[i].Analysis(e);
+		            IntegrationPoints[i].Calculate(e);
 	            }
 
 				// Calculate stresses and forces
@@ -305,9 +316,6 @@ namespace SPMTool.Core
             // Set results to panel integration points
             public void Results()
             {
-	            foreach (var intPoint in IntegrationPoints)
-		            intPoint.Results();
-
 	            MaterialStiffness = Material_Stiffness();
             }
 
@@ -320,8 +328,8 @@ namespace SPMTool.Core
 	            for (int i = 0; i < 4; i++)
 	            {
 		            // Get the stiffness
-		            var Dci = IntegrationPoints[i].ConcreteStiffness;
-		            var Dsi = IntegrationPoints[i].ReinforcementStiffness;
+		            var Dci = IntegrationPoints[i].Concrete.Stiffness;
+		            var Dsi = IntegrationPoints[i].Reinforcement.Stiffness;
 
 		            // Set to stiffness
 		            Dc.SetSubMatrix(3 * i, 3 * i, Dci);
@@ -405,8 +413,8 @@ namespace SPMTool.Core
 	            {
 		            // Get the stiffness
 		            var sig  = IntegrationPoints[i].Stresses;
-		            var sigC = IntegrationPoints[i].ConcreteStresses;
-		            var sigS = IntegrationPoints[i].ReinforcementStresses;
+		            var sigC = IntegrationPoints[i].Concrete.Stresses;
+		            var sigS = IntegrationPoints[i].Reinforcement.Stresses;
 
 		            // Set to stiffness
 		            sigma.SetSubVector (3 * i, 3, sig );
@@ -443,7 +451,7 @@ namespace SPMTool.Core
 		            var theta = Vector<double>.Build.Dense(4);
 
 		            for (int i = 0; i < 4; i++)
-			            theta[i] = IntegrationPoints[i].PrincipalAngles.theta2;
+			            theta[i] = IntegrationPoints[i].Concrete.PrincipalAngles.theta2;
 
 		            return theta;
 	            }
@@ -598,8 +606,8 @@ namespace SPMTool.Core
 	            for (int i = 0; i < 4; i++)
 	            {
 		            // Get the stiffness
-		            var Dci = IntegrationPoints[i].InitialConcreteStiffness;
-		            var Dsi = IntegrationPoints[i].InitialReinforcementStiffness;
+		            var Dci = IntegrationPoints[i].Concrete.InitialStiffness();
+		            var Dsi = IntegrationPoints[i].Concrete.InitialStiffness();
 
 		            // Set to stiffness
 		            Dc.SetSubMatrix(3 * i, 3 * i, Dci);

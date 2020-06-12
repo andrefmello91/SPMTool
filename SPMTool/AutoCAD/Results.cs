@@ -6,7 +6,6 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Core;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
-using Auxiliary = SPMTool.AutoCAD.Auxiliary;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Results))]
 

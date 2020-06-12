@@ -2,11 +2,11 @@
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
-using SPMTool.Material;
-using ConcreteData  = SPMTool.XData.Concrete;
-using AggregateType = SPMTool.Material.Concrete.AggregateType;
-using Model         = SPMTool.Material.Concrete.Model;
+using Material;
+using ConcreteData       = SPMTool.XData.Concrete;
+using AggregateType      = Material.Concrete.AggregateType;
+using ConcreteParameters = Material.Concrete.Parameters;
+using ParameterModel     = Material.Concrete.ModelParameters;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Material))]
 
@@ -23,9 +23,11 @@ namespace SPMTool.AutoCAD
 			Quartzite = AggregateType.Quartzite.ToString(),
 			Limestone = AggregateType.Limestone.ToString(),
 			Sandstone = AggregateType.Sandstone.ToString(),
-			MC2010    = Model.MC2010.ToString(),
-			NBR6118   = Model.NBR6118.ToString(),
-			Custom    = Model.Custom.ToString();
+			MC2010    = ParameterModel.MC2010.ToString(),
+			NBR6118   = ParameterModel.NBR6118.ToString(),
+			MCFT      = ParameterModel.MCFT.ToString(),
+			DSFM      = ParameterModel.DSFM.ToString(),
+			Custom    = ParameterModel.Custom.ToString();
 
 		[CommandMethod("SetConcreteParameters")]
 		public static void SetConcreteParameters()
@@ -54,13 +56,13 @@ namespace SPMTool.AutoCAD
 
             if (concrete != null)
             {
-                fc    = concrete.fc;
+                fc    = concrete.Strength;
                 phiAg = concrete.AggregateDiameter;
-                fcr   = concrete.fcr;
-                Ec    = concrete.Ec;
-                ec    = -concrete.ec;
-                ecu   = -concrete.ecu;
-                model = concrete.ConcreteModel.ToString();
+                fcr   = concrete.TensileStrength;
+                Ec    = concrete.InitialModule;
+                ec    = -concrete.PlasticStrain;
+                ecu   = -concrete.UltimateStrain;
+                model = concrete.GetType().Name;
                 agrgt = concrete.Type.ToString();
             }
 
@@ -69,6 +71,8 @@ namespace SPMTool.AutoCAD
 			{
 				MC2010,
 				NBR6118,
+				MCFT,
+				DSFM,
 				Custom
 			};
 
@@ -109,10 +113,10 @@ namespace SPMTool.AutoCAD
             agrgt = agn.Value.keyword;
             phiAg = phin.Value;
             var aggType   = (AggregateType) Enum.Parse(typeof(AggregateType), agrgt);
-            var modelType = (Model) Enum.Parse(typeof(Model), model);
+            var modelType = (ParameterModel) Enum.Parse(typeof(ParameterModel), model);
 
 			// Get custom values from user
-            if (modelType == Model.Custom)
+            if (modelType == ParameterModel.Custom)
             {
 	            var fcrn = UserInput.GetDouble("Input concrete tensile strength (fcr) in MPa:", fcr);
 
@@ -180,7 +184,7 @@ namespace SPMTool.AutoCAD
         }
 
         // Read the concrete parameters
-        public static Concrete ReadConcreteData()
+        public static ConcreteParameters ReadConcreteData()
 		{
 			var data = Auxiliary.ReadDictionaryEntry(ConcreteParams);
 
@@ -188,16 +192,32 @@ namespace SPMTool.AutoCAD
 				return null;
 
 			// Get the parameters from XData
-			var model   = (Model)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
+			var par     = (ParameterModel)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
 			var aggType = (AggregateType)Convert.ToInt32(data[(int) ConcreteData.AggType].Value);
 
 			double
                 fc      = Convert.ToDouble(data[(int)ConcreteData.fc].Value),
 				phiAg   = Convert.ToDouble(data[(int)ConcreteData.AggDiam].Value);
 
-			if (model != Model.Custom)
-				return
-					new Concrete(fc, phiAg, model, aggType);
+			// Verify which parameters are set
+			switch (par)
+			{
+                case ParameterModel.MC2010:
+					return
+						new ConcreteParameters.MC2010(fc, phiAg, aggType);
+
+                case ParameterModel.NBR6118:
+					return
+						new ConcreteParameters.NBR6118(fc, phiAg, aggType);
+
+                case ParameterModel.MCFT:
+					return
+						new ConcreteParameters.MCFT(fc, phiAg, aggType);
+
+                case ParameterModel.DSFM:
+					return
+						new ConcreteParameters.DSFM(fc, phiAg, aggType);
+            }
 
 			// Get additional parameters
 			double
@@ -207,7 +227,7 @@ namespace SPMTool.AutoCAD
 				ecu = -Convert.ToDouble(data[(int) ConcreteData.ecu].Value);
 
 			return
-				new Concrete(fc, phiAg, model, aggType, fcr, Ec, ec, ecu);
+				new ConcreteParameters.Custom(fc, phiAg, fcr, Ec, ec, ecu);
 		}
     }
 }

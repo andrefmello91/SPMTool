@@ -5,6 +5,12 @@ VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPMTool", "SPMTool\SPMTool.csproj", "{58BD68B9-7377-47E8-8BF9-2A934714CD79}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Relations", "..\Stress-and-Strain-Relations\Relations\Relations.csproj", "{7DF65381-8507-4F02-9C2B-2AE9A1E50EFA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RCMembrane", "..\Reinforced-Concrete-Membrane\Membrane\RCMembrane.csproj", "{F26DDECB-E2E4-49F1-ADD7-99BF554EECEA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Material", "..\Material\Material\Material.csproj", "{5E103AD6-45A8-4B2D-816C-5CCEC09380E6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +21,18 @@ Global
 		{58BD68B9-7377-47E8-8BF9-2A934714CD79}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58BD68B9-7377-47E8-8BF9-2A934714CD79}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58BD68B9-7377-47E8-8BF9-2A934714CD79}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7DF65381-8507-4F02-9C2B-2AE9A1E50EFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DF65381-8507-4F02-9C2B-2AE9A1E50EFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DF65381-8507-4F02-9C2B-2AE9A1E50EFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DF65381-8507-4F02-9C2B-2AE9A1E50EFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F26DDECB-E2E4-49F1-ADD7-99BF554EECEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F26DDECB-E2E4-49F1-ADD7-99BF554EECEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F26DDECB-E2E4-49F1-ADD7-99BF554EECEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F26DDECB-E2E4-49F1-ADD7-99BF554EECEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E103AD6-45A8-4B2D-816C-5CCEC09380E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E103AD6-45A8-4B2D-816C-5CCEC09380E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E103AD6-45A8-4B2D-816C-5CCEC09380E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E103AD6-45A8-4B2D-816C-5CCEC09380E6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,10 +1,10 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics;
-using MathNet.Numerics.Differentiation;
 using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.RootFinding;
-using SPMTool.Material;
+using Concrete           = Material.Concrete.Uniaxial;
+using ConcreteParameters = Material.Concrete.Parameters;
+using Reinforcement      = Material.Reinforcement.Uniaxial;
 
 namespace SPMTool.Core
 {
@@ -18,7 +18,7 @@ namespace SPMTool.Core
 			public Matrix<double>         FMatrix     { get; set; }
 
 
-            public NonLinear(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
+            public NonLinear(ObjectId stringerObject, ConcreteParameters concreteParameters) : base(stringerObject, concreteParameters)
 			{
 				// Initiate F matrix
 				FMatrix = InitialFMatrix();
@@ -32,11 +32,11 @@ namespace SPMTool.Core
             public abstract double fcr { get; }
             public abstract double ecr { get; }
 
-				// Steel parameters
+			// Steel parameters
 			private double fy  => Reinforcement.Steel.YieldStress;
 			private double ey  => Reinforcement.Steel.YieldStrain;
 			private double Es  => Reinforcement.Steel.ElasticModule;
-			private double esu => Reinforcement.Steel.esu;
+			private double esu => Reinforcement.Steel.UltimateStrain;
 
 			// Constants
 			private double Ac    => ConcreteArea;
@@ -50,7 +50,7 @@ namespace SPMTool.Core
 
             // Maximum Stringer forces
             private double Nc  => -fc * Ac;
-			private double Nyr =>  fy * As;
+			private double Nyr => Reinforcement.YieldForce;
 			public abstract double Nyc { get; }
 			public abstract double Nt  { get; }
 
@@ -303,7 +303,7 @@ namespace SPMTool.Core
 			// Classic SPM model
 			public class Classic : NonLinear
 			{
-				public Classic(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
+				public Classic(ObjectId stringerObject, ConcreteParameters concreteParameters) : base(stringerObject, concreteParameters)
 				{
 				}
 
@@ -449,7 +449,7 @@ namespace SPMTool.Core
 			// MCFT model
 			public class MCFT : Classic
 			{
-				public MCFT(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
+				public MCFT(ObjectId stringerObject, ConcreteParameters concreteParameters) : base(stringerObject, concreteParameters)
 				{
 				}
 
@@ -512,7 +512,7 @@ namespace SPMTool.Core
             // MC2010 model for concrete
             public class MC2010 : NonLinear
             {
-	            public MC2010(ObjectId stringerObject, Concrete concrete) : base(stringerObject, concrete)
+	            public MC2010(ObjectId stringerObject, ConcreteParameters concreteParameters) : base(stringerObject, concreteParameters)
 	            {
 	            }
 
