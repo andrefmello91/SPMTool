@@ -10,15 +10,15 @@ namespace SPMTool.Core
     public class InputData
     {
 		// Properties
-		public ConcreteParameters ConcreteParameters        { get; }
-        public Node[]             Nodes           { get; }
-	    public Stringer[]         Stringers       { get; }
-	    public Panel[]            Panels          { get; }
-	    public Force[]            Forces          { get; }
-	    public Constraint[]       Constraints     { get; }
-	    public Vector<double>     ForceVector     { get; }
-	    public int[]              ConstraintIndex { get; }
-	    public int                numDoFs         => 2 * Nodes.Length;
+		public ConcreteParameters ConcreteParameters { get; }
+        public Node[]             Nodes              { get; }
+	    public Stringer[]         Stringers          { get; }
+	    public Panel[]            Panels             { get; }
+	    public Force[]            Forces             { get; }
+	    public Constraint[]       Constraints        { get; }
+	    public Vector<double>     ForceVector        { get; }
+	    public int[]              ConstraintIndex    { get; }
+	    public int                numDoFs            => 2 * Nodes.Length;
 
 		// Private properties
 		private ObjectIdCollection NodeObjects      { get; }
@@ -93,9 +93,9 @@ namespace SPMTool.Core
 	                    stringer = new Stringer.NonLinear.Classic(strObj, ConcreteParameters);
 						break;
 
-                    case Stringer.Behavior.NonLinearMC2010:
-	                    stringer = new Stringer.NonLinear.MC2010(strObj, ConcreteParameters);
-						break;
+      //              case Stringer.Behavior.NonLinearMC2010:
+	     //               stringer = new Stringer.NonLinear.MC2010(strObj, ConcreteParameters);
+						//break;
 
                     case Stringer.Behavior.NonLinearMCFT:
 	                    stringer = new Stringer.NonLinear.MCFT(strObj, ConcreteParameters);
