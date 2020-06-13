@@ -1,7 +1,9 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
+using Material;
 using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.RootFinding;
 using Concrete           = Material.Concrete.Uniaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
 using Reinforcement      = Material.Reinforcement.Uniaxial;
@@ -33,10 +35,11 @@ namespace SPMTool.Core
             public abstract double ecr { get; }
 
 			// Steel parameters
-			private double fy  => Reinforcement.Steel.YieldStress;
-			private double ey  => Reinforcement.Steel.YieldStrain;
-			private double Es  => Reinforcement.Steel.ElasticModule;
-			private double esu => Reinforcement.Steel.UltimateStrain;
+			private Steel  Steel => Reinforcement.Steel;
+			private double fy    => Steel.YieldStress;
+			private double ey    => Steel.YieldStrain;
+			private double Es    => Steel.ElasticModule;
+			private double esu   => Steel.UltimateStrain;
 
 			// Constants
 			private double Ac    => ConcreteArea;
@@ -50,7 +53,7 @@ namespace SPMTool.Core
 
             // Maximum Stringer forces
             private double Nc  => -fc * Ac;
-			private double Nyr => Reinforcement.YieldForce;
+			public virtual  double Nyr => Reinforcement.YieldForce;
 			public abstract double Nyc { get; }
 			public abstract double Nt  { get; }
 
@@ -176,7 +179,7 @@ namespace SPMTool.Core
 
                 // Verify the values of N1 and N3
                 N1 = PlasticForce(N1);
-				N3 = PlasticForce(N3);
+                N3 = PlasticForce(N3);
 
                 // Set values
                 FMatrix     = F;
@@ -376,7 +379,7 @@ namespace SPMTool.Core
                 }
 
                 // Case T.2: Cracked with not yielding steel
-                public virtual (double e, double de) Cracked(double N)
+                public (double e, double de) Cracked(double N)
                 {
                     double
                         e  = (N * N - Nr * Nr) / (EsAs * N),
@@ -397,7 +400,6 @@ namespace SPMTool.Core
                     return
                         (e, de);
                 }
-
 
                 // Compression Cases
                 // Case C.1: concrete not crushed
@@ -453,21 +455,34 @@ namespace SPMTool.Core
 				{
 				}
 
-                // Calculate the strain and derivative on a Stringer given a force N and the concrete parameters
+				// Calculate plastic force
+				//public override double Nyr => Force(ey);
+
+				// Calculate the strain and derivative on a Stringer given a force N and the concrete parameters
                 public override (double e, double de) StringerStrain(double N)
                 {
 	                // Verify the value of N
+	                if (N == 0)
+		                return (0, 1 / t1);
+
 	                // Tensioned Stringer
 	                if (N > 0)
 	                {
-						// Calculate uncracked
-						var unc = Uncracked(N);
+		                // Calculate uncracked
+		                var res = Uncracked(N);
 
-		                if (unc.e <= ecr)
-			                return unc;
+		                if (res.e <= Concrete.ecr)
+			                return res;
 
+		                // Calculate cracked
+		                var cracked = Cracked(N);
+
+                        if (cracked.HasValue)
+                            return cracked.Value;
+
+		                // Steel is yielding
 		                return
-			                Cracked(N);
+			                YieldingSteel(N);
 	                }
 
 	                // Compressed Stringer
@@ -480,33 +495,55 @@ namespace SPMTool.Core
                 }
 
                 // Case T.2: Cracked with yielding or not yielding steel
-                public override (double e, double de) Cracked(double N)
+                public (double e, double de)? Cracked(double N) => Solver(N, Concrete.ecr, Steel.YieldStrain);
+
+                // Case T.3: Cracked with yielding steel
+                public (double e, double de) YieldingSteel(double N)
                 {
-					// Iterate to find strain
-					double e = FindRoots.OfFunction(eps => N - CrackedForce(eps), ecr, 3E-3);
-
-					// Calculate derivative of function
-					double
-						dN = Differentiate.FirstDerivative(CrackedForce, e),
-						de = 1 / dN;
-
-                    return
-                        (e, de);
-                }
-
-				// Calculate cracked force based on strain
-                private double CrackedForce(double e)
-                {
-	                double Ns;
-
-	                if (e < ey)
-		                Ns = EsAs * e;
-	                else
-		                Ns = Nyr;
+	                double
+		                e  = ey + (N - Nyr) / t1,
+		                de = 1 / t1;
 
 	                return
-		                fcr * Ac / (1 + Math.Sqrt(500 * e)) + Ns;
+		                (e, de);
                 }
+
+                // Compressed case
+                private (double e, double de)? Compressed(double N) => Solver(N, Concrete.ecu, 0);
+
+				// Solver to find strain given force
+				private (double e, double de)? Solver(double N, double lowerBound, double upperBound)
+				{
+                    // Iterate to find strain
+                    (double e, double de)? result = null;
+                    double? e = null;
+                    //var solution = Brent.TryFindRoot(eps => N - Force(eps), lowerBound, upperBound, 1E-8, 1000, out var e);
+
+                    try
+                    {
+	                    e = FindRoots.OfFunction(eps => N - Force(eps), lowerBound, upperBound);
+                    }
+                    catch
+                    {
+                    }
+                    finally
+                    {
+	                    if (e.HasValue)
+	                    {
+		                    // Calculate derivative of function
+		                    double
+			                    dN = Differentiate.FirstDerivative(Force, e.Value),
+			                    de = 1 / dN;
+
+		                    result = (e.Value, de);
+	                    }
+                    }
+
+                    return result;
+				}
+
+                // Calculate cracked force based on strain
+                private double Force(double e) => Concrete.CalculateForce(e) + Reinforcement.CalculateForce(e);
             }
 
             // MC2010 model for concrete

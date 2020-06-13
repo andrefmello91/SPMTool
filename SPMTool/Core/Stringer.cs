@@ -18,7 +18,9 @@ namespace SPMTool.Core
 		{
 			Linear,
 			NonLinearClassic,
-			NonLinearMC2010
+			NonLinearMC2010,
+			NonLinearMCFT,
+			NonLinearDSFM
 		}
 
         // Stringer properties
@@ -39,9 +41,6 @@ namespace SPMTool.Core
 		public Stringer(ObjectId stringerObject, ConcreteParameters concreteParameters = null)
 		{
 			ObjectId = stringerObject;
-
-			// Get concrete
-			Concrete = new Concrete(concreteParameters);
 
 			// Read the object as a line
 			Line strLine = Geometry.Stringer.ReadStringer(stringerObject);
@@ -74,8 +73,11 @@ namespace SPMTool.Core
 			Width  = Convert.ToDouble(data[(int) StringerData.Width].Value);
 			Height = Convert.ToDouble(data[(int) StringerData.Height].Value);
 
-			// Get reinforcement
-			int numOfBars = Convert.ToInt32 (data[(int) StringerData.NumOfBars].Value);
+			// Get concrete
+			Concrete = new Concrete(concreteParameters, Area);
+
+            // Get reinforcement
+            int numOfBars = Convert.ToInt32 (data[(int) StringerData.NumOfBars].Value);
 			double phi    = Convert.ToDouble(data[(int) StringerData.BarDiam].Value);
 
 			// Get steel data

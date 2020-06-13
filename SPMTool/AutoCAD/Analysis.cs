@@ -37,7 +37,7 @@ namespace SPMTool.AutoCAD
             var (strBehavior, pnlBehavior) = Config.ReadBehavior();
 
 			// Get input data
-			InputData input = new InputData(strBehavior, pnlBehavior);
+			InputData input = new InputData(Stringer.Behavior.NonLinearMCFT, Panel.Behavior.NonLinearMCFT);
 
 			if (input.ConcreteParameters.IsSet && (strBehavior, pnlBehavior) != default)
 			{

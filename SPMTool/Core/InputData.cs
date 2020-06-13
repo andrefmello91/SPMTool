@@ -2,7 +2,6 @@
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics.LinearAlgebra;
-using Material;
 using SPMTool.AutoCAD;
 using ConcreteParameters = Material.Concrete.Parameters;
 
@@ -81,17 +80,27 @@ namespace SPMTool.Core
 
 	        foreach (ObjectId strObj in StringerObjects)
 	        {
-		        Stringer stringer;
+		        Stringer stringer = null;
 
                 // Verify the stringer Behavior
-                if (StringerBehavior == Stringer.Behavior.Linear)
-					stringer = new Stringer.Linear(strObj, ConcreteParameters);
+                switch (StringerBehavior)
+                {
+                    case Stringer.Behavior.Linear:
+	                    stringer = new Stringer.Linear(strObj, ConcreteParameters);
+						break;
 
-				else if (StringerBehavior == Stringer.Behavior.NonLinearClassic)
-					stringer = new Stringer.NonLinear.Classic(strObj, ConcreteParameters);
+                    case Stringer.Behavior.NonLinearClassic:
+	                    stringer = new Stringer.NonLinear.Classic(strObj, ConcreteParameters);
+						break;
 
-                else
-					stringer = new Stringer.NonLinear.MC2010(strObj, ConcreteParameters);
+                    case Stringer.Behavior.NonLinearMC2010:
+	                    stringer = new Stringer.NonLinear.MC2010(strObj, ConcreteParameters);
+						break;
+
+                    case Stringer.Behavior.NonLinearMCFT:
+	                    stringer = new Stringer.NonLinear.MCFT(strObj, ConcreteParameters);
+						break;
+                }
 
 				// Set to the array
                 int i = stringer.Number - 1;
@@ -109,17 +118,22 @@ namespace SPMTool.Core
 
 	        foreach (ObjectId pnlObj in PanelObjects)
 	        {
-		        Panel panel;
+		        Panel panel = null;
 
-				// Verify the panelBehavior
-				if (PanelBehavior == Panel.Behavior.Linear)
-					panel = new Panel.Linear(pnlObj, ConcreteParameters);
+		        switch (PanelBehavior)
+		        {
+                    case Panel.Behavior.Linear:
+	                    panel = new Panel.Linear(pnlObj, ConcreteParameters);
+						break;
 
-				else if (PanelBehavior == Panel.Behavior.NonLinearMCFT)
-					panel = new Panel.NonLinear(pnlObj, ConcreteParameters, Stringers);
+                    case Panel.Behavior.NonLinearMCFT:
+	                    panel = new Panel.NonLinear(pnlObj, ConcreteParameters, Stringers);
+						break;
 
-				else
-					panel = new Panel.NonLinear(pnlObj, ConcreteParameters, Stringers, Panel.Behavior.NonLinearDSFM);
+                    case Panel.Behavior.NonLinearDSFM:
+	                    panel = new Panel.NonLinear(pnlObj, ConcreteParameters, Stringers, Panel.Behavior.NonLinearDSFM);
+						break;
+                }
 
                 // Set to the array
                 int i     = panel.Number - 1;

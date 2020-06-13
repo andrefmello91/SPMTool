@@ -511,24 +511,24 @@ namespace SPMTool.Core
 						ui += du;
                     }
 
-                    var pnl = (Panel.NonLinear) Panels[0];
+                    //var pnl = (Panel.NonLinear) Panels[0];
 
                     fiMatrix.SetRow(loadStep - 1, fi);
                     uMatrix.SetRow(loadStep - 1, ui);
-                    fPnl.SetRow(loadStep - 1, pnl.Forces);
-                    sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
-                    sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
-                    epsPnl.SetRow(loadStep - 1, pnl.StrainVector);
-                    uPnl.SetRow(loadStep - 1, pnl.Displacements);
-                    DcPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Dc);
-                    DsPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Ds);
+                    //fPnl.SetRow(loadStep - 1, pnl.Forces);
+                    //sigCPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaC);
+                    //sigSPnl.SetRow(loadStep - 1, pnl.StressVector.sigmaS);
+                    //epsPnl.SetRow(loadStep - 1, pnl.StrainVector);
+                    //uPnl.SetRow(loadStep - 1, pnl.Displacements);
+                    //DcPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Dc);
+                    //DsPnl.SetSubMatrix(12 * (loadStep - 1), 0, pnl.MaterialStiffness.Ds);
 
-                    var thetaPnl = new double[4];
+                    //var thetaPnl = new double[4];
 
-                    for (int i = 0; i < 4; i++)
-                        thetaPnl[i] = pnl.IntegrationPoints[i].Concrete.PrincipalAngles.theta2;
+                    //for (int i = 0; i < 4; i++)
+                    //    thetaPnl[i] = pnl.IntegrationPoints[i].Concrete.PrincipalAngles.theta2;
 
-                    thetaPnl1.SetRow(loadStep - 1, thetaPnl);
+                    //thetaPnl1.SetRow(loadStep - 1, thetaPnl);
 
                     // Set the results to elements
                     Results();
