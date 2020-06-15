@@ -430,11 +430,7 @@ namespace SPMTool.Core
             public List<double> MonitoredDisplacements { get; set; }
             public List<double> MonitoredLoadFactor    { get; set; }
 
-            // Max iterations and load steps
-            private int maxIterations = 1000;
-			private int loadSteps     = 50;
-
-            public NonLinear(InputData inputData, int monitoredIndex) : base(inputData)
+            public NonLinear(InputData inputData, int monitoredIndex, int numLoadSteps = 50, double tolerance = 1E-2, int maxIterations = 1000) : base(inputData)
 	        {
 				// Initiate lists
 				MonitoredDisplacements = new List<double>();
@@ -449,11 +445,8 @@ namespace SPMTool.Core
                 //DelimitedWriter.Write("D:/Ki.csv", Kg, ";");
 
                 // Solve the initial displacements
-                double lf0 = (double) 1 / loadSteps;
-                var u0 = Kg.Solve(lf0 * f);
-                var ui = u0;
-
-                DelimitedWriter.Write("D:/u0.csv", u0.ToColumnMatrix(), ";");
+                double lf0 = (double) 1 / numLoadSteps;
+                var ui = Kg.Solve(lf0 * f);
 
 				var uMatrix = Matrix<double>.Build.Dense(100, numDoFs);
 		        var fiMatrix = Matrix<double>.Build.Dense(100, numDoFs);
@@ -470,10 +463,10 @@ namespace SPMTool.Core
                 var thetaPnl1 = Matrix<double>.Build.Dense(100, 4);
 
                 // Initialize a loop for load steps
-                for (int loadStep = 1; loadStep <= loadSteps; loadStep++)
+                for (int loadStep = 1; loadStep <= numLoadSteps; loadStep++)
 				{
                     // Calculate the current load factor
-                    double lf = (double)loadStep / loadSteps;
+                    double lf = (double)loadStep / numLoadSteps;
 
                     // Get the force vector
                     var fs = lf * f;
@@ -481,7 +474,7 @@ namespace SPMTool.Core
 					Vector<double> fi = Vector<double>.Build.Dense(numDoFs);
 
 					// Initiate iterations
-					for (int it = 0; it < maxIterations; it++)
+					for (int it = 1; it <= maxIterations; it++)
 					{
 						// Calculate element displacements and forces
 						ElementAnalysis(ui);
@@ -493,7 +486,7 @@ namespace SPMTool.Core
 						var fr = fs - fi;
 
 						// Check convergence
-						if (EquilibriumConvergence(fr, ui - u0, it))
+						if (ConvergenceReached(fr, fs, tolerance, it))
 						{
 							AutoCAD.Current.edtr.WriteMessage("\nLS = " + loadStep + ": Iterations = " + it);
                             MonitoredDisplacements.Add(ui[monitoredIndex]);
@@ -501,14 +494,8 @@ namespace SPMTool.Core
                             break;
 						}
 
-						// Set initial displacements
-						u0 = ui;
-
-						// Calculate displacement increment
-						var du = Kg.Solve(fr);
-
 						// Increment displacements
-						ui += du;
+						ui += Kg.Solve(fr);
                     }
 
                     //var pnl = (Panel.NonLinear) Panels[0];
@@ -582,21 +569,29 @@ namespace SPMTool.Core
                 //DelimitedWriter.Write("D:/KPnl1.csv", KPnl, ";");
             }
 
-            // Set element displacements
-            //public override void ElementAnalysis(Vector<double> globalDisplacements)
-            //{
-	           // foreach (Stringer.NonLinear stringer in Stringers)
-	           // {
-		          //  stringer.Displacement(globalDisplacements);
-		          //  stringer.Analysis();
-	           // }
+            // Calculate convergence
+            private double Convergence(Vector<double> residualForces, Vector<double> appliedForces)
+            {
+	            double
+		            num = 0,
+		            den = 1;
 
-	           // foreach (Panel.NonLinear panel in Panels)
-	           // {
-		          //  panel.Displacement(globalDisplacements);
-		          //  panel.Analysis();
-	           // }
-            //}
+	            for (int i = 0; i < residualForces.Count; i++)
+	            {
+		            num += residualForces[i] * residualForces[i];
+		            den += appliedForces[i] * appliedForces[i];
+	            }
+
+	            return
+		            num / den;
+            }
+
+            // Verify if convergence is reached
+            private bool ConvergenceReached(double convergence, double tolerance, int iteration, int minIterations = 10) => convergence <= tolerance && iteration >= minIterations;
+
+            // Verify if convergence is reached
+            private bool ConvergenceReached(Vector<double> residualForces, Vector<double> appliedForces, double tolerance,
+	            int iteration, int minIterations = 10) => ConvergenceReached(Convergence(residualForces, appliedForces), tolerance, iteration, minIterations);
 
             // Verify convergence
             private bool EquilibriumConvergence(Vector<double> residualForces, Vector<double> residualDisplacements, int iteration)
