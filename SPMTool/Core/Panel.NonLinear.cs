@@ -5,6 +5,7 @@ using RCMembrane;
 using Concrete           = Material.Concrete.Biaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
 using Reinforcement      = Material.Reinforcement.Biaxial;
+using Behavior           = Material.Concrete.ModelBehavior;
 
 namespace SPMTool.Core
 {
@@ -13,26 +14,23 @@ namespace SPMTool.Core
         public class NonLinear : Panel
         {
             // Public Properties
-            public  Membrane[]                                                          IntegrationPoints  { get; set; }
-            public  double[]                                                            StringerDimensions { get; }
-            private Matrix<double>                                                      BAMatrix           { get; }
-            private Matrix<double>                                                      QMatrix            { get; }
-            private (Matrix<double> Pc, Matrix<double> Ps)                              PMatrix            { get; }
-            public (Matrix<double> Dc, Matrix<double> Ds)                               MaterialStiffness  { get; set; }
-            public (Vector<double> sigma, Vector<double> sigmaC, Vector<double> sigmaS) StressVector       { get; set; }
+            public  Membrane[]                                     IntegrationPoints  { get; set; }
+            public  double[]                                       StringerDimensions { get; }
+            private Matrix<double>                                 BAMatrix           { get; }
+            private Matrix<double>                                 QMatrix            { get; }
+            private (Matrix<double> Pc,     Matrix<double> Ps)     PMatrix            { get; }
+            public  (Matrix<double> Dc,     Matrix<double> Ds)     MaterialStiffness  { get; set; }
+            public  (Vector<double> sigmaC, Vector<double> sigmaS) MaterialStresses   { get; set; }
 
-            // Private Properties
-            private int LoadStep { get; set; }
-
-            public NonLinear(ObjectId panelObject, ConcreteParameters concreteParameters, Stringer[] stringers, Behavior behavior = Behavior.NonLinearMCFT) : base(panelObject, concreteParameters, behavior)
+            public NonLinear(ObjectId panelObject, ConcreteParameters concreteParameters, Stringer[] stringers, Behavior behavior = Behavior.MCFT) : base(panelObject, concreteParameters, behavior)
             {
                 // Get Stringer dimensions and effective ratio
                 StringerDimensions = StringersDimensions(stringers);
 
                 // Calculate initial matrices
-                BAMatrix = MatrixBA();
-                QMatrix  = MatrixQ();
-                PMatrix  = MatrixP();
+                BAMatrix = CalculateBA();
+                QMatrix  = CalculateQ();
+                PMatrix  = CalculateP();
 
                 // Initiate integration points
                 IntegrationPoints = IntPoints();
@@ -41,18 +39,140 @@ namespace SPMTool.Core
 				MaterialStiffness = InitialMaterialStiffness();
             }
 
-			// Get integration points
-			private Membrane[] IntPoints()
+            // Calculate panel strain vector
+            public Vector<double> StrainVector => BAMatrix * Displacements;
+
+			// Calculate stresses
+			public Vector<double> Stresses => MaterialStresses.sigmaC + MaterialStresses.sigmaS;
+
+			// Calculate stiffness
+			public override Matrix<double> GlobalStiffness
+			{
+				get
+				{
+					var (Pc, Ps) = PMatrix;
+					var (Dc, Ds) = MaterialStiffness;
+					var QPs = QMatrix * Ps;
+					var QPc = QMatrix * Pc;
+
+					var kc = QPc * Dc * BAMatrix;
+					var ks = QPs * Ds * BAMatrix;
+
+					return
+						kc + ks;
+				}
+			}
+
+			// Get principal strains in concrete
+			public Vector<double> ConcretePrincipalStrains
+			{
+				get
+				{
+					var epsilon = Vector<double>.Build.Dense(8);
+
+					for (int i = 0; i < 4; i++)
+					{
+						var (ec1, ec2) = IntegrationPoints[i].Concrete.PrincipalStrains;
+						epsilon[2 * i] = ec1;
+						epsilon[2 * i + 1] = ec2;
+					}
+
+					return epsilon;
+				}
+			}
+
+			public Vector<double> StrainAngles
+			{
+				get
+				{
+					var theta = Vector<double>.Build.Dense(4);
+
+					for (int i = 0; i < 4; i++)
+						theta[i] = IntegrationPoints[i].Concrete.PrincipalAngles.theta2;
+
+					return theta;
+				}
+			}
+
+			// Get principal stresses in concrete
+			public Vector<double> ConcretePrincipalStresses
+			{
+				get
+				{
+					var sigma = Vector<double>.Build.Dense(8);
+
+					for (int i = 0; i < 4; i++)
+					{
+						var (fc1, fc2) = IntegrationPoints[i].Concrete.PrincipalStresses;
+						sigma[2 * i] = fc1;
+						sigma[2 * i + 1] = fc2;
+					}
+
+					return sigma;
+				}
+			}
+
+			// Calculate panel stresses
+			public override Vector<double> AverageStresses
+			{
+				get
+				{
+					// Get stress vector
+					var sigma = Stresses;
+
+					// Calculate average stresses
+					double
+						sigxm = (sigma[0] + sigma[3] + sigma[6] + sigma[9]) / 4,
+						sigym = (sigma[1] + sigma[4] + sigma[7] + sigma[10]) / 4,
+						sigxym = (sigma[2] + sigma[5] + sigma[8] + sigma[11]) / 4;
+
+					return
+						Vector<double>.Build.DenseOfArray(new[] { sigxm, sigym, sigxym });
+				}
+			}
+
+			// Calculate principal stresses
+			// Theta is the angle of sigma 2
+			public override (Vector<double> sigma, double theta) PrincipalStresses
+			{
+				get
+				{
+					// Get average stresses
+					var sigm = AverageStresses;
+
+					// Calculate principal stresses by Mohr's Circle
+					double
+						rad = 0.5 * (sigm[0] + sigm[1]),
+						cen = Math.Sqrt(0.25 * (sigm[0] - sigm[1]) * (sigm[0] - sigm[1]) + sigm[2] * sigm[2]),
+						sig1 = cen + rad,
+						sig2 = cen - rad,
+						theta = Math.Atan((sig1 - sigm[1]) / sigm[2]) - Constants.PiOver2;
+
+					var sigma = Vector<double>.Build.DenseOfArray(new[] { sig1, sig2, 0 });
+
+					return
+						(sigma, theta);
+				}
+			}
+
+            // Get integration points
+            private Membrane[] IntPoints()
 			{
 				// Initiate integration points
 				var intPts = new Membrane[4];
 
-				if (PanelBehavior == Behavior.NonLinearMCFT)
-					for (int i = 0; i < 4; i++)
-						intPts[i] = new MCFT(Concrete, Reinforcement, Width);
-				else
-					for (int i = 0; i < 4; i++)
-						intPts[i] = new DSFM(Concrete, Reinforcement, Width);
+				switch (PanelBehavior)
+				{
+                    case Behavior.MCFT:
+	                    for (int i = 0; i < 4; i++)
+		                    intPts[i] = new MCFT(Concrete, Reinforcement, Width);
+						break;
+
+                    case Behavior.DSFM:
+	                    for (int i = 0; i < 4; i++)
+		                    intPts[i] = new DSFM(Concrete, Reinforcement, Width);
+	                    break;
+                }
 
 				return intPts;
 			}
@@ -85,7 +205,7 @@ namespace SPMTool.Core
             }
 
             // Calculate BA matrix
-            private Matrix<double> MatrixBA()
+            private Matrix<double> CalculateBA()
             {
                 var (a, b, c, d) = Dimensions;
 
@@ -165,7 +285,7 @@ namespace SPMTool.Core
             }
 
             // Calculate Q matrixS
-            private Matrix<double> MatrixQ()
+            private Matrix<double> CalculateQ()
             {
                 // Get dimensions
                 var (a, b, c, d) = Dimensions;
@@ -202,7 +322,7 @@ namespace SPMTool.Core
             }
 
             // Calculate P matrices for concrete and steel
-            private (Matrix<double> Pc, Matrix<double> Ps) MatrixP()
+            private (Matrix<double> Pc, Matrix<double> Ps) CalculateP()
             {
                 // Get dimensions
                 var (x, y) = VertexCoordinates;
@@ -289,12 +409,13 @@ namespace SPMTool.Core
 					});
 			}
 
-            // Calculate panel strain vector
-            public Vector<double> StrainVector => BAMatrix * Displacements;
-
             // Calculate D matrix and stress vector by MCFT
-            public override void Analysis()
+            public override void Analysis(Vector<double> globalDisplacements = null)
             {
+				// Set displacements
+				if (globalDisplacements != null)
+					SetDisplacements(globalDisplacements);
+
 	            // Get the vector strains and stresses
 	            var ev = StrainVector;
 
@@ -309,18 +430,18 @@ namespace SPMTool.Core
 	            }
 
 				// Calculate stresses and forces
-				StressVector = CalculateStresses();
-				Forces       = CalculateForces();
+				MaterialStresses = CalculateStresses();
+				Forces           = CalculateForces();
             }
 
             // Set results to panel integration points
-            public void Results()
+            public void UpdateStiffness()
             {
-	            MaterialStiffness = Material_Stiffness();
+	            MaterialStiffness = CalculateMaterialStiffness();
             }
 
             // Calculate DMatrix
-            public (Matrix<double> Dc, Matrix<double> Ds) Material_Stiffness()
+            public (Matrix<double> Dc, Matrix<double> Ds) CalculateMaterialStiffness()
             {
 	            var Dc = Matrix<double>.Build.Dense(12, 12);
 	            var Ds = Matrix<double>.Build.Dense(12, 12);
@@ -338,24 +459,6 @@ namespace SPMTool.Core
 
 	            return
 		            (Dc, Ds);
-            }
-
-            // Calculate stiffness
-            public override Matrix<double> GlobalStiffness
-            {
-                get
-                {
-                    var (Pc, Ps) = PMatrix;
-                    var (Dc, Ds) = MaterialStiffness;
-                    var QPs = QMatrix * Ps;
-                    var QPc = QMatrix * Pc;
-
-                    var kc = QPc * Dc * BAMatrix;
-                    var ks = QPs * Ds * BAMatrix;
-
-                    return
-                        kc + ks;
-                }
             }
 
             // Calculate tangent stiffness
@@ -376,14 +479,14 @@ namespace SPMTool.Core
 		            ud[i] = d;
 
 		            // Set displacements and do analysis
-		            Displacement(u + ud);
+		            SetDisplacements(u + ud);
 		            Analysis();
 
 		            // Get updated panel forces
 		            var fd1 = Forces;
 
 		            // Set displacements and do analysis
-		            Displacement(u - ud);
+		            SetDisplacements(u - ud);
 		            Analysis();
 
 		            // Get updated panel forces
@@ -397,13 +500,13 @@ namespace SPMTool.Core
 	            }
 
 	            // Set displacements again
-	            Displacement(u);
+	            SetDisplacements(u);
 
 	            return K;
             }
 
             // Get stress vector
-            public (Vector<double> sigma, Vector<double> sigmaC, Vector<double> sigmaS) CalculateStresses()
+            public (Vector<double> sigmaC, Vector<double> sigmaS) CalculateStresses()
             {
 	            var sigma = Vector<double>.Build.Dense(12);
 	            var sigmaC = Vector<double>.Build.Dense(12);
@@ -412,67 +515,16 @@ namespace SPMTool.Core
 	            for (int i = 0; i < 4; i++)
 	            {
 		            // Get the stiffness
-		            var sig  = IntegrationPoints[i].Stresses;
 		            var sigC = IntegrationPoints[i].Concrete.Stresses;
 		            var sigS = IntegrationPoints[i].Reinforcement.Stresses;
 
 		            // Set to stiffness
-		            sigma.SetSubVector (3 * i, 3, sig );
 		            sigmaC.SetSubVector(3 * i, 3, sigC);
 		            sigmaS.SetSubVector(3 * i, 3, sigS);
 	            }
 
 	            return
-		            (sigma, sigmaC, sigmaS);
-            }
-
-            // Get principal strains in concrete
-            public Vector<double> ConcretePrincipalStrains
-            {
-	            get
-	            {
-		            var epsilon = Vector<double>.Build.Dense(8);
-
-		            for (int i = 0; i < 4; i++)
-		            {
-			            var (ec1, ec2) = IntegrationPoints[i].Concrete.PrincipalStrains;
-			            epsilon[2 * i] = ec1;
-			            epsilon[2 * i + 1] = ec2;
-		            }
-
-		            return epsilon;
-	            }
-            }
-
-            public Vector<double> StrainAngles
-            {
-	            get
-	            {
-		            var theta = Vector<double>.Build.Dense(4);
-
-		            for (int i = 0; i < 4; i++)
-			            theta[i] = IntegrationPoints[i].Concrete.PrincipalAngles.theta2;
-
-		            return theta;
-	            }
-            }
-
-            // Get principal stresses in concrete
-            public Vector<double> ConcretePrincipalStresses
-            {
-	            get
-	            {
-		            var sigma = Vector<double>.Build.Dense(8);
-
-		            for (int i = 0; i < 4; i++)
-		            {
-			            var (fc1, fc2) = IntegrationPoints[i].Concrete.PrincipalStresses;
-			            sigma[2 * i] = fc1;
-			            sigma[2 * i + 1] = fc2;
-		            }
-
-		            return sigma;
-	            }
+		            (sigmaC, sigmaS);
             }
 
             // Calculate panel forces
@@ -487,7 +539,9 @@ namespace SPMTool.Core
 	            var t            = Width;
 
 	            // Get stresses
-	            var (sig, sigC, sigS)    = StressVector;
+	            var sig          = Stresses;
+	            var (sigC, sigS) = MaterialStresses;
+
 	            var (sig1, sigC1, sigS1) = (sig.SubVector(0, 3), sigC.SubVector(0, 3), sigS.SubVector(0, 3));
 	            var (sig2, sigC2, sigS2) = (sig.SubVector(3, 3), sigC.SubVector(3, 3), sigS.SubVector(3, 3));
 	            var (sig3, sigC3, sigS3) = (sig.SubVector(6, 3), sigC.SubVector(6, 3), sigS.SubVector(6, 3));
@@ -552,49 +606,6 @@ namespace SPMTool.Core
 
 					return value;
 				}
-            }
-
-            // Calculate panel stresses
-            public override Vector<double> AverageStresses
-            {
-                get
-                {
-                    // Get stress vector
-                    var sigma = StressVector.sigma;
-
-                    // Calculate average stresses
-                    double
-                        sigxm  = (sigma[0] + sigma[3] + sigma[6] + sigma[9 ]) / 4,
-                        sigym  = (sigma[1] + sigma[4] + sigma[7] + sigma[10]) / 4,
-                        sigxym = (sigma[2] + sigma[5] + sigma[8] + sigma[11]) / 4;
-
-                    return
-                        Vector<double>.Build.DenseOfArray(new[] { sigxm, sigym, sigxym });
-                }
-            }
-
-            // Calculate principal stresses
-            // Theta is the angle of sigma 2
-            public override (Vector<double> sigma, double theta) PrincipalStresses
-            {
-                get
-                {
-                    // Get average stresses
-                    var sigm = AverageStresses;
-
-                    // Calculate principal stresses by Mohr's Circle
-                    double
-                        rad = 0.5 * (sigm[0] + sigm[1]),
-                        cen = Math.Sqrt(0.25 * (sigm[0] - sigm[1]) * (sigm[0] - sigm[1]) + sigm[2] * sigm[2]),
-                        sig1 = cen + rad,
-                        sig2 = cen - rad,
-                        theta = Math.Atan((sig1 - sigm[1]) / sigm[2]) - Constants.PiOver2;
-
-                    var sigma = Vector<double>.Build.DenseOfArray(new[] { sig1, sig2, 0 });
-
-                    return
-                        (sigma, theta);
-                }
             }
 
             // Initial material stiffness

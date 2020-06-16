@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
 using ConcreteParameters = Material.Concrete.Parameters;
+using ModelBehavior      = Material.Concrete.ModelBehavior;
+using AnalysisType       = SPMTool.Core.Analysis.AnalysisType;
 
 namespace SPMTool.Core
 {
@@ -11,6 +14,7 @@ namespace SPMTool.Core
     {
 		// Properties
 		public ConcreteParameters ConcreteParameters { get; }
+		public ModelBehavior      ConcreteBehavior   { get; }
         public Node[]             Nodes              { get; }
 	    public Stringer[]         Stringers          { get; }
 	    public Panel[]            Panels             { get; }
@@ -24,10 +28,8 @@ namespace SPMTool.Core
 		private ObjectIdCollection NodeObjects      { get; }
 		private ObjectIdCollection StringerObjects  { get; }
 		private ObjectIdCollection PanelObjects     { get; }
-		private Stringer.Behavior  StringerBehavior { get; }
-		private Panel.Behavior     PanelBehavior    { get; }
 
-		public InputData(Stringer.Behavior stringerBehavior, Panel.Behavior panelBehavior)
+		public InputData(AnalysisType analysisType)
 		{
 			// Get the collection of elements in the model
 			NodeObjects     = Geometry.Node.UpdateNodes();
@@ -39,11 +41,7 @@ namespace SPMTool.Core
             Constraints = Constraint.ListOfConstraints();
 
 			// Get concrete data
-			ConcreteParameters = AutoCAD.Material.ReadConcreteData();
-
-			// Set the Behavior of elements
-			StringerBehavior = stringerBehavior;
-			PanelBehavior    = panelBehavior;
+			(ConcreteParameters, ConcreteBehavior) = AutoCAD.Material.ReadConcreteData().Value;
 
 			// Read nodes, forces and constraints indexes
 			Nodes           = ReadNodes();
@@ -51,11 +49,11 @@ namespace SPMTool.Core
 			ConstraintIndex = ConstraintsIndex();
 
 			// Read elements
-			Stringers = ReadStringers();
-			Panels    = ReadPanels();
+			Stringers = ReadStringers(analysisType, ConcreteBehavior);
+			Panels    = ReadPanels(analysisType, ConcreteBehavior);
 		}
 
-        // Read the parameters of nodes
+		// Read the parameters of nodes
         private Node[] ReadNodes()
 	    {
 		    Node[] nodes = new Node[NodeObjects.Count];
@@ -74,7 +72,7 @@ namespace SPMTool.Core
 	    }
 
         // Read parameters stringers
-        private Stringer[] ReadStringers()
+        private Stringer[] ReadStringers(AnalysisType analysisType, ModelBehavior concreteBehavior)
         {
 	        Stringer[] stringers = new Stringer[StringerObjects.Count];
 
@@ -82,25 +80,17 @@ namespace SPMTool.Core
 	        {
 		        Stringer stringer = null;
 
-                // Verify the stringer Behavior
-                switch (StringerBehavior)
-                {
-                    case Stringer.Behavior.Linear:
-	                    stringer = new Stringer.Linear(strObj, ConcreteParameters);
+				// Verify analysis type
+				switch (analysisType)
+				{
+					case AnalysisType.Linear:
+						stringer = new Stringer.Linear(strObj, ConcreteParameters);
 						break;
 
-                    case Stringer.Behavior.NonLinearClassic:
-	                    stringer = new Stringer.NonLinear.Classic(strObj, ConcreteParameters);
-						break;
-
-      //              case Stringer.Behavior.NonLinearMC2010:
-	     //               stringer = new Stringer.NonLinear.MC2010(strObj, ConcreteParameters);
-						//break;
-
-                    case Stringer.Behavior.NonLinearMCFT:
-	                    stringer = new Stringer.NonLinear.MCFT(strObj, ConcreteParameters);
-						break;
-                }
+                    case AnalysisType.Nonlinear:
+	                    stringer = new Stringer.NonLinear(strObj, ConcreteParameters, concreteBehavior);
+                        break;
+				}
 
 				// Set to the array
                 int i = stringer.Number - 1;
@@ -112,7 +102,7 @@ namespace SPMTool.Core
         }
 
         // Read parameters of panels
-        private Panel[] ReadPanels()
+        private Panel[] ReadPanels(AnalysisType analysisType, ModelBehavior concreteBehavior)
         {
 	        Panel[] panels = new Panel[PanelObjects.Count];
 
@@ -120,22 +110,19 @@ namespace SPMTool.Core
 	        {
 		        Panel panel = null;
 
-		        switch (PanelBehavior)
+		        // Verify analysis type
+		        switch (analysisType)
 		        {
-                    case Panel.Behavior.Linear:
-	                    panel = new Panel.Linear(pnlObj, ConcreteParameters);
-						break;
+			        case AnalysisType.Linear:
+				        panel = new Panel.Linear(pnlObj, ConcreteParameters);
+				        break;
 
-                    case Panel.Behavior.NonLinearMCFT:
-	                    panel = new Panel.NonLinear(pnlObj, ConcreteParameters, Stringers);
+			        case AnalysisType.Nonlinear:
+				        panel = new Panel.NonLinear(pnlObj, ConcreteParameters, Stringers, concreteBehavior);
 						break;
+		        }
 
-                    case Panel.Behavior.NonLinearDSFM:
-	                    panel = new Panel.NonLinear(pnlObj, ConcreteParameters, Stringers, Panel.Behavior.NonLinearDSFM);
-						break;
-                }
-
-                // Set to the array
+		        // Set to the array
                 int i     = panel.Number - 1;
 		        panels[i] = panel;
 	        }

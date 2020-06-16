@@ -123,7 +123,7 @@ namespace SPMTool.Core
         }
 
         // Get nodal displacements
-        public void Displacements(Vector<double> displacementVector)
+        public void SetDisplacements(Vector<double> displacementVector)
         {
 	        var u = displacementVector;
 

@@ -9,6 +9,13 @@ namespace SPMTool.Core
 {
     public abstract class Analysis
     {
+		// Type of analysis
+		public enum AnalysisType
+		{
+			Linear,
+			Nonlinear
+		}
+
         // Public Properties
 		public Vector<double> DisplacementVector { get; set; }
 		public Matrix<double> GlobalStiffness    { get; set; }
@@ -19,12 +26,8 @@ namespace SPMTool.Core
         public int[]          Constraints        { get; }
 
         // Constructor
-        public Analysis(InputData inputData = null)
+        public Analysis(InputData inputData)
 		{
-			// Get input data
-			if (inputData == null)
-				inputData = new InputData(Stringer.Behavior.Linear, Panel.Behavior.Linear);
-
             // Get elements
             Nodes       = inputData.Nodes;
 			Stringers   = inputData.Stringers;
@@ -35,6 +38,50 @@ namespace SPMTool.Core
 
 		// Get the number of DoFs
 		private int numDoFs => 2 * Nodes.Length;
+
+		// Calculate maximum Stringer force
+		public double MaxStringerForce
+		{
+			get
+			{
+				// Create a list to store the maximum Stringer forces
+				var strForces = new List<double>();
+
+				foreach (var str in Stringers)
+					// Add to the list of forces
+					strForces.Add(str.MaxForce);
+
+				// Verify the maximum Stringer force
+				return
+					strForces.MaximumAbsolute();
+			}
+		}
+
+		// Calculate maximum panel force
+		public double MaxPanelForce
+		{
+			get
+			{
+				if (Panels.Length > 0)
+				{
+					// Create a list to store the maximum panel forces
+					var pnlForces = new List<double>();
+
+					foreach (var pnl in Panels)
+						// Add to the list of forces
+						pnlForces.Add(pnl.MaxForce);
+
+					// Verify the maximum panel force
+					return
+						pnlForces.MaximumAbsolute();
+				}
+
+				return 0;
+			}
+		}
+
+		// Get maximum element force
+		private double MaxElementForce => Math.Max(MaxStringerForce, MaxPanelForce);
 
         // Calculate Global Stiffness
         private Matrix<double> Global_Stiffness(Vector<double> forceVector = null, bool simplify = true)
@@ -163,68 +210,18 @@ namespace SPMTool.Core
         private void ElementAnalysis(Vector<double> globalDisplacements)
         {
 	        foreach (var stringer in Stringers)
-	        {
-		        stringer.Displacement(globalDisplacements);
-				stringer.Analysis();
-	        }
+				stringer.Analysis(globalDisplacements);
 
 	        foreach (var panel in Panels)
-	        {
-		        panel.Displacement(globalDisplacements);
-				panel.Analysis();
-	        }
+				panel.Analysis(globalDisplacements);
         }
 
 		// Set nodal displacements
 		private void NodalDisplacements(Vector<double> globalDisplacements)
 		{
 			foreach (var node in Nodes)
-				node.Displacements(globalDisplacements);
+				node.SetDisplacements(globalDisplacements);
 		}
-
-        // Calculate maximum Stringer force
-        public double MaxStringerForce
-        {
-	        get
-	        {
-		        // Create a list to store the maximum Stringer forces
-		        var strForces = new List<double>();
-
-                foreach (var str in Stringers)
-			        // Add to the list of forces
-			        strForces.Add(str.MaxForce);
-
-		        // Verify the maximum Stringer force
-		        return
-			        strForces.MaximumAbsolute();
-            }
-        }
-
-        // Calculate maximum panel force
-        public double MaxPanelForce
-        {
-	        get
-	        {
-		        if (Panels.Length > 0)
-		        {
-			        // Create a list to store the maximum panel forces
-			        var pnlForces = new List<double>();
-
-			        foreach (var pnl in Panels)
-				        // Add to the list of forces
-				        pnlForces.Add(pnl.MaxForce);
-
-			        // Verify the maximum panel force
-			        return
-				        pnlForces.MaximumAbsolute();
-		        }
-
-		        return 0;
-	        }
-        }
-
-        // Get maximum element force
-        private double MaxElementForce => Math.Max(MaxStringerForce, MaxPanelForce);
 
         // Get the list of continued stringers
         public List<(int str1, int str2)> ContinuedStringers(Stringer[] stringers)
@@ -405,7 +402,7 @@ namespace SPMTool.Core
 
         public sealed class Linear : Analysis
         {
-	        public Linear(InputData inputData = null, double loadFactor = 1) : base(inputData)
+	        public Linear(InputData inputData, double loadFactor = 1) : base(inputData)
             {
                 // Get force Vector
                 var f = loadFactor * ForceVector;
@@ -587,11 +584,11 @@ namespace SPMTool.Core
             }
 
             // Verify if convergence is reached
-            private bool ConvergenceReached(double convergence, double tolerance, int iteration, int minIterations = 10) => convergence <= tolerance && iteration >= minIterations;
+            private bool ConvergenceReached(double convergence, double tolerance, int iteration, int minIterations = 5) => convergence <= tolerance && iteration >= minIterations;
 
             // Verify if convergence is reached
             private bool ConvergenceReached(Vector<double> residualForces, Vector<double> appliedForces, double tolerance,
-	            int iteration, int minIterations = 10) => ConvergenceReached(Convergence(residualForces, appliedForces), tolerance, iteration, minIterations);
+	            int iteration, int minIterations = 5) => ConvergenceReached(Convergence(residualForces, appliedForces), tolerance, iteration, minIterations);
 
             // Verify convergence
             private bool EquilibriumConvergence(Vector<double> residualForces, Vector<double> residualDisplacements, int iteration)
@@ -665,7 +662,7 @@ namespace SPMTool.Core
                     stringer.Results();
 
                 foreach (Panel.NonLinear panel in Panels)
-					panel.Results();
+					panel.UpdateStiffness();
 			}
         }
     }

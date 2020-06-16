@@ -2,6 +2,7 @@
 using MathNet.Numerics.LinearAlgebra;
 using Concrete           = Material.Concrete.Uniaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
+using Behavior           = Material.Concrete.ModelBehavior;
 
 namespace SPMTool.Core
 {
@@ -9,13 +10,8 @@ namespace SPMTool.Core
 	{
         public class Linear : Stringer
         {
-            // Private properties
-            private double L  => Length;
-            private double Ac => ConcreteArea;
-            private double Ec => Concrete.Ec;
-
             // Constructor
-            public Linear(ObjectId stringerObject, ConcreteParameters concreteParameters) : base(stringerObject, concreteParameters)
+            public Linear(ObjectId stringerObject, ConcreteParameters concreteParameters, Behavior concreteBehavior = Behavior.Linear) : base(stringerObject, concreteParameters, concreteBehavior)
             {
             }
 
@@ -25,11 +21,11 @@ namespace SPMTool.Core
                 get
                 {
                     // Calculate the constant factor of stiffness
-                    double EcAOverL = Ec * Ac / L;
+                    double EcA_L = Concrete.Ec * Area / Length;
 
                     // Calculate the local stiffness matrix
                     return
-                        EcAOverL * Matrix<double>.Build.DenseOfArray(new double[,]
+                        EcA_L * Matrix<double>.Build.DenseOfArray(new double[,]
                         {
                             {  4, -6,  2 },
                             { -6, 12, -6 },
@@ -55,9 +51,13 @@ namespace SPMTool.Core
 			}
 
 			// Calculate forces
-			public override void Analysis()
+			public override void Analysis(Vector<double> globalDisplacements = null, int numStrainSteps = 5)
 			{
-				Forces = CalculateForces();
+				// Set displacements
+				if (globalDisplacements != null)
+					SetDisplacements(globalDisplacements);
+
+                Forces = CalculateForces();
 			}
         }
 	}

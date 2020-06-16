@@ -7,6 +7,7 @@ using ConcreteData       = SPMTool.XData.Concrete;
 using AggregateType      = Material.Concrete.AggregateType;
 using ConcreteParameters = Material.Concrete.Parameters;
 using ParameterModel     = Material.Concrete.ModelParameters;
+using BehaviorModel      = Material.Concrete.ModelBehavior;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Material))]
 
@@ -48,26 +49,30 @@ namespace SPMTool.AutoCAD
 				ecu   = 0.0035;
 
 			string
-				model = MC2010,
-				agrgt = Quartzite;
+				model    = MC2010,
+				agrgt    = Quartzite,
+				behavior = BehaviorModel.MCFT.ToString();
 
             // Read data
-            var concrete = ReadConcreteData();
+            var concreteData = ReadConcreteData();
 
-            if (concrete != null)
+            if (concreteData.HasValue)
             {
-                fc    = concrete.Strength;
-                phiAg = concrete.AggregateDiameter;
-                fcr   = concrete.TensileStrength;
-                Ec    = concrete.InitialModule;
-                ec    = -concrete.PlasticStrain;
-                ecu   = -concrete.UltimateStrain;
-                model = concrete.GetType().Name;
-                agrgt = concrete.Type.ToString();
+                var parameters = concreteData.Value.parameters;
+
+                fc       =  parameters.Strength;
+                phiAg    =  parameters.AggregateDiameter;
+                fcr      =  parameters.TensileStrength;
+                Ec       =  parameters.InitialModule;
+                ec       = -parameters.PlasticStrain;
+                ecu      = -parameters.UltimateStrain;
+                model    =  parameters.GetType().Name;
+                agrgt    =  parameters.Type.ToString();
+                behavior =  concreteData.Value.behavior.ToString();
             }
 
             // Ask the user choose concrete model parameters
-            var modelOptions = new[]
+            var parOps = new[]
 			{
 				MC2010,
 				NBR6118,
@@ -76,9 +81,21 @@ namespace SPMTool.AutoCAD
 				Custom
 			};
 
-			var mOp = UserInput.SelectKeyword("Choose model of concrete parameters:", modelOptions, model);
+			var parOp = UserInput.SelectKeyword("Choose model of concrete parameters:", parOps, model);
 
-			if (!mOp.HasValue)
+			if (!parOp.HasValue)
+				return;
+
+            // Ask the user choose concrete model parameters
+            var bhOps = new[]
+			{
+				BehaviorModel.MCFT.ToString(),
+				BehaviorModel.DSFM.ToString()
+			};
+
+			var bhOp = UserInput.SelectKeyword("Choose concrete behavior:", bhOps, behavior);
+
+			if (!bhOp.HasValue)
 				return;
 
             // Ask the user to input the concrete compressive strength
@@ -108,12 +125,15 @@ namespace SPMTool.AutoCAD
 				return;
 
             // Get values
-            model = mOp.Value.keyword;
-            fc    = fcn.Value;
-            agrgt = agn.Value.keyword;
-            phiAg = phin.Value;
+            model    = parOp.Value.keyword;
+            fc       = fcn.Value;
+            agrgt    = agn.Value.keyword;
+            phiAg    = phin.Value;
+            behavior = bhOp.Value.keyword;
+
             var aggType   = (AggregateType) Enum.Parse(typeof(AggregateType), agrgt);
             var modelType = (ParameterModel) Enum.Parse(typeof(ParameterModel), model);
+            var bhType    = (BehaviorModel) Enum.Parse(typeof(BehaviorModel), behavior);
 
 			// Get custom values from user
             if (modelType == ParameterModel.Custom)
@@ -152,6 +172,7 @@ namespace SPMTool.AutoCAD
             data[(int)ConcreteData.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
             data[(int)ConcreteData.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
             data[(int)ConcreteData.Model]    = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)modelType);
+            data[(int)ConcreteData.Behavior] = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)bhType);
             data[(int)ConcreteData.fc]       = new TypedValue((int)DxfCode.ExtendedDataReal,        fc);
             data[(int)ConcreteData.AggType]  = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)aggType);
             data[(int)ConcreteData.AggDiam]  = new TypedValue((int)DxfCode.ExtendedDataReal,        phiAg);
@@ -173,8 +194,8 @@ namespace SPMTool.AutoCAD
 			string concmsg;
 
             // Write the concrete parameters
-            if (concrete != null)
-	            concmsg = concrete.ToString();
+            if (concrete.HasValue)
+	            concmsg = concrete.Value.parameters.ToString();
 
             else
 	            concmsg = "Concrete parameters not set";
@@ -184,7 +205,7 @@ namespace SPMTool.AutoCAD
         }
 
         // Read the concrete parameters
-        public static ConcreteParameters ReadConcreteData()
+        public static (ConcreteParameters parameters, BehaviorModel behavior)? ReadConcreteData()
 		{
 			var data = Auxiliary.ReadDictionaryEntry(ConcreteParams);
 
@@ -192,42 +213,48 @@ namespace SPMTool.AutoCAD
 				return null;
 
 			// Get the parameters from XData
-			var par     = (ParameterModel)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
-			var aggType = (AggregateType)Convert.ToInt32(data[(int) ConcreteData.AggType].Value);
+			var par      = (ParameterModel)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
+			var behavior = (BehaviorModel)Convert.ToInt32(data[(int) ConcreteData.Behavior].Value);
+			var aggType  = (AggregateType)Convert.ToInt32(data[(int) ConcreteData.AggType].Value);
 
 			double
                 fc      = Convert.ToDouble(data[(int)ConcreteData.fc].Value),
 				phiAg   = Convert.ToDouble(data[(int)ConcreteData.AggDiam].Value);
 
 			// Verify which parameters are set
+			ConcreteParameters parameters = null;
+
 			switch (par)
 			{
                 case ParameterModel.MC2010:
-					return
-						new ConcreteParameters.MC2010(fc, phiAg, aggType);
+					parameters = new ConcreteParameters.MC2010(fc, phiAg, aggType);
+					break;
 
                 case ParameterModel.NBR6118:
-					return
-						new ConcreteParameters.NBR6118(fc, phiAg, aggType);
+					parameters = new ConcreteParameters.NBR6118(fc, phiAg, aggType);
+					break;
 
                 case ParameterModel.MCFT:
-					return
-						new ConcreteParameters.MCFT(fc, phiAg, aggType);
+					parameters = new ConcreteParameters.MCFT(fc, phiAg, aggType);
+					break;
 
                 case ParameterModel.DSFM:
-					return
-						new ConcreteParameters.DSFM(fc, phiAg, aggType);
+					parameters = new ConcreteParameters.DSFM(fc, phiAg, aggType);
+					break;
+
+                case ParameterModel.Custom:
+	                // Get additional parameters
+	                double
+		                fcr = Convert.ToDouble(data[(int)ConcreteData.fcr].Value),
+		                Ec  = Convert.ToDouble(data[(int)ConcreteData.Ec].Value),
+		                ec  = -Convert.ToDouble(data[(int)ConcreteData.ec].Value),
+		                ecu = -Convert.ToDouble(data[(int)ConcreteData.ecu].Value);
+	                parameters = new ConcreteParameters.Custom(fc, phiAg, fcr, Ec, ec, ecu);
+                    break;
             }
 
-			// Get additional parameters
-			double
-				fcr =  Convert.ToDouble(data[(int) ConcreteData.fcr].Value),
-				Ec  =  Convert.ToDouble(data[(int) ConcreteData.Ec].Value),
-				ec  = -Convert.ToDouble(data[(int) ConcreteData.ec].Value),
-				ecu = -Convert.ToDouble(data[(int) ConcreteData.ecu].Value);
-
 			return
-				new ConcreteParameters.Custom(fc, phiAg, fcr, Ec, ec, ecu);
+				(parameters, behavior);
 		}
     }
 }

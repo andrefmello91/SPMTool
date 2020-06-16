@@ -15,9 +15,10 @@ namespace SPMTool.Core
 		public ObjectId         SupportObject { get; }
 		public Point3d          Position      { get; }
 		public (bool X, bool Y) Direction     { get; }
+		public override int[]   DoFIndex      { get; }
 
-		// Constructor
-		public Constraint(ObjectId supportObject)
+        // Constructor
+        public Constraint(ObjectId supportObject)
 		{
 			SupportObject = supportObject;
 
@@ -84,7 +85,6 @@ namespace SPMTool.Core
 				"Support conditions: " + sup;
         }
 
-		public override int[] DoFIndex { get; }
 	}
 
 }

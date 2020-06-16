@@ -3,6 +3,7 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using SPMTool.Core;
 using SPMTool.UserInterface;
+using AnalysisType = SPMTool.Core.Analysis.AnalysisType;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Results))]
 
@@ -13,9 +14,8 @@ namespace SPMTool.AutoCAD
 		[CommandMethod("DoLinearAnalysis")]
 		public static void DoLinearAnalysis()
 		{
-
             // Get input data
-            InputData input = new InputData(Stringer.Behavior.Linear, Panel.Behavior.Linear);
+            InputData input = new InputData(AnalysisType.Linear);
 
 			if (input.ConcreteParameters.IsSet)
 			{
@@ -33,13 +33,10 @@ namespace SPMTool.AutoCAD
 		[CommandMethod("DoNonLinearAnalysis")]
 		public static void DoNonLinearAnalysis()
 		{
-            // Get elements behavior
-            var (strBehavior, pnlBehavior) = Config.ReadBehavior();
-
 			// Get input data
-			InputData input = new InputData(Stringer.Behavior.NonLinearMCFT, Panel.Behavior.NonLinearMCFT);
+			InputData input = new InputData(AnalysisType.Nonlinear);
 
-			if (input.ConcreteParameters.IsSet && (strBehavior, pnlBehavior) != default)
+			if (input.ConcreteParameters.IsSet)
 			{
 				// Get the index of node to monitor displacement
 				var uIndexn = MonitoredIndex();

@@ -4,6 +4,7 @@ using MathNet.Numerics.LinearAlgebra;
 using Concrete           = Material.Concrete.Biaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
 using Reinforcement      = Material.Reinforcement.Biaxial;
+using Behavior           = Material.Concrete.ModelBehavior;
 
 namespace SPMTool.Core
 {
@@ -21,6 +22,70 @@ namespace SPMTool.Core
 
                 // Calculate panel stiffness
                 LocalStiffness = Stiffness();
+            }
+
+            // Calculate global stiffness
+            public override Matrix<double> GlobalStiffness => TransMatrix.Transpose() * LocalStiffness * TransMatrix;
+
+            // Calculate panel stresses
+            public override Vector<double> AverageStresses
+            {
+                get
+                {
+                    // Get the dimensions as a vector
+                    var lsV = Vector<double>.Build.DenseOfArray(Edges.Length);
+
+                    // Calculate the shear stresses
+                    var tau = Forces / (lsV * Width);
+
+                    // Calculate the average stress
+                    double tauAvg = (-tau[0] + tau[1] - tau[2] + tau[3]) / 4;
+
+                    return
+                        Vector<double>.Build.DenseOfArray(new[] { 0, 0, tauAvg });
+                }
+            }
+
+            // Calculate principal stresses by Equilibrium Plasticity Truss Model
+            // Theta is the angle of sigma 2
+            public override (Vector<double> sigma, double theta) PrincipalStresses
+            {
+                get
+                {
+                    double sig2;
+
+                    // Get shear stress
+                    double tau = AverageStresses[2];
+
+                    // Get steel strengths
+                    double
+                        fyx = Reinforcement.Steel.X.YieldStress,
+                        fyy = Reinforcement.Steel.Y.YieldStress;
+
+                    if (fyx == fyy)
+                        sig2 = -2 * Math.Abs(tau);
+
+                    else
+                    {
+                        // Get relation of steel strengths
+                        double rLambda = Math.Sqrt(fyx / fyy);
+                        sig2 = -Math.Abs(tau) * (rLambda + 1 / rLambda);
+                    }
+
+                    var sigma = Vector<double>.Build.DenseOfArray(new[] { 0, sig2, 0 });
+
+                    // Calculate theta
+                    double theta;
+
+                    if (tau <= 0)
+                        theta = Constants.PiOver4;
+
+                    else
+                        theta = -Constants.PiOver4;
+
+                    return
+                        (sigma, theta);
+                }
             }
 
             // Calculate transformation matrix
@@ -56,9 +121,6 @@ namespace SPMTool.Core
                 return
                     NonRectangularPanelStiffness();
             }
-
-            // Calculate global stiffness
-            public override Matrix<double> GlobalStiffness => TransMatrix.Transpose() * LocalStiffness * TransMatrix;
 
             // Calculate local stiffness of a rectangular panel
             private Matrix<double> RectangularPanelStiffness()
@@ -201,70 +263,13 @@ namespace SPMTool.Core
 	            return fl;
             }
 
-            // Calculate panel stresses
-            public override Vector<double> AverageStresses
-            {
-                get
-                {
-                    // Get the dimensions as a vector
-                    var lsV = Vector<double>.Build.DenseOfArray(Edges.Length);
-
-                    // Calculate the shear stresses
-                    var tau = Forces / (lsV * Width);
-
-                    // Calculate the average stress
-                    double tauAvg = (-tau[0] + tau[1] - tau[2] + tau[3]) / 4;
-
-                    return
-                        Vector<double>.Build.DenseOfArray(new[] { 0, 0, tauAvg });
-                }
-            }
-
-            // Calculate principal stresses by Equilibrium Plasticity Truss Model
-            // Theta is the angle of sigma 2
-            public override (Vector<double> sigma, double theta) PrincipalStresses
-            {
-                get
-                {
-                    double sig2;
-
-                    // Get shear stress
-                    double tau = AverageStresses[2];
-
-                    // Get steel strengths
-                    double
-                        fyx = Reinforcement.Steel.X.YieldStress,
-                        fyy = Reinforcement.Steel.Y.YieldStress;
-
-                    if (fyx == fyy)
-                        sig2 = -2 * Math.Abs(tau);
-
-                    else
-                    {
-                        // Get relation of steel strengths
-                        double rLambda = Math.Sqrt(fyx / fyy);
-                        sig2 = -Math.Abs(tau) * (rLambda + 1 / rLambda);
-                    }
-
-                    var sigma = Vector<double>.Build.DenseOfArray(new[] { 0, sig2, 0 });
-
-                    // Calculate theta
-                    double theta;
-
-                    if (tau <= 0)
-                        theta = Constants.PiOver4;
-
-                    else
-                        theta = -Constants.PiOver4;
-
-                    return
-                        (sigma, theta);
-                }
-            }
-
 			// Calculate forces
-			public override void Analysis()
+			public override void Analysis(Vector<double> globalDisplacements = null)
 			{
+				// Set displacements
+				if (globalDisplacements != null)
+					SetDisplacements(globalDisplacements);
+
 				Forces = CalculateForces();
 			}
         }

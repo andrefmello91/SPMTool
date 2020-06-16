@@ -124,6 +124,7 @@
 			AppName,
 			XDataStr,
 			Model,
+			Behavior,
 			fc,
 			AggType,
 			AggDiam,

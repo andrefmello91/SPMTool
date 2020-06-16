@@ -8,21 +8,12 @@ using ConcreteParameters = Material.Concrete.Parameters;
 using Concrete           = Material.Concrete.Uniaxial;
 using Reinforcement      = Material.Reinforcement.Uniaxial;
 using StringerData       = SPMTool.XData.Stringer;
+using Behavior           = Material.Concrete.ModelBehavior;
 
 namespace SPMTool.Core
 {
 	public partial class Stringer : SPMElement
 	{
-		// Enum for setting Stringer behavior
-		public enum Behavior
-		{
-			Linear,
-			NonLinearClassic,
-			NonLinearMC2010,
-			NonLinearMCFT,
-			NonLinearDSFM
-		}
-
         // Stringer properties
 		public int[]                   Grips            { get; }
 		public Point3d[]               PointsConnected  { get; }
@@ -38,7 +29,7 @@ namespace SPMTool.Core
 		public Vector<double>          Displacements    { get; set; }
 
 		// Constructor
-		public Stringer(ObjectId stringerObject, ConcreteParameters concreteParameters = null)
+		public Stringer(ObjectId stringerObject, ConcreteParameters concreteParameters = null, Behavior concreteBehavior = Behavior.Linear)
 		{
 			ObjectId = stringerObject;
 
@@ -74,7 +65,7 @@ namespace SPMTool.Core
 			Height = Convert.ToDouble(data[(int) StringerData.Height].Value);
 
 			// Get concrete
-			Concrete = new Concrete(concreteParameters, Area);
+			Concrete = new Concrete(concreteParameters, Area, concreteBehavior);
 
             // Get reinforcement
             int numOfBars = Convert.ToInt32 (data[(int) StringerData.NumOfBars].Value);
@@ -113,44 +104,8 @@ namespace SPMTool.Core
 		public double Area         => Width * Height;
         public double ConcreteArea => Area - SteelArea;
 
-		// Calculate the transformation matrix
-		private Matrix<double> TransformationMatrix()
-		{
-			// Get the direction cosines
-			var (l, m) = DirectionCosines;
-
-			// Obtain the transformation matrix
-			return Matrix<double>.Build.DenseOfArray(new double[,]
-			{
-				{l, m, 0, 0, 0, 0 },
-				{0, 0, l, m, 0, 0 },
-				{0, 0, 0, 0, l, m }
-			});
-		}
-
 		// Calculate global stiffness
 		public Matrix<double> GlobalStiffness => TransMatrix.Transpose() * LocalStiffness * TransMatrix;
-
-		// Get Stringer displacements from global displacement vector
-		public void Displacement(Vector<double> globalDisplacementVector)
-		{
-			var u = globalDisplacementVector;
-			int[] ind = DoFIndex;
-
-			// Get the displacements
-			var us = Vector<double>.Build.Dense(6);
-			for (int i = 0; i < ind.Length; i++)
-			{
-				// Global index
-				int j = ind[i];
-
-				// Set values
-				us[i] = u[j];
-			}
-
-			// Set
-			Displacements = us;
-		}
 
 		// Calculate local displacements
 		public Vector<double> LocalDisplacements => TransMatrix * Displacements;
@@ -161,8 +116,44 @@ namespace SPMTool.Core
         // Maximum Stringer force
         public double MaxForce => Forces.AbsoluteMaximum();
 
-		// Results
-		public virtual void Analysis()
+        // Calculate the transformation matrix
+        private Matrix<double> TransformationMatrix()
+        {
+	        // Get the direction cosines
+	        var (l, m) = DirectionCosines;
+
+	        // Obtain the transformation matrix
+	        return Matrix<double>.Build.DenseOfArray(new double[,]
+	        {
+		        {l, m, 0, 0, 0, 0 },
+		        {0, 0, l, m, 0, 0 },
+		        {0, 0, 0, 0, l, m }
+	        });
+        }
+
+        // Get Stringer displacements from global displacement vector
+        public void SetDisplacements(Vector<double> globalDisplacementVector)
+        {
+	        var u = globalDisplacementVector;
+	        int[] ind = DoFIndex;
+
+	        // Get the displacements
+	        var us = Vector<double>.Build.Dense(6);
+	        for (int i = 0; i < ind.Length; i++)
+	        {
+		        // Global index
+		        int j = ind[i];
+
+		        // Set values
+		        us[i] = u[j];
+	        }
+
+	        // Set
+	        Displacements = us;
+        }
+
+        // Results
+        public virtual void Analysis(Vector<double> globalDisplacements = null, int numStrainSteps = 5)
 		{
 		}
 

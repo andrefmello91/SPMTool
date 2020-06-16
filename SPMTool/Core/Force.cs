@@ -22,9 +22,10 @@ namespace SPMTool.Core
 		public double         Value       { get; }
 		public Point3d        Position    { get; }
 		public ForceDirection Direction   { get; }
+		public override int[] DoFIndex { get; }
 
-		// Constructor
-		public Force(ObjectId forceObject)
+        // Constructor
+        public Force(ObjectId forceObject)
 		{
 			ForceObject = forceObject;
 
@@ -72,7 +73,6 @@ namespace SPMTool.Core
 				"Fy = " + Value + " kN";
 		}
 
-		public override int[] DoFIndex { get; }
 	}
 
 }
