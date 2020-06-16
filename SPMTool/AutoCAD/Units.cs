@@ -101,7 +101,7 @@ namespace SPMTool.AutoCAD
 			{
 				TypedValue[] data = Auxiliary.ReadDictionaryEntry(Units);
 
-				if (data == null)
+				if (data is null)
 					return
 						new Units();
 

@@ -219,8 +219,7 @@ namespace SPMTool.AutoCAD
 			// Get the node number at the position
 			public static int GetNodeNumber(Point3d position, ObjectIdCollection nodes = null)
 			{
-				if (nodes == null)
-					nodes = AllNodes();
+				nodes = nodes ?? AllNodes();
 
 				// Initiate the node number
 				int ndNum = 0;

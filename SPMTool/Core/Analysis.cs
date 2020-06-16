@@ -192,12 +192,10 @@ namespace SPMTool.Core
 		// Calculate force vector including reactions
 		public Vector<double> ForcesAndReactions(Vector<double> globalDisplacements = null, Matrix<double> globalStiffness = null)
 		{
-			if (globalDisplacements == null)
-				globalDisplacements = DisplacementVector;
+			globalDisplacements = globalDisplacements ?? DisplacementVector;
 
 			// Get global stiffness not simplified
-			if (globalStiffness == null)
-				globalStiffness = Global_Stiffness(null, false);
+			globalStiffness = globalStiffness ?? Global_Stiffness(null, false);
 
 			// Calculate forces and reactions
 			var f = globalStiffness * globalDisplacements;

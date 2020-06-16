@@ -826,16 +826,13 @@ namespace SPMTool.AutoCAD
 		[CommandMethod("ViewElementData")]
 		public static void ViewElementData()
 		{
-			// Initialize a message to display
-			string msgstr = "";
-
 			// Start a loop for viewing continuous elements
 			for ( ; ; )
 			{
 				// Get the entity for read
 				Entity ent = UserInput.SelectEntity("Select an element to view data:", SPMElement.layers);
 
-				if (ent == null)
+				if (ent is null)
 					return;
 
 				// Read the element

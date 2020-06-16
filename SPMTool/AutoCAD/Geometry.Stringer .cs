@@ -43,8 +43,7 @@ namespace SPMTool.AutoCAD
             public Stringer(Point3d startPoint, Point3d endPoint, List<PointsConnected> stringerList = null)
 			{
 				// Get the list of stringers if it's not imposed
-				if (stringerList == null)
-					stringerList = ListOfStringerPoints();
+				stringerList = stringerList ?? ListOfStringerPoints();
 
 				var points = new PointsConnected(startPoint, endPoint);
 
@@ -87,7 +86,7 @@ namespace SPMTool.AutoCAD
 				// Prompt for the start point of Stringer
 				var stPtn = UserInput.GetPoint("Enter the start point:");
 
-				if (stPtn == null)
+				if (stPtn is null)
 					return;
 
 				var stPt = stPtn.Value;
@@ -102,11 +101,9 @@ namespace SPMTool.AutoCAD
 						// Prompt for the start point of Stringer
 						var endPtn = UserInput.GetPoint("Enter the end point:", stPt);
 
-						if (endPtn == null)
-						{
+						if (endPtn is null)
 							// Finish command
 							break;
-						}
 
 						var endPt = endPtn.Value;
 
@@ -150,7 +147,7 @@ namespace SPMTool.AutoCAD
 				// Prompt for select stringers
 				var strs = UserInput.SelectStringers("Select stringers to divide");
 
-				if (strs == null)
+				if (strs is null)
 					return;
 
 				// Prompt for the number of segments
@@ -317,7 +314,7 @@ namespace SPMTool.AutoCAD
 						int size = Enum.GetNames(typeof(StringerData)).Length;
 
 						// If XData does not exist, create it
-						if (str.XData == null)
+						if (str.XData is null)
 							data = NewStringerData();
 
 						else // Xdata exists
@@ -527,7 +524,7 @@ namespace SPMTool.AutoCAD
 				// Get dictionary entries
 				var entries = Auxiliary.ReadDictionaryEntries(StrGeo);
 
-				if (entries == null)
+				if (entries is null)
 					return null;
 
 				foreach (var entry in entries)

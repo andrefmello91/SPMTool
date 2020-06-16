@@ -8,7 +8,6 @@ using Concrete           = Material.Concrete.Uniaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
 using Reinforcement      = Material.Reinforcement.Uniaxial;
 using Behavior           = Material.Concrete.Behavior;
-using ModelBehavior      = Material.Concrete.ModelBehavior;
 
 
 namespace SPMTool.Core
@@ -170,15 +169,15 @@ namespace SPMTool.Core
 			// Get the relations
 			private StressStrainRelations GetRelations(Behavior concreteBehavior)
 			{
-				var behavior = Enum.Parse(typeof(ModelBehavior), concreteBehavior.ToString());
+				var behavior = Enum.Parse(typeof(Material.Concrete.BehaviorModel), concreteBehavior.ToString());
 
 				switch (behavior)
 				{
-					case ModelBehavior.MCFT:
+					case Material.Concrete.BehaviorModel.MCFT:
 						return
 							new StressStrainRelations.MCFT(Concrete, Reinforcement);
 
-					case ModelBehavior.DSFM:
+					case Material.Concrete.BehaviorModel.DSFM:
 						throw new NotImplementedException(); //Implement DSFM
 				}
 

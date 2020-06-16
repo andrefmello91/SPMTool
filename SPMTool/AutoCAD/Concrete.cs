@@ -7,8 +7,6 @@ using ConcreteData       = SPMTool.XData.Concrete;
 using AggregateType      = Material.Concrete.AggregateType;
 using ConcreteParameters = Material.Concrete.Parameters;
 using ConcreteBehavior   = Material.Concrete.Behavior;
-using ParameterModel     = Material.Concrete.ModelParameters;
-using BehaviorModel      = Material.Concrete.ModelBehavior;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Material))]
 
@@ -25,11 +23,11 @@ namespace SPMTool.AutoCAD
 			Quartzite = AggregateType.Quartzite.ToString(),
 			Limestone = AggregateType.Limestone.ToString(),
 			Sandstone = AggregateType.Sandstone.ToString(),
-			MC2010    = ParameterModel.MC2010.ToString(),
-			NBR6118   = ParameterModel.NBR6118.ToString(),
-			MCFT      = ParameterModel.MCFT.ToString(),
-			DSFM      = ParameterModel.DSFM.ToString(),
-			Custom    = ParameterModel.Custom.ToString();
+			MC2010    = Concrete.ParameterModel.MC2010.ToString(),
+			NBR6118   = Concrete.ParameterModel.NBR6118.ToString(),
+			MCFT      = Concrete.ParameterModel.MCFT.ToString(),
+			DSFM      = Concrete.ParameterModel.DSFM.ToString(),
+			Custom    = Concrete.ParameterModel.Custom.ToString();
 
 		[CommandMethod("SetConcreteParameters")]
 		public static void SetConcreteParameters()
@@ -52,7 +50,7 @@ namespace SPMTool.AutoCAD
 			string
 				model    = MC2010,
 				agrgt    = Quartzite,
-				behavior = BehaviorModel.MCFT.ToString();
+				behavior = Concrete.BehaviorModel.MCFT.ToString();
 
             // Read data
             var concreteData = ReadConcreteData();
@@ -90,8 +88,8 @@ namespace SPMTool.AutoCAD
             // Ask the user choose concrete model parameters
             var bhOps = new[]
 			{
-				BehaviorModel.MCFT.ToString(),
-				BehaviorModel.DSFM.ToString()
+				Concrete.BehaviorModel.MCFT.ToString(),
+				Concrete.BehaviorModel.DSFM.ToString()
 			};
 
 			var bhOp = UserInput.SelectKeyword("Choose concrete behavior:", bhOps, behavior);
@@ -133,11 +131,11 @@ namespace SPMTool.AutoCAD
             behavior = bhOp.Value.keyword;
 
             var aggType   = (AggregateType) Enum.Parse(typeof(AggregateType), agrgt);
-            var modelType = (ParameterModel) Enum.Parse(typeof(ParameterModel), model);
-            var bhType    = (BehaviorModel) Enum.Parse(typeof(BehaviorModel), behavior);
+            var modelType = (Concrete.ParameterModel) Enum.Parse(typeof(Concrete.ParameterModel), model);
+            var bhType    = (Concrete.BehaviorModel) Enum.Parse(typeof(Concrete.BehaviorModel), behavior);
 
 			// Get custom values from user
-            if (modelType == ParameterModel.Custom)
+            if (modelType == Concrete.ParameterModel.Custom)
             {
 	            var fcrn = UserInput.GetDouble("Input concrete tensile strength (fcr) in MPa:", fcr);
 
@@ -214,8 +212,8 @@ namespace SPMTool.AutoCAD
 				return null;
 
 			// Get the parameters from XData
-			var par      = (ParameterModel)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
-			var bhModel  = (BehaviorModel)Convert.ToInt32(data[(int) ConcreteData.Behavior].Value);
+			var par      = (Concrete.ParameterModel)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
+			var bhModel  = (Concrete.BehaviorModel)Convert.ToInt32(data[(int) ConcreteData.Behavior].Value);
 			var aggType  = (AggregateType)Convert.ToInt32(data[(int) ConcreteData.AggType].Value);
 
 			double
@@ -229,23 +227,23 @@ namespace SPMTool.AutoCAD
 			// Get parameters
 			switch (par)
 			{
-                case ParameterModel.MC2010:
+                case Concrete.ParameterModel.MC2010:
 					parameters = new ConcreteParameters.MC2010(fc, phiAg, aggType);
 					break;
 
-                case ParameterModel.NBR6118:
+                case Concrete.ParameterModel.NBR6118:
 					parameters = new ConcreteParameters.NBR6118(fc, phiAg, aggType);
 					break;
 
-                case ParameterModel.MCFT:
+                case Concrete.ParameterModel.MCFT:
 					parameters = new ConcreteParameters.MCFT(fc, phiAg, aggType);
 					break;
 
-                case ParameterModel.DSFM:
+                case Concrete.ParameterModel.DSFM:
 					parameters = new ConcreteParameters.DSFM(fc, phiAg, aggType);
 					break;
 
-                case ParameterModel.Custom:
+                case Concrete.ParameterModel.Custom:
 	                // Get additional parameters
 	                double
 		                fcr = Convert.ToDouble(data[(int)ConcreteData.fcr].Value),
@@ -260,14 +258,14 @@ namespace SPMTool.AutoCAD
 			// Get behavior
 			switch (bhModel)
 			{
-                case BehaviorModel.Linear:
+                case Concrete.BehaviorModel.Linear:
 					break;
 
-                case BehaviorModel.MCFT:
+                case Concrete.BehaviorModel.MCFT:
 					behavior = new ConcreteBehavior.MCFT(parameters);
 					break;
 
-                case BehaviorModel.DSFM:
+                case Concrete.BehaviorModel.DSFM:
 					behavior = new ConcreteBehavior.DSFM(parameters);
 					break;
 			}

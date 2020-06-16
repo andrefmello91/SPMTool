@@ -38,7 +38,7 @@ namespace SPMTool.AutoCAD
 	        // Request objects to be selected in the drawing area
 	        var nds = UserInput.SelectNodes("Select nodes to add support conditions:", Node.NodeType.External);
 
-	        if (nds == null)
+	        if (nds is null)
 		        return;
 
 	        // Ask the user set the support conditions:

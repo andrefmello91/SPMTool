@@ -43,8 +43,7 @@ namespace SPMTool.AutoCAD
 			public Panel(Vertices vertices, List<Vertices> panelList = null)
 			{
 				// Check if list of panels is null
-				if (panelList == null)
-					panelList = ListOfPanelVertices();
+				panelList = panelList ?? ListOfPanelVertices();
 
 				// Check if a panel already exist on that position. If not, create it
 				if (!panelList.Contains(vertices))
@@ -82,7 +81,7 @@ namespace SPMTool.AutoCAD
                     // Prompt for user select 4 vertices of the panel
                     var nds = UserInput.SelectNodes("Select four nodes to be the vertices of the panel", NodeType.External);
 
-                    if (nds == null)
+                    if (nds is null)
 	                    break;
 
 					// Check if there are four points
@@ -116,7 +115,7 @@ namespace SPMTool.AutoCAD
 				// Prompt for select panels
 				var pnls = UserInput.SelectPanels("Select panels to divide");
 
-				if (pnls == null)
+				if (pnls is null)
 					return;
 
 				// Prompt for the number of rows
@@ -315,7 +314,7 @@ namespace SPMTool.AutoCAD
 				var pnls = UserInput.SelectPanels(
 					"Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)");
 
-				if (pnls == null)
+				if (pnls is null)
 					return;
 
 				// Get width
@@ -419,7 +418,7 @@ namespace SPMTool.AutoCAD
 				// Get dictionary entries
 				var entries = Auxiliary.ReadDictionaryEntries(PnlW);
 
-				if (entries == null)
+				if (entries is null)
 					return null;
 
 				foreach (var entry in entries)

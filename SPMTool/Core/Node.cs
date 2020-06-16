@@ -31,11 +31,9 @@ namespace SPMTool.Core
 		{
 			ObjectId = nodeObject;
 
-			if (forces == null)
-				forces = Core.Force.ListOfForces();
+			forces = forces ?? Core.Force.ListOfForces();
 
-			if (constraints == null)
-				constraints = Constraint.ListOfConstraints();
+			constraints = constraints ?? Constraint.ListOfConstraints();
 
 			// Read the object as a point
 			DBPoint ndPt = Geometry.Node.ReadNode(nodeObject);

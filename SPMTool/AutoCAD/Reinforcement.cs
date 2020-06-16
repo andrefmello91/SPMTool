@@ -25,14 +25,14 @@ namespace SPMTool.AutoCAD
 		    var strs = UserInput.SelectStringers(
 			    "Select the stringers to assign reinforcement (you can select other elements, the properties will be only applied to stringers).");
 
-		    if (strs == null)
+		    if (strs is null)
 			    return;
 
 		    // Get steel parameters and reinforcement from user
 		    var reinforcement = GetStringerReinforcement();
 		    var steel         = GetSteel();
 
-			if (reinforcement == null && steel == null)
+			if (reinforcement is null && steel is null)
 				return;
 
 		    // Start a transaction
@@ -208,7 +208,7 @@ namespace SPMTool.AutoCAD
 			var pnls = UserInput.SelectPanels(
 				"Select the panels to assign reinforcement (you can select other elements, the properties will be only applied to panels).");
 
-			if (pnls == null)
+			if (pnls is null)
 				return;
 
 			// Get the values
@@ -217,7 +217,7 @@ namespace SPMTool.AutoCAD
 			var refY   = GetPanelReinforcement(Directions.Y);
 			var steelY = GetSteel();
 
-			if (!refX.HasValue && !refY.HasValue && steelX == null && steelY == null)
+			if (!refX.HasValue && !refY.HasValue && steelX is null && steelY is null)
 				return;
 
 			// Start a transaction
@@ -379,7 +379,7 @@ namespace SPMTool.AutoCAD
 	        // Get dictionary entries
 	        var entries = Auxiliary.ReadDictionaryEntries(Steel);
 
-	        if (entries == null)
+	        if (entries is null)
 		        return null;
 
 	        foreach (var entry in entries)
@@ -441,7 +441,7 @@ namespace SPMTool.AutoCAD
 			// Get dictionary entries
 			var entries = Auxiliary.ReadDictionaryEntries(StrRef);
 
-			if (entries == null)
+			if (entries is null)
 				return null;
 
 			foreach (var entry in entries)
@@ -494,7 +494,7 @@ namespace SPMTool.AutoCAD
 	        // Get dictionary entries
 	        var entries = Auxiliary.ReadDictionaryEntries(PnlRef);
 
-	        if (entries == null)
+	        if (entries is null)
 		        return null;
 
 	        foreach (var entry in entries)

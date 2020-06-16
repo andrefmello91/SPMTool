@@ -53,7 +53,7 @@ namespace SPMTool.AutoCAD
 					// Get layername
 					var layer = (Layers) Enum.Parse(typeof(Layers), ent.Layer);
 
-					if (layers == null || layers.Contains(layer))
+					if (layers is null || layers.Contains(layer))
 						return ent;
 				}
 
@@ -94,7 +94,7 @@ namespace SPMTool.AutoCAD
 						var layer = (Layers) Enum.Parse(typeof(Layers), ent.Layer);
 
 						// Check if it is a external node
-						if (layers == null || layers.Contains(layer))
+						if (layers is null || layers.Contains(layer))
 							collection.Add(ent);
 					}
 				}
@@ -120,7 +120,7 @@ namespace SPMTool.AutoCAD
 			{
 				nds = SelectObjects(message, layers.ToArray());
 
-				if (nds == null)
+				if (nds is null)
 					return null;
 
 				if (nds.Count > 0)
@@ -142,7 +142,7 @@ namespace SPMTool.AutoCAD
 			{
 				strs = SelectObjects(message, layers);
 
-				if (strs == null)
+				if (strs is null)
 					return null;
 
 				if (strs.Count > 0)
@@ -163,7 +163,7 @@ namespace SPMTool.AutoCAD
 			{
 				pnls = SelectObjects(message, layers);
 
-				if (pnls == null)
+				if (pnls is null)
 					return null;
 
 				if (pnls.Count > 0)

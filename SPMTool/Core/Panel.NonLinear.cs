@@ -6,7 +6,6 @@ using Concrete           = Material.Concrete.Biaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
 using Reinforcement      = Material.Reinforcement.Biaxial;
 using Behavior           = Material.Concrete.Behavior;
-using ModelBehavior      = Material.Concrete.ModelBehavior;
 
 namespace SPMTool.Core
 {
@@ -162,16 +161,16 @@ namespace SPMTool.Core
 				// Initiate integration points
 				var intPts = new Membrane[4];
 
-				var model = Enum.Parse(typeof(ModelBehavior), behavior.ToString());
+				var model = Enum.Parse(typeof(Material.Concrete.BehaviorModel), behavior.ToString());
 
 				switch (model)
 				{
-                    case ModelBehavior.MCFT:
+                    case Material.Concrete.BehaviorModel.MCFT:
 	                    for (int i = 0; i < 4; i++)
 		                    intPts[i] = new MCFT(parameters, behavior, Reinforcement, Width);
 						break;
 
-                    case ModelBehavior.DSFM:
+                    case Material.Concrete.BehaviorModel.DSFM:
 	                    for (int i = 0; i < 4; i++)
 		                    intPts[i] = new DSFM(parameters, behavior, Reinforcement, Width);
 	                    break;
