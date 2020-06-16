@@ -68,7 +68,7 @@ namespace SPMTool.AutoCAD
 			// Ask user to select a node
 			var nd = UserInput.SelectEntity("Select a node to monitor displacement:", new [] { Layers.ExtNode, Layers.IntNode });
 
-			if (nd == null)
+			if (nd is null)
 				return null;
 
 			// Ask direction to monitor

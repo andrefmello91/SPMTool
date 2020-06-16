@@ -5,7 +5,8 @@ using RCMembrane;
 using Concrete           = Material.Concrete.Biaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
 using Reinforcement      = Material.Reinforcement.Biaxial;
-using Behavior           = Material.Concrete.ModelBehavior;
+using Behavior           = Material.Concrete.Behavior;
+using ModelBehavior      = Material.Concrete.ModelBehavior;
 
 namespace SPMTool.Core
 {
@@ -22,7 +23,7 @@ namespace SPMTool.Core
             public  (Matrix<double> Dc,     Matrix<double> Ds)     MaterialStiffness  { get; set; }
             public  (Vector<double> sigmaC, Vector<double> sigmaS) MaterialStresses   { get; set; }
 
-            public NonLinear(ObjectId panelObject, ConcreteParameters concreteParameters, Stringer[] stringers, Behavior behavior = Behavior.MCFT) : base(panelObject, concreteParameters, behavior)
+            public NonLinear(ObjectId panelObject, ConcreteParameters concreteParameters, Stringer[] stringers, Behavior behavior) : base(panelObject, concreteParameters, behavior)
             {
                 // Get Stringer dimensions and effective ratio
                 StringerDimensions = StringersDimensions(stringers);
@@ -33,7 +34,7 @@ namespace SPMTool.Core
                 PMatrix  = CalculateP();
 
                 // Initiate integration points
-                IntegrationPoints = IntPoints();
+                IntegrationPoints = IntPoints(concreteParameters, behavior);
 
 				// Initiate stiffness
 				MaterialStiffness = InitialMaterialStiffness();
@@ -156,21 +157,23 @@ namespace SPMTool.Core
 			}
 
             // Get integration points
-            private Membrane[] IntPoints()
+            private Membrane[] IntPoints(ConcreteParameters parameters, Behavior behavior)
 			{
 				// Initiate integration points
 				var intPts = new Membrane[4];
 
-				switch (PanelBehavior)
+				var model = Enum.Parse(typeof(ModelBehavior), behavior.ToString());
+
+				switch (model)
 				{
-                    case Behavior.MCFT:
+                    case ModelBehavior.MCFT:
 	                    for (int i = 0; i < 4; i++)
-		                    intPts[i] = new MCFT(Concrete, Reinforcement, Width);
+		                    intPts[i] = new MCFT(parameters, behavior, Reinforcement, Width);
 						break;
 
-                    case Behavior.DSFM:
+                    case ModelBehavior.DSFM:
 	                    for (int i = 0; i < 4; i++)
-		                    intPts[i] = new DSFM(Concrete, Reinforcement, Width);
+		                    intPts[i] = new DSFM(parameters, behavior, Reinforcement, Width);
 	                    break;
                 }
 

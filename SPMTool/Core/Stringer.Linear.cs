@@ -2,7 +2,7 @@
 using MathNet.Numerics.LinearAlgebra;
 using Concrete           = Material.Concrete.Uniaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
-using Behavior           = Material.Concrete.ModelBehavior;
+using Behavior           = Material.Concrete.Behavior;
 
 namespace SPMTool.Core
 {
@@ -11,7 +11,7 @@ namespace SPMTool.Core
         public class Linear : Stringer
         {
             // Constructor
-            public Linear(ObjectId stringerObject, ConcreteParameters concreteParameters, Behavior concreteBehavior = Behavior.Linear) : base(stringerObject, concreteParameters, concreteBehavior)
+            public Linear(ObjectId stringerObject, ConcreteParameters concreteParameters, Behavior concreteBehavior = null) : base(stringerObject, concreteParameters, concreteBehavior)
             {
             }
 

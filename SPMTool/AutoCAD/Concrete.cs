@@ -6,6 +6,7 @@ using Material;
 using ConcreteData       = SPMTool.XData.Concrete;
 using AggregateType      = Material.Concrete.AggregateType;
 using ConcreteParameters = Material.Concrete.Parameters;
+using ConcreteBehavior   = Material.Concrete.Behavior;
 using ParameterModel     = Material.Concrete.ModelParameters;
 using BehaviorModel      = Material.Concrete.ModelBehavior;
 
@@ -205,16 +206,16 @@ namespace SPMTool.AutoCAD
         }
 
         // Read the concrete parameters
-        public static (ConcreteParameters parameters, BehaviorModel behavior)? ReadConcreteData()
+        public static (ConcreteParameters parameters, ConcreteBehavior behavior)? ReadConcreteData()
 		{
 			var data = Auxiliary.ReadDictionaryEntry(ConcreteParams);
 
-			if (data == null)
+			if (data is null)
 				return null;
 
 			// Get the parameters from XData
 			var par      = (ParameterModel)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
-			var behavior = (BehaviorModel)Convert.ToInt32(data[(int) ConcreteData.Behavior].Value);
+			var bhModel  = (BehaviorModel)Convert.ToInt32(data[(int) ConcreteData.Behavior].Value);
 			var aggType  = (AggregateType)Convert.ToInt32(data[(int) ConcreteData.AggType].Value);
 
 			double
@@ -223,7 +224,9 @@ namespace SPMTool.AutoCAD
 
 			// Verify which parameters are set
 			ConcreteParameters parameters = null;
+			ConcreteBehavior   behavior   = null;
 
+			// Get parameters
 			switch (par)
 			{
                 case ParameterModel.MC2010:
@@ -249,9 +252,25 @@ namespace SPMTool.AutoCAD
 		                Ec  = Convert.ToDouble(data[(int)ConcreteData.Ec].Value),
 		                ec  = -Convert.ToDouble(data[(int)ConcreteData.ec].Value),
 		                ecu = -Convert.ToDouble(data[(int)ConcreteData.ecu].Value);
+
 	                parameters = new ConcreteParameters.Custom(fc, phiAg, fcr, Ec, ec, ecu);
                     break;
             }
+
+			// Get behavior
+			switch (bhModel)
+			{
+                case BehaviorModel.Linear:
+					break;
+
+                case BehaviorModel.MCFT:
+					behavior = new ConcreteBehavior.MCFT(parameters);
+					break;
+
+                case BehaviorModel.DSFM:
+					behavior = new ConcreteBehavior.DSFM(parameters);
+					break;
+			}
 
 			return
 				(parameters, behavior);

@@ -8,7 +8,7 @@ using ConcreteParameters = Material.Concrete.Parameters;
 using Concrete           = Material.Concrete.Uniaxial;
 using Reinforcement      = Material.Reinforcement.Uniaxial;
 using StringerData       = SPMTool.XData.Stringer;
-using Behavior           = Material.Concrete.ModelBehavior;
+using Behavior           = Material.Concrete.Behavior;
 
 namespace SPMTool.Core
 {
@@ -29,7 +29,7 @@ namespace SPMTool.Core
 		public Vector<double>          Displacements    { get; set; }
 
 		// Constructor
-		public Stringer(ObjectId stringerObject, ConcreteParameters concreteParameters = null, Behavior concreteBehavior = Behavior.Linear)
+		public Stringer(ObjectId stringerObject, ConcreteParameters concreteParameters = null, Behavior concreteBehavior = null)
 		{
 			ObjectId = stringerObject;
 

@@ -4,7 +4,7 @@ using MathNet.Numerics.LinearAlgebra;
 using Concrete           = Material.Concrete.Biaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
 using Reinforcement      = Material.Reinforcement.Biaxial;
-using Behavior           = Material.Concrete.ModelBehavior;
+using Behavior           = Material.Concrete.Behavior;
 
 namespace SPMTool.Core
 {
@@ -15,7 +15,7 @@ namespace SPMTool.Core
             // Private properties
             private Matrix<double> TransMatrix { get; }
 	        
-            public Linear(ObjectId panelObject, ConcreteParameters concreteParameters = null, Behavior behavior = Behavior.Linear) : base(panelObject, concreteParameters, behavior)
+            public Linear(ObjectId panelObject, ConcreteParameters concreteParameters = null, Behavior behavior = null) : base(panelObject, concreteParameters, behavior)
             {
                 // Get transformation matrix
                 TransMatrix = TransformationMatrix();

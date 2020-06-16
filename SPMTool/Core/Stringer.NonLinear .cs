@@ -7,7 +7,8 @@ using MathNet.Numerics.RootFinding;
 using Concrete           = Material.Concrete.Uniaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
 using Reinforcement      = Material.Reinforcement.Uniaxial;
-using Behavior           = Material.Concrete.ModelBehavior;
+using Behavior           = Material.Concrete.Behavior;
+using ModelBehavior      = Material.Concrete.ModelBehavior;
 
 
 namespace SPMTool.Core
@@ -27,7 +28,7 @@ namespace SPMTool.Core
 			private (double e1, double e3) IterationGenStrains  { get; set; }
 			private (double N1, double N3) IterationGenStresses { get; set; }
 
-            public NonLinear(ObjectId stringerObject, ConcreteParameters concreteParameters, Behavior concreteBehavior = Behavior.MCFT) : base(stringerObject, concreteParameters, concreteBehavior)
+            public NonLinear(ObjectId stringerObject, ConcreteParameters concreteParameters, Behavior concreteBehavior) : base(stringerObject, concreteParameters, concreteBehavior)
 			{
 				// Initiate F matrix
 				FMatrix = InitialFMatrix();
@@ -169,13 +170,15 @@ namespace SPMTool.Core
 			// Get the relations
 			private StressStrainRelations GetRelations(Behavior concreteBehavior)
 			{
-				switch (concreteBehavior)
+				var behavior = Enum.Parse(typeof(ModelBehavior), concreteBehavior.ToString());
+
+				switch (behavior)
 				{
-					case Behavior.MCFT:
+					case ModelBehavior.MCFT:
 						return
 							new StressStrainRelations.MCFT(Concrete, Reinforcement);
 
-					case Behavior.DSFM:
+					case ModelBehavior.DSFM:
 						throw new NotImplementedException(); //Implement DSFM
 				}
 

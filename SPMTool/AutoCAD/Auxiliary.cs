@@ -164,15 +164,14 @@ namespace SPMTool.AutoCAD
 			string layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Open the Layer table for read
-				LayerTable lyrTbl = trans.GetObject(AutoCAD.Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
+				var lyrTbl = (LayerTable)trans.GetObject(Current.db.LayerTableId, OpenMode.ForRead);
 
 				if (lyrTbl.Has(layerName))
 				{
-					using (LayerTableRecord lyrTblRec =
-						trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite) as LayerTableRecord)
+					using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
 					{
 						// Verify the state
 						if (lyrTblRec.IsOff)
@@ -220,12 +219,10 @@ namespace SPMTool.AutoCAD
 				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 				{
 					// Open the Block table for read
-					BlockTable blkTbl =
-						trans.GetObject(AutoCAD.Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
+					var blkTbl = (BlockTable) trans.GetObject(AutoCAD.Current.db.BlockTableId, OpenMode.ForRead);
 
 					// Open the Block table record Model space for write
-					BlockTableRecord blkTblRec =
-						trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+					var blkTblRec = (BlockTableRecord) trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
 
 					// Add the object to the drawing
 					blkTblRec.AppendEntity(entity);
@@ -246,7 +243,7 @@ namespace SPMTool.AutoCAD
 				foreach (ObjectId obj in objects)
 				{
 					// Read as entity
-					Entity ent = trans.GetObject(obj, OpenMode.ForWrite) as Entity;
+					var ent = (Entity)trans.GetObject(obj, OpenMode.ForWrite);
 
 					// Erase the object
 					ent.Erase();
@@ -263,7 +260,8 @@ namespace SPMTool.AutoCAD
 			// Get objects
 			var objs = GetEntitiesOnLayer(layer);
 
-			if (objs.Count > 0) EraseObjects(objs);
+			if (objs.Count > 0)
+				EraseObjects(objs);
 		}
 
 		// Read extended data
@@ -282,7 +280,7 @@ namespace SPMTool.AutoCAD
 			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Get the NOD in the database
-				var entity = (Entity) trans.GetObject(Current.nod, OpenMode.ForRead);
+				var entity = (Entity) trans.GetObject(objectId, OpenMode.ForRead);
 
 				return
 					ReadXData(entity);

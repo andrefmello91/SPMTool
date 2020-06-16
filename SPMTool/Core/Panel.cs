@@ -8,14 +8,13 @@ using Concrete           = Material.Concrete.Biaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
 using Reinforcement      = Material.Reinforcement.Biaxial;
 using PanelData          = SPMTool.XData.Panel;
-using Behavior           = Material.Concrete.ModelBehavior;
+using Behavior           = Material.Concrete.Behavior;
 
 namespace SPMTool.Core
 {
 	public partial class Panel : SPMElement
 	{
 		// Panel parameters
-		public Behavior                                      PanelBehavior     { get; }
 		public int[]                                         Grips             { get; }
 		public Point3d[]                                     Vertices          { get; }
 		public (double[] x, double[] y)                      VertexCoordinates { get; }
@@ -33,10 +32,9 @@ namespace SPMTool.Core
 
 		// Constructor
 		public Panel(ObjectId panelObject, ConcreteParameters concreteParameters = null,
-			Behavior behavior = Behavior.MCFT)
+			Behavior behavior = null)
 		{
 			ObjectId      = panelObject;
-			PanelBehavior = behavior;
 
 			// Get concrete
 			Concrete = new Concrete(concreteParameters, behavior);
