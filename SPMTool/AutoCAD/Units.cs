@@ -1,4 +1,5 @@
 ﻿using System;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using UnitsData = SPMTool.XData.Units;
@@ -12,6 +13,10 @@ namespace SPMTool.AutoCAD
 		{
 			// Unit names
 			private static readonly string Units = "Units";
+			private static readonly string[]
+				DimOpts = {"mm", "cm", "m"},
+				FOpts   = {"N", "kN", "MN"},
+				StOpts  = {"Pa", "kPa", "MPa", "GPa"};
 			
 			[CommandMethod("SetUnits")]
 			public static void SetUnits()
@@ -21,12 +26,6 @@ namespace SPMTool.AutoCAD
 
 				// Read data
 				var units = ReadUnits() ?? new Units();
-
-				// Get options
-				string[]
-					dimOpts = Enum.GetNames(typeof(DimensionUnit)),
-					fOpts   = Enum.GetNames(typeof(ForceUnit)),
-					stOpts  = Enum.GetNames(typeof(StressUnit));
 
 				// Get defaults
 				string[]
@@ -51,7 +50,7 @@ namespace SPMTool.AutoCAD
 				string[] dimTypes =
 				{
 					"geometry",
-					"reinforcement",
+					"reinforcement / aggregate",
 					"displacements"
 				};
 				
@@ -59,7 +58,7 @@ namespace SPMTool.AutoCAD
 
 				for (int i = 0; i < dimTypes.Length; i++)
 				{
-					var dimOps = UserInput.SelectKeyword("Choose " + dimTypes[i] + " dimensions unit:", dimOpts, dimDefs[i]);
+					var dimOps = UserInput.SelectKeyword("Choose " + dimTypes[i] + " dimensions unit", DimOpts, dimDefs[i]);
 
 					if (!dimOps.HasValue)
 						return;
@@ -79,7 +78,7 @@ namespace SPMTool.AutoCAD
 
 				for (int i = 0; i < fTypes.Length; i++)
 				{
-					var fOps = UserInput.SelectKeyword("Choose " + fTypes[i] + " unit:", fOpts, fDefs[i]);
+					var fOps = UserInput.SelectKeyword("Choose " + fTypes[i] + " unit", FOpts, fDefs[i]);
 
 					if (!fOps.HasValue)
 						return;
@@ -99,7 +98,7 @@ namespace SPMTool.AutoCAD
 
 				for (int i = 0; i < stTypes.Length; i++)
 				{
-					var stOps = UserInput.SelectKeyword("Choose " + stTypes[i] + " unit:", stOpts, stDefs[i]);
+					var stOps = UserInput.SelectKeyword("Choose " + stTypes[i] + " unit", StOpts, stDefs[i]);
 
 					if (!stOps.HasValue)
 						return;
@@ -138,14 +137,31 @@ namespace SPMTool.AutoCAD
 				return
 					new Units
 					{
-						Geometry          = (DimensionUnit) data[(int)UnitsData.Geometry].Value,
-						Reinforcement     = (DimensionUnit) data[(int)UnitsData.Reinforcement].Value,
-						Displacements     = (DimensionUnit) data[(int)UnitsData.Displacements].Value,
-						AppliedForces     = (ForceUnit)     data[(int)UnitsData.AppliedForces].Value,
-						StringerForces    = (ForceUnit)     data[(int)UnitsData.StringerForces].Value,
-						PanelStresses     = (StressUnit)    data[(int)UnitsData.PanelStresses].Value,
-						MaterialStrength  = (StressUnit)    data[(int)UnitsData.MaterialStrength].Value,
+						Geometry          = (DimensionUnit) Convert.ToInt32(data[(int)UnitsData.Geometry].Value),
+						Reinforcement     = (DimensionUnit) Convert.ToInt32(data[(int)UnitsData.Reinforcement].Value),
+						Displacements     = (DimensionUnit) Convert.ToInt32(data[(int)UnitsData.Displacements].Value),
+						AppliedForces     = (ForceUnit)     Convert.ToInt32(data[(int)UnitsData.AppliedForces].Value),
+						StringerForces    = (ForceUnit)     Convert.ToInt32(data[(int)UnitsData.StringerForces].Value),
+						PanelStresses     = (StressUnit)    Convert.ToInt32(data[(int)UnitsData.PanelStresses].Value),
+						MaterialStrength  = (StressUnit)    Convert.ToInt32(data[(int)UnitsData.MaterialStrength].Value),
 					};
 			}
-		}
+
+			[CommandMethod("ViewUnits")]
+			public static void ViewUnits()
+			{
+				var units = ReadUnits() ?? new Units();
+
+				var msg =
+					"Geometry: " + units.Geometry + "\n" +
+					"Reinforcement: " + units.Reinforcement + "\n" +
+					"Displacements: " + units.Displacements + "\n" +
+					"AppliedForces: " + units.AppliedForces + "\n" +
+					"StringerForces: " + units.StringerForces + "\n" +
+					"PanelStresses: " + units.PanelStresses + "\n" +
+					"MaterialStrength: " + units.MaterialStrength;
+
+				Application.ShowAlertDialog(msg);
+			}
 	}
+}

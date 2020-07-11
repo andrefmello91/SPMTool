@@ -52,11 +52,11 @@ namespace SPMTool
 		}
 
 		// Get dimension in mm
-		public double ConvertToMilimeter(double dimension, DimensionUnit fromUnit) =>
+		public double ConvertToMillimeter(double dimension, DimensionUnit fromUnit) =>
 			UnitConverter.Convert(dimension, (LengthUnit) fromUnit, (LengthUnit) DimensionUnit.mm);
 
 		// Convert mm to dimension
-		public double ConvertfromMilimeter(double mm, DimensionUnit toUnit) =>
+		public double ConvertFromMillimeter(double mm, DimensionUnit toUnit) =>
 			UnitConverter.Convert(mm, (LengthUnit) DimensionUnit.mm, (LengthUnit) toUnit);
 
 		// Get force in N

@@ -128,7 +128,7 @@
 			fc,
 			AggType,
 			AggDiam,
-			fcr,
+			ft,
 			Ec,
 			ec,
 			ecu

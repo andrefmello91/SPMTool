@@ -7,6 +7,8 @@ using ConcreteData       = SPMTool.XData.Concrete;
 using AggregateType      = Material.Concrete.AggregateType;
 using ConcreteParameters = Material.Concrete.Parameters;
 using ConcreteBehavior   = Material.Concrete.Behavior;
+using UnitsNet;
+using UnitsNet.Units;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Material))]
 
@@ -50,7 +52,7 @@ namespace SPMTool.AutoCAD
 			double
 				fc    = 30,
 				phiAg = 20,
-				fcr   = 2,
+				ft    = 2,
 				Ec    = 30000,
 				ec    = 0.002,
 				ecu   = 0.0035;
@@ -69,7 +71,7 @@ namespace SPMTool.AutoCAD
 
                 fc       =  parameters.Strength;
                 phiAg    =  parameters.AggregateDiameter;
-                fcr      =  parameters.TensileStrength;
+                ft      =  parameters.TensileStrength;
                 Ec       =  parameters.InitialModule;
                 ec       = -parameters.PlasticStrain;
                 ecu      = -parameters.UltimateStrain;
@@ -78,7 +80,13 @@ namespace SPMTool.AutoCAD
                 behavior =  concreteData.Value.behavior.ToString();
             }
 
-            // Ask the user choose concrete model parameters
+			// Convert units
+			fc    = units.ConvertFromMPa(fc,  units.MaterialStrength);
+			ft   = units.ConvertFromMPa(ft, units.MaterialStrength);
+			Ec    = units.ConvertFromMPa(Ec,  units.MaterialStrength);
+			phiAg = units.ConvertFromMillimeter(phiAg, units.Reinforcement);
+
+			// Ask the user choose concrete model parameters
             var parOps = new[]
 			{
 				MC2010,
@@ -106,7 +114,7 @@ namespace SPMTool.AutoCAD
 				return;
 
             // Ask the user to input the concrete compressive strength
-            var fcn = UserInput.GetDouble("Input concrete compressive strength (fc) in MPa:", fc);
+            var fcn = UserInput.GetDouble("Input concrete compressive strength (fc) in " + units.MaterialStrength + ":", fc);
 
 			if (!fcn.HasValue)
 				return;
@@ -126,7 +134,7 @@ namespace SPMTool.AutoCAD
 				return;
 
             // Ask the user to input the maximum aggregate diameter
-            var phin = UserInput.GetDouble("Input the maximum diameter for concrete aggregate:", phiAg);
+            var phin = UserInput.GetDouble("Input the maximum diameter for concrete aggregate in " + units.Reinforcement + ":", phiAg);
 
 			if (!phin.HasValue)
 				return;
@@ -145,12 +153,12 @@ namespace SPMTool.AutoCAD
 			// Get custom values from user
             if (modelType == Concrete.ParameterModel.Custom)
             {
-	            var fcrn = UserInput.GetDouble("Input concrete tensile strength (fcr) in MPa:", fcr);
+	            var fcrn = UserInput.GetDouble("Input concrete tensile strength (fcr) in " + units.MaterialStrength + ":", ft);
 
 	            if (!fcrn.HasValue)
 		            return;
 
-	            var Ecn = UserInput.GetDouble("Input concrete elastic module (Ec) in MPa:", Ec);
+	            var Ecn = UserInput.GetDouble("Input concrete elastic module (Ec) in " + units.MaterialStrength + ":", Ec);
 
 	            if (!Ecn.HasValue)
 		            return;
@@ -166,13 +174,19 @@ namespace SPMTool.AutoCAD
 		            return;
 
                 // Get custom values
-                fcr = fcrn.Value;
+                ft = fcrn.Value;
                 Ec  = Ecn.Value;
                 ec  = ecn.Value;
                 ecu = ecun.Value;
             }
 
-            // Get the Xdata size
+			// Convert to MPa
+			fc    = units.ConvertToMPa(fc, units.MaterialStrength);
+			ft    = units.ConvertToMPa(ft, units.MaterialStrength);
+			Ec    = units.ConvertToMPa(Ec, units.MaterialStrength);
+			phiAg = units.ConvertToMillimeter(phiAg, units.Reinforcement);
+
+			// Get the Xdata size
             int size = Enum.GetNames(typeof(ConcreteData)).Length;
             var data = new TypedValue[size];
 
@@ -183,7 +197,7 @@ namespace SPMTool.AutoCAD
             data[(int)ConcreteData.fc]       = new TypedValue((int)DxfCode.ExtendedDataReal,        fc);
             data[(int)ConcreteData.AggType]  = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)aggType);
             data[(int)ConcreteData.AggDiam]  = new TypedValue((int)DxfCode.ExtendedDataReal,        phiAg);
-            data[(int)ConcreteData.fcr]      = new TypedValue((int)DxfCode.ExtendedDataReal,        fcr);
+            data[(int)ConcreteData.ft]       = new TypedValue((int)DxfCode.ExtendedDataReal,        ft);
             data[(int)ConcreteData.Ec]       = new TypedValue((int)DxfCode.ExtendedDataReal,        Ec);
             data[(int)ConcreteData.ec]       = new TypedValue((int)DxfCode.ExtendedDataReal,        ec);
             data[(int)ConcreteData.ecu]      = new TypedValue((int)DxfCode.ExtendedDataReal,        ecu);
@@ -202,9 +216,31 @@ namespace SPMTool.AutoCAD
 
             // Write the concrete parameters
             if (concrete.HasValue)
-	            concmsg = concrete.Value.parameters.ToString();
+            {
+	            var par = concrete.Value.parameters;
 
-            else
+				// Get units
+				var units = Config.ReadUnits();
+				IQuantity
+					fc    = Pressure.FromMegapascals(par.Strength),
+					ft    = Pressure.FromMegapascals(Math.Round(par.TensileStrength)),
+					Ec    = Pressure.FromMegapascals(Math.Round(par.InitialModule)),
+					phiAg = Length.FromMillimeters(par.AggregateDiameter);
+
+				char
+					phi = (char)Characters.Phi,
+					eps = (char)Characters.Epsilon;
+
+				concmsg =
+					"Concrete Parameters:\n" +
+					"\nfc = " + fc +
+					"\nft = " + ft +
+					"\nEc = " + Ec +
+					"\n" + eps + "c = " + Math.Round(1000 * par.PlasticStrain, 2) + " E-03" +
+					"\n" + eps + "cu = " + Math.Round(1000 * par.UltimateStrain, 2) + " E-03" +
+					"\n" + phi + ",ag = " + phiAg;
+            }
+			else
 	            concmsg = "Concrete parameters not set";
 
 			// Display the values returned
@@ -254,7 +290,7 @@ namespace SPMTool.AutoCAD
                 case Concrete.ParameterModel.Custom:
 	                // Get additional parameters
 	                double
-		                fcr = Convert.ToDouble(data[(int)ConcreteData.fcr].Value),
+		                fcr = Convert.ToDouble(data[(int)ConcreteData.ft].Value),
 		                Ec  = Convert.ToDouble(data[(int)ConcreteData.Ec].Value),
 		                ec  = -Convert.ToDouble(data[(int)ConcreteData.ec].Value),
 		                ecu = -Convert.ToDouble(data[(int)ConcreteData.ecu].Value);
