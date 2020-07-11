@@ -165,7 +165,7 @@ namespace SPMTool.AutoCAD
 					            blkRef.TransformBy(Matrix3d.Rotation(rotAng, Current.ucs.Zaxis, insPt));
 
 					            // Set XData to force block
-					            blkRef.XData = ForceXData(xForce, (int) Force.ForceDirection.X);
+					            blkRef.XData = ForceXData(xForce, (int) ForceDirection.X);
 
 					            // Define the force text
 					            DBText text = new DBText()
@@ -180,7 +180,7 @@ namespace SPMTool.AutoCAD
 					            Auxiliary.AddObject(text);
 
 					            // Add the node position to the text XData
-					            text.XData = ForceTextXData(ndPos, (int) Force.ForceDirection.X);
+					            text.XData = ForceTextXData(ndPos, (int) ForceDirection.X);
 				            }
 			            }
 

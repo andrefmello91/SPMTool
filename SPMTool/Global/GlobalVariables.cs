@@ -133,5 +133,19 @@
 			ec,
 			ecu
 		}
+
+        // Unit indexers
+        public enum Units
+        {
+            AppName,
+            XDataStr,
+            Geometry,
+            Reinforcement,
+            Displacements,
+            AppliedForces,
+            StringerForces,
+            PanelStresses,
+            MaterialStrength
+        }
     }
 }

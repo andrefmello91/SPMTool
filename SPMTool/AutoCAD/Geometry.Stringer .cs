@@ -67,6 +67,14 @@ namespace SPMTool.AutoCAD
 			[CommandMethod("AddStringer")]
 			public static void AddStringer()
 			{
+				// Get units
+				var units = Config.ReadUnits();
+				if (units is null)
+				{
+					Config.SetUnits();
+					units = Config.ReadUnits();
+				}
+
 				// Check if the layers already exists in the drawing. If it doesn't, then it's created:
 				Auxiliary.CreateLayer(Layers.ExtNode, Colors.Red);
 				Auxiliary.CreateLayer(Layers.IntNode, Colors.Blue);
@@ -137,7 +145,7 @@ namespace SPMTool.AutoCAD
 				new Node(newIntNds, NodeType.Internal);
 
 				// Update the nodes and stringers
-				Node.UpdateNodes();
+				Node.UpdateNodes(units);
 				UpdateStringers();
 			}
 

@@ -103,8 +103,11 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Enumerate all the nodes in the model and return the collection of nodes
-			public static ObjectIdCollection UpdateNodes()
+			public static ObjectIdCollection UpdateNodes(Units units = null)
 			{
+				// Get units
+				units = units ?? Config.ReadUnits();
+
 				// Get all the nodes in the model
 				ObjectIdCollection nds = AllNodes();
 
@@ -154,7 +157,7 @@ namespace SPMTool.AutoCAD
 
 					// Set the style for all point objects in the drawing
 					Current.db.Pdmode = 32;
-					Current.db.Pdsize = 40;
+					Current.db.Pdsize = units.ConvertfromMilimeter(40, units.Geometry);
 
 					// Commit and dispose the transaction
 					trans.Commit();

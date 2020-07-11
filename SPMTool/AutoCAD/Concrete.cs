@@ -38,6 +38,14 @@ namespace SPMTool.AutoCAD
 			// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
 			Auxiliary.RegisterApp();
 
+			// Get units
+			var units = Config.ReadUnits();
+			if (units is null)
+			{
+				Config.SetUnits();
+				units = Config.ReadUnits();
+			}
+
 			// Initiate default values
 			double
 				fc    = 30,

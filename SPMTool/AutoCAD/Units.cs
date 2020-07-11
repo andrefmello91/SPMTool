@@ -1,10 +1,7 @@
 ﻿using System;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
-using DimensionUnits = SPMTool.Units.Dimension;
-using ForceUnits     = SPMTool.Units.Force;
-using StressUnits    = SPMTool.Units.Stress;
+using UnitsData = SPMTool.XData.Units;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Config))]
 
@@ -14,87 +11,120 @@ namespace SPMTool.AutoCAD
 		public static partial class Config
 		{
 			// Unit names
-			private static readonly string
-				Units = "Units",
-				mm    = DimensionUnits.mm.ToString(),
-				cm    = DimensionUnits.cm.ToString(),
-				m     = DimensionUnits.m.ToString(),
-				N     = ForceUnits.N.ToString(),
-				kN    = ForceUnits.kN.ToString(),
-				MN    = ForceUnits.MN.ToString(),
-				Pa    = StressUnits.Pa.ToString(),
-				kPa   = StressUnits.kPa.ToString(),
-				MPa   = StressUnits.MPa.ToString();
-
+			private static readonly string Units = "Units";
+			
 			[CommandMethod("SetUnits")]
 			public static void SetUnits()
 			{
 				// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
 				Auxiliary.RegisterApp();
 
-				// Get data set
-				var units = ReadUnits();
+				// Read data
+				var units = ReadUnits() ?? new Units();
 
-				// Ask the user dimension unit
-				PromptKeywordOptions dimOp = new PromptKeywordOptions("\nChoose dimension unit:");
-				dimOp.Keywords.Add(mm);
-				dimOp.Keywords.Add(cm);
-				dimOp.Keywords.Add(m);
-				dimOp.Keywords.Default = units.DimensionUnit.ToString();
-				dimOp.AllowNone = false;
+				// Get options
+				string[]
+					dimOpts = Enum.GetNames(typeof(DimensionUnit)),
+					fOpts   = Enum.GetNames(typeof(ForceUnit)),
+					stOpts  = Enum.GetNames(typeof(StressUnit));
 
-				// Get the result
-				PromptResult dimRes = Current.edtr.GetKeywords(dimOp);
+				// Get defaults
+				string[]
+					dimDefs =
+					{
+						units.Geometry.ToString(),
+						units.Reinforcement.ToString(),
+						units.Displacements.ToString()
+					},
+					fDefs =
+					{
+						units.AppliedForces.ToString(),
+						units.StringerForces.ToString()
+					},
+					stDefs =
+					{
+						units.PanelStresses.ToString(),
+						units.MaterialStrength.ToString()
+					};
 
-				if (dimRes.Status == PromptStatus.Cancel)
-					return;
-
-				// Ask the user force unit
-				PromptKeywordOptions fOp = new PromptKeywordOptions("\nChoose force unit:");
-				fOp.Keywords.Add(N);
-				fOp.Keywords.Add(kN);
-				fOp.Keywords.Add(MN);
-				fOp.Keywords.Default = units.ForceUnit.ToString();
-				fOp.AllowNone = false;
-
-				// Get the result
-				PromptResult fRes = Current.edtr.GetKeywords(fOp);
-
-				if (fRes.Status == PromptStatus.Cancel)
-					return;
-
-				// Ask the user stress unit
-				PromptKeywordOptions sOp = new PromptKeywordOptions("\nChoose stress unit:");
-				sOp.Keywords.Add(Pa);
-				sOp.Keywords.Add(kPa);
-				sOp.Keywords.Add(MPa);
-				sOp.Keywords.Default = units.StressUnit.ToString();
-				sOp.AllowNone = false;
-
-				// Get the result
-				PromptResult sRes = Current.edtr.GetKeywords(sOp);
-
-				if (sRes.Status == PromptStatus.Cancel)
-					return;
-
-				var dim = (DimensionUnits) Enum.Parse(typeof(DimensionUnits), dimRes.StringResult);
-				var f   = (ForceUnits)     Enum.Parse(typeof(ForceUnits),     fRes.StringResult);
-				var sig = (StressUnits)    Enum.Parse(typeof(StressUnits),    sRes.StringResult);
-
-				// Save the variables on the Xrecord
-				using (ResultBuffer rb = new ResultBuffer())
+				// Ask the user to choose dimension units
+				string[] dimTypes =
 				{
-					rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName));  // 0
-					rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, Units));           // 1
-					rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, (int)dim));          // 2
-					rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, (int)f));            // 3
-					rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, (int)sig));          // 4
+					"geometry",
+					"reinforcement",
+					"displacements"
+				};
+				
+				DimensionUnit[] dimUnits = new DimensionUnit[3];
 
-					// Create the entry in the NOD and add to the transaction
-					Auxiliary.SaveObjectDictionary(Units, rb);
+				for (int i = 0; i < dimTypes.Length; i++)
+				{
+					var dimOps = UserInput.SelectKeyword("Choose " + dimTypes[i] + " dimensions unit:", dimOpts, dimDefs[i]);
+
+					if (!dimOps.HasValue)
+						return;
+
+					// Save value
+					dimUnits[i] = (DimensionUnit) Enum.Parse(typeof(DimensionUnit), dimOps.Value.keyword);
 				}
 
-				Current.edtr.WriteMessage("\nUnits set: " + dim + ", " + f + ", " + sig);
+				// Ask the user to choose force units
+				string[] fTypes =
+				{
+					"applied forces",
+					"stringer forces"
+				};
+				
+				ForceUnit[] fUnits = new ForceUnit[2];
+
+				for (int i = 0; i < fTypes.Length; i++)
+				{
+					var fOps = UserInput.SelectKeyword("Choose " + fTypes[i] + " unit:", fOpts, fDefs[i]);
+
+					if (!fOps.HasValue)
+						return;
+
+					// Save value
+					fUnits[i] = (ForceUnit) Enum.Parse(typeof(ForceUnit), fOps.Value.keyword);
+				}
+
+				// Ask the user to choose stress units
+				string[] stTypes =
+				{
+					"panel stresses",
+					"material strength/module"
+				};
+
+				StressUnit[] stUnits = new StressUnit[2];
+
+				for (int i = 0; i < stTypes.Length; i++)
+				{
+					var stOps = UserInput.SelectKeyword("Choose " + stTypes[i] + " unit:", stOpts, stDefs[i]);
+
+					if (!stOps.HasValue)
+						return;
+
+					// Save value
+					stUnits[i] = (StressUnit)Enum.Parse(typeof(StressUnit), stOps.Value.keyword);
+				}
+
+				// Get the Xdata size
+				int size = Enum.GetNames(typeof(UnitsData)).Length;
+				var data = new TypedValue[size];
+
+				// Set data
+				data[(int)UnitsData.AppName]           = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  Current.appName);
+				data[(int)UnitsData.XDataStr]          = new TypedValue((int)DxfCode.ExtendedDataAsciiString, Units);
+				data[(int)UnitsData.Geometry]          = new TypedValue((int)DxfCode.ExtendedDataInteger32,   dimUnits[0]);
+				data[(int)UnitsData.Reinforcement]     = new TypedValue((int)DxfCode.ExtendedDataInteger32,   dimUnits[1]);
+				data[(int)UnitsData.Displacements]     = new TypedValue((int)DxfCode.ExtendedDataInteger32,   dimUnits[2]);
+				data[(int)UnitsData.AppliedForces]     = new TypedValue((int)DxfCode.ExtendedDataInteger32,   fUnits[0]);
+				data[(int)UnitsData.StringerForces]    = new TypedValue((int)DxfCode.ExtendedDataInteger32,   fUnits[1]);
+				data[(int)UnitsData.PanelStresses]     = new TypedValue((int)DxfCode.ExtendedDataInteger32,   stUnits[0]);
+				data[(int)UnitsData.MaterialStrength]  = new TypedValue((int)DxfCode.ExtendedDataInteger32,   stUnits[1]);
+
+				// Create the entry in the NOD and add to the transaction
+				Auxiliary.SaveObjectDictionary(Units, new ResultBuffer(data));
 			}
 
 			public static Units ReadUnits()
@@ -102,16 +132,20 @@ namespace SPMTool.AutoCAD
 				TypedValue[] data = Auxiliary.ReadDictionaryEntry(Units);
 
 				if (data is null)
-					return
-						new Units();
+					return null;
 
 				// Get the parameters from XData
-				var dim = (DimensionUnits) Convert.ToInt32(data[2].Value);
-				var f   = (ForceUnits)     Convert.ToInt32(data[3].Value);
-				var sig = (StressUnits)    Convert.ToInt32(data[4].Value);
-
 				return
-					new Units(dim, f, sig);
+					new Units
+					{
+						Geometry          = (DimensionUnit) data[(int)UnitsData.Geometry].Value,
+						Reinforcement     = (DimensionUnit) data[(int)UnitsData.Reinforcement].Value,
+						Displacements     = (DimensionUnit) data[(int)UnitsData.Displacements].Value,
+						AppliedForces     = (ForceUnit)     data[(int)UnitsData.AppliedForces].Value,
+						StringerForces    = (ForceUnit)     data[(int)UnitsData.StringerForces].Value,
+						PanelStresses     = (StressUnit)    data[(int)UnitsData.PanelStresses].Value,
+						MaterialStrength  = (StressUnit)    data[(int)UnitsData.MaterialStrength].Value,
+					};
 			}
 		}
 	}
