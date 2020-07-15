@@ -219,7 +219,8 @@ namespace SPMTool.AutoCAD
 			// Ask the user to choose the options
 			var keyOp = new PromptKeywordOptions("\n" + message)
 			{
-				AllowNone = allowNone
+				AllowNone           = allowNone,
+				AllowArbitraryInput = false
 			};
 
 			// Get the options
@@ -231,7 +232,7 @@ namespace SPMTool.AutoCAD
 				keyOp.Keywords.Default = defaultKeyword;
 
 			PromptResult result = Current.edtr.GetKeywords(keyOp);
-
+			
 			if (result.Status == PromptStatus.Cancel)
 				return null;
 

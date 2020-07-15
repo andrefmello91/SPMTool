@@ -1,86 +1,62 @@
 ﻿using UnitsNet;
 using UnitsNet.Units;
+using StressUnit = UnitsNet.Units.PressureUnit;
 
 namespace SPMTool
 {
-	// Dimension units related to mm
-	public enum DimensionUnit
-	{
-		mm = LengthUnit.Millimeter,
-		cm = LengthUnit.Centimeter,
-		m  = LengthUnit.Meter
-	}
-	
-	// Force units related to N
-	public enum ForceUnit
-	{
-		N  = UnitsNet.Units.ForceUnit.Newton,
-		kN = UnitsNet.Units.ForceUnit.Kilonewton,
-		MN = UnitsNet.Units.ForceUnit.Meganewton
-	}
-
-	// Stress units
-	public enum StressUnit
-	{
-		Pa  = PressureUnit.Pascal,
-		kPa = PressureUnit.Kilopascal,
-		MPa = PressureUnit.Megapascal,
-		GPa = PressureUnit.Gigapascal
-	}
-
 	public class Units
     {
 	    // Properties
-		public DimensionUnit Geometry         { get; set; }
-		public DimensionUnit Reinforcement    { get; set; }
-		public DimensionUnit Displacements    { get; set; }
-		public ForceUnit     AppliedForces    { get; set; }
-		public ForceUnit     StringerForces   { get; set; }
-		public StressUnit    PanelStresses    { get; set; }
-		public StressUnit    MaterialStrength { get; set; }
+		public LengthUnit Geometry         { get; set; }
+		public LengthUnit Reinforcement    { get; set; }
+		public LengthUnit Displacements    { get; set; }
+		public ForceUnit  AppliedForces    { get; set; }
+		public ForceUnit  StringerForces   { get; set; }
+		public StressUnit PanelStresses    { get; set; }
+		public StressUnit MaterialStrength { get; set; }
        
 		// Default Constructor
 		public Units()
 		{
-			Geometry         = DimensionUnit.mm;
-			Reinforcement    = DimensionUnit.mm;
-			Displacements    = DimensionUnit.mm;
-			AppliedForces    = ForceUnit.kN;
-			StringerForces   = ForceUnit.kN;
-			PanelStresses    = StressUnit.MPa;
-			MaterialStrength = StressUnit.MPa;
+			Geometry         = LengthUnit.Millimeter;
+			Reinforcement    = LengthUnit.Millimeter;
+			Displacements    = LengthUnit.Millimeter;
+			AppliedForces    = ForceUnit.Kilonewton;
+			StringerForces   = ForceUnit.Kilonewton;
+			PanelStresses    = StressUnit.Megapascal;
+			MaterialStrength = StressUnit.Megapascal;
 		}
 
 		// Get dimension in mm
-		public double ConvertToMillimeter(double dimension, DimensionUnit fromUnit) =>
-			UnitConverter.Convert(dimension, (LengthUnit) fromUnit, (LengthUnit) DimensionUnit.mm);
+		public double ConvertToMillimeter(double dimension, LengthUnit fromUnit) =>
+			UnitConverter.Convert(dimension, fromUnit, LengthUnit.Millimeter);
 
 		// Convert mm to dimension
-		public double ConvertFromMillimeter(double mm, DimensionUnit toUnit) =>
-			UnitConverter.Convert(mm, (LengthUnit) DimensionUnit.mm, (LengthUnit) toUnit);
+		public double ConvertFromMillimeter(double millimeter, LengthUnit toUnit) =>
+			UnitConverter.Convert(millimeter, LengthUnit.Millimeter, toUnit);
 
 		// Get force in N
 		public double ConvertToNewton(double force, ForceUnit fromUnit) =>
-			UnitConverter.Convert(force, (UnitsNet.Units.ForceUnit) fromUnit, (UnitsNet.Units.ForceUnit) ForceUnit.N);
+			UnitConverter.Convert(force, fromUnit, ForceUnit.Newton);
 
 		// Convert from N
 		public double ConvertFromNewton(double newton, ForceUnit toUnit) =>
-			UnitConverter.Convert(newton, (UnitsNet.Units.ForceUnit) ForceUnit.N, (UnitsNet.Units.ForceUnit) toUnit);
+			UnitConverter.Convert(newton, ForceUnit.Newton, toUnit);
 		
 		// Get force in kN
 		public double ConvertToKiloNewton(double force, ForceUnit fromUnit) =>
-			UnitConverter.Convert(force, (UnitsNet.Units.ForceUnit) fromUnit, (UnitsNet.Units.ForceUnit) ForceUnit.kN);
+			UnitConverter.Convert(force, fromUnit, ForceUnit.Kilonewton);
 
 		// Convert from N
 		public double ConvertFromKiloNewton(double kiloNewton, ForceUnit toUnit) =>
-			UnitConverter.Convert(kiloNewton, (UnitsNet.Units.ForceUnit) ForceUnit.kN, (UnitsNet.Units.ForceUnit) toUnit);
+			UnitConverter.Convert(kiloNewton, ForceUnit.Kilonewton, toUnit);
 
 		// Get stress unit related to MPa
 		public double ConvertToMPa(double stress, StressUnit fromUnit) =>
-			UnitConverter.Convert(stress, (PressureUnit) fromUnit, (PressureUnit) StressUnit.MPa);
+			UnitConverter.Convert(stress, fromUnit, StressUnit.Megapascal);
 
 		// Transform stress from MPa to unit
-		public double ConvertFromMPa(double mpa, StressUnit toUnit) =>
-			UnitConverter.Convert(mpa, (PressureUnit) StressUnit.MPa, (PressureUnit) toUnit);
+		public double ConvertFromMPa(double megapascal, StressUnit toUnit) =>
+			UnitConverter.Convert(megapascal, StressUnit.Megapascal, toUnit);
     }
 }

@@ -162,6 +162,9 @@
     <Compile Include="UserInterface\GraphWindow.xaml.cs">
       <DependentUpon>GraphWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UserInterface\UnitsConfig.xaml.cs">
+      <DependentUpon>UnitsConfig.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserInterface\UserInterface.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -318,6 +321,10 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="UserInterface\GraphWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserInterface\UnitsConfig.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
