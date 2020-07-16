@@ -82,31 +82,35 @@ namespace SPMTool.UserInterface
 		// Update parameters
 		private void UpdateParameters()
 		{
-			// Read parameters
-			double
-				fc    = Units.ConvertToMPa(double.Parse(StrengthBox.Text, CultureInfo.InvariantCulture), Units.MaterialStrength),
-				phiAg = Units.ConvertToMillimeter(double.Parse(AggDiamBox.Text, CultureInfo.InvariantCulture), Units.Reinforcement);
-
-			var aggType = (Concrete.AggregateType) Enum.Parse(typeof(Concrete.AggregateType), AggTypeBox.Text);
-
-			// Get parameters
-			switch (ParModel)
+			if (StrengthBox.Text != String.Empty && AggDiamBox.Text != String.Empty && AggTypeBox.SelectedItem.ToString() != String.Empty)
 			{
-				case ParameterModel.MC2010:
-					ConcreteParameters = new Parameters.MC2010(fc, phiAg, aggType);
-					break;
+				// Read parameters
+				double
+					fc    = Units.ConvertToMPa(double.Parse(StrengthBox.Text, CultureInfo.InvariantCulture), Units.MaterialStrength),
+					phiAg = Units.ConvertToMillimeter(double.Parse(AggDiamBox.Text, CultureInfo.InvariantCulture), Units.Reinforcement);
 
-				case ParameterModel.NBR6118:
-					ConcreteParameters = new Parameters.NBR6118(fc, phiAg, aggType);
-					break;
+				var aggType = (Concrete.AggregateType) Enum.Parse(typeof(Concrete.AggregateType),
+					AggTypeBox.SelectedItem.ToString());
 
-				case ParameterModel.MCFT:
-					ConcreteParameters = new Parameters.MCFT(fc, phiAg, aggType);
-					break;
+				// Get parameters
+				switch (ParModel)
+				{
+					case ParameterModel.MC2010:
+						ConcreteParameters = new Parameters.MC2010(fc, phiAg, aggType);
+						break;
 
-				case ParameterModel.DSFM:
-					ConcreteParameters = new Parameters.DSFM(fc, phiAg, aggType);
-					break;
+					case ParameterModel.NBR6118:
+						ConcreteParameters = new Parameters.NBR6118(fc, phiAg, aggType);
+						break;
+
+					case ParameterModel.MCFT:
+						ConcreteParameters = new Parameters.MCFT(fc, phiAg, aggType);
+						break;
+
+					case ParameterModel.DSFM:
+						ConcreteParameters = new Parameters.DSFM(fc, phiAg, aggType);
+						break;
+				}
 			}
 		}
 
@@ -182,14 +186,9 @@ namespace SPMTool.UserInterface
 		{
 			var fcBox = (TextBox) sender;
 
-			if (System.Text.RegularExpressions.Regex.IsMatch(fcBox.Text, "  ^ [0-9]"))
-			{
-				fcBox.Text = string.Empty;
-			}
-
             if (ParModel != ParameterModel.Custom && fcBox.Text != string.Empty)
 			{
-				ConcreteParameters.Strength = double.Parse(fcBox.Text);
+				UpdateParameters();
 				UpdateCustomParameters();
 			}
 		}
@@ -200,16 +199,8 @@ namespace SPMTool.UserInterface
 
 			if (ParModel != ParameterModel.Custom && aggBox.SelectedItem.ToString() != string.Empty)
 			{
-				ConcreteParameters.Type = (Concrete.AggregateType)Enum.Parse(typeof(Concrete.AggregateType), aggBox.SelectedItem.ToString());
+				UpdateParameters();
 				UpdateCustomParameters();
-			}
-		}
-
-		private void textBox_KeyPress(object sender, KeyPressEventArgs e)
-		{
-			if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) && (e.KeyChar != '.'))
-			{
-				e.Handled = true;
 			}
 		}
 
