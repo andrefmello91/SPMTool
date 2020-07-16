@@ -1,0 +1,44 @@
+﻿<Window x:Class="SPMTool.UserInterface.ConcreteConfig"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SPMTool.UserInterface"
+        mc:Ignorable="d"
+        Title="Concrete Configuration" Height="465" Width="400">
+    <Grid Background="#cfd2d4">
+        <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="168" Margin="10,41,0,0" VerticalAlignment="Top" Width="372" Opacity="0.3"/>
+        <TextBlock Text="Main parameters:" HorizontalAlignment="Left" Margin="10,15,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Parameter model:" HorizontalAlignment="Left" Margin="22,55,0,0" VerticalAlignment="Top"/>
+        <ComboBox Name="ParameterBox" HorizontalAlignment="Left" Margin="210,50,0,0" VerticalAlignment="Top" Width="116" Height="26" SelectionChanged="ParameterBox_OnSelectionChanged"/>
+        <TextBlock Text="Compressive strength (fc):"     HorizontalAlignment="Left" Margin="20,85,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="StrengthBox" HorizontalAlignment="Left" Margin="210,80,0,0" VerticalAlignment="Top" Width="116" Height="26" TextWrapping="NoWrap" TextChanged="StrengthBox_OnTextChanged" PreviewTextInput="NumberValidationTextBox"/>
+        <TextBlock Text="{Binding StressUnit}"   HorizontalAlignment="Left" Margin="336,85,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Maximum aggregate diameter:"     HorizontalAlignment="Left" Margin="20,115,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="AggDiamBox" HorizontalAlignment="Left" Margin="210,110,0,0" VerticalAlignment="Top" Width="116" Height="26" TextWrapping="NoWrap" PreviewTextInput="NumberValidationTextBox"/>
+        <TextBlock Text="{Binding AggregateUnit}"   HorizontalAlignment="Left" Margin="336,115,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Aggregate type:"     HorizontalAlignment="Left" Margin="20,145,0,0" VerticalAlignment="Top"/>
+        <ComboBox Name="AggTypeBox" HorizontalAlignment="Left" Margin="210,140,0,0" VerticalAlignment="Top" Width="116" Height="26" SelectionChanged="AggTypeBox_OnSelectionChanged"/>
+        <TextBlock Text="Nonlinear behavior:"     HorizontalAlignment="Left" Margin="20,175,0,0" VerticalAlignment="Top"/>
+        <ComboBox Name="BehaviorBox" HorizontalAlignment="Left" Margin="210,170,0,0" VerticalAlignment="Top" Width="116" Height="26"/>
+
+        <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="135" Margin="10,250,0,0" VerticalAlignment="Top" Width="372" Opacity="0.3"/>
+        <TextBlock Text="Custom parameters (set custom parameter model):" HorizontalAlignment="Left" Margin="10,225,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Elastic module (Ec):"     HorizontalAlignment="Left" Margin="20,265,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="ModuleBox" HorizontalAlignment="Left" Margin="210,260,0,0" VerticalAlignment="Top" Width="116" Height="26" TextWrapping="NoWrap" PreviewTextInput="NumberValidationTextBox"/>
+        <TextBlock Text="{Binding StressUnit}"   HorizontalAlignment="Left" Margin="336,265,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Tensile strength (ft):"     HorizontalAlignment="Left" Margin="20,295,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="TensileBox" HorizontalAlignment="Left" Margin="210,290,0,0" VerticalAlignment="Top" Width="116" Height="26" TextWrapping="NoWrap" PreviewTextInput="NumberValidationTextBox"/>
+        <TextBlock Text="{Binding StressUnit}"   HorizontalAlignment="Left" Margin="336,295,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Plastic strain (εc):"     HorizontalAlignment="Left" Margin="20,325,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="PlasticStrainBox" HorizontalAlignment="Left" Margin="210,320,0,0" VerticalAlignment="Top" Width="116" Height="26" TextWrapping="NoWrap" PreviewTextInput="NumberValidationTextBox"/>
+        <TextBlock Text="E-03"   HorizontalAlignment="Left" Margin="336,325,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Ultimate strain (εcu):"     HorizontalAlignment="Left" Margin="20,355,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="UltStrainBox" HorizontalAlignment="Left" Margin="210,350,0,0" VerticalAlignment="Top" Width="116" Height="26" TextWrapping="NoWrap" PreviewTextInput="NumberValidationTextBox"/>
+        <TextBlock Text="E-03"   HorizontalAlignment="Left" Margin="336,355,0,0" VerticalAlignment="Top"/>
+
+
+        <Button Content="OK" HorizontalAlignment="Left" Margin="302,399,0,0" VerticalAlignment="Top" Width="75" Click="ButtonOK_OnClick" ToolTip="Save concrete parameters"/>
+        <Button Content="Cancel" HorizontalAlignment="Left" Margin="214,399,0,0" VerticalAlignment="Top" Width="75" Click="ButtonCancel_OnClick" ToolTip="Cancel changes"/>
+    </Grid>
+</Window>
