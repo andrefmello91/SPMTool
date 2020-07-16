@@ -8,29 +8,29 @@
         Title="Units Configuration" Height="459.054" Width="304.728">
     <Grid Background="#cfd2d4">
         <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="104" Margin="10,41,0,0" VerticalAlignment="Top" Width="275" Opacity="0.3"></Border>
-        <Label Content="Dimension units:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-        <Label Content="Geometry:"     HorizontalAlignment="Left" Margin="20,50,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Dimension units:" HorizontalAlignment="Left" Margin="10,15,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Geometry:"     HorizontalAlignment="Left" Margin="20,55,0,0" VerticalAlignment="Top"/>
         <ComboBox Name="GeometryBox" HorizontalAlignment="Left" Margin="210,50,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
-        <Label Content="Reinforcement / aggregate size:"     HorizontalAlignment="Left" Margin="20,80,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Reinforcement / aggregate size:"     HorizontalAlignment="Left" Margin="20,85,0,0" VerticalAlignment="Top"/>
         <ComboBox Name="ReinforcementBox" HorizontalAlignment="Left" Margin="210,80,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
-        <Label Content="Displacements:"     HorizontalAlignment="Left" Margin="20,110,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Displacements:"     HorizontalAlignment="Left" Margin="20,115,0,0" VerticalAlignment="Top"/>
         <ComboBox Name="DisplacementsBox" HorizontalAlignment="Left" Margin="210,110,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
+
         <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="74" Margin="10,186,0,0" VerticalAlignment="Top" Width="275" Opacity="0.3"/>
-
-        <Label Content="Force Units:"      HorizontalAlignment="Left" Margin="10,155,0,0" VerticalAlignment="Top"/>
-        <Label Content="Applied forces:"   HorizontalAlignment="Left" Margin="20,195,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Force Units:"      HorizontalAlignment="Left" Margin="10,160,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Applied forces:"   HorizontalAlignment="Left" Margin="20,200,0,0" VerticalAlignment="Top"/>
         <ComboBox Name="AppliedForcesBox"  HorizontalAlignment="Left" Margin="210,195,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
-        <Label Content="Stringer Forces:"  HorizontalAlignment="Left" Margin="20,225,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Stringer Forces:"  HorizontalAlignment="Left" Margin="20,230,0,0" VerticalAlignment="Top"/>
         <ComboBox Name="StringerForcesBox" HorizontalAlignment="Left" Margin="210,225,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
-        <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="74" Margin="10,305,0,0" VerticalAlignment="Top" Width="275" Opacity="0.3"/>
 
-        <Label Content="Stress Units:" HorizontalAlignment="Left" Margin="10,274,0,0" VerticalAlignment="Top"/>
-        <Label Content="Panel stresses:"     HorizontalAlignment="Left" Margin="20,314,0,0" VerticalAlignment="Top"/>
+        <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="74" Margin="10,305,0,0" VerticalAlignment="Top" Width="275" Opacity="0.3"/>
+        <TextBlock Text="Stress Units:" HorizontalAlignment="Left" Margin="10,280,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Panel stresses:"     HorizontalAlignment="Left" Margin="20,320,0,0" VerticalAlignment="Top"/>
         <ComboBox Name="PanelStressesBox" HorizontalAlignment="Left" Margin="210,314,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
-        <Label Content="Material Strength / Module:"     HorizontalAlignment="Left" Margin="20,344,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="Material Strength / Module:"     HorizontalAlignment="Left" Margin="20,350,0,0" VerticalAlignment="Top"/>
         <ComboBox Name="MaterialBox" HorizontalAlignment="Left" Margin="210,344,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
 
         <Button Content="OK" HorizontalAlignment="Left" Margin="212,398,0,0" VerticalAlignment="Top" Width="75" Click="ButtonOK_OnClick" ToolTip="Save units"/>
-        <Button Content="Cancel" HorizontalAlignment="Left" Margin="123,398,0,0" VerticalAlignment="Top" Width="75" Click="ButtonCancel_OnClick" ToolTip="Cancel changes"/>
+        <Button Content="Cancel" HorizontalAlignment="Left" Margin="123,398,0,0" VerticalAlignment="Top" Width="75" Click="ButtonCancel_OnClick" ToolTip="Discard changes"/>
     </Grid>
 </Window>

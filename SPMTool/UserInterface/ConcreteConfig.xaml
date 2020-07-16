@@ -39,6 +39,6 @@
 
 
         <Button Content="OK" HorizontalAlignment="Left" Margin="286,400,0,0" VerticalAlignment="Top" Width="75" Click="ButtonOK_OnClick" ToolTip="Save concrete parameters"/>
-        <Button Content="Cancel" HorizontalAlignment="Left" Margin="198,400,0,0" VerticalAlignment="Top" Width="75" Click="ButtonCancel_OnClick" ToolTip="Cancel changes"/>
+        <Button Content="Cancel" HorizontalAlignment="Left" Margin="198,400,0,0" VerticalAlignment="Top" Width="75" Click="ButtonCancel_OnClick" ToolTip="Discard changes"/>
     </Grid>
 </Window>
