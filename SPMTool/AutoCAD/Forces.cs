@@ -3,6 +3,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Core;
+using UnitsNet.Units;
 using Force = UnitsNet.Force;
 using ForceTextData  = SPMTool.XData.ForceText;
 using ForceData      = SPMTool.XData.Force;
@@ -30,6 +31,7 @@ namespace SPMTool.AutoCAD
 			// Read units
 			var units = Config.ReadUnits();
 			string fAbrev = Force.GetAbbreviation(units.AppliedForces);
+			double scFctr = GlobalAuxiliary.ScaleFactor(units.Geometry);
 
             // Check if the force block already exist. If not, create the blocks
             CreateForceBlock();
@@ -154,7 +156,7 @@ namespace SPMTool.AutoCAD
 						            rotAng = Constants.PiOver2;
 
 						            // Set the text position
-						            txtPos = new Point3d(xPos - 200, yPos + 25, 0);
+						            txtPos = new Point3d(xPos - 200 * scFctr, yPos + 25 * scFctr, 0);
 					            }
 
 					            if (xForce.Value < 0) // negative force in x
@@ -163,11 +165,13 @@ namespace SPMTool.AutoCAD
 						            rotAng = -Constants.PiOver2;
 
 						            // Set the text position
-						            txtPos = new Point3d(xPos + 75, yPos + 25, 0);
+						            txtPos = new Point3d(xPos + 75 * scFctr, yPos + 25 * scFctr, 0);
 					            }
 
-					            // Rotate the block
+					            // Rotate and scale the block
 					            blkRef.TransformBy(Matrix3d.Rotation(rotAng, Current.ucs.Zaxis, insPt));
+								if(units.Geometry != LengthUnit.Millimeter)
+									blkRef.TransformBy(Matrix3d.Scaling(scFctr, insPt));
 
 					            // Set XData to force block
 					            blkRef.XData = ForceXData(xForce.Newtons, (int) ForceDirection.X);
@@ -177,7 +181,7 @@ namespace SPMTool.AutoCAD
 					            {
 						            TextString = xForceAbs.ToString(),
 						            Position = txtPos,
-						            Height = 30,
+						            Height = 30 * scFctr,
 						            Layer = TxtLayer
 					            };
 
@@ -211,7 +215,7 @@ namespace SPMTool.AutoCAD
 						            rotAng = Constants.Pi;
 
 						            // Set the text position
-						            txtPos = new Point3d(xPos + 25, yPos - 125, 0);
+						            txtPos = new Point3d(xPos + 25 * scFctr, yPos - 125 * scFctr, 0);
 					            }
 
 					            if (yForce.Value < 0) // negative force in y
@@ -219,21 +223,23 @@ namespace SPMTool.AutoCAD
 						            // No rotation needed
 
 						            // Set the text position
-						            txtPos = new Point3d(xPos + 25, yPos + 100, 0);
+						            txtPos = new Point3d(xPos + 25 * scFctr, yPos + 100 * scFctr, 0);
 					            }
 
-					            // Rotate the block
+					            // Rotate and scale the block
 					            blkRef.TransformBy(Matrix3d.Rotation(rotAng, Current.ucs.Zaxis, insPt));
+					            if (units.Geometry != LengthUnit.Millimeter)
+						            blkRef.TransformBy(Matrix3d.Scaling(scFctr, insPt));
 
-					            // Set XData to force block
-					            blkRef.XData = ForceXData(yForce.Newtons, ForceDirection.Y);
+								// Set XData to force block
+								blkRef.XData = ForceXData(yForce.Newtons, ForceDirection.Y);
 
 					            // Define the force text
 					            DBText text = new DBText()
 					            {
 						            TextString = yForceAbs.ToString(),
 						            Position = txtPos,
-						            Height = 30,
+						            Height = 30 * scFctr,
 						            Layer = TxtLayer
 					            };
 

@@ -3,6 +3,8 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Core;
+using UnitsNet.Units;
+using Force = UnitsNet.Force;
 using SupportDirection = SPMTool.Directions;
 using SupportData      = SPMTool.XData.Support;
 
@@ -29,8 +31,12 @@ namespace SPMTool.AutoCAD
 	        // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
 	        Auxiliary.CreateLayer(Layers.Support, Colors.Red);
 
-	        // Check if the support blocks already exist. If not, create the blocks
-	        CreateSupportBlocks();
+	        // Read units
+	        var units     = Config.ReadUnits();
+	        double scFctr = GlobalAuxiliary.ScaleFactor(units.Geometry);
+
+            // Check if the support blocks already exist. If not, create the blocks
+            CreateSupportBlocks();
 
 	        // Get all the supports in the model
 	        ObjectIdCollection sprts = Auxiliary.GetEntitiesOnLayer(Layers.Support);
@@ -127,8 +133,12 @@ namespace SPMTool.AutoCAD
 					        blkRef.Layer = SupportLayer;
 					        Auxiliary.AddObject(blkRef);
 
-					        // Set XData
-					        blkRef.XData = SupportXData(direction);
+					        // Set scale to the block
+					        if (units.Geometry != LengthUnit.Millimeter)
+						        blkRef.TransformBy(Matrix3d.Scaling(scFctr, insPt));
+
+                            // Set XData
+                            blkRef.XData = SupportXData(direction);
 				        }
 			        }
 		        }
