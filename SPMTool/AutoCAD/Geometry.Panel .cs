@@ -112,6 +112,9 @@ namespace SPMTool.AutoCAD
 			[CommandMethod("DividePanel")]
 			public static void DividePanel()
 			{
+				// Get units
+				var units = Config.ReadUnits() ?? new Units();
+
 				// Prompt for select panels
 				var pnls = UserInput.SelectPanels("Select panels to divide");
 
@@ -180,7 +183,7 @@ namespace SPMTool.AutoCAD
 								foreach (ObjectId strObj in strs)
 								{
 									// Read as a stringer
-									var str = new Core.Stringer(strObj);
+									var str = new Core.Stringer(strObj, units);
 
 									// Verify if the Stringer starts and ends in a panel vertex
 									if (grpPts.Contains(str.StartPoint) && grpPts.Contains(str.EndPoint))

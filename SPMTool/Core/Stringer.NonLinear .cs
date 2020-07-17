@@ -27,7 +27,7 @@ namespace SPMTool.Core
 			private (double e1, double e3) IterationGenStrains  { get; set; }
 			private (double N1, double N3) IterationGenStresses { get; set; }
 
-            public NonLinear(ObjectId stringerObject, ConcreteParameters concreteParameters, Behavior concreteBehavior) : base(stringerObject, concreteParameters, concreteBehavior)
+            public NonLinear(ObjectId stringerObject, Units units, ConcreteParameters concreteParameters, Behavior concreteBehavior) : base(stringerObject, units, concreteParameters, concreteBehavior)
 			{
 				// Initiate F matrix
 				FMatrix = InitialFMatrix();

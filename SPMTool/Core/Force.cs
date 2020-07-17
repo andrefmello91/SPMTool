@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.AutoCAD;
+using UnitsNet.Units;
 using ForceData = SPMTool.XData.Force;
 
 namespace SPMTool.Core
@@ -18,19 +19,24 @@ namespace SPMTool.Core
 		}
 
 		// Properties
-		public ObjectId       ForceObject { get; }
-		public double         Value       { get; }
-		public Point3d        Position    { get; }
-		public ForceDirection Direction   { get; }
-		public override int[] DoFIndex { get; }
+		public  ObjectId       ForceObject { get; }
+		private ForceUnit      ForceUnit   { get; }
+		public  double         Value       { get; }
+		public  Point3d        Position    { get; }
+		public  ForceDirection Direction   { get; }
+		public  override int[] DoFIndex { get; }
+
+		// Convert force
+		private UnitsNet.Force convertedForce => UnitsNet.Force.FromNewtons(Value).ToUnit(ForceUnit);
 
         // Constructor
-        public Force(ObjectId forceObject)
+        public Force(ObjectId forceObject, ForceUnit forceUnit = ForceUnit.Newton)
 		{
 			ForceObject = forceObject;
+			ForceUnit   = forceUnit;
 
 			// Start a transaction
-			using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Read the object as a blockreference
 				var fBlck = trans.GetObject(ForceObject, OpenMode.ForRead) as BlockReference;
@@ -49,7 +55,7 @@ namespace SPMTool.Core
 		}
 
 		// Read applied forces
-		public static Force[] ListOfForces()
+		public static Force[] ListOfForces(ForceUnit forceUnit = ForceUnit.Newton)
 		{
 			var forces = new List<Force>();
 
@@ -57,7 +63,7 @@ namespace SPMTool.Core
 			var fObjs = Auxiliary.GetEntitiesOnLayer(Layers.Force);
 
 			foreach (ObjectId fObj in fObjs)
-				forces.Add(new Force(fObj));
+				forces.Add(new Force(fObj, forceUnit));
 
 			return
 				forces.ToArray();
@@ -67,10 +73,10 @@ namespace SPMTool.Core
 		{
 			if (Direction == ForceDirection.X)
 				return
-					"Fx = " + Value + " kN";
+					"Fx = " + convertedForce;
 
 			return
-				"Fy = " + Value + " kN";
+				"Fy = " + convertedForce;
 		}
 
 	}

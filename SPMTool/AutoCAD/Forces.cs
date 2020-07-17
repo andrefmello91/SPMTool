@@ -3,6 +3,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Core;
+using Force = UnitsNet.Force;
 using ForceTextData  = SPMTool.XData.ForceText;
 using ForceData      = SPMTool.XData.Force;
 using ForceDirection = SPMTool.Core.Force.ForceDirection;
@@ -26,6 +27,10 @@ namespace SPMTool.AutoCAD
             Auxiliary.CreateLayer(Layers.Force, Colors.Yellow);
             Auxiliary.CreateLayer(Layers.ForceText, Colors.Yellow);
 
+			// Read units
+			var units = Config.ReadUnits();
+			string fAbrev = Force.GetAbbreviation(units.AppliedForces);
+
             // Check if the force block already exist. If not, create the blocks
             CreateForceBlock();
 
@@ -42,20 +47,20 @@ namespace SPMTool.AutoCAD
 	            return;
 
             // Ask the user set the load value in x direction:
-            var xFn = UserInput.GetDouble("Enter force (in kN) in X direction(positive following axis direction)?", 0, true, true);
+            var xFn = UserInput.GetDouble("Enter force (in " + fAbrev + ") in X direction(positive following axis direction)?", 0, true, true);
 
             if (!xFn.HasValue)
 	            return;
 
             // Ask the user set the load value in y direction:
-            var yFn = UserInput.GetDouble("Enter force (in kN) in Y direction(positive following axis direction)?", 0, true, true);
+            var yFn = UserInput.GetDouble("Enter force (in " + fAbrev + ") in Y direction(positive following axis direction)?", 0, true, true);
 
             if (!yFn.HasValue)
 	            return;
 
-            double
-				xForce = xFn.Value,
-	            yForce = yFn.Value;
+            Force
+				xForce = Force.From(xFn.Value, units.AppliedForces),
+	            yForce = Force.From(yFn.Value, units.AppliedForces);
 
             // Start a transaction
             using (Transaction trans = Current.db.TransactionManager.StartTransaction())
@@ -128,7 +133,7 @@ namespace SPMTool.AutoCAD
 
 			            // Insert the block into the current space
 			            // For forces in x
-			            if (xForce != 0)
+			            if (xForce.Value != 0)
 			            {
 				            using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
 				            {
@@ -137,13 +142,13 @@ namespace SPMTool.AutoCAD
 					            Auxiliary.AddObject(blkRef);
 
 					            // Get the force absolute value
-					            double xForceAbs = Math.Abs(xForce);
+					            double xForceAbs = Math.Abs(xForce.Value);
 
 					            // Initialize the rotation angle and the text position
 					            double rotAng = 0;
 					            Point3d txtPos = new Point3d();
 
-					            if (xForce > 0) // positive force in x
+					            if (xForce.Value > 0) // positive force in x
 					            {
 						            // Rotate 90 degress counterclockwise
 						            rotAng = Constants.PiOver2;
@@ -152,7 +157,7 @@ namespace SPMTool.AutoCAD
 						            txtPos = new Point3d(xPos - 200, yPos + 25, 0);
 					            }
 
-					            if (xForce < 0) // negative force in x
+					            if (xForce.Value < 0) // negative force in x
 					            {
 						            // Rotate 90 degress clockwise
 						            rotAng = -Constants.PiOver2;
@@ -165,7 +170,7 @@ namespace SPMTool.AutoCAD
 					            blkRef.TransformBy(Matrix3d.Rotation(rotAng, Current.ucs.Zaxis, insPt));
 
 					            // Set XData to force block
-					            blkRef.XData = ForceXData(xForce, (int) ForceDirection.X);
+					            blkRef.XData = ForceXData(xForce.Newtons, (int) ForceDirection.X);
 
 					            // Define the force text
 					            DBText text = new DBText()
@@ -185,7 +190,7 @@ namespace SPMTool.AutoCAD
 			            }
 
 			            // For forces in y
-			            if (yForce != 0)
+			            if (yForce.Value != 0)
 			            {
 				            using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
 				            {
@@ -194,13 +199,13 @@ namespace SPMTool.AutoCAD
 					            Auxiliary.AddObject(blkRef);
 
 					            // Get the force absolute value
-					            double yForceAbs = Math.Abs(yForce);
+					            double yForceAbs = Math.Abs(yForce.Value);
 
 					            // Initialize the rotation angle and the text position
 					            double rotAng = 0;
 					            Point3d txtPos = new Point3d();
 
-					            if (yForce > 0) // positive force in y
+					            if (yForce.Value > 0) // positive force in y
 					            {
 						            // Rotate 180 degress counterclockwise
 						            rotAng = Constants.Pi;
@@ -209,7 +214,7 @@ namespace SPMTool.AutoCAD
 						            txtPos = new Point3d(xPos + 25, yPos - 125, 0);
 					            }
 
-					            if (yForce < 0) // negative force in y
+					            if (yForce.Value < 0) // negative force in y
 					            {
 						            // No rotation needed
 
@@ -221,7 +226,7 @@ namespace SPMTool.AutoCAD
 					            blkRef.TransformBy(Matrix3d.Rotation(rotAng, Current.ucs.Zaxis, insPt));
 
 					            // Set XData to force block
-					            blkRef.XData = ForceXData(yForce, ForceDirection.Y);
+					            blkRef.XData = ForceXData(yForce.Newtons, ForceDirection.Y);
 
 					            // Define the force text
 					            DBText text = new DBText()

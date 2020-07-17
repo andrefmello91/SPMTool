@@ -11,7 +11,7 @@ namespace SPMTool.Core
         public class Linear : Stringer
         {
             // Constructor
-            public Linear(ObjectId stringerObject, ConcreteParameters concreteParameters, Behavior concreteBehavior = null) : base(stringerObject, concreteParameters, concreteBehavior)
+            public Linear(ObjectId stringerObject, Units units, ConcreteParameters concreteParameters, Behavior concreteBehavior = null) : base(stringerObject, units, concreteParameters, concreteBehavior)
             {
             }
 

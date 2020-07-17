@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using System.Threading;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -96,5 +98,5 @@ namespace SPMTool.AutoCAD
 					MaterialStrength  = (StressUnit) data[(int) UnitsData.MaterialStrength].Value,
 				};
 		}
-	}
+    }
 }

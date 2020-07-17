@@ -3,6 +3,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
+using UnitsNet;
 using NodeData       = SPMTool.XData.Node;
 using ForceDirection = SPMTool.Core.Force.ForceDirection;
 
@@ -25,13 +26,16 @@ namespace SPMTool.Core
 		public Constraint	        Constraint   { get; }
 		public (Force X, Force Y)	Forces       { get; }
 	    public (double X, double Y) Displacement { get; set; }
+		private Units               Units { get; }
 
 		// Constructor
-		public Node(ObjectId nodeObject, Force[] forces = null, Constraint[] constraints = null)
+		public Node(ObjectId nodeObject, Units units, Force[] forces = null, Constraint[] constraints = null)
 		{
 			ObjectId = nodeObject;
 
-			forces = forces ?? Core.Force.ListOfForces();
+			Units = units;
+
+			forces = forces ?? Core.Force.ListOfForces(Units.AppliedForces);
 
 			constraints = constraints ?? Constraint.ListOfConstraints();
 
@@ -212,15 +216,16 @@ namespace SPMTool.Core
 	        // Get displacements
 	        if (DisplacementSet)
 	        {
-		        // Approximate displacements
-		        double
-			        ux = Math.Round(Displacement.X, 2),
-			        uy = Math.Round(Displacement.Y, 2);
+		        // Convert displacements
+		        Length
+			        ux = Length.FromMillimeters(Displacement.X).ToUnit(Units.Displacements),
+			        uy = Length.FromMillimeters(Displacement.Y).ToUnit(Units.Displacements);
+					
 
 		        msgstr +=
 			        "\n\nDisplacements:\n" +
-			        "ux = " + ux + " mm" + "\n" +
-			        "uy = " + uy + " mm";
+			        "ux = " + ux +
+			        "uy = " + uy;
 	        }
 
 	        return msgstr;

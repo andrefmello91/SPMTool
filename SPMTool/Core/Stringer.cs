@@ -15,6 +15,7 @@ namespace SPMTool.Core
 	public partial class Stringer : SPMElement
 	{
         // Stringer properties
+		public Units                   Units            { get; }
 		public int[]                   Grips            { get; }
 		public Point3d[]               PointsConnected  { get; }
 		public double                  Length           { get; }
@@ -29,15 +30,16 @@ namespace SPMTool.Core
 		public Vector<double>          Displacements    { get; set; }
 
 		// Constructor
-		public Stringer(ObjectId stringerObject, ConcreteParameters concreteParameters = null, Behavior concreteBehavior = null)
+		public Stringer(ObjectId stringerObject, Units units, ConcreteParameters concreteParameters = null, Behavior concreteBehavior = null)
 		{
 			ObjectId = stringerObject;
+			Units    = units;
 
 			// Read the object as a line
 			Line strLine = Geometry.Stringer.ReadStringer(stringerObject);
 
 			// Get the length and angles
-			Length = strLine.Length;
+			Length = Units.ConvertToMillimeter(strLine.Length, Units.Geometry);
 			Angle  = strLine.Angle;
 
 			// Calculate midpoint
@@ -123,7 +125,7 @@ namespace SPMTool.Core
 	        var (l, m) = DirectionCosines;
 
 	        // Obtain the transformation matrix
-	        return Matrix<double>.Build.DenseOfArray(new double[,]
+	        return Matrix<double>.Build.DenseOfArray(new [,]
 	        {
 		        {l, m, 0, 0, 0, 0 },
 		        {0, 0, l, m, 0, 0 },
@@ -160,12 +162,18 @@ namespace SPMTool.Core
 		// Custom string return
 		public override string ToString()
 		{
-			string msgstr =
+			// Convert units
+			UnitsNet.Length
+				l = UnitsNet.Length.FromMillimeters(Length).ToUnit(Units.Geometry),
+				w = UnitsNet.Length.FromMillimeters(Width).ToUnit(Units.Geometry),
+				h = UnitsNet.Length.FromMillimeters(Height).ToUnit(Units.Geometry);
+
+            string msgstr =
 				"Stringer " + Number + "\n\n" +
 				"Grips: (" + Grips[0] + " - " + Grips[1] + " - " + Grips[2] + ")" + "\n" +
-				"Lenght = " + Length + " mm" + "\n" +
-				"Width = " + Width + " mm" + "\n" +
-				"Height = " + Height + " mm";
+				"Lenght = " + l + "\n" +
+				"Width = " + w  + "\n" +
+				"Height = " + h;
 
 			if (Reinforcement.IsSet)
 			{

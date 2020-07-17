@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Core;
+using SPMTool.UserInterface;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Results))]
@@ -838,8 +839,8 @@ namespace SPMTool.AutoCAD
 				// Read the element
 				var element = Auxiliary.ReadElement(ent);
 
-                // Display the values returned
-                Application.ShowAlertDialog(Current.appName + "\n\n" + element);
+				// Display the values returned
+				Application.ShowAlertDialog(Current.appName + "\n\n" + element);
 			}
 		}
 

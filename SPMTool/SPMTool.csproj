@@ -159,6 +159,9 @@
     <Compile Include="Core\Analysis.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\Constraints.cs" />
+    <Compile Include="UserInterface\NodeWindow.xaml.cs">
+      <DependentUpon>NodeWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserInterface\GraphWindow.xaml.cs">
       <DependentUpon>GraphWindow.xaml</DependentUpon>
     </Compile>
@@ -323,6 +326,10 @@
     <None Include="Resources\viewsupport_large_light.png" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="UserInterface\NodeWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="UserInterface\GraphWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

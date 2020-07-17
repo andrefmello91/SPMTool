@@ -13,6 +13,7 @@ namespace SPMTool.Core
     public class InputData
     {
 		// Properties
+		public Units              Units { get; }
 		public ConcreteParameters ConcreteParameters { get; }
 		public ConcreteBehavior   ConcreteBehavior   { get; }
         public Node[]             Nodes              { get; }
@@ -31,13 +32,16 @@ namespace SPMTool.Core
 
 		public InputData(AnalysisType analysisType)
 		{
+			// Get units
+			Units = Config.ReadUnits() ?? new Units();
+
 			// Get the collection of elements in the model
 			NodeObjects     = Geometry.Node.UpdateNodes();
 			StringerObjects = Geometry.Stringer.UpdateStringers();
 			PanelObjects    = Geometry.Panel.UpdatePanels();
 
             // Read forces and constraints
-            Forces      = Force.ListOfForces();
+            Forces      = Force.ListOfForces(Units.AppliedForces);
             Constraints = Constraint.ListOfConstraints();
 
 			// Get concrete data
@@ -60,7 +64,7 @@ namespace SPMTool.Core
 
 		    foreach (ObjectId ndObj in NodeObjects)
 		    {
-			    Node node = new Node(ndObj, Forces, Constraints);
+			    Node node = new Node(ndObj, Units, Forces, Constraints);
 
 			    // Set to nodes
 			    int i    = node.Number - 1;
@@ -84,11 +88,11 @@ namespace SPMTool.Core
 				switch (analysisType)
 				{
 					case AnalysisType.Linear:
-						stringer = new Stringer.Linear(strObj, ConcreteParameters);
+						stringer = new Stringer.Linear(strObj, Units, ConcreteParameters);
 						break;
 
                     case AnalysisType.Nonlinear:
-	                    stringer = new Stringer.NonLinear(strObj, ConcreteParameters, ConcreteBehavior);
+	                    stringer = new Stringer.NonLinear(strObj, Units, ConcreteParameters, ConcreteBehavior);
                         break;
 				}
 

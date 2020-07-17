@@ -288,15 +288,17 @@ namespace SPMTool.AutoCAD
 		}
 
 		// Read SPM element
-		public static SPMElement ReadElement(Entity entity)
+		public static SPMElement ReadElement(Entity entity, Units units = null)
 		{
+			units = (units ?? Config.ReadUnits()) ?? new Units();
+
 			if (entity.Layer == Layers.ExtNode.ToString() || entity.Layer == Layers.IntNode.ToString())
 				return
-					new Node(entity.ObjectId);
+					new Node(entity.ObjectId, units);
 
 			if (entity.Layer == Layers.Stringer.ToString())
 				return
-					new Stringer(entity.ObjectId);
+					new Stringer(entity.ObjectId, units);
 
 			if (entity.Layer == Layers.Panel.ToString())
 				return
