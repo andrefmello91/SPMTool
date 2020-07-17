@@ -179,7 +179,7 @@ namespace SPMTool.Core
 
 			if (Reinforcement.IsSet)
 			{
-				msgstr += "\n\n" + Reinforcement;
+				msgstr += "\n\n" + Reinforcement.ToString(Units.Reinforcement, Units.MaterialStrength);
 			}
 
 			return msgstr;

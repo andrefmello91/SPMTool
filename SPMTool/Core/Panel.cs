@@ -243,7 +243,7 @@ namespace SPMTool.Core
 				"Width = " + w;
 
 			if (Reinforcement.IsSet)
-				msgstr += "\n\n" + Reinforcement;
+				msgstr += "\n\n" + Reinforcement.ToString(Units.Reinforcement, Units.Geometry, Units.MaterialStrength);
 
 			return msgstr;
 		}

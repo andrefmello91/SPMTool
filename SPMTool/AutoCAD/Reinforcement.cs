@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Material;
+using UnitsNet;
 using Reinforcement = Material.Reinforcement.Uniaxial;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Material))]
@@ -21,16 +22,19 @@ namespace SPMTool.AutoCAD
 	    [CommandMethod("SetStringerReinforcement")]
 	    public static void SetStringerReinforcement()
 	    {
-		    // Request objects to be selected in the drawing area
-		    var strs = UserInput.SelectStringers(
+		    // Read units
+		    var units = Config.ReadUnits() ?? new Units();
+
+            // Request objects to be selected in the drawing area
+            var strs = UserInput.SelectStringers(
 			    "Select the stringers to assign reinforcement (you can select other elements, the properties will be only applied to stringers).");
 
 		    if (strs is null)
 			    return;
 
 		    // Get steel parameters and reinforcement from user
-		    var reinforcement = GetStringerReinforcement();
-		    var steel         = GetSteel();
+		    var reinforcement = GetStringerReinforcement(units);
+		    var steel         = GetSteel(units);
 
 			if (reinforcement is null && steel is null)
 				return;
@@ -70,13 +74,16 @@ namespace SPMTool.AutoCAD
 	    }
 
 	    // Get reinforcement parameters from user
-		private static Reinforcement GetStringerReinforcement()
+		private static Reinforcement GetStringerReinforcement(Units units)
 		{
 			// Get saved reinforcement options
 			var savedRef = ReadStringerReinforcement();
 
-			// Get saved reinforcement options
-			if (savedRef != null)
+			// Get unit abreviation
+			var dimAbrev = Length.GetAbbreviation(units.Reinforcement);
+
+            // Get saved reinforcement options
+            if (savedRef != null)
 			{
 				var options = new List<string>();
 
@@ -84,7 +91,7 @@ namespace SPMTool.AutoCAD
 				for (int i = 0; i < savedRef.Length; i++)
 				{
 					int    n = savedRef[i].NumberOfBars;
-					double d = savedRef[i].BarDiameter;
+					double d = units.ConvertFromMillimeter(savedRef[i].BarDiameter, units.Reinforcement);
 
 					string name = n.ToString() + Phi + d;
 
@@ -95,7 +102,7 @@ namespace SPMTool.AutoCAD
 				options.Add("New");
 
 				// Ask the user to choose the options
-				var res = UserInput.SelectKeyword("Choose a reinforcement option or add a new one:", options.ToArray(),
+				var res = UserInput.SelectKeyword("Choose a reinforcement option (" + dimAbrev + ") or add a new one:", options.ToArray(),
 					options[0]);
 
 				if (!res.HasValue)
@@ -118,14 +125,15 @@ namespace SPMTool.AutoCAD
 				return null;
 
 			// Ask the user to input the Stringer height
-			var phin = UserInput.GetDouble("Input the diameter (in mm) of Stringer reinforcement bars:", 10);
+			double def = units.ConvertFromMillimeter(10, units.Reinforcement);
+			var phin = UserInput.GetDouble("Input the diameter (" + dimAbrev + ") of Stringer reinforcement bars:", def);
 
 			if (!phin.HasValue)
 				return null;
 
 			// Get reinforcement
 			int num    = numn.Value;
-			double phi = phin.Value;
+			double phi = units.ConvertToMillimeter(phin.Value, units.Reinforcement);
 
 			var reinforcement = new Reinforcement(num, phi);
 
@@ -136,13 +144,16 @@ namespace SPMTool.AutoCAD
 		}
 
 		// Get steel parameters from user
-		private static Steel GetSteel()
+		private static Steel GetSteel(Units units)
 		{
 			// Get steel data saved on database
 			var savedSteel = ReadSteel();
 
-			// Get saved reinforcement options
-			if (savedSteel != null)
+			// Get unit abreviation
+			var matAbrev = Pressure.GetAbbreviation(units.MaterialStrength);
+
+            // Get saved reinforcement options
+            if (savedSteel != null)
 			{
 				var options = new List<string>();
 
@@ -150,8 +161,8 @@ namespace SPMTool.AutoCAD
 				for (int i = 0; i < savedSteel.Length; i++)
 				{
 					double
-						f = savedSteel[i].YieldStress,
-						E = savedSteel[i].ElasticModule;
+						f = units.ConvertFromMPa(savedSteel[i].YieldStress,   units.MaterialStrength),
+						E = units.ConvertFromMPa(savedSteel[i].ElasticModule, units.MaterialStrength);
 
 					string name = f + "|" + E;
 
@@ -162,7 +173,7 @@ namespace SPMTool.AutoCAD
 				options.Add("New");
 
 				// Ask the user to choose the options
-				var res = UserInput.SelectKeyword("Choose a steel option (fy | Es) or add a new one:",
+				var res = UserInput.SelectKeyword("Choose a steel option (fy | Es) (" + matAbrev + ") or add a new one:",
 					options.ToArray(),
 					options[0]);
 
@@ -178,20 +189,22 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Ask the user to input the Steel yield strength
-			var fyn = UserInput.GetDouble("Input the yield strength (MPa) of Steel:", 500);
+			double fDef = units.ConvertFromMPa(500, units.MaterialStrength);
+			var fyn = UserInput.GetDouble("Input the yield strength (" + matAbrev + ") of Steel:", fDef);
 
 			if (!fyn.HasValue)
 				return null;
 
-			// Ask the user to input the Steel elastic modulus
-			var Esn = UserInput.GetDouble("Input the elastic modulus (MPa) of Steel:", 210000);
+            // Ask the user to input the Steel elastic modulus
+            double eDef = units.ConvertFromMPa(210000, units.MaterialStrength);
+            var Esn = UserInput.GetDouble("Input the elastic modulus (" + matAbrev + ") of Steel:", eDef);
 
 			if (!Esn.HasValue)
 				return null;
 
 			double
-				fy = fyn.Value,
-				Es = Esn.Value;
+				fy = units.ConvertToMPa(fyn.Value, units.MaterialStrength),
+				Es = units.ConvertToMPa(Esn.Value, units.MaterialStrength);
 
 			var steel = new Steel(fy, Es);
 
@@ -204,18 +217,21 @@ namespace SPMTool.AutoCAD
 		[CommandMethod("SetPanelReinforcement")]
 		public static void SetPanelReinforcement()
 		{
-			// Request objects to be selected in the drawing area
-			var pnls = UserInput.SelectPanels(
+			// Read units
+			var units = Config.ReadUnits() ?? new Units();
+
+            // Request objects to be selected in the drawing area
+            var pnls = UserInput.SelectPanels(
 				"Select the panels to assign reinforcement (you can select other elements, the properties will be only applied to panels).");
 
 			if (pnls is null)
 				return;
 
 			// Get the values
-			var refX   = GetPanelReinforcement(Directions.X);
-			var steelX = GetSteel();
-			var refY   = GetPanelReinforcement(Directions.Y);
-			var steelY = GetSteel();
+			var refX   = GetPanelReinforcement(Directions.X, units);
+			var steelX = GetSteel(units);
+			var refY   = GetPanelReinforcement(Directions.Y, units);
+			var steelY = GetSteel(units);
 
 			if (!refX.HasValue && !refY.HasValue && steelX is null && steelY is null)
 				return;
@@ -275,13 +291,17 @@ namespace SPMTool.AutoCAD
 		}
 
 		// Get reinforcement parameters from user
-		private static (double diameter, double spacing)? GetPanelReinforcement(Directions direction)
+		private static (double diameter, double spacing)? GetPanelReinforcement(Directions direction, Units units)
 		{
 			// Get saved reinforcement options
 			var savedRef = ReadPanelReinforcement();
 
+			// Get unit abreviation
+			var dimAbrev = Length.GetAbbreviation(units.Geometry);
+			var refAbrev = Length.GetAbbreviation(units.Reinforcement);
+
 			// Get saved reinforcement options
-			if (savedRef != null)
+            if (savedRef != null)
 			{
 				var options = new List<string>();
 
@@ -289,8 +309,8 @@ namespace SPMTool.AutoCAD
 				for (int i = 0; i < savedRef.Length; i++)
 				{
 					double
-						d  = savedRef[i].diameter,
-						si = savedRef[i].spacing;
+						d  = units.ConvertFromMillimeter(savedRef[i].diameter, units.Reinforcement),
+						si = units.ConvertFromMillimeter(savedRef[i].spacing,  units.Geometry);
 
 					string name = Phi.ToString() + d + "|" + si;
 
@@ -302,7 +322,7 @@ namespace SPMTool.AutoCAD
 
 				// Ask the user to choose the options
 				var res = UserInput.SelectKeyword(
-					"Choose a reinforcement option (" + Phi + "|s) for " + direction + " direction or add a new one:",
+					"Choose a reinforcement option (" + Phi + " | s)(" + refAbrev + " | " + dimAbrev +") for " + direction + " direction or add a new one:",
 					options.ToArray(),
 					options[0]);
 
@@ -319,24 +339,26 @@ namespace SPMTool.AutoCAD
 
 			// New reinforcement
 			// Ask the user to input the diameter of bars
+			double phiDef = units.ConvertFromMillimeter(10, units.Reinforcement);
 			var phin = UserInput.GetDouble(
-				"Input the reinforcement bar diameter (in mm) for " + direction +
-				" direction for selected panels (only needed for nonlinear analysis):", 10);
+				"Input the reinforcement bar diameter (" + refAbrev + ") for " + direction +
+				" direction for selected panels (only needed for nonlinear analysis):", phiDef);
 
 			if (!phin.HasValue)
 				return null;
 
-			// Ask the user to input the bar spacing
-			var sn = UserInput.GetDouble(
-				"Input the bar spacing (in mm) for " + direction + " direction:", 100);
+            // Ask the user to input the bar spacing
+            double sDef = units.ConvertFromMillimeter(100, units.Geometry);
+            var sn = UserInput.GetDouble(
+                "Input the bar spacing (" + dimAbrev + ") for " + direction + " direction:", sDef);
 
 			if (!sn.HasValue)
 				return null;
 
 			// Save the reinforcement
 			double
-				phi = phin.Value,
-				s   = sn.Value;
+				phi = units.ConvertToMillimeter(phin.Value, units.Reinforcement),
+				s   = units.ConvertToMillimeter(sn.Value,   units.Geometry);
 
 			SavePanelReinforcement(phi, s);
 
