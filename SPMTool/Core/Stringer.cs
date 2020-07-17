@@ -4,6 +4,7 @@ using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
 using Material;
+using UnitsNet;
 using ConcreteParameters = Material.Concrete.Parameters;
 using Concrete           = Material.Concrete.Uniaxial;
 using Reinforcement      = Material.Reinforcement.Uniaxial;
@@ -18,6 +19,7 @@ namespace SPMTool.Core
 		public Units                   Units            { get; }
 		public int[]                   Grips            { get; }
 		public Point3d[]               PointsConnected  { get; }
+		public Length				   DrawingLength    { get; }
 		public double                  Length           { get; }
 		public double                  Angle            { get; }
 		public double                  Width            { get; }
@@ -39,8 +41,9 @@ namespace SPMTool.Core
 			Line strLine = Geometry.Stringer.ReadStringer(stringerObject);
 
 			// Get the length and angles
-			Length = Units.ConvertToMillimeter(strLine.Length, Units.Geometry);
-			Angle  = strLine.Angle;
+			DrawingLength = UnitsNet.Length.From(strLine.Length, Units.Geometry);
+			Length        = DrawingLength.Millimeters;
+			Angle         = strLine.Angle;
 
 			// Calculate midpoint
 			var midPt = GlobalAuxiliary.MidPoint(strLine.StartPoint, strLine.EndPoint);
@@ -163,16 +166,15 @@ namespace SPMTool.Core
 		public override string ToString()
 		{
 			// Convert units
-			UnitsNet.Length
-				l = UnitsNet.Length.FromMillimeters(Length).ToUnit(Units.Geometry),
+			Length
 				w = UnitsNet.Length.FromMillimeters(Width).ToUnit(Units.Geometry),
 				h = UnitsNet.Length.FromMillimeters(Height).ToUnit(Units.Geometry);
 
             string msgstr =
 				"Stringer " + Number + "\n\n" +
 				"Grips: (" + Grips[0] + " - " + Grips[1] + " - " + Grips[2] + ")" + "\n" +
-				"Lenght = " + l + "\n" +
-				"Width = " + w  + "\n" +
+				"Lenght = " + DrawingLength + "\n" +
+				"Width = "  + w  + "\n" +
 				"Height = " + h;
 
 			if (Reinforcement.IsSet)

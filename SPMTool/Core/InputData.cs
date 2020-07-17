@@ -36,7 +36,7 @@ namespace SPMTool.Core
 			Units = Config.ReadUnits() ?? new Units();
 
 			// Get the collection of elements in the model
-			NodeObjects     = Geometry.Node.UpdateNodes();
+			NodeObjects     = Geometry.Node.UpdateNodes(Units);
 			StringerObjects = Geometry.Stringer.UpdateStringers();
 			PanelObjects    = Geometry.Panel.UpdatePanels();
 
@@ -118,11 +118,11 @@ namespace SPMTool.Core
 		        switch (analysisType)
 		        {
 			        case AnalysisType.Linear:
-				        panel = new Panel.Linear(pnlObj, ConcreteParameters);
+				        panel = new Panel.Linear(pnlObj, Units, ConcreteParameters);
 				        break;
 
 			        case AnalysisType.Nonlinear:
-				        panel = new Panel.NonLinear(pnlObj, ConcreteParameters, Stringers, ConcreteBehavior);
+				        panel = new Panel.NonLinear(pnlObj, Units, ConcreteParameters, Stringers, ConcreteBehavior);
 						break;
 		        }
 

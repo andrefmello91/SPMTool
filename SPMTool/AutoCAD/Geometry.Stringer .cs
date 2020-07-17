@@ -4,6 +4,7 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using UnitsNet;
 using StringerData = SPMTool.XData.Stringer;
 using NodeType     = SPMTool.Core.Node.NodeType;
 
@@ -152,8 +153,11 @@ namespace SPMTool.AutoCAD
 			[CommandMethod("DivideStringer")]
 			public static void DivideStringer()
 			{
-				// Prompt for select stringers
-				var strs = UserInput.SelectStringers("Select stringers to divide");
+				// Get units
+				var units = Config.ReadUnits() ?? new Units();
+
+                // Prompt for select stringers
+                var strs = UserInput.SelectStringers("Select stringers to divide");
 
 				if (strs is null)
 					return;
@@ -185,7 +189,6 @@ namespace SPMTool.AutoCAD
 					{
 						// Open the selected object for read
 						Line str = (Line) trans.GetObject(obj.ObjectId, OpenMode.ForRead);
-
 
 						// Access the XData as an array
 						var data = Auxiliary.ReadXData(str);
@@ -273,7 +276,7 @@ namespace SPMTool.AutoCAD
 				new Node(newIntNds, NodeType.Internal);
 
 				// Update nodes and stringers
-				Node.UpdateNodes();
+				Node.UpdateNodes(units);
 				UpdateStringers();
 			}
 
@@ -339,8 +342,7 @@ namespace SPMTool.AutoCAD
 								userAlert = true;
 							}
 						}
-
-
+						
 						// Get the coordinates of the midpoint of the Stringer
 						Point3d midPt = GlobalAuxiliary.MidPoint(str.StartPoint, str.EndPoint);
 
@@ -405,13 +407,16 @@ namespace SPMTool.AutoCAD
 			[CommandMethod("SetStringerGeometry")]
 			public static void SetStringerGeometry()
 			{
+				// Read units
+				var units = Config.ReadUnits() ?? new Units();
+
                 // Request objects to be selected in the drawing area
                 var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)");
 
 				if (strs != null)
 				{
 					// Get geometry
-					var geometryn = GetStringerGeometry();
+					var geometryn = GetStringerGeometry(units);
 
 					if (!geometryn.HasValue)
 						return;
@@ -444,10 +449,13 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Get reinforcement parameters from user
-			private static (double width, double height)? GetStringerGeometry()
+			private static (double width, double height)? GetStringerGeometry(Units units)
 			{
-				// Get saved reinforcement options
-				var savedGeo = ReadStringerGeometry();
+				// Get unit abreviation
+				var dimAbrev = Length.GetAbbreviation(units.Geometry);
+
+                // Get saved reinforcement options
+                var savedGeo = ReadStringerGeometry();
 
 				// Get saved reinforcement options
 				if (savedGeo != null)
@@ -458,8 +466,8 @@ namespace SPMTool.AutoCAD
 					for (int i = 0; i < savedGeo.Length; i++)
 					{
 						double
-							wi = savedGeo[i].width,
-							hi = savedGeo[i].height;
+							wi = units.ConvertFromMillimeter(savedGeo[i].width,  units.Geometry),
+							hi = units.ConvertFromMillimeter(savedGeo[i].height, units.Geometry);
 
 						char times = (char) Characters.Times;
 
@@ -472,7 +480,7 @@ namespace SPMTool.AutoCAD
 					options.Add("New");
 
 					// Get string result
-					var res = UserInput.SelectKeyword("Choose a geometry option (mm x mm) or add a new one:",
+					var res = UserInput.SelectKeyword("Choose a geometry option (" + dimAbrev + " x " + dimAbrev + ") or add a new one:",
 						options.ToArray(), options[0]);
 
 					if (!res.HasValue)
@@ -486,18 +494,20 @@ namespace SPMTool.AutoCAD
 				}
 
 				// New reinforcement
+				double def = units.ConvertFromMillimeter(100, units.Geometry);
+
 				// Ask the user to input the Stringer width
-				var wn = UserInput.GetDouble("Input width (mm) for selected stringers:", 100);
+				var wn = UserInput.GetDouble("Input width (" + dimAbrev + ") for selected stringers:", def);
 
 				// Ask the user to input the Stringer height
-				var hn = UserInput.GetDouble("Input height (mm) for selected stringers:", 100);
+				var hn = UserInput.GetDouble("Input height (" + dimAbrev + ") for selected stringers:", def);
 
 				if (!wn.HasValue && !hn.HasValue)
 					return null;
 
 				double
-					w = wn.Value,
-					h = hn.Value;
+					w = units.ConvertToMillimeter(wn.Value, units.Geometry),
+					h = units.ConvertToMillimeter(hn.Value, units.Geometry);
 
 				// Save geometry
 				SaveStringerGeometry(w, h);

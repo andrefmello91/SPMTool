@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using UnitsNet;
 using PanelData = SPMTool.XData.Panel;
 using NodeType  = SPMTool.Core.Node.NodeType;
 
@@ -72,6 +73,9 @@ namespace SPMTool.AutoCAD
 				// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
 				Auxiliary.RegisterApp();
 
+				// Read units
+				var units = Config.ReadUnits() ?? new Units();
+
 				// Get the list of panel vertices
 				var pnlList = ListOfPanelVertices();
 
@@ -105,7 +109,7 @@ namespace SPMTool.AutoCAD
 				}
 
 				// Update nodes and panels
-				Node.UpdateNodes();
+				Node.UpdateNodes(units);
 				UpdatePanels();
 			}
 
@@ -168,7 +172,7 @@ namespace SPMTool.AutoCAD
                         Solid pnl = (Solid) trans.GetObject(obj.ObjectId, OpenMode.ForWrite);
 
                         // Get the panel
-						var panel = new Core.Panel(obj.ObjectId);
+						var panel = new Core.Panel(obj.ObjectId, units);
 
 						// Get vertices
 						var grpPts = panel.Vertices;
@@ -212,8 +216,8 @@ namespace SPMTool.AutoCAD
 								}
 
 								// Calculate the distance of the points in X and Y
-								double distX = (panel.Edges.Length[0]) / cln;
-								double distY = (panel.Edges.Length[1]) / row;
+								double distX = units.ConvertFromMillimeter((panel.Edges.Length[0]) / cln, units.Geometry);
+								double distY = units.ConvertFromMillimeter((panel.Edges.Length[1]) / row, units.Geometry);
 
 								// Initialize the start point
 								Point3d stPt = grpPts[0];
@@ -302,7 +306,7 @@ namespace SPMTool.AutoCAD
 				new Node(newIntNds, NodeType.Internal);
 
 				// Update the elements
-				Node.UpdateNodes();
+				Node.UpdateNodes(units);
 				Stringer.UpdateStringers();
 				UpdatePanels();
 
@@ -313,15 +317,18 @@ namespace SPMTool.AutoCAD
 			[CommandMethod("SetPanelGeometry")]
 			public static void SetPanelGeometry()
 			{
-				// Request objects to be selected in the drawing area
-				var pnls = UserInput.SelectPanels(
+				// Read units
+				var units = Config.ReadUnits() ?? new Units();
+
+                // Request objects to be selected in the drawing area
+                var pnls = UserInput.SelectPanels(
 					"Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)");
 
 				if (pnls is null)
 					return;
 
 				// Get width
-				var wn = GetPanelGeometry();
+				var wn = GetPanelGeometry(units);
 
 				if (!wn.HasValue)
 					return;
@@ -350,10 +357,13 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Get reinforcement parameters from user
-            private static double? GetPanelGeometry()
+            private static double? GetPanelGeometry(Units units)
             {
                 // Get saved reinforcement options
                 var savedGeo = ReadPanelGeometry();
+
+                // Get unit abreviation
+                var dimAbrev = Length.GetAbbreviation(units.Geometry);
 
                 // Get saved reinforcement options
                 if (savedGeo != null)
@@ -362,13 +372,13 @@ namespace SPMTool.AutoCAD
 					var options = new List<string>();
 
 					for (int i = 0; i < savedGeo.Length; i ++)
-						options.Add(savedGeo[i].ToString());
+						options.Add(units.ConvertFromMillimeter(savedGeo[i], units.Geometry).ToString());
 
 					// Add option to set new reinforcement
 					options.Add("New");
 
                     // Get string result
-                    var res = UserInput.SelectKeyword("Choose panel width (mm) or add a new one:", options.ToArray(), options[0]);
+                    var res = UserInput.SelectKeyword("Choose panel width (" + dimAbrev + ") or add a new one:", options.ToArray(), options[0]);
 
                     if (!res.HasValue)
 	                    return null;
@@ -381,12 +391,13 @@ namespace SPMTool.AutoCAD
                 }
 
                 // New reinforcement
-	            var widthn = UserInput.GetDouble("Input width (mm) for selected panels:", 100);
+                double def = units.ConvertFromMillimeter(100, units.Geometry);
+                var widthn = UserInput.GetDouble("Input width (" + dimAbrev + ") for selected panels:", def);
 
 	            if (!widthn.HasValue)
 		            return null;
 
-	            var width = widthn.Value;
+	            var width = units.ConvertToMillimeter(widthn.Value, units.Geometry);
 
 	            // Save geometry
 	            SavePanelGeometry(width);

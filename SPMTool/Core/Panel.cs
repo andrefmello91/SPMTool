@@ -4,6 +4,8 @@ using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
 using Material;
+using UnitsNet;
+using UnitsNet.Units;
 using Concrete           = Material.Concrete.Biaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
 using Reinforcement      = Material.Reinforcement.Biaxial;
@@ -15,6 +17,7 @@ namespace SPMTool.Core
 	public partial class Panel : SPMElement
 	{
 		// Panel parameters
+		public Units										 Units             { get; }
 		public int[]                                         Grips             { get; }
 		public Point3d[]                                     Vertices          { get; }
 		public (double[] x, double[] y)                      VertexCoordinates { get; }
@@ -31,10 +34,11 @@ namespace SPMTool.Core
 		public virtual (Vector<double> sigma, double theta)  PrincipalStresses { get; }
 
 		// Constructor
-		public Panel(ObjectId panelObject, ConcreteParameters concreteParameters = null,
+		public Panel(ObjectId panelObject, Units units, ConcreteParameters concreteParameters = null,
 			Behavior behavior = null)
 		{
-			ObjectId      = panelObject;
+			ObjectId = panelObject;
+			Units    = units;
 
 			// Get concrete
 			Concrete = new Concrete(concreteParameters, behavior);
@@ -153,8 +157,8 @@ namespace SPMTool.Core
 			// Get X and Y coordinates of the vertices
 			for (var i = 0; i < 4; i++)
 			{
-				x[i] = Vertices[i].X;
-				y[i] = Vertices[i].Y;
+				x[i] = Units.ConvertToMillimeter(Vertices[i].X, Units.Geometry);
+				y[i] = Units.ConvertToMillimeter(Vertices[i].Y, Units.Geometry);
 			}
 
 			return (x, y);
@@ -195,7 +199,7 @@ namespace SPMTool.Core
 			// Create the list of dimensions
 			for (var i = 0; i < 4; i++)
 			{
-				l[i] = ln[i].Length;
+				l[i] = Units.ConvertToMillimeter(ln[i].Length, Units.Geometry);
 				a[i] = ln[i].Angle;
 			}
 
@@ -229,11 +233,14 @@ namespace SPMTool.Core
 
 		public override string ToString()
 		{
+			// Convert width
+			var w = Length.From(Width, LengthUnit.Millimeter).ToUnit(Units.Geometry);
+
 			var msgstr =
 				"Panel " + Number + "\n\n" +
 				"Grips: (" + Grips[0] + " - " + Grips[1] + " - " + Grips[2] + " - " + Grips[3] +
 				")" + "\n" +
-				"Width = " + Width + " mm";
+				"Width = " + w;
 
 			if (Reinforcement.IsSet)
 				msgstr += "\n\n" + Reinforcement;

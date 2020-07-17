@@ -22,7 +22,7 @@ namespace SPMTool.Core
             public  (Matrix<double> Dc,     Matrix<double> Ds)     MaterialStiffness  { get; set; }
             public  (Vector<double> sigmaC, Vector<double> sigmaS) MaterialStresses   { get; set; }
 
-            public NonLinear(ObjectId panelObject, ConcreteParameters concreteParameters, Stringer[] stringers, Behavior behavior) : base(panelObject, concreteParameters, behavior)
+            public NonLinear(ObjectId panelObject, Units units, ConcreteParameters concreteParameters, Stringer[] stringers, Behavior behavior) : base(panelObject, units, concreteParameters, behavior)
             {
                 // Get Stringer dimensions and effective ratio
                 StringerDimensions = StringersDimensions(stringers);

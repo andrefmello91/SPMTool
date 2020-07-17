@@ -15,7 +15,7 @@ namespace SPMTool.Core
             // Private properties
             private Matrix<double> TransMatrix { get; }
 	        
-            public Linear(ObjectId panelObject, ConcreteParameters concreteParameters = null, Behavior behavior = null) : base(panelObject, concreteParameters, behavior)
+            public Linear(ObjectId panelObject, Units units, ConcreteParameters concreteParameters = null, Behavior behavior = null) : base(panelObject, units, concreteParameters, behavior)
             {
                 // Get transformation matrix
                 TransMatrix = TransformationMatrix();

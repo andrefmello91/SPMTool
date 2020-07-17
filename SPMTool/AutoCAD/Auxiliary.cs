@@ -302,7 +302,7 @@ namespace SPMTool.AutoCAD
 
 			if (entity.Layer == Layers.Panel.ToString())
 				return
-					new Panel(entity.ObjectId);
+					new Panel(entity.ObjectId, units);
 
 			if (entity.Layer == Layers.Force.ToString())
 				return

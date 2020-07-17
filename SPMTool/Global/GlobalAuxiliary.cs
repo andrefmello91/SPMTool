@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
+using UnitsNet;
+using UnitsNet.Units;
 
 namespace SPMTool
 {
@@ -83,6 +85,15 @@ namespace SPMTool
 		        tan = Trig.Cos(angle).CoerceZero(1E-6);
 
 	        return tan;
+        }
+
+        public static double ScaleFactor(LengthUnit drawingUnit = LengthUnit.Millimeter)
+        {
+	        if (drawingUnit == LengthUnit.Millimeter)
+		        return 1;
+
+	        return
+		        UnitConverter.Convert(1, LengthUnit.Millimeter, drawingUnit);
         }
 
         // Function to verify if a number is not zero

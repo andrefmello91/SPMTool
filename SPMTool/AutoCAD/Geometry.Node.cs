@@ -157,7 +157,7 @@ namespace SPMTool.AutoCAD
 
 					// Set the style for all point objects in the drawing
 					Current.db.Pdmode = 32;
-					Current.db.Pdsize = units.ConvertFromMillimeter(40, units.Geometry);
+					Current.db.Pdsize = 40 * GlobalAuxiliary.ScaleFactor(units.Geometry);
 
 					// Commit and dispose the transaction
 					trans.Commit();
