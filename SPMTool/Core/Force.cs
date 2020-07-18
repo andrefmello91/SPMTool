@@ -24,10 +24,10 @@ namespace SPMTool.Core
 		public  double         Value       { get; }
 		public  Point3d        Position    { get; }
 		public  ForceDirection Direction   { get; }
-		public  override int[] DoFIndex { get; }
+		public  override int[] DoFIndex    { get; }
 
 		// Convert force
-		private UnitsNet.Force convertedForce => UnitsNet.Force.FromNewtons(Value).ToUnit(ForceUnit);
+		private UnitsNet.Force ConvertedForce => UnitsNet.Force.FromNewtons(Value).ToUnit(ForceUnit);
 
         // Constructor
         public Force(ObjectId forceObject, ForceUnit forceUnit = ForceUnit.Newton)
@@ -73,10 +73,10 @@ namespace SPMTool.Core
 		{
 			if (Direction == ForceDirection.X)
 				return
-					"Fx = " + convertedForce;
+					"Fx = " + ConvertedForce;
 
 			return
-				"Fy = " + convertedForce;
+				"Fy = " + ConvertedForce;
 		}
 
 	}

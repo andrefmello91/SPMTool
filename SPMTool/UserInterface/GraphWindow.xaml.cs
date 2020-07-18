@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -11,6 +9,8 @@ using LiveCharts.Wpf;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.Data.Text;
 using SPMTool.AutoCAD;
+using UnitsNet;
+using UnitsNet.Units;
 
 namespace SPMTool.UserInterface
 {
@@ -20,16 +20,20 @@ namespace SPMTool.UserInterface
     public partial class GraphWindow : Window
     {
         // Properties
-		public SeriesCollection LoadDisplacement { get; set; }
-		public double[]         Displacements { get; }
-		public double[]         LoadFactors   { get; }
+		public SeriesCollection LoadDisplacement  { get; set; }
+		private LengthUnit      DisplacementUnit  { get; }
+		public double[]         Displacements     { get; }
+		public double[]         LoadFactors       { get; }
+		public string           DisplacementTitle { get; }
 
-        public GraphWindow(double[] displacements = null, double[] loadFactors = null)
+        public GraphWindow(double[] displacements = null, double[] loadFactors = null, LengthUnit displacementUnit = LengthUnit.Millimeter)
         {
             InitializeComponent();
 
-            Displacements = displacements;
-            LoadFactors   = loadFactors;
+            Displacements    = displacements;
+            LoadFactors      = loadFactors;
+            DisplacementUnit = displacementUnit;
+            DisplacementTitle = "Displacement (" + Length.GetAbbreviation(DisplacementUnit) + ")";
 
             var values = GetValues();
 
@@ -92,8 +96,8 @@ namespace SPMTool.UserInterface
 		private string Label(ChartPoint point)
 		{
 			return
-				"LF = "  + Math.Round(point.Y, 2) + "\n" +
-				"u  = "  + Math.Round(point.X, 4) + " mm";
+				"LF = " + Math.Round(point.Y, 2) + "\n" +
+				"u  = " + Length.FromMillimeters(point.X).ToUnit(DisplacementUnit);
 		}
 
         // When a point is clicked
@@ -116,11 +120,15 @@ namespace SPMTool.UserInterface
 			var u  = Vector<double>.Build.DenseOfArray(Displacements);
 			var lf = Vector<double>.Build.DenseOfArray(LoadFactors);
 
+			// Convert displacements
+			if (DisplacementUnit != LengthUnit.Millimeter)
+				u = u.Multiply(GlobalAuxiliary.ScaleFactor(DisplacementUnit));
+
 			// Get matrix
 			var result = Matrix<double>.Build.DenseOfColumnVectors(lf, u);
 
 			// Create headers
-			var headers = new[] { "Load Factor", "Displacement" };
+			var headers = new[] { "Load Factor", "Displacement (" + Length.GetAbbreviation(DisplacementUnit) + ")" };
 			var headerList = headers.ToList();
 
 			// Get location and name

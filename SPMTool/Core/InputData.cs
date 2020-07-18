@@ -155,9 +155,7 @@ namespace SPMTool.Core
 		        }
 	        }
 
-			// Transform forces in N
-	        return 
-		        1000 * f;
+	        return f;
         }
 
 		// Get constraint list

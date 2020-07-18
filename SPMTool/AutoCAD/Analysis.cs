@@ -23,7 +23,7 @@ namespace SPMTool.AutoCAD
 				var analysis = new Analysis.Linear(input);
 
 				// Draw results of analysis
-				Draw(analysis);
+				Draw(analysis, input.Units);
 			}
 
             else
@@ -52,10 +52,10 @@ namespace SPMTool.AutoCAD
                 // Show load-displacement diagram
                 var u  = analysis.MonitoredDisplacements.ToArray();
                 var lf = analysis.MonitoredLoadFactor.ToArray();
-                Application.ShowModelessWindow(Application.MainWindow.Handle, new GraphWindow(u, lf));
+                Application.ShowModelessWindow(Application.MainWindow.Handle, new GraphWindow(u, lf, input.Units.Displacements));
 
                 // Draw results of analysis
-                Draw(analysis);
+                Draw(analysis, input.Units);
 			}
 
 			else
