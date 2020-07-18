@@ -357,5 +357,11 @@
       <Name>Relations</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\units_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\units.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

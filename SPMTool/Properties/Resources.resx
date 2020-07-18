@@ -226,6 +226,12 @@
   <data name="support_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\support_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="units" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\units.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="units_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\units_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="update_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\update_small.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>

@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Threading;
+using System.Windows.Controls;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
 using Autodesk.AutoCAD.Runtime;
@@ -91,7 +92,8 @@ namespace SPMTool
 			    strFBMP,
 			    pnlFBMP,
 			    pnlSBMP,
-			    dispBMP;
+			    dispBMP,
+			    unitsBMP;
 
             public static BitmapImage getBitmap(Bitmap image)
 		    {
@@ -146,6 +148,7 @@ namespace SPMTool
 				    pnlFBMP    = Properties.Resources.panelforces_large_light;
 				    pnlSBMP    = Properties.Resources.panelstresses_large_light;
 				    dispBMP    = Properties.Resources.displacements_large_light;
+				    unitsBMP   = Properties.Resources.units_light;
 			    }
 			    else // If the theme is light
 			    {
@@ -172,10 +175,11 @@ namespace SPMTool
 				    pnlFBMP    = Properties.Resources.panelforces_large;
 				    pnlSBMP    = Properties.Resources.panelstresses_large;
 				    dispBMP    = Properties.Resources.displacements_large;
+				    unitsBMP   = Properties.Resources.units;
 			    }
 
-			    // Create the Ribbon Tab
-			    RibbonTab Tab = new RibbonTab()
+                // Create the Ribbon Tab
+                RibbonTab Tab = new RibbonTab()
 			    {
 				    Title = Current.appName,
 				    Id    = Current.appName
@@ -190,6 +194,7 @@ namespace SPMTool
 			    AnalysisPanel(Tab);
 			    ViewPanel(Tab);
 			    ResultsPanel(Tab);
+				SettingsPanel(Tab);
 
 			    // Activate tab
 			    Tab.IsActive = true;
@@ -281,7 +286,6 @@ namespace SPMTool
 			    subPnl.Items.Add(new RibbonRowBreak());
 
 			    // Element division buttons
-
 			    RibbonButton button6 = new RibbonButton()
 			    {
 				    Text = "Divide Stringer",
@@ -394,13 +398,13 @@ namespace SPMTool
 			    Panel.Source = pnlSrc;
 			    Tab.Panels.Add(Panel);
 
-			    RibbonButton[] buttons = new RibbonButton[2];
-
                 // Material parameters buttons
-                buttons[0] = new RibbonButton()
+                var button = new RibbonButton()
 			    {
 				    Text = "Concrete",
-				    ToolTip = "Set concrete compressive strength and elastic module",
+				    ToolTip = "Set concrete parameters",
+				    Size = RibbonItemSize.Large,
+					Orientation = Orientation.Vertical,
 				    ShowText = true,
 				    ShowImage = true,
 				    LargeImage = getBitmap(cncrtBmp),
@@ -408,31 +412,8 @@ namespace SPMTool
 				    CommandParameter = "SetConcreteParameters"
 			    };
 
-                buttons[1] = new RibbonButton()
-			    {
-				    Text = "View concrete parameters",
-				    ToolTip = "View concrete parameters",
-				    ShowText = true,
-				    ShowImage = true,
-				    LargeImage = getBitmap(viewDtBmp),
-				    CommandHandler = new CmdHandler(),
-				    CommandParameter = "ViewConcreteParameters"
-			    };
-
-			    // Create a split button for materials
-			    RibbonSplitButton rbSpBtn1 = new RibbonSplitButton()
-			    {
-				    ShowText = true,
-				    IsSplit = true,
-				    Size = RibbonItemSize.Large,
-				    IsSynchronizedWithCurrentItem = true
-			    };
-
-			    foreach (var button in buttons)
-				    rbSpBtn1.Items.Add(button);
-
                 // Add to the panel source
-                pnlSrc.Items.Add(rbSpBtn1);
+                pnlSrc.Items.Add(button);
 		    }
 
 		    // Create Conditions Panel
@@ -627,7 +608,6 @@ namespace SPMTool
 			    pnlSrc.Items.Add(rbSpBtn1);
 		    }
 
-
 		    // Create Results Panel
 		    private static void ResultsPanel(RibbonTab Tab)
 		    {
@@ -698,9 +678,36 @@ namespace SPMTool
 			    pnlSrc.Items.Add(rbSpBtn1);
 		    }
 
+            // Create Settings Panel
+            private static void SettingsPanel(RibbonTab Tab)
+            {
+	            RibbonPanelSource pnlSrc = new RibbonPanelSource();
+	            pnlSrc.Title = "Settings";
+	            RibbonPanel Panel = new RibbonPanel();
+	            Panel.Source = pnlSrc;
+	            Tab.Panels.Add(Panel);
 
-		    // Command Handler
-		    public class CmdHandler : System.Windows.Input.ICommand
+	            // Material parameters buttons
+	            var button = new RibbonButton()
+	            {
+		            Text = "Units",
+		            ToolTip = "Set units",
+					Size = RibbonItemSize.Large,
+					Orientation = Orientation.Vertical,
+					ShowText = true,
+		            ShowImage = true,
+		            LargeImage = getBitmap(unitsBMP),
+		            CommandHandler = new CmdHandler(),
+		            CommandParameter = "SetUnits"
+	            };
+
+	            // Add to the panel source
+	            pnlSrc.Items.Add(button);
+            }
+
+
+            // Command Handler
+            public class CmdHandler : System.Windows.Input.ICommand
 		    {
 			    public bool CanExecute(object parameter)
 			    {
