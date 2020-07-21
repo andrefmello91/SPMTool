@@ -89,8 +89,7 @@ namespace SPMTool.UserInterface
 					fc    = Units.ConvertToMPa(double.Parse(StrengthBox.Text, CultureInfo.InvariantCulture), Units.MaterialStrength),
 					phiAg = Units.ConvertToMillimeter(double.Parse(AggDiamBox.Text, CultureInfo.InvariantCulture), Units.Reinforcement);
 
-				var aggType = (Concrete.AggregateType) Enum.Parse(typeof(Concrete.AggregateType),
-					AggTypeBox.SelectedItem.ToString());
+				var aggType = (Concrete.AggregateType) Enum.Parse(typeof(Concrete.AggregateType), AggTypeBox.SelectedItem.ToString());
 
 				// Get parameters
 				switch (ParModel)
@@ -117,6 +116,8 @@ namespace SPMTool.UserInterface
 		// Update custom parameters
 		private void UpdateCustomParameters()
 		{
+			ConcreteParameters.UpdateParameters();
+
 			ModuleBox.Text  = Math.Round(Units.ConvertFromMPa(ConcreteParameters.InitialModule, Units.MaterialStrength), 2).ToString();
 
 			TensileBox.Text = Math.Round(Units.ConvertFromMPa(ConcreteParameters.TensileStrength, Units.MaterialStrength), 2).ToString();
@@ -187,8 +188,8 @@ namespace SPMTool.UserInterface
 			var fcBox = (TextBox) sender;
 
             if (ParModel != ParameterModel.Custom && fcBox.Text != string.Empty)
-			{
-				UpdateParameters();
+            {
+	            ConcreteParameters.Strength = double.Parse(fcBox.Text);
 				UpdateCustomParameters();
 			}
 		}
@@ -199,8 +200,8 @@ namespace SPMTool.UserInterface
 
 			if (ParModel != ParameterModel.Custom && aggBox.SelectedItem.ToString() != string.Empty)
 			{
-				UpdateParameters();
-				UpdateCustomParameters();
+				ConcreteParameters.Type = (Concrete.AggregateType)Enum.Parse(typeof(Concrete.AggregateType), aggBox.SelectedItem.ToString());
+                UpdateCustomParameters();
 			}
 		}
 
