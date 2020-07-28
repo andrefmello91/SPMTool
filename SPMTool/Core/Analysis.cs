@@ -335,6 +335,18 @@ namespace SPMTool.Core
 		        contDofs;
         }
 
+        private void PrintStiffness()
+        {
+	        foreach (var stringer in Stringers)
+	        {
+		        DelimitedWriter.Write("D:/Ks" + stringer.Number + ".csv", stringer.GlobalStiffness, ";");
+	        }
+	        foreach (var panel in Panels)
+	        {
+		        DelimitedWriter.Write("D:/Kp" + panel.Number + ".csv", panel.GlobalStiffness, ";");
+	        }
+        }
+
         // Get DoFs that are not continuous
         private int[] NotContinuousPanelDoFs
         {
