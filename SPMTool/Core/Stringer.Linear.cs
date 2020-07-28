@@ -9,14 +9,25 @@ namespace SPMTool.Core
 {
 	public partial class Stringer
 	{
+		/// <summary>
+        /// Stringer linear class.
+        /// </summary>
         public class Linear : Stringer
         {
-            // Constructor
+            /// <summary>
+            /// Stringer linear object.
+            /// </summary>
+            /// <param name="stringerObject">The object ID from AutoCAD drawing.</param>
+            /// <param name="units">Units current in use.</param>
+            /// <param name="concreteParameters">The concrete parameters.</param>
+            /// <param name="concreteBehavior">The concrete behavior.</param>
             public Linear(ObjectId stringerObject, Units units, ConcreteParameters concreteParameters, Behavior concreteBehavior = null) : base(stringerObject, units, concreteParameters, concreteBehavior)
             {
             }
 
-            // Calculate local stiffness
+            /// <summary>
+            /// Get local stiffness.
+            /// </summary>
             public override Matrix<double> LocalStiffness
             {
                 get
@@ -35,8 +46,10 @@ namespace SPMTool.Core
                 }
             }
 
-			// Calculate Stringer forces
-			public Vector<double> CalculateForces()
+            /// <summary>
+            /// Calculate Stringer forces
+            /// </summary>
+            public Vector<double> CalculateForces()
 			{
 				// Get the parameters
 				var Kl = LocalStiffness;
@@ -51,7 +64,7 @@ namespace SPMTool.Core
 				return fl;
 			}
 
-			// Calculate forces
+			/// <inheritdoc/>
 			public override void Analysis(Vector<double> globalDisplacements = null, int numStrainSteps = 5)
 			{
 				// Set displacements

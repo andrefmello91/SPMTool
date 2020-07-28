@@ -48,7 +48,9 @@ namespace SPMTool.Core
 			// Get steel
             private Steel Steel => Reinforcement.Steel;
 
-            // Implementation to verify cracked or yielded state on each integration point
+            /// <summary>
+            /// Struct to verify cracked or yielded state on each integration point
+            /// </summary>
             private struct IntegrationPoint
             {
 	            public bool Cracked  { get; set; }
@@ -166,8 +168,12 @@ namespace SPMTool.Core
 				}
 			}
 
-			// Get the relations
-			private StressStrainRelations GetRelations(Behavior concreteBehavior)
+            /// <summary>
+            /// Get stress-strain relations.
+            /// </summary>
+            /// <param name="concreteBehavior">The concrete behavior.</param>
+            /// <returns></returns>
+            private StressStrainRelations GetRelations(Behavior concreteBehavior)
 			{
 				var behavior = Enum.Parse(typeof(Material.Concrete.BehaviorModel), concreteBehavior.ToString());
 
@@ -184,7 +190,9 @@ namespace SPMTool.Core
 				return null;
 			}
 
-            // Get the initial F matrix
+            /// <summary>
+            /// Calculate the initial flexibility matrix.
+            /// </summary>
             public Matrix<double> InitialFMatrix()
 			{
 				double
@@ -205,7 +213,7 @@ namespace SPMTool.Core
 				});
 			}
 
-            // Calculate the effective Stringer force
+            /// <inheritdoc/>
             public override void Analysis(Vector<double> globalDisplacements = null, int numStrainSteps = 5)
             {
 				// Set displacements
@@ -266,7 +274,11 @@ namespace SPMTool.Core
 				IterationGenStrains  = (e1, e3);
             }
 
-			// Calculate plastic force
+            /// <summary>
+            /// Calculate the plastic force.
+            /// </summary>
+            /// <param name="N">Force to verify, in N.</param>
+            /// <returns></returns>
             private double PlasticForce(double N)
             {
 	            double
@@ -283,7 +295,11 @@ namespace SPMTool.Core
 	            return N;
             }
 
-            // Calculate the Stringer flexibility and generalized strains
+            /// <summary>
+            /// Calculate the stringer flexibility matrix and generalized strains.
+            /// </summary>
+            /// <param name="genStresses">Current generalized stresses.</param>
+            /// <returns></returns>
             public ((double e1, double e3) genStrains, Matrix<double> F) StringerGenStrains((double N1, double N3) genStresses)
             {
 	            var (N1, N3) = genStresses;
@@ -321,7 +337,9 @@ namespace SPMTool.Core
 				return ((e1, e3), F);
             }
 
-            // Set Stringer results (after reached convergence)
+            /// <summary>
+            /// Set Stringer results after reaching convergence.
+            /// </summary>
             public void Results()
             {
                 // Get the values
@@ -333,7 +351,11 @@ namespace SPMTool.Core
                 GenStrains  = genStrains;
             }
 
-            // Calculate plastic strains
+            /// <summary>
+            /// Calculate plastic strains
+            /// </summary>
+            /// <param name="strain">Current strain</param>
+            /// <returns></returns>
             private double PlasticStrain(double strain)
             {
 	            // Initialize the plastic strain
@@ -353,14 +375,21 @@ namespace SPMTool.Core
 	            return ep;
             }
 
-			// MCFT model
+			/// <summary>
+            /// Base class for stress-strain relations.
+            /// </summary>
 			private abstract class StressStrainRelations
 			{
 				private Concrete      Concrete      { get; }
 				private Reinforcement Reinforcement { get; }
 				private Steel         Steel         => Reinforcement.Steel;
 
-				public StressStrainRelations(Concrete concrete, Reinforcement reinforcement)
+                /// <summary>
+                /// Base object for stress-strain relations.
+                /// </summary>
+                /// <param name="concrete">Uniaxial concrete object.</param>
+                /// <param name="reinforcement">Uniaxial reinforcement object.</param>
+                public StressStrainRelations(Concrete concrete, Reinforcement reinforcement)
 				{
 					Concrete      = concrete;
 					Reinforcement = reinforcement;
@@ -394,15 +423,29 @@ namespace SPMTool.Core
                 private double Ncr => Concrete.ft * Concrete.Area * (1 + xi);
 				private double Nr  => Ncr / Math.Sqrt(1 + xi);
 
+				/// <summary>
+                /// Calculate the strain and its derivative in the integration point.
+                /// </summary>
+                /// <param name="N">Current force, in N.</param>
+                /// <param name="intPoint">Integration point.</param>
+                /// <returns></returns>
 				public abstract (double e, double de) StringerStrain(double N, IntegrationPoint intPoint);
 
-				public class MCFT : StressStrainRelations
+                /// <summary>
+                /// MCFT class for stress-strain relations.
+                /// </summary>
+                public class MCFT : StressStrainRelations
 				{
+					/// <summary>
+					/// MCFT object for stress-strain relations.
+					/// </summary>
+					/// <param name="concrete">Uniaxial concrete object.</param>
+					/// <param name="reinforcement">Uniaxial reinforcement object.</param>
 					public MCFT(Concrete concrete, Reinforcement reinforcement) : base(concrete, reinforcement)
 					{
 					}
 
-					// Calculate the strain and derivative on a Stringer given a force N and the concrete parameters
+					/// <inheritdoc/>
 					public override (double e, double de) StringerStrain(double N, IntegrationPoint intPoint)
 					{
 						(double e, double de) result = (0, 1 / t1);
@@ -460,7 +503,10 @@ namespace SPMTool.Core
 					}
 
 					// Tension Cases
-					// Case T.1: Uncracked
+					/// <summary>
+                    /// Tension case 1: uncracked.
+                    /// </summary>
+                    /// <param name="N">Normal force, in N.</param>
 					private (double e, double de) Uncracked(double N)
 					{
 						double
@@ -471,11 +517,17 @@ namespace SPMTool.Core
 							(e, de);
 					}
 
-					// Case T.2: Cracked with yielding or not yielding steel
-					private (double e, double de)? Cracked(double N) => Solver(N, Concrete.ecr, Steel.YieldStrain);
+                    /// <summary>
+                    /// Tension case 2: Cracked with not yielding steel.
+                    /// </summary>
+                    /// <param name="N">Normal force, in N.</param>
+                    private (double e, double de)? Cracked(double N) => Solver(N, Concrete.ecr, Steel.YieldStrain);
 
-					// Case T.3: Cracked with yielding steel
-					private (double e, double de) YieldingSteel(double N)
+                    /// <summary>
+                    /// Tension case 3: Cracked with yielding steel.
+                    /// </summary>
+                    /// <param name="N">Normal force, in N.</param>
+                    private (double e, double de) YieldingSteel(double N)
 					{
 						double
 							ey = Steel.YieldStrain,
@@ -486,9 +538,12 @@ namespace SPMTool.Core
 							(e, de);
 					}
 
-					// Compression Cases
-					// Case C.1: concrete not crushed
-					private (double e, double de) ConcreteNotCrushed(double N)
+                    // Compression Cases
+                    /// <summary>
+                    /// Compression case 1: concrete not crushed.
+                    /// </summary>
+                    /// <param name="N">Normal force, in N.</param>
+                    private (double e, double de) ConcreteNotCrushed(double N)
 					{
 						// Calculate the strain for steel not yielding
 						double
@@ -512,8 +567,11 @@ namespace SPMTool.Core
 							(e, de);
 					}
 
-					// Case C.2: Concrete crushing
-					private (double e, double de) ConcreteCrushing(double N)
+                    /// <summary>
+                    /// Compression case 2: concrete crushed.
+                    /// </summary>
+                    /// <param name="N">Normal force, in N.</param>
+                    private (double e, double de) ConcreteCrushing(double N)
 					{
 						// Calculate the strain for steel not yielding
 						double
@@ -539,8 +597,10 @@ namespace SPMTool.Core
 					// Compressed case
 					private (double e, double de)? Compressed(double N) => Solver(N, Concrete.ecu, 0);
 
-					// Solver to find strain given force
-					private (double e, double de)? Solver(double N, double lowerBound, double upperBound)
+                    /// <summary>
+                    /// Solver to find strain given force.
+                    /// </summary>
+                    private (double e, double de)? Solver(double N, double lowerBound, double upperBound)
 					{
 						// Iterate to find strain
 						(double e, double de)? result = null;
@@ -569,8 +629,11 @@ namespace SPMTool.Core
 						return result;
 					}
 
-					// Calculate cracked force based on strain
-					private double Force(double e) => Concrete.CalculateForce(e) + Reinforcement.CalculateForce(e);
+                    /// <summary>
+                    /// Calculate force based on strain.
+                    /// </summary>
+                    /// <param name="strain">Current strain.</param>
+                    private double Force(double strain) => Concrete.CalculateForce(strain) + Reinforcement.CalculateForce(strain);
 				}
 			}
 

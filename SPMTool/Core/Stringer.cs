@@ -13,9 +13,14 @@ using Behavior           = Material.Concrete.Behavior;
 
 namespace SPMTool.Core
 {
+	/// <summary>
+    /// Stringer base class;
+    /// </summary>
 	public partial class Stringer : SPMElement
 	{
-		// Force states
+		/// <summary>
+        /// Type of forces that stringer can be loaded.
+        /// </summary>
 		public enum ForceState
 		{
 			Unloaded,
@@ -40,7 +45,13 @@ namespace SPMTool.Core
 		public virtual Vector<double>  Forces           { get; set; }
 		public Vector<double>          Displacements    { get; set; }
 
-		// Constructor
+		/// <summary>
+        /// Stringer base object.
+        /// </summary>
+        /// <param name="stringerObject">The object ID from AutoCAD drawing.</param>
+        /// <param name="units">Units current in use.</param>
+        /// <param name="concreteParameters">The concrete parameters.</param>
+        /// <param name="concreteBehavior">The concrete behavior.</param>
 		public Stringer(ObjectId stringerObject, Units units, ConcreteParameters concreteParameters = null, Behavior concreteBehavior = null)
 		{
 			ObjectId = stringerObject;
@@ -157,7 +168,9 @@ namespace SPMTool.Core
         // Maximum Stringer force
         public double MaxForce => Forces.AbsoluteMaximum();
 
-        // Calculate the transformation matrix
+        /// <summary>
+        /// Calculate the transformation matrix.
+        /// </summary>
         private Matrix<double> TransformationMatrix()
         {
 	        // Get the direction cosines
@@ -172,7 +185,9 @@ namespace SPMTool.Core
 	        });
         }
 
-        // Get Stringer displacements from global displacement vector
+        /// <summary>
+        /// Set Stringer displacements from global displacement vector.
+        /// </summary>
         public void SetDisplacements(Vector<double> globalDisplacementVector)
         {
 	        var u = globalDisplacementVector;
@@ -193,12 +208,15 @@ namespace SPMTool.Core
 	        Displacements = us;
         }
 
-        // Results
+		/// <summary>
+        /// Do analysis of stringer.
+        /// </summary>
+        /// <param name="globalDisplacements">The global displacement vector.</param>
+        /// <param name="numStrainSteps">The number of strain increments (for nonlinear analysis) (default: 5).</param>
         public virtual void Analysis(Vector<double> globalDisplacements = null, int numStrainSteps = 5)
 		{
 		}
 
-		// Custom string return
 		public override string ToString()
 		{
 			// Convert units
