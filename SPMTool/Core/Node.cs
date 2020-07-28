@@ -224,7 +224,7 @@ namespace SPMTool.Core
 
 		        msgstr +=
 			        "\n\nDisplacements:\n" +
-			        "ux = " + ux +
+			        "ux = " + ux + "\n" +
 			        "uy = " + uy;
 	        }
 
