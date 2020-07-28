@@ -238,32 +238,29 @@ namespace SPMTool.AutoCAD
 			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Get the stringers stiffness matrix and add to the global stiffness matrix
-				foreach (var str in stringers)
+				foreach (var stringer in stringers)
 				{
-					// Get the parameters of the Stringer
-					double
-						l   = units.ConvertFromMillimeter(str.Length, units.Geometry),
-						ang = str.Angle;
-
-					// Get the start point
-					var stPt = str.PointsConnected[0];
-
-					// Get the forces in the list
-					var f = str.Forces;
-					double
-						N1 =  f[0],
-						N3 = -f[2];
-
-					// Check if at least one force is not zero
-					if (N1 != 0 || N3 != 0)
+					// Check if the stringer is loaded
+					if (stringer.State != Stringer.ForceState.Unloaded)
 					{
-						// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
+						// Get the parameters of the Stringer
 						double
-							h1 = units.ConvertFromMillimeter(150 * N1 / maxForce, units.Geometry),
+							l   = units.ConvertFromMillimeter(stringer.Length, units.Geometry),
+							ang = stringer.Angle;
+
+						// Get the start point
+						var stPt = stringer.PointsConnected[0];
+
+						// Get normal forces
+						var (N1, N3) = stringer.NormalForces;
+
+                        // Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
+                        double
+                            h1 = units.ConvertFromMillimeter(150 * N1 / maxForce, units.Geometry),
 							h3 = units.ConvertFromMillimeter(150 * N3 / maxForce, units.Geometry);
 
-						// Check if the forces are in the same direction
-						if (N1 * N3 >= 0) // same direction
+						// Check if load state is pure tension or compression
+						if (stringer.State != Stringer.ForceState.Combined)
 						{
 							// Calculate the points (the solid will be rotated later)
 							Point3d[] vrts =
@@ -295,7 +292,7 @@ namespace SPMTool.AutoCAD
 							}
 						}
 
-						else // forces are in diferent directions
+						else
 						{
 							// Calculate the point where the Stringer force will be zero
 							double x = Math.Abs(h1) * l / (Math.Abs(h1) + Math.Abs(h3));

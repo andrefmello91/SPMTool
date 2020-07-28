@@ -59,9 +59,6 @@ namespace SPMTool.Core
 					SetDisplacements(globalDisplacements);
 
                 Forces = CalculateForces();
-
-				// Set GenStresses
-				GenStresses = (-Forces[0], Forces[2]);
 			}
         }
 	}

@@ -39,30 +39,6 @@ namespace SPMTool.Core
         public virtual Matrix<double>  LocalStiffness   { get; }
 		public virtual Vector<double>  Forces           { get; set; }
 		public Vector<double>          Displacements    { get; set; }
-		public (double N1, double N3)  GenStresses      { get; set; }
-		public (double e1, double e3)  GenStrains       { get; set; }
-
-		/// <summary>
-        /// Get the state of forces acting on the stringer.
-        /// </summary>
-        public ForceState State
-		{
-			get
-			{
-				var (N1, N3) = GenStresses;
-
-				if (N1 == 0 && N3 == 0)
-					return ForceState.Unloaded;
-
-				if (N1 > 0 && N3 > 0)
-					return ForceState.PureTension;
-
-				if (N1 < 0 && N3 < 0)
-					return ForceState.PureCompression;
-
-				return ForceState.Combined;
-			}
-		}
 
 		// Constructor
 		public Stringer(ObjectId stringerObject, Units units, ConcreteParameters concreteParameters = null, Behavior concreteBehavior = null)
@@ -147,6 +123,33 @@ namespace SPMTool.Core
 
 		// Calculate local displacements
 		public Vector<double> LocalDisplacements => TransMatrix * Displacements;
+
+		/// <summary>
+        /// Get normal forces acting in the stringer, in kN.
+        /// </summary>
+		public (double N1, double N3) NormalForces => (Forces[0], -Forces[2]);
+
+		/// <summary>
+		/// Get the state of forces acting on the stringer.
+		/// </summary>
+		public ForceState State
+		{
+			get
+			{
+				var (N1, N3) = NormalForces;
+
+				if (N1 == 0 && N3 == 0)
+					return ForceState.Unloaded;
+
+				if (N1 > 0 && N3 > 0)
+					return ForceState.PureTension;
+
+				if (N1 < 0 && N3 < 0)
+					return ForceState.PureCompression;
+
+				return ForceState.Combined;
+			}
+		}
 
         // Global Stringer forces
         public Vector<double> GlobalForces => TransMatrix.Transpose() * Forces;

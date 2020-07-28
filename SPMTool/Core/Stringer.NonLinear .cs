@@ -20,9 +20,11 @@ namespace SPMTool.Core
 			public  Matrix<double>         FMatrix     { get; set; }
 			private IntegrationPoint[]     IntPoints   { get; }
 			private StressStrainRelations  Relations   { get; }
+			public (double N1, double N3)  GenStresses { get; set; }
+			public (double e1, double e3)  GenStrains  { get; set; }
 
-			// Generalized strains and stresses for each iteration
-			private (double e1, double e3) IterationGenStrains  { get; set; }
+            // Generalized strains and stresses for each iteration
+            private (double e1, double e3) IterationGenStrains  { get; set; }
 			private (double N1, double N3) IterationGenStresses { get; set; }
 
             public NonLinear(ObjectId stringerObject, Units units, ConcreteParameters concreteParameters, Behavior concreteBehavior) : base(stringerObject, units, concreteParameters, concreteBehavior)
