@@ -1,4 +1,5 @@
-﻿using Autodesk.AutoCAD.DatabaseServices;
+﻿using System;
+using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics.LinearAlgebra;
 using Concrete           = Material.Concrete.Uniaxial;
 using ConcreteParameters = Material.Concrete.Parameters;
@@ -58,6 +59,9 @@ namespace SPMTool.Core
 					SetDisplacements(globalDisplacements);
 
                 Forces = CalculateForces();
+
+				// Set GenStresses
+				GenStresses = (-Forces[0], Forces[2]);
 			}
         }
 	}

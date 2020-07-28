@@ -17,8 +17,6 @@ namespace SPMTool.Core
 		public class NonLinear : Stringer
 		{
 			// Public properties
-			public (double N1, double N3)  GenStresses { get; set; }
-			public (double e1, double e3)  GenStrains  { get; set; }
 			public  Matrix<double>         FMatrix     { get; set; }
 			private IntegrationPoint[]     IntPoints   { get; }
 			private StressStrainRelations  Relations   { get; }
@@ -330,7 +328,7 @@ namespace SPMTool.Core
 
                 // Set the final values
                 GenStresses = genStresses;
-                GenStrains = genStrains;
+                GenStrains  = genStrains;
             }
 
             // Calculate plastic strains
@@ -391,7 +389,7 @@ namespace SPMTool.Core
 				}
 
                 // Cracking load
-                private double Ncr => Concrete.fcr * Concrete.Area * (1 + xi);
+                private double Ncr => Concrete.ft * Concrete.Area * (1 + xi);
 				private double Nr  => Ncr / Math.Sqrt(1 + xi);
 
 				public abstract (double e, double de) StringerStrain(double N, IntegrationPoint intPoint);

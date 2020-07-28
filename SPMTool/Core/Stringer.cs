@@ -15,6 +15,15 @@ namespace SPMTool.Core
 {
 	public partial class Stringer : SPMElement
 	{
+		// Force states
+		public enum ForceState
+		{
+			Unloaded,
+			PureTension,
+			PureCompression,
+			Combined
+		}
+
         // Stringer properties
 		public Units                   Units            { get; }
 		public int[]                   Grips            { get; }
@@ -30,6 +39,30 @@ namespace SPMTool.Core
         public virtual Matrix<double>  LocalStiffness   { get; }
 		public virtual Vector<double>  Forces           { get; set; }
 		public Vector<double>          Displacements    { get; set; }
+		public (double N1, double N3)  GenStresses      { get; set; }
+		public (double e1, double e3)  GenStrains       { get; set; }
+
+		/// <summary>
+        /// Get the state of forces acting on the stringer.
+        /// </summary>
+        public ForceState State
+		{
+			get
+			{
+				var (N1, N3) = GenStresses;
+
+				if (N1 == 0 && N3 == 0)
+					return ForceState.Unloaded;
+
+				if (N1 > 0 && N3 > 0)
+					return ForceState.PureTension;
+
+				if (N1 < 0 && N3 < 0)
+					return ForceState.PureCompression;
+
+				return ForceState.Combined;
+			}
+		}
 
 		// Constructor
 		public Stringer(ObjectId stringerObject, Units units, ConcreteParameters concreteParameters = null, Behavior concreteBehavior = null)
