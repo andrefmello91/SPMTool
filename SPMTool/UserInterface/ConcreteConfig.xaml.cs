@@ -122,9 +122,9 @@ namespace SPMTool.UserInterface
 
 			TensileBox.Text = Math.Round(Units.ConvertFromMPa(ConcreteParameters.TensileStrength, Units.MaterialStrength), 2).ToString();
 
-			PlasticStrainBox.Text = Math.Round(1000 * ConcreteParameters.PlasticStrain, 2).ToString();
+			PlasticStrainBox.Text = Math.Round(-1000 * ConcreteParameters.PlasticStrain, 2).ToString();
 
-			UltStrainBox.Text = Math.Round(1000 * ConcreteParameters.UltimateStrain, 2).ToString();
+			UltStrainBox.Text = Math.Round(-1000 * ConcreteParameters.UltimateStrain, 2).ToString();
 		}
 
 		// Get custom parameters
@@ -136,8 +136,8 @@ namespace SPMTool.UserInterface
 				phiAg = Units.ConvertToMillimeter(double.Parse(AggDiamBox.Text), Units.Reinforcement),
 				Ec    = Units.ConvertToMPa(double.Parse(ModuleBox.Text), Units.MaterialStrength),
 				ft    = Units.ConvertToMPa(double.Parse(TensileBox.Text), Units.MaterialStrength),
-				ec    = double.Parse(PlasticStrainBox.Text) * 0.001,
-				ecu   = double.Parse(UltStrainBox.Text) * 0.001;
+				ec    = double.Parse(PlasticStrainBox.Text) * -0.001,
+				ecu   = double.Parse(UltStrainBox.Text) * -0.001;
 
 			ConcreteParameters = new Parameters.Custom(fc, phiAg, ft, Ec, ec, ecu);
 		}
@@ -207,7 +207,7 @@ namespace SPMTool.UserInterface
 
 		private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
 		{
-			Regex regex = new Regex("[^0-9.-]+");
+			Regex regex = new Regex("[^0-9.]+");
 			e.Handled = regex.IsMatch(e.Text);
 		}
 
