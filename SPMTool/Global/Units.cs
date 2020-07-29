@@ -27,6 +27,46 @@ namespace SPMTool
 			MaterialStrength = StressUnit.Megapascal;
 		}
 
+		public AreaUnit GeometryArea
+		{
+			get
+			{
+				switch (Geometry)
+				{
+                    case LengthUnit.Millimeter:
+	                    return AreaUnit.SquareMillimeter;
+
+                    case LengthUnit.Centimeter:
+	                    return AreaUnit.SquareCentimeter;
+
+                    case LengthUnit.Meter:
+	                    return AreaUnit.SquareMeter;
+				}
+
+				return AreaUnit.SquareMillimeter;
+			}
+		}
+
+		public AreaUnit ReinforcementArea
+		{
+			get
+			{
+				switch (Reinforcement)
+				{
+                    case LengthUnit.Millimeter:
+	                    return AreaUnit.SquareMillimeter;
+
+                    case LengthUnit.Centimeter:
+	                    return AreaUnit.SquareCentimeter;
+
+                    case LengthUnit.Meter:
+	                    return AreaUnit.SquareMeter;
+				}
+
+				return AreaUnit.SquareMillimeter;
+			}
+		}
+
 		// Get dimension in mm
 		public double ConvertToMillimeter(double dimension, LengthUnit fromUnit) =>
 			UnitConverter.Convert(dimension, fromUnit, LengthUnit.Millimeter);
