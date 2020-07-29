@@ -343,6 +343,16 @@ namespace SPMTool.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap stringer_cross_section {
+            get {
+                object obj = ResourceManager.GetObject("stringer_cross_section", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap stringer_large {
             get {
                 object obj = ResourceManager.GetObject("stringer_large", resourceCulture);

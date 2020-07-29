@@ -841,6 +841,12 @@ namespace SPMTool.AutoCAD
 				// Read the element
 				var element = Auxiliary.ReadElement(ent);
 
+				if (element.GetType() == typeof(Stringer))
+				{
+					var window = new StringerWindow((Stringer)element);
+					Application.ShowModalWindow(Application.MainWindow.Handle, window, true);
+				}
+
 				// Display the values returned
 				Application.ShowAlertDialog(Current.appName + "\n\n" + element);
 			}

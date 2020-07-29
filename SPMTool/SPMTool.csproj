@@ -159,6 +159,9 @@
     <Compile Include="Core\Analysis.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\Constraints.cs" />
+    <Compile Include="UserInterface\StringerWindow.xaml.cs">
+      <DependentUpon>StringerWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserInterface\NodeWindow.xaml.cs">
       <DependentUpon>NodeWindow.xaml</DependentUpon>
     </Compile>
@@ -326,6 +329,10 @@
     <None Include="Resources\viewsupport_large_light.png" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="UserInterface\StringerWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="UserInterface\NodeWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -362,6 +369,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\units.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringer-cross-section.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
