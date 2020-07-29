@@ -11,10 +11,9 @@
             <RowDefinition Height="99*"/>
             <RowDefinition Height="235*"/>
             <RowDefinition Height="40*"/>
-            <RowDefinition Height="6*"/>
         </Grid.RowDefinitions>
-        <TextBlock Name="StringerNumberBlock" HorizontalAlignment="Left" Margin="197,20,0,0" VerticalAlignment="Top" FontWeight="SemiBold"/>
-        <TextBlock Name="StringerGripsBlock" HorizontalAlignment="Left" Margin="197,45,0,0" VerticalAlignment="Top" FontWeight="SemiBold"/>
+        <TextBlock Name="StringerNumberBlock" HorizontalAlignment="Left" Margin="197,15,0,0" VerticalAlignment="Top" FontWeight="SemiBold"/>
+        <TextBlock Name="StringerGripsBlock" HorizontalAlignment="Left" Margin="197,40,0,0" VerticalAlignment="Top" FontWeight="SemiBold"/>
 
         <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="98" Margin="10,105,0,0" VerticalAlignment="Top" Width="170" Opacity="0.3" Grid.Row="1"/>
         <TextBlock Text="Geometry:" HorizontalAlignment="Left" Margin="11,84,0,0" VerticalAlignment="Top" Grid.Row="1" FontWeight="SemiBold"/>
@@ -22,18 +21,18 @@
         <TextBox x:Name="LengthBox" HorizontalAlignment="Left" Height="23" Margin="80,111,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1" IsEnabled="False"/>
         <TextBlock Text="{Binding GeometryUnit}" HorizontalAlignment="Left" Margin="145,114,0,0" VerticalAlignment="Top" Grid.Row="1"/>
         <TextBlock Text="Width (b):" HorizontalAlignment="Left" Margin="20,144,0,0" VerticalAlignment="Top" Grid.Row="1"/>
-        <TextBox Name="WidthBox" HorizontalAlignment="Left" Height="23" Margin="80,141,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1"/>
+        <TextBox Name="WidthBox" HorizontalAlignment="Left" Height="23" Margin="80,141,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1" PreviewTextInput="DoubleValidationTextBox"/>
         <TextBlock Text="{Binding GeometryUnit}" HorizontalAlignment="Left" Margin="145,144,0,0" VerticalAlignment="Top" Grid.Row="1"/>
         <TextBlock Text="Height (h):" HorizontalAlignment="Left" Margin="20,174,0,0" VerticalAlignment="Top" Grid.Row="1"/>
-        <TextBox Name="HeigthBox" HorizontalAlignment="Left" Height="23" Margin="80,171,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1"/>
+        <TextBox Name="HeigthBox" HorizontalAlignment="Left" Height="23" Margin="80,171,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1" PreviewTextInput="DoubleValidationTextBox"/>
         <TextBlock Text="{Binding GeometryUnit}" HorizontalAlignment="Left" Margin="145,174,0,0" VerticalAlignment="Top" Grid.Row="1"/>
 
         <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="195" Margin="197,9,0,0" VerticalAlignment="Top" Width="220" Opacity="0.3" Grid.Row="1"/>
-        <TextBlock Text="Reiforcement:" HorizontalAlignment="Left" Margin="197,72,0,0" VerticalAlignment="Top" FontWeight="SemiBold"/>
+        <CheckBox Name="ReinforcementCheck" Content="Reiforcement:" HorizontalAlignment="Left" Margin="197,68,0,0" VerticalAlignment="Top" FontWeight="SemiBold" Height="18" Checked="ReinforcementCheck_OnChecked" Unchecked="ReinforcementCheck_OnUnchecked"/>
         <TextBlock Text="Number of bars:" HorizontalAlignment="Left" Margin="207,22,0,0" VerticalAlignment="Top" Grid.Row="1"/>
-        <TextBox Name="NumBarsBox" HorizontalAlignment="Left" Height="23" Margin="317,19,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1"/>
+        <TextBox Name="NumBarsBox" HorizontalAlignment="Left" Height="23" Margin="317,19,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1" TextChanged="Reinforcement_OnTextChanged" PreviewTextInput="IntValidationTextBox"/>
         <TextBlock Text="Bar diameter:" HorizontalAlignment="Left" Margin="207,52,0,0" VerticalAlignment="Top" Grid.Row="1"/>
-        <TextBox Name="BarDiamBox" HorizontalAlignment="Left" Height="23" Margin="317,49,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1"/>
+        <TextBox Name="BarDiamBox" HorizontalAlignment="Left" Height="23" Margin="317,49,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1" TextChanged="Reinforcement_OnTextChanged" PreviewTextInput="DoubleValidationTextBox"/>
         <TextBlock Text="{Binding ReiforcementUnit}" HorizontalAlignment="Left" Margin="382,52,0,0" VerticalAlignment="Top" Grid.Row="1"/>
         <TextBlock Text="Area:" HorizontalAlignment="Left" Margin="207,82,0,0" VerticalAlignment="Top" Grid.Row="1"/>
         <TextBox Name="AreaBox" HorizontalAlignment="Left" Height="23" Margin="317,79,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1" IsEnabled="False"/>
@@ -41,14 +40,14 @@
 
         <TextBlock Text="Steel properties:" HorizontalAlignment="Left" Margin="207,112,0,0" VerticalAlignment="Top" Grid.Row="1" FontWeight="SemiBold"/>
         <TextBlock Text="Yield stress (fy):" HorizontalAlignment="Left" Margin="207,142,0,0" VerticalAlignment="Top" Grid.Row="1"/>
-        <TextBox x:Name="YieldBox" HorizontalAlignment="Left" Height="23" Margin="317,139,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1"/>
+        <TextBox x:Name="YieldBox" HorizontalAlignment="Left" Height="23" Margin="317,139,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1" PreviewTextInput="DoubleValidationTextBox"/>
         <TextBlock Text="{Binding StressUnit}" HorizontalAlignment="Left" Margin="382,142,0,0" VerticalAlignment="Top" Grid.Row="1"/>
         <TextBlock Text="Elastic Module (Es):" HorizontalAlignment="Left" Margin="207,172,0,0" VerticalAlignment="Top" Grid.Row="1"/>
-        <TextBox x:Name="ModuleBox" HorizontalAlignment="Left" Height="23" Margin="317,169,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1"/>
+        <TextBox x:Name="ModuleBox" HorizontalAlignment="Left" Height="23" Margin="317,169,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Grid.Row="1" PreviewTextInput="DoubleValidationTextBox"/>
         <TextBlock Text="{Binding StressUnit}" HorizontalAlignment="Left" Margin="382,172,0,0" VerticalAlignment="Top" Grid.Row="1"/>
 
         <Button Content="OK" HorizontalAlignment="Left" Margin="340,216,0,0" VerticalAlignment="Top" Width="75" Click="ButtonOK_OnClick" ToolTip="Save stringer parameters" Grid.Row="1" Grid.RowSpan="2"/>
         <Button Content="Cancel" HorizontalAlignment="Left" Margin="255,216,0,0" VerticalAlignment="Top" Width="75" Click="ButtonCancel_OnClick" ToolTip="Discard changes" Grid.Row="1" Grid.RowSpan="2"/>
-        <Image HorizontalAlignment="Left" Height="130" Margin="11,24,0,0" VerticalAlignment="Top" Width="171" Source="pack://siteoforigin:,,,/Resources/stringer-cross-section.png" Grid.RowSpan="2"/>
+        <Image Name="StringerImage" HorizontalAlignment="Left" Height="130" Margin="11,24,0,0" VerticalAlignment="Top" Width="171" Grid.RowSpan="2"/>
     </Grid>
 </Window>

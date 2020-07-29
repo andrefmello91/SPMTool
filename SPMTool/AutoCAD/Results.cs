@@ -841,7 +841,7 @@ namespace SPMTool.AutoCAD
 				// Read the element
 				var element = Auxiliary.ReadElement(ent);
 
-				if (element.GetType() == typeof(Stringer))
+				if (element is Stringer)
 				{
 					var window = new StringerWindow((Stringer)element);
 					Application.ShowModalWindow(Application.MainWindow.Handle, window, true);

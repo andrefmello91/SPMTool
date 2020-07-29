@@ -50,6 +50,9 @@ namespace SPMTool.UserInterface
 
             InitializeComponent();
 
+            // Get stringer image
+            StringerImage.Source = AutoCAD.UserInterface.getBitmap(Properties.Resources.stringer_cross_section);
+
             GetInitialData();
 
             InitiateBoxes();
@@ -76,21 +79,157 @@ namespace SPMTool.UserInterface
 			LengthBox.Text  = Units.ConvertFromMillimeter(Stringer.Length, Units.Geometry).ToString();
 			WidthBox.Text   = Units.ConvertFromMillimeter(Stringer.Width,  Units.Geometry).ToString();
 			HeigthBox.Text  = Units.ConvertFromMillimeter(Stringer.Height, Units.Geometry).ToString();
-			NumBarsBox.Text = Reinforcement.NumberOfBars.ToString();
-			BarDiamBox.Text = Units.ConvertFromMillimeter(Reinforcement.BarDiameter, Units.Reinforcement).ToString();
-			AreaBox.Text    = UnitConverter.Convert(Reinforcement.Area, AreaUnit.SquareMillimeter, Units.ReinforcementArea).ToString();
-			YieldBox.Text   = Units.ConvertFromMPa(Steel.YieldStress, Units.MaterialStrength).ToString();
-			ModuleBox.Text  = Units.ConvertFromMPa(Steel.ElasticModule, Units.MaterialStrength).ToString();
+
+			// Get checkbox state
+			if (Reinforcement is null || Reinforcement.NumberOfBars == 0 || Reinforcement.BarDiameter == 0)
+			{
+				ReinforcementCheck.IsChecked = false;
+				DisableReinforcementBoxes();
+			}
+			else
+				ReinforcementCheck.IsChecked = true;
+
+			if (Reinforcement.NumberOfBars > 0)
+				NumBarsBox.Text = Reinforcement.NumberOfBars.ToString();
+
+			if (Reinforcement.BarDiameter > 0)
+				BarDiamBox.Text = Units.ConvertFromMillimeter(Reinforcement.BarDiameter, Units.Reinforcement).ToString();
+
+			if (Reinforcement.Area > 0)
+				AreaBox.Text = UnitConverter.Convert(Reinforcement.Area, AreaUnit.SquareMillimeter, Units.ReinforcementArea).ToString();
+			else
+				AreaBox.Text = "0.00";
+
+			if (Steel.YieldStress > 0)
+				YieldBox.Text   = Units.ConvertFromMPa(Steel.YieldStress, Units.MaterialStrength).ToString();
+
+			if (Steel.ElasticModule > 0)
+				ModuleBox.Text  = Units.ConvertFromMPa(Steel.ElasticModule, Units.MaterialStrength).ToString();
 		}
 
-		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
+		/// <summary>
+		/// Calculated reinforcement area.
+		/// </summary>
+		private double ReinforcementArea(int numberOfBars, double barDiameter)
 		{
+			if (numberOfBars > 0 && barDiameter > 0)
+				return
+					0.25 * numberOfBars * Constants.Pi * barDiameter * barDiameter;
+
+			return 0;
+		}
+
+		private void EnableReinforcementBoxes()
+		{
+			NumBarsBox.IsEnabled = true;
+			BarDiamBox.IsEnabled = true;
+			YieldBox.IsEnabled   = true;
+			ModuleBox.IsEnabled  = true;
+		}
+
+		private void DisableReinforcementBoxes()
+		{
+			NumBarsBox.IsEnabled = false;
+			BarDiamBox.IsEnabled = false;
+			YieldBox.IsEnabled   = false;
+			ModuleBox.IsEnabled  = false;
+		}
+		
+        private void DoubleValidationTextBox(object sender, TextCompositionEventArgs e)
+		{
+			Regex regex = new Regex("[^0-9.]+");
+			e.Handled = regex.IsMatch(e.Text);
+		}
+
+		private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
+		{
+			Regex regex = new Regex("[^0-9]+");
+			e.Handled = regex.IsMatch(e.Text);
+		}
+
+		private void SaveData()
+		{
+			Reinforcement reinforcement = null;
+			int numOfBars = 0;
+			double
+				width = 0,
+				height = 0,
+				barDiameter = 0,
+				fy = 0,
+				Es = 0;
+
+			// Get values
+			int.TryParse(NumBarsBox.Text, out numOfBars);
+			double.TryParse(WidthBox.Text, out width);
+			double.TryParse(HeigthBox.Text, out height);
+			double.TryParse(BarDiamBox.Text, out barDiameter);
+			double.TryParse(YieldBox.Text, out fy);
+			double.TryParse(ModuleBox.Text, out Es);
+
+			// Convert values
+			if (Units.Geometry != LengthUnit.Millimeter)
+			{
+				width  = Units.ConvertToMillimeter(width,  Units.Geometry);
+				height = Units.ConvertToMillimeter(height, Units.Geometry);
+			}
+
+			if (Units.Reinforcement != LengthUnit.Millimeter)
+				barDiameter = Units.ConvertToMillimeter(barDiameter, Units.Reinforcement);
+
+			if (Units.MaterialStrength != PressureUnit.Megapascal)
+			{
+				fy = Units.ConvertToMPa(fy, Units.MaterialStrength);
+				Es = Units.ConvertToMPa(Es, Units.MaterialStrength);
+			}
+
+            if (ReinforcementCheck.IsChecked.Value && barDiameter > 0 && numOfBars > 0)
+            {
+	            Steel steel = null;
+
+				if (fy > 0 || Es > 0)
+					steel = new Steel(fy, Es);
+
+				reinforcement = new Reinforcement(numOfBars, barDiameter, 0, steel);
+			}
+
+			Auxiliary.SaveStringerData(Stringer.ObjectId, width, height, reinforcement);
+        }
+
+        private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
+		{
+			SaveData();
 			Close();
 		}
 
 		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e)
 		{
-			Close();
+
+            Close();
 		}
-	}
+
+		private void Reinforcement_OnTextChanged(object sender, TextChangedEventArgs e)
+		{
+			if (NumBarsBox.Text != string.Empty && BarDiamBox.Text != string.Empty)
+			{
+				// Get values
+				int numOfBars      = int.Parse(NumBarsBox.Text);
+				double barDiameter = double.Parse(BarDiamBox.Text);
+
+				// Set area value
+				AreaBox.Text = $"{ReinforcementArea(numOfBars, barDiameter):0.00}";
+			}
+			else
+				AreaBox.Text = "0.00";
+		}
+
+		private void ReinforcementCheck_OnChecked(object sender, RoutedEventArgs e)
+		{
+			EnableReinforcementBoxes();
+		}
+
+		private void ReinforcementCheck_OnUnchecked(object sender, RoutedEventArgs e)
+		{
+			DisableReinforcementBoxes();
+		}
+    }
 }
