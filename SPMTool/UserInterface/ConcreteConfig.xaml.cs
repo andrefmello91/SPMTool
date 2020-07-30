@@ -15,6 +15,7 @@ using SPMTool.AutoCAD;
 using UnitsNet;
 using UnitsNet.Units;
 using ComboBox = System.Windows.Controls.ComboBox;
+using MessageBox = System.Windows.MessageBox;
 using TextBox = System.Windows.Controls.TextBox;
 
 namespace SPMTool.UserInterface
@@ -60,8 +61,45 @@ namespace SPMTool.UserInterface
             DataContext = this;
 		}
 
-		// Get combo boxes items
-		private void InitiateComboBoxes()
+		/// <summary>
+		/// Verify if strength and aggregate diameter text boxes are filled.
+		/// </summary>
+		private bool ParametersSet
+		{
+			get
+			{
+				var textBoxes = new[] { StrengthBox, AggDiamBox };
+				foreach (var textBox in textBoxes)
+				{
+					if (!GlobalAuxiliary.ParsedAndNotZero(textBox.Text))
+						return false;
+				}
+
+				return true;
+			}
+		}
+
+		/// <summary>
+		/// Verify if custom parameters text boxes are filled.
+		/// </summary>
+		private bool CustomParametersSet
+		{
+			get
+			{
+				var textBoxes = new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox };
+				foreach (var textBox in textBoxes)
+				{
+					if (!GlobalAuxiliary.ParsedAndNotZero(textBox.Text))
+						return false;
+				}
+
+				return true;
+			}
+		}
+
+
+        // Get combo boxes items
+        private void InitiateComboBoxes()
 		{
 			StrengthBox.Text = $"{Units.ConvertFromMPa(ConcreteParameters.Strength, Units.MaterialStrength):0.00}";
 
@@ -218,14 +256,28 @@ namespace SPMTool.UserInterface
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
-			if (ParModel == ParameterModel.Custom)
-				GetCustomParameters();
-			else
-				UpdateParameters();
+			// Verify if text boxes are filled
+			if (!ParametersSet)
+			{
+				MessageBox.Show("Please set concrete strength and aggregate diameter.", "Alert");
+			}
 
-			// Save units on database
-			AutoCAD.Material.SaveConcreteParameters(ConcreteParameters, BehaviorModel);
-			Close();
+			else if (ParModel == ParameterModel.Custom && !CustomParametersSet)
+			{
+				MessageBox.Show("Please set concrete custom parameters.", "Alert");
+			}
+
+			else
+			{
+				if (ParModel == ParameterModel.Custom)
+					GetCustomParameters();
+				else
+					UpdateParameters();
+
+				// Save units on database
+				AutoCAD.Material.SaveConcreteParameters(ConcreteParameters, BehaviorModel);
+				Close();
+			}
 		}
 	}
 }

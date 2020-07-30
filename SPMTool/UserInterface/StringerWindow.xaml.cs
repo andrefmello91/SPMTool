@@ -87,14 +87,11 @@ namespace SPMTool.UserInterface
 		        var textBoxes = new[] { WidthBox, HeigthBox };
 		        foreach (var textBox in textBoxes)
 		        {
-			        double x = 0;
-			        bool parsed = double.TryParse(textBox.Text, out x);
-
-			        if (!parsed || x == 0)
+			        if (!GlobalAuxiliary.ParsedAndNotZero(textBox.Text))
 				        return false;
 		        }
 
-		        return true;
+                return true;
 	        }
         }
 
@@ -108,14 +105,11 @@ namespace SPMTool.UserInterface
 				var textBoxes = new[] { NumBarsBox, BarDiamBox, YieldBox, ModuleBox };
 				foreach (var textBox in textBoxes)
 				{
-					double x = 0;
-					bool parsed = double.TryParse(textBox.Text, out x);
-
-					if (!parsed || x == 0)
+					if (!GlobalAuxiliary.ParsedAndNotZero(textBox.Text))
 						return false;
 				}
 
-				return true;
+                return true;
 			}
 		}
 

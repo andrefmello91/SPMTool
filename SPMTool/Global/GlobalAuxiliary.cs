@@ -98,5 +98,20 @@ namespace SPMTool
 
         // Function to verify if a number is not zero
         public static bool NotZero(double num) => num != 0;
+
+        /// <summary>
+        /// Try parse a string and verify if is not zero
+        /// </summary>
+        /// <param name="numberAsString">String to parse.</param>
+        /// <returns></returns>
+        public static bool ParsedAndNotZero(string numberAsString)
+		{
+			bool parsed = double.TryParse(numberAsString, out double x);
+
+			if (!parsed || x == 0)
+				return false;
+
+			return true;
+		}
     }
 }
