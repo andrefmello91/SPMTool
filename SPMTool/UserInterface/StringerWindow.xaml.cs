@@ -76,9 +76,9 @@ namespace SPMTool.UserInterface
 
 		private void InitiateBoxes()
 		{
-			LengthBox.Text  = Units.ConvertFromMillimeter(Stringer.Length, Units.Geometry).ToString();
-			WidthBox.Text   = Units.ConvertFromMillimeter(Stringer.Width,  Units.Geometry).ToString();
-			HeigthBox.Text  = Units.ConvertFromMillimeter(Stringer.Height, Units.Geometry).ToString();
+			LengthBox.Text  = $"{Units.ConvertFromMillimeter(Stringer.Length, Units.Geometry):0.00}";
+			WidthBox.Text   = $"{Units.ConvertFromMillimeter(Stringer.Width,  Units.Geometry):0.00}";
+			HeigthBox.Text  = $"{Units.ConvertFromMillimeter(Stringer.Height, Units.Geometry):0.00}";
 
 			// Get checkbox state
 			if (Reinforcement is null || Reinforcement.NumberOfBars == 0 || Reinforcement.BarDiameter == 0)
@@ -93,18 +93,17 @@ namespace SPMTool.UserInterface
 				NumBarsBox.Text = Reinforcement.NumberOfBars.ToString();
 
 			if (Reinforcement.BarDiameter > 0)
-				BarDiamBox.Text = Units.ConvertFromMillimeter(Reinforcement.BarDiameter, Units.Reinforcement).ToString();
+				BarDiamBox.Text = $"{Units.ConvertFromMillimeter(Reinforcement.BarDiameter, Units.Reinforcement):0.00}";
 
-			if (Reinforcement.Area > 0)
-				AreaBox.Text = UnitConverter.Convert(Reinforcement.Area, AreaUnit.SquareMillimeter, Units.ReinforcementArea).ToString();
-			else
-				AreaBox.Text = "0.00";
+			AreaBox.Text = 
+				Reinforcement.Area > 0 ? 
+					$"{UnitConverter.Convert(Reinforcement.Area, AreaUnit.SquareMillimeter, Units.ReinforcementArea):0.00}" : "0.00";
 
 			if (Steel.YieldStress > 0)
-				YieldBox.Text   = Units.ConvertFromMPa(Steel.YieldStress, Units.MaterialStrength).ToString();
+				YieldBox.Text   = $"{Units.ConvertFromMPa(Steel.YieldStress, Units.MaterialStrength):0.00}";
 
 			if (Steel.ElasticModule > 0)
-				ModuleBox.Text  = Units.ConvertFromMPa(Steel.ElasticModule, Units.MaterialStrength).ToString();
+				ModuleBox.Text  = $"{Units.ConvertFromMPa(Steel.ElasticModule, Units.MaterialStrength):0.00}";
 		}
 
 		/// <summary>
@@ -165,7 +164,7 @@ namespace SPMTool.UserInterface
 			double.TryParse(BarDiamBox.Text, out barDiameter);
 			double.TryParse(YieldBox.Text, out fy);
 			double.TryParse(ModuleBox.Text, out Es);
-
+			
 			// Convert values
 			if (Units.Geometry != LengthUnit.Millimeter)
 			{
@@ -209,10 +208,10 @@ namespace SPMTool.UserInterface
 
 		private void Reinforcement_OnTextChanged(object sender, TextChangedEventArgs e)
 		{
-			if (NumBarsBox.Text != string.Empty && BarDiamBox.Text != string.Empty)
+            if (NumBarsBox.Text != string.Empty && BarDiamBox.Text != string.Empty)
 			{
 				// Get values
-				int numOfBars      = int.Parse(NumBarsBox.Text);
+				int    numOfBars   = int.Parse(NumBarsBox.Text);
 				double barDiameter = double.Parse(BarDiamBox.Text);
 
 				// Set area value

@@ -841,9 +841,9 @@ namespace SPMTool.AutoCAD
 				// Read the element
 				var element = Auxiliary.ReadElement(ent);
 
-				if (element is Stringer)
+				if (element is Stringer stringer)
 				{
-					var window = new StringerWindow((Stringer)element);
+					var window = new StringerWindow(stringer);
 					Application.ShowModalWindow(Application.MainWindow.Handle, window, true);
 				}
 
