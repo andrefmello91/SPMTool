@@ -412,32 +412,26 @@ namespace SPMTool.AutoCAD
 			return null;
 		}
 
-		public static void SaveStringerData(ObjectId stringerObject, double width, double height, Reinforcement.Uniaxial reinforcement = null)
+		public static void SaveStringerData(Stringer stringer)
 		{
 			// Start a transaction
 			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Open the selected object for read
-				Entity ent = (Entity)trans.GetObject(stringerObject, OpenMode.ForWrite);
+				Entity ent = (Entity)trans.GetObject(stringer.ObjectId, OpenMode.ForWrite);
 
 				// Access the XData as an array
 				TypedValue[] data = ReadXData(ent);
 
-				// Set the new geometry and reinforcement (line 7 to 9 of the array)
-				data[(int)XData.Stringer.Width]     = new TypedValue((int)DxfCode.ExtendedDataReal,      width);
-				data[(int)XData.Stringer.Height]    = new TypedValue((int)DxfCode.ExtendedDataReal,      height);
+				// Set the new geometry
+				data[(int)XData.Stringer.Width]     = new TypedValue((int)DxfCode.ExtendedDataReal, stringer.Width);
+				data[(int)XData.Stringer.Height]    = new TypedValue((int)DxfCode.ExtendedDataReal, stringer.Height);
 
-				if (reinforcement != null)
-				{
-					data[(int) XData.Stringer.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, reinforcement.NumberOfBars);
-					data[(int) XData.Stringer.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement.BarDiameter);
-
-					if (reinforcement.Steel != null)
-					{
-						data[(int) XData.Stringer.Steelfy] = new TypedValue((int) DxfCode.ExtendedDataReal, reinforcement.Steel.YieldStress);
-						data[(int) XData.Stringer.SteelEs] = new TypedValue((int) DxfCode.ExtendedDataReal, reinforcement.Steel.ElasticModule);
-					}
-				}
+				// Save reinforcement
+				data[(int) XData.Stringer.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, stringer.Reinforcement?.NumberOfBars         ?? 0);
+				data[(int) XData.Stringer.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal,      stringer.Reinforcement?.BarDiameter          ?? 0); 
+				data[(int) XData.Stringer.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal,      stringer.Reinforcement?.Steel?.YieldStress   ?? 0);
+				data[(int) XData.Stringer.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal,      stringer.Reinforcement?.Steel?.ElasticModule ?? 0);
 
 				// Add the new XData
 				ent.XData = new ResultBuffer(data);

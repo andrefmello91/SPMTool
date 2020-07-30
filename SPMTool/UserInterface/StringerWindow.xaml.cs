@@ -194,50 +194,43 @@ namespace SPMTool.UserInterface
 
 		private void SaveData()
 		{
-			Reinforcement reinforcement = null;
-			int numOfBars = 0;
-			double
-				width = 0,
-				height = 0,
-				barDiameter = 0,
-				fy = 0,
-				Es = 0;
-
 			// Get values
-			int.TryParse(NumBarsBox.Text, out numOfBars);
-			double.TryParse(WidthBox.Text, out width);
-			double.TryParse(HeigthBox.Text, out height);
-			double.TryParse(BarDiamBox.Text, out barDiameter);
-			double.TryParse(YieldBox.Text, out fy);
-			double.TryParse(ModuleBox.Text, out Es);
+			int.TryParse(NumBarsBox.Text, out var numOfBars);
+			double.TryParse(WidthBox.Text, out var width);
+			double.TryParse(HeigthBox.Text, out var height);
+			double.TryParse(BarDiamBox.Text, out var barDiameter);
+			double.TryParse(YieldBox.Text, out var fy);
+			double.TryParse(ModuleBox.Text, out var Es);
 			
 			// Convert values
 			if (Units.Geometry != LengthUnit.Millimeter)
 			{
-				width  = Units.ConvertToMillimeter(width,  Units.Geometry);
-				height = Units.ConvertToMillimeter(height, Units.Geometry);
+				Stringer.Width  = Units.ConvertToMillimeter(width,  Units.Geometry);
+				Stringer.Height = Units.ConvertToMillimeter(height, Units.Geometry);
 			}
 
-			if (Units.Reinforcement != LengthUnit.Millimeter)
-				barDiameter = Units.ConvertToMillimeter(barDiameter, Units.Reinforcement);
-
-			if (Units.MaterialStrength != PressureUnit.Megapascal)
+			if (ReinforcementChecked && barDiameter > 0 && numOfBars > 0)
 			{
-				fy = Units.ConvertToMPa(fy, Units.MaterialStrength);
-				Es = Units.ConvertToMPa(Es, Units.MaterialStrength);
-			}
+				if (Units.Reinforcement != LengthUnit.Millimeter)
+					barDiameter = Units.ConvertToMillimeter(barDiameter, Units.Reinforcement);
 
-            if (ReinforcementCheck.IsChecked.Value && barDiameter > 0 && numOfBars > 0)
-            {
-	            Steel steel = null;
+				if (Units.MaterialStrength != PressureUnit.Megapascal)
+				{
+					fy = Units.ConvertToMPa(fy, Units.MaterialStrength);
+					Es = Units.ConvertToMPa(Es, Units.MaterialStrength);
+				}
+
+				Steel steel = null;
 
 				if (fy > 0 || Es > 0)
 					steel = new Steel(fy, Es);
 
-				reinforcement = new Reinforcement(numOfBars, barDiameter, 0, steel);
+				Stringer.Reinforcement = new Reinforcement(numOfBars, barDiameter, 0, steel);
 			}
+			else
+				Stringer.Reinforcement = null;
 
-			Auxiliary.SaveStringerData(Stringer.ObjectId, width, height, reinforcement);
+			Auxiliary.SaveStringerData(Stringer);
         }
 
         private void ButtonOK_OnClick(object sender, RoutedEventArgs e)

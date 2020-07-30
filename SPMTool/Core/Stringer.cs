@@ -36,10 +36,10 @@ namespace SPMTool.Core
 		public Length				   DrawingLength    { get; }
 		public double                  Length           { get; }
 		public double                  Angle            { get; }
-		public double                  Width            { get; }
-		public double                  Height           { get; }
+		public double                  Width            { get; set; }
+		public double                  Height           { get; set; }
 		public Concrete                Concrete         { get; }
-        public Reinforcement           Reinforcement    { get; }
+        public Reinforcement           Reinforcement    { get; set; }
         public Matrix<double>          TransMatrix      { get; }
         public virtual Matrix<double>  LocalStiffness   { get; }
 		public virtual Vector<double>  Forces           { get; set; }
