@@ -18,6 +18,7 @@ using UnitsNet;
 using UnitsNet.Units;
 using ComboBox = System.Windows.Controls.ComboBox;
 using Force = UnitsNet.Force;
+using MessageBox = System.Windows.MessageBox;
 using TextBox = System.Windows.Controls.TextBox;
 using Reinforcement = Material.Reinforcement.Uniaxial;
 
@@ -35,6 +36,23 @@ namespace SPMTool.UserInterface
 		public  string        ReinforcementUnit     { get; set; }
 		public  string        StressUnit            { get; set; }
 		public  string        ReinforcementAreaUnit { get; set; }
+
+		/// <summary>
+        /// Gets and sets reinforcement checkbox state.
+        /// </summary>
+		private bool ReinforcementChecked
+		{
+			get => ReinforcementCheck.IsChecked.Value;
+			set
+			{
+				if (value)
+					EnableReinforcementBoxes();
+				else
+					DisableReinforcementBoxes();
+
+				ReinforcementCheck.IsChecked = value;
+			}
+		}
 
 		private Reinforcement Reinforcement => Stringer.Reinforcement;
 		private Steel         Steel         => Reinforcement?.Steel;
@@ -59,7 +77,49 @@ namespace SPMTool.UserInterface
             DataContext = this;
 		}
 
-		private void GetInitialData()
+        /// <summary>
+        /// Verify if geometry text boxes are filled.
+        /// </summary>
+        private bool GeometrySet
+        {
+	        get
+	        {
+		        var textBoxes = new[] { WidthBox, HeigthBox };
+		        foreach (var textBox in textBoxes)
+		        {
+			        double x = 0;
+			        bool parsed = double.TryParse(textBox.Text, out x);
+
+			        if (!parsed || x == 0)
+				        return false;
+		        }
+
+		        return true;
+	        }
+        }
+
+		/// <summary>
+        /// Verify if reinforcement text boxes are filled.
+        /// </summary>
+        private bool ReinforcementSet
+        {
+			get
+			{
+				var textBoxes = new[] { NumBarsBox, BarDiamBox, YieldBox, ModuleBox };
+				foreach (var textBox in textBoxes)
+				{
+					double x = 0;
+					bool parsed = double.TryParse(textBox.Text, out x);
+
+					if (!parsed || x == 0)
+						return false;
+				}
+
+				return true;
+			}
+		}
+
+        private void GetInitialData()
 		{
 			StringerNumberBlock.Text = "Stringer " + Stringer.Number;
 			StringerGripsBlock.Text  = "Grips: " + Stringer.Grips[0] + " - " + Stringer.Grips[1] + " - " + Stringer.Grips[2];
@@ -81,13 +141,11 @@ namespace SPMTool.UserInterface
 
 			// Get checkbox state
 			if (Reinforcement is null || Reinforcement.NumberOfBars == 0 || Reinforcement.BarDiameter == 0)
-			{
-				ReinforcementCheck.IsChecked = false;
-				DisableReinforcementBoxes();
-			}
+				ReinforcementChecked = false;
+
 			else
 			{
-				ReinforcementCheck.IsChecked = true;
+				ReinforcementChecked = true;
 				NumBarsBox.Text = Reinforcement.NumberOfBars.ToString();
 				BarDiamBox.Text = $"{Units.ConvertFromMillimeter(Reinforcement.BarDiameter, Units.Reinforcement):0.00}";
 
@@ -127,7 +185,7 @@ namespace SPMTool.UserInterface
 			YieldBox.IsEnabled   = false;
 			ModuleBox.IsEnabled  = false;
 		}
-		
+
         private void DoubleValidationTextBox(object sender, TextCompositionEventArgs e)
 		{
 			Regex regex = new Regex("[^0-9.]+");
@@ -190,8 +248,23 @@ namespace SPMTool.UserInterface
 
         private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
-			SaveData();
-			Close();
+			// Check geometry
+			if (!GeometrySet)
+			{
+				MessageBox.Show("Please set stringer geometry.", "Alert");
+			}
+
+            // Check if reinforcement is set
+            else if (ReinforcementChecked && !ReinforcementSet)
+			{
+				MessageBox.Show("Please set all reinforcement properties or uncheck reinforcement checkbox.", "Alert");
+			}
+
+			else
+			{
+				SaveData();
+				Close();
+			}
 		}
 
 		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e)
@@ -215,14 +288,8 @@ namespace SPMTool.UserInterface
 				AreaBox.Text = "0.00";
 		}
 
-		private void ReinforcementCheck_OnChecked(object sender, RoutedEventArgs e)
-		{
-			EnableReinforcementBoxes();
-		}
-
-		private void ReinforcementCheck_OnUnchecked(object sender, RoutedEventArgs e)
-		{
-			DisableReinforcementBoxes();
-		}
-    }
+		private void ReinforcementCheck_OnChecked(object sender, RoutedEventArgs e) => ReinforcementChecked = true;
+		
+		private void ReinforcementCheck_OnUnchecked(object sender, RoutedEventArgs e) => ReinforcementChecked = false;
+	}
 }

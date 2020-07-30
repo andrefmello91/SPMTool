@@ -847,8 +847,8 @@ namespace SPMTool.AutoCAD
 					Application.ShowModalWindow(Application.MainWindow.Handle, window, true);
 				}
 
-				// Display the values returned
-				Application.ShowAlertDialog(Current.appName + "\n\n" + element);
+				else
+					Application.ShowAlertDialog(Current.appName + "\n\n" + element);
 			}
 		}
 
