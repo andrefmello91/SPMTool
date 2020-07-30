@@ -35,10 +35,10 @@ namespace SPMTool.Core
 				// Initiate integration points
 				IntPoints = new []
 				{
-					new IntegrationPoint(Concrete.ecr, Steel.YieldStrain),
-					new IntegrationPoint(Concrete.ecr, Steel.YieldStrain),
-					new IntegrationPoint(Concrete.ecr, Steel.YieldStrain),
-					new IntegrationPoint(Concrete.ecr, Steel.YieldStrain)
+					new IntegrationPoint(Concrete.ecr, Steel?.YieldStrain ?? 0),
+					new IntegrationPoint(Concrete.ecr, Steel?.YieldStrain ?? 0),
+					new IntegrationPoint(Concrete.ecr, Steel?.YieldStrain ?? 0),
+					new IntegrationPoint(Concrete.ecr, Steel?.YieldStrain ?? 0)
 				};
 
 				// Get the relations
@@ -46,7 +46,7 @@ namespace SPMTool.Core
 			}
 
 			// Get steel
-            private Steel Steel => Reinforcement.Steel;
+            private Steel Steel => Reinforcement?.Steel;
 
             /// <summary>
             /// Struct to verify cracked or yielded state on each integration point
@@ -152,10 +152,10 @@ namespace SPMTool.Core
 				{
 					// Calculate the maximum plastic strain for tension
 					double
-						ey = Steel.YieldStrain,
-						esu = Steel.UltimateStrain,
-						ec = Concrete.ec,
-						ecu = Concrete.ecu,
+						ec   = Concrete.ec,
+						ecu  = Concrete.ecu,
+						ey   = Steel?.YieldStrain ?? ec,
+						esu  = Steel?.UltimateStrain ?? 0.01,
 						eput = 0.3 * esu * Length;
 
 					// Calculate the maximum plastic strain for compression
@@ -196,7 +196,7 @@ namespace SPMTool.Core
             public Matrix<double> InitialFMatrix()
 			{
 				double
-					t1 = Concrete.Stiffness + Reinforcement.Stiffness, 
+					t1 = Concrete.Stiffness + (Reinforcement?.Stiffness ?? 0), 
 					de = 1 / t1;
 
 				// Calculate the flexibility matrix elements
@@ -283,7 +283,7 @@ namespace SPMTool.Core
             {
 	            double
 		            Nt  = Relations.Nt,
-		            Nyr = Reinforcement.YieldForce;
+		            Nyr = Reinforcement?.YieldForce ?? 0;
 
 	            // Check the value of N
 	            if (N < Nt)
@@ -361,7 +361,7 @@ namespace SPMTool.Core
 	            // Initialize the plastic strain
 	            double
 		            ep = 0,
-		            ey = Steel.YieldStrain,
+		            ey = Steel?.YieldStrain ?? 0,
 		            ec = Concrete.ec;
 
 	            // Case of tension
@@ -382,7 +382,7 @@ namespace SPMTool.Core
 			{
 				private Concrete      Concrete      { get; }
 				private Reinforcement Reinforcement { get; }
-				private Steel         Steel         => Reinforcement.Steel;
+				private Steel         Steel         => Reinforcement?.Steel;
 
                 /// <summary>
                 /// Base object for stress-strain relations.
@@ -397,19 +397,20 @@ namespace SPMTool.Core
 
 				// Constants
 				private double EcAc  => Concrete.Stiffness;
-				private double EsAs  => Reinforcement.Stiffness;
+				private double EsAs  => Reinforcement?.Stiffness ?? 0;
 				private double xi    => EsAs / EcAc;
 				private double t1    => EcAc + EsAs;
-				private double ey_ec => Steel.YieldStrain / Concrete.ec;
 
 				// Maximum Stringer forces
 				private double Nc  => Concrete.MaxForce;
-				private double Nyr => Reinforcement.YieldForce;
-				public  double Nyc => -Nyr + Nc * (-2 * ey_ec - (-ey_ec) * (-ey_ec));
+				private double Nyr => Reinforcement?.YieldForce ?? 0;
 				public  double Nt
 				{
 					get
 					{
+						if (Steel is null)
+							return Nc;
+
 						double
 							Nt1 = Nc * (1 + xi) * (1 + xi),
 							Nt2 = Nc - Nyr;
@@ -530,7 +531,7 @@ namespace SPMTool.Core
                     private (double e, double de) YieldingSteel(double N)
 					{
 						double
-							ey = Steel.YieldStrain,
+							ey = Steel?.YieldStrain ?? 0,
 							e  = ey + (N - Nyr) / t1,
 							de = 1 / t1;
 
@@ -548,12 +549,11 @@ namespace SPMTool.Core
 						// Calculate the strain for steel not yielding
 						double
 							ec = Concrete.ec,
-							ey = Steel.YieldStrain,
 							t2 = Math.Sqrt((1 + xi) * (1 + xi) - N / Nc),
 							e = ec * (1 + xi - t2);
 
 						// Check the strain
-						if (e < -ey)
+						if (Steel != null && e < -Steel.YieldStrain)
 						{
 							// Recalculate the strain for steel yielding
 							t2 = Math.Sqrt(1 - (N + Nyr) / Nc);
@@ -576,15 +576,14 @@ namespace SPMTool.Core
 						// Calculate the strain for steel not yielding
 						double
 							ec = Concrete.ec,
-							ey = Steel.YieldStrain,
 							t2 = Math.Sqrt((1 + xi) * (1 + xi) - Nt / Nc),
-							e = ec * ((1 + xi) - t2) + (N - Nt) / t1;
+							e = ec * (1 + xi - t2) + (N - Nt) / t1;
 
-						// Check the strain
-						if (e < -ey)
+                        // Check the strain
+                        if (Steel != null && e < -Steel.YieldStrain)
 						{
-							// Recalculate the strain for steel yielding
-							e = ec * (1 - Math.Sqrt(1 - (Nyr + Nt) / Nc)) + (N - Nt) / t1;
+                            // Recalculate the strain for steel yielding
+                            e = ec * (1 - Math.Sqrt(1 - (Nyr + Nt) / Nc)) + (N - Nt) / t1;
 						}
 
 						// Calculate de
@@ -633,7 +632,7 @@ namespace SPMTool.Core
                     /// Calculate force based on strain.
                     /// </summary>
                     /// <param name="strain">Current strain.</param>
-                    private double Force(double strain) => Concrete.CalculateForce(strain) + Reinforcement.CalculateForce(strain);
+                    private double Force(double strain) => Concrete.CalculateForce(strain) + (Reinforcement?.CalculateForce(strain) ?? 0);
 				}
 			}
 

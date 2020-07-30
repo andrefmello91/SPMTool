@@ -31,18 +31,17 @@ namespace SPMTool.UserInterface
 		// Properties
 		private Units         Units                 { get; }
 		private Stringer      Stringer              { get; }
-		private Reinforcement Reinforcement         { get; set; }
-		private Steel         Steel                 { get; set; }
 		public  string        GeometryUnit          { get; set; }
 		public  string        ReinforcementUnit     { get; set; }
 		public  string        StressUnit            { get; set; }
 		public  string        ReinforcementAreaUnit { get; set; }
 
-		public StringerWindow(Stringer stringer, Units units = null)
+		private Reinforcement Reinforcement => Stringer.Reinforcement;
+		private Steel         Steel         => Reinforcement?.Steel;
+
+        public StringerWindow(Stringer stringer, Units units = null)
 		{
 			Stringer      = stringer;
-			Reinforcement = Stringer.Reinforcement;
-			Steel         = Reinforcement.Steel;
 
 			// Read units
 			Units = (units ?? Config.ReadUnits()) ?? new Units();
@@ -87,23 +86,18 @@ namespace SPMTool.UserInterface
 				DisableReinforcementBoxes();
 			}
 			else
+			{
 				ReinforcementCheck.IsChecked = true;
-
-			if (Reinforcement.NumberOfBars > 0)
 				NumBarsBox.Text = Reinforcement.NumberOfBars.ToString();
-
-			if (Reinforcement.BarDiameter > 0)
 				BarDiamBox.Text = $"{Units.ConvertFromMillimeter(Reinforcement.BarDiameter, Units.Reinforcement):0.00}";
 
-			AreaBox.Text = 
-				Reinforcement.Area > 0 ? 
-					$"{UnitConverter.Convert(Reinforcement.Area, AreaUnit.SquareMillimeter, Units.ReinforcementArea):0.00}" : "0.00";
+				AreaBox.Text =
+					Reinforcement.Area > 0 ?
+						$"{UnitConverter.Convert(Reinforcement.Area, AreaUnit.SquareMillimeter, Units.ReinforcementArea):0.00}" : "0.00";
 
-			if (Steel.YieldStress > 0)
-				YieldBox.Text   = $"{Units.ConvertFromMPa(Steel.YieldStress, Units.MaterialStrength):0.00}";
-
-			if (Steel.ElasticModule > 0)
-				ModuleBox.Text  = $"{Units.ConvertFromMPa(Steel.ElasticModule, Units.MaterialStrength):0.00}";
+				YieldBox.Text  = $"{Units.ConvertFromMPa(Steel.YieldStress, Units.MaterialStrength):0.00}";
+				ModuleBox.Text = $"{Units.ConvertFromMPa(Steel.ElasticModule, Units.MaterialStrength):0.00}";
+			}
 		}
 
 		/// <summary>

@@ -96,16 +96,19 @@ namespace SPMTool.Core
             int numOfBars = Convert.ToInt32 (data[(int) StringerData.NumOfBars].Value);
 			double phi    = Convert.ToDouble(data[(int) StringerData.BarDiam].Value);
 
-			// Get steel data
-			double
-				fy = Convert.ToDouble(data[(int) StringerData.Steelfy].Value),
-				Es = Convert.ToDouble(data[(int) StringerData.SteelEs].Value);
+			if (numOfBars > 0 && phi > 0)
+			{
+				// Get steel data
+				double
+					fy = Convert.ToDouble(data[(int) StringerData.Steelfy].Value),
+					Es = Convert.ToDouble(data[(int) StringerData.SteelEs].Value);
 
-			// Set steel data
-			var steel = new Steel(fy, Es);
+				// Set steel data
+				var steel = new Steel(fy, Es);
 
-			// Set reinforcement
-			Reinforcement = new Reinforcement(numOfBars, phi, Area, steel);
+				// Set reinforcement
+				Reinforcement = new Reinforcement(numOfBars, phi, Area, steel);
+			}
 
 			// Calculate transformation matrix
 			TransMatrix = TransformationMatrix();
@@ -123,7 +126,7 @@ namespace SPMTool.Core
 		public (double cos, double sin) DirectionCosines => GlobalAuxiliary.DirectionCosines(Angle);
 
 		// Calculate steel area
-		public double SteelArea => Reinforcement.Area;
+		public double SteelArea => Reinforcement?.Area ?? 0;
 
 		// Calculate concrete area
 		public double Area         => Width * Height;
@@ -231,7 +234,7 @@ namespace SPMTool.Core
 				"Width = "  + w  + "\n" +
 				"Height = " + h;
 
-			if (Reinforcement.IsSet)
+			if (Reinforcement != null)
 			{
 				msgstr += "\n\n" + Reinforcement.ToString(Units.Reinforcement, Units.MaterialStrength);
 			}
