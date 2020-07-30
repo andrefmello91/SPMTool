@@ -63,9 +63,9 @@ namespace SPMTool.UserInterface
 		// Get combo boxes items
 		private void InitiateComboBoxes()
 		{
-			StrengthBox.Text = Units.ConvertFromMPa(ConcreteParameters.Strength, Units.MaterialStrength).ToString();
+			StrengthBox.Text = $"{Units.ConvertFromMPa(ConcreteParameters.Strength, Units.MaterialStrength):0.00}";
 
-			AggDiamBox.Text = Units.ConvertFromMillimeter(ConcreteParameters.AggregateDiameter, Units.Reinforcement).ToString();
+			AggDiamBox.Text = $"{Units.ConvertFromMillimeter(ConcreteParameters.AggregateDiameter, Units.Reinforcement):0.00}";
 
             AggTypeBox.ItemsSource  = AgOpts;
 			AggTypeBox.SelectedItem = ConcreteParameters.Type.ToString();
@@ -82,7 +82,7 @@ namespace SPMTool.UserInterface
 		// Update parameters
 		private void UpdateParameters()
 		{
-			if (StrengthBox.Text != String.Empty && AggDiamBox.Text != String.Empty && AggTypeBox.SelectedItem.ToString() != String.Empty)
+			if (StrengthBox.Text != string.Empty && AggDiamBox.Text != string.Empty && AggTypeBox.SelectedItem.ToString() != string.Empty)
 			{
 				// Read parameters
 				double
@@ -118,13 +118,13 @@ namespace SPMTool.UserInterface
 		{
 			ConcreteParameters.UpdateParameters();
 
-			ModuleBox.Text  = Math.Round(Units.ConvertFromMPa(ConcreteParameters.InitialModule, Units.MaterialStrength), 2).ToString();
+			ModuleBox.Text  = $"{Units.ConvertFromMPa(ConcreteParameters.InitialModule, Units.MaterialStrength):0.00}";
 
-			TensileBox.Text = Math.Round(Units.ConvertFromMPa(ConcreteParameters.TensileStrength, Units.MaterialStrength), 2).ToString();
+			TensileBox.Text = $"{Units.ConvertFromMPa(ConcreteParameters.TensileStrength, Units.MaterialStrength):0.00}";
 
-			PlasticStrainBox.Text = Math.Round(-1000 * ConcreteParameters.PlasticStrain, 2).ToString();
+			PlasticStrainBox.Text = $"{-1000 * ConcreteParameters.PlasticStrain:0.00}";
 
-			UltStrainBox.Text = Math.Round(-1000 * ConcreteParameters.UltimateStrain, 2).ToString();
+			UltStrainBox.Text = $"{-1000 * ConcreteParameters.UltimateStrain:0.00}";
 		}
 
 		// Get custom parameters
