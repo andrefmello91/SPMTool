@@ -1,26 +1,15 @@
-﻿using System;
-using System.Globalization;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Forms;
 using System.Windows.Input;
-using System.Windows.Media;
 using Material;
-using Parameters = Material.Concrete.Parameters;
-using ParameterModel = Material.Concrete.ParameterModel;
-using Behavior = Material.Concrete.Behavior;
-using BehaviorModel = Material.Concrete.BehaviorModel;
+using Material.Reinforcement;
 using SPMTool.AutoCAD;
 using SPMTool.Core;
 using UnitsNet;
 using UnitsNet.Units;
-using ComboBox = System.Windows.Controls.ComboBox;
-using Force = UnitsNet.Force;
 using MessageBox = System.Windows.MessageBox;
-using TextBox = System.Windows.Controls.TextBox;
-using Reinforcement = Material.Reinforcement.Uniaxial;
+using Reinforcement = Material.Reinforcement.UniaxialReinforcement;
 
 namespace SPMTool.UserInterface
 {

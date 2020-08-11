@@ -1,11 +1,10 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
+using Material.Concrete;
 using MathNet.Numerics.LinearAlgebra;
 using RCMembrane;
-using Concrete           = Material.Concrete.Biaxial;
-using ConcreteParameters = Material.Concrete.Parameters;
-using Reinforcement      = Material.Reinforcement.Biaxial;
-using Behavior           = Material.Concrete.Behavior;
+using Concrete           = Material.Concrete.BiaxialConcrete;
+using Reinforcement      = Material.Reinforcement.BiaxialReinforcement;
 
 namespace SPMTool.Core
 {
@@ -22,7 +21,7 @@ namespace SPMTool.Core
             public  (Matrix<double> Dc,     Matrix<double> Ds)     MaterialStiffness  { get; set; }
             public  (Vector<double> sigmaC, Vector<double> sigmaS) MaterialStresses   { get; set; }
 
-            public NonLinear(ObjectId panelObject, Units units, ConcreteParameters concreteParameters, Stringer[] stringers, Behavior behavior) : base(panelObject, units, concreteParameters, behavior)
+            public NonLinear(ObjectId panelObject, Units units, Parameters concreteParameters, Stringer[] stringers, Constitutive behavior) : base(panelObject, units, concreteParameters, behavior)
             {
                 // Get Stringer dimensions and effective ratio
                 StringerDimensions = StringersDimensions(stringers);
@@ -156,25 +155,15 @@ namespace SPMTool.Core
 			}
 
             // Get integration points
-            private Membrane[] IntPoints(ConcreteParameters parameters, Behavior behavior)
+            private Membrane[] IntPoints(Parameters parameters, Constitutive constitutive)
 			{
 				// Initiate integration points
 				var intPts = new Membrane[4];
 
-				var model = Enum.Parse(typeof(Material.Concrete.BehaviorModel), behavior.ToString());
+				var model = Enum.Parse(typeof(ConstitutiveModel), constitutive.ToString());
 
-				switch (model)
-				{
-                    case Material.Concrete.BehaviorModel.MCFT:
-	                    for (int i = 0; i < 4; i++)
-		                    intPts[i] = new MCFT(parameters, behavior, Reinforcement, Width);
-						break;
-
-                    case Material.Concrete.BehaviorModel.DSFM:
-	                    for (int i = 0; i < 4; i++)
-		                    intPts[i] = new DSFM(parameters, behavior, Reinforcement, Width);
-	                    break;
-                }
+				for (int i = 0; i < 4; i++)
+					intPts[i] = Membrane.ReadMembrane(parameters, constitutive, Reinforcement, Width);
 
 				return intPts;
 			}

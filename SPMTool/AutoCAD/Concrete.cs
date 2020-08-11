@@ -3,11 +3,9 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Material;
+using Material.Concrete;
 using SPMTool.UserInterface;
 using ConcreteData       = SPMTool.XData.Concrete;
-using AggregateType      = Material.Concrete.AggregateType;
-using ConcreteParameters = Material.Concrete.Parameters;
-using ConcreteBehavior   = Material.Concrete.Behavior;
 using UnitsNet;
 using UnitsNet.Units;
 
@@ -23,18 +21,18 @@ namespace SPMTool.AutoCAD
         // Model names
         public static readonly string[] Models =
         {
-	        Concrete.ParameterModel.MC2010.ToString(),
-	        Concrete.ParameterModel.NBR6118.ToString(),
-	        Concrete.ParameterModel.MCFT.ToString(),
-	        Concrete.ParameterModel.DSFM.ToString(),
-	        Concrete.ParameterModel.Custom.ToString()
+	        ParameterModel.MC2010.ToString(),
+	        ParameterModel.NBR6118.ToString(),
+	        ParameterModel.MCFT.ToString(),
+	        ParameterModel.DSFM.ToString(),
+	        ParameterModel.Custom.ToString()
         };
 
         // Behavior names
         public static readonly string[] Behaviors =
         {
-			Concrete.BehaviorModel.MCFT.ToString(),
-			Concrete.BehaviorModel.DSFM.ToString()
+			ConstitutiveModel.MCFT.ToString(),
+			ConstitutiveModel.DSFM.ToString()
         };
 
         // Aggregate types
@@ -67,25 +65,24 @@ namespace SPMTool.AutoCAD
 				ec    = 0.002,
 				ecu   = 0.0035;
 
-
-            // Read data
+			// Read data
             var concreteData = ReadConcreteData();
 
-            var parameters = concreteData?.parameters ?? new ConcreteParameters.MC2010(fc, phiAg);
-            var behavior   = concreteData?.behavior ?? new ConcreteBehavior.MCFT(parameters);
+            var parameters   = concreteData?.parameters ?? new MC2010Parameters(fc, phiAg);
+            var constitutive = concreteData?.constitutive ?? new MCFTConstitutive(parameters);
 
 			// Start the config window
-			var concreteConfig = new ConcreteConfig(parameters, behavior, units);
+			var concreteConfig = new ConcreteConfig(parameters, constitutive, units);
 			Application.ShowModalWindow(Application.MainWindow.Handle, concreteConfig, false);
 		}
 
-        public static void SaveConcreteParameters(ConcreteParameters parameters, Concrete.BehaviorModel behaviorModel)
+        public static void SaveConcreteParameters(Parameters parameters, ConstitutiveModel behaviorModel)
 		{
 			// Definition for the Extended Data
 			string xdataStr = "Concrete data";
 
             // Read the parameter model
-            var parModel = (Concrete.ParameterModel)Enum.Parse(typeof(Concrete.ParameterModel), parameters.GetType().Name);
+            var parModel = Parameters.ReadParameterModel(parameters);
 
 			// Get the Xdata size
 			int size = Enum.GetNames(typeof(ConcreteData)).Length;
@@ -137,8 +134,8 @@ namespace SPMTool.AutoCAD
 					"\nfc = " + fc.ToUnit(units.MaterialStrength) +
 					"\nft = " + ft.ToUnit(units.MaterialStrength) +
 					"\nEc = " + Ec.ToUnit(units.MaterialStrength) +
-					"\n" + eps + "c = " + Math.Round(1000 * par.PlasticStrain, 2) + " E-03" +
-					"\n" + eps + "cu = " + Math.Round(1000 * par.UltimateStrain, 2) + " E-03" +
+					"\n" + eps + "c = "  + $"{1000 * par.PlasticStrain,0:00}" + " E-03" +
+					"\n" + eps + "cu = " + $"{1000 * par.UltimateStrain,0:00}" + " E-03" +
 					"\n" + phi + ",ag = " + phiAg.ToUnit(units.Reinforcement);
             }
 			else
@@ -149,7 +146,7 @@ namespace SPMTool.AutoCAD
         }
 
         // Read the concrete parameters
-        public static (ConcreteParameters parameters, ConcreteBehavior behavior)? ReadConcreteData()
+        public static (Parameters parameters, Constitutive constitutive)? ReadConcreteData()
 		{
 			var data = Auxiliary.ReadDictionaryEntry(ConcreteParams);
 
@@ -157,63 +154,23 @@ namespace SPMTool.AutoCAD
 				return null;
 
 			// Get the parameters from XData
-			var par      = (Concrete.ParameterModel)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
-			var bhModel  = (Concrete.BehaviorModel)Convert.ToInt32(data[(int) ConcreteData.Behavior].Value);
+			var par      = (ParameterModel)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
+			var bhModel  = (ConstitutiveModel)Convert.ToInt32(data[(int) ConcreteData.Behavior].Value);
 			var aggType  = (AggregateType)Convert.ToInt32(data[(int) ConcreteData.AggType].Value);
 
 			double
                 fc      = Convert.ToDouble(data[(int)ConcreteData.fc].Value),
-				phiAg   = Convert.ToDouble(data[(int)ConcreteData.AggDiam].Value);
+				phiAg   = Convert.ToDouble(data[(int)ConcreteData.AggDiam].Value), 
+                
+                // Get additional parameters
+                fcr =  Convert.ToDouble(data[(int)ConcreteData.ft].Value),
+				Ec  =  Convert.ToDouble(data[(int)ConcreteData.Ec].Value),
+				ec  = -Convert.ToDouble(data[(int)ConcreteData.ec].Value),
+				ecu = -Convert.ToDouble(data[(int)ConcreteData.ecu].Value);
 
-			// Verify which parameters are set
-			ConcreteParameters parameters = null;
-			ConcreteBehavior   behavior   = null;
-
-			// Get parameters
-			switch (par)
-			{
-                case Concrete.ParameterModel.MC2010:
-					parameters = new ConcreteParameters.MC2010(fc, phiAg, aggType);
-					break;
-
-                case Concrete.ParameterModel.NBR6118:
-					parameters = new ConcreteParameters.NBR6118(fc, phiAg, aggType);
-					break;
-
-                case Concrete.ParameterModel.MCFT:
-					parameters = new ConcreteParameters.MCFT(fc, phiAg, aggType);
-					break;
-
-                case Concrete.ParameterModel.DSFM:
-					parameters = new ConcreteParameters.DSFM(fc, phiAg, aggType);
-					break;
-
-                case Concrete.ParameterModel.Custom:
-	                // Get additional parameters
-	                double
-		                fcr = Convert.ToDouble(data[(int)ConcreteData.ft].Value),
-		                Ec  = Convert.ToDouble(data[(int)ConcreteData.Ec].Value),
-		                ec  = -Convert.ToDouble(data[(int)ConcreteData.ec].Value),
-		                ecu = -Convert.ToDouble(data[(int)ConcreteData.ecu].Value);
-
-	                parameters = new ConcreteParameters.Custom(fc, phiAg, fcr, Ec, ec, ecu);
-                    break;
-            }
-
-			// Get behavior
-			switch (bhModel)
-			{
-                case Concrete.BehaviorModel.Linear:
-					break;
-
-                case Concrete.BehaviorModel.MCFT:
-					behavior = new ConcreteBehavior.MCFT(parameters);
-					break;
-
-                case Concrete.BehaviorModel.DSFM:
-					behavior = new ConcreteBehavior.DSFM(parameters);
-					break;
-			}
+            // Get parameters and constitutive
+            Parameters parameters = Parameters.ReadParameters(par, fc, phiAg, aggType, fcr, Ec, ec, ecu);
+            Constitutive behavior = Constitutive.ReadConstitutive(bhModel, parameters);
 
 			return
 				(parameters, behavior);

@@ -3,14 +3,13 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
-using Material;
+using Material.Concrete;
+using Material.Reinforcement;
 using UnitsNet;
 using UnitsNet.Units;
-using Concrete           = Material.Concrete.Biaxial;
-using ConcreteParameters = Material.Concrete.Parameters;
-using Reinforcement      = Material.Reinforcement.Biaxial;
+using Concrete           = Material.Concrete.BiaxialConcrete;
+using Reinforcement      = Material.Reinforcement.BiaxialReinforcement;
 using PanelData          = SPMTool.XData.Panel;
-using Behavior           = Material.Concrete.Behavior;
 
 namespace SPMTool.Core
 {
@@ -34,8 +33,8 @@ namespace SPMTool.Core
 		public virtual (Vector<double> sigma, double theta)  PrincipalStresses { get; }
 
 		// Constructor
-		public Panel(ObjectId panelObject, Units units, ConcreteParameters concreteParameters = null,
-			Behavior behavior = null)
+		public Panel(ObjectId panelObject, Units units, Parameters concreteParameters = null,
+			Constitutive behavior = null)
 		{
 			ObjectId = panelObject;
 			Units    = units;

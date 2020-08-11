@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
+using Material.Concrete;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
-using ConcreteParameters = Material.Concrete.Parameters;
-using ConcreteBehavior   = Material.Concrete.Behavior;
 using AnalysisType       = SPMTool.Core.Analysis.AnalysisType;
 
 namespace SPMTool.Core
@@ -13,17 +11,17 @@ namespace SPMTool.Core
     public class InputData
     {
 		// Properties
-		public Units              Units { get; }
-		public ConcreteParameters ConcreteParameters { get; }
-		public ConcreteBehavior   ConcreteBehavior   { get; }
-        public Node[]             Nodes              { get; }
-	    public Stringer[]         Stringers          { get; }
-	    public Panel[]            Panels             { get; }
-	    public Force[]            Forces             { get; }
-	    public Constraint[]       Constraints        { get; }
-	    public Vector<double>     ForceVector        { get; }
-	    public int[]              ConstraintIndex    { get; }
-	    public int                numDoFs            => 2 * Nodes.Length;
+		public Units          Units                { get; }
+		public Parameters     ConcreteParameters   { get; }
+		public Constitutive   ConcreteConstitutive { get; }
+        public Node[]         Nodes                { get; }
+	    public Stringer[]     Stringers            { get; }
+	    public Panel[]        Panels               { get; }
+	    public Force[]        Forces               { get; }
+	    public Constraint[]   Constraints          { get; }
+	    public Vector<double> ForceVector          { get; }
+	    public int[]          ConstraintIndex      { get; }
+	    public int            numDoFs              => 2 * Nodes.Length;
 
 		// Private properties
 		private ObjectIdCollection NodeObjects      { get; }
@@ -45,7 +43,7 @@ namespace SPMTool.Core
             Constraints = Constraint.ListOfConstraints();
 
 			// Get concrete data
-			(ConcreteParameters, ConcreteBehavior) = AutoCAD.Material.ReadConcreteData().Value;
+			(ConcreteParameters, ConcreteConstitutive) = AutoCAD.Material.ReadConcreteData().Value;
 
 			// Read nodes, forces and constraints indexes
 			Nodes           = ReadNodes();
@@ -92,7 +90,7 @@ namespace SPMTool.Core
 						break;
 
                     case AnalysisType.Nonlinear:
-	                    stringer = new Stringer.NonLinear(strObj, Units, ConcreteParameters, ConcreteBehavior);
+	                    stringer = new Stringer.NonLinear(strObj, Units, ConcreteParameters, ConcreteConstitutive);
                         break;
 				}
 
@@ -122,7 +120,7 @@ namespace SPMTool.Core
 				        break;
 
 			        case AnalysisType.Nonlinear:
-				        panel = new Panel.NonLinear(pnlObj, Units, ConcreteParameters, Stringers, ConcreteBehavior);
+				        panel = new Panel.NonLinear(pnlObj, Units, ConcreteParameters, Stringers, ConcreteConstitutive);
 						break;
 		        }
 

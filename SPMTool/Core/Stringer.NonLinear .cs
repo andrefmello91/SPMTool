@@ -1,13 +1,13 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
 using Material;
+using Material.Concrete;
+using Material.Reinforcement;
 using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.RootFinding;
-using Concrete           = Material.Concrete.Uniaxial;
-using ConcreteParameters = Material.Concrete.Parameters;
-using Reinforcement      = Material.Reinforcement.Uniaxial;
-using Behavior           = Material.Concrete.Behavior;
+using Concrete           = Material.Concrete.UniaxialConcrete;
+using Reinforcement      = Material.Reinforcement.UniaxialReinforcement;
 
 
 namespace SPMTool.Core
@@ -27,7 +27,7 @@ namespace SPMTool.Core
             private (double e1, double e3) IterationGenStrains  { get; set; }
 			private (double N1, double N3) IterationGenStresses { get; set; }
 
-            public NonLinear(ObjectId stringerObject, Units units, ConcreteParameters concreteParameters, Behavior concreteBehavior) : base(stringerObject, units, concreteParameters, concreteBehavior)
+            public NonLinear(ObjectId stringerObject, Units units, Parameters concreteParameters, Constitutive concreteBehavior) : base(stringerObject, units, concreteParameters, concreteBehavior)
 			{
 				// Initiate F matrix
 				FMatrix = InitialFMatrix();
@@ -173,17 +173,17 @@ namespace SPMTool.Core
             /// </summary>
             /// <param name="concreteBehavior">The concrete behavior.</param>
             /// <returns></returns>
-            private StressStrainRelations GetRelations(Behavior concreteBehavior)
+            private StressStrainRelations GetRelations(Constitutive concreteBehavior)
 			{
-				var behavior = Enum.Parse(typeof(Material.Concrete.BehaviorModel), concreteBehavior.ToString());
+				var behavior = Enum.Parse(typeof(ConstitutiveModel), concreteBehavior.ToString());
 
 				switch (behavior)
 				{
-					case Material.Concrete.BehaviorModel.MCFT:
+					case ConstitutiveModel.MCFT:
 						return
 							new StressStrainRelations.MCFT(Concrete, Reinforcement);
 
-					case Material.Concrete.BehaviorModel.DSFM:
+					case ConstitutiveModel.DSFM:
 						throw new NotImplementedException(); //Implement DSFM
 				}
 

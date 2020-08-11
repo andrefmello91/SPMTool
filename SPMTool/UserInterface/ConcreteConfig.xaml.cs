@@ -7,10 +7,9 @@ using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Input;
 using Material;
+using Material.Concrete;
 using Parameters = Material.Concrete.Parameters;
-using ParameterModel = Material.Concrete.ParameterModel;
-using Behavior = Material.Concrete.Behavior;
-using BehaviorModel = Material.Concrete.BehaviorModel;
+using Material.Concrete;
 using SPMTool.AutoCAD;
 using UnitsNet;
 using UnitsNet.Units;
@@ -26,13 +25,13 @@ namespace SPMTool.UserInterface
     public partial class ConcreteConfig : Window
 	{
 		// Properties
-		private Units          Units              { get; }
-		private Parameters     ConcreteParameters { get; set; }
-		private Behavior       ConcreteBehavior   { get; }
-		private ParameterModel ParModel           { get; set; }
-		private BehaviorModel  BehaviorModel      { get; }
-		public string          StressUnit         { get; }
-		public string          AggregateUnit      { get; }
+		private Units             Units              { get; }
+		private Parameters        Parameters         { get; set; }
+		private Constitutive      Constitutive       { get; }
+		private ParameterModel    ParameterModel     { get; set; }
+		private ConstitutiveModel ConstitutiveModel  { get; }
+		public string             StressUnit         { get; }
+		public string             AggregateUnit      { get; }
 
 		// Unit options
 		private readonly string[]
@@ -40,7 +39,7 @@ namespace SPMTool.UserInterface
 			BhOpts  = AutoCAD.Material.Behaviors,
 			AgOpts  = AutoCAD.Material.AggregateTypes;
 
-		public ConcreteConfig(Parameters parameters, Behavior behavior, Units units = null)
+		public ConcreteConfig(Parameters parameters, Constitutive constitutive, Units units = null)
 		{
 			// Read units
 			Units = (units ?? Config.ReadUnits()) ?? new Units();
@@ -50,10 +49,10 @@ namespace SPMTool.UserInterface
             InitializeComponent();
 
 			// Get settings
-			ConcreteParameters = parameters;
-			ConcreteBehavior   = behavior;
-			ParModel           = (ParameterModel)Enum.Parse(typeof(ParameterModel), ConcreteParameters.GetType().Name);
-			BehaviorModel      = (BehaviorModel)Enum.Parse(typeof(BehaviorModel), ConcreteBehavior.GetType().Name);
+			Parameters        = parameters;
+			Constitutive      = constitutive;
+			ParameterModel    = Parameters.ReadParameterModel(Parameters);
+			ConstitutiveModel = Constitutive.ReadConstitutiveModel(Constitutive);
 
 			// Initiate combo boxes with units set
             InitiateComboBoxes();
@@ -97,22 +96,21 @@ namespace SPMTool.UserInterface
 			}
 		}
 
-
         // Get combo boxes items
         private void InitiateComboBoxes()
 		{
-			StrengthBox.Text = $"{Units.ConvertFromMPa(ConcreteParameters.Strength, Units.MaterialStrength):0.00}";
+			StrengthBox.Text = $"{Units.ConvertFromMPa(Parameters.Strength, Units.MaterialStrength):0.00}";
 
-			AggDiamBox.Text = $"{Units.ConvertFromMillimeter(ConcreteParameters.AggregateDiameter, Units.Reinforcement):0.00}";
+			AggDiamBox.Text = $"{Units.ConvertFromMillimeter(Parameters.AggregateDiameter, Units.Reinforcement):0.00}";
 
             AggTypeBox.ItemsSource  = AgOpts;
-			AggTypeBox.SelectedItem = ConcreteParameters.Type.ToString();
+			AggTypeBox.SelectedItem = Parameters.Type.ToString();
 
 			BehaviorBox.ItemsSource  = BhOpts;
-			BehaviorBox.SelectedItem = BehaviorModel.ToString();
+			BehaviorBox.SelectedItem = ConstitutiveModel.ToString();
 
 			ParameterBox.ItemsSource = ParOpts;
-			ParameterBox.SelectedItem = ParModel.ToString();
+			ParameterBox.SelectedItem = ParameterModel.ToString();
 
             UpdateCustomParameters();
 		}
@@ -120,49 +118,32 @@ namespace SPMTool.UserInterface
 		// Update parameters
 		private void UpdateParameters()
 		{
-			if (StrengthBox.Text != string.Empty && AggDiamBox.Text != string.Empty && AggTypeBox.SelectedItem.ToString() != string.Empty)
+			if (ParameterModel != ParameterModel.Custom && StrengthBox.Text != string.Empty && AggDiamBox.Text != string.Empty && AggTypeBox.SelectedItem.ToString() != string.Empty)
 			{
 				// Read parameters
 				double
 					fc    = Units.ConvertToMPa(double.Parse(StrengthBox.Text, CultureInfo.InvariantCulture), Units.MaterialStrength),
 					phiAg = Units.ConvertToMillimeter(double.Parse(AggDiamBox.Text, CultureInfo.InvariantCulture), Units.Reinforcement);
 
-				var aggType = (Concrete.AggregateType) Enum.Parse(typeof(Concrete.AggregateType), AggTypeBox.SelectedItem.ToString());
+				var aggType = (AggregateType) Enum.Parse(typeof(AggregateType), AggTypeBox.SelectedItem.ToString());
 
 				// Get parameters
-				switch (ParModel)
-				{
-					case ParameterModel.MC2010:
-						ConcreteParameters = new Parameters.MC2010(fc, phiAg, aggType);
-						break;
-
-					case ParameterModel.NBR6118:
-						ConcreteParameters = new Parameters.NBR6118(fc, phiAg, aggType);
-						break;
-
-					case ParameterModel.MCFT:
-						ConcreteParameters = new Parameters.MCFT(fc, phiAg, aggType);
-						break;
-
-					case ParameterModel.DSFM:
-						ConcreteParameters = new Parameters.DSFM(fc, phiAg, aggType);
-						break;
-				}
+				Parameters = Parameters.ReadParameters(ParameterModel, fc, phiAg, aggType);
 			}
 		}
 
 		// Update custom parameters
 		private void UpdateCustomParameters()
 		{
-			ConcreteParameters.UpdateParameters();
+			Parameters.UpdateParameters();
 
-			ModuleBox.Text  = $"{Units.ConvertFromMPa(ConcreteParameters.InitialModule, Units.MaterialStrength):0.00}";
+			ModuleBox.Text  = $"{Units.ConvertFromMPa(Parameters.InitialModule, Units.MaterialStrength):0.00}";
 
-			TensileBox.Text = $"{Units.ConvertFromMPa(ConcreteParameters.TensileStrength, Units.MaterialStrength):0.00}";
+			TensileBox.Text = $"{Units.ConvertFromMPa(Parameters.TensileStrength, Units.MaterialStrength):0.00}";
 
-			PlasticStrainBox.Text = $"{-1000 * ConcreteParameters.PlasticStrain:0.00}";
+			PlasticStrainBox.Text = $"{-1000 * Parameters.PlasticStrain:0.00}";
 
-			UltStrainBox.Text = $"{-1000 * ConcreteParameters.UltimateStrain:0.00}";
+			UltStrainBox.Text = $"{-1000 * Parameters.UltimateStrain:0.00}";
 		}
 
 		// Get custom parameters
@@ -177,7 +158,7 @@ namespace SPMTool.UserInterface
 				ec    = double.Parse(PlasticStrainBox.Text) * -0.001,
 				ecu   = double.Parse(UltStrainBox.Text) * -0.001;
 
-			ConcreteParameters = new Parameters.Custom(fc, phiAg, ft, Ec, ec, ecu);
+			Parameters = new CustomParameters(fc, phiAg, ft, Ec, ec, ecu);
 		}
 
 		// Disable a textbox
@@ -198,11 +179,11 @@ namespace SPMTool.UserInterface
 
 			if (parBox.SelectedItem.ToString() != string.Empty)
 			{
-				ParModel = (ParameterModel) Enum.Parse(typeof(ParameterModel), parBox.SelectedItem.ToString());
+				ParameterModel = (ParameterModel) Enum.Parse(typeof(ParameterModel), parBox.SelectedItem.ToString());
 
 				var customBoxes = new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox };
 
-				if (ParModel == ParameterModel.Custom)
+				if (ParameterModel == ParameterModel.Custom)
 				{
 					foreach (var box in customBoxes)
 					{
@@ -225,9 +206,9 @@ namespace SPMTool.UserInterface
 		{
 			var fcBox = (TextBox) sender;
 
-            if (ParModel != ParameterModel.Custom && fcBox.Text != string.Empty)
+            if (ParameterModel != ParameterModel.Custom && fcBox.Text != string.Empty)
             {
-	            ConcreteParameters.Strength = double.Parse(fcBox.Text);
+	            Parameters.Strength = double.Parse(fcBox.Text);
 				UpdateCustomParameters();
 			}
 		}
@@ -236,9 +217,9 @@ namespace SPMTool.UserInterface
 		{
 			var aggBox = (ComboBox) sender;
 
-			if (ParModel != ParameterModel.Custom && aggBox.SelectedItem.ToString() != string.Empty)
+			if (ParameterModel != ParameterModel.Custom && aggBox.SelectedItem.ToString() != string.Empty)
 			{
-				ConcreteParameters.Type = (Concrete.AggregateType)Enum.Parse(typeof(Concrete.AggregateType), aggBox.SelectedItem.ToString());
+				Parameters.Type = (AggregateType)Enum.Parse(typeof(AggregateType), aggBox.SelectedItem.ToString());
                 UpdateCustomParameters();
 			}
 		}
@@ -262,20 +243,20 @@ namespace SPMTool.UserInterface
 				MessageBox.Show("Please set concrete strength and aggregate diameter.", "Alert");
 			}
 
-			else if (ParModel == ParameterModel.Custom && !CustomParametersSet)
+			else if (ParameterModel == ParameterModel.Custom && !CustomParametersSet)
 			{
 				MessageBox.Show("Please set concrete custom parameters.", "Alert");
 			}
 
 			else
 			{
-				if (ParModel == ParameterModel.Custom)
+				if (ParameterModel == ParameterModel.Custom)
 					GetCustomParameters();
 				else
 					UpdateParameters();
 
 				// Save units on database
-				AutoCAD.Material.SaveConcreteParameters(ConcreteParameters, BehaviorModel);
+				AutoCAD.Material.SaveConcreteParameters(Parameters, ConstitutiveModel);
 				Close();
 			}
 		}

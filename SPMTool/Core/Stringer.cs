@@ -3,13 +3,12 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
-using Material;
+using Material.Concrete;
+using Material.Reinforcement;
 using UnitsNet;
-using ConcreteParameters = Material.Concrete.Parameters;
-using Concrete           = Material.Concrete.Uniaxial;
-using Reinforcement      = Material.Reinforcement.Uniaxial;
+using Concrete           = Material.Concrete.UniaxialConcrete;
+using Reinforcement      = Material.Reinforcement.UniaxialReinforcement;
 using StringerData       = SPMTool.XData.Stringer;
-using Behavior           = Material.Concrete.Behavior;
 
 namespace SPMTool.Core
 {
@@ -52,7 +51,7 @@ namespace SPMTool.Core
         /// <param name="units">Units current in use.</param>
         /// <param name="concreteParameters">The concrete parameters.</param>
         /// <param name="concreteBehavior">The concrete behavior.</param>
-		public Stringer(ObjectId stringerObject, Units units, ConcreteParameters concreteParameters = null, Behavior concreteBehavior = null)
+		public Stringer(ObjectId stringerObject, Units units, Parameters concreteParameters = null, Constitutive concreteBehavior = null)
 		{
 			ObjectId = stringerObject;
 			Units    = units;

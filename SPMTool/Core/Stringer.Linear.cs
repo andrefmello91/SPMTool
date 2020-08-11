@@ -1,9 +1,8 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
+using Material.Concrete;
 using MathNet.Numerics.LinearAlgebra;
-using Concrete           = Material.Concrete.Uniaxial;
-using ConcreteParameters = Material.Concrete.Parameters;
-using Behavior           = Material.Concrete.Behavior;
+using Concrete           = Material.Concrete.UniaxialConcrete;
 
 namespace SPMTool.Core
 {
@@ -21,7 +20,7 @@ namespace SPMTool.Core
             /// <param name="units">Units current in use.</param>
             /// <param name="concreteParameters">The concrete parameters.</param>
             /// <param name="concreteBehavior">The concrete behavior.</param>
-            public Linear(ObjectId stringerObject, Units units, ConcreteParameters concreteParameters, Behavior concreteBehavior = null) : base(stringerObject, units, concreteParameters, concreteBehavior)
+            public Linear(ObjectId stringerObject, Units units, Parameters concreteParameters, Constitutive concreteBehavior = null) : base(stringerObject, units, concreteParameters, concreteBehavior)
             {
             }
 

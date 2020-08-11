@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Material;
+using Material.Reinforcement;
 using UnitsNet;
-using Reinforcement = Material.Reinforcement.Uniaxial;
+using Reinforcement = Material.Reinforcement.UniaxialReinforcement;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Material))]
 
