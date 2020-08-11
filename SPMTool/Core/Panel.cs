@@ -7,7 +7,6 @@ using Material.Concrete;
 using Material.Reinforcement;
 using UnitsNet;
 using UnitsNet.Units;
-using Concrete           = Material.Concrete.BiaxialConcrete;
 using Reinforcement      = Material.Reinforcement.BiaxialReinforcement;
 using PanelData          = SPMTool.XData.Panel;
 
@@ -23,7 +22,7 @@ namespace SPMTool.Core
 		public (double a, double b, double c, double d)      Dimensions        { get; }
 		public (double[] Length, double[] Angle)             Edges             { get; }
 		public double                                        Width             { get; }
-		public Concrete                                      Concrete          { get; }
+		public BiaxialConcrete                                      Concrete          { get; }
 		public Reinforcement                                 Reinforcement     { get; }
 		public Matrix<double>                                LocalStiffness    { get; set; }
 		public virtual Matrix<double>                        GlobalStiffness   { get; }
@@ -40,7 +39,7 @@ namespace SPMTool.Core
 			Units    = units;
 
 			// Get concrete
-			Concrete = new Concrete(concreteParameters, behavior);
+			Concrete = new BiaxialConcrete(concreteParameters, behavior);
 
 			// Read as a solid
 			var pnl = Geometry.Panel.ReadPanel(panelObject);

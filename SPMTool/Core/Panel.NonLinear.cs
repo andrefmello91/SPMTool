@@ -3,7 +3,6 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Material.Concrete;
 using MathNet.Numerics.LinearAlgebra;
 using RCMembrane;
-using Concrete           = Material.Concrete.BiaxialConcrete;
 using Reinforcement      = Material.Reinforcement.BiaxialReinforcement;
 
 namespace SPMTool.Core
