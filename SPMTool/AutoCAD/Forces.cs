@@ -2,12 +2,12 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
-using SPMTool.Core;
+using SPMTool.Elements;
 using UnitsNet.Units;
 using Force = UnitsNet.Force;
 using ForceTextData  = SPMTool.XData.ForceText;
 using ForceData      = SPMTool.XData.Force;
-using ForceDirection = SPMTool.Core.Force.ForceDirection;
+using ForceDirection = SPMTool.Elements.Force.ForceDirection;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Forces))]
 

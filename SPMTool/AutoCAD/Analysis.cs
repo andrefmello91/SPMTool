@@ -1,9 +1,10 @@
 ﻿using System.Threading;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
-using SPMTool.Core;
+using SPMTool.Analysis;
+using SPMTool.Elements;
 using SPMTool.UserInterface;
-using AnalysisType = SPMTool.Core.Analysis.AnalysisType;
+using AnalysisType = SPMTool.Analysis.AnalysisType;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Results))]
 
@@ -20,7 +21,7 @@ namespace SPMTool.AutoCAD
 			if (input.ConcreteParameters.IsSet)
 			{
 				// Do a linear analysis
-				var analysis = new Analysis.Linear(input);
+				var analysis = new LinearAnalysis(input);
 
 				// Draw results of analysis
 				Draw(analysis, input.Units);
@@ -47,7 +48,7 @@ namespace SPMTool.AutoCAD
 				int uIndex = uIndexn.Value;
 
                 // Do analysis
-                var analysis = new Analysis.NonLinear(input, uIndex);
+                var analysis = new NonLinearAnalysis(input, uIndex);
 
                 // Show load-displacement diagram
                 var u  = analysis.MonitoredDisplacements.ToArray();

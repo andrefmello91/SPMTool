@@ -6,7 +6,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Runtime;
 using Material;
-using SPMTool.Core;
+using SPMTool.Elements;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Auxiliary))]
 
@@ -255,8 +255,39 @@ namespace SPMTool.AutoCAD
 			}
 		}
 
-		// Erase the objects in a layer
-		public static void EraseObjects(Layers layer)
+		/// <summary>
+        /// Read an object layer.
+        /// </summary>
+        /// <param name="objectId">The ObjectId of the SPM element.</param>
+        /// <returns></returns>
+		public static Layers ReadObjectLayer(ObjectId objectId)
+		{
+			// Start a transaction
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			{
+				// Get the entity
+				var entity = (Entity) trans.GetObject(objectId, OpenMode.ForRead);
+
+                // Get the layer
+                return
+	                (Layers) Enum.Parse(typeof(Layers), entity.Layer);
+			}
+		}
+
+        /// <summary>
+        /// Read an entity layer.
+        /// </summary>
+        /// <param name="entity">The entity of the SPM element.</param>
+        /// <returns></returns>
+        public static Layers ReadObjectLayer(Entity entity)
+		{
+			// Get the layer
+			return
+				(Layers) Enum.Parse(typeof(Layers), entity.Layer);
+		}
+
+        // Erase the objects in a layer
+        public static void EraseObjects(Layers layer)
 		{
 			// Get objects
 			var objs = GetEntitiesOnLayer(layer);
@@ -286,34 +317,6 @@ namespace SPMTool.AutoCAD
 				return
 					ReadXData(entity);
 			}
-		}
-
-		// Read SPM element
-		public static SPMElement ReadElement(Entity entity, Units units = null)
-		{
-			units = (units ?? Config.ReadUnits()) ?? new Units();
-
-			if (entity.Layer == Layers.ExtNode.ToString() || entity.Layer == Layers.IntNode.ToString())
-				return
-					new Node(entity.ObjectId, units);
-
-			if (entity.Layer == Layers.Stringer.ToString())
-				return
-					new Stringer(entity.ObjectId, units);
-
-			if (entity.Layer == Layers.Panel.ToString())
-				return
-					new Panel(entity.ObjectId, units);
-
-			if (entity.Layer == Layers.Force.ToString())
-				return
-					new Force(entity.ObjectId);
-
-			if (entity.Layer == Layers.Support.ToString())
-				return
-					new Constraint(entity.ObjectId);
-
-			return null;
 		}
 
 		// Save object on database dictionary

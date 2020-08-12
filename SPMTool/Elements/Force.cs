@@ -6,7 +6,7 @@ using SPMTool.AutoCAD;
 using UnitsNet.Units;
 using ForceData = SPMTool.XData.Force;
 
-namespace SPMTool.Core
+namespace SPMTool.Elements
 {
 	// Constraints related commands
 	public class Force : SPMElement

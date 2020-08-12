@@ -7,7 +7,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using UnitsNet;
 using PanelData = SPMTool.XData.Panel;
-using NodeType  = SPMTool.Core.Node.NodeType;
+using NodeType  = SPMTool.Elements.Node.NodeType;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Panel))]
 
@@ -172,7 +172,7 @@ namespace SPMTool.AutoCAD
                         Solid pnl = (Solid) trans.GetObject(obj.ObjectId, OpenMode.ForWrite);
 
                         // Get the panel
-						var panel = new Core.Panel(obj.ObjectId, units);
+						var panel = new Elements.Panel(obj.ObjectId, units);
 
 						// Get vertices
 						var grpPts = panel.Vertices;
@@ -187,7 +187,7 @@ namespace SPMTool.AutoCAD
 								foreach (ObjectId strObj in strs)
 								{
 									// Read as a stringer
-									var str = new Core.Stringer(strObj, units);
+									var str = new Elements.Stringer(strObj, units);
 
 									// Verify if the Stringer starts and ends in a panel vertex
 									if (grpPts.Contains(str.StartPoint) && grpPts.Contains(str.EndPoint))

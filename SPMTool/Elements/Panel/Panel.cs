@@ -5,14 +5,16 @@ using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
 using Material.Concrete;
 using Material.Reinforcement;
+using SPMTool.Analysis;
 using UnitsNet;
 using UnitsNet.Units;
+using Concrete           = Material.Concrete.BiaxialConcrete;
 using Reinforcement      = Material.Reinforcement.BiaxialReinforcement;
 using PanelData          = SPMTool.XData.Panel;
 
-namespace SPMTool.Core
+namespace SPMTool.Elements
 {
-	public partial class Panel : SPMElement
+	public class Panel : SPMElement
 	{
 		// Panel parameters
 		public Units										 Units             { get; }
@@ -22,7 +24,7 @@ namespace SPMTool.Core
 		public (double a, double b, double c, double d)      Dimensions        { get; }
 		public (double[] Length, double[] Angle)             Edges             { get; }
 		public double                                        Width             { get; }
-		public BiaxialConcrete                                      Concrete          { get; }
+		public Concrete                                      Concrete          { get; }
 		public Reinforcement                                 Reinforcement     { get; }
 		public Matrix<double>                                LocalStiffness    { get; set; }
 		public virtual Matrix<double>                        GlobalStiffness   { get; }
@@ -32,14 +34,13 @@ namespace SPMTool.Core
 		public virtual (Vector<double> sigma, double theta)  PrincipalStresses { get; }
 
 		// Constructor
-		public Panel(ObjectId panelObject, Units units, Parameters concreteParameters = null,
-			Constitutive behavior = null)
+		public Panel(ObjectId panelObject, Units units, Parameters concreteParameters = null, Constitutive concreteConstitutive = null)
 		{
 			ObjectId = panelObject;
 			Units    = units;
 
 			// Get concrete
-			Concrete = new BiaxialConcrete(concreteParameters, behavior);
+			Concrete = new Concrete(concreteParameters, concreteConstitutive);
 
 			// Read as a solid
 			var pnl = Geometry.Panel.ReadPanel(panelObject);
@@ -90,6 +91,15 @@ namespace SPMTool.Core
 
 			// Set reinforcement
 			Reinforcement = new Reinforcement((phiX, phiY), (sx, sy), steel, Width);
+		}
+
+		public static Panel ReadPanel(AnalysisType analysisType, ObjectId panelObject, Units units,
+			Parameters concreteParameters = null, Constitutive concreteConstitutive = null, Stringer[] stringers = null)
+		{
+			if (analysisType == AnalysisType.Linear)
+				return new LinearPanel(panelObject, units, concreteParameters, concreteConstitutive);
+
+			return new NonLinearPanel(panelObject, units, concreteParameters, concreteConstitutive, stringers);
 		}
 
 		// Set global indexes from grips

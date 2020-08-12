@@ -2,7 +2,7 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
-using SPMTool.Core;
+using SPMTool.Elements;
 using UnitsNet.Units;
 using Force = UnitsNet.Force;
 using SupportDirection = SPMTool.Directions;

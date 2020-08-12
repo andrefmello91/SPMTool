@@ -4,9 +4,10 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Material.Concrete;
 using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
-using AnalysisType       = SPMTool.Core.Analysis.AnalysisType;
+using SPMTool.Elements;
+using AnalysisType       = SPMTool.Analysis.AnalysisType;
 
-namespace SPMTool.Core
+namespace SPMTool.Analysis
 {
     public class InputData
     {
@@ -47,7 +48,7 @@ namespace SPMTool.Core
 
 			// Read nodes, forces and constraints indexes
 			Nodes           = ReadNodes();
-			ForceVector     = ReadForces();
+			ForceVector     = ReadForceVector();
 			ConstraintIndex = ConstraintsIndex();
 
 			// Read elements
@@ -80,19 +81,7 @@ namespace SPMTool.Core
 
 	        foreach (ObjectId strObj in StringerObjects)
 	        {
-		        Stringer stringer = null;
-
-				// Verify analysis type
-				switch (analysisType)
-				{
-					case AnalysisType.Linear:
-						stringer = new Stringer.Linear(strObj, Units, ConcreteParameters);
-						break;
-
-                    case AnalysisType.Nonlinear:
-	                    stringer = new Stringer.NonLinear(strObj, Units, ConcreteParameters, ConcreteConstitutive);
-                        break;
-				}
+		        Stringer stringer = Stringer.ReadStringer(analysisType, strObj, Units, ConcreteParameters, ConcreteConstitutive);
 
 				// Set to the array
                 int i = stringer.Number - 1;
@@ -110,19 +99,7 @@ namespace SPMTool.Core
 
 	        foreach (ObjectId pnlObj in PanelObjects)
 	        {
-		        Panel panel = null;
-
-		        // Verify analysis type
-		        switch (analysisType)
-		        {
-			        case AnalysisType.Linear:
-				        panel = new Panel.Linear(pnlObj, Units, ConcreteParameters);
-				        break;
-
-			        case AnalysisType.Nonlinear:
-				        panel = new Panel.NonLinear(pnlObj, Units, ConcreteParameters, Stringers, ConcreteConstitutive);
-						break;
-		        }
+		        var panel = Panel.ReadPanel(analysisType, pnlObj, Units, ConcreteParameters, ConcreteConstitutive, Stringers);
 
 		        // Set to the array
                 int i     = panel.Number - 1;
@@ -133,7 +110,7 @@ namespace SPMTool.Core
         }
 
         // Get the force vector
-        private Vector<double> ReadForces()
+        private Vector<double> ReadForceVector()
         {
 	        // Initialize the force vector with size 2x number of DoFs (forces in x and y)
 	        var f = Vector<double>.Build.Dense(numDoFs);

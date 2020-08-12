@@ -5,9 +5,9 @@ using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
 using UnitsNet;
 using NodeData       = SPMTool.XData.Node;
-using ForceDirection = SPMTool.Core.Force.ForceDirection;
+using ForceDirection = SPMTool.Elements.Force.ForceDirection;
 
-namespace SPMTool.Core
+namespace SPMTool.Elements
 {
     public class Node : SPMElement
     {
@@ -35,7 +35,7 @@ namespace SPMTool.Core
 
 			Units = units;
 
-			forces = forces ?? Core.Force.ListOfForces(Units.AppliedForces);
+			forces = forces ?? Elements.Force.ListOfForces(Units.AppliedForces);
 
 			constraints = constraints ?? Constraint.ListOfConstraints();
 

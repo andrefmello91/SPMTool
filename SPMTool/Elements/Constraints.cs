@@ -6,7 +6,7 @@ using SPMTool.AutoCAD;
 using SupportData = SPMTool.XData.Support;
 using SupportDirection = SPMTool.Directions;
 
-namespace SPMTool.Core
+namespace SPMTool.Elements
 {
 	// Constraints related commands
 	public class Constraint : SPMElement

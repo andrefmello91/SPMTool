@@ -4,7 +4,7 @@ using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using SPMTool.Core;
+using SPMTool.Elements;
 using SPMTool.UserInterface;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
@@ -26,7 +26,7 @@ namespace SPMTool.AutoCAD
 			TensileBlock     = Blocks.TensileStressBlock.ToString();
 
 		// Draw results
-		public static void Draw(Analysis analysis, Units units)
+		public static void Draw(Analysis.Analysis analysis, Units units)
 		{
 			SetDisplacements(analysis.Nodes);
 			DrawDisplacements(analysis.Stringers, analysis.Nodes, units);
@@ -839,7 +839,7 @@ namespace SPMTool.AutoCAD
 					return;
 
 				// Read the element
-				var element = Auxiliary.ReadElement(ent);
+				var element = SPMElement.ReadElement(ent);
 
 				if (element is Stringer stringer)
 				{

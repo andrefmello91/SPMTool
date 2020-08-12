@@ -5,7 +5,7 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using NodeType = SPMTool.Core.Node.NodeType;
+using NodeType = SPMTool.Elements.Node.NodeType;
 
 namespace SPMTool.AutoCAD
 {

@@ -5,7 +5,7 @@ using System.Windows.Input;
 using Material;
 using Material.Reinforcement;
 using SPMTool.AutoCAD;
-using SPMTool.Core;
+using SPMTool.Elements;
 using UnitsNet;
 using UnitsNet.Units;
 using MessageBox = System.Windows.MessageBox;

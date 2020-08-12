@@ -5,17 +5,18 @@ using MathNet.Numerics.LinearAlgebra;
 using SPMTool.AutoCAD;
 using Material.Concrete;
 using Material.Reinforcement;
+using SPMTool.Analysis;
 using UnitsNet;
 using Concrete           = Material.Concrete.UniaxialConcrete;
 using Reinforcement      = Material.Reinforcement.UniaxialReinforcement;
 using StringerData       = SPMTool.XData.Stringer;
 
-namespace SPMTool.Core
+namespace SPMTool.Elements
 {
 	/// <summary>
     /// Stringer base class;
     /// </summary>
-	public partial class Stringer : SPMElement
+	public class Stringer : SPMElement
 	{
 		/// <summary>
         /// Type of forces that stringer can be loaded.
@@ -44,20 +45,20 @@ namespace SPMTool.Core
 		public virtual Vector<double>  Forces           { get; set; }
 		public Vector<double>          Displacements    { get; set; }
 
-		/// <summary>
+        /// <summary>
         /// Stringer base object.
         /// </summary>
-        /// <param name="stringerObject">The object ID from AutoCAD drawing.</param>
-        /// <param name="units">Units current in use.</param>
-        /// <param name="concreteParameters">The concrete parameters.</param>
-        /// <param name="concreteBehavior">The concrete behavior.</param>
-		public Stringer(ObjectId stringerObject, Units units, Parameters concreteParameters = null, Constitutive concreteBehavior = null)
+        /// <param name="stringerObjectId">The object ID of the stringer from AutoCAD drawing.</param>
+        /// <param name="units">Units current in use <see cref="SPMTool.Units"/>.</param>
+        /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
+        /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
+        public Stringer(ObjectId stringerObjectId, Units units, Parameters concreteParameters = null, Constitutive concreteConstitutive = null)
 		{
-			ObjectId = stringerObject;
+			ObjectId = stringerObjectId;
 			Units    = units;
 
 			// Read the object as a line
-			Line strLine = Geometry.Stringer.ReadStringer(stringerObject);
+			Line strLine = Geometry.Stringer.ReadStringer(stringerObjectId);
 
 			// Get the length and angles
 			DrawingLength = UnitsNet.Length.From(strLine.Length, Units.Geometry);
@@ -89,7 +90,7 @@ namespace SPMTool.Core
 			Height = Convert.ToDouble(data[(int) StringerData.Height].Value);
 
 			// Get concrete
-			Concrete = new Concrete(concreteParameters, Area, concreteBehavior);
+			Concrete = new Concrete(concreteParameters, Area, concreteConstitutive);
 
             // Get reinforcement
             int numOfBars = Convert.ToInt32 (data[(int) StringerData.NumOfBars].Value);
@@ -111,6 +112,23 @@ namespace SPMTool.Core
 
 			// Calculate transformation matrix
 			TransMatrix = TransformationMatrix();
+		}
+
+        /// <summary>
+        /// Read the stringer.
+        /// </summary>
+        /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
+        /// <param name="stringerObjectId">The object ID of the stringer from AutoCAD drawing.</param>
+        /// <param name="units">Units current in use <see cref="SPMTool.Units"/>.</param>
+        /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
+        /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
+        public static Stringer ReadStringer(AnalysisType analysisType, ObjectId stringerObjectId, Units units,
+			Parameters concreteParameters = null, Constitutive concreteConstitutive = null)
+		{
+			if (analysisType == AnalysisType.Linear)
+				return new LinearStringer(stringerObjectId, units, concreteParameters, concreteConstitutive);
+
+			return new NonLinearStringer(stringerObjectId, units, concreteParameters, concreteConstitutive);
 		}
 
 		// Get points

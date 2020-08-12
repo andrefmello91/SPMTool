@@ -123,9 +123,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analysis\LinearAnalysis.cs" />
+    <Compile Include="Analysis\NonLinearAnalysis.cs" />
     <Compile Include="AutoCAD\Units.cs" />
     <Compile Include="AutoCAD\UserInput.cs" />
-    <Compile Include="Core\InputData.cs" />
+    <Compile Include="Analysis\InputData.cs" />
     <Compile Include="AutoCAD\Analysis.cs" />
     <Compile Include="AutoCAD\Behavior .cs" />
     <Compile Include="AutoCAD\Concrete.cs" />
@@ -137,16 +139,19 @@
     <Compile Include="AutoCAD\Reinforcement.cs" />
     <Compile Include="AutoCAD\Supports.cs" />
     <Compile Include="AutoCAD\Auxiliary.cs" />
-    <Compile Include="Core\Panel.NonLinear.cs" />
-    <Compile Include="Core\Panel.Linear.cs" />
-    <Compile Include="Core\SPMElement.cs" />
-    <Compile Include="Core\Stringer.NonLinear .cs" />
-    <Compile Include="Core\Stringer.Linear.cs" />
+    <Compile Include="Elements\Panel\NonLinear.cs" />
+    <Compile Include="Elements\Panel\Linear.cs" />
+    <Compile Include="Elements\SPMElement.cs" />
+    <Compile Include="Elements\Stringer\IntegrationPoint.cs" />
+    <Compile Include="Elements\Stringer\Relations\MCFTRelations.cs" />
+    <Compile Include="Elements\Stringer\NonLinear.cs" />
+    <Compile Include="Elements\Stringer\Linear.cs" />
+    <Compile Include="Elements\Stringer\Relations\StressStrainRelations.cs" />
     <Compile Include="Global\Units.cs" />
-    <Compile Include="Core\Node.cs" />
-    <Compile Include="Core\Panel.cs" />
-    <Compile Include="Core\Stringer.cs" />
-    <Compile Include="Core\Force.cs" />
+    <Compile Include="Elements\Node.cs" />
+    <Compile Include="Elements\Panel\Panel.cs" />
+    <Compile Include="Elements\Stringer\Stringer.cs" />
+    <Compile Include="Elements\Force.cs" />
     <Compile Include="Global\GlobalVariables.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -156,9 +161,9 @@
     <Compile Include="AutoCAD\Results.cs" />
     <Compile Include="AutoCAD\Geometry.cs" />
     <Compile Include="Global\GlobalAuxiliary.cs" />
-    <Compile Include="Core\Analysis.cs" />
+    <Compile Include="Analysis\Analysis.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Core\Constraints.cs" />
+    <Compile Include="Elements\Constraints.cs" />
     <Compile Include="UserInterface\StringerWindow.xaml.cs">
       <DependentUpon>StringerWindow.xaml</DependentUpon>
     </Compile>
@@ -373,5 +378,6 @@
   <ItemGroup>
     <None Include="Resources\stringer-cross-section.png" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

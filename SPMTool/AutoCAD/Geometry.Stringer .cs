@@ -6,7 +6,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using UnitsNet;
 using StringerData = SPMTool.XData.Stringer;
-using NodeType     = SPMTool.Core.Node.NodeType;
+using NodeType     = SPMTool.Elements.Node.NodeType;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Stringer))]
 

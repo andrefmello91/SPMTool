@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows;
 using SPMTool.AutoCAD;
-using SPMTool.Core;
+using SPMTool.Elements;
 using UnitsNet;
 using Force = UnitsNet.Force;
 
