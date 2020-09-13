@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using NodeType = SPMTool.Elements.Node.NodeType;
+using SPM.Elements;
 using NodeData = SPMTool.XData.Node;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Node))]

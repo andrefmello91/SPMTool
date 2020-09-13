@@ -256,11 +256,23 @@ namespace SPMTool.AutoCAD
 		}
 
 		/// <summary>
+		/// Read a <see cref="DBObject"/> in the drawing.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId"/> of the <see cref="DBObject"/>.</param>
+		public static DBObject ReadDBObject(ObjectId objectId)
+		{
+			// Start a transaction
+			using (var trans = Current.db.TransactionManager.StartTransaction())
+				// Read the object as a point
+				return trans.GetObject(objectId, OpenMode.ForRead);
+		}
+
+        /// <summary>
         /// Read an object layer.
         /// </summary>
         /// <param name="objectId">The ObjectId of the SPM element.</param>
         /// <returns></returns>
-		public static Layers ReadObjectLayer(ObjectId objectId)
+        public static Layers ReadObjectLayer(ObjectId objectId)
 		{
 			// Start a transaction
 			using (Transaction trans = Current.db.TransactionManager.StartTransaction())

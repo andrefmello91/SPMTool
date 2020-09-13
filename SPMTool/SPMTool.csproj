@@ -123,12 +123,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Analysis\LinearAnalysis.cs" />
-    <Compile Include="Analysis\NonLinearAnalysis.cs" />
     <Compile Include="AutoCAD\Units.cs" />
     <Compile Include="AutoCAD\UserInput.cs" />
-    <Compile Include="Analysis\InputData.cs" />
-    <Compile Include="AutoCAD\Analysis.cs" />
+    <Compile Include="Analysis\Analysis.cs" />
     <Compile Include="AutoCAD\Behavior .cs" />
     <Compile Include="AutoCAD\Concrete.cs" />
     <Compile Include="AutoCAD\Forces.cs" />
@@ -139,20 +136,13 @@
     <Compile Include="AutoCAD\Reinforcement.cs" />
     <Compile Include="AutoCAD\Supports.cs" />
     <Compile Include="AutoCAD\Auxiliary.cs" />
-    <Compile Include="Elements\Panel\NonLinear.cs" />
-    <Compile Include="Elements\Panel\Linear.cs" />
-    <Compile Include="Elements\SPMElement.cs" />
-    <Compile Include="Elements\Stringer\IntegrationPoint.cs" />
-    <Compile Include="Elements\Stringer\Relations\MCFTRelations.cs" />
-    <Compile Include="Elements\Stringer\NonLinear.cs" />
-    <Compile Include="Elements\Stringer\Linear.cs" />
-    <Compile Include="Elements\Stringer\Relations\StressStrainRelations.cs" />
     <Compile Include="Global\Units.cs" />
-    <Compile Include="Elements\Node.cs" />
-    <Compile Include="Elements\Panel\Panel.cs" />
-    <Compile Include="Elements\Stringer\Stringer.cs" />
-    <Compile Include="Elements\Force.cs" />
     <Compile Include="Global\GlobalVariables.cs" />
+    <Compile Include="Input\Conditions.cs" />
+    <Compile Include="Input\InputData.cs" />
+    <Compile Include="Input\Nodes.cs" />
+    <Compile Include="Input\Panels.cs" />
+    <Compile Include="Input\Stringers.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -161,9 +151,7 @@
     <Compile Include="AutoCAD\Results.cs" />
     <Compile Include="AutoCAD\Geometry.cs" />
     <Compile Include="Global\GlobalAuxiliary.cs" />
-    <Compile Include="Analysis\Analysis.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Elements\Constraints.cs" />
     <Compile Include="UserInterface\StringerWindow.xaml.cs">
       <DependentUpon>StringerWindow.xaml</DependentUpon>
     </Compile>
@@ -356,17 +344,29 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Extensions\Extensions\Extensions.csproj">
+      <Project>{70944e9c-5603-4721-870f-1d24db5cdb3c}</Project>
+      <Name>Extensions</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Material\Material\Material.csproj">
       <Project>{5e103ad6-45a8-4b2d-816c-5ccec09380e6}</Project>
       <Name>Material</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\On-Plane-Components\OnPlaneComponents\OnPlaneComponents.csproj">
+      <Project>{5ea278f4-5f43-4cd7-9627-9f46411a871e}</Project>
+      <Name>OnPlaneComponents</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Reinforced-Concrete-Membrane\Membrane\RCMembrane.csproj">
       <Project>{f26ddecb-e2e4-49f1-add7-99bf554eecea}</Project>
       <Name>RCMembrane</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Stress-and-Strain-Relations\Relations\Relations.csproj">
-      <Project>{7df65381-8507-4f02-9c2b-2ae9a1e50efa}</Project>
-      <Name>Relations</Name>
+    <ProjectReference Include="..\..\SPMAnalysis\SPMAnalysis\SPMAnalysis.csproj">
+      <Project>{eb46a104-4b8c-4857-b56f-c496b03b71c9}</Project>
+      <Name>SPMAnalysis</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SPMElements\SPMElements\SPMElements.csproj">
+      <Project>{8bcb760a-598d-4468-9009-5c4d799562af}</Project>
+      <Name>SPMElements</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
