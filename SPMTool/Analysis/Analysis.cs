@@ -5,6 +5,8 @@ using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.UserInterface;
 using SPMTool.Input;
+using static SPMTool.Input.Data;
+
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Results))]
 
@@ -16,19 +18,18 @@ namespace SPMTool.AutoCAD
 		public static void DoLinearAnalysis()
 		{
             // Get input data
-            InputData input = new InputData(AnalysisType.Linear);
+            var input = ReadInput(AnalysisType.Linear, out var dataOk, out var message);
 
-			if (input.ConcreteParameters.IsSet)
-			{
-				// Do a linear analysis
-				var analysis = new LinearAnalysis(input);
+            if (!dataOk)
+            {
+	            Application.ShowAlertDialog(message);
+				return;
+            }
+			// Do a linear analysis
+			var analysis = new LinearAnalysis(input);
 
-				// Draw results of analysis
-				Draw(analysis, input.Units);
-			}
-
-            else
-				Application.ShowAlertDialog("Please set concrete parameters");
+			// Draw results of analysis
+			Draw(analysis, input.Units);
 		}
 
 		[CommandMethod("DoNonLinearAnalysis")]

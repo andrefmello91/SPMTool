@@ -4,7 +4,10 @@ using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using SPMTool.Elements;
+using Extensions.Number;
+using SPM.Analysis;
+using SPM.Elements;
+using SPMTool.Input;
 using SPMTool.UserInterface;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
@@ -26,7 +29,7 @@ namespace SPMTool.AutoCAD
 			TensileBlock     = Blocks.TensileStressBlock.ToString();
 
 		// Draw results
-		public static void Draw(Analysis.Analysis analysis, Units units)
+		public static void Draw(Analysis analysis, Units units)
 		{
 			SetDisplacements(analysis.Nodes);
 			DrawDisplacements(analysis.Stringers, analysis.Nodes, units);
@@ -65,14 +68,14 @@ namespace SPMTool.AutoCAD
 				foreach (var pnl in panels)
 				{
 					// Get panel data
-					var l      = pnl.Edges.Length;
-					var cntrPt = pnl.CenterPoint;
+					var l      = pnl.Geometry.EdgeLengths;
+					var cntrPt = pnl.Geometry.Vertices.CenterPoint;
 
 					// Get the maximum length of the panel
 					double lMax = units.ConvertFromMillimeter(l.Max(), units.Geometry);
 
 					// Get the average stress
-					double tauAvg = Math.Round(units.ConvertFromMPa(pnl.AverageStresses[2], units.PanelStresses), 2);
+					double tauAvg = units.ConvertFromMPa(pnl.AverageStresses.TauXY, units.PanelStresses);
 
 					// Calculate the scale factor for the block and text
 					double scFctr = 0.001 * lMax;
@@ -114,8 +117,8 @@ namespace SPMTool.AutoCAD
 
 					// Create stress block
 					// Get principal stresses
-					var (sigma, theta) = pnl.PrincipalStresses;
-					if (sigma[1] != 0)
+					var stresses = pnl.ConcretePrincipalStresses;
+					if (!stresses.Sigma2.ApproxZero())
 					{
 						// Create compressive stress block
 						using (BlockReference blkRef = new BlockReference(cntrPt, compStress))
@@ -128,9 +131,9 @@ namespace SPMTool.AutoCAD
 							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
 
 							// Rotate the block in theta angle
-							if (theta != 0)
+							if (!stresses.Theta2.ApproxZero())
 							{
-								blkRef.TransformBy(Matrix3d.Rotation(theta, Current.ucs.Zaxis, cntrPt));
+								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, Current.ucs.Zaxis, cntrPt));
 							}
 						}
 
@@ -144,7 +147,7 @@ namespace SPMTool.AutoCAD
 								EndPoint = new Point3d(cntrPt.X + 210 * scFctr, cntrPt.Y, 0)
 							};
 
-							ln.TransformBy(Matrix3d.Rotation(theta, AutoCAD.Current.ucs.Zaxis, cntrPt));
+							ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, Current.ucs.Zaxis, cntrPt));
 
                             // Set the alignment point
 							Point3d algnPt = ln.EndPoint;
@@ -152,7 +155,7 @@ namespace SPMTool.AutoCAD
 							// Set the parameters
 							sigTxt.Layer = CompStressLayer;
 							sigTxt.Height = 30 * scFctr;
-							sigTxt.TextString = Math.Round(units.ConvertFromMPa(Math.Abs(sigma[1]), units.PanelStresses), 2).ToString();
+							sigTxt.TextString = $"{units.ConvertFromMPa(Math.Abs(stresses.Sigma2), units.PanelStresses):0.00}";
 							sigTxt.Position = algnPt;
                             sigTxt.HorizontalMode = TextHorizontalMode.TextCenter;
                             sigTxt.AlignmentPoint = algnPt;
@@ -163,7 +166,7 @@ namespace SPMTool.AutoCAD
                     }
 
 					// Verify tensile stress
-					if (sigma[0] != 0)
+					if (!stresses.Sigma1.ApproxZero())
 					{
 						// Create tensile stress block
 						using (BlockReference blkRef = new BlockReference(cntrPt, tensStress))
@@ -175,9 +178,9 @@ namespace SPMTool.AutoCAD
 							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
 
 							// Rotate the block in theta angle
-							if (theta != 0)
+							if (!stresses.Theta2.ApproxZero())
 							{
-								blkRef.TransformBy(Matrix3d.Rotation(theta, AutoCAD.Current.ucs.Zaxis, cntrPt));
+								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, AutoCAD.Current.ucs.Zaxis, cntrPt));
 							}
 						}
 
@@ -191,7 +194,7 @@ namespace SPMTool.AutoCAD
 								EndPoint = new Point3d(cntrPt.X, cntrPt.Y + 210 * scFctr, 0)
 							};
 
-							ln.TransformBy(Matrix3d.Rotation(theta, Current.ucs.Zaxis, cntrPt));
+							ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, Current.ucs.Zaxis, cntrPt));
 
                             // Set the alignment point
 							Point3d algnPt = ln.EndPoint;
@@ -199,7 +202,7 @@ namespace SPMTool.AutoCAD
 							// Set the parameters
 							sigTxt.Layer = TenStressLayer;
 							sigTxt.Height = 30 * scFctr;
-							sigTxt.TextString = Math.Round(units.ConvertFromMPa(Math.Abs(sigma[1]), units.PanelStresses), 2).ToString();
+							sigTxt.TextString = $"{units.ConvertFromMPa(Math.Abs(stresses.Sigma1), units.PanelStresses):0.00}";
 							sigTxt.Position = algnPt;
                             sigTxt.HorizontalMode = TextHorizontalMode.TextCenter;
                             sigTxt.AlignmentPoint = algnPt;
@@ -245,11 +248,11 @@ namespace SPMTool.AutoCAD
 					{
 						// Get the parameters of the Stringer
 						double
-							l   = units.ConvertFromMillimeter(stringer.Length, units.Geometry),
-							ang = stringer.Angle;
+							l   = units.ConvertFromMillimeter(stringer.Geometry.Length, units.Geometry),
+							ang = stringer.Geometry.Angle;
 
 						// Get the start point
-						var stPt = stringer.PointsConnected[0];
+						var stPt = stringer.Geometry.InitialPoint;
 
 						// Get normal forces
 						var (N1, N3) = stringer.NormalForces;
@@ -363,7 +366,7 @@ namespace SPMTool.AutoCAD
 								txt1.Height = 30 * scFctr;
 
 								// Write force in unit
-								txt1.TextString = Math.Abs(Math.Round(units.ConvertFromNewton(N1, units.StringerForces), 2)).ToString();
+								txt1.TextString = $"{units.ConvertFromNewton(N1, units.StringerForces).Abs():0.00}";
 
 								// Set the color (blue to compression and red to tension) and position
 								if (N1 > 0)
@@ -471,13 +474,13 @@ namespace SPMTool.AutoCAD
 					foreach (var nd in nodes) // Initial node
 					{
 						// Verify if its an external node
-						if (nd.Type == Node.NodeType.External)
+						if (nd.Type is NodeType.External)
 						{
 							// Verify the start point
 							if (str.Grips[0] == nd.Number)
 							{
-								ux1 = nd.Displacement.X * scFctr;
-								uy1 = nd.Displacement.Y * scFctr;
+								ux1 = nd.Displacement.ComponentX * scFctr;
+								uy1 = nd.Displacement.ComponentY * scFctr;
 
 								// Node found
 								stNdFound = true;
@@ -486,8 +489,8 @@ namespace SPMTool.AutoCAD
 							// Verify the end point
 							if (str.Grips[2] == nd.Number)
 							{
-								ux3 = nd.Displacement.X * scFctr;
-								uy3 = nd.Displacement.Y * scFctr;
+								ux3 = nd.Displacement.ComponentX * scFctr;
+								uy3 = nd.Displacement.ComponentY * scFctr;
 
 								// Node found
 								enNdFound = true;
@@ -501,8 +504,8 @@ namespace SPMTool.AutoCAD
 
 					// Calculate the displaced nodes
 					Point3d
-						stPt = new Point3d(str.PointsConnected[0].X + ux1, str.PointsConnected[0].Y + uy1, 0),
-						enPt = new Point3d(str.PointsConnected[2].X + ux3, str.PointsConnected[2].Y + uy3, 0),
+						stPt = new Point3d(str.Geometry.InitialPoint.X + ux1, str.Geometry.InitialPoint.Y + uy1, 0),
+						enPt = new Point3d(str.Geometry.EndPoint.X + ux3, str.Geometry.EndPoint.Y + uy3, 0),
 						midPt = GlobalAuxiliary.MidPoint(stPt, enPt);
 
 					// Draw the displaced Stringer
@@ -531,31 +534,28 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Add the nodes
-			new Geometry.Node(dispNds, Node.NodeType.Displaced);
+			new Geometry.Node(dispNds, NodeType.Displaced);
 		}
 
 		// Set displacement to nodes
 		private static void SetDisplacements(Node[] nodes)
 		{
 			// Start a transaction
-			using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
 			{
 				// Get the stringers stifness matrix and add to the global stifness matrix
 				foreach (var nd in nodes)
 				{
-					// Get the displacements
-					var (ux, uy) = nd.Displacement;
-
 					// Read the object of the node as a point
 					DBPoint ndPt = trans.GetObject(nd.ObjectId, OpenMode.ForWrite) as DBPoint;
 
 					// Get the result buffer as an array
-					ResultBuffer rb = ndPt.GetXDataForApplication(AutoCAD.Current.appName);
+					ResultBuffer rb = ndPt.GetXDataForApplication(Current.appName);
 					TypedValue[] data = rb.AsArray();
 
 					// Save the displacements on the XData
-					data[(int) XData.Node.Ux] = new TypedValue((int) DxfCode.ExtendedDataReal, ux);
-					data[(int) XData.Node.Uy] = new TypedValue((int) DxfCode.ExtendedDataReal, uy);
+					data[(int) XData.Node.Ux] = new TypedValue((int) DxfCode.ExtendedDataReal, nd.Displacement.ComponentX);
+					data[(int) XData.Node.Uy] = new TypedValue((int) DxfCode.ExtendedDataReal, nd.Displacement.ComponentY);
 
 					// Add the new XData
 					ndPt.XData = new ResultBuffer(data);
@@ -833,13 +833,13 @@ namespace SPMTool.AutoCAD
 			for ( ; ; )
 			{
 				// Get the entity for read
-				Entity ent = UserInput.SelectEntity("Select an element to view data:", SPMElement.layers);
+				Entity ent = UserInput.SelectEntity("Select an element to view data:", Geometry.ElementLayers);
 
 				if (ent is null)
 					return;
 
 				// Read the element
-				var element = SPMElement.ReadElement(ent);
+				var element = Data.GetElement(ent);
 
 				if (element is Stringer stringer)
 				{

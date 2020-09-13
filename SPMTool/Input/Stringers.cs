@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions.AutoCAD;
+using Extensions.Number;
 using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements;
@@ -71,22 +72,33 @@ namespace SPMTool.Input
 				height = data[(int)XData.Stringer.Height].ToDouble();
 
             // Get reinforcement
-            int numOfBars = data[(int)XData.Stringer.NumOfBars].ToInt();
-            double phi    = data[(int)XData.Stringer.BarDiam].ToDouble();
-            UniaxialReinforcement reinforcement = null;
-			
-            if (numOfBars > 0 && phi > 0)
-            {
-                // Get steel data
-                double
-                    fy = data[(int)XData.Stringer.Steelfy].ToDouble(),
-                    Es = data[(int)XData.Stringer.SteelEs].ToDouble();
-
-                // Set reinforcement
-                reinforcement = new UniaxialReinforcement(numOfBars, phi, new Steel(fy, Es), width * height);
-            }
+            var reinforcement = GetReinforcement(data, width * height);
 
 			return Stringer.Read(analysisType, objectId, number, nodes, line.StartPoint, line.EndPoint, width, height, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
+        }
+
+		/// <summary>
+        /// Get stringer <see cref="UniaxialReinforcement"/> from <paramref name="stringerXData"/>.
+        /// </summary>
+        /// <param name="stringerXData">The <see cref="Array"/> containing stringer XData.</param>
+        /// <param name="stringerArea">The area of stringer cross-section, in mm2.</param>
+        /// <returns></returns>
+        public static UniaxialReinforcement GetReinforcement(TypedValue[] stringerXData, double stringerArea)
+        {
+	        // Get reinforcement
+	        int numOfBars = stringerXData[(int)XData.Stringer.NumOfBars].ToInt();
+	        double phi    = stringerXData[(int)XData.Stringer.BarDiam].ToDouble();
+
+	        if (numOfBars == 0 || phi.ApproxZero())
+		        return null;
+
+	        // Get steel data
+	        double
+		        fy = stringerXData[(int)XData.Stringer.Steelfy].ToDouble(),
+		        Es = stringerXData[(int)XData.Stringer.SteelEs].ToDouble();
+
+	        // Set reinforcement
+	        return new UniaxialReinforcement(numOfBars, phi, new Steel(fy, Es), stringerArea);
         }
     }
 }

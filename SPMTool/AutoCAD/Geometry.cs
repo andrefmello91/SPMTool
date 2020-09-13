@@ -8,7 +8,9 @@ namespace SPMTool.AutoCAD
 	// Geometry related commands
 	public partial class Geometry
 	{
-		[CommandMethod("UpdateElements")]
+		public static readonly Layers[] ElementLayers = { Layers.ExtNode, Layers.IntNode, Layers.Stringer, Layers.Panel, Layers.Force, Layers.Support };
+
+        [CommandMethod("UpdateElements")]
 		public static void UpdateElements()
 		{
 			// Enumerate and get the number of nodes

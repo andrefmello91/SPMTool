@@ -4,8 +4,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using Material;
 using Material.Reinforcement;
+using SPM.Elements;
+using SPM.Elements.StringerProperties;
 using SPMTool.AutoCAD;
-using SPMTool.Elements;
 using UnitsNet;
 using UnitsNet.Units;
 using MessageBox = System.Windows.MessageBox;
@@ -118,9 +119,9 @@ namespace SPMTool.UserInterface
 
 		private void InitiateBoxes()
 		{
-			LengthBox.Text  = $"{Units.ConvertFromMillimeter(Stringer.Length, Units.Geometry):0.00}";
-			WidthBox.Text   = $"{Units.ConvertFromMillimeter(Stringer.Width,  Units.Geometry):0.00}";
-			HeigthBox.Text  = $"{Units.ConvertFromMillimeter(Stringer.Height, Units.Geometry):0.00}";
+			LengthBox.Text  = $"{Units.ConvertFromMillimeter(Stringer.Geometry.Length, Units.Geometry):0.00}";
+			WidthBox.Text   = $"{Units.ConvertFromMillimeter(Stringer.Geometry.Width,  Units.Geometry):0.00}";
+			HeigthBox.Text  = $"{Units.ConvertFromMillimeter(Stringer.Geometry.Height, Units.Geometry):0.00}";
 
 			// Get checkbox state
 			if (Reinforcement is null || Reinforcement.NumberOfBars == 0 || Reinforcement.BarDiameter == 0)
@@ -194,8 +195,8 @@ namespace SPMTool.UserInterface
 			// Convert values
 			if (Units.Geometry != LengthUnit.Millimeter)
 			{
-				Stringer.Width  = Units.ConvertToMillimeter(width,  Units.Geometry);
-				Stringer.Height = Units.ConvertToMillimeter(height, Units.Geometry);
+				Stringer.Geometry.Width  = Units.ConvertToMillimeter(width,  Units.Geometry);
+				Stringer.Geometry.Height = Units.ConvertToMillimeter(height, Units.Geometry);
 			}
 
 			if (ReinforcementChecked && barDiameter > 0 && numOfBars > 0)
