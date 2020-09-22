@@ -123,6 +123,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AutoCAD\DataBase.cs" />
     <Compile Include="AutoCAD\Units.cs" />
     <Compile Include="AutoCAD\UserInput.cs" />
     <Compile Include="Analysis\Analysis.cs" />
@@ -136,6 +137,7 @@
     <Compile Include="AutoCAD\Reinforcement.cs" />
     <Compile Include="AutoCAD\Supports.cs" />
     <Compile Include="AutoCAD\Auxiliary.cs" />
+    <Compile Include="Global\Extensions.cs" />
     <Compile Include="Global\Units.cs" />
     <Compile Include="Global\GlobalVariables.cs" />
     <Compile Include="Input\Conditions.cs" />

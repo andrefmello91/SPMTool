@@ -74,7 +74,7 @@ namespace SPMTool.AutoCAD
 				Auxiliary.RegisterApp();
 
 				// Read units
-				var units = Config.ReadUnits() ?? new Units();
+				var units = DataBase.Units;
 
 				// Get the list of panel vertices
 				var pnlList = ListOfPanelVertices();
@@ -117,7 +117,7 @@ namespace SPMTool.AutoCAD
 			public static void DividePanel()
 			{
 				// Get units
-				var units = Config.ReadUnits() ?? new Units();
+				var units = DataBase.Units;
 
 				// Prompt for select panels
 				var pnls = UserInput.SelectPanels("Select panels to divide");
@@ -163,7 +163,7 @@ namespace SPMTool.AutoCAD
 				ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
 
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					// Get the selection set and analyse the elements
 					foreach (DBObject obj in pnls)
@@ -283,7 +283,7 @@ namespace SPMTool.AutoCAD
 							}
 
 							else // panel is not rectangular
-								Current.edtr.WriteMessage("\nPanel " + pnlNum + " is not rectangular");
+								DataBase.Editor.WriteMessage("\nPanel " + pnlNum + " is not rectangular");
 					}
 
 					// Save the new object to the database
@@ -318,7 +318,7 @@ namespace SPMTool.AutoCAD
 			public static void SetPanelGeometry()
 			{
 				// Read units
-				var units = Config.ReadUnits() ?? new Units();
+				var units = DataBase.Units;
 
                 // Request objects to be selected in the drawing area
                 var pnls = UserInput.SelectPanels(
@@ -334,7 +334,7 @@ namespace SPMTool.AutoCAD
 					return;
 
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					foreach (DBObject pnl in pnls)
 					{
@@ -414,7 +414,7 @@ namespace SPMTool.AutoCAD
 	            // Save the variables on the Xrecord
 	            using (ResultBuffer rb = new ResultBuffer())
 	            {
-		            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName)); // 0
+		            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName)); // 0
 		            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));           // 1
 		            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, width));            // 2
 
@@ -468,10 +468,10 @@ namespace SPMTool.AutoCAD
 				List<Point3d> cntrPts = new List<Point3d>();
 
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					// Open the Block table for read
-					BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
+					BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
 					// Add the centerpoint of each panel to the collection
 					foreach (ObjectId pnlObj in pnls)
@@ -513,7 +513,7 @@ namespace SPMTool.AutoCAD
 						else // Xdata exists
 						{
 							// Get the result buffer as an array
-							ResultBuffer rb = pnl.GetXDataForApplication(Current.appName);
+							ResultBuffer rb = pnl.GetXDataForApplication(DataBase.AppName);
 							data = rb.AsArray();
 
 							// Verify the size of XData
@@ -601,7 +601,7 @@ namespace SPMTool.AutoCAD
 				if (pnls.Count > 0)
 				{
 					// Start a transaction
-					using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+					using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 					{
 						foreach (ObjectId obj in pnls)
 						{
@@ -634,7 +634,7 @@ namespace SPMTool.AutoCAD
 
 				// Set the initial parameters
 				newData[(int) PanelData.AppName]  =
-					new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
+					new TypedValue((int) DxfCode.ExtendedDataRegAppName, DataBase.AppName);
 				newData[(int) PanelData.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
 				newData[(int) PanelData.Width]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
 				newData[(int) PanelData.XDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
@@ -653,7 +653,7 @@ namespace SPMTool.AutoCAD
 			public static Solid ReadPanel(ObjectId objectId, OpenMode openMode = OpenMode.ForRead)
 			{
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					// Read as a solid
 					return 

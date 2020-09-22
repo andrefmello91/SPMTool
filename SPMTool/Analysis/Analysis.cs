@@ -87,7 +87,7 @@ namespace SPMTool.AutoCAD
 				return null;
 
 			// Get the node global indexes
-			var node  = Nodes.Read(nd.ObjectId, new Units());
+			var node  = Nodes.Read(nd.ObjectId, Units.Default);
 			var index = node.DoFIndex;
 
 			// Verify selected direction

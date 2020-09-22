@@ -23,7 +23,7 @@ namespace SPMTool.AutoCAD
 				ptOp.BasePoint = basePoint.Value;
 			}
 
-			PromptPointResult ptRes = Current.edtr.GetPoint(ptOp);
+			PromptPointResult ptRes = DataBase.Editor.GetPoint(ptOp);
 
 			if (ptRes.Status == PromptStatus.OK)
 				return ptRes.Value;
@@ -39,13 +39,13 @@ namespace SPMTool.AutoCAD
 			{
 				// Request the object to be selected in the drawing area
 				PromptEntityOptions entOp = new PromptEntityOptions("\n" + message);
-				PromptEntityResult entRes = Current.edtr.GetEntity(entOp);
+				PromptEntityResult entRes = DataBase.Editor.GetEntity(entOp);
 
 				if (entRes.Status == PromptStatus.Cancel)
 					return null;
 
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					// Get the entity for read
 					Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
@@ -70,7 +70,7 @@ namespace SPMTool.AutoCAD
 				MessageForAdding = "\n" + message
 			};
 
-			PromptSelectionResult selRes = Current.edtr.GetSelection(selOp);
+			PromptSelectionResult selRes = DataBase.Editor.GetSelection(selOp);
 
 			if (selRes.Status == PromptStatus.Cancel)
 				return null;
@@ -82,7 +82,7 @@ namespace SPMTool.AutoCAD
 			if (set.Count > 0)
 			{
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					// Get the objects in the selection and add to the collection only the external nodes
 					foreach (SelectedObject obj in set)
@@ -185,7 +185,7 @@ namespace SPMTool.AutoCAD
 			};
 
 			// Get the number
-			PromptIntegerResult intRes = Current.edtr.GetInteger(intOp);
+			PromptIntegerResult intRes = DataBase.Editor.GetInteger(intOp);
 
 			if (intRes.Status == PromptStatus.OK)
 				return intRes.Value;
@@ -205,7 +205,7 @@ namespace SPMTool.AutoCAD
 			};
 
 			// Get the result
-			PromptDoubleResult dbRes = Current.edtr.GetDouble(dbOp);
+			PromptDoubleResult dbRes = DataBase.Editor.GetDouble(dbOp);
 
 			if (dbRes.Status == PromptStatus.OK)
 				return dbRes.Value;
@@ -231,7 +231,7 @@ namespace SPMTool.AutoCAD
 			if (defaultKeyword != null)
 				keyOp.Keywords.Default = defaultKeyword;
 
-			PromptResult result = Current.edtr.GetKeywords(keyOp);
+			PromptResult result = DataBase.Editor.GetKeywords(keyOp);
 			
 			if (result.Status == PromptStatus.Cancel)
 				return null;

@@ -2,6 +2,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Geometry;
+using Extensions.Number;
 using Material;
 using Material.Reinforcement;
 using SPM.Elements;
@@ -10,7 +13,7 @@ using SPMTool.AutoCAD;
 using UnitsNet;
 using UnitsNet.Units;
 using MessageBox = System.Windows.MessageBox;
-using Reinforcement = Material.Reinforcement.UniaxialReinforcement;
+using static SPMTool.GlobalAuxiliary;
 
 namespace SPMTool.UserInterface
 {
@@ -18,19 +21,25 @@ namespace SPMTool.UserInterface
     /// Lógica interna para NodeWindow.xaml
     /// </summary>
     public partial class StringerWindow : Window
-	{
-		// Properties
-		private Units         Units                 { get; }
-		private Stringer      Stringer              { get; }
-		public  string        GeometryUnit          { get; set; }
-		public  string        ReinforcementUnit     { get; set; }
-		public  string        StressUnit            { get; set; }
-		public  string        ReinforcementAreaUnit { get; set; }
+    {
+	    private StringerGeometry _geometry;
+	    private UniaxialReinforcement _reinforcement;
+	    private readonly ObjectId _objectId;
+	    private readonly Units _units;
 
-		/// <summary>
+        // Properties
+        public string GeometryUnit => Length.GetAbbreviation(_units.Geometry);
+
+        public string ReinforcementUnit => Length.GetAbbreviation(_units.Reinforcement);
+
+        public string StressUnit => Pressure.GetAbbreviation(_units.MaterialStrength);
+
+        public string ReinforcementAreaUnit => Area.GetAbbreviation(_units.ReinforcementArea);
+
+        /// <summary>
         /// Gets and sets reinforcement checkbox state.
         /// </summary>
-		private bool ReinforcementChecked
+        private bool ReinforcementChecked
 		{
 			get => ReinforcementCheck.IsChecked.Value;
 			set
@@ -44,23 +53,21 @@ namespace SPMTool.UserInterface
 			}
 		}
 
-		private Reinforcement Reinforcement => Stringer.Reinforcement;
-		private Steel         Steel         => Reinforcement?.Steel;
+        public StringerWindow(Stringer stringer)
+        {
+	        _geometry = stringer.Geometry;
+	        _reinforcement    = stringer.Reinforcement;
+	        _objectId         = stringer.ObjectId;
 
-        public StringerWindow(Stringer stringer, Units units = null)
-		{
-			Stringer      = stringer;
-
-			// Read units
-			Units = (units ?? Config.ReadUnits()) ?? new Units();
-			GetUnits();
+            // Read units
+            _units = DataBase.Units;
 
             InitializeComponent();
 
             // Get stringer image
             StringerImage.Source = AutoCAD.UserInterface.getBitmap(Properties.Resources.stringer_cross_section);
 
-            GetInitialData();
+            GetInitialData(stringer);
 
             InitiateBoxes();
 
@@ -77,7 +84,7 @@ namespace SPMTool.UserInterface
 		        var textBoxes = new[] { WidthBox, HeigthBox };
 		        foreach (var textBox in textBoxes)
 		        {
-			        if (!GlobalAuxiliary.ParsedAndNotZero(textBox.Text))
+			        if (!ParsedAndNotZero(textBox.Text))
 				        return false;
 		        }
 
@@ -95,7 +102,7 @@ namespace SPMTool.UserInterface
 				var textBoxes = new[] { NumBarsBox, BarDiamBox, YieldBox, ModuleBox };
 				foreach (var textBox in textBoxes)
 				{
-					if (!GlobalAuxiliary.ParsedAndNotZero(textBox.Text))
+					if (!ParsedAndNotZero(textBox.Text))
 						return false;
 				}
 
@@ -103,42 +110,42 @@ namespace SPMTool.UserInterface
 			}
 		}
 
-        private void GetInitialData()
+        private void GetInitialData(Stringer stringer)
 		{
-			StringerNumberBlock.Text = "Stringer " + Stringer.Number;
-			StringerGripsBlock.Text  = "Grips: " + Stringer.Grips[0] + " - " + Stringer.Grips[1] + " - " + Stringer.Grips[2];
+			StringerNumberBlock.Text = $"Stringer {stringer.Number}";
+			StringerGripsBlock.Text  = $"Grips: {stringer.Grips[0]} - {stringer.Grips[1]} - {stringer.Grips[2]}";
 		}
 
-		private void GetUnits()
-		{
-			GeometryUnit          = Length.GetAbbreviation(Units.Geometry);
-			ReinforcementUnit     = Length.GetAbbreviation(Units.Reinforcement);
-			StressUnit            = Pressure.GetAbbreviation(Units.MaterialStrength);
-			ReinforcementAreaUnit = Area.GetAbbreviation(Units.ReinforcementArea);
-		}
+		//private void GetUnits()
+		//{
+  //          GeometryUnit          = Length.GetAbbreviation(_units.Geometry);
+		//	ReinforcementUnit     = Length.GetAbbreviation(_units.Reinforcement);
+		//	StressUnit            = Pressure.GetAbbreviation(_units.MaterialStrength);
+		//	ReinforcementAreaUnit = Area.GetAbbreviation(_units.ReinforcementArea);
+		//}
 
 		private void InitiateBoxes()
 		{
-			LengthBox.Text  = $"{Units.ConvertFromMillimeter(Stringer.Geometry.Length, Units.Geometry):0.00}";
-			WidthBox.Text   = $"{Units.ConvertFromMillimeter(Stringer.Geometry.Width,  Units.Geometry):0.00}";
-			HeigthBox.Text  = $"{Units.ConvertFromMillimeter(Stringer.Geometry.Height, Units.Geometry):0.00}";
+			LengthBox.Text  = $"{_geometry.Length.ConvertFromMillimeter(_units.Geometry):0.00}";
+			WidthBox.Text   = $"{_geometry.Width.ConvertFromMillimeter(_units.Geometry):0.00}";
+			HeigthBox.Text  = $"{_geometry.Height.ConvertFromMillimeter(_units.Geometry):0.00}";
 
 			// Get checkbox state
-			if (Reinforcement is null || Reinforcement.NumberOfBars == 0 || Reinforcement.BarDiameter == 0)
+			if (_reinforcement is null || _reinforcement.NumberOfBars == 0 || _reinforcement.BarDiameter.ApproxZero())
 				ReinforcementChecked = false;
 
 			else
 			{
 				ReinforcementChecked = true;
-				NumBarsBox.Text = Reinforcement.NumberOfBars.ToString();
-				BarDiamBox.Text = $"{Units.ConvertFromMillimeter(Reinforcement.BarDiameter, Units.Reinforcement):0.00}";
+				NumBarsBox.Text = $"{_reinforcement.NumberOfBars}";
+				BarDiamBox.Text = $"{_units.ConvertFromMillimeter(_reinforcement.BarDiameter, _units.Reinforcement):0.00}";
 
 				AreaBox.Text =
-					Reinforcement.Area > 0 ?
-						$"{UnitConverter.Convert(Reinforcement.Area, AreaUnit.SquareMillimeter, Units.ReinforcementArea):0.00}" : "0.00";
+					_reinforcement.Area > 0 ?
+						$"{_reinforcement.Area.ConvertFromSquareMillimeter(_units.ReinforcementArea):0.00}" : "0.00";
 
-				YieldBox.Text  = $"{Units.ConvertFromMPa(Steel.YieldStress, Units.MaterialStrength):0.00}";
-				ModuleBox.Text = $"{Units.ConvertFromMPa(Steel.ElasticModule, Units.MaterialStrength):0.00}";
+				YieldBox.Text  = $"{_reinforcement.Steel.YieldStress.ConvertFromMPa(_units.MaterialStrength):0.00}";
+				ModuleBox.Text = $"{_reinforcement.Steel.ElasticModule.ConvertFromMPa(_units.MaterialStrength):0.00}";
 			}
 		}
 
@@ -193,35 +200,20 @@ namespace SPMTool.UserInterface
 			double.TryParse(ModuleBox.Text, out var Es);
 			
 			// Convert values
-			if (Units.Geometry != LengthUnit.Millimeter)
-			{
-				Stringer.Geometry.Width  = Units.ConvertToMillimeter(width,  Units.Geometry);
-				Stringer.Geometry.Height = Units.ConvertToMillimeter(height, Units.Geometry);
-			}
+			_geometry = new StringerGeometry(Point3d.Origin, Point3d.Origin, width, height, _units.Geometry);
 
-			if (ReinforcementChecked && barDiameter > 0 && numOfBars > 0)
-			{
-				if (Units.Reinforcement != LengthUnit.Millimeter)
-					barDiameter = Units.ConvertToMillimeter(barDiameter, Units.Reinforcement);
+			if (!ReinforcementChecked || barDiameter.ApproxZero() || numOfBars == 0)
+				return;
 
-				if (Units.MaterialStrength != PressureUnit.Megapascal)
-				{
-					fy = Units.ConvertToMPa(fy, Units.MaterialStrength);
-					Es = Units.ConvertToMPa(Es, Units.MaterialStrength);
-				}
+			Steel steel = null;
 
-				Steel steel = null;
+			if (fy > 0 || Es > 0)
+				steel = new Steel(Pressure.From(fy, _units.MaterialStrength), Pressure.From(Es, _units.MaterialStrength));
 
-				if (fy > 0 || Es > 0)
-					steel = new Steel(fy, Es);
+			_reinforcement = new UniaxialReinforcement(numOfBars, Length.From(barDiameter, _units.Reinforcement), steel, Area.Zero);
 
-				Stringer.Reinforcement = new Reinforcement(numOfBars, barDiameter, 0, steel);
-			}
-			else
-				Stringer.Reinforcement = null;
-
-			Auxiliary.SaveStringerData(Stringer);
-        }
+			Auxiliary.SaveStringerData(_objectId, _geometry, _reinforcement);
+		}
 
         private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{

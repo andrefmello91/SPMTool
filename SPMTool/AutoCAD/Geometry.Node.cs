@@ -103,16 +103,13 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Enumerate all the nodes in the model and return the collection of nodes
-			public static ObjectIdCollection UpdateNodes(Units units = null)
+			public static ObjectIdCollection UpdateNodes(Units units)
 			{
-				// Get units
-				units = units ?? Config.ReadUnits();
-
 				// Get all the nodes in the model
 				ObjectIdCollection nds = AllNodes();
 
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					// Get the list of nodes ordered
 					var ndList = NodePositions(NodeType.All);
@@ -156,8 +153,8 @@ namespace SPMTool.AutoCAD
 					}
 
 					// Set the style for all point objects in the drawing
-					Current.db.Pdmode = 32;
-					Current.db.Pdsize = 40 * GlobalAuxiliary.ScaleFactor(units.Geometry);
+					DataBase.Database.Pdmode = 32;
+					DataBase.Database.Pdsize = 40 * GlobalAuxiliary.ScaleFactor(units.Geometry);
 
 					// Commit and dispose the transaction
 					trans.Commit();
@@ -187,7 +184,7 @@ namespace SPMTool.AutoCAD
 				var pts = new List<Point3d>();
 
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					foreach (ObjectId ndObj in nds)
 					{
@@ -228,7 +225,7 @@ namespace SPMTool.AutoCAD
 				int ndNum = 0;
 
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					// Compare to the nodes collection
 					foreach (ObjectId ndObj in nodes)
@@ -241,7 +238,7 @@ namespace SPMTool.AutoCAD
 						{
 							// Get the node number
 							// Access the XData as an array
-							ResultBuffer ndRb = nd.GetXDataForApplication(Current.appName);
+							ResultBuffer ndRb = nd.GetXDataForApplication(DataBase.AppName);
 							TypedValue[] dataNd = ndRb.AsArray();
 
 							// Get the node number (line 2)
@@ -266,7 +263,7 @@ namespace SPMTool.AutoCAD
 				var data = new TypedValue[size];
 
 				// Set the initial parameters
-				data[(int)NodeData.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName);
+				data[(int)NodeData.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName);
 				data[(int)NodeData.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
 				data[(int)NodeData.Ux]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
 				data[(int)NodeData.Uy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
@@ -278,7 +275,7 @@ namespace SPMTool.AutoCAD
             public static DBPoint ReadNode(ObjectId objectId, OpenMode openMode = OpenMode.ForRead)
 			{
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					// Read the object as a point
 					return

@@ -4,9 +4,11 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using SPM.Elements;
+using SPM.Elements.StringerProperties;
+using SPMTool.Global;
 using UnitsNet;
 using StringerData = SPMTool.XData.Stringer;
-using NodeType     = SPMTool.Elements.Node.NodeType;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Stringer))]
 
@@ -69,15 +71,10 @@ namespace SPMTool.AutoCAD
 			public static void AddStringer()
 			{
 				// Get units
-				var units = Config.ReadUnits();
-				if (units is null)
-				{
-					Config.SetUnits();
-					units = Config.ReadUnits();
-				}
+				var units = DataBase.Units;
 
-				// Check if the layers already exists in the drawing. If it doesn't, then it's created:
-				Auxiliary.CreateLayer(Layers.ExtNode, Colors.Red);
+                // Check if the layers already exists in the drawing. If it doesn't, then it's created:
+                Auxiliary.CreateLayer(Layers.ExtNode, Colors.Red);
 				Auxiliary.CreateLayer(Layers.IntNode, Colors.Blue);
 				Auxiliary.CreateLayer(Layers.Stringer, Colors.Cyan);
 
@@ -154,7 +151,7 @@ namespace SPMTool.AutoCAD
 			public static void DivideStringer()
 			{
 				// Get units
-				var units = Config.ReadUnits() ?? new Units();
+				var units = DataBase.Units;
 
                 // Prompt for select stringers
                 var strs = UserInput.SelectStringers("Select stringers to divide");
@@ -183,7 +180,7 @@ namespace SPMTool.AutoCAD
 				ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
 
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					foreach (DBObject obj in strs)
 					{
@@ -290,7 +287,7 @@ namespace SPMTool.AutoCAD
 				ObjectIdCollection nds = Node.AllNodes();
 
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					// Create a point collection
 					List<Point3d> midPts = new List<Point3d>();
@@ -388,7 +385,7 @@ namespace SPMTool.AutoCAD
 				if (strs.Count > 0)
 				{
 					// Start a transaction
-					using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+					using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 					{
 						foreach (ObjectId obj in strs)
 						{
@@ -408,54 +405,54 @@ namespace SPMTool.AutoCAD
 			public static void SetStringerGeometry()
 			{
 				// Read units
-				var units = Config.ReadUnits() ?? new Units();
+				var units = DataBase.Units;
 
                 // Request objects to be selected in the drawing area
                 var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)");
 
-				if (strs != null)
+                if (strs is null)
+	                return;
+
+                // Get geometry
+				var geometryn = GetStringerGeometry(units);
+
+				if (!geometryn.HasValue)
+					return;
+
+				var geometry = geometryn.Value;
+
+				// Start a transaction
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
-					// Get geometry
-					var geometryn = GetStringerGeometry(units);
-
-					if (!geometryn.HasValue)
-						return;
-
-					var geometry = geometryn.Value;
-
-					// Start a transaction
-					using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+					foreach (DBObject obj in strs)
 					{
-						foreach (DBObject obj in strs)
-						{
-							// Open the selected object for read
-							Entity ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForWrite);
+						// Open the selected object for read
+						Entity ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForWrite);
 
-							// Access the XData as an array
-							TypedValue[] data = Auxiliary.ReadXData(ent);
+						// Access the XData as an array
+						TypedValue[] data = Auxiliary.ReadXData(ent);
 
-							// Set the new geometry and reinforcement (line 7 to 9 of the array)
-							data[(int) StringerData.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.width);
-							data[(int) StringerData.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.height);
+						// Set the new geometry and reinforcement (line 7 to 9 of the array)
+						data[(int) StringerData.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.Width);
+						data[(int) StringerData.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.Height);
 
-							// Add the new XData
-							ent.XData = new ResultBuffer(data);
-						}
-
-						// Save the new object to the database
-						trans.Commit();
+						// Add the new XData
+						ent.XData = new ResultBuffer(data);
 					}
+
+					// Save the new object to the database
+					trans.Commit();
 				}
 			}
 
 			// Get reinforcement parameters from user
-			private static (double width, double height)? GetStringerGeometry(Units units)
+			private static StringerGeometry? GetStringerGeometry(Units units)
 			{
 				// Get unit abreviation
 				var dimAbrev = Length.GetAbbreviation(units.Geometry);
 
                 // Get saved reinforcement options
-                var savedGeo = ReadStringerGeometry();
+                var savedGeo = ReadStringerGeometries();
 
 				// Get saved reinforcement options
 				if (savedGeo != null)
@@ -463,25 +460,20 @@ namespace SPMTool.AutoCAD
 					// Get the options
 					var options = new List<string>();
 
-					for (int i = 0; i < savedGeo.Length; i++)
+					foreach (var geometry in savedGeo)
 					{
 						double
-							wi = units.ConvertFromMillimeter(savedGeo[i].width,  units.Geometry),
-							hi = units.ConvertFromMillimeter(savedGeo[i].height, units.Geometry);
+							wi = units.ConvertFromMillimeter(geometry.Width,  units.Geometry),
+							hi = units.ConvertFromMillimeter(geometry.Height, units.Geometry);
 
-						char times = (char) Characters.Times;
-
-						string name = wi.ToString() + times + hi;
-
-						options.Add(name);
+						options.Add($"{wi:0.00} {(char)Characters.Times} {hi:0.00}");
 					}
 
 					// Add option to set new reinforcement
 					options.Add("New");
 
 					// Get string result
-					var res = UserInput.SelectKeyword("Choose a geometry option (" + dimAbrev + " x " + dimAbrev + ") or add a new one:",
-						options.ToArray(), options[0]);
+					var res = UserInput.SelectKeyword($"Choose a geometry option ({dimAbrev} x {dimAbrev}) or add a new one:", options.ToArray(), options[0]);
 
 					if (!res.HasValue)
 						return null;
@@ -497,12 +489,12 @@ namespace SPMTool.AutoCAD
 				double def = units.ConvertFromMillimeter(100, units.Geometry);
 
 				// Ask the user to input the Stringer width
-				var wn = UserInput.GetDouble("Input width (" + dimAbrev + ") for selected stringers:", def);
+				var wn = UserInput.GetDouble($"Input width ({dimAbrev}) for selected stringers:", def);
 
 				// Ask the user to input the Stringer height
-				var hn = UserInput.GetDouble("Input height (" + dimAbrev + ") for selected stringers:", def);
+				var hn = UserInput.GetDouble($"Input height ({dimAbrev}) for selected stringers:", def);
 
-				if (!wn.HasValue && !hn.HasValue)
+				if (!wn.HasValue || !hn.HasValue)
 					return null;
 
 				double
@@ -510,34 +502,37 @@ namespace SPMTool.AutoCAD
 					h = units.ConvertToMillimeter(hn.Value, units.Geometry);
 
 				// Save geometry
-				SaveStringerGeometry(w, h);
-				return (w, h);
+				var strGeo = new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h);
+				SaveStringerGeometry(strGeo);
+				return strGeo;
 			}
 
 			// Save geometry configuration on database
-            private static void SaveStringerGeometry(double width, double height)
-			{
-				// Get the name to save
-				string name = StrGeo + "W" + width + "H" + height;
+            private static void SaveStringerGeometry(StringerGeometry geometry)
+            {
+	            var saveCode = geometry.SaveCode();
 
 				// Save the variables on the Xrecord
 				using (ResultBuffer rb = new ResultBuffer())
 				{
-					rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName)); // 0
-					rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));            // 1
-					rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, width));           // 2
-					rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, height));          // 3
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName));   // 0
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, saveCode));			 // 1
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32,   geometry.Width));    // 2
+					rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal,        geometry.Height));   // 3
 
 					// Save on NOD if it doesn't exist
-					Auxiliary.SaveObjectDictionary(name, rb, false);
+					Auxiliary.SaveObjectDictionary(saveCode, rb, false);
 				}
 			}
 
-            // Read stringer geometry on database
-            private static (double width, double height)[] ReadStringerGeometry()
+
+            /// <summary>
+            /// Read stringer geometries saved on database.
+            /// </summary>
+            private static StringerGeometry[] ReadStringerGeometries()
 			{
-				// Create a list of reinforcement
-				var geoList = new List<(double width, double height)>();
+				// Create a list of geometry
+				var geoList = new List<StringerGeometry>();
 
 				// Get dictionary entries
 				var entries = Auxiliary.ReadDictionaryEntries(StrGeo);
@@ -555,15 +550,11 @@ namespace SPMTool.AutoCAD
 						h = Convert.ToDouble(data[3].Value);
 
 					// Add to the list
-					geoList.Add((w, h));
+					geoList.Add(new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h));
 				}
 
-				if (geoList.Count > 0)
-					return
-						geoList.ToArray();
-
-				// None
-				return null;
+				return
+					geoList.Count > 0 ? geoList.ToArray() : null;
 			}
 
             // Method to create XData
@@ -578,7 +569,7 @@ namespace SPMTool.AutoCAD
 				var newData = new TypedValue[size];
 
 				// Set the initial parameters
-				newData[(int) StringerData.AppName]   = new TypedValue((int) DxfCode.ExtendedDataRegAppName, Current.appName);
+				newData[(int) StringerData.AppName]   = new TypedValue((int) DxfCode.ExtendedDataRegAppName, DataBase.AppName);
 				newData[(int) StringerData.XDataStr]  = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
 				newData[(int) StringerData.Width]     = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
 				newData[(int) StringerData.Height]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
@@ -593,7 +584,7 @@ namespace SPMTool.AutoCAD
 			// Read a stringer in the drawing
 			public static Line ReadStringer(ObjectId objectId, OpenMode openMode = OpenMode.ForRead)
 			{
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					// Read the object as a line
 					return

@@ -32,7 +32,7 @@ namespace SPMTool.AutoCAD
 	        Auxiliary.CreateLayer(Layers.Support, Colors.Red);
 
 	        // Read units
-	        var units     = Config.ReadUnits();
+	        var units     = DataBase.Units;
 	        double scFctr = GlobalAuxiliary.ScaleFactor(units.Geometry);
 
             // Check if the support blocks already exist. If not, create the blocks
@@ -65,10 +65,10 @@ namespace SPMTool.AutoCAD
 	        string support = supn.Value.keyword;
 
 	        // Start a transaction
-	        using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+	        using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 	        {
 		        // Open the Block table for read
-		        BlockTable blkTbl = (BlockTable) trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead);
+		        BlockTable blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
 
 		        // Read the object Ids of the support blocks
 		        ObjectId xBlock  = blkTbl[BlockX];
@@ -152,10 +152,10 @@ namespace SPMTool.AutoCAD
         public static void CreateSupportBlocks()
         {
             // Start a transaction
-            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = (BlockTable) trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead);
+                BlockTable blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
 
                 // Initialize the block Ids
                 ObjectId xBlock = ObjectId.Null;
@@ -354,7 +354,7 @@ namespace SPMTool.AutoCAD
             var sData = new TypedValue[size];
 
             // Set values
-            sData[(int)SupportData.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName);
+            sData[(int)SupportData.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName);
             sData[(int)SupportData.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
             sData[(int)SupportData.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32, (int)direction);
 

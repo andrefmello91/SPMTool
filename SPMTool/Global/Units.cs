@@ -1,41 +1,53 @@
-﻿using UnitsNet;
+﻿using System;
+using UnitsNet;
 using UnitsNet.Units;
-using StressUnit = UnitsNet.Units.PressureUnit;
 
 namespace SPMTool
 {
 	/// <summary>
-    /// Units class.
+    /// Units struct.
     /// </summary>
-	public class Units
+	public struct Units : IEquatable<Units>
     {
-	    // Properties
-		public LengthUnit Geometry         { get; set; }
-		public LengthUnit Reinforcement    { get; set; }
-		public LengthUnit Displacements    { get; set; }
-		public ForceUnit  AppliedForces    { get; set; }
-		public ForceUnit  StringerForces   { get; set; }
-		public StressUnit PanelStresses    { get; set; }
-		public StressUnit MaterialStrength { get; set; }
-       
 		/// <summary>
-        /// Default units object (mm, kN, MPa).
+        /// Get/set the <see cref="LengthUnit"/> for geometry.
         /// </summary>
-		public Units()
-		{
-			Geometry         = LengthUnit.Millimeter;
-			Reinforcement    = LengthUnit.Millimeter;
-			Displacements    = LengthUnit.Millimeter;
-			AppliedForces    = ForceUnit.Kilonewton;
-			StringerForces   = ForceUnit.Kilonewton;
-			PanelStresses    = StressUnit.Megapascal;
-			MaterialStrength = StressUnit.Megapascal;
-		}
+		public LengthUnit Geometry         { get; set; }
 
 		/// <summary>
-        /// Get the area unit for geometry.
+		/// Get/set the <see cref="LengthUnit"/> for reinforcement.
+		/// </summary>
+		public LengthUnit Reinforcement    { get; set; }
+
+		/// <summary>
+		/// Get/set the <see cref="LengthUnit"/> for displacements.
+		/// </summary>
+		public LengthUnit Displacements    { get; set; }
+
+        /// <summary>
+        /// Get/set the <see cref="ForceUnit"/> for applied forces.
         /// </summary>
-		public AreaUnit GeometryArea
+        public ForceUnit  AppliedForces    { get; set; }
+
+        /// <summary>
+        /// Get/set the <see cref="ForceUnit"/> for stringer forces.
+        /// </summary>
+        public ForceUnit  StringerForces   { get; set; }
+
+        /// <summary>
+        /// Get/set the <see cref="PressureUnit"/> for panel stresses.
+        /// </summary>
+        public PressureUnit PanelStresses    { get; set; }
+
+        /// <summary>
+        /// Get/set the <see cref="PressureUnit"/> for material parameters.
+        /// </summary>
+        public PressureUnit MaterialStrength { get; set; }
+
+        /// <summary>
+        /// Get the <see cref="AreaUnit"/> for geometry.
+        /// </summary>
+        public AreaUnit GeometryArea
 		{
 			get
 			{
@@ -49,16 +61,17 @@ namespace SPMTool
 
                     case LengthUnit.Meter:
 	                    return AreaUnit.SquareMeter;
-				}
 
-				return AreaUnit.SquareMillimeter;
+					default:
+						return AreaUnit.SquareMillimeter;
+				}
 			}
 		}
 
-		/// <summary>
-		/// Get the area unit for reinforcement.
-		/// </summary>
-		public AreaUnit ReinforcementArea
+        /// <summary>
+        /// Get the <see cref="AreaUnit"/> for reinforcement.
+        /// </summary>
+        public AreaUnit ReinforcementArea
 		{
 			get
 			{
@@ -78,12 +91,33 @@ namespace SPMTool
 			}
 		}
 
-		/// <summary>
+        /// <summary>
+        /// Returns true if this <see cref="Units"/> has the default values.
+        /// <para>Default units: mm, kN, MPa.</para>
+        /// </summary>
+        public bool IsDefault => Equals(Default);
+
+        /// <summary>
+        /// Default units object.
+        /// <para>Default units: mm, kN, MPa.</para>
+        /// </summary>
+        public static Units Default => new Units
+		{
+			Geometry         = LengthUnit.Millimeter,
+			Reinforcement    = LengthUnit.Millimeter,
+			Displacements    = LengthUnit.Millimeter,
+			AppliedForces    = ForceUnit.Kilonewton,
+			StringerForces   = ForceUnit.Kilonewton,
+			PanelStresses    = PressureUnit.Megapascal,
+			MaterialStrength = PressureUnit.Megapascal
+		};
+
+        /// <summary>
         /// Convert length to millimeters.
         /// </summary>
         /// <param name="dimension">Length value.</param>
         /// <param name="fromUnit">Current unit.</param>
-		public double ConvertToMillimeter(double dimension, LengthUnit fromUnit) =>
+        public double ConvertToMillimeter(double dimension, LengthUnit fromUnit) =>
 			UnitConverter.Convert(dimension, fromUnit, LengthUnit.Millimeter);
 
         /// <summary>
@@ -131,15 +165,31 @@ namespace SPMTool
         /// </summary>
         /// <param name="stress">Stress value.</param>
         /// <param name="fromUnit">Current unit.</param>
-        public double ConvertToMPa(double stress, StressUnit fromUnit) =>
-			UnitConverter.Convert(stress, fromUnit, StressUnit.Megapascal);
+        public double ConvertToMPa(double stress, PressureUnit fromUnit) =>
+			UnitConverter.Convert(stress, fromUnit, PressureUnit.Megapascal);
 
         /// <summary>
         /// Convert stress/pressure from MegaPascals.
         /// </summary>
         /// <param name="megapascal">Stress/pressure value, in MPa.</param>
         /// <param name="toUnit">Stress/pressure unit to convert.</param>
-		public double ConvertFromMPa(double megapascal, StressUnit toUnit) =>
-			UnitConverter.Convert(megapascal, StressUnit.Megapascal, toUnit);
+		public double ConvertFromMPa(double megapascal, PressureUnit toUnit) =>
+			UnitConverter.Convert(megapascal, PressureUnit.Megapascal, toUnit);
+
+		/// <summary>
+        /// Returns true if all units coincide.
+        /// </summary>
+        /// <param name="other">The other <see cref="Units"/> object.</param>
+        public bool Equals(Units other) => Geometry == other.Geometry && Reinforcement == other.Reinforcement && Displacements == other.Displacements && AppliedForces == other.AppliedForces && StringerForces == other.StringerForces && PanelStresses == other.PanelStresses && MaterialStrength == other.MaterialStrength;
+
+		/// <summary>
+		/// Returns true if all units coincide.
+		/// </summary>
+		public static bool operator == (Units left, Units right) => left.Equals(right);
+
+		/// <summary>
+		/// Returns true if at least a unit do not coincide.
+		/// </summary>
+		public static bool operator != (Units left, Units right) => !left.Equals(right);
     }
 }

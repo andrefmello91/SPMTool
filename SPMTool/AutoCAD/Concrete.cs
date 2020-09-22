@@ -47,32 +47,11 @@ namespace SPMTool.AutoCAD
 		[CommandMethod("SetConcreteParameters")]
 		public static void SetConcreteParameters()
 		{
-			// Definition for the Extended Data
-			string xdataStr = "Concrete data";
-
-			// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-			Auxiliary.RegisterApp();
-
-			// Get units
-			var units = Config.ReadUnits() ?? new Units();
-
-			// Initiate default values
-			double
-				fc    = 30,
-				phiAg = 20,
-				ft    = 2,
-				Ec    = 30000,
-				ec    = 0.002,
-				ecu   = 0.0035;
-
 			// Read data
-            var concreteData = ReadConcreteData();
-
-            var parameters   = concreteData?.parameters ?? new MC2010Parameters(fc, phiAg);
-            var constitutive = concreteData?.constitutive ?? new MCFTConstitutive(parameters);
+            var concrete = ReadConcreteData(false);
 
 			// Start the config window
-			var concreteConfig = new ConcreteConfig(parameters, constitutive, units);
+			var concreteConfig = new ConcreteConfig(concrete);
 			Application.ShowModalWindow(Application.MainWindow.Handle, concreteConfig, false);
 		}
 
@@ -88,7 +67,7 @@ namespace SPMTool.AutoCAD
 			int size = Enum.GetNames(typeof(ConcreteData)).Length;
 			var data = new TypedValue[size];
 
-			data[(int)ConcreteData.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  Current.appName);
+			data[(int)ConcreteData.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
 			data[(int)ConcreteData.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
 			data[(int)ConcreteData.Model]    = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)parModel);
 			data[(int)ConcreteData.Behavior] = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)behaviorModel);
@@ -104,59 +83,70 @@ namespace SPMTool.AutoCAD
 			Auxiliary.SaveObjectDictionary(ConcreteParams, new ResultBuffer(data));
 		}
 
-        [CommandMethod("ViewConcreteParameters")]
-		public static void ViewConcreteParameters()
-		{
-			// Get the values
-			var concrete = ReadConcreteData();
+  //      [CommandMethod("ViewConcreteParameters")]
+		//public static void ViewConcreteParameters()
+		//{
+		//	// Get the values
+		//	var concrete = ReadConcreteData();
 
-			string concmsg;
+		//	string concmsg;
 
-            // Write the concrete parameters
-            if (concrete.HasValue)
-            {
-	            var par = concrete.Value.parameters;
+  //          // Write the concrete parameters
+  //          if (concrete.HasValue)
+  //          {
+	 //           var par = concrete.Value.parameters;
 
-				// Get units
-				var units = Config.ReadUnits();
-				IQuantity
-					fc    = Pressure.FromMegapascals(par.Strength),
-					ft    = Pressure.FromMegapascals(par.TensileStrength),
-					Ec    = Pressure.FromMegapascals(par.InitialModule),
-					phiAg = Length.FromMillimeters(par.AggregateDiameter);
+		//		// Get units
+		//		var units = Config.ReadUnits();
+		//		IQuantity
+		//			fc    = Pressure.FromMegapascals(par.Strength),
+		//			ft    = Pressure.FromMegapascals(par.TensileStrength),
+		//			Ec    = Pressure.FromMegapascals(par.InitialModule),
+		//			phiAg = Length.FromMillimeters(par.AggregateDiameter);
 
-				char
-					phi = (char)Characters.Phi,
-					eps = (char)Characters.Epsilon;
+		//		char
+		//			phi = (char)Characters.Phi,
+		//			eps = (char)Characters.Epsilon;
 
-				concmsg =
-					"Concrete Parameters:\n" +
-					"\nfc = " + fc.ToUnit(units.MaterialStrength) +
-					"\nft = " + ft.ToUnit(units.MaterialStrength) +
-					"\nEc = " + Ec.ToUnit(units.MaterialStrength) +
-					"\n" + eps + "c = "  + $"{1000 * par.PlasticStrain,0:00}" + " E-03" +
-					"\n" + eps + "cu = " + $"{1000 * par.UltimateStrain,0:00}" + " E-03" +
-					"\n" + phi + ",ag = " + phiAg.ToUnit(units.Reinforcement);
-            }
-			else
-	            concmsg = "Concrete parameters not set";
+		//		concmsg =
+		//			"Concrete Parameters:\n" +
+		//			"\nfc = " + fc.ToUnit(units.MaterialStrength) +
+		//			"\nft = " + ft.ToUnit(units.MaterialStrength) +
+		//			"\nEc = " + Ec.ToUnit(units.MaterialStrength) +
+		//			"\n" + eps + "c = "  + $"{1000 * par.PlasticStrain,0:00}" + " E-03" +
+		//			"\n" + eps + "cu = " + $"{1000 * par.UltimateStrain,0:00}" + " E-03" +
+		//			"\n" + phi + ",ag = " + phiAg.ToUnit(units.Reinforcement);
+  //          }
+		//	else
+	 //           concmsg = "Concrete parameters not set";
 
-			// Display the values returned
-			Application.ShowAlertDialog(Current.appName + "\n\n" + concmsg);
-        }
+		//	// Display the values returned
+		//	Application.ShowAlertDialog(DataBase.AppName + "\n\n" + concmsg);
+  //      }
 
         // Read the concrete parameters
-        public static (Parameters parameters, Constitutive constitutive)? ReadConcreteData()
+
+		/// <summary>
+        /// Read concrete saved in database.
+        /// </summary>
+        /// <param name="setConcrete">Concrete must be set by user?</param>
+        public static Concrete ReadConcreteData(bool setConcrete = true)
 		{
 			var data = Auxiliary.ReadDictionaryEntry(ConcreteParams);
 
 			if (data is null)
-				return null;
+			{
+				if (setConcrete)
+					SetConcreteParameters();
+
+				else
+					return null;
+			}
 
 			// Get the parameters from XData
-			var par      = (ParameterModel)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
-			var bhModel  = (ConstitutiveModel)Convert.ToInt32(data[(int) ConcreteData.Behavior].Value);
-			var aggType  = (AggregateType)Convert.ToInt32(data[(int) ConcreteData.AggType].Value);
+			var parModel    = (ParameterModel)Convert.ToInt32(data[(int) ConcreteData.Model].Value);
+			var constModel  = (ConstitutiveModel)Convert.ToInt32(data[(int) ConcreteData.Behavior].Value);
+			var aggType     = (AggregateType)Convert.ToInt32(data[(int) ConcreteData.AggType].Value);
 
 			double
                 fc      = Convert.ToDouble(data[(int)ConcreteData.fc].Value),
@@ -169,11 +159,9 @@ namespace SPMTool.AutoCAD
 				ecu = -Convert.ToDouble(data[(int)ConcreteData.ecu].Value);
 
             // Get parameters and constitutive
-            Parameters parameters = Parameters.ReadParameters(par, fc, phiAg, aggType, fcr, Ec, ec, ecu);
-            Constitutive behavior = Constitutive.ReadConstitutive(bhModel, parameters);
+            var parameters = Parameters.ReadParameters(parModel, fc, phiAg, aggType, fcr, Ec, ec, ecu);
 
-			return
-				(parameters, behavior);
+			return new Concrete(parameters, constModel);
 		}
     }
 }

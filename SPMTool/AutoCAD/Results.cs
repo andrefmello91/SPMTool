@@ -55,10 +55,10 @@ namespace SPMTool.AutoCAD
 			Auxiliary.EraseObjects(Layers.TensilePanelStress);
 
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Open the Block table for read
-				BlockTable blkTbl = trans.GetObject(AutoCAD.Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
+				BlockTable blkTbl = trans.GetObject(AutoCAD.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
 				// Read the object Ids of the support blocks
 				ObjectId shearBlock = blkTbl[ShearBlock];
@@ -93,7 +93,7 @@ namespace SPMTool.AutoCAD
 						// If the shear is negative, mirror the block
 						if (tauAvg < 0)
 						{
-							blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, Current.ucs.Yaxis, cntrPt));
+							blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, DataBase.Ucs.Yaxis, cntrPt));
 						}
 					}
 
@@ -133,7 +133,7 @@ namespace SPMTool.AutoCAD
 							// Rotate the block in theta angle
 							if (!stresses.Theta2.ApproxZero())
 							{
-								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, Current.ucs.Zaxis, cntrPt));
+								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, DataBase.Ucs.Zaxis, cntrPt));
 							}
 						}
 
@@ -147,7 +147,7 @@ namespace SPMTool.AutoCAD
 								EndPoint = new Point3d(cntrPt.X + 210 * scFctr, cntrPt.Y, 0)
 							};
 
-							ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, Current.ucs.Zaxis, cntrPt));
+							ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, DataBase.Ucs.Zaxis, cntrPt));
 
                             // Set the alignment point
 							Point3d algnPt = ln.EndPoint;
@@ -180,7 +180,7 @@ namespace SPMTool.AutoCAD
 							// Rotate the block in theta angle
 							if (!stresses.Theta2.ApproxZero())
 							{
-								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, AutoCAD.Current.ucs.Zaxis, cntrPt));
+								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, AutoCAD.DataBase.Ucs.Zaxis, cntrPt));
 							}
 						}
 
@@ -194,7 +194,7 @@ namespace SPMTool.AutoCAD
 								EndPoint = new Point3d(cntrPt.X, cntrPt.Y + 210 * scFctr, 0)
 							};
 
-							ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, Current.ucs.Zaxis, cntrPt));
+							ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, DataBase.Ucs.Zaxis, cntrPt));
 
                             // Set the alignment point
 							Point3d algnPt = ln.EndPoint;
@@ -238,7 +238,7 @@ namespace SPMTool.AutoCAD
 			var scFctr = GlobalAuxiliary.ScaleFactor(units.Geometry);
 
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Get the stringers stiffness matrix and add to the global stiffness matrix
 				foreach (var stringer in stringers)
@@ -291,7 +291,7 @@ namespace SPMTool.AutoCAD
 								Auxiliary.AddObject(dgrm);
 
 								// Rotate the diagram
-								dgrm.TransformBy(Matrix3d.Rotation(ang, Current.ucs.Zaxis, stPt));
+								dgrm.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
 							}
 						}
 
@@ -333,7 +333,7 @@ namespace SPMTool.AutoCAD
 								Auxiliary.AddObject(dgrm1);
 
 								// Rotate the diagram
-								dgrm1.TransformBy(Matrix3d.Rotation(ang, Current.ucs.Zaxis, stPt));
+								dgrm1.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
 							}
 
 							using (Solid dgrm3 = new Solid(vrts3[0], vrts3[1], vrts3[2]))
@@ -352,7 +352,7 @@ namespace SPMTool.AutoCAD
 								Auxiliary.AddObject(dgrm3);
 
 								// Rotate the diagram
-								dgrm3.TransformBy(Matrix3d.Rotation(ang, Current.ucs.Zaxis, stPt));
+								dgrm3.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
 							}
 						}
 
@@ -384,7 +384,7 @@ namespace SPMTool.AutoCAD
 								Auxiliary.AddObject(txt1);
 
 								// Rotate the text
-								txt1.TransformBy(Matrix3d.Rotation(ang, Current.ucs.Zaxis, stPt));
+								txt1.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
 							}
 						}
 
@@ -419,7 +419,7 @@ namespace SPMTool.AutoCAD
 								Auxiliary.AddObject(txt3);
 
 								// Rotate the text
-								txt3.TransformBy(Matrix3d.Rotation(ang, Current.ucs.Zaxis, stPt));
+								txt3.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
 							}
 						}
 					}
@@ -454,7 +454,7 @@ namespace SPMTool.AutoCAD
 			List<Point3d> dispNds = new List<Point3d>();
 
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				foreach (var str in stringers)
 				{
@@ -541,7 +541,7 @@ namespace SPMTool.AutoCAD
 		private static void SetDisplacements(Node[] nodes)
 		{
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Get the stringers stifness matrix and add to the global stifness matrix
 				foreach (var nd in nodes)
@@ -550,7 +550,7 @@ namespace SPMTool.AutoCAD
 					DBPoint ndPt = trans.GetObject(nd.ObjectId, OpenMode.ForWrite) as DBPoint;
 
 					// Get the result buffer as an array
-					ResultBuffer rb = ndPt.GetXDataForApplication(Current.appName);
+					ResultBuffer rb = ndPt.GetXDataForApplication(DataBase.AppName);
 					TypedValue[] data = rb.AsArray();
 
 					// Save the displacements on the XData
@@ -571,10 +571,10 @@ namespace SPMTool.AutoCAD
         private static void CreatePanelShearBlock()
         {
             // Start a transaction
-            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Id
                 ObjectId shearBlock = ObjectId.Null;
@@ -656,10 +656,10 @@ namespace SPMTool.AutoCAD
         private static void CreatePanelStressesBlock()
         {
             // Start a transaction
-            using (Transaction trans = AutoCAD.Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.DataBase.Database.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(AutoCAD.Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(AutoCAD.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
                 ObjectId compStressBlock = ObjectId.Null;
@@ -848,7 +848,7 @@ namespace SPMTool.AutoCAD
 				}
 
 				else
-					Application.ShowAlertDialog(Current.appName + "\n\n" + element);
+					Application.ShowAlertDialog(DataBase.AppName + "\n\n" + element);
 			}
 		}
 

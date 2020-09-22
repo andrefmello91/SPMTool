@@ -21,15 +21,15 @@ namespace SPMTool.UserInterface
 		private Length Uy    { get; }
 
 
-		public NodeWindow(Node node, Units units = null)
+		public NodeWindow(Node node)
 		{
 			Node = node;
 
 			// Read units
-			Units = (units ?? Config.ReadUnits()) ?? new Units();
+			Units = DataBase.Units;
 
-			// Get forces and displacements
-			double
+            // Get forces and displacements
+            double
 				fx = 0,
 				fy = 0;
 

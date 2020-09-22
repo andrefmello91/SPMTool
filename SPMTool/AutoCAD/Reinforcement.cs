@@ -24,7 +24,7 @@ namespace SPMTool.AutoCAD
 	    public static void SetStringerReinforcement()
 	    {
 		    // Read units
-		    var units = Config.ReadUnits() ?? new Units();
+		    var units = DataBase.Units;
 
             // Request objects to be selected in the drawing area
             var strs = UserInput.SelectStringers(
@@ -41,7 +41,7 @@ namespace SPMTool.AutoCAD
 				return;
 
 		    // Start a transaction
-		    using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+		    using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 		    {
 			    // Save the properties
 			    foreach (DBObject obj in strs)
@@ -219,7 +219,7 @@ namespace SPMTool.AutoCAD
 		public static void SetPanelReinforcement()
 		{
 			// Read units
-			var units = Config.ReadUnits() ?? new Units();
+			var units = DataBase.Units;
 
             // Request objects to be selected in the drawing area
             var pnls = UserInput.SelectPanels(
@@ -238,7 +238,7 @@ namespace SPMTool.AutoCAD
 				return;
 
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				foreach (DBObject obj in pnls)
 				{
@@ -246,7 +246,7 @@ namespace SPMTool.AutoCAD
 					Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForWrite) as Entity;
 
 					// Access the XData as an array
-					ResultBuffer rb = ent.GetXDataForApplication(Current.appName);
+					ResultBuffer rb = ent.GetXDataForApplication(DataBase.AppName);
 					TypedValue[] data = rb.AsArray();
 
 					// Set the new reinforcement (line 7 to 9 of the array)
@@ -382,7 +382,7 @@ namespace SPMTool.AutoCAD
 		        // Save the variables on the Xrecord
 		        using (ResultBuffer rb = new ResultBuffer())
 		        {
-			        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Current.appName)); // 0
+			        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName)); // 0
 			        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));           // 1
 			        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, fy));                    // 2
 			        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, Es));                    // 3
@@ -444,7 +444,7 @@ namespace SPMTool.AutoCAD
 		        // Save the variables on the Xrecord
 		        using (ResultBuffer rb = new ResultBuffer())
 		        {
-			        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName,  Current.appName)); // 0
+			        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName)); // 0
 			        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));            // 1
 			        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32,   num));             // 2
 			        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal,        phi));             // 3
@@ -498,7 +498,7 @@ namespace SPMTool.AutoCAD
 
 	        using (ResultBuffer rb = new ResultBuffer())
 	        {
-		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName,  Current.appName)); // 0
+		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName)); // 0
 		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));            // 1
 		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal,        barDiameter));     // 2
 		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal,        spacing));         // 3

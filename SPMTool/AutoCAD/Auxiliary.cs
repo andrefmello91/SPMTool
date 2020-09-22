@@ -6,6 +6,9 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Runtime;
 using Material;
+using Material.Reinforcement;
+using SPM.Elements;
+using SPM.Elements.StringerProperties;
 using SPMTool.Elements;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Auxiliary))]
@@ -18,17 +21,17 @@ namespace SPMTool.AutoCAD
 		public static void RegisterApp()
 		{
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Open the Registered Applications table for read
 				RegAppTable regAppTbl =
-					trans.GetObject(Current.db.RegAppTableId, OpenMode.ForRead) as RegAppTable;
-				if (!regAppTbl.Has(Current.appName))
+					trans.GetObject(DataBase.Database.RegAppTableId, OpenMode.ForRead) as RegAppTable;
+				if (!regAppTbl.Has(DataBase.AppName))
 				{
 					using (RegAppTableRecord regAppTblRec = new RegAppTableRecord())
 					{
-						regAppTblRec.Name = Current.appName;
-						trans.GetObject(Current.db.RegAppTableId, OpenMode.ForWrite);
+						regAppTblRec.Name = DataBase.AppName;
+						trans.GetObject(DataBase.Database.RegAppTableId, OpenMode.ForWrite);
 						regAppTbl.Add(regAppTblRec);
 						trans.AddNewlyCreatedDBObject(regAppTblRec, true);
 					}
@@ -61,10 +64,10 @@ namespace SPMTool.AutoCAD
 			string layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Open the Layer table for read
-				LayerTable lyrTbl = trans.GetObject(Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
+				LayerTable lyrTbl = trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead) as LayerTable;
 
 				if (!lyrTbl.Has(layerName))
 				{
@@ -75,7 +78,7 @@ namespace SPMTool.AutoCAD
 						lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, (short) color);
 
 						// Upgrade the Layer table for write
-						trans.GetObject(AutoCAD.Current.db.LayerTableId, OpenMode.ForWrite);
+						trans.GetObject(AutoCAD.DataBase.Database.LayerTableId, OpenMode.ForWrite);
 
 						// Append the new layer to the Layer table and the transaction
 						lyrTbl.Add(lyrTblRec);
@@ -101,10 +104,10 @@ namespace SPMTool.AutoCAD
 			string layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Open the Layer table for read
-				LayerTable lyrTbl = trans.GetObject(Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
+				LayerTable lyrTbl = trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead) as LayerTable;
 
 				if (lyrTbl.Has(layerName))
 				{
@@ -135,10 +138,10 @@ namespace SPMTool.AutoCAD
 			string layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Open the Layer table for read
-				LayerTable lyrTbl = trans.GetObject(Current.db.LayerTableId, OpenMode.ForRead) as LayerTable;
+				LayerTable lyrTbl = trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead) as LayerTable;
 
 				if (lyrTbl.Has(layerName))
 				{
@@ -165,10 +168,10 @@ namespace SPMTool.AutoCAD
 			string layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Open the Layer table for read
-				var lyrTbl = (LayerTable)trans.GetObject(Current.db.LayerTableId, OpenMode.ForRead);
+				var lyrTbl = (LayerTable)trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead);
 
 				if (lyrTbl.Has(layerName))
 				{
@@ -202,7 +205,7 @@ namespace SPMTool.AutoCAD
 			SelectionFilter selFt = new SelectionFilter(tvs);
 
 			// Get the entities on the layername
-			PromptSelectionResult selRes = Current.edtr.SelectAll(selFt);
+			PromptSelectionResult selRes = DataBase.Editor.SelectAll(selFt);
 
 			if (selRes.Status == PromptStatus.OK)
 				return
@@ -217,10 +220,10 @@ namespace SPMTool.AutoCAD
 			if (entity != null)
 			{
 				// Start a transaction
-				using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 				{
 					// Open the Block table for read
-					var blkTbl = (BlockTable) trans.GetObject(AutoCAD.Current.db.BlockTableId, OpenMode.ForRead);
+					var blkTbl = (BlockTable) trans.GetObject(AutoCAD.DataBase.Database.BlockTableId, OpenMode.ForRead);
 
 					// Open the Block table record Model space for write
 					var blkTblRec = (BlockTableRecord) trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
@@ -239,7 +242,7 @@ namespace SPMTool.AutoCAD
 		public static void EraseObjects(ObjectIdCollection objects)
 		{
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				foreach (ObjectId obj in objects)
 				{
@@ -262,7 +265,7 @@ namespace SPMTool.AutoCAD
 		public static DBObject ReadDBObject(ObjectId objectId)
 		{
 			// Start a transaction
-			using (var trans = Current.db.TransactionManager.StartTransaction())
+			using (var trans = DataBase.Database.TransactionManager.StartTransaction())
 				// Read the object as a point
 				return trans.GetObject(objectId, OpenMode.ForRead);
 		}
@@ -275,7 +278,7 @@ namespace SPMTool.AutoCAD
         public static Layers ReadObjectLayer(ObjectId objectId)
 		{
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Get the entity
 				var entity = (Entity) trans.GetObject(objectId, OpenMode.ForRead);
@@ -312,7 +315,7 @@ namespace SPMTool.AutoCAD
 		public static TypedValue[] ReadXData(Entity entity)
 		{
 			// Read the XData and get the necessary data
-			ResultBuffer rb = entity.GetXDataForApplication(Current.appName);
+			ResultBuffer rb = entity.GetXDataForApplication(DataBase.AppName);
 
 			return
 				rb.AsArray();
@@ -321,7 +324,7 @@ namespace SPMTool.AutoCAD
 		public static TypedValue[] ReadXData(ObjectId objectId)
 		{
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Get the NOD in the database
 				var entity = (Entity) trans.GetObject(objectId, OpenMode.ForRead);
@@ -335,10 +338,10 @@ namespace SPMTool.AutoCAD
 		public static void SaveObjectDictionary(string name, ResultBuffer data, bool overwrite = true)
 		{
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Get the NOD in the database
-				var nod = (DBDictionary) trans.GetObject(Current.nod, OpenMode.ForWrite);
+				var nod = (DBDictionary) trans.GetObject(DataBase.Nod, OpenMode.ForWrite);
 
 				// Create and add data to an Xrecord
 				Xrecord xRec = new Xrecord();
@@ -361,10 +364,10 @@ namespace SPMTool.AutoCAD
 		public static TypedValue[] ReadDictionaryEntry(string name, bool fullName = true)
 		{
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Get the NOD in the database
-				var nod = (DBDictionary) trans.GetObject(Current.nod, OpenMode.ForRead);
+				var nod = (DBDictionary) trans.GetObject(DataBase.Nod, OpenMode.ForRead);
 
 				// Check if it exists as full name
 				if (fullName && nod.Contains(name))
@@ -402,10 +405,10 @@ namespace SPMTool.AutoCAD
 			var resList = new List<ResultBuffer>();
 
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Get the NOD in the database
-				var nod = (DBDictionary)trans.GetObject(Current.nod, OpenMode.ForRead);
+				var nod = (DBDictionary)trans.GetObject(DataBase.Nod, OpenMode.ForRead);
 
 				// Check if name contains
 				foreach (var entry in nod)
@@ -427,26 +430,28 @@ namespace SPMTool.AutoCAD
 			return null;
 		}
 
-		public static void SaveStringerData(Stringer stringer)
+		public static void SaveStringerData(Stringer stringer) => SaveStringerData(stringer.ObjectId, stringer.Geometry, stringer.Reinforcement);
+
+		public static void SaveStringerData(ObjectId objectId, StringerGeometry geometry, UniaxialReinforcement reinforcement)
 		{
 			// Start a transaction
-			using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
 			{
 				// Open the selected object for read
-				Entity ent = (Entity)trans.GetObject(stringer.ObjectId, OpenMode.ForWrite);
+				Entity ent = (Entity)trans.GetObject(objectId, OpenMode.ForWrite);
 
 				// Access the XData as an array
 				TypedValue[] data = ReadXData(ent);
 
 				// Set the new geometry
-				data[(int)XData.Stringer.Width]     = new TypedValue((int)DxfCode.ExtendedDataReal, stringer.Width);
-				data[(int)XData.Stringer.Height]    = new TypedValue((int)DxfCode.ExtendedDataReal, stringer.Height);
+				data[(int)XData.Stringer.Width] = new TypedValue((int)DxfCode.ExtendedDataReal,  geometry.Width);
+				data[(int)XData.Stringer.Height] = new TypedValue((int)DxfCode.ExtendedDataReal, geometry.Height);
 
 				// Save reinforcement
-				data[(int) XData.Stringer.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, stringer.Reinforcement?.NumberOfBars         ?? 0);
-				data[(int) XData.Stringer.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal,      stringer.Reinforcement?.BarDiameter          ?? 0); 
-				data[(int) XData.Stringer.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal,      stringer.Reinforcement?.Steel?.YieldStress   ?? 0);
-				data[(int) XData.Stringer.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal,      stringer.Reinforcement?.Steel?.ElasticModule ?? 0);
+				data[(int)XData.Stringer.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataInteger32, reinforcement?.NumberOfBars         ?? 0);
+				data[(int)XData.Stringer.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.BarDiameter          ?? 0);
+				data[(int)XData.Stringer.Steelfy]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.Steel?.YieldStress   ?? 0);
+				data[(int)XData.Stringer.SteelEs]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.Steel?.ElasticModule ?? 0);
 
 				// Add the new XData
 				ent.XData = new ResultBuffer(data);
@@ -454,6 +459,8 @@ namespace SPMTool.AutoCAD
 				// Save the new object to the database
 				trans.Commit();
 			}
-		}
+
+        }
+
     }
 }

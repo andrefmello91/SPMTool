@@ -29,7 +29,7 @@ namespace SPMTool.AutoCAD
             Auxiliary.CreateLayer(Layers.ForceText, Colors.Yellow);
 
 			// Read units
-			var units = Config.ReadUnits();
+			var units = DataBase.Units;
 			string fAbrev = Force.GetAbbreviation(units.AppliedForces);
 			double scFctr = GlobalAuxiliary.ScaleFactor(units.Geometry);
 
@@ -65,10 +65,10 @@ namespace SPMTool.AutoCAD
 	            yForce = Force.From(yFn.Value, units.AppliedForces);
 
             // Start a transaction
-            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
             {
 	            // Open the Block table for read
-	            BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
+	            BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
 	            // Read the force block
 	            ObjectId ForceBlock = blkTbl[BlockName];
@@ -115,7 +115,7 @@ namespace SPMTool.AutoCAD
 					            Entity txtEnt = trans.GetObject(txtObj, OpenMode.ForRead) as Entity;
 
 					            // Access the XData as an array
-					            ResultBuffer txtRb = txtEnt.GetXDataForApplication(Current.appName);
+					            ResultBuffer txtRb = txtEnt.GetXDataForApplication(DataBase.AppName);
 					            TypedValue[] txtData = txtRb.AsArray();
 
 					            // Get the position of the node of the text
@@ -169,7 +169,7 @@ namespace SPMTool.AutoCAD
 					            }
 
 					            // Rotate and scale the block
-					            blkRef.TransformBy(Matrix3d.Rotation(rotAng, Current.ucs.Zaxis, insPt));
+					            blkRef.TransformBy(Matrix3d.Rotation(rotAng, DataBase.Ucs.Zaxis, insPt));
 								if(units.Geometry != LengthUnit.Millimeter)
 									blkRef.TransformBy(Matrix3d.Scaling(scFctr, insPt));
 
@@ -227,7 +227,7 @@ namespace SPMTool.AutoCAD
 					            }
 
 					            // Rotate and scale the block
-					            blkRef.TransformBy(Matrix3d.Rotation(rotAng, Current.ucs.Zaxis, insPt));
+					            blkRef.TransformBy(Matrix3d.Rotation(rotAng, DataBase.Ucs.Zaxis, insPt));
 					            if (units.Geometry != LengthUnit.Millimeter)
 						            blkRef.TransformBy(Matrix3d.Scaling(scFctr, insPt));
 
@@ -263,10 +263,10 @@ namespace SPMTool.AutoCAD
         // Method to create the force block
         public static void CreateForceBlock()
         {
-            using (Transaction trans = Current.db.TransactionManager.StartTransaction())
+            using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Current.db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
                 ObjectId ForceBlock = ObjectId.Null;
@@ -333,7 +333,7 @@ namespace SPMTool.AutoCAD
             var fData = new TypedValue[size];
 
             // Set values
-            fData[(int)ForceData.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  Current.appName);
+            fData[(int)ForceData.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
             fData[(int)ForceData.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
             fData[(int)ForceData.Value]     = new TypedValue((int)DxfCode.ExtendedDataReal,        forceValue);
             fData[(int)ForceData.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32,  (int)forceDirection);
@@ -351,7 +351,7 @@ namespace SPMTool.AutoCAD
             var fData = new TypedValue[size];
 
             // Set values
-            fData[(int)ForceTextData.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  Current.appName);
+            fData[(int)ForceTextData.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
             fData[(int)ForceTextData.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Force at nodes");
             fData[(int)ForceTextData.XPosition] = new TypedValue((int)DxfCode.ExtendedDataReal,         forcePosition.X);
             fData[(int)ForceTextData.YPosition] = new TypedValue((int)DxfCode.ExtendedDataReal,         forcePosition.Y);

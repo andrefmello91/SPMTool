@@ -1,28 +1,8 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
-using Autodesk.AutoCAD.Geometry;
-
-namespace SPMTool
+﻿namespace SPMTool
 {
 	namespace AutoCAD
 	{
 		// AutoCAD variables
-		public static class Current
-		{
-			// Get the current document, database and editor
-			public static Document     doc  = Application.DocumentManager.MdiActiveDocument;
-			public static Database     db   = doc.Database;
-			public static Editor       edtr = doc.Editor;
-			public static ObjectId     nod  = db.NamedObjectsDictionaryId;
-
-			// Get the coordinate system for transformations
-			public static Matrix3d ucsMatrix     = edtr.CurrentUserCoordinateSystem;
-			public static CoordinateSystem3d ucs = ucsMatrix.CoordinateSystem3d;
-
-			// Define the appName
-			public static string appName = "SPMTool";
-		}
 
 		// Color codes
 		public enum Colors : short

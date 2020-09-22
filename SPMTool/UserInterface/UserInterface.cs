@@ -21,6 +21,9 @@ namespace SPMTool
             new EventHandler(on_ApplicationIdle);
 
             AddAppEvent();
+
+            // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
+            Auxiliary.RegisterApp();
         }
 
         public void on_ApplicationIdle(object sender, EventArgs e)
@@ -111,7 +114,7 @@ namespace SPMTool
 			    RibbonControl ribbonControl = ComponentManager.Ribbon;
 
 			    // Check if the tab already exists
-			    RibbonTab tab = ribbonControl.FindTab(AutoCAD.Current.appName);
+			    RibbonTab tab = ribbonControl.FindTab(AutoCAD.DataBase.AppName);
 
 			    if (tab != null)
 			    {
@@ -181,8 +184,8 @@ namespace SPMTool
                 // Create the Ribbon Tab
                 RibbonTab Tab = new RibbonTab()
 			    {
-				    Title = Current.appName,
-				    Id    = Current.appName
+				    Title = DataBase.AppName,
+				    Id    = DataBase.AppName
 			    };
 			    ribbonControl.Tabs.Add(Tab);
 
@@ -733,7 +736,7 @@ namespace SPMTool
 						    if (!cmdText.EndsWith(";"))
 							    cmdText = cmdText + " ";
 
-						    Current.doc.SendStringToExecute(esc + cmdText, true, false, true);
+						    DataBase.Document.SendStringToExecute(esc + cmdText, true, false, true);
 					    }
 				    }
 			    }

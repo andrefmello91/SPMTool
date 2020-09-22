@@ -134,7 +134,7 @@ namespace SPMTool.UserInterface
 			// Get location and name
 			string
 				path   = Auxiliary.GetFilePath(),
-				name   = Path.GetFileNameWithoutExtension(Current.doc.Name),
+				name   = Path.GetFileNameWithoutExtension(DataBase.Document.Name),
 				svName = path + name + "_SPMResult.csv";
 
             // Export

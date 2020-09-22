@@ -26,7 +26,7 @@ namespace SPMTool.AutoCAD
 			int numPnls = pnls.Count;
 
 			// Display the number of updated elements
-			Current.edtr.WriteMessage("\n" + numNds + " nodes, " + numStrs + " stringers and " + numPnls +
+			DataBase.Editor.WriteMessage("\n" + numNds + " nodes, " + numStrs + " stringers and " + numPnls +
 			                          " panels updated.");
 		}
 

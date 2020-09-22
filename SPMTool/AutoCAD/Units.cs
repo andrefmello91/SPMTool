@@ -15,7 +15,7 @@ using StressUnit = UnitsNet.Units.PressureUnit;
 namespace SPMTool.AutoCAD
 {
 	// Concrete
-	public static partial class Config
+	public static class Config
 	{
 		// Unit names
 		private static readonly string Units = "Units";
@@ -45,11 +45,8 @@ namespace SPMTool.AutoCAD
 		[CommandMethod("SetUnits")]
 		public static void SetUnits()
 		{
-			// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-			Auxiliary.RegisterApp();
-
 			// Read data
-			var units = ReadUnits() ?? new Units();
+			var units = ReadUnits(false);
 
 			// Start the window of units configuration
 			var unitConfig = new UnitsConfig(units);
@@ -63,7 +60,7 @@ namespace SPMTool.AutoCAD
 			var data = new TypedValue[size];
 
 			// Set data
-			data[(int) UnitsData.AppName]          = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  Current.appName);
+			data[(int) UnitsData.AppName]          = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
 			data[(int) UnitsData.XDataStr]         = new TypedValue((int) DxfCode.ExtendedDataAsciiString, Units);
 			data[(int) UnitsData.Geometry]         = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Geometry);
 			data[(int) UnitsData.Reinforcement]    = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Reinforcement);
@@ -77,13 +74,21 @@ namespace SPMTool.AutoCAD
 			Auxiliary.SaveObjectDictionary(Units, new ResultBuffer(data));
 		}
 
-		// Read units on database
-		public static Units ReadUnits()
+        /// <summary>
+        /// Read units on database.
+        /// </summary>
+        /// <param name="setUnits">Units must be set by user?</param>
+        public static Units ReadUnits(bool setUnits = true)
 		{
 			TypedValue[] data = Auxiliary.ReadDictionaryEntry(Units);
 
 			if (data is null)
-				return null;
+			{
+				if (setUnits)
+					SetUnits();
+				else
+					return SPMTool.Units.Default;
+			}
 
 			// Get the parameters from XData
 			return
