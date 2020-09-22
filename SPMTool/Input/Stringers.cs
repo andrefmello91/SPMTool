@@ -11,7 +11,7 @@ using Material.Reinforcement;
 using SPM.Elements;
 using SPMTool.AutoCAD;
 using UnitsNet;
-using static SPMTool.AutoCAD.Current;
+using static SPMTool.AutoCAD.DataBase;
 
 namespace SPMTool.Input
 {
@@ -61,7 +61,7 @@ namespace SPMTool.Input
             var line = (Line) objectId.ToDBObject();
 
             // Read the XData and get the necessary data
-            var data = line.ReadXData(appName);
+            var data = line.ReadXData(AppName);
 
             // Get the Stringer number
             int number = data[(int)XData.Stringer.Number].ToInt();

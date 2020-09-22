@@ -29,10 +29,10 @@ namespace SPMTool.Input
         public static InputData ReadInput(AnalysisType analysisType, out bool dataOk, out string message)
         {
 	        // Get units
-	        var units = GetUnits();
+	        var units = DataBase.Units;
 
             // Get concrete
-            var concrete = GetConcrete();
+            var concrete = DataBase.Concrete;
 			
 			// Read elements
 			var ndObjs  = Geometry.Node.UpdateNodes();
@@ -54,47 +54,14 @@ namespace SPMTool.Input
 			SetConditions(nodes);
 
 			// Get stringers and panels
-			var stringers = Stringers.Read(strObjs, units, concrete.parameters, concrete.constitutive, nodes, analysisType);
-			var panels    = Panels.Read(pnlObjs, units, concrete.parameters, concrete.constitutive, nodes, analysisType);
+			var stringers = Stringers.Read(strObjs, units, concrete.Parameters, concrete.Constitutive, nodes, analysisType);
+			var panels    = Panels.Read(pnlObjs, units, concrete.Parameters, concrete.Constitutive, nodes, analysisType);
 
 			// Generate input
 			dataOk  = true;
 			message = null;
 			return new InputData(nodes, stringers, panels, analysisType);
         }
-
-		/// <summary>
-        /// Get units saved.
-        /// </summary>
-        private static Units GetUnits()
-        {
-	        // Get units
-	        var units = ReadUnits();
-
-	        if (!(units is null))
-		        return units;
-
-			// Set units
-	        SetUnits();
-
-	        return ReadUnits();
-        }
-
-		/// <summary>
-        /// Get concrete saved.
-        /// </summary>
-		private static (Parameters parameters, Constitutive constitutive) GetConcrete()
-		{
-			// Get concrete
-			var concrete = ReadConcreteData();
-
-			if (concrete.HasValue)
-				return concrete.Value;
-
-			// Set concrete
-			SetConcreteParameters();
-			return ReadConcreteData().Value;
-		}
 
         /// <summary>
         /// Set constraints and forces to nodes
@@ -121,8 +88,8 @@ namespace SPMTool.Input
 				return null;
 
 			// Get concrete and units
-			var concrete = GetConcrete();
-			var units    = GetUnits();
+			var concrete = DataBase.Concrete;
+			var units    = DataBase.Units;
 
 			if (layer is Layers.IntNode || layer is Layers.ExtNode)
 				return Nodes.Read(entity.ObjectId, units);
@@ -131,10 +98,10 @@ namespace SPMTool.Input
 	        var nodes = Nodes.Read(Geometry.Node.UpdateNodes(units), units);
 
             if (layer is Layers.Stringer)
-		        return Stringers.Read(entity.ObjectId, units, concrete.parameters, concrete.constitutive, nodes);
+		        return Stringers.Read(entity.ObjectId, units, concrete.Parameters, concrete.Constitutive, nodes);
 
 	        if (layer is Layers.Panel)
-		        return Panels.Read(entity.ObjectId, units, concrete.parameters, concrete.constitutive, nodes);
+		        return Panels.Read(entity.ObjectId, units, concrete.Parameters, concrete.Constitutive, nodes);
 
 	        return null;
         }

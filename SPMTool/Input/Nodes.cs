@@ -11,7 +11,7 @@ using SPM.Elements;
 using SPMTool.AutoCAD;
 using UnitsNet;
 using static SPMTool.AutoCAD.Auxiliary;
-using static SPMTool.AutoCAD.Current;
+using static SPMTool.AutoCAD.DataBase;
 
 namespace SPMTool.Input
 {
@@ -52,7 +52,7 @@ namespace SPMTool.Input
 		    var ndPt = (DBPoint) objectId.ToDBObject();
 
 		    // Read the XData and get the necessary data
-		    var data = ndPt.ReadXData(appName);
+		    var data = ndPt.ReadXData(AppName);
 
 		    // Get the node number
 		    int number = data[(int)XData.Node.Number].ToInt();

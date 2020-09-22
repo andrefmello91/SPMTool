@@ -11,7 +11,7 @@ using Material.Reinforcement;
 using SPM.Elements;
 using SPMTool.AutoCAD;
 using static SPMTool.AutoCAD.Auxiliary;
-using static SPMTool.AutoCAD.Current;
+using static SPMTool.AutoCAD.DataBase;
 
 namespace SPMTool.Input
 {
@@ -60,7 +60,7 @@ namespace SPMTool.Input
             var pnl = (Solid) objectId.ToDBObject();
 
             // Read the XData and get the necessary data
-            var pnlData = pnl.ReadXData(appName);
+            var pnlData = pnl.ReadXData(AppName);
 
             // Get the panel parameters
             var number = pnlData[(int)XData.Panel.Number].ToInt();

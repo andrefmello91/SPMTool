@@ -7,7 +7,7 @@ using SPM.Elements;
 using ForceData = SPMTool.XData.Force;
 using SupportData = SPMTool.XData.Support;
 using static SPMTool.AutoCAD.Auxiliary;
-using static SPMTool.AutoCAD.Current;
+using static SPMTool.AutoCAD.DataBase;
 
 namespace SPMTool.Input
 {
@@ -61,7 +61,7 @@ namespace SPMTool.Input
         public static Force ReadForce(BlockReference forceBlock)
         {
 	        // Read the XData and get the necessary data
-	        var data = forceBlock.ReadXData(appName);
+	        var data = forceBlock.ReadXData(AppName);
 
 	        // Get value and direction
 	        var value     = data[(int)ForceData.Value].ToDouble();
@@ -117,7 +117,7 @@ namespace SPMTool.Input
         public static Constraint ReadConstraint(BlockReference supportBlock)
         {
 	        // Read the XData and get the necessary data
-	        var data = supportBlock.ReadXData(appName);
+	        var data = supportBlock.ReadXData(AppName);
 
 	        // Get the direction
 	        return (Constraint)data[(int)SupportData.Direction].ToInt();
