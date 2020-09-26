@@ -39,7 +39,7 @@ namespace SPMTool.AutoCAD
             CreateSupportBlocks();
 
 	        // Get all the supports in the model
-	        ObjectIdCollection sprts = Auxiliary.GetEntitiesOnLayer(Layers.Support);
+	        ObjectIdCollection sprts = Auxiliary.GetObjectsOnLayer(Layers.Support);
 
 	        // Request objects to be selected in the drawing area
 	        var nds = UserInput.SelectNodes("Select nodes to add support conditions:", Node.NodeType.External);
@@ -65,7 +65,7 @@ namespace SPMTool.AutoCAD
 	        string support = supn.Value.keyword;
 
 	        // Start a transaction
-	        using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+	        using (Transaction trans = DataBase.StartTransaction())
 	        {
 		        // Open the Block table for read
 		        BlockTable blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
@@ -152,7 +152,7 @@ namespace SPMTool.AutoCAD
         public static void CreateSupportBlocks()
         {
             // Start a transaction
-            using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+            using (Transaction trans = DataBase.StartTransaction())
             {
                 // Open the Block table for read
                 BlockTable blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);

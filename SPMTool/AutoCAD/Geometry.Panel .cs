@@ -5,9 +5,12 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using Extensions.AutoCAD;
+using Extensions.Number;
+using SPM.Elements;
+using SPMTool.Global;
 using UnitsNet;
 using PanelData = SPMTool.XData.Panel;
-using NodeType  = SPMTool.Elements.Node.NodeType;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Panel))]
 
@@ -26,7 +29,7 @@ namespace SPMTool.AutoCAD
 			public static readonly string PanelLayer = Layers.Panel.ToString();
 
 			// Width database
-			private static string PnlW = "PnlW";
+			private static readonly string PnlW = "PnlW";
 
 			// Vertices implementation
 			public class Vertices : Tuple<Point3d, Point3d, Point3d, Point3d>
@@ -157,13 +160,13 @@ namespace SPMTool.AutoCAD
 				var newStrList = new List<(Point3d start, Point3d end)>();
 
 				// Access the stringers in the model
-				ObjectIdCollection strs = Auxiliary.GetEntitiesOnLayer(Layers.Stringer);
+				ObjectIdCollection strs = Auxiliary.GetObjectsOnLayer(Layers.Stringer);
 
 				// Access the internal nodes in the model
-				ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
+				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layers.IntNode);
 
 				// Start a transaction
-				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.StartTransaction())
 				{
 					// Get the selection set and analyse the elements
 					foreach (DBObject obj in pnls)
@@ -283,7 +286,7 @@ namespace SPMTool.AutoCAD
 							}
 
 							else // panel is not rectangular
-								DataBase.Editor.WriteMessage("\nPanel " + pnlNum + " is not rectangular");
+								DataBase.Editor.WriteMessage($"\nPanel {pnlNum} is not rectangular");
 					}
 
 					// Save the new object to the database
@@ -321,8 +324,7 @@ namespace SPMTool.AutoCAD
 				var units = DataBase.Units;
 
                 // Request objects to be selected in the drawing area
-                var pnls = UserInput.SelectPanels(
-					"Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)");
+                var pnls = UserInput.SelectPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)");
 
 				if (pnls is null)
 					return;
@@ -334,7 +336,7 @@ namespace SPMTool.AutoCAD
 					return;
 
 				// Start a transaction
-				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+				using (var trans = DataBase.StartTransaction())
 				{
 					foreach (DBObject pnl in pnls)
 					{
@@ -360,7 +362,7 @@ namespace SPMTool.AutoCAD
             private static double? GetPanelGeometry(Units units)
             {
                 // Get saved reinforcement options
-                var savedGeo = ReadPanelGeometry();
+                var savedGeo = DataBase.SavedPanelWidth;
 
                 // Get unit abreviation
                 var dimAbrev = Length.GetAbbreviation(units.Geometry);
@@ -369,16 +371,13 @@ namespace SPMTool.AutoCAD
                 if (savedGeo != null)
                 {
 					// Get the options
-					var options = new List<string>();
-
-					for (int i = 0; i < savedGeo.Length; i ++)
-						options.Add(units.ConvertFromMillimeter(savedGeo[i], units.Geometry).ToString());
+					var options = savedGeo.Select(t => $"{t.ConvertFromMillimeter(units.Geometry):0.00}").ToList();
 
 					// Add option to set new reinforcement
 					options.Add("New");
 
                     // Get string result
-                    var res = UserInput.SelectKeyword("Choose panel width (" + dimAbrev + ") or add a new one:", options.ToArray(), options[0]);
+                    var res = UserInput.SelectKeyword($"Choose panel width ({dimAbrev}) or add a new one:", options.ToArray(), options[0]);
 
                     if (!res.HasValue)
 	                    return null;
@@ -391,84 +390,34 @@ namespace SPMTool.AutoCAD
                 }
 
                 // New reinforcement
-                double def = units.ConvertFromMillimeter(100, units.Geometry);
+                double def = 100.ConvertFromMillimeter(units.Geometry);
                 var widthn = UserInput.GetDouble("Input width (" + dimAbrev + ") for selected panels:", def);
 
 	            if (!widthn.HasValue)
 		            return null;
 
-	            var width = units.ConvertToMillimeter(widthn.Value, units.Geometry);
+	            var width = widthn.Value.Convert(units.Geometry);
 
 	            // Save geometry
-	            SavePanelGeometry(width);
+	            DataBase.Save(width);
 
 	            return width;
-            }
-
-            // Save geometry configuration on database
-            private static void SavePanelGeometry(double width)
-            {
-	            // Get the name to save
-	            string name = PnlW + width;
-
-	            // Save the variables on the Xrecord
-	            using (ResultBuffer rb = new ResultBuffer())
-	            {
-		            rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName)); // 0
-		            rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));           // 1
-		            rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, width));            // 2
-
-		            // Create the entry in the NOD if it doesn't exist
-		            Auxiliary.SaveObjectDictionary(name, rb, false);
-	            }
-            }
-
-            // Read stringer geometry on database
-            private static double[] ReadPanelGeometry()
-            {
-                // Create a list of reinforcement
-                var geoList = new List<double>();
-
-				// Get dictionary entries
-				var entries = Auxiliary.ReadDictionaryEntries(PnlW);
-
-				if (entries is null)
-					return null;
-
-				foreach (var entry in entries)
-				{
-					// Read data
-					var data = entry.AsArray();
-
-					double
-						w = Convert.ToDouble(data[2].Value);
-
-					// Add to the list
-					geoList.Add(w);
-				}
-
-                if (geoList.Count > 0)
-                    return
-                        geoList.ToArray();
-
-                // None
-                return null;
             }
 
             // Update the panel numbers on the XData of each panel in the model and return the collection of panels
             public static ObjectIdCollection UpdatePanels()
 			{
 				// Get the internal nodes of the model
-				ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
+				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layers.IntNode);
 
 				// Create the panels collection and initialize getting the elements on node layer
-				ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.Panel);
+				ObjectIdCollection pnls = Auxiliary.GetObjectsOnLayer(Layers.Panel);
 
 				// Create a point collection
 				List<Point3d> cntrPts = new List<Point3d>();
 
 				// Start a transaction
-				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.StartTransaction())
 				{
 					// Open the Block table for read
 					BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
@@ -593,7 +542,7 @@ namespace SPMTool.AutoCAD
 			public static List<Vertices> ListOfPanelVertices()
 			{
 				// Get the stringers in the model
-				ObjectIdCollection pnls = Auxiliary.GetEntitiesOnLayer(Layers.Panel);
+				ObjectIdCollection pnls = Auxiliary.GetObjectsOnLayer(Layers.Panel);
 
 				// Initialize a list
 				var pnlList = new List<Vertices>();
@@ -601,7 +550,7 @@ namespace SPMTool.AutoCAD
 				if (pnls.Count > 0)
 				{
 					// Start a transaction
-					using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+					using (Transaction trans = DataBase.StartTransaction())
 					{
 						foreach (ObjectId obj in pnls)
 						{
@@ -653,7 +602,7 @@ namespace SPMTool.AutoCAD
 			public static Solid ReadPanel(ObjectId objectId, OpenMode openMode = OpenMode.ForRead)
 			{
 				// Start a transaction
-				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.StartTransaction())
 				{
 					// Read as a solid
 					return 

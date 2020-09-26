@@ -21,7 +21,7 @@ namespace SPMTool.AutoCAD
 		public static void RegisterApp()
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Open the Registered Applications table for read
 				RegAppTable regAppTbl =
@@ -64,7 +64,7 @@ namespace SPMTool.AutoCAD
 			string layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Open the Layer table for read
 				LayerTable lyrTbl = trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead) as LayerTable;
@@ -104,7 +104,7 @@ namespace SPMTool.AutoCAD
 			string layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Open the Layer table for read
 				LayerTable lyrTbl = trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead) as LayerTable;
@@ -138,7 +138,7 @@ namespace SPMTool.AutoCAD
 			string layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Open the Layer table for read
 				LayerTable lyrTbl = trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead) as LayerTable;
@@ -168,7 +168,7 @@ namespace SPMTool.AutoCAD
 			string layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Open the Layer table for read
 				var lyrTbl = (LayerTable)trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead);
@@ -191,7 +191,7 @@ namespace SPMTool.AutoCAD
 		}
 
 		// This method select all objects on a determined layer
-		public static ObjectIdCollection GetEntitiesOnLayer(Layers layer)
+		public static ObjectIdCollection GetObjectsOnLayer(Layers layer)
 		{
 			// Get layer name
 			string layerName = layer.ToString();
@@ -220,7 +220,7 @@ namespace SPMTool.AutoCAD
 			if (entity != null)
 			{
 				// Start a transaction
-				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.StartTransaction())
 				{
 					// Open the Block table for read
 					var blkTbl = (BlockTable) trans.GetObject(AutoCAD.DataBase.Database.BlockTableId, OpenMode.ForRead);
@@ -242,7 +242,7 @@ namespace SPMTool.AutoCAD
 		public static void EraseObjects(ObjectIdCollection objects)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				foreach (ObjectId obj in objects)
 				{
@@ -265,7 +265,7 @@ namespace SPMTool.AutoCAD
 		public static DBObject ReadDBObject(ObjectId objectId)
 		{
 			// Start a transaction
-			using (var trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
 				// Read the object as a point
 				return trans.GetObject(objectId, OpenMode.ForRead);
 		}
@@ -278,7 +278,7 @@ namespace SPMTool.AutoCAD
         public static Layers ReadObjectLayer(ObjectId objectId)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Get the entity
 				var entity = (Entity) trans.GetObject(objectId, OpenMode.ForRead);
@@ -305,7 +305,7 @@ namespace SPMTool.AutoCAD
         public static void EraseObjects(Layers layer)
 		{
 			// Get objects
-			var objs = GetEntitiesOnLayer(layer);
+			var objs = GetObjectsOnLayer(layer);
 
 			if (objs.Count > 0)
 				EraseObjects(objs);
@@ -324,7 +324,7 @@ namespace SPMTool.AutoCAD
 		public static TypedValue[] ReadXData(ObjectId objectId)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Get the NOD in the database
 				var entity = (Entity) trans.GetObject(objectId, OpenMode.ForRead);
@@ -338,7 +338,7 @@ namespace SPMTool.AutoCAD
 		public static void SaveObjectDictionary(string name, ResultBuffer data, bool overwrite = true)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Get the NOD in the database
 				var nod = (DBDictionary) trans.GetObject(DataBase.Nod, OpenMode.ForWrite);
@@ -364,7 +364,7 @@ namespace SPMTool.AutoCAD
 		public static TypedValue[] ReadDictionaryEntry(string name, bool fullName = true)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Get the NOD in the database
 				var nod = (DBDictionary) trans.GetObject(DataBase.Nod, OpenMode.ForRead);
@@ -405,7 +405,7 @@ namespace SPMTool.AutoCAD
 			var resList = new List<ResultBuffer>();
 
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Get the NOD in the database
 				var nod = (DBDictionary)trans.GetObject(DataBase.Nod, OpenMode.ForRead);
@@ -435,7 +435,7 @@ namespace SPMTool.AutoCAD
 		public static void SaveStringerData(ObjectId objectId, StringerGeometry geometry, UniaxialReinforcement reinforcement)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Open the selected object for read
 				Entity ent = (Entity)trans.GetObject(objectId, OpenMode.ForWrite);

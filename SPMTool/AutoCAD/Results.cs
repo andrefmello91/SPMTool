@@ -55,7 +55,7 @@ namespace SPMTool.AutoCAD
 			Auxiliary.EraseObjects(Layers.TensilePanelStress);
 
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Open the Block table for read
 				BlockTable blkTbl = trans.GetObject(AutoCAD.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
@@ -230,7 +230,7 @@ namespace SPMTool.AutoCAD
 			Auxiliary.CreateLayer(Layers.StringerForce, Colors.Grey);
 
 			// Erase all the Stringer forces in the drawing
-			ObjectIdCollection strFs = Auxiliary.GetEntitiesOnLayer(Layers.StringerForce);
+			ObjectIdCollection strFs = Auxiliary.GetObjectsOnLayer(Layers.StringerForce);
 			if (strFs.Count > 0) 
 				Auxiliary.EraseObjects(strFs);
 
@@ -238,7 +238,7 @@ namespace SPMTool.AutoCAD
 			var scFctr = GlobalAuxiliary.ScaleFactor(units.Geometry);
 
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Get the stringers stiffness matrix and add to the global stiffness matrix
 				foreach (var stringer in stringers)
@@ -443,7 +443,7 @@ namespace SPMTool.AutoCAD
 			Auxiliary.LayerOff(Layers.Displacements);
 
 			// Erase all the displaced objects in the drawing
-			ObjectIdCollection dispObjs = Auxiliary.GetEntitiesOnLayer(Layers.Displacements);
+			ObjectIdCollection dispObjs = Auxiliary.GetObjectsOnLayer(Layers.Displacements);
 			if (dispObjs.Count > 0)
 				Auxiliary.EraseObjects(dispObjs);
 
@@ -454,7 +454,7 @@ namespace SPMTool.AutoCAD
 			List<Point3d> dispNds = new List<Point3d>();
 
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				foreach (var str in stringers)
 				{
@@ -541,7 +541,7 @@ namespace SPMTool.AutoCAD
 		private static void SetDisplacements(Node[] nodes)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Get the stringers stifness matrix and add to the global stifness matrix
 				foreach (var nd in nodes)
@@ -571,7 +571,7 @@ namespace SPMTool.AutoCAD
         private static void CreatePanelShearBlock()
         {
             // Start a transaction
-            using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+            using (Transaction trans = DataBase.StartTransaction())
             {
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
@@ -656,7 +656,7 @@ namespace SPMTool.AutoCAD
         private static void CreatePanelStressesBlock()
         {
             // Start a transaction
-            using (Transaction trans = AutoCAD.DataBase.Database.TransactionManager.StartTransaction())
+            using (Transaction trans = AutoCAD.DataBase.StartTransaction())
             {
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(AutoCAD.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;

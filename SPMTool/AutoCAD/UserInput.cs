@@ -5,7 +5,7 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using NodeType = SPMTool.Elements.Node.NodeType;
+using SPM.Elements;
 
 namespace SPMTool.AutoCAD
 {
@@ -45,7 +45,7 @@ namespace SPMTool.AutoCAD
 					return null;
 
 				// Start a transaction
-				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.StartTransaction())
 				{
 					// Get the entity for read
 					Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
@@ -82,7 +82,7 @@ namespace SPMTool.AutoCAD
 			if (set.Count > 0)
 			{
 				// Start a transaction
-				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.StartTransaction())
 				{
 					// Get the objects in the selection and add to the collection only the external nodes
 					foreach (SelectedObject obj in set)

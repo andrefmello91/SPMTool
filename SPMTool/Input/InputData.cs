@@ -35,9 +35,9 @@ namespace SPMTool.Input
             var concrete = DataBase.Concrete;
 			
 			// Read elements
-			var ndObjs  = Geometry.Node.UpdateNodes();
-			var strObjs = Geometry.Stringer.UpdateStringers();
-			var pnlObjs = Geometry.Panel.UpdatePanels();
+			var ndObjs  = DataBase.NodeCollection;
+			var strObjs = DataBase.StringerCollection;
+			var pnlObjs = DataBase.PanelCollection;
 
 			// Verify if there is stringers and nodes at least
 			if (ndObjs.Count == 0 || strObjs.Count == 0)
@@ -48,7 +48,7 @@ namespace SPMTool.Input
 			}
 
 			// Get nodes
-			var nodes     = Nodes.Read(ndObjs, units);
+			var nodes = Nodes.Read(ndObjs, units);
 
 			// Set supports and forces
 			SetConditions(nodes);
@@ -69,10 +69,8 @@ namespace SPMTool.Input
         /// <param name="nodes"><see cref="Array"/> of nodes of model.</param>
         private static void SetConditions(Node[] nodes)
 		{
-			var forces   = GetEntitiesOnLayer(Layers.Force);
-			var supports = GetEntitiesOnLayer(Layers.Support);
-			Conditions.SetForces(forces, nodes);
-			Conditions.SetConstraints(supports, nodes);
+			Conditions.SetForces(DataBase.ForceCollection, nodes);
+			Conditions.SetConstraints(DataBase.SupportCollection, nodes);
 		}
 
 		/// <summary>
@@ -95,7 +93,7 @@ namespace SPMTool.Input
 				return Nodes.Read(entity.ObjectId, units);
 
 	        // Read nodes
-	        var nodes = Nodes.Read(Geometry.Node.UpdateNodes(units), units);
+	        var nodes = Nodes.Read(DataBase.NodeCollection, units);
 
             if (layer is Layers.Stringer)
 		        return Stringers.Read(entity.ObjectId, units, concrete.Parameters, concrete.Constitutive, nodes);

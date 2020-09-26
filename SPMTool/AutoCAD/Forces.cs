@@ -37,10 +37,10 @@ namespace SPMTool.AutoCAD
             CreateForceBlock();
 
             // Get all the force blocks in the model
-            ObjectIdCollection fcs = Auxiliary.GetEntitiesOnLayer(Layers.Force);
+            ObjectIdCollection fcs = Auxiliary.GetObjectsOnLayer(Layers.Force);
 
             // Get all the force texts in the model
-            ObjectIdCollection fcTxts = Auxiliary.GetEntitiesOnLayer(Layers.ForceText);
+            ObjectIdCollection fcTxts = Auxiliary.GetObjectsOnLayer(Layers.ForceText);
 
             // Request objects to be selected in the drawing area
             var nds = UserInput.SelectNodes("Select nodes to add load:", Node.NodeType.External);
@@ -65,7 +65,7 @@ namespace SPMTool.AutoCAD
 	            yForce = Force.From(yFn.Value, units.AppliedForces);
 
             // Start a transaction
-            using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+            using (Transaction trans = DataBase.StartTransaction())
             {
 	            // Open the Block table for read
 	            BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
@@ -263,7 +263,7 @@ namespace SPMTool.AutoCAD
         // Method to create the force block
         public static void CreateForceBlock()
         {
-            using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+            using (Transaction trans = DataBase.StartTransaction())
             {
                 // Open the Block table for read
                 BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;

@@ -109,7 +109,7 @@ namespace SPMTool.AutoCAD
 				ObjectIdCollection nds = AllNodes();
 
 				// Start a transaction
-				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.StartTransaction())
 				{
 					// Get the list of nodes ordered
 					var ndList = NodePositions(NodeType.All);
@@ -175,16 +175,16 @@ namespace SPMTool.AutoCAD
 					nds = AllNodes();
 
 				if (nodeType == NodeType.Internal)
-					nds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
+					nds = Auxiliary.GetObjectsOnLayer(Layers.IntNode);
 
 				if (nodeType == NodeType.External)
-					nds = Auxiliary.GetEntitiesOnLayer(Layers.ExtNode);
+					nds = Auxiliary.GetObjectsOnLayer(Layers.ExtNode);
 
 				// Create a point collection
 				var pts = new List<Point3d>();
 
 				// Start a transaction
-				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.StartTransaction())
 				{
 					foreach (ObjectId ndObj in nds)
 					{
@@ -203,8 +203,8 @@ namespace SPMTool.AutoCAD
 			public static ObjectIdCollection AllNodes()
 			{
 				// Create the nodes collection and initialize getting the elements on node layer
-				ObjectIdCollection extNds = Auxiliary.GetEntitiesOnLayer(Layers.ExtNode);
-				ObjectIdCollection intNds = Auxiliary.GetEntitiesOnLayer(Layers.IntNode);
+				ObjectIdCollection extNds = Auxiliary.GetObjectsOnLayer(Layers.ExtNode);
+				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layers.IntNode);
 
 				// Create a unique collection for all the nodes
 				ObjectIdCollection nds = new ObjectIdCollection();
@@ -225,7 +225,7 @@ namespace SPMTool.AutoCAD
 				int ndNum = 0;
 
 				// Start a transaction
-				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.StartTransaction())
 				{
 					// Compare to the nodes collection
 					foreach (ObjectId ndObj in nodes)
@@ -275,7 +275,7 @@ namespace SPMTool.AutoCAD
             public static DBPoint ReadNode(ObjectId objectId, OpenMode openMode = OpenMode.ForRead)
 			{
 				// Start a transaction
-				using (Transaction trans = DataBase.Database.TransactionManager.StartTransaction())
+				using (Transaction trans = DataBase.StartTransaction())
 				{
 					// Read the object as a point
 					return
