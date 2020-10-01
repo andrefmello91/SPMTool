@@ -7,7 +7,9 @@ using Autodesk.AutoCAD.Geometry;
 using Extensions.Number;
 using SPM.Analysis;
 using SPM.Elements;
+using SPMTool.Database;
 using SPMTool.Input;
+using SPMTool.Model;
 using SPMTool.UserInterface;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
@@ -58,7 +60,7 @@ namespace SPMTool.AutoCAD
 			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Open the Block table for read
-				BlockTable blkTbl = trans.GetObject(AutoCAD.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
+				BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
 				// Read the object Ids of the support blocks
 				ObjectId shearBlock = blkTbl[ShearBlock];
@@ -180,7 +182,7 @@ namespace SPMTool.AutoCAD
 							// Rotate the block in theta angle
 							if (!stresses.Theta2.ApproxZero())
 							{
-								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, AutoCAD.DataBase.Ucs.Zaxis, cntrPt));
+								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, DataBase.Ucs.Zaxis, cntrPt));
 							}
 						}
 
@@ -656,10 +658,10 @@ namespace SPMTool.AutoCAD
         private static void CreatePanelStressesBlock()
         {
             // Start a transaction
-            using (Transaction trans = AutoCAD.DataBase.StartTransaction())
+            using (Transaction trans = DataBase.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(AutoCAD.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
                 ObjectId compStressBlock = ObjectId.Null;

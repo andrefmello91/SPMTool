@@ -9,13 +9,16 @@ using Extensions.AutoCAD;
 using Extensions.Number;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
+using SPMTool.AutoCAD;
+using SPMTool.Database;
 using SPMTool.Global;
+using SPMTool.Model;
 using UnitsNet;
 using StringerData = SPMTool.XData.Stringer;
 
-[assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Stringer))]
+[assembly: CommandClass(typeof(Geometry.Stringer))]
 
-namespace SPMTool.AutoCAD
+namespace SPMTool.Model
 {
 	// Geometry related commands
 	public partial class Geometry

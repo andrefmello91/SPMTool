@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -9,6 +10,7 @@ using Material;
 using Material.Reinforcement;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
+using SPMTool.Database;
 using SPMTool.Elements;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Auxiliary))]
@@ -78,7 +80,7 @@ namespace SPMTool.AutoCAD
 						lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, (short) color);
 
 						// Upgrade the Layer table for write
-						trans.GetObject(AutoCAD.DataBase.Database.LayerTableId, OpenMode.ForWrite);
+						trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForWrite);
 
 						// Append the new layer to the Layer table and the transaction
 						lyrTbl.Add(lyrTblRec);
@@ -194,7 +196,7 @@ namespace SPMTool.AutoCAD
 		public static ObjectIdCollection GetObjectsOnLayer(Layers layer)
 		{
 			// Get layer name
-			string layerName = layer.ToString();
+			var layerName = layer.ToString();
 
 			// Build a filter list so that only entities on the specified layer are selected
 			TypedValue[] tvs =
@@ -202,16 +204,12 @@ namespace SPMTool.AutoCAD
 				new TypedValue((int) DxfCode.LayerName, layerName)
 			};
 
-			SelectionFilter selFt = new SelectionFilter(tvs);
+			var selFt = new SelectionFilter(tvs);
 
 			// Get the entities on the layername
-			PromptSelectionResult selRes = DataBase.Editor.SelectAll(selFt);
+			var selRes = DataBase.Editor.SelectAll(selFt);
 
-			if (selRes.Status == PromptStatus.OK)
-				return
-					new ObjectIdCollection(selRes.Value.GetObjectIds());
-
-			return new ObjectIdCollection();
+			return selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 ? new ObjectIdCollection(selRes.Value.GetObjectIds()) : null;
 		}
 
 		// Add objects to drawing
@@ -223,7 +221,7 @@ namespace SPMTool.AutoCAD
 				using (Transaction trans = DataBase.StartTransaction())
 				{
 					// Open the Block table for read
-					var blkTbl = (BlockTable) trans.GetObject(AutoCAD.DataBase.Database.BlockTableId, OpenMode.ForRead);
+					var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
 
 					// Open the Block table record Model space for write
 					var blkTblRec = (BlockTableRecord) trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
@@ -341,7 +339,7 @@ namespace SPMTool.AutoCAD
 			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Get the NOD in the database
-				var nod = (DBDictionary) trans.GetObject(DataBase.Nod, OpenMode.ForWrite);
+				var nod = (DBDictionary) trans.GetObject(DataBase.NodId, OpenMode.ForWrite);
 
 				// Create and add data to an Xrecord
 				Xrecord xRec = new Xrecord();
@@ -367,7 +365,7 @@ namespace SPMTool.AutoCAD
 			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Get the NOD in the database
-				var nod = (DBDictionary) trans.GetObject(DataBase.Nod, OpenMode.ForRead);
+				var nod = (DBDictionary) trans.GetObject(DataBase.NodId, OpenMode.ForRead);
 
 				// Check if it exists as full name
 				if (fullName && nod.Contains(name))
@@ -408,26 +406,22 @@ namespace SPMTool.AutoCAD
 			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Get the NOD in the database
-				var nod = (DBDictionary)trans.GetObject(DataBase.Nod, OpenMode.ForRead);
+				var nod = (DBDictionary)trans.GetObject(DataBase.NodId, OpenMode.ForRead);
 
 				// Check if name contains
 				foreach (var entry in nod)
 				{
-					if (entry.Key.Contains(name))
-					{
-						var xRec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+					if (!entry.Key.Contains(name))
+						continue;
 
-                        // Add data
-                        resList.Add(xRec.Data);
-					}
+					var xRec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+
+					// Add data
+					resList.Add(xRec.Data);
 				}
 			}
 
-			if (resList.Count > 0)
-				return
-					resList.ToArray();
-
-			return null;
+			return resList.Count > 0 ? resList.ToArray() : null;
 		}
 
 		public static void SaveStringerData(Stringer stringer) => SaveStringerData(stringer.ObjectId, stringer.Geometry, stringer.Reinforcement);

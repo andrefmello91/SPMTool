@@ -8,13 +8,16 @@ using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
 using Extensions.Number;
 using SPM.Elements;
+using SPMTool.AutoCAD;
+using SPMTool.Database;
 using SPMTool.Global;
+using SPMTool.Model;
 using UnitsNet;
 using PanelData = SPMTool.XData.Panel;
 
-[assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Panel))]
+[assembly: CommandClass(typeof(Geometry.Panel))]
 
-namespace SPMTool.AutoCAD
+namespace SPMTool.Model
 {
 	// Geometry related commands
 	public partial class Geometry

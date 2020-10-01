@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
@@ -8,10 +9,12 @@ using Extensions.AutoCAD;
 using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements.StringerProperties;
+using SPMTool.AutoCAD;
 using SPMTool.Global;
+using SPMTool.Model;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
-namespace SPMTool.AutoCAD
+namespace SPMTool.Database
 {
 	/// <summary>
     /// DataBase class.
@@ -31,7 +34,7 @@ namespace SPMTool.AutoCAD
         /// <summary>
         /// Get current <see cref="Autodesk.AutoCAD.DatabaseServices.Database"/>.
         /// </summary>
-        public static Database Database => Document.Database;
+        public static Autodesk.AutoCAD.DatabaseServices.Database Database => Document.Database;
 
         /// <summary>
         /// Get application <see cref="Autodesk.AutoCAD.EditorInput.Editor"/>.
@@ -39,9 +42,21 @@ namespace SPMTool.AutoCAD
         public static Editor Editor => Document.Editor;
 
         /// <summary>
+        /// Get Named Objects Dictionary for read.
+        /// </summary>
+        public static DBDictionary Nod
+        {
+	        get
+	        {
+		        using (var trans = StartTransaction())
+			        return (DBDictionary) trans.GetObject(NodId, OpenMode.ForRead);
+	        }
+        }
+
+        /// <summary>
         /// Get Named Objects <see cref="ObjectId"/>.
         /// </summary>
-        public static ObjectId Nod => Database.NamedObjectsDictionaryId;
+        public static ObjectId NodId => Database.NamedObjectsDictionaryId;
 
 		/// <summary>
         /// Get current user coordinate system.
@@ -61,7 +76,7 @@ namespace SPMTool.AutoCAD
 		/// <summary>
         /// Get <see cref="Concrete"/> saved in database.
         /// </summary>
-		public static Concrete Concrete => Material.ReadConcreteData();
+		public static Concrete Concrete => AutoCAD.Material.ReadConcreteData();
 
 		/// <summary>
         /// Get <see cref="Steel"/> objects saved in database.
@@ -87,31 +102,6 @@ namespace SPMTool.AutoCAD
         /// Get panel widths saved in database.
         /// </summary>
         public static double[] SavedPanelWidth => ReadPanelWidths();
-
-		/// <summary>
-        /// Get the collection of nodes in the model.
-        /// </summary>
-		public static ObjectIdCollection NodeCollection => Geometry.Node.UpdateNodes(Units);
-
-		/// <summary>
-        /// Get the collection of stringers in the model.
-        /// </summary>
-		public static ObjectIdCollection StringerCollection => Geometry.Stringer.UpdateStringers();
-
-		/// <summary>
-        /// Get the collection of panels in the model.
-        /// </summary>
-		public static ObjectIdCollection PanelCollection => Geometry.Panel.UpdatePanels();
-
-		/// <summary>
-		/// Get the collection of forces in the model.
-		/// </summary>
-		public static ObjectIdCollection ForceCollection => Auxiliary.GetObjectsOnLayer(Layers.Force);
-
-		/// <summary>
-		/// Get the collection of supports in the model.
-		/// </summary>
-		public static ObjectIdCollection SupportCollection => Auxiliary.GetObjectsOnLayer(Layers.Support);
 
 		/// <summary>
         /// Start a new transaction in <see cref="Database"/>.
@@ -236,32 +226,20 @@ namespace SPMTool.AutoCAD
         /// </summary>
         private static Steel[] ReadSteel()
         {
-	        // Create a list of reinforcement
-	        var stList = new List<Steel>();
-
 	        // Get dictionary entries
 	        var entries = Auxiliary.ReadDictionaryEntries("Steel");
 
 	        if (entries is null)
 		        return null;
 
-	        foreach (var entry in entries)
-	        {
-		        // Read data
-		        var data = entry.AsArray();
+	        // Create a list of steel
+	        var stList = (from r in entries
+		        let t   = r.AsArray()
+		        let fy  = t[2].ToDouble()
+		        let Es  = t[3].ToDouble()
+		        select new Steel(fy, Es)).ToArray();
 
-		        double
-			        fy = data[2].ToDouble(),
-			        Es = data[3].ToDouble();
-
-		        // Create new reinforcement
-		        var steel = new Steel(fy, Es);
-
-		        // Add to the list
-		        stList.Add(steel);
-	        }
-
-	        return stList.Count > 0 ? stList.ToArray() : null;
+	        return stList.Length > 0 ? stList.ToArray() : null;
         }
 
         /// <summary>
@@ -269,31 +247,20 @@ namespace SPMTool.AutoCAD
         /// </summary>
         private static UniaxialReinforcement[] ReadStringerReinforcement()
         {
-	        // Create a list of reinforcement
-	        var refList = new List<UniaxialReinforcement>();
-
 	        // Get dictionary entries
 	        var entries = Auxiliary.ReadDictionaryEntries("StrRef");
 
 	        if (entries is null)
 		        return null;
 
-	        foreach (var entry in entries)
-	        {
-		        // Read data
-		        var data = entry.AsArray();
+	        // Create a list of reinforcement
+	        var refList = (from r in entries
+		        let t   = r.AsArray()
+		        let num = t[2].ToInt()
+		        let phi = t[3].ToDouble()
+		        select new UniaxialReinforcement(num, phi, null)).ToArray();
 
-		        var num = data[2].ToInt();
-		        var phi = data[3].ToDouble();
-
-		        // Create new reinforcement
-		        var reinforcement = new UniaxialReinforcement(num, phi, null);
-
-		        // Add to the list
-		        refList.Add(reinforcement);
-	        }
-
-	        return refList.Count > 0 ? refList.ToArray() : null;
+	        return refList.Length > 0 ? refList.ToArray() : null;
         }
 
         /// <summary>
@@ -302,29 +269,19 @@ namespace SPMTool.AutoCAD
         /// <returns></returns>
         private static WebReinforcementDirection[] ReadPanelReinforcement()
         {
-            // Create a list of reinforcement
-            var refList = new List<WebReinforcementDirection>();
-
             // Get dictionary entries
             var entries = Auxiliary.ReadDictionaryEntries("PnlRef");
 
             if (entries is null)
                 return null;
 
-            foreach (var entry in entries)
-            {
-                // Read data
-                var data = entry.AsArray();
+            var refList = (from r in entries
+	            let t   = r.AsArray()
+	            let phi = t[2].ToDouble()
+	            let s   = t[3].ToDouble()
+	            select new WebReinforcementDirection(phi, s, null, 0, 0)).ToArray();
 
-                double
-                    phi = data[2].ToDouble(),
-                    s = data[3].ToDouble();
-
-                // Add to the list
-                refList.Add(new WebReinforcementDirection(phi, s, null, 0, 0));
-            }
-
-            return refList.Count > 0 ? refList.ToArray() : null;
+            return refList.Length > 0 ? refList.ToArray() : null;
         }
 
         /// <summary>
@@ -332,30 +289,20 @@ namespace SPMTool.AutoCAD
         /// </summary>
         private static StringerGeometry[] ReadStringerGeometries()
         {
-	        // Create a list of geometry
-	        var geoList = new List<StringerGeometry>();
-
 	        // Get dictionary entries
 	        var entries = Auxiliary.ReadDictionaryEntries("StrGeo");
 
 	        if (entries is null)
 		        return null;
 
-	        foreach (var entry in entries)
-	        {
-		        // Read data
-		        var data = entry.AsArray();
-
-		        double
-			        w = data[2].ToDouble(),
-			        h = data[3].ToDouble();
-
-		        // Add to the list
-		        geoList.Add(new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h));
-	        }
+	        var geoList = (from r in entries
+		        let t   = r.AsArray()
+		        let w   = t[2].ToDouble()
+		        let h   = t[3].ToDouble()
+		        select new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h)).ToArray();
 
 	        return
-		        geoList.Count > 0 ? geoList.ToArray() : null;
+		        geoList.Length > 0 ? geoList : null;
         }
 
         /// <summary>
@@ -363,28 +310,15 @@ namespace SPMTool.AutoCAD
         /// </summary>
         private static double[] ReadPanelWidths()
         {
-	        // Create a list of reinforcement
-	        var geoList = new List<double>();
-
 	        // Get dictionary entries
 	        var entries = Auxiliary.ReadDictionaryEntries("PnlW");
 
 	        if (entries is null)
 		        return null;
 
-	        foreach (var entry in entries)
-	        {
-		        // Read data
-		        var data = entry.AsArray();
+	        var geoList = entries.Select(entry => entry.AsArray()[2].ToDouble()).ToArray();
 
-		        var w = data[2].ToDouble();
-
-		        // Add to the list
-		        geoList.Add(w);
-	        }
-
-	        return geoList.Count > 0 ? geoList.ToArray() : null;
+	        return geoList.Length > 0 ? geoList : null;
         }
-
-    }
+	}
 }

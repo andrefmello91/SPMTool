@@ -4,6 +4,7 @@ using System.Threading;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
+using SPMTool.Database;
 using SPMTool.UserInterface;
 using UnitsNet.Units;
 using UnitsNet;

@@ -6,6 +6,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using SPM.Elements;
+using SPMTool.Database;
 
 namespace SPMTool.AutoCAD
 {

@@ -9,6 +9,8 @@ using Material.Concrete;
 using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.AutoCAD;
+using SPMTool.Database;
+using SPMTool.Model;
 using static SPMTool.AutoCAD.Auxiliary;
 using static SPMTool.AutoCAD.Material;
 using static SPMTool.AutoCAD.Config;

@@ -4,11 +4,14 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPM.Elements;
+using SPMTool.AutoCAD;
+using SPMTool.Database;
+using SPMTool.Model;
 using NodeData = SPMTool.XData.Node;
 
-[assembly: CommandClass(typeof(SPMTool.AutoCAD.Geometry.Node))]
+[assembly: CommandClass(typeof(Geometry.Node))]
 
-namespace SPMTool.AutoCAD
+namespace SPMTool.Model
 {
 	// Geometry related commands
 	public partial class Geometry

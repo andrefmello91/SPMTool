@@ -1,13 +1,20 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
-using SPMTool.Elements;
+using Extensions;
+using Extensions.AutoCAD;
+using Extensions.Number;
+using SPMTool.Database;
+using SPMTool.Model;
+using SPM.Elements;
 using UnitsNet.Units;
-using Force = UnitsNet.Force;
+using OnPlaneComponents;
 using ForceTextData  = SPMTool.XData.ForceText;
 using ForceData      = SPMTool.XData.Force;
-using ForceDirection = SPMTool.Elements.Force.ForceDirection;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Forces))]
 
@@ -30,252 +37,160 @@ namespace SPMTool.AutoCAD
 
 			// Read units
 			var units = DataBase.Units;
-			string fAbrev = Force.GetAbbreviation(units.AppliedForces);
-			double scFctr = GlobalAuxiliary.ScaleFactor(units.Geometry);
 
             // Check if the force block already exist. If not, create the blocks
             CreateForceBlock();
 
-            // Get all the force blocks in the model
-            ObjectIdCollection fcs = Auxiliary.GetObjectsOnLayer(Layers.Force);
-
-            // Get all the force texts in the model
-            ObjectIdCollection fcTxts = Auxiliary.GetObjectsOnLayer(Layers.ForceText);
-
             // Request objects to be selected in the drawing area
-            var nds = UserInput.SelectNodes("Select nodes to add load:", Node.NodeType.External);
-
-            if (nds == null)
-	            return;
-
-            // Ask the user set the load value in x direction:
-            var xFn = UserInput.GetDouble("Enter force (in " + fAbrev + ") in X direction(positive following axis direction)?", 0, true, true);
-
-            if (!xFn.HasValue)
-	            return;
-
-            // Ask the user set the load value in y direction:
-            var yFn = UserInput.GetDouble("Enter force (in " + fAbrev + ") in Y direction(positive following axis direction)?", 0, true, true);
-
-            if (!yFn.HasValue)
-	            return;
-
-            Force
-				xForce = Force.From(xFn.Value, units.AppliedForces),
-	            yForce = Force.From(yFn.Value, units.AppliedForces);
-
-            // Start a transaction
-            using (Transaction trans = DataBase.StartTransaction())
+            using (var nds = UserInput.SelectNodes("Select nodes to add load:", NodeType.External))
             {
-	            // Open the Block table for read
-	            BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
+	            if (nds is null)
+		            return;
 
-	            // Read the force block
-	            ObjectId ForceBlock = blkTbl[BlockName];
+	            // Get force from user
+	            var force = GetForceValue(units.AppliedForces);
 
-	            foreach (DBObject obj in nds)
-	            {
-                    // Open the selected object for read
-                    DBPoint nd = (DBPoint) trans.GetObject(obj.ObjectId, OpenMode.ForRead);
+	            if (!force.HasValue)
+		            return;
 
-			            Point3d ndPos = nd.Position;
+	            // Get node positions
+	            var positions = (from DBPoint nd in nds select nd.Position).ToArray();
 
-			            // Get the node coordinates
-			            double xPos = ndPos.X;
-			            double yPos = ndPos.Y;
 
-			            // Add the block to selected node at
-			            Point3d insPt = ndPos;
+	            // Erase blocks
+	            EraseForceBlocks(positions);
 
-			            // Check if there is a force block at the node position
-			            if (fcs.Count > 0)
-			            {
-				            foreach (ObjectId fcObj in fcs)
-				            {
-					            // Read as a block reference
-					            var fcBlk = (BlockReference) trans.GetObject(fcObj, OpenMode.ForRead);
-
-					            // Check if the position is equal to the selected node
-					            if (fcBlk.Position == ndPos)
-					            {
-						            fcBlk.UpgradeOpen();
-
-						            // Erase the force block
-						            fcBlk.Erase();
-					            }
-				            }
-			            }
-
-			            // Check if there is a force text at the node position
-			            if (fcTxts.Count > 0)
-			            {
-				            foreach (ObjectId txtObj in fcTxts)
-				            {
-					            // Read as text
-					            Entity txtEnt = trans.GetObject(txtObj, OpenMode.ForRead) as Entity;
-
-					            // Access the XData as an array
-					            ResultBuffer txtRb = txtEnt.GetXDataForApplication(DataBase.AppName);
-					            TypedValue[] txtData = txtRb.AsArray();
-
-					            // Get the position of the node of the text
-					            double ndX = Convert.ToDouble(txtData[(int) ForceTextData.XPosition].Value);
-					            double ndY = Convert.ToDouble(txtData[(int) ForceTextData.YPosition].Value);
-					            Point3d ndTxtPos = new Point3d(ndX, ndY, 0);
-
-					            // Check if the position is equal to the selected node
-					            if (ndTxtPos == ndPos)
-					            {
-						            // Erase the text
-						            txtEnt.UpgradeOpen();
-						            txtEnt.Erase();
-					            }
-				            }
-			            }
-
-			            // Insert the block into the current space
-			            // For forces in x
-			            if (xForce.Value != 0)
-			            {
-				            using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
-				            {
-					            // Append the block to drawing
-					            blkRef.Layer = ForceLayer;
-					            Auxiliary.AddObject(blkRef);
-
-					            // Get the force absolute value
-					            double xForceAbs = Math.Abs(xForce.Value);
-
-					            // Initialize the rotation angle and the text position
-					            double rotAng = 0;
-					            Point3d txtPos = new Point3d();
-
-					            if (xForce.Value > 0) // positive force in x
-					            {
-						            // Rotate 90 degress counterclockwise
-						            rotAng = Constants.PiOver2;
-
-						            // Set the text position
-						            txtPos = new Point3d(xPos - 200 * scFctr, yPos + 25 * scFctr, 0);
-					            }
-
-					            if (xForce.Value < 0) // negative force in x
-					            {
-						            // Rotate 90 degress clockwise
-						            rotAng = -Constants.PiOver2;
-
-						            // Set the text position
-						            txtPos = new Point3d(xPos + 75 * scFctr, yPos + 25 * scFctr, 0);
-					            }
-
-					            // Rotate and scale the block
-					            blkRef.TransformBy(Matrix3d.Rotation(rotAng, DataBase.Ucs.Zaxis, insPt));
-								if(units.Geometry != LengthUnit.Millimeter)
-									blkRef.TransformBy(Matrix3d.Scaling(scFctr, insPt));
-
-					            // Set XData to force block
-					            blkRef.XData = ForceXData(xForce.Newtons, (int) ForceDirection.X);
-
-					            // Define the force text
-					            DBText text = new DBText()
-					            {
-						            TextString = xForceAbs.ToString(),
-						            Position = txtPos,
-						            Height = 30 * scFctr,
-						            Layer = TxtLayer
-					            };
-
-					            // Append the text to drawing
-					            Auxiliary.AddObject(text);
-
-					            // Add the node position to the text XData
-					            text.XData = ForceTextXData(ndPos, (int) ForceDirection.X);
-				            }
-			            }
-
-			            // For forces in y
-			            if (yForce.Value != 0)
-			            {
-				            using (BlockReference blkRef = new BlockReference(insPt, ForceBlock))
-				            {
-					            // Append the block to drawing
-					            blkRef.Layer = ForceLayer;
-					            Auxiliary.AddObject(blkRef);
-
-					            // Get the force absolute value
-					            double yForceAbs = Math.Abs(yForce.Value);
-
-					            // Initialize the rotation angle and the text position
-					            double rotAng = 0;
-					            Point3d txtPos = new Point3d();
-
-					            if (yForce.Value > 0) // positive force in y
-					            {
-						            // Rotate 180 degress counterclockwise
-						            rotAng = Constants.Pi;
-
-						            // Set the text position
-						            txtPos = new Point3d(xPos + 25 * scFctr, yPos - 125 * scFctr, 0);
-					            }
-
-					            if (yForce.Value < 0) // negative force in y
-					            {
-						            // No rotation needed
-
-						            // Set the text position
-						            txtPos = new Point3d(xPos + 25 * scFctr, yPos + 100 * scFctr, 0);
-					            }
-
-					            // Rotate and scale the block
-					            blkRef.TransformBy(Matrix3d.Rotation(rotAng, DataBase.Ucs.Zaxis, insPt));
-					            if (units.Geometry != LengthUnit.Millimeter)
-						            blkRef.TransformBy(Matrix3d.Scaling(scFctr, insPt));
-
-								// Set XData to force block
-								blkRef.XData = ForceXData(yForce.Newtons, ForceDirection.Y);
-
-					            // Define the force text
-					            DBText text = new DBText()
-					            {
-						            TextString = yForceAbs.ToString(),
-						            Position = txtPos,
-						            Height = 30 * scFctr,
-						            Layer = TxtLayer
-					            };
-
-					            // Append the text to drawing
-					            Auxiliary.AddObject(text);
-
-					            // Add the node position to the text XData
-					            text.XData = ForceTextXData(ndPos, ForceDirection.Y);
-				            }
-			            }
-
-		            // If x or y forces are 0, the block is not added
-	            }
-
-	            // Save the new object to the database
-	            trans.Commit();
+	            // Add force blocks
+	            AddForceBlocks(positions, force.Value, units.Geometry);
             }
-
         }
 
-        // Method to create the force block
-        public static void CreateForceBlock()
+		/// <summary>
+        /// Get the force values from user.
+        /// </summary>
+        /// <param name="forceUnit">The current <see cref="ForceUnit"/>.</param>
+        private static Force? GetForceValue(ForceUnit forceUnit)
         {
-            using (Transaction trans = DataBase.StartTransaction())
-            {
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
+	        var fAbrev = forceUnit.Abbrev();
 
+            // Ask the user set the load value in x direction:
+            var xFn = UserInput.GetDouble($"Enter force (in {fAbrev}) in X direction(positive following axis direction)?", 0, true, true);
+
+	        if (!xFn.HasValue)
+		        return null;
+
+	        // Ask the user set the load value in y direction:
+	        var yFn = UserInput.GetDouble($"Enter force (in {fAbrev}) in Y direction(positive following axis direction)?", 0, true, true);
+
+	        if (!yFn.HasValue)
+		        return null;
+
+	        return new Force(xFn.Value, yFn.Value, forceUnit);
+        }
+
+		/// <summary>
+        /// Add the force blocks to the model.
+        /// </summary>
+        /// <param name="positions">The collection of nodes to add</param>
+        /// <param name="force"></param>
+        /// <param name="geometryUnit"></param>
+		private static void AddForceBlocks(IReadOnlyCollection<Point3d> positions, Force force, LengthUnit geometryUnit)
+		{
+			if (positions is null || positions.Count == 0)
+				return;
+
+			// Get scale factor
+			var scFctr = GlobalAuxiliary.ScaleFactor(geometryUnit);
+
+			// Start a transaction
+			using (var trans = DataBase.StartTransaction())
+				// Open the Block table for read
+			using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
+			{
+				// Read the force block
+				var forceBlock = blkTbl[BlockName];
+
+				foreach (var pos in positions)
+				{
+					double
+						xPos = pos.X,
+						yPos = pos.Y;
+
+					// Insert the block into the current space
+					// For forces in x
+					if (!force.IsComponentXZero)
+						AddForceBlock(force.ComponentX, Directions.X);
+					
+					// For forces in y
+					if (!force.IsComponentYZero)
+						AddForceBlock(force.ComponentY, Directions.Y);
+					
+					void AddForceBlock(double forceValue, Directions direction)
+					{
+						// Get rotation angle and the text position
+						var rotAng = direction is Directions.X
+							? forceValue > 0 ? Constants.PiOver2 : -Constants.PiOver2
+							: forceValue > 0 ? Constants.Pi : 0;
+
+						var txtPos = direction is Directions.X
+							? forceValue > 0 ? new Point3d(xPos - 200 * scFctr, yPos + 25 * scFctr, 0) : new Point3d(xPos + 75 * scFctr, yPos + 25 * scFctr, 0)
+							: forceValue > 0 ? new Point3d(xPos + 25 * scFctr, yPos - 125 * scFctr, 0) : new Point3d(xPos + 25 * scFctr, yPos + 100 * scFctr, 0);
+
+                        using (var blkRef = new BlockReference(pos, forceBlock))
+						{
+							// Append the block to drawing
+							blkRef.Layer = ForceLayer;
+							Auxiliary.AddObject(blkRef);
+
+							// Rotate and scale the block
+							if (!rotAng.ApproxZero())
+								blkRef.TransformBy(Matrix3d.Rotation(rotAng, DataBase.Ucs.Zaxis, pos));
+
+							if (geometryUnit != LengthUnit.Millimeter)
+								blkRef.TransformBy(Matrix3d.Scaling(scFctr, pos));
+
+							// Set XData to force block
+							blkRef.XData = ForceXData(forceValue.Convert(force.Unit), direction);
+
+							// Define the force text
+							var text = new DBText
+							{
+								TextString = $"{forceValue.Abs():0.00}",
+								Position = txtPos,
+								Height = 30 * scFctr,
+								Layer = TxtLayer
+							};
+
+							// Append the text to drawing
+							Auxiliary.AddObject(text);
+
+							// Add the node position to the text XData
+							text.XData = ForceTextXData(pos, direction);
+						}
+					}
+                }
+
+				trans.Commit();
+			}
+		}
+
+		/// <summary>
+        /// Create the force block.
+        /// </summary>
+        private static void CreateForceBlock()
+        {
+            using (var trans = DataBase.StartTransaction())
+	        // Open the Block table for read
+            using (var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
+            {
                 // Initialize the block Ids
-                ObjectId ForceBlock = ObjectId.Null;
+                var forceBlock = ObjectId.Null;
 
                 // Check if the support blocks already exist in the drawing
                 if (!blkTbl.Has(BlockName))
                 {
                     // Create the X block
-                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
+                    using (var blkTblRec = new BlockTableRecord())
                     {
                         blkTblRec.Name = BlockName;
 
@@ -285,26 +200,26 @@ namespace SPMTool.AutoCAD
                         trans.AddNewlyCreatedDBObject(blkTblRec, true);
 
                         // Set the name
-                        ForceBlock = blkTblRec.Id;
+                        forceBlock = blkTblRec.Id;
 
                         // Set the insertion point for the block
-                        Point3d origin = new Point3d(0, 0, 0);
+                        var origin = new Point3d(0, 0, 0);
                         blkTblRec.Origin = origin;
 
                         // Create a collection
-                        using (DBObjectCollection arrow = new DBObjectCollection())
+                        using (var arrow = new DBObjectCollection())
                         {
                             // Create the arrow line and solid)
-                            Line line = new Line
+                            var line = new Line
                             {
                                 StartPoint = new Point3d(0, 37.5, 0),
-                                EndPoint = new Point3d(0, 125, 0)
+                                EndPoint   = new Point3d(0, 125, 0)
                             };
                             // Add to the collection
                             arrow.Add(line);
 
                             // Create the solid and add to the collection
-                            Solid solid = new Solid(origin, new Point3d(-25, 37.5, 0), new Point3d(25, 37.5, 0));
+                            var solid = new Solid(origin, new Point3d(-25, 37.5, 0), new Point3d(25, 37.5, 0));
                             arrow.Add(solid);
 
                             // Add the lines to the block table record
@@ -322,8 +237,85 @@ namespace SPMTool.AutoCAD
             }
         }
 
-        // Create XData for forces
-        private static ResultBuffer ForceXData(double forceValue, ForceDirection forceDirection)
+		/// <summary>
+        /// Erase the force blocks and texts in the model.
+        /// </summary>
+        /// <param name="positions">The collection of nodes in the model.</param>
+        private static void EraseForceBlocks(IReadOnlyCollection<Point3d> positions)
+        {
+			if (positions is null || positions.Count == 0)
+				return;
+
+	        // Get all the force blocks in the model
+	        var fcs    = Model.Model.ForceCollection;
+
+	        // Get all the force texts in the model
+	        var fcTxts = Model.Model.ForceTextCollection;
+
+			if (fcs is null && fcTxts is null)
+				return;
+
+            // Start a transaction
+            using (var trans = DataBase.StartTransaction())
+            {
+	            foreach (var position in positions)
+	            {
+		            // Check if there is a force block at the node position
+		            if (fcs != null && fcs.Count > 0)
+		            {
+			            foreach (ObjectId fcObj in fcs)
+			            {
+				            // Read as a block reference
+				            var fcBlk = (BlockReference) trans.GetObject(fcObj, OpenMode.ForRead);
+
+				            // Check if the position is equal to the selected node
+				            if (fcBlk.Position != position)
+					            continue;
+
+				            // Erase the force block
+				            fcBlk.UpgradeOpen();
+				            fcBlk.Erase();
+			            }
+		            }
+
+		            // Check if there is a force text at the node position
+		            if (fcTxts is null || fcTxts.Count == 0)
+			            continue;
+
+		            foreach (ObjectId txtObj in fcTxts)
+		            {
+			            // Read as text
+			            var txtEnt = (Entity) trans.GetObject(txtObj, OpenMode.ForRead);
+			            var txtData = txtEnt.ReadXData(DataBase.AppName);
+
+			            // Get the position of the node of the text
+			            double
+				            ndX = txtData[(int) ForceTextData.XPosition].ToDouble(),
+				            ndY = txtData[(int) ForceTextData.YPosition].ToDouble();
+
+			            var ndTxtPos = new Point3d(ndX, ndY, 0);
+
+			            // Check if the position is equal to the selected node
+			            if (ndTxtPos != position)
+				            continue;
+
+			            // Erase the text
+			            txtEnt.UpgradeOpen();
+			            txtEnt.Erase();
+		            }
+	            }
+
+				trans.Commit();
+            }
+        }
+
+        /// <summary>
+        /// Create XData for forces
+        /// </summary>
+        /// <param name="forceValue">The force value, in N.</param>
+        /// <param name="forceDirection">The force direction.</param>
+        /// <returns></returns>
+        private static ResultBuffer ForceXData(double forceValue, Directions forceDirection)
         {
             // Definition for the Extended Data
             string xdataStr = "Force Data";
@@ -344,7 +336,7 @@ namespace SPMTool.AutoCAD
         }
 
         // Create XData for force text
-        private static ResultBuffer ForceTextXData(Point3d forcePosition, ForceDirection forceDirection)
+        private static ResultBuffer ForceTextXData(Point3d forcePosition, Directions forceDirection)
         {
             // Get the Xdata size
             int size = Enum.GetNames(typeof(ForceTextData)).Length;

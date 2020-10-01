@@ -10,6 +10,7 @@ using Material.Reinforcement;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.AutoCAD;
+using SPMTool.Database;
 using UnitsNet;
 using UnitsNet.Units;
 using MessageBox = System.Windows.MessageBox;

@@ -7,7 +7,7 @@ using SPM.Elements;
 using ForceData = SPMTool.XData.Force;
 using SupportData = SPMTool.XData.Support;
 using static SPMTool.AutoCAD.Auxiliary;
-using static SPMTool.AutoCAD.DataBase;
+using static SPMTool.Database.DataBase;
 
 namespace SPMTool.Input
 {

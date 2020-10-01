@@ -6,6 +6,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Extensions.AutoCAD;
 using Extensions.Number;
 using Material.Reinforcement;
+using SPMTool.Database;
 using UnitsNet;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Material))]

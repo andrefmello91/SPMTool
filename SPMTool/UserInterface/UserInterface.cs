@@ -9,6 +9,7 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.AutoCAD;
+using SPMTool.Database;
 
 
 namespace SPMTool
@@ -114,7 +115,7 @@ namespace SPMTool
 			    RibbonControl ribbonControl = ComponentManager.Ribbon;
 
 			    // Check if the tab already exists
-			    RibbonTab tab = ribbonControl.FindTab(AutoCAD.DataBase.AppName);
+			    RibbonTab tab = ribbonControl.FindTab(DataBase.AppName);
 
 			    if (tab != null)
 			    {
