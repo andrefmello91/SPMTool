@@ -47,9 +47,9 @@ namespace SPMTool.Model
 
 			// Layer names
 			public static readonly string
-				ExtNodeLayer  = Layers.ExtNode.ToString(),
-				IntNodeLayer  = Layers.IntNode.ToString(),
-				DispNodeLayer = Layers.Displacements.ToString();
+				ExtNodeLayer  = AutoCAD.Layer.ExtNode.ToString(),
+				IntNodeLayer  = AutoCAD.Layer.IntNode.ToString(),
+				DispNodeLayer = AutoCAD.Layer.Displacements.ToString();
 
 			// Constructor
 			public Node(Point3d position, NodeType nodeType)
@@ -178,10 +178,10 @@ namespace SPMTool.Model
 					nds = AllNodes();
 
 				if (nodeType == NodeType.Internal)
-					nds = Auxiliary.GetObjectsOnLayer(Layers.IntNode);
+					nds = Auxiliary.GetObjectsOnLayer(AutoCAD.Layer.IntNode);
 
 				if (nodeType == NodeType.External)
-					nds = Auxiliary.GetObjectsOnLayer(Layers.ExtNode);
+					nds = Auxiliary.GetObjectsOnLayer(AutoCAD.Layer.ExtNode);
 
 				// Create a point collection
 				var pts = new List<Point3d>();
@@ -206,8 +206,8 @@ namespace SPMTool.Model
 			public static ObjectIdCollection AllNodes()
 			{
 				// Create the nodes collection and initialize getting the elements on node layer
-				ObjectIdCollection extNds = Auxiliary.GetObjectsOnLayer(Layers.ExtNode);
-				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layers.IntNode);
+				ObjectIdCollection extNds = Auxiliary.GetObjectsOnLayer(AutoCAD.Layer.ExtNode);
+				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(AutoCAD.Layer.IntNode);
 
 				// Create a unique collection for all the nodes
 				ObjectIdCollection nds = new ObjectIdCollection();

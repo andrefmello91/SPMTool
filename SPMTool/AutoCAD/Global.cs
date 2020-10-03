@@ -5,7 +5,7 @@
 		// AutoCAD variables
 
 		// Color codes
-		public enum Colors : short
+		public enum Color : short
 		{
 			Red     = 1,
 			Yellow  = 2,
@@ -18,7 +18,7 @@
 		}
 
 		// Layer names
-		public enum Layers
+		public enum Layer
 		{
 			ExtNode,
 			IntNode,
@@ -35,7 +35,7 @@
 		}
 
 		// Block names
-		public enum Blocks
+		public enum Block
 		{
 			SupportX,
 			SupportY,

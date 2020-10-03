@@ -24,16 +24,16 @@ namespace SPMTool.AutoCAD
     {
         // Layer and block names
         public static readonly string
-	        ForceLayer = Layers.Force.ToString(),
-			TxtLayer   = Layers.ForceText.ToString(),
-			BlockName  = Blocks.ForceBlock.ToString();
+	        ForceLayer = Layer.Force.ToString(),
+			TxtLayer   = Layer.ForceText.ToString(),
+			BlockName  = Block.ForceBlock.ToString();
 
         [CommandMethod("AddForce")]
         public static void AddForce()
         {
             // Check if the layer Force and ForceText already exists in the drawing. If it doesn't, then it's created:
-            Auxiliary.CreateLayer(Layers.Force, Colors.Yellow);
-            Auxiliary.CreateLayer(Layers.ForceText, Colors.Yellow);
+            Auxiliary.CreateLayer(Layer.Force, Color.Yellow);
+            Auxiliary.CreateLayer(Layer.ForceText, Color.Yellow);
 
 			// Read units
 			var units = DataBase.Units;
@@ -359,8 +359,8 @@ namespace SPMTool.AutoCAD
         [CommandMethod("ToogleForces")]
         public static void ToogleForces()
         {
-	        Auxiliary.ToogleLayer(Layers.Force);
-	        Auxiliary.ToogleLayer(Layers.ForceText);
+	        Auxiliary.ToogleLayer(Layer.Force);
+	        Auxiliary.ToogleLayer(Layer.ForceText);
         }
 
     }

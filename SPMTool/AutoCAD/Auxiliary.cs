@@ -11,7 +11,6 @@ using Material.Reinforcement;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database;
-using SPMTool.Elements;
 
 [assembly: CommandClass(typeof(SPMTool.AutoCAD.Auxiliary))]
 
@@ -19,18 +18,19 @@ namespace SPMTool.AutoCAD
 {
 	public static class Auxiliary
 	{
-		// Add the app to the Registered Applications Record
-		public static void RegisterApp()
+        /// <summary>
+        /// Add the app to the Registered Applications Record
+        /// </summary>
+        public static void RegisterApp()
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
+			// Open the Registered Applications table for read
+			using (var regAppTbl = (RegAppTable)trans.GetObject(DataBase.Database.RegAppTableId, OpenMode.ForRead))
 			{
-				// Open the Registered Applications table for read
-				RegAppTable regAppTbl =
-					trans.GetObject(DataBase.Database.RegAppTableId, OpenMode.ForRead) as RegAppTable;
 				if (!regAppTbl.Has(DataBase.AppName))
 				{
-					using (RegAppTableRecord regAppTblRec = new RegAppTableRecord())
+					using (var regAppTblRec = new RegAppTableRecord())
 					{
 						regAppTblRec.Name = DataBase.AppName;
 						trans.GetObject(DataBase.Database.RegAppTableId, OpenMode.ForWrite);
@@ -44,54 +44,59 @@ namespace SPMTool.AutoCAD
 			}
 		}
 
-        // Get folder path of current file
-        public static string GetFilePath()
+        /// <summary>
+        /// Get folder path of current file.
+        /// </summary>
+        public static string GetFilePath() => Application.GetSystemVariable("DWGPREFIX").ToString();
+
+        /// <summary>
+        /// Convert transparency to alpha.
+        /// </summary>
+        /// <param name="transparency">Transparency percent.</param>
+        public static Transparency Transparency(int transparency)
 		{
-			return
-				Application.GetSystemVariable("DWGPREFIX").ToString();
+			var alpha = (byte) (255 * (100 - transparency) / 100);
+			return new Transparency(alpha);
 		}
 
-		// Method to assign transparency to an object
-		public static Transparency Transparency(int transparency)
-		{
-			byte alpha = (byte) (255 * (100 - transparency) / 100);
-			Transparency transp = new Transparency(alpha);
-			return transp;
-		}
-
-		// Method to create a layer given a name, a color and transparency
-		public static void CreateLayer(Layers layer, Colors color, int transparency = 0)
+        /// <summary>
+        /// Create a layer given a name, a color and transparency.
+        /// </summary>
+        /// <param name="layer">The <see cref="Layer"/>.</param>
+        /// <param name="color">The <see cref="Color"/></param>
+        /// <param name="transparency">Transparency percent.</param>
+        public static void CreateLayer(Layer layer, Color color, int transparency = 0)
 		{
 			// Get layer name
-			string layerName = layer.ToString();
+			var layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
+			// Open the Layer table for read
+			using (var lyrTbl = (LayerTable) trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead))
 			{
-				// Open the Layer table for read
-				LayerTable lyrTbl = trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead) as LayerTable;
+				if (lyrTbl.Has(layerName))
+					return;
 
-				if (!lyrTbl.Has(layerName))
+				lyrTbl.UpgradeOpen();
+				using (var lyrTblRec = new LayerTableRecord())
 				{
-					lyrTbl.UpgradeOpen();
-					using (LayerTableRecord lyrTblRec = new LayerTableRecord())
-					{
-						// Assign the layer the ACI color and a name
-						lyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, (short) color);
+					// Assign the layer the ACI color and a name
+					lyrTblRec.Color =
+						Autodesk.AutoCAD.Colors.Color.FromColorIndex(ColorMethod.ByAci, (short) color);
 
-						// Upgrade the Layer table for write
-						trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForWrite);
+					// Upgrade the Layer table for write
+					trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForWrite);
 
-						// Append the new layer to the Layer table and the transaction
-						lyrTbl.Add(lyrTblRec);
-						trans.AddNewlyCreatedDBObject(lyrTblRec, true);
+					// Append the new layer to the Layer table and the transaction
+					lyrTbl.Add(lyrTblRec);
+					trans.AddNewlyCreatedDBObject(lyrTblRec, true);
 
-						// Assign the name and transparency to the layer
-						lyrTblRec.Name = layerName;
+					// Assign the name and transparency to the layer
+					lyrTblRec.Name = layerName;
 
-						if (transparency != 0)
-							lyrTblRec.Transparency = Transparency(transparency);
-					}
+					if (transparency != 0)
+						lyrTblRec.Transparency = Transparency(transparency);
 				}
 
 				// Commit and dispose the transaction
@@ -99,101 +104,97 @@ namespace SPMTool.AutoCAD
 			}
 		}
 
-		// Method to toogle view of a layer (on and off)
-		public static void ToogleLayer(Layers layer)
+        /// <summary>
+        /// Toogle view of a <see cref="Layer"/> (on and off).
+        /// </summary>
+        /// <param name="layer">The <see cref="Layer"/>.</param>
+        public static void ToogleLayer(Layer layer)
 		{
 			// Get layer name
-			string layerName = layer.ToString();
+			var layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
+			// Open the Layer table for read
+			using (var lyrTbl = (LayerTable)trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead))
 			{
-				// Open the Layer table for read
-				LayerTable lyrTbl = trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead) as LayerTable;
+				if (!lyrTbl.Has(layerName))
+					return;
 
-				if (lyrTbl.Has(layerName))
+				using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
 				{
-					using (LayerTableRecord lyrTblRec =
-						trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite) as LayerTableRecord)
-					{
-						// Verify the state
-						if (!lyrTblRec.IsOff)
-						{
-							lyrTblRec.IsOff = true;   // Turn it off
-						}
-						else
-						{
-							lyrTblRec.IsOff = false;  // Turn it on
-						}
-					}
-
-					// Commit and dispose the transaction
-					trans.Commit();
+					// Verify the state
+					lyrTblRec.IsOff = !lyrTblRec.IsOff;
 				}
+
+				// Commit and dispose the transaction
+				trans.Commit();
 			}
 		}
 
-		// Method to turn a layer Off
-		public static void LayerOff(Layers layer)
+        /// <summary>
+        /// Turn off a <see cref="Layer"/>.
+        /// </summary>
+        /// <param name="layer">The <see cref="Layer"/>.</param>
+        public static void LayerOff(Layer layer)
 		{
 			// Get layer name
-			string layerName = layer.ToString();
+			var layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
+			// Open the Layer table for read
+			using (var lyrTbl = (LayerTable)trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead))
 			{
-				// Open the Layer table for read
-				LayerTable lyrTbl = trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead) as LayerTable;
+				if (!lyrTbl.Has(layerName))
+					return;
 
-				if (lyrTbl.Has(layerName))
+				using (var lyrTblRec = trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite) as LayerTableRecord)
 				{
-					using (LayerTableRecord lyrTblRec =
-						trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite) as LayerTableRecord)
-					{
-						// Verify the state
-						if (!lyrTblRec.IsOff)
-						{
-							lyrTblRec.IsOff = true;   // Turn it off
-						}
-					}
-
-					// Commit and dispose the transaction
-					trans.Commit();
+					// Verify the state
+					if (!lyrTblRec.IsOff)
+						lyrTblRec.IsOff = true;   // Turn it off
 				}
+
+				// Commit and dispose the transaction
+				trans.Commit();
 			}
 		}
 
-		// Method to turn a layer On
-		public static void LayerOn(Layers layer)
+        /// <summary>
+        /// Turn on a <see cref="Layer"/>.
+        /// </summary>
+        /// <param name="layer">The <see cref="Layer"/>.</param>
+        public static void LayerOn(Layer layer)
 		{
 			// Get layer name
-			string layerName = layer.ToString();
+			var layerName = layer.ToString();
 
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
+			// Open the Layer table for read
+			using (var lyrTbl = (LayerTable)trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead))
 			{
-				// Open the Layer table for read
-				var lyrTbl = (LayerTable)trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead);
+				if (!lyrTbl.Has(layerName))
+					return;
 
-				if (lyrTbl.Has(layerName))
+				using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
 				{
-					using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
-					{
-						// Verify the state
-						if (lyrTblRec.IsOff)
-						{
-							lyrTblRec.IsOff = false;   // Turn it on
-						}
-					}
-
-					// Commit and dispose the transaction
-					trans.Commit();
+					// Verify the state
+					if (lyrTblRec.IsOff)
+						lyrTblRec.IsOff = false;   // Turn it on
 				}
+
+				// Commit and dispose the transaction
+				trans.Commit();
 			}
 		}
 
-		// This method select all objects on a determined layer
-		public static ObjectIdCollection GetObjectsOnLayer(Layers layer)
+        /// <summary>
+        /// Get a <see cref="ObjectIdCollection"/> containing all the objects in this <see cref="Layer"/>.
+        /// </summary>
+        /// <param name="layer">The <see cref="Layer"/>.</param>
+		public static ObjectIdCollection GetObjectsOnLayer(Layer layer)
 		{
 			// Get layer name
 			var layerName = layer.ToString();
@@ -209,38 +210,48 @@ namespace SPMTool.AutoCAD
 			// Get the entities on the layername
 			var selRes = DataBase.Editor.SelectAll(selFt);
 
-			return selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 ? new ObjectIdCollection(selRes.Value.GetObjectIds()) : null;
+			return
+				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 ? new ObjectIdCollection(selRes.Value.GetObjectIds()) : null;
 		}
 
-		// Add objects to drawing
+		/// <summary>
+        /// Add this <paramref name="entity"/> to the drawing.
+        /// </summary>
+        /// <param name="entity">The <see cref="Entity"/>.</param>
 		public static void AddObject(Entity entity)
 		{
-			if (entity != null)
+			if (entity is null)
+				return;
+
+			// Start a transaction
+			using (var trans = DataBase.StartTransaction())
+
+			// Open the Block table for read
+			using (var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
+
+			// Open the Block table record Model space for write
+			using (var blkTblRec = (BlockTableRecord)trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite))
 			{
-				// Start a transaction
-				using (Transaction trans = DataBase.StartTransaction())
-				{
-					// Open the Block table for read
-					var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
+				// Add the object to the drawing
+				blkTblRec.AppendEntity(entity);
+				trans.AddNewlyCreatedDBObject(entity, true);
 
-					// Open the Block table record Model space for write
-					var blkTblRec = (BlockTableRecord) trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
-
-					// Add the object to the drawing
-					blkTblRec.AppendEntity(entity);
-					trans.AddNewlyCreatedDBObject(entity, true);
-
-					// Commit changes
-					trans.Commit();
-				}
+				// Commit changes
+				trans.Commit();
 			}
 		}
 
-		// Erase the objects in a collection
-		public static void EraseObjects(ObjectIdCollection objects)
+        /// <summary>
+        /// Erase all the objects in this <see cref="ObjectIdCollection"/>.
+        /// </summary>
+        /// <param name="objects">The <see cref="ObjectIdCollection"/> containing the objects to erase.</param>
+        public static void EraseObjects(ObjectIdCollection objects)
 		{
+			if (objects is null || objects.Count == 0)
+				return;
+
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
 			{
 				foreach (ObjectId obj in objects)
 				{
@@ -272,18 +283,17 @@ namespace SPMTool.AutoCAD
         /// Read an object layer.
         /// </summary>
         /// <param name="objectId">The ObjectId of the SPM element.</param>
-        /// <returns></returns>
-        public static Layers ReadObjectLayer(ObjectId objectId)
+        public static Layer ReadObjectLayer(ObjectId objectId)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
-			{
-				// Get the entity
-				var entity = (Entity) trans.GetObject(objectId, OpenMode.ForRead);
+			using (var trans = DataBase.StartTransaction())
 
-                // Get the layer
+			// Get the entity
+			using (var entity = (Entity)trans.GetObject(objectId, OpenMode.ForRead))
+			{
+				// Get the layer
                 return
-	                (Layers) Enum.Parse(typeof(Layers), entity.Layer);
+	                (Layer) Enum.Parse(typeof(Layer), entity.Layer);
 			}
 		}
 
@@ -292,63 +302,67 @@ namespace SPMTool.AutoCAD
         /// </summary>
         /// <param name="entity">The entity of the SPM element.</param>
         /// <returns></returns>
-        public static Layers ReadObjectLayer(Entity entity)
+        public static Layer ReadObjectLayer(Entity entity) => (Layer) Enum.Parse(typeof(Layer), entity.Layer);
+
+        /// <summary>
+        /// Erase all the objects in this <paramref name="layer"/>.
+        /// </summary>
+        /// <param name="layer">The <see cref="Layer"/>.</param>
+        public static void EraseObjects(Layer layer)
 		{
-			// Get the layer
-			return
-				(Layers) Enum.Parse(typeof(Layers), entity.Layer);
+            // Get objects
+            using (var objs = GetObjectsOnLayer(layer))
+	            EraseObjects(objs);
 		}
 
-        // Erase the objects in a layer
-        public static void EraseObjects(Layers layer)
+        /// <summary>
+        /// Read extended data of this <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="entity">The <see cref="Entity"/>.</param>
+        public static TypedValue[] ReadXData(Entity entity)
 		{
-			// Get objects
-			var objs = GetObjectsOnLayer(layer);
-
-			if (objs.Count > 0)
-				EraseObjects(objs);
+            // Read the XData and get the necessary data
+            using (var rb = entity.GetXDataForApplication(DataBase.AppName))
+	            return
+                    rb.AsArray();
 		}
 
-		// Read extended data
-		public static TypedValue[] ReadXData(Entity entity)
-		{
-			// Read the XData and get the necessary data
-			ResultBuffer rb = entity.GetXDataForApplication(DataBase.AppName);
-
-			return
-				rb.AsArray();
-		}
-
+        /// <summary>
+        /// Read extended data of this <paramref name="objectId"/>.
+        /// </summary>
+        /// <param name="objectId">The <see cref="ObjectId"/>.</param>
 		public static TypedValue[] ReadXData(ObjectId objectId)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
-			{
-				// Get the NOD in the database
-				var entity = (Entity) trans.GetObject(objectId, OpenMode.ForRead);
-
+			using (var trans = DataBase.StartTransaction())
 				return
-					ReadXData(entity);
-			}
+					ReadXData((Entity)trans.GetObject(objectId, OpenMode.ForRead));
 		}
 
-		// Save object on database dictionary
+		/// <summary>
+        /// Save <paramref name="data"/> in <see cref="DBDictionary"/>.
+        /// </summary>
+        /// <param name="name">The name to save.</param>
+        /// <param name="data">The <see cref="ResultBuffer"/> to save.</param>
+        /// <param name="overwrite">Overwrite data with the same <paramref name="name"/>?</param>
 		public static void SaveObjectDictionary(string name, ResultBuffer data, bool overwrite = true)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
+
+			// Get the NOD in the database
+			using (var nod = (DBDictionary)trans.GetObject(DataBase.NodId, OpenMode.ForWrite))
 			{
-				// Get the NOD in the database
-				var nod = (DBDictionary) trans.GetObject(DataBase.NodId, OpenMode.ForWrite);
-
-				// Create and add data to an Xrecord
-				Xrecord xRec = new Xrecord();
-				xRec.Data    = data;
-
 				// Verify if object exists and must be overwrote
 				if (!overwrite && nod.Contains(name))
 					return;
 
+                // Create and add data to an Xrecord
+                var xRec = new Xrecord
+				{
+					Data = data
+				};
+				
 				// Create the entry in the NOD and add to the transaction
 				nod.SetAt(name, xRec);
 				trans.AddNewlyCreatedDBObject(xRec, true);
@@ -358,15 +372,19 @@ namespace SPMTool.AutoCAD
 			}
         }
 
-		// Read data on a dictionary entry (full name or if name contains string passed)
-		public static TypedValue[] ReadDictionaryEntry(string name, bool fullName = true)
+        /// <summary>
+        /// Read data on a dictionary entry.
+        /// </summary>
+        /// <param name="name">The name of entry.</param>
+        /// <param name="fullName">Return only data corresponding to full name?</param>
+        public static TypedValue[] ReadDictionaryEntry(string name, bool fullName = true)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
+			
+			// Get the NOD in the database
+			using (var nod = (DBDictionary)trans.GetObject(DataBase.NodId, OpenMode.ForWrite))
 			{
-				// Get the NOD in the database
-				var nod = (DBDictionary) trans.GetObject(DataBase.NodId, OpenMode.ForRead);
-
 				// Check if it exists as full name
 				if (fullName && nod.Contains(name))
 				{
@@ -382,14 +400,14 @@ namespace SPMTool.AutoCAD
 				// Check if name contains
 				foreach (var entry in nod)
 				{
-					if (entry.Key.Contains(name))
-					{
-						// Read data
-						var refXrec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+					if (!entry.Key.Contains(name))
+						continue;
 
-						return
-							refXrec.Data.AsArray();
-					}
+					// Read data
+					var refXrec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+
+					return
+						refXrec.Data.AsArray();
 				}
 
 				// Not set
@@ -400,42 +418,52 @@ namespace SPMTool.AutoCAD
 		// Read all the entries in dictionary that contain name
 		public static ResultBuffer[] ReadDictionaryEntries(string name)
 		{
-			var resList = new List<ResultBuffer>();
-
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
+
+			// Get the NOD in the database
+			using (var nod = (DBDictionary)trans.GetObject(DataBase.NodId, OpenMode.ForWrite))
 			{
-				// Get the NOD in the database
-				var nod = (DBDictionary)trans.GetObject(DataBase.NodId, OpenMode.ForRead);
+				var resList = (from DBDictionaryEntry entry in nod where entry.Key.Contains(name) select ((Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead)).Data).ToArray();
 
-				// Check if name contains
-				foreach (var entry in nod)
-				{
-					if (!entry.Key.Contains(name))
-						continue;
+				return resList.Length > 0 ? resList.ToArray() : null;
 
-					var xRec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+                // Check if name contains
+    //            foreach (var entry in nod)
+				//{
+				//	if (!entry.Key.Contains(name))
+				//		continue;
 
-					// Add data
-					resList.Add(xRec.Data);
-				}
+				//	var xRec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+
+				//	// Add data
+				//	resList.Add(xRec.Data);
+				//}
 			}
-
-			return resList.Count > 0 ? resList.ToArray() : null;
 		}
 
+		/// <summary>
+        /// Save extended data to this <paramref name="stringer"/>.
+        /// </summary>
+        /// <param name="stringer">The <see cref="Stringer"/>.</param>
 		public static void SaveStringerData(Stringer stringer) => SaveStringerData(stringer.ObjectId, stringer.Geometry, stringer.Reinforcement);
 
-		public static void SaveStringerData(ObjectId objectId, StringerGeometry geometry, UniaxialReinforcement reinforcement)
+        /// <summary>
+        /// Save extended data to the stringer related to this <paramref name="objectId"/>.
+        /// </summary>
+        /// <param name="objectId">The <see cref="ObjectId"/>.</param>
+        /// <param name="geometry">The <see cref="StringerGeometry"/>.</param>
+        /// <param name="reinforcement">The <see cref="UniaxialReinforcement"/>.</param>
+        public static void SaveStringerData(ObjectId objectId, StringerGeometry geometry, UniaxialReinforcement reinforcement)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
-			{
-				// Open the selected object for read
-				Entity ent = (Entity)trans.GetObject(objectId, OpenMode.ForWrite);
+			using (var trans = DataBase.StartTransaction())
 
+			// Open the selected object for read
+			using (var ent = (Entity)trans.GetObject(objectId, OpenMode.ForWrite))
+			{
 				// Access the XData as an array
-				TypedValue[] data = ReadXData(ent);
+				var data = ReadXData(ent);
 
 				// Set the new geometry
 				data[(int)XData.Stringer.Width] = new TypedValue((int)DxfCode.ExtendedDataReal,  geometry.Width);
@@ -453,8 +481,7 @@ namespace SPMTool.AutoCAD
 				// Save the new object to the database
 				trans.Commit();
 			}
-
-        }
+		}
 
     }
 }

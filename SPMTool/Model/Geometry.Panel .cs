@@ -29,7 +29,7 @@ namespace SPMTool.Model
 			public Solid         SolidObject { get; }
 
 			// Layer name
-			public static readonly string PanelLayer = Layers.Panel.ToString();
+			public static readonly string PanelLayer = Layer.Panel.ToString();
 
 			// Width database
 			private static readonly string PnlW = "PnlW";
@@ -74,7 +74,7 @@ namespace SPMTool.Model
 			public static void AddPanel()
 			{
 				// Check if the layer panel already exists in the drawing. If it doesn't, then it's created:
-				Auxiliary.CreateLayer(Layers.Panel, Colors.Grey, 80);
+				Auxiliary.CreateLayer(Layer.Panel, Color.Grey, 80);
 
 				// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
 				Auxiliary.RegisterApp();
@@ -163,10 +163,10 @@ namespace SPMTool.Model
 				var newStrList = new List<(Point3d start, Point3d end)>();
 
 				// Access the stringers in the model
-				ObjectIdCollection strs = Auxiliary.GetObjectsOnLayer(Layers.Stringer);
+				ObjectIdCollection strs = Auxiliary.GetObjectsOnLayer(Layer.Stringer);
 
 				// Access the internal nodes in the model
-				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layers.IntNode);
+				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layer.IntNode);
 
 				// Start a transaction
 				using (Transaction trans = DataBase.StartTransaction())
@@ -411,10 +411,10 @@ namespace SPMTool.Model
             public static ObjectIdCollection UpdatePanels()
 			{
 				// Get the internal nodes of the model
-				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layers.IntNode);
+				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layer.IntNode);
 
 				// Create the panels collection and initialize getting the elements on node layer
-				ObjectIdCollection pnls = Auxiliary.GetObjectsOnLayer(Layers.Panel);
+				ObjectIdCollection pnls = Auxiliary.GetObjectsOnLayer(Layer.Panel);
 
 				// Create a point collection
 				List<Point3d> cntrPts = new List<Point3d>();
@@ -545,7 +545,7 @@ namespace SPMTool.Model
 			public static List<Vertices> ListOfPanelVertices()
 			{
 				// Get the stringers in the model
-				ObjectIdCollection pnls = Auxiliary.GetObjectsOnLayer(Layers.Panel);
+				ObjectIdCollection pnls = Auxiliary.GetObjectsOnLayer(Layer.Panel);
 
 				// Initialize a list
 				var pnlList = new List<Vertices>();

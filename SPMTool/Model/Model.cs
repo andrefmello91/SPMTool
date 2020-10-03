@@ -27,17 +27,17 @@ namespace SPMTool.Model
 	    /// <summary>
 	    /// Get the collection of forces in the model.
 	    /// </summary>
-	    public static ObjectIdCollection ForceCollection => Auxiliary.GetObjectsOnLayer(Layers.Force);
+	    public static ObjectIdCollection ForceCollection => Auxiliary.GetObjectsOnLayer(Layer.Force);
 
 	    /// <summary>
 	    /// Get the collection of supports in the model.
 	    /// </summary>
-	    public static ObjectIdCollection SupportCollection => Auxiliary.GetObjectsOnLayer(Layers.Support);
+	    public static ObjectIdCollection SupportCollection => Auxiliary.GetObjectsOnLayer(Layer.Support);
 
         /// <summary>
         /// Get the collection of force texts in the model.
         /// </summary>
-        public static ObjectIdCollection ForceTextCollection => Auxiliary.GetObjectsOnLayer(Layers.ForceText);
+        public static ObjectIdCollection ForceTextCollection => Auxiliary.GetObjectsOnLayer(Layer.ForceText);
 
     }
 }

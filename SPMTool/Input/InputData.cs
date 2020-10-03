@@ -82,7 +82,7 @@ namespace SPMTool.Input
         public static SPMElement GetElement(Entity entity)
         {
 			// Get element layer
-			var layer = (Layers) Enum.Parse(typeof(Layers), entity.Layer);
+			var layer = (Layer) Enum.Parse(typeof(Layer), entity.Layer);
 
 			if (!Geometry.ElementLayers.Contains(layer))
 				return null;
@@ -91,16 +91,16 @@ namespace SPMTool.Input
 			var concrete = DataBase.Concrete;
 			var units    = DataBase.Units;
 
-			if (layer is Layers.IntNode || layer is Layers.ExtNode)
+			if (layer is Layer.IntNode || layer is Layer.ExtNode)
 				return Nodes.Read(entity.ObjectId, units);
 
 	        // Read nodes
 	        var nodes = Nodes.Read(DataBase.NodeCollection, units);
 
-            if (layer is Layers.Stringer)
+            if (layer is Layer.Stringer)
 		        return Stringers.Read(entity.ObjectId, units, concrete.Parameters, concrete.Constitutive, nodes);
 
-	        if (layer is Layers.Panel)
+	        if (layer is Layer.Panel)
 		        return Panels.Read(entity.ObjectId, units, concrete.Parameters, concrete.Constitutive, nodes);
 
 	        return null;

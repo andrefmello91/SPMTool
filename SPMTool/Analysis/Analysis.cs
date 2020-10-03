@@ -70,7 +70,7 @@ namespace SPMTool.AutoCAD
 		private static int? MonitoredIndex()
 		{
 			// Ask user to select a node
-			var nd = UserInput.SelectEntity("Select a node to monitor displacement:", new [] { Layers.ExtNode, Layers.IntNode });
+			var nd = UserInput.SelectEntity("Select a node to monitor displacement:", new [] { Layer.ExtNode, Layer.IntNode });
 
 			if (nd is null)
 				return null;

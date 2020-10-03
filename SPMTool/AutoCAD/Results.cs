@@ -21,14 +21,14 @@ namespace SPMTool.AutoCAD
 	{
 		// Layers and block names
 		public static readonly string
-			StrForceLayer    = Layers.StringerForce.ToString(),
-			PanelForceLayer  = Layers.PanelForce.ToString(),
-			DispLayer        = Layers.Displacements.ToString(),
-			CompStressLayer  = Layers.CompressivePanelStress.ToString(),
-			TenStressLayer   = Layers.TensilePanelStress.ToString(),
-			ShearBlock       = Blocks.ShearBlock.ToString(),
-			CompressiveBlock = Blocks.CompressiveStressBlock.ToString(),
-			TensileBlock     = Blocks.TensileStressBlock.ToString();
+			StrForceLayer    = Layer.StringerForce.ToString(),
+			PanelForceLayer  = Layer.PanelForce.ToString(),
+			DispLayer        = Layer.Displacements.ToString(),
+			CompStressLayer  = Layer.CompressivePanelStress.ToString(),
+			TenStressLayer   = Layer.TensilePanelStress.ToString(),
+			ShearBlock       = Block.ShearBlock.ToString(),
+			CompressiveBlock = Block.CompressiveStressBlock.ToString(),
+			TensileBlock     = Block.TensileStressBlock.ToString();
 
 		// Draw results
 		public static void Draw(Analysis analysis, Units units)
@@ -43,18 +43,18 @@ namespace SPMTool.AutoCAD
         private static void DrawPanelStresses(Panel[] panels, Units units)
 		{
 			// Check if the layer already exists in the drawing. If it doesn't, then it's created:
-			Auxiliary.CreateLayer(Layers.PanelForce, Colors.Green);
-			Auxiliary.CreateLayer(Layers.CompressivePanelStress, Colors.Blue1, 80);
-			Auxiliary.CreateLayer(Layers.TensilePanelStress, Colors.Red, 80);
+			Auxiliary.CreateLayer(Layer.PanelForce, Color.Green);
+			Auxiliary.CreateLayer(Layer.CompressivePanelStress, Color.Blue1, 80);
+			Auxiliary.CreateLayer(Layer.TensilePanelStress, Color.Red, 80);
 
             // Check if the shear blocks already exist. If not, create the blocks
             CreatePanelShearBlock();
             CreatePanelStressesBlock();
 
 			// Erase all the panel forces in the drawing
-			Auxiliary.EraseObjects(Layers.PanelForce);
-			Auxiliary.EraseObjects(Layers.CompressivePanelStress);
-			Auxiliary.EraseObjects(Layers.TensilePanelStress);
+			Auxiliary.EraseObjects(Layer.PanelForce);
+			Auxiliary.EraseObjects(Layer.CompressivePanelStress);
+			Auxiliary.EraseObjects(Layer.TensilePanelStress);
 
 			// Start a transaction
 			using (Transaction trans = DataBase.StartTransaction())
@@ -126,7 +126,7 @@ namespace SPMTool.AutoCAD
 						using (BlockReference blkRef = new BlockReference(cntrPt, compStress))
 						{
 							blkRef.Layer = CompStressLayer;
-							blkRef.ColorIndex = (int)Colors.Blue1;
+							blkRef.ColorIndex = (int)Color.Blue1;
 							Auxiliary.AddObject(blkRef);
 
 							// Set the scale of the block
@@ -220,19 +220,19 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Turn the layer on
-			Auxiliary.LayerOn(Layers.PanelForce);
-			Auxiliary.LayerOff(Layers.CompressivePanelStress);
-			Auxiliary.LayerOff(Layers.TensilePanelStress);
+			Auxiliary.LayerOn(Layer.PanelForce);
+			Auxiliary.LayerOff(Layer.CompressivePanelStress);
+			Auxiliary.LayerOff(Layer.TensilePanelStress);
 		}
 
 		// Draw the Stringer forces diagrams
 		private static void DrawStringerForces(Stringer[] stringers, double maxForce, Units units)
 		{
 			// Check if the layer already exists in the drawing. If it doesn't, then it's created:
-			Auxiliary.CreateLayer(Layers.StringerForce, Colors.Grey);
+			Auxiliary.CreateLayer(Layer.StringerForce, Color.Grey);
 
 			// Erase all the Stringer forces in the drawing
-			ObjectIdCollection strFs = Auxiliary.GetObjectsOnLayer(Layers.StringerForce);
+			ObjectIdCollection strFs = Auxiliary.GetObjectsOnLayer(Layer.StringerForce);
 			if (strFs.Count > 0) 
 				Auxiliary.EraseObjects(strFs);
 
@@ -285,9 +285,9 @@ namespace SPMTool.AutoCAD
 
 								// Set the color (blue to compression and red to tension)
 								if (Math.Max(N1, N3) > 0)
-									dgrm.ColorIndex = (short) Colors.Blue1;
+									dgrm.ColorIndex = (short) Color.Blue1;
 								else
-									dgrm.ColorIndex = (short) Colors.Red;
+									dgrm.ColorIndex = (short) Color.Red;
 
 								// Add the diagram to the drawing
 								Auxiliary.AddObject(dgrm);
@@ -327,9 +327,9 @@ namespace SPMTool.AutoCAD
 
 								// Set the color (blue to compression and red to tension)
 								if (N1 > 0)
-									dgrm1.ColorIndex = (short) Colors.Blue1;
+									dgrm1.ColorIndex = (short) Color.Blue1;
 								else
-									dgrm1.ColorIndex = (short) Colors.Red;
+									dgrm1.ColorIndex = (short) Color.Red;
 
 								// Add the diagram to the drawing
 								Auxiliary.AddObject(dgrm1);
@@ -346,9 +346,9 @@ namespace SPMTool.AutoCAD
 
 								// Set the color (blue to compression and red to tension)
 								if (N3 > 0)
-									dgrm3.ColorIndex = (short) Colors.Blue1;
+									dgrm3.ColorIndex = (short) Color.Blue1;
 								else
-									dgrm3.ColorIndex = (short) Colors.Red;
+									dgrm3.ColorIndex = (short) Color.Red;
 
 								// Add the diagram to the drawing
 								Auxiliary.AddObject(dgrm3);
@@ -373,12 +373,12 @@ namespace SPMTool.AutoCAD
 								// Set the color (blue to compression and red to tension) and position
 								if (N1 > 0)
 								{
-									txt1.ColorIndex = (short) Colors.Blue1;
+									txt1.ColorIndex = (short) Color.Blue1;
 									txt1.Position = new Point3d(stPt.X + 10 * scFctr, stPt.Y + h1 + 20 * scFctr, 0);
 								}
 								else
 								{
-									txt1.ColorIndex = (short) Colors.Red;
+									txt1.ColorIndex = (short) Color.Red;
 									txt1.Position = new Point3d(stPt.X + 10 * scFctr, stPt.Y + h1 - 50 * scFctr, 0);
 								}
 
@@ -404,12 +404,12 @@ namespace SPMTool.AutoCAD
                                 // Set the color (blue to compression and red to tension) and position
                                 if (N3 > 0)
 								{
-									txt3.ColorIndex = (short) Colors.Blue1;
+									txt3.ColorIndex = (short) Color.Blue1;
 									txt3.Position = new Point3d(stPt.X + l - 10 * scFctr, stPt.Y + h3 + 20 * scFctr, 0);
 								}
 								else
 								{
-									txt3.ColorIndex = (short) Colors.Red;
+									txt3.ColorIndex = (short) Color.Red;
 									txt3.Position = new Point3d(stPt.X + l - 10 * scFctr, stPt.Y + h3 - 50 * scFctr, 0);
 								}
 
@@ -432,20 +432,20 @@ namespace SPMTool.AutoCAD
 			}
 
 			// Turn the layer on
-			Auxiliary.LayerOn(Layers.StringerForce);
+			Auxiliary.LayerOn(Layer.StringerForce);
 		}
 
 		// Draw the displaced model
 		private static void DrawDisplacements(Stringer[] stringers, Node[] nodes, Units units)
 		{
 			// Create the layer
-			Auxiliary.CreateLayer(Layers.Displacements, Colors.Yellow1, 0);
+			Auxiliary.CreateLayer(Layer.Displacements, Color.Yellow1, 0);
 
 			// Turn the layer off
-			Auxiliary.LayerOff(Layers.Displacements);
+			Auxiliary.LayerOff(Layer.Displacements);
 
 			// Erase all the displaced objects in the drawing
-			ObjectIdCollection dispObjs = Auxiliary.GetObjectsOnLayer(Layers.Displacements);
+			ObjectIdCollection dispObjs = Auxiliary.GetObjectsOnLayer(Layer.Displacements);
 			if (dispObjs.Count > 0)
 				Auxiliary.EraseObjects(dispObjs);
 
@@ -858,29 +858,29 @@ namespace SPMTool.AutoCAD
 		[CommandMethod("ToogleStringerForces")]
 		public static void ToogleStringerForces()
 		{
-			Auxiliary.ToogleLayer(Layers.StringerForce);
+			Auxiliary.ToogleLayer(Layer.StringerForce);
 		}
 
 		// Toggle view for panel forces
 		[CommandMethod("TooglePanelForces")]
 		public static void TooglePanelForces()
 		{
-			Auxiliary.ToogleLayer(Layers.PanelForce);
+			Auxiliary.ToogleLayer(Layer.PanelForce);
 		}
 
 		// Toggle view for panel forces
 		[CommandMethod("TooglePanelStresses")]
 		public static void TooglePanelStresses()
 		{
-			Auxiliary.ToogleLayer(Layers.CompressivePanelStress);
-			Auxiliary.ToogleLayer(Layers.TensilePanelStress);
+			Auxiliary.ToogleLayer(Layer.CompressivePanelStress);
+			Auxiliary.ToogleLayer(Layer.TensilePanelStress);
 		}
 
 		// Toggle view for displacements
 		[CommandMethod("ToogleDisplacements")]
 		public static void ToogleDisplacements()
 		{
-			Auxiliary.ToogleLayer(Layers.Displacements);
+			Auxiliary.ToogleLayer(Layer.Displacements);
 		}
 	}
 }

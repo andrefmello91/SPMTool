@@ -17,20 +17,20 @@ namespace SPMTool.AutoCAD
     {
         // Layer, block and direction names
         public static readonly string
-	        SupportLayer = Layers.Support.ToString(),
+	        SupportLayer = Layer.Support.ToString(),
 			Free         = "Free",
 	        X            = SupportDirection.X.ToString(),
 	        Y            = SupportDirection.Y.ToString(),
 	        XY           = SupportDirection.XY.ToString(),
-	        BlockX       = Blocks.SupportX.ToString(),
-	        BlockY       = Blocks.SupportY.ToString(),
-	        BlockXY      = Blocks.SupportXY.ToString();
+	        BlockX       = Block.SupportX.ToString(),
+	        BlockY       = Block.SupportY.ToString(),
+	        BlockXY      = Block.SupportXY.ToString();
 
         [CommandMethod("AddConstraint")]
         public static void AddConstraint()
         {
 	        // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-	        Auxiliary.CreateLayer(Layers.Support, Colors.Red);
+	        Auxiliary.CreateLayer(Layer.Support, Color.Red);
 
 	        // Read units
 	        var units     = DataBase.Units;
@@ -40,7 +40,7 @@ namespace SPMTool.AutoCAD
             CreateSupportBlocks();
 
 	        // Get all the supports in the model
-	        ObjectIdCollection sprts = Auxiliary.GetObjectsOnLayer(Layers.Support);
+	        ObjectIdCollection sprts = Auxiliary.GetObjectsOnLayer(Layer.Support);
 
 	        // Request objects to be selected in the drawing area
 	        var nds = UserInput.SelectNodes("Select nodes to add support conditions:", Node.NodeType.External);
@@ -368,7 +368,7 @@ namespace SPMTool.AutoCAD
         [CommandMethod("ToogleSupports")]
         public static void ToogleSupports()
         {
-	        Auxiliary.ToogleLayer(Layers.Support);
+	        Auxiliary.ToogleLayer(Layer.Support);
         }
     }
 }

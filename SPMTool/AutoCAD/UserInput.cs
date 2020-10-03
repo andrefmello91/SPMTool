@@ -33,7 +33,7 @@ namespace SPMTool.AutoCAD
 		}
 
         // Ask user to select an entity
-        public static Entity SelectEntity(string message, Layers[] layers = null)
+        public static Entity SelectEntity(string message, Layer[] layers = null)
 		{
 			// Get element
 			for ( ; ; )
@@ -52,7 +52,7 @@ namespace SPMTool.AutoCAD
 					Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
 
 					// Get layername
-					var layer = (Layers) Enum.Parse(typeof(Layers), ent.Layer);
+					var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
 
 					if (layers is null || layers.Contains(layer))
 						return ent;
@@ -63,7 +63,7 @@ namespace SPMTool.AutoCAD
 		}
 
 		// Ask user to select objects
-		public static DBObjectCollection SelectObjects(string message, Layers[] layers = null)
+		public static DBObjectCollection SelectObjects(string message, Layer[] layers = null)
 		{
 			// Prompt for user select elements
 			var selOp = new PromptSelectionOptions()
@@ -92,7 +92,7 @@ namespace SPMTool.AutoCAD
 						Entity ent = trans.GetObject(obj.ObjectId, OpenMode.ForRead) as Entity;
 
 						// Get layername
-						var layer = (Layers) Enum.Parse(typeof(Layers), ent.Layer);
+						var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
 
 						// Check if it is a external node
 						if (layers is null || layers.Contains(layer))
@@ -108,13 +108,13 @@ namespace SPMTool.AutoCAD
 		public static DBObjectCollection SelectNodes(string message, NodeType nodeType)
 		{
 			DBObjectCollection nds;
-            var layers = new List<Layers>();
+            var layers = new List<Layer>();
 
 			if (nodeType == NodeType.External || nodeType == NodeType.All)
-				layers.Add(Layers.ExtNode);
+				layers.Add(Layer.ExtNode);
 
 			if (nodeType == NodeType.Internal || nodeType == NodeType.All)
-				layers.Add(Layers.IntNode);
+				layers.Add(Layer.IntNode);
 
 			// Create an infinite loop for selecting elements
 			for ( ; ; )
@@ -136,7 +136,7 @@ namespace SPMTool.AutoCAD
 		public static DBObjectCollection SelectStringers(string message)
 		{
 			DBObjectCollection strs;
-			var layers = new[] { Layers.Stringer };
+			var layers = new[] { Layer.Stringer };
 
             // Create an infinite loop for selecting elements
             for ( ; ; )
@@ -157,7 +157,7 @@ namespace SPMTool.AutoCAD
 		public static DBObjectCollection SelectPanels(string message)
 		{
 			DBObjectCollection pnls;
-			var layers = new[] { Layers.Panel };
+			var layers = new[] { Layer.Panel };
 
             // Create an infinite loop for selecting elements
             for ( ; ; )

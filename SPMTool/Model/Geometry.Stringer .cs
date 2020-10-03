@@ -35,7 +35,7 @@ namespace SPMTool.Model
 				=> LineObject.EndPoint;
 
 			// Layer name
-			public static readonly string StringerLayer = Layers.Stringer.ToString();
+			public static readonly string StringerLayer = Layer.Stringer.ToString();
 
             // Implementation of stringer connected points
             public class PointsConnected : Tuple<Point3d, Point3d>
@@ -77,9 +77,9 @@ namespace SPMTool.Model
 				var units = DataBase.Units;
 
                 // Check if the layers already exists in the drawing. If it doesn't, then it's created:
-                Auxiliary.CreateLayer(Layers.ExtNode, Colors.Red);
-				Auxiliary.CreateLayer(Layers.IntNode, Colors.Blue);
-				Auxiliary.CreateLayer(Layers.Stringer, Colors.Cyan);
+                Auxiliary.CreateLayer(Layer.ExtNode, Color.Red);
+				Auxiliary.CreateLayer(Layer.IntNode, Color.Blue);
+				Auxiliary.CreateLayer(Layer.Stringer, Color.Cyan);
 
 				// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
 				Auxiliary.RegisterApp();
@@ -180,7 +180,7 @@ namespace SPMTool.Model
 					newExtNds = new List<Point3d>();
 
 				// Access the internal nodes in the model
-				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layers.IntNode);
+				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layer.IntNode);
 
 				// Start a transaction
 				using (Transaction trans = DataBase.StartTransaction())
@@ -284,7 +284,7 @@ namespace SPMTool.Model
 			public static ObjectIdCollection UpdateStringers(bool updateNodes = true)
 			{
 				// Create the Stringer collection and initialize getting the elements on layer
-				var strs = Auxiliary.GetObjectsOnLayer(Layers.Stringer);
+				var strs = Auxiliary.GetObjectsOnLayer(Layer.Stringer);
 
 				// Get all the nodes in the model
 				using (var nds = updateNodes ? Node.UpdateNodes(DataBase.Units) : Node.AllNodes())
@@ -380,7 +380,7 @@ namespace SPMTool.Model
 			public static List<PointsConnected> ListOfStringerPoints()
 			{
 				// Get the stringers in the model
-				ObjectIdCollection strs = Auxiliary.GetObjectsOnLayer(Layers.Stringer);
+				ObjectIdCollection strs = Auxiliary.GetObjectsOnLayer(Layer.Stringer);
 
 				// Initialize a list
 				var strList = new List<PointsConnected>();

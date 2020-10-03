@@ -11,7 +11,7 @@ namespace SPMTool.Model
 	// Geometry related commands
 	public partial class Geometry
 	{
-		public static readonly Layers[] ElementLayers = { Layers.ExtNode, Layers.IntNode, Layers.Stringer, Layers.Panel, Layers.Force, Layers.Support };
+		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
 
         [CommandMethod("UpdateElements")]
 		public static void UpdateElements()
@@ -37,22 +37,22 @@ namespace SPMTool.Model
 		[CommandMethod("ToogleNodes")]
 		public static void ToogleNodes()
 		{
-			Auxiliary.ToogleLayer(Layers.ExtNode);
-			Auxiliary.ToogleLayer(Layers.IntNode);
+			Auxiliary.ToogleLayer(Layer.ExtNode);
+			Auxiliary.ToogleLayer(Layer.IntNode);
 		}
 
 		// Toggle view for stringers
 		[CommandMethod("ToogleStringers")]
 		public static void ToogleStringers()
 		{
-			Auxiliary.ToogleLayer(Layers.Stringer);
+			Auxiliary.ToogleLayer(Layer.Stringer);
 		}
 
 		// Toggle view for panels
 		[CommandMethod("TooglePanels")]
 		public static void TooglePanels()
 		{
-			Auxiliary.ToogleLayer(Layers.Panel);
+			Auxiliary.ToogleLayer(Layer.Panel);
 		}
 	}
 

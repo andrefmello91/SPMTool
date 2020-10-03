@@ -65,6 +65,6 @@ namespace SPMTool.Input
         /// Get <see cref="NodeType"/>.
         /// </summary>
         /// <param name="nodePoint">The <see cref="DBPoint"/> object.</param>
-		private static NodeType GetNodeType(DBPoint nodePoint) => nodePoint.Layer == Layers.ExtNode.ToString() ? NodeType.External : NodeType.Internal;
+		private static NodeType GetNodeType(DBPoint nodePoint) => nodePoint.Layer == Layer.ExtNode.ToString() ? NodeType.External : NodeType.Internal;
     }
 }
