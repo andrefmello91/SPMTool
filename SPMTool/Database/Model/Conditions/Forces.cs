@@ -8,17 +8,18 @@ using Autodesk.AutoCAD.Runtime;
 using Extensions;
 using Extensions.AutoCAD;
 using Extensions.Number;
-using SPMTool.Database;
-using SPMTool.Model;
 using SPM.Elements;
 using UnitsNet.Units;
 using OnPlaneComponents;
+using SPMTool.Database;
+using SPMTool.Global;
 using ForceTextData  = SPMTool.XData.ForceText;
 using ForceData      = SPMTool.XData.Force;
+using static SPMTool.Auxiliary;
 
-[assembly: CommandClass(typeof(SPMTool.AutoCAD.Forces))]
+[assembly: CommandClass(typeof(SPMTool.Database.Model.Conditions.Forces))]
 
-namespace SPMTool.AutoCAD
+namespace SPMTool.Database.Model.Conditions
 {
     public static class Forces
     {
@@ -32,8 +33,8 @@ namespace SPMTool.AutoCAD
         public static void AddForce()
         {
             // Check if the layer Force and ForceText already exists in the drawing. If it doesn't, then it's created:
-            Auxiliary.CreateLayer(Layer.Force, Color.Yellow);
-            Auxiliary.CreateLayer(Layer.ForceText, Color.Yellow);
+            Layer.Force.Create(Color.Yellow);
+            Layer.ForceText.Create(Color.Yellow);
 
 			// Read units
 			var units = DataBase.Units;
@@ -55,8 +56,7 @@ namespace SPMTool.AutoCAD
 
 	            // Get node positions
 	            var positions = (from DBPoint nd in nds select nd.Position).ToArray();
-
-
+				
 	            // Erase blocks
 	            EraseForceBlocks(positions);
 
@@ -100,7 +100,7 @@ namespace SPMTool.AutoCAD
 				return;
 
 			// Get scale factor
-			var scFctr = GlobalAuxiliary.ScaleFactor(geometryUnit);
+			var scFctr = ScaleFactor(geometryUnit);
 
 			// Start a transaction
 			using (var trans = DataBase.StartTransaction())
@@ -140,7 +140,7 @@ namespace SPMTool.AutoCAD
 						{
 							// Append the block to drawing
 							blkRef.Layer = ForceLayer;
-							Auxiliary.AddObject(blkRef);
+							blkRef.Add();
 
 							// Rotate and scale the block
 							if (!rotAng.ApproxZero())
@@ -162,7 +162,7 @@ namespace SPMTool.AutoCAD
 							};
 
 							// Append the text to drawing
-							Auxiliary.AddObject(text);
+							text.Add();
 
 							// Add the node position to the text XData
 							text.XData = ForceTextXData(pos, direction);
@@ -247,10 +247,10 @@ namespace SPMTool.AutoCAD
 				return;
 
 	        // Get all the force blocks in the model
-	        var fcs    = Model.Model.ForceCollection;
+	        var fcs    = Drawing.ForceCollection;
 
 	        // Get all the force texts in the model
-	        var fcTxts = Model.Model.ForceTextCollection;
+	        var fcTxts = Drawing.ForceTextCollection;
 
 			if (fcs is null && fcTxts is null)
 				return;
@@ -318,10 +318,10 @@ namespace SPMTool.AutoCAD
         private static ResultBuffer ForceXData(double forceValue, Directions forceDirection)
         {
             // Definition for the Extended Data
-            string xdataStr = "Force Data";
+            var xdataStr = "Force Data";
 
             // Get the Xdata size
-            int size  = Enum.GetNames(typeof(ForceData)).Length;
+            var size  = Enum.GetNames(typeof(ForceData)).Length;
             var fData = new TypedValue[size];
 
             // Set values
@@ -339,7 +339,7 @@ namespace SPMTool.AutoCAD
         private static ResultBuffer ForceTextXData(Point3d forcePosition, Directions forceDirection)
         {
             // Get the Xdata size
-            int size = Enum.GetNames(typeof(ForceTextData)).Length;
+            var size = Enum.GetNames(typeof(ForceTextData)).Length;
             var fData = new TypedValue[size];
 
             // Set values
@@ -359,8 +359,8 @@ namespace SPMTool.AutoCAD
         [CommandMethod("ToogleForces")]
         public static void ToogleForces()
         {
-	        Auxiliary.ToogleLayer(Layer.Force);
-	        Auxiliary.ToogleLayer(Layer.ForceText);
+	        Layer.Force.Toogle();
+	        Layer.ForceText.Toogle();
         }
 
     }

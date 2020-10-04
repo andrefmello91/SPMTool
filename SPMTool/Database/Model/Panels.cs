@@ -9,11 +9,11 @@ using Extensions.AutoCAD;
 using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements;
-using SPMTool.AutoCAD;
-using static SPMTool.AutoCAD.Auxiliary;
+using SPMTool.Database.Model.Conditions;
+using static SPMTool.Database.Model.Conditions.Auxiliary;
 using static SPMTool.Database.DataBase;
 
-namespace SPMTool.Input
+namespace SPMTool.Database
 {
 	/// <summary>
 	/// Panel input class.

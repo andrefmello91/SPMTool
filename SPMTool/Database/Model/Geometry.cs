@@ -1,12 +1,11 @@
 ﻿using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
-using SPMTool.AutoCAD;
+using SPMTool.Database.Model.Conditions;
 using SPMTool.Database;
-using SPMTool.Model;
 
 [assembly: CommandClass(typeof(Geometry))]
 
-namespace SPMTool.Model
+namespace SPMTool.Database
 {
 	// Geometry related commands
 	public partial class Geometry

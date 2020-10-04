@@ -4,14 +4,13 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPM.Elements;
-using SPMTool.AutoCAD;
+using SPMTool.Database.Model.Conditions;
 using SPMTool.Database;
-using SPMTool.Model;
 using NodeData = SPMTool.XData.Node;
 
 [assembly: CommandClass(typeof(Geometry.Node))]
 
-namespace SPMTool.Model
+namespace SPMTool.Database
 {
 	// Geometry related commands
 	public partial class Geometry
@@ -47,9 +46,9 @@ namespace SPMTool.Model
 
 			// Layer names
 			public static readonly string
-				ExtNodeLayer  = AutoCAD.Layer.ExtNode.ToString(),
-				IntNodeLayer  = AutoCAD.Layer.IntNode.ToString(),
-				DispNodeLayer = AutoCAD.Layer.Displacements.ToString();
+				ExtNodeLayer  = Database.Model.Conditions.Layer.ExtNode.ToString(),
+				IntNodeLayer  = Database.Model.Conditions.Layer.IntNode.ToString(),
+				DispNodeLayer = Database.Model.Conditions.Layer.Displacements.ToString();
 
 			// Constructor
 			public Node(Point3d position, NodeType nodeType)
@@ -73,7 +72,7 @@ namespace SPMTool.Model
 					};
 
 					// Add the new object
-					Auxiliary.AddObject(PointObject);
+					Global.Extensions.Add(PointObject);
 				}
 			}
 
@@ -100,7 +99,7 @@ namespace SPMTool.Model
 						};
 
 						// Add the new object
-						Auxiliary.AddObject(PointObject);
+						Global.Extensions.Add(PointObject);
 					}
 				}
 			}
@@ -157,7 +156,7 @@ namespace SPMTool.Model
 
 					// Set the style for all point objects in the drawing
 					DataBase.Database.Pdmode = 32;
-					DataBase.Database.Pdsize = 40 * GlobalAuxiliary.ScaleFactor(units.Geometry);
+					DataBase.Database.Pdsize = 40 * Auxiliary.ScaleFactor(units.Geometry);
 
 					// Commit and dispose the transaction
 					trans.Commit();
@@ -178,10 +177,10 @@ namespace SPMTool.Model
 					nds = AllNodes();
 
 				if (nodeType == NodeType.Internal)
-					nds = Auxiliary.GetObjectsOnLayer(AutoCAD.Layer.IntNode);
+					nds = Drawing.GetObjectsOnLayer(Database.Model.Conditions.Layer.IntNode);
 
 				if (nodeType == NodeType.External)
-					nds = Auxiliary.GetObjectsOnLayer(AutoCAD.Layer.ExtNode);
+					nds = Drawing.GetObjectsOnLayer(Database.Model.Conditions.Layer.ExtNode);
 
 				// Create a point collection
 				var pts = new List<Point3d>();
@@ -199,15 +198,15 @@ namespace SPMTool.Model
 
 				// Return the node list ordered
 				return
-					GlobalAuxiliary.OrderPoints(pts);
+					Auxiliary.OrderPoints(pts);
 			}
 
 			// Get the collection of all of the nodes
 			public static ObjectIdCollection AllNodes()
 			{
 				// Create the nodes collection and initialize getting the elements on node layer
-				ObjectIdCollection extNds = Auxiliary.GetObjectsOnLayer(AutoCAD.Layer.ExtNode);
-				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(AutoCAD.Layer.IntNode);
+				ObjectIdCollection extNds = Drawing.GetObjectsOnLayer(Database.Model.Conditions.Layer.ExtNode);
+				ObjectIdCollection intNds = Drawing.GetObjectsOnLayer(Database.Model.Conditions.Layer.IntNode);
 
 				// Create a unique collection for all the nodes
 				ObjectIdCollection nds = new ObjectIdCollection();

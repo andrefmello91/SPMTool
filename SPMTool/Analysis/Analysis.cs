@@ -4,13 +4,13 @@ using Autodesk.AutoCAD.ApplicationServices;
 using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.UserInterface;
-using SPMTool.Input;
-using static SPMTool.Input.Data;
+using SPMTool.Database;
+using static SPMTool.Database.Data;
 
 
-[assembly: CommandClass(typeof(SPMTool.AutoCAD.Results))]
+[assembly: CommandClass(typeof(SPMTool.Database.Model.Conditions.Results))]
 
-namespace SPMTool.AutoCAD
+namespace SPMTool.Database.Model.Conditions
 {
 	public static partial class Results
 	{

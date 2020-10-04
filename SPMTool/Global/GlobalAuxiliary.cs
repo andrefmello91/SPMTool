@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.Geometry;
+using Extensions.Number;
 using MathNet.Numerics;
 using UnitsNet;
 using UnitsNet.Units;
@@ -9,7 +11,7 @@ using UnitsNet.Units;
 namespace SPMTool
 {
     // Auxiliary Methods
-    public static class GlobalAuxiliary
+    public static class Auxiliary
     {
         // This method calculates the midpoint between two points
         public static Point3d MidPoint(Point3d point1, Point3d point2)
@@ -96,22 +98,14 @@ namespace SPMTool
 		        UnitConverter.Convert(1, LengthUnit.Millimeter, drawingUnit);
         }
 
-        // Function to verify if a number is not zero
-        public static bool NotZero(double num) => num != 0;
-
         /// <summary>
-        /// Try parse a string and verify if is not zero
+        /// Convert transparency to alpha.
         /// </summary>
-        /// <param name="numberAsString">String to parse.</param>
-        /// <returns></returns>
-        public static bool ParsedAndNotZero(string numberAsString)
-		{
-			bool parsed = double.TryParse(numberAsString, out double x);
-
-			if (!parsed || x == 0)
-				return false;
-
-			return true;
-		}
+        /// <param name="transparency">Transparency percent.</param>
+        public static Transparency Transparency(int transparency)
+        {
+	        var alpha = (byte) (255 * (100 - transparency) / 100);
+	        return new Transparency(alpha);
+        }
     }
 }

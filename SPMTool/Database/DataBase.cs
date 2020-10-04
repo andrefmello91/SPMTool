@@ -9,9 +9,9 @@ using Extensions.AutoCAD;
 using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements.StringerProperties;
-using SPMTool.AutoCAD;
+using SPMTool.Database.Model.Conditions;
 using SPMTool.Global;
-using SPMTool.Model;
+using SPMTool.Database;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Database
@@ -76,22 +76,22 @@ namespace SPMTool.Database
 		/// <summary>
         /// Get <see cref="Concrete"/> saved in database.
         /// </summary>
-		public static Concrete Concrete => AutoCAD.Material.ReadConcreteData();
+		public static Concrete Concrete => ConcreteData.ReadConcreteData();
 
 		/// <summary>
         /// Get <see cref="Steel"/> objects saved in database.
         /// </summary>
-		public static Steel[] SavedSteel => ReadSteel();
+		public static Steel[] SavedSteel => ReinforcementData.ReadSteel();
 
         /// <summary>
         /// Get <see cref="UniaxialReinforcement"/> objects saved in database.
         /// </summary>
-        public static UniaxialReinforcement[] SavedStringerReinforcement => ReadStringerReinforcement();
+        public static UniaxialReinforcement[] SavedStringerReinforcement => ReinforcementData.ReadStringerReinforcement();
 
         /// <summary>
         /// Get <see cref="WebReinforcementDirection"/> objects saved in database.
         /// </summary>
-        public static WebReinforcementDirection[] SavedPanelReinforcement => ReadPanelReinforcement();
+        public static WebReinforcementDirection[] SavedPanelReinforcement => ReinforcementData.ReadPanelReinforcement();
 
         /// <summary>
         /// Get <see cref="StringerGeometry"/> objects saved in database.
@@ -108,78 +108,7 @@ namespace SPMTool.Database
         /// </summary>
 		public static Transaction StartTransaction() => Database.TransactionManager.StartTransaction();
 
-        /// <summary>
-        /// Save steel configuration on database.
-        /// </summary>
-        /// <param name="steel">The steel object.</param>
-        public static void Save(Steel steel)
-        {
-            if (steel is null)
-                return;
-
-            // Get the name to save
-            var name = steel.SaveName();
-
-            // Save the variables on the Xrecord
-            using (ResultBuffer rb = new ResultBuffer())
-            {
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName));   // 0
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));              // 1
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, steel.YieldStress));        // 2
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, steel.ElasticModule));      // 3
-
-                // Create the entry in the NOD if it doesn't exist
-                Auxiliary.SaveObjectDictionary(name, rb, false);
-            }
-        }
-
-        /// <summary>
-        /// Save stringer reinforcement configuration in database.
-        /// </summary>
-        /// <param name="reinforcement">The <see cref="UniaxialReinforcement"/> object.</param>
-        public static void Save(UniaxialReinforcement reinforcement)
-        {
-            if (reinforcement is null)
-                return;
-
-            // Get the name to save
-            var name = reinforcement.SaveName();
-
-            // Save the variables on the Xrecord
-            using (ResultBuffer rb = new ResultBuffer())
-            {
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName));                  // 0
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));                             // 1
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, reinforcement.NumberOfBars));       // 2
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, reinforcement.BarDiameter));        // 3
-
-                // Create the entry in the NOD if it doesn't exist
-                Auxiliary.SaveObjectDictionary(name, rb, false);
-            }
-        }
-
-        /// <summary>
-        /// Save reinforcement configuration on database.
-        /// </summary>
-        /// <param name="reinforcement">The <see cref="WebReinforcementDirection"/> object.</param>
-        public static void Save(WebReinforcementDirection reinforcement)
-        {
-            // Get the names to save
-            var name = reinforcement.SaveName();
-
-            using (var rb = new ResultBuffer())
-            {
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName));              // 0
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));                         // 1
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, reinforcement.BarDiameter));    // 2
-                rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, reinforcement.BarSpacing));     // 3
-
-                // Create the entry in the NOD if it doesn't exist
-                Auxiliary.SaveObjectDictionary(name, rb, false);
-            }
-        }
-
-        /// <summary>
+		/// <summary>
         /// Save stringer geometry configuration on database.
         /// </summary>
         /// <param name="geometry">The <see cref="StringerGeometry"/> object.</param>
@@ -196,7 +125,7 @@ namespace SPMTool.Database
 		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, geometry.Height));   // 3
 
 		        // Save on NOD if it doesn't exist
-		        Auxiliary.SaveObjectDictionary(saveCode, rb, false);
+		        SaveDictionary(rb, saveCode, false);
 	        }
         }
 
@@ -217,71 +146,8 @@ namespace SPMTool.Database
 		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, panelWidth));       // 2
 
 		        // Create the entry in the NOD if it doesn't exist
-		        Auxiliary.SaveObjectDictionary(name, rb, false);
+		        SaveDictionary(rb, name, false);
 	        }
-        }
-
-        /// <summary>
-        /// Read steel parameters saved in database.
-        /// </summary>
-        private static Steel[] ReadSteel()
-        {
-	        // Get dictionary entries
-	        var entries = Auxiliary.ReadDictionaryEntries("Steel");
-
-	        if (entries is null)
-		        return null;
-
-	        // Create a list of steel
-	        var stList = (from r in entries
-		        let t   = r.AsArray()
-		        let fy  = t[2].ToDouble()
-		        let Es  = t[3].ToDouble()
-		        select new Steel(fy, Es)).ToArray();
-
-	        return stList.Length > 0 ? stList.ToArray() : null;
-        }
-
-        /// <summary>
-        /// Read stringer reinforcement parameters saved in database.
-        /// </summary>
-        private static UniaxialReinforcement[] ReadStringerReinforcement()
-        {
-	        // Get dictionary entries
-	        var entries = Auxiliary.ReadDictionaryEntries("StrRef");
-
-	        if (entries is null)
-		        return null;
-
-	        // Create a list of reinforcement
-	        var refList = (from r in entries
-		        let t   = r.AsArray()
-		        let num = t[2].ToInt()
-		        let phi = t[3].ToDouble()
-		        select new UniaxialReinforcement(num, phi, null)).ToArray();
-
-	        return refList.Length > 0 ? refList.ToArray() : null;
-        }
-
-        /// <summary>
-        /// Read panel reinforcement on database.
-        /// </summary>
-        /// <returns></returns>
-        private static WebReinforcementDirection[] ReadPanelReinforcement()
-        {
-            // Get dictionary entries
-            var entries = Auxiliary.ReadDictionaryEntries("PnlRef");
-
-            if (entries is null)
-                return null;
-
-            var refList = (from r in entries
-	            let t   = r.AsArray()
-	            let phi = t[2].ToDouble()
-	            let s   = t[3].ToDouble()
-	            select new WebReinforcementDirection(phi, s, null, 0, 0)).ToArray();
-
-            return refList.Length > 0 ? refList.ToArray() : null;
         }
 
         /// <summary>
@@ -290,16 +156,16 @@ namespace SPMTool.Database
         private static StringerGeometry[] ReadStringerGeometries()
         {
 	        // Get dictionary entries
-	        var entries = Auxiliary.ReadDictionaryEntries("StrGeo");
+	        var entries = ReadDictionaryEntries("StrGeo");
 
 	        if (entries is null)
 		        return null;
 
-	        var geoList = (from r in entries
+	        var geoList = Enumerable.ToArray<StringerGeometry>((from r in entries
 		        let t   = r.AsArray()
-		        let w   = t[2].ToDouble()
-		        let h   = t[3].ToDouble()
-		        select new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h)).ToArray();
+		        let w   = Extensions.AutoCAD.Extensions.ToDouble(t[2])
+		        let h   = Extensions.AutoCAD.Extensions.ToDouble(t[3])
+		        select new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h)));
 
 	        return
 		        geoList.Length > 0 ? geoList : null;
@@ -311,14 +177,149 @@ namespace SPMTool.Database
         private static double[] ReadPanelWidths()
         {
 	        // Get dictionary entries
-	        var entries = Auxiliary.ReadDictionaryEntries("PnlW");
+	        var entries = ReadDictionaryEntries("PnlW");
 
 	        if (entries is null)
 		        return null;
 
-	        var geoList = entries.Select(entry => entry.AsArray()[2].ToDouble()).ToArray();
+	        var geoList = Enumerable.Select<ResultBuffer, double>(entries, entry => Extensions.AutoCAD.Extensions.ToDouble(entry.AsArray()[2])).ToArray();
 
 	        return geoList.Length > 0 ? geoList : null;
+        }
+
+        /// <summary>
+        /// Add the app to the Registered Applications Record.
+        /// </summary>
+        public static void RegisterApp()
+        {
+	        // Start a transaction
+	        using (var trans = StartTransaction())
+
+		    // Open the Registered Applications table for read
+	        using (var regAppTbl = (RegAppTable)trans.GetObject(DataBase.Database.RegAppTableId, OpenMode.ForRead))
+	        {
+		        if (regAppTbl.Has(AppName))
+					return;
+
+		        using (var regAppTblRec = new RegAppTableRecord())
+		        {
+			        regAppTblRec.Name = AppName;
+			        trans.GetObject(Database.RegAppTableId, OpenMode.ForWrite);
+			        regAppTbl.Add(regAppTblRec);
+			        trans.AddNewlyCreatedDBObject(regAppTblRec, true);
+		        }
+
+		        // Commit and dispose the transaction
+		        trans.Commit();
+	        }
+        }
+
+        /// <summary>
+        /// Get folder path of current file.
+        /// </summary>
+        public static string GetFilePath() => GetSystemVariable("DWGPREFIX").ToString();
+
+        /// <summary>
+        /// Save <paramref name="data"/> in <see cref="DBDictionary"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="ResultBuffer"/> to save.</param>
+        /// <param name="name">The name to save.</param>
+        /// <param name="overwrite">Overwrite data with the same <paramref name="name"/>?</param>
+        public static void SaveDictionary(ResultBuffer data, string name, bool overwrite = true)
+        {
+	        // Start a transaction
+	        using (var trans = StartTransaction())
+
+		        // Get the NOD in the database
+	        using (var nod = (DBDictionary)trans.GetObject(DataBase.NodId, OpenMode.ForWrite))
+	        {
+		        // Verify if object exists and must be overwrote
+		        if (!overwrite && nod.Contains(name))
+			        return;
+
+		        // Create and add data to an Xrecord
+		        var xRec = new Xrecord
+		        {
+			        Data = data
+		        };
+				
+		        // Create the entry in the NOD and add to the transaction
+		        nod.SetAt(name, xRec);
+		        trans.AddNewlyCreatedDBObject(xRec, true);
+
+		        // Save the new object to the database
+		        trans.Commit();
+	        }
+        }
+
+        /// <summary>
+        /// Read data on a dictionary entry.
+        /// </summary>
+        /// <param name="name">The name of entry.</param>
+        /// <param name="fullName">Return only data corresponding to full name?</param>
+        public static TypedValue[] ReadDictionaryEntry(string name, bool fullName = true)
+        {
+	        // Start a transaction
+	        using (var trans = DataBase.StartTransaction())
+			
+		        // Get the NOD in the database
+	        using (var nod = (DBDictionary)trans.GetObject(DataBase.NodId, OpenMode.ForWrite))
+	        {
+		        // Check if it exists as full name
+		        if (fullName && nod.Contains(name))
+		        {
+			        // Read the concrete Xrecord
+			        using (var xrec = (Xrecord)trans.GetObject(nod.GetAt(name), OpenMode.ForRead))
+				        return
+					        xrec.Data.AsArray();
+		        }
+
+		        // Check if name contains
+		        foreach (var entry in nod)
+		        {
+			        if (!entry.Key.Contains(name))
+				        continue;
+
+			        // Read data
+			        var refXrec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+
+			        return
+				        refXrec.Data.AsArray();
+		        }
+
+		        // Not set
+		        return null;
+	        }
+        }
+
+        /// <summary>
+        /// Read dictionary entries that contains <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name">The name of entry.</param>
+        public static ResultBuffer[] ReadDictionaryEntries(string name)
+        {
+	        // Start a transaction
+	        using (var trans = DataBase.StartTransaction())
+
+		    // Get the NOD in the database
+	        using (var nod = (DBDictionary)trans.GetObject(NodId, OpenMode.ForRead))
+	        {
+		        var resList = (from DBDictionaryEntry entry in nod where entry.Key.Contains(name) select ((Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead)).Data).ToArray();
+
+		        return resList.Length > 0 ? resList.ToArray() : null;
+
+		        // Check if name contains
+		        //            foreach (var entry in nod)
+		        //{
+		        //	if (!entry.Key.Contains(name))
+		        //		continue;
+
+		        //	var xRec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+
+		        //	// Add data
+		        //	resList.Add(xRec.Data);
+		        //}
+	        }
         }
 	}
 }

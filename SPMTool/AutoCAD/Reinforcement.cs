@@ -9,9 +9,9 @@ using Material.Reinforcement;
 using SPMTool.Database;
 using UnitsNet;
 
-[assembly: CommandClass(typeof(SPMTool.AutoCAD.Material))]
+[assembly: CommandClass(typeof(SPMTool.Database.Model.Conditions.Material))]
 
-namespace SPMTool.AutoCAD
+namespace SPMTool.Database.Model.Conditions
 {
     public static partial class Material
     {
@@ -136,7 +136,7 @@ namespace SPMTool.AutoCAD
 			var reinforcement = new UniaxialReinforcement(num, phi, steel);
 
 			// Save the reinforcement
-			DataBase.Save(reinforcement);
+			ReinforcementData.Save(reinforcement);
 
 			return reinforcement;
 		}
@@ -197,7 +197,7 @@ namespace SPMTool.AutoCAD
 			var steel = new Steel(fy, Es);
 
 			// Save steel
-			DataBase.Save(steel);
+			ReinforcementData.Save(steel);
 
 			return steel;
 		}
@@ -336,7 +336,7 @@ namespace SPMTool.AutoCAD
 
 			var reinforcement = new WebReinforcementDirection(phi, s, steel, 0, 0);
 
-			DataBase.Save(reinforcement);
+			ReinforcementData.Save(reinforcement);
 
 			return reinforcement;
 		}

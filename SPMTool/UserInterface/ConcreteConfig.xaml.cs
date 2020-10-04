@@ -6,17 +6,19 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Input;
+using Extensions.Number;
 using Material;
 using Material.Concrete;
 using Parameters = Material.Concrete.Parameters;
 using Material.Concrete;
-using SPMTool.AutoCAD;
+using SPMTool.Database.Model.Conditions;
 using SPMTool.Database;
 using UnitsNet;
 using UnitsNet.Units;
 using ComboBox = System.Windows.Controls.ComboBox;
 using MessageBox = System.Windows.MessageBox;
 using TextBox = System.Windows.Controls.TextBox;
+using static SPMTool.Database.ConcreteData;
 
 namespace SPMTool.UserInterface
 {
@@ -36,15 +38,9 @@ namespace SPMTool.UserInterface
         public string AggregateUnit => Length.GetAbbreviation(_units.Reinforcement);
 
 		/// <summary>
-        /// Get the output <see cref="Concrete"/> object.
+        /// Get the output <see cref="ConcreteData"/> object.
         /// </summary>
 		public Concrete OutputConcrete => new Concrete(_parameters, _constitutiveModel);
-
-        // Unit options
-        private readonly string[]
-			ParOpts = AutoCAD.Material.Models,
-			BhOpts  = AutoCAD.Material.Behaviors,
-			AgOpts  = AutoCAD.Material.AggregateTypes;
 
         public ConcreteConfig()
 	        : this (DataBase.Concrete)
@@ -89,7 +85,7 @@ namespace SPMTool.UserInterface
 				var textBoxes = new[] { StrengthBox, AggDiamBox };
 				foreach (var textBox in textBoxes)
 				{
-					if (!GlobalAuxiliary.ParsedAndNotZero(textBox.Text))
+					if (textBox.Text.ParsedAndNotZero(out var x))
 						return false;
 				}
 
@@ -107,7 +103,7 @@ namespace SPMTool.UserInterface
 				var textBoxes = new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox };
 				foreach (var textBox in textBoxes)
 				{
-					if (!GlobalAuxiliary.ParsedAndNotZero(textBox.Text))
+					if (textBox.Text.ParsedAndNotZero(out var x))
 						return false;
 				}
 
@@ -122,13 +118,13 @@ namespace SPMTool.UserInterface
 
 			AggDiamBox.Text = $"{_units.ConvertFromMillimeter(_parameters.AggregateDiameter, _units.Reinforcement):0.00}";
 
-            AggTypeBox.ItemsSource  = AgOpts;
+            AggTypeBox.ItemsSource  = AggregateTypes;
 			AggTypeBox.SelectedItem = _parameters.Type.ToString();
 
-			ConstitutiveBox.ItemsSource  = BhOpts;
+			ConstitutiveBox.ItemsSource  = ConstitutiveModels;
 			ConstitutiveBox.SelectedItem = _constitutiveModel.ToString();
 
-			ParameterBox.ItemsSource = ParOpts;
+			ParameterBox.ItemsSource = Models;
 			ParameterBox.SelectedItem = _parameterModel.ToString();
 
             UpdateCustomParameters();
@@ -285,7 +281,7 @@ namespace SPMTool.UserInterface
 					UpdateParameters();
 
 				// Save units on database
-				AutoCAD.Material.SaveConcreteParameters(_parameters, _constitutiveModel);
+				ConcreteData.Save(_parameters, _constitutiveModel);
 				Close();
 			}
 		}

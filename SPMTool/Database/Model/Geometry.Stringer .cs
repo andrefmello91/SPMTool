@@ -9,16 +9,15 @@ using Extensions.AutoCAD;
 using Extensions.Number;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
-using SPMTool.AutoCAD;
+using SPMTool.Database.Model.Conditions;
 using SPMTool.Database;
 using SPMTool.Global;
-using SPMTool.Model;
 using UnitsNet;
 using StringerData = SPMTool.XData.Stringer;
 
 [assembly: CommandClass(typeof(Geometry.Stringer))]
 
-namespace SPMTool.Model
+namespace SPMTool.Database
 {
 	// Geometry related commands
 	public partial class Geometry
@@ -66,7 +65,7 @@ namespace SPMTool.Model
 					};
 
 					// Add the object
-					Auxiliary.AddObject(LineObject);
+					Global.Extensions.Add(LineObject);
 				}
 			}
 
@@ -82,7 +81,7 @@ namespace SPMTool.Model
 				Auxiliary.CreateLayer(Layer.Stringer, Color.Cyan);
 
 				// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-				Auxiliary.RegisterApp();
+				DataBase.RegisterApp();
 
 				// Get the list of start and endpoints
 				var strList = ListOfStringerPoints();
@@ -119,13 +118,13 @@ namespace SPMTool.Model
 						nds.Add(endPt);
 
 						// Get the points ordered in ascending Y and ascending X:
-						List<Point3d> extNds = GlobalAuxiliary.OrderPoints(nds);
+						List<Point3d> extNds = Auxiliary.OrderPoints(nds);
 
 						// Create the Stringer and add to drawing
 						new Stringer(extNds[0], extNds[1], strList);
 
 						// Get the midpoint
-						Point3d midPt = GlobalAuxiliary.MidPoint(extNds[0], extNds[1]);
+						Point3d midPt = Auxiliary.MidPoint(extNds[0], extNds[1]);
 
 						// Add the position of the nodes to the list
 						if (!newExtNds.Contains(extNds[0]))
@@ -180,7 +179,7 @@ namespace SPMTool.Model
 					newExtNds = new List<Point3d>();
 
 				// Access the internal nodes in the model
-				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layer.IntNode);
+				ObjectIdCollection intNds = Drawing.GetObjectsOnLayer(Layer.IntNode);
 
 				// Start a transaction
 				using (Transaction trans = DataBase.StartTransaction())
@@ -207,7 +206,7 @@ namespace SPMTool.Model
 						Point3d stPt = strSt;
 
 						// Get the midpoint
-						Point3d midPt = GlobalAuxiliary.MidPoint(strSt, strEnd);
+						Point3d midPt = Auxiliary.MidPoint(strSt, strEnd);
 
 						// Read the internal nodes
 						foreach (ObjectId intNd in intNds)
@@ -243,7 +242,7 @@ namespace SPMTool.Model
 								strLine.XData = new ResultBuffer(data);
 
 							// Get the mid point
-							midPt = GlobalAuxiliary.MidPoint(stPt, endPt);
+							midPt = Auxiliary.MidPoint(stPt, endPt);
 
 							// Add the position of the nodes to the list
 							if (!newExtNds.Contains(stPt))
@@ -284,7 +283,7 @@ namespace SPMTool.Model
 			public static ObjectIdCollection UpdateStringers(bool updateNodes = true)
 			{
 				// Create the Stringer collection and initialize getting the elements on layer
-				var strs = Auxiliary.GetObjectsOnLayer(Layer.Stringer);
+				var strs = Drawing.GetObjectsOnLayer(Layer.Stringer);
 
 				// Get all the nodes in the model
 				using (var nds = updateNodes ? Node.UpdateNodes(DataBase.Units) : Node.AllNodes())
@@ -302,12 +301,12 @@ namespace SPMTool.Model
 						Line str = trans.GetObject(strObj, OpenMode.ForRead) as Line;
 
 						// Get the midpoint and add to the collection
-						Point3d midPt = SPMTool.GlobalAuxiliary.MidPoint(str.StartPoint, str.EndPoint);
+						Point3d midPt = SPMTool.Auxiliary.MidPoint(str.StartPoint, str.EndPoint);
 						midPts.Add(midPt);
 					}
 
 					// Get the array of midpoints ordered
-					List<Point3d> midPtsList = SPMTool.GlobalAuxiliary.OrderPoints(midPts);
+					List<Point3d> midPtsList = SPMTool.Auxiliary.OrderPoints(midPts);
 
 					// Bool to alert the user
 					bool userAlert = false;
@@ -344,7 +343,7 @@ namespace SPMTool.Model
 						}
 						
 						// Get the coordinates of the midpoint of the Stringer
-						Point3d midPt = GlobalAuxiliary.MidPoint(str.StartPoint, str.EndPoint);
+						Point3d midPt = Auxiliary.MidPoint(str.StartPoint, str.EndPoint);
 
 						// Get the Stringer number
 						int strNum = midPtsList.IndexOf(midPt) + 1;
@@ -380,7 +379,7 @@ namespace SPMTool.Model
 			public static List<PointsConnected> ListOfStringerPoints()
 			{
 				// Get the stringers in the model
-				ObjectIdCollection strs = Auxiliary.GetObjectsOnLayer(Layer.Stringer);
+				ObjectIdCollection strs = Drawing.GetObjectsOnLayer(Layer.Stringer);
 
 				// Initialize a list
 				var strList = new List<PointsConnected>();

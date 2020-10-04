@@ -1,6 +1,6 @@
 ﻿namespace SPMTool
 {
-	namespace AutoCAD
+	namespace Database.Model.Conditions
 	{
 		// AutoCAD variables
 

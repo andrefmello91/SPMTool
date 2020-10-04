@@ -11,9 +11,9 @@ using UnitsNet;
 using UnitsData  = SPMTool.XData.Units;
 using StressUnit = UnitsNet.Units.PressureUnit;
 
-[assembly: CommandClass(typeof(SPMTool.AutoCAD.Config))]
+[assembly: CommandClass(typeof(SPMTool.Database.Model.Conditions.Config))]
 
-namespace SPMTool.AutoCAD
+namespace SPMTool.Database.Model.Conditions
 {
 	// Concrete
 	public static class Config
@@ -72,7 +72,7 @@ namespace SPMTool.AutoCAD
 			data[(int) UnitsData.MaterialStrength] = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.MaterialStrength);
 
 			// Create the entry in the NOD and add to the transaction
-			Auxiliary.SaveObjectDictionary(Units, new ResultBuffer(data));
+			DataBase.SaveDictionary(Units, new ResultBuffer(data));
 		}
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace SPMTool.AutoCAD
         /// <param name="setUnits">Units must be set by user?</param>
         public static Units ReadUnits(bool setUnits = true)
 		{
-			TypedValue[] data = Auxiliary.ReadDictionaryEntry(Units);
+			TypedValue[] data = DataBase.ReadDictionaryEntry(Units);
 
 			if (data is null)
 			{

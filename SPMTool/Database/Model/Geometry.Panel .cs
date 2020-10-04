@@ -8,16 +8,15 @@ using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
 using Extensions.Number;
 using SPM.Elements;
-using SPMTool.AutoCAD;
+using SPMTool.Database.Model.Conditions;
 using SPMTool.Database;
 using SPMTool.Global;
-using SPMTool.Model;
 using UnitsNet;
 using PanelData = SPMTool.XData.Panel;
 
 [assembly: CommandClass(typeof(Geometry.Panel))]
 
-namespace SPMTool.Model
+namespace SPMTool.Database
 {
 	// Geometry related commands
 	public partial class Geometry
@@ -66,7 +65,7 @@ namespace SPMTool.Model
 					};
 
 					// Add the object
-					Auxiliary.AddObject(SolidObject);
+					Global.Extensions.Add(SolidObject);
 				}
 			}
 
@@ -77,7 +76,7 @@ namespace SPMTool.Model
 				Auxiliary.CreateLayer(Layer.Panel, Color.Grey, 80);
 
 				// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-				Auxiliary.RegisterApp();
+				DataBase.RegisterApp();
 
 				// Read units
 				var units = DataBase.Units;
@@ -103,7 +102,7 @@ namespace SPMTool.Model
 							vrts.Add(nd.Position);
 
 						// Order the vertices in ascending Y and ascending X
-						vrts = GlobalAuxiliary.OrderPoints(vrts);
+						vrts = Auxiliary.OrderPoints(vrts);
 
 						// Create the panel if it doesn't exist
 						var pnlPts = new Vertices(vrts[0], vrts[1], vrts[2], vrts[3]);
@@ -163,10 +162,10 @@ namespace SPMTool.Model
 				var newStrList = new List<(Point3d start, Point3d end)>();
 
 				// Access the stringers in the model
-				ObjectIdCollection strs = Auxiliary.GetObjectsOnLayer(Layer.Stringer);
+				ObjectIdCollection strs = Drawing.GetObjectsOnLayer(Layer.Stringer);
 
 				// Access the internal nodes in the model
-				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layer.IntNode);
+				ObjectIdCollection intNds = Drawing.GetObjectsOnLayer(Layer.IntNode);
 
 				// Start a transaction
 				using (Transaction trans = DataBase.StartTransaction())
@@ -302,7 +301,7 @@ namespace SPMTool.Model
 					new Stringer(pts.start, pts.end, strList);
 
 					// Get the midpoint to add the external node
-					Point3d midPt = GlobalAuxiliary.MidPoint(pts.Item1, pts.Item2);
+					Point3d midPt = Auxiliary.MidPoint(pts.Item1, pts.Item2);
 					if (!newIntNds.Contains(midPt))
 						newIntNds.Add(midPt);
 				}
@@ -411,10 +410,10 @@ namespace SPMTool.Model
             public static ObjectIdCollection UpdatePanels()
 			{
 				// Get the internal nodes of the model
-				ObjectIdCollection intNds = Auxiliary.GetObjectsOnLayer(Layer.IntNode);
+				ObjectIdCollection intNds = Drawing.GetObjectsOnLayer(Layer.IntNode);
 
 				// Create the panels collection and initialize getting the elements on node layer
-				ObjectIdCollection pnls = Auxiliary.GetObjectsOnLayer(Layer.Panel);
+				ObjectIdCollection pnls = Drawing.GetObjectsOnLayer(Layer.Panel);
 
 				// Create a point collection
 				List<Point3d> cntrPts = new List<Point3d>();
@@ -436,12 +435,12 @@ namespace SPMTool.Model
 						pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
 
 						// Get the approximate coordinates of the center point of the panel
-						Point3d cntrPt = SPMTool.GlobalAuxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
+						Point3d cntrPt = SPMTool.Auxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
 						cntrPts.Add(cntrPt);
 					}
 
 					// Get the list of center points ordered
-					List<Point3d> cntrPtsList = SPMTool.GlobalAuxiliary.OrderPoints(cntrPts);
+					List<Point3d> cntrPtsList = SPMTool.Auxiliary.OrderPoints(cntrPts);
 
 					// Bool to alert the user
 					bool userAlert = false;
@@ -483,14 +482,14 @@ namespace SPMTool.Model
 						pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
 
 						// Get the approximate coordinates of the center point of the panel
-						Point3d cntrPt = SPMTool.GlobalAuxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
+						Point3d cntrPt = SPMTool.Auxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
 
 						// Get the coordinates of the panel DoFs in the necessary order
 						Point3dCollection pnlGrips = new Point3dCollection();
-						pnlGrips.Add(SPMTool.GlobalAuxiliary.MidPoint(pnlVerts[0], pnlVerts[1]));
-						pnlGrips.Add(SPMTool.GlobalAuxiliary.MidPoint(pnlVerts[1], pnlVerts[3]));
-						pnlGrips.Add(SPMTool.GlobalAuxiliary.MidPoint(pnlVerts[3], pnlVerts[2]));
-						pnlGrips.Add(SPMTool.GlobalAuxiliary.MidPoint(pnlVerts[2], pnlVerts[0]));
+						pnlGrips.Add(SPMTool.Auxiliary.MidPoint(pnlVerts[0], pnlVerts[1]));
+						pnlGrips.Add(SPMTool.Auxiliary.MidPoint(pnlVerts[1], pnlVerts[3]));
+						pnlGrips.Add(SPMTool.Auxiliary.MidPoint(pnlVerts[3], pnlVerts[2]));
+						pnlGrips.Add(SPMTool.Auxiliary.MidPoint(pnlVerts[2], pnlVerts[0]));
 
 						// Get the panel number
 						int pnlNum = cntrPtsList.IndexOf(cntrPt) + 1;
@@ -545,7 +544,7 @@ namespace SPMTool.Model
 			public static List<Vertices> ListOfPanelVertices()
 			{
 				// Get the stringers in the model
-				ObjectIdCollection pnls = Auxiliary.GetObjectsOnLayer(Layer.Panel);
+				ObjectIdCollection pnls = Drawing.GetObjectsOnLayer(Layer.Panel);
 
 				// Initialize a list
 				var pnlList = new List<Vertices>();

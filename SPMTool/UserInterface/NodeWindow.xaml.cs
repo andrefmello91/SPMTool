@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Windows;
-using SPMTool.AutoCAD;
+using SPMTool.Database.Model.Conditions;
 using SPMTool.Database;
 using SPMTool.Elements;
 using UnitsNet;

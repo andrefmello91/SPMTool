@@ -8,14 +8,12 @@ using Extensions.Number;
 using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.Database;
-using SPMTool.Input;
-using SPMTool.Model;
 using SPMTool.UserInterface;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
-[assembly: CommandClass(typeof(SPMTool.AutoCAD.Results))]
+[assembly: CommandClass(typeof(SPMTool.Database.Model.Conditions.Results))]
 
-namespace SPMTool.AutoCAD
+namespace SPMTool.Database.Model.Conditions
 {
 	public static partial class Results
 	{
@@ -52,9 +50,9 @@ namespace SPMTool.AutoCAD
             CreatePanelStressesBlock();
 
 			// Erase all the panel forces in the drawing
-			Auxiliary.EraseObjects(Layer.PanelForce);
-			Auxiliary.EraseObjects(Layer.CompressivePanelStress);
-			Auxiliary.EraseObjects(Layer.TensilePanelStress);
+			Database.Drawing.EraseObjects(Layer.PanelForce);
+			Database.Drawing.EraseObjects(Layer.CompressivePanelStress);
+			Database.Drawing.EraseObjects(Layer.TensilePanelStress);
 
 			// Start a transaction
 			using (Transaction trans = DataBase.StartTransaction())
@@ -87,7 +85,7 @@ namespace SPMTool.AutoCAD
 					using (BlockReference blkRef = new BlockReference(cntrPt, shearBlock))
 					{
 						blkRef.Layer = PanelForceLayer;
-						Auxiliary.AddObject(blkRef);
+						Global.Extensions.Add(blkRef);
 
 						// Set the scale of the block
 						blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
@@ -114,7 +112,7 @@ namespace SPMTool.AutoCAD
 						tauTxt.AlignmentPoint = algnPt;
 
 						// Add the text to the drawing
-						Auxiliary.AddObject(tauTxt);
+						Global.Extensions.Add(tauTxt);
 					}
 
 					// Create stress block
@@ -127,7 +125,7 @@ namespace SPMTool.AutoCAD
 						{
 							blkRef.Layer = CompStressLayer;
 							blkRef.ColorIndex = (int)Color.Blue1;
-							Auxiliary.AddObject(blkRef);
+							Global.Extensions.Add(blkRef);
 
 							// Set the scale of the block
 							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
@@ -163,7 +161,7 @@ namespace SPMTool.AutoCAD
                             sigTxt.AlignmentPoint = algnPt;
 
                             // Add the text to the drawing
-                            Auxiliary.AddObject(sigTxt);
+                            Global.Extensions.Add(sigTxt);
 						}
                     }
 
@@ -174,7 +172,7 @@ namespace SPMTool.AutoCAD
 						using (BlockReference blkRef = new BlockReference(cntrPt, tensStress))
 						{
 							blkRef.Layer = TenStressLayer;
-							Auxiliary.AddObject(blkRef);
+							Global.Extensions.Add(blkRef);
 
 							// Set the scale of the block
 							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
@@ -210,7 +208,7 @@ namespace SPMTool.AutoCAD
                             sigTxt.AlignmentPoint = algnPt;
 
                             // Add the text to the drawing
-                            Auxiliary.AddObject(sigTxt);
+                            Global.Extensions.Add(sigTxt);
 						}
                     }
                 }
@@ -232,12 +230,12 @@ namespace SPMTool.AutoCAD
 			Auxiliary.CreateLayer(Layer.StringerForce, Color.Grey);
 
 			// Erase all the Stringer forces in the drawing
-			ObjectIdCollection strFs = Auxiliary.GetObjectsOnLayer(Layer.StringerForce);
+			ObjectIdCollection strFs = Database.Drawing.GetObjectsOnLayer(Layer.StringerForce);
 			if (strFs.Count > 0) 
-				Auxiliary.EraseObjects(strFs);
+				Database.Drawing.EraseObjects(strFs);
 
 			// Get the scale factor
-			var scFctr = GlobalAuxiliary.ScaleFactor(units.Geometry);
+			var scFctr = Auxiliary.ScaleFactor(units.Geometry);
 
 			// Start a transaction
 			using (Transaction trans = DataBase.StartTransaction())
@@ -290,7 +288,7 @@ namespace SPMTool.AutoCAD
 									dgrm.ColorIndex = (short) Color.Red;
 
 								// Add the diagram to the drawing
-								Auxiliary.AddObject(dgrm);
+								Global.Extensions.Add(dgrm);
 
 								// Rotate the diagram
 								dgrm.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
@@ -332,7 +330,7 @@ namespace SPMTool.AutoCAD
 									dgrm1.ColorIndex = (short) Color.Red;
 
 								// Add the diagram to the drawing
-								Auxiliary.AddObject(dgrm1);
+								Global.Extensions.Add(dgrm1);
 
 								// Rotate the diagram
 								dgrm1.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
@@ -351,7 +349,7 @@ namespace SPMTool.AutoCAD
 									dgrm3.ColorIndex = (short) Color.Red;
 
 								// Add the diagram to the drawing
-								Auxiliary.AddObject(dgrm3);
+								Global.Extensions.Add(dgrm3);
 
 								// Rotate the diagram
 								dgrm3.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
@@ -383,7 +381,7 @@ namespace SPMTool.AutoCAD
 								}
 
 								// Add the text to the drawing
-								Auxiliary.AddObject(txt1);
+								Global.Extensions.Add(txt1);
 
 								// Rotate the text
 								txt1.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
@@ -418,7 +416,7 @@ namespace SPMTool.AutoCAD
 								txt3.AlignmentPoint = txt3.Position;
 
 								// Add the text to the drawing
-								Auxiliary.AddObject(txt3);
+								Global.Extensions.Add(txt3);
 
 								// Rotate the text
 								txt3.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
@@ -445,12 +443,12 @@ namespace SPMTool.AutoCAD
 			Auxiliary.LayerOff(Layer.Displacements);
 
 			// Erase all the displaced objects in the drawing
-			ObjectIdCollection dispObjs = Auxiliary.GetObjectsOnLayer(Layer.Displacements);
+			ObjectIdCollection dispObjs = Database.Drawing.GetObjectsOnLayer(Layer.Displacements);
 			if (dispObjs.Count > 0)
-				Auxiliary.EraseObjects(dispObjs);
+				Database.Drawing.EraseObjects(dispObjs);
 
 			// Set a scale factor for displacements
-			double scFctr = 100 * GlobalAuxiliary.ScaleFactor(units.Geometry);
+			double scFctr = 100 * Auxiliary.ScaleFactor(units.Geometry);
 
 			// Create lists of points for adding the nodes later
 			List<Point3d> dispNds = new List<Point3d>();
@@ -508,7 +506,7 @@ namespace SPMTool.AutoCAD
 					Point3d
 						stPt = new Point3d(str.Geometry.InitialPoint.X + ux1, str.Geometry.InitialPoint.Y + uy1, 0),
 						enPt = new Point3d(str.Geometry.EndPoint.X + ux3, str.Geometry.EndPoint.Y + uy3, 0),
-						midPt = GlobalAuxiliary.MidPoint(stPt, enPt);
+						midPt = Auxiliary.MidPoint(stPt, enPt);
 
 					// Draw the displaced Stringer
 					using (Line newStr = new Line(stPt, enPt))
@@ -517,7 +515,7 @@ namespace SPMTool.AutoCAD
 						newStr.Layer = DispLayer;
 
 						// Add the line to the drawing
-						Auxiliary.AddObject(newStr);
+						Global.Extensions.Add(newStr);
 					}
 
 					// Add the position of the nodes to the list

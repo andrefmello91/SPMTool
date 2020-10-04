@@ -2,14 +2,14 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions.AutoCAD;
 using OnPlaneComponents;
-using SPMTool.AutoCAD;
+using SPMTool.Database.Model.Conditions;
 using SPM.Elements;
 using ForceData = SPMTool.XData.Force;
 using SupportData = SPMTool.XData.Support;
-using static SPMTool.AutoCAD.Auxiliary;
+using static SPMTool.Database.Model.Conditions.Auxiliary;
 using static SPMTool.Database.DataBase;
 
-namespace SPMTool.Input
+namespace SPMTool.Database
 {
     /// <summary>
     /// Input conditions class.

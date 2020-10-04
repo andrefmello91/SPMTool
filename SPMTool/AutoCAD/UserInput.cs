@@ -8,7 +8,7 @@ using Autodesk.AutoCAD.Geometry;
 using SPM.Elements;
 using SPMTool.Database;
 
-namespace SPMTool.AutoCAD
+namespace SPMTool.Database.Model.Conditions
 {
 	public static class UserInput
 	{

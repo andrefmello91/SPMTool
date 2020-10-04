@@ -9,9 +9,9 @@ using Force = UnitsNet.Force;
 using SupportDirection = SPMTool.Directions;
 using SupportData      = SPMTool.XData.Support;
 
-[assembly: CommandClass(typeof(SPMTool.AutoCAD.Supports))]
+[assembly: CommandClass(typeof(SPMTool.Database.Model.Conditions.Supports))]
 
-namespace SPMTool.AutoCAD
+namespace SPMTool.Database.Model.Conditions
 {
     public static class Supports
     {
@@ -34,13 +34,13 @@ namespace SPMTool.AutoCAD
 
 	        // Read units
 	        var units     = DataBase.Units;
-	        double scFctr = GlobalAuxiliary.ScaleFactor(units.Geometry);
+	        double scFctr = Auxiliary.ScaleFactor(units.Geometry);
 
             // Check if the support blocks already exist. If not, create the blocks
             CreateSupportBlocks();
 
 	        // Get all the supports in the model
-	        ObjectIdCollection sprts = Auxiliary.GetObjectsOnLayer(Layer.Support);
+	        ObjectIdCollection sprts = Database.Drawing.GetObjectsOnLayer(Layer.Support);
 
 	        // Request objects to be selected in the drawing area
 	        var nds = UserInput.SelectNodes("Select nodes to add support conditions:", Node.NodeType.External);
@@ -132,7 +132,7 @@ namespace SPMTool.AutoCAD
 				        using (BlockReference blkRef = new BlockReference(insPt, supBlock))
 				        {
 					        blkRef.Layer = SupportLayer;
-					        Auxiliary.AddObject(blkRef);
+					        Global.Extensions.Add(blkRef);
 
 					        // Set scale to the block
 					        if (units.Geometry != LengthUnit.Millimeter)

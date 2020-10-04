@@ -9,11 +9,14 @@ using Extensions.Number;
 using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements;
-using SPMTool.AutoCAD;
+using SPM.Elements.StringerProperties;
+using SPMTool.Database.Model.Conditions;
+using SPMTool.Database;
+using SPMTool.Global;
 using UnitsNet;
 using static SPMTool.Database.DataBase;
 
-namespace SPMTool.Input
+namespace SPMTool.Database
 {
     /// <summary>
     /// Stringer input class
@@ -100,5 +103,46 @@ namespace SPMTool.Input
 	        // Set reinforcement
 	        return new UniaxialReinforcement(numOfBars, phi, new Steel(fy, Es), stringerArea);
         }
+
+		/// <summary>
+		/// Save extended data to this <paramref name="stringer"/>.
+		/// </summary>
+		/// <param name="stringer">The <see cref="Stringer"/>.</param>
+		public static void SaveStringerData(Stringer stringer) => SaveStringerData(stringer.ObjectId, stringer.Geometry, stringer.Reinforcement);
+
+		/// <summary>
+		/// Save extended data to the stringer related to this <paramref name="objectId"/>.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId"/>.</param>
+		/// <param name="geometry">The <see cref="StringerGeometry"/>.</param>
+		/// <param name="reinforcement">The <see cref="UniaxialReinforcement"/>.</param>
+		public static void SaveStringerData(ObjectId objectId, StringerGeometry geometry, UniaxialReinforcement reinforcement)
+		{
+			// Start a transaction
+			using (var trans = DataBase.StartTransaction())
+
+				// Open the selected object for read
+			using (var ent = (Entity)trans.GetObject(objectId, OpenMode.ForWrite))
+			{
+				// Access the XData as an array
+				var data = ent.ReadXData();
+
+				// Set the new geometry
+				data[(int)XData.Stringer.Width] = new TypedValue((int)DxfCode.ExtendedDataReal,  geometry.Width);
+				data[(int)XData.Stringer.Height] = new TypedValue((int)DxfCode.ExtendedDataReal, geometry.Height);
+
+				// Save reinforcement
+				data[(int)XData.Stringer.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataInteger32, reinforcement?.NumberOfBars         ?? 0);
+				data[(int)XData.Stringer.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.BarDiameter          ?? 0);
+				data[(int)XData.Stringer.Steelfy]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.Steel?.YieldStress   ?? 0);
+				data[(int)XData.Stringer.SteelEs]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.Steel?.ElasticModule ?? 0);
+
+				// Add the new XData
+				ent.XData = new ResultBuffer(data);
+
+				// Save the new object to the database
+				trans.Commit();
+			}
+		}
     }
 }

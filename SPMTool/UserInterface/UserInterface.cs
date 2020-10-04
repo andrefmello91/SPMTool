@@ -8,7 +8,7 @@ using System.Windows.Controls;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
 using Autodesk.AutoCAD.Runtime;
-using SPMTool.AutoCAD;
+using SPMTool.Database.Model.Conditions;
 using SPMTool.Database;
 
 
@@ -24,12 +24,12 @@ namespace SPMTool
             AddAppEvent();
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-            Auxiliary.RegisterApp();
+            DataBase.RegisterApp();
         }
 
         public void on_ApplicationIdle(object sender, EventArgs e)
         {
-            AutoCAD.UserInterface.RibbonButtons();
+            Database.Model.Conditions.UserInterface.RibbonButtons();
             Autodesk.AutoCAD.ApplicationServices.Application.Idle -= on_ApplicationIdle;
         }
 
@@ -63,12 +63,12 @@ namespace SPMTool
             if (sysVarChEvtArgs.Name == "COLORTHEME")
             {
                 // Reinitialize the ribbon buttons
-                AutoCAD.UserInterface.RibbonButtons();
+                Database.Model.Conditions.UserInterface.RibbonButtons();
             }
         }
     }
 
-    namespace AutoCAD
+    namespace Database.Model.Conditions
     {
 	    public class UserInterface
 	    {

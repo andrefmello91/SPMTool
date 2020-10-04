@@ -8,14 +8,13 @@ using Extensions.AutoCAD;
 using Material.Concrete;
 using SPM.Analysis;
 using SPM.Elements;
-using SPMTool.AutoCAD;
+using SPMTool.Database.Model.Conditions;
 using SPMTool.Database;
-using SPMTool.Model;
-using static SPMTool.AutoCAD.Auxiliary;
-using static SPMTool.AutoCAD.Material;
-using static SPMTool.AutoCAD.Config;
+using static SPMTool.Database.Model.Conditions.Auxiliary;
+using static SPMTool.Database.Model.Conditions.Material;
+using static SPMTool.Database.Model.Conditions.Config;
 
-namespace SPMTool.Input
+namespace SPMTool.Database
 {
     /// <summary>
     /// Input data class.
