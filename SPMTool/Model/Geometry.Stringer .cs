@@ -9,11 +9,11 @@ using Extensions.AutoCAD;
 using Extensions.Number;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
-using SPMTool.Database.Model.Conditions;
 using SPMTool.Database;
-using SPMTool.Global;
+using SPMTool.Database.Elements;
+using SPMTool.Enums;
+using SPMTool.Model.Conditions;
 using UnitsNet;
-using StringerData = SPMTool.XData.Stringer;
 
 [assembly: CommandClass(typeof(Geometry.Stringer))]
 
@@ -65,7 +65,7 @@ namespace SPMTool.Database
 					};
 
 					// Add the object
-					Global.Extensions.Add(LineObject);
+					Extensions.Add(LineObject);
 				}
 			}
 
@@ -179,7 +179,7 @@ namespace SPMTool.Database
 					newExtNds = new List<Point3d>();
 
 				// Access the internal nodes in the model
-				ObjectIdCollection intNds = Drawing.GetObjectsOnLayer(Layer.IntNode);
+				ObjectIdCollection intNds = Model.GetObjectsOnLayer(Layer.IntNode);
 
 				// Start a transaction
 				using (Transaction trans = DataBase.StartTransaction())
@@ -283,7 +283,7 @@ namespace SPMTool.Database
 			public static ObjectIdCollection UpdateStringers(bool updateNodes = true)
 			{
 				// Create the Stringer collection and initialize getting the elements on layer
-				var strs = Drawing.GetObjectsOnLayer(Layer.Stringer);
+				var strs = Model.GetObjectsOnLayer(Layer.Stringer);
 
 				// Get all the nodes in the model
 				using (var nds = updateNodes ? Node.UpdateNodes(DataBase.Units) : Node.AllNodes())
@@ -321,7 +321,7 @@ namespace SPMTool.Database
 						TypedValue[] data;
 
 						// Get the Xdata size
-						int size = Enum.GetNames(typeof(StringerData)).Length;
+						int size = Enum.GetNames(typeof(StringerIndex)).Length;
 
 						// If XData does not exist, create it
 						if (str.XData is null)
@@ -354,10 +354,10 @@ namespace SPMTool.Database
 							strEnNd  = Node.GetNodeNumber(str.EndPoint, nds);
 
 						// Set the updated number and nodes in ascending number and length (line 2 to 6)
-						data[(int) StringerData.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, strNum);
-						data[(int) StringerData.Grip1]  = new TypedValue((int) DxfCode.ExtendedDataReal, strStNd);
-						data[(int) StringerData.Grip2]  = new TypedValue((int) DxfCode.ExtendedDataReal, strMidNd);
-						data[(int) StringerData.Grip3]  = new TypedValue((int) DxfCode.ExtendedDataReal, strEnNd);
+						data[(int) StringerIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, strNum);
+						data[(int) StringerIndex.Grip1]  = new TypedValue((int) DxfCode.ExtendedDataReal, strStNd);
+						data[(int) StringerIndex.Grip2]  = new TypedValue((int) DxfCode.ExtendedDataReal, strMidNd);
+						data[(int) StringerIndex.Grip3]  = new TypedValue((int) DxfCode.ExtendedDataReal, strEnNd);
 
 						// Add the new XData
 						str.XData = new ResultBuffer(data);
@@ -379,7 +379,7 @@ namespace SPMTool.Database
 			public static List<PointsConnected> ListOfStringerPoints()
 			{
 				// Get the stringers in the model
-				ObjectIdCollection strs = Drawing.GetObjectsOnLayer(Layer.Stringer);
+				ObjectIdCollection strs = Model.GetObjectsOnLayer(Layer.Stringer);
 
 				// Initialize a list
 				var strList = new List<PointsConnected>();
@@ -435,8 +435,8 @@ namespace SPMTool.Database
 						var data = Auxiliary.ReadXData(ent);
 
 						// Set the new geometry and reinforcement (line 7 to 9 of the array)
-						data[(int) StringerData.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.Width);
-						data[(int) StringerData.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.Height);
+						data[(int) StringerIndex.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.Width);
+						data[(int) StringerIndex.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.Height);
 
 						// Add the new XData
 						ent.XData = new ResultBuffer(data);
@@ -460,7 +460,7 @@ namespace SPMTool.Database
 				if (savedGeo != null)
 				{
 					// Get the options
-					var options = savedGeo.Select(g => $"{g.Width:0.00} {(char)Characters.Times} {g.Height:0.00}").ToList();
+					var options = savedGeo.Select(g => $"{g.Width:0.00} {(char)Character.Times} {g.Height:0.00}").ToList();
 
 					// Add option to set new reinforcement
 					options.Add("New");
@@ -496,7 +496,7 @@ namespace SPMTool.Database
 
 				// Save geometry
 				var strGeo = new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h);
-				DataBase.Save(strGeo);
+				ElementData.Save(strGeo);
 				return strGeo;
 			}
 
@@ -508,19 +508,19 @@ namespace SPMTool.Database
 				string xdataStr = "Stringer Data";
 
 				// Get the Xdata size
-				int size = Enum.GetNames(typeof(StringerData)).Length;
+				int size = Enum.GetNames(typeof(StringerIndex)).Length;
 
 				var newData = new TypedValue[size];
 
 				// Set the initial parameters
-				newData[(int) StringerData.AppName]   = new TypedValue((int) DxfCode.ExtendedDataRegAppName, DataBase.AppName);
-				newData[(int) StringerData.XDataStr]  = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-				newData[(int) StringerData.Width]     = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
-				newData[(int) StringerData.Height]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
-				newData[(int) StringerData.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-				newData[(int) StringerData.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-				newData[(int) StringerData.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-				newData[(int) StringerData.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) StringerIndex.AppName]   = new TypedValue((int) DxfCode.ExtendedDataRegAppName, DataBase.AppName);
+				newData[(int) StringerIndex.XDataStr]  = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
+				newData[(int) StringerIndex.Width]     = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
+				newData[(int) StringerIndex.Height]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
+				newData[(int) StringerIndex.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) StringerIndex.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) StringerIndex.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) StringerIndex.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
 
 				return newData;
 			}

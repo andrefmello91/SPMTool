@@ -1,7 +1,8 @@
 ﻿using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
-using SPMTool.Database.Model.Conditions;
 using SPMTool.Database;
+using SPMTool.Enums;
+using SPMTool.Model.Conditions;
 
 [assembly: CommandClass(typeof(Geometry))]
 

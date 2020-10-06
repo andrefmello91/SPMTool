@@ -10,10 +10,13 @@ using SPM.Elements.StringerProperties;
 using SPMTool.Database;
 using Extensions;
 using Extensions.AutoCAD;
-using SPMTool.Database.Model.Conditions;
-using Color = SPMTool.Database.Model.Conditions.Color;
+using SPMTool.Enums;
+using SPMTool.Model.Conditions;
+using UnitsNet;
+using UnitsNet.Units;
+using Color = SPMTool.Enums.Color;
 
-namespace SPMTool.Global
+namespace SPMTool
 {
     public static class Extensions
     {
@@ -61,7 +64,7 @@ namespace SPMTool.Global
 	        using (var trans = DataBase.StartTransaction())
 
 		        // Open the Block table for read
-	        using (var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
+	        using (var blkTbl = (BlockTable)trans.GetObject(DataBase.BlockTableId, OpenMode.ForRead))
 
 		        // Open the Block table record Model space for write
 	        using (var blkTblRec = (BlockTableRecord)trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite))
@@ -112,12 +115,11 @@ namespace SPMTool.Global
             // Start a transaction
             using (var trans = DataBase.StartTransaction())
             // Open the Layer table for read
-            using (var lyrTbl = (LayerTable)trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead))
+            using (var lyrTbl = (LayerTable)trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead))
             {
                 if (lyrTbl.Has(layerName))
                     return;
 
-                lyrTbl.UpgradeOpen();
                 using (var lyrTblRec = new LayerTableRecord())
                 {
                     // Assign the layer the ACI color and a name
@@ -125,7 +127,7 @@ namespace SPMTool.Global
                         Autodesk.AutoCAD.Colors.Color.FromColorIndex(ColorMethod.ByAci, (short)color);
 
                     // Upgrade the Layer table for write
-                    trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForWrite);
+                    lyrTbl.UpgradeOpen();
 
                     // Append the new layer to the Layer table and the transaction
                     lyrTbl.Add(lyrTblRec);
@@ -135,7 +137,7 @@ namespace SPMTool.Global
                     lyrTblRec.Name = layerName;
 
                     if (transparency != 0)
-                        lyrTblRec.Transparency = Auxiliary.Transparency(transparency);
+                        lyrTblRec.Transparency = Transparency(transparency);
                 }
 
                 // Commit and dispose the transaction
@@ -154,7 +156,7 @@ namespace SPMTool.Global
             // Start a transaction
             using (var trans = DataBase.StartTransaction())
             // Open the Layer table for read
-            using (var lyrTbl = (LayerTable)trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead))
+            using (var lyrTbl = (LayerTable)trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead))
             {
                 if (!lyrTbl.Has(layerName))
                     return;
@@ -181,7 +183,7 @@ namespace SPMTool.Global
             // Start a transaction
             using (var trans = DataBase.StartTransaction())
             // Open the Layer table for read
-            using (var lyrTbl = (LayerTable)trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead))
+            using (var lyrTbl = (LayerTable)trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead))
             {
                 if (!lyrTbl.Has(layerName))
                     return;
@@ -210,7 +212,7 @@ namespace SPMTool.Global
             // Start a transaction
             using (var trans = DataBase.StartTransaction())
             // Open the Layer table for read
-            using (var lyrTbl = (LayerTable)trans.GetObject(DataBase.Database.LayerTableId, OpenMode.ForRead))
+            using (var lyrTbl = (LayerTable)trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead))
             {
                 if (!lyrTbl.Has(layerName))
                     return;
@@ -241,5 +243,28 @@ namespace SPMTool.Global
         /// Read this <see cref="ObjectId"/>'s XData as an <see cref="Array"/> of <see cref="TypedValue"/>.
         /// </summary>
         public static TypedValue[] ReadXData(this ObjectId objectId) => objectId.ReadXData(DataBase.AppName);
+
+        /// <summary>
+        /// Get the drawing scale factor.
+        /// </summary>
+        /// <param name="drawingUnit"></param>
+        public static double ScaleFactor(this LengthUnit drawingUnit)
+        {
+	        if (drawingUnit == LengthUnit.Millimeter)
+		        return 1;
+
+	        return
+		        UnitConverter.Convert(1, LengthUnit.Millimeter, drawingUnit);
+        }
+
+        /// <summary>
+        /// Convert transparency to alpha.
+        /// </summary>
+        /// <param name="transparency">Transparency percent.</param>
+        public static Transparency Transparency(this int transparency)
+        {
+	        var alpha = (byte) (255 * (100 - transparency) / 100);
+	        return new Transparency(alpha);
+        }
     }
 }

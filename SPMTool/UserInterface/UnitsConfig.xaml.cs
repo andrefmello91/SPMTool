@@ -1,7 +1,8 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
-using SPMTool.Database.Model.Conditions;
+using SPMTool.Database.Settings;
+using SPMTool.Model.Conditions;
 using UnitsNet;
 using UnitsNet.Units;
 using ComboBox = System.Windows.Controls.ComboBox;
@@ -19,9 +20,9 @@ namespace SPMTool.UserInterface
 
 		// Unit options
 		private readonly string[]
-			DimOpts = Config.DimOpts,
-			FOpts   = Config.FOpts,
-			StOpts  = Config.StOpts;
+			DimOpts = UnitsData.DimOpts,
+			FOpts   = UnitsData.FOpts,
+			StOpts  = UnitsData.StOpts;
 
         /// <summary>
         /// Get output <see cref="Units"/>.
@@ -111,7 +112,7 @@ namespace SPMTool.UserInterface
         private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
         {
 			// Save units on database
-			Config.SaveUnits(_outputUnits);
+			UnitsData.Save(_outputUnits);
 
 			Close();
         }

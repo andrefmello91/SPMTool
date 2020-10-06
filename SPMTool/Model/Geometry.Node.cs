@@ -4,9 +4,9 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPM.Elements;
-using SPMTool.Database.Model.Conditions;
+using SPMTool.Model.Conditions;
 using SPMTool.Database;
-using NodeData = SPMTool.XData.Node;
+using SPMTool.Enums;
 
 [assembly: CommandClass(typeof(Geometry.Node))]
 
@@ -46,9 +46,9 @@ namespace SPMTool.Database
 
 			// Layer names
 			public static readonly string
-				ExtNodeLayer  = Database.Model.Conditions.Layer.ExtNode.ToString(),
-				IntNodeLayer  = Database.Model.Conditions.Layer.IntNode.ToString(),
-				DispNodeLayer = Database.Model.Conditions.Layer.Displacements.ToString();
+				ExtNodeLayer  = Enums.Layer.ExtNode.ToString(),
+				IntNodeLayer  = Enums.Layer.IntNode.ToString(),
+				DispNodeLayer = Enums.Layer.Displacements.ToString();
 
 			// Constructor
 			public Node(Point3d position, NodeType nodeType)
@@ -72,7 +72,7 @@ namespace SPMTool.Database
 					};
 
 					// Add the new object
-					Global.Extensions.Add(PointObject);
+					Extensions.Add(PointObject);
 				}
 			}
 
@@ -99,7 +99,7 @@ namespace SPMTool.Database
 						};
 
 						// Add the new object
-						Global.Extensions.Add(PointObject);
+						Extensions.Add(PointObject);
 					}
 				}
 			}
@@ -129,7 +129,7 @@ namespace SPMTool.Database
 						TypedValue[] data;
 
 						// Get the Xdata size
-						int size = Enum.GetNames(typeof(NodeData)).Length;
+						int size = Enum.GetNames(typeof(NodeIndex)).Length;
 
 						// If the Extended data does not exist, create it
 						if (nd.XData == null)
@@ -148,7 +148,7 @@ namespace SPMTool.Database
 						}
 
 						// Set the updated number
-						data[(int) NodeData.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
+						data[(int) NodeIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
 
 						// Add the new XData
 						nd.XData = new ResultBuffer(data);
@@ -156,7 +156,7 @@ namespace SPMTool.Database
 
 					// Set the style for all point objects in the drawing
 					DataBase.Database.Pdmode = 32;
-					DataBase.Database.Pdsize = 40 * Auxiliary.ScaleFactor(units.Geometry);
+					DataBase.Database.Pdsize = 40 * Extensions.ScaleFactor(units.Geometry);
 
 					// Commit and dispose the transaction
 					trans.Commit();
@@ -177,10 +177,10 @@ namespace SPMTool.Database
 					nds = AllNodes();
 
 				if (nodeType == NodeType.Internal)
-					nds = Drawing.GetObjectsOnLayer(Database.Model.Conditions.Layer.IntNode);
+					nds = Model.GetObjectsOnLayer(Enums.Layer.IntNode);
 
 				if (nodeType == NodeType.External)
-					nds = Drawing.GetObjectsOnLayer(Database.Model.Conditions.Layer.ExtNode);
+					nds = Model.GetObjectsOnLayer(Enums.Layer.ExtNode);
 
 				// Create a point collection
 				var pts = new List<Point3d>();
@@ -205,8 +205,8 @@ namespace SPMTool.Database
 			public static ObjectIdCollection AllNodes()
 			{
 				// Create the nodes collection and initialize getting the elements on node layer
-				ObjectIdCollection extNds = Drawing.GetObjectsOnLayer(Database.Model.Conditions.Layer.ExtNode);
-				ObjectIdCollection intNds = Drawing.GetObjectsOnLayer(Database.Model.Conditions.Layer.IntNode);
+				ObjectIdCollection extNds = Model.GetObjectsOnLayer(Enums.Layer.ExtNode);
+				ObjectIdCollection intNds = Model.GetObjectsOnLayer(Enums.Layer.IntNode);
 
 				// Create a unique collection for all the nodes
 				ObjectIdCollection nds = new ObjectIdCollection();
@@ -244,7 +244,7 @@ namespace SPMTool.Database
 							TypedValue[] dataNd = ndRb.AsArray();
 
 							// Get the node number (line 2)
-							ndNum = Convert.ToInt32(dataNd[(int) NodeData.Number].Value);
+							ndNum = Convert.ToInt32(dataNd[(int) NodeIndex.Number].Value);
 						}
 					}
 				}
@@ -259,16 +259,16 @@ namespace SPMTool.Database
 				string xdataStr = "Node Data";
 
                 // Get the Xdata size
-                int size = Enum.GetNames(typeof(NodeData)).Length;
+                int size = Enum.GetNames(typeof(NodeIndex)).Length;
 
 				// Initialize the array of typed values for XData
 				var data = new TypedValue[size];
 
 				// Set the initial parameters
-				data[(int)NodeData.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName);
-				data[(int)NodeData.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-				data[(int)NodeData.Ux]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-				data[(int)NodeData.Uy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				data[(int)NodeIndex.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName);
+				data[(int)NodeIndex.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+				data[(int)NodeIndex.Ux]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+				data[(int)NodeIndex.Uy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
 
 				return data;
 			}

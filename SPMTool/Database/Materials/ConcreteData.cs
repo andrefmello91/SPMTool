@@ -3,11 +3,13 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Runtime;
 using Material.Concrete;
+using SPMTool.Database.Materials;
+using SPMTool.Enums;
 using SPMTool.UserInterface;
 
-[assembly: CommandClass(typeof(SPMTool.Database.ConcreteData))]
+[assembly: CommandClass(typeof(ConcreteData))]
 
-namespace SPMTool.Database
+namespace SPMTool.Database.Materials
 {
     /// <summary>
     /// Concrete database class.
@@ -82,20 +84,20 @@ namespace SPMTool.Database
 		    var parModel = Parameters.ReadParameterModel(parameters);
 
 		    // Get the Xdata size
-		    var size = Enum.GetNames(typeof(XData.Concrete)).Length;
+		    var size = Enum.GetNames(typeof(ConcreteIndex)).Length;
 		    var data = new TypedValue[size];
 
-		    data[(int)XData.Concrete.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
-		    data[(int)XData.Concrete.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-		    data[(int)XData.Concrete.Model]    = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)parModel);
-		    data[(int)XData.Concrete.Behavior] = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)behaviorModel);
-		    data[(int)XData.Concrete.fc]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.Strength);
-		    data[(int)XData.Concrete.AggType]  = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)parameters.Type);
-		    data[(int)XData.Concrete.AggDiam]  = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.AggregateDiameter);
-		    data[(int)XData.Concrete.ft]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.TensileStrength);
-		    data[(int)XData.Concrete.Ec]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.InitialModule);
-		    data[(int)XData.Concrete.ec]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.PlasticStrain);
-		    data[(int)XData.Concrete.ecu]      = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.UltimateStrain);
+		    data[(int)ConcreteIndex.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
+		    data[(int)ConcreteIndex.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+		    data[(int)ConcreteIndex.Model]    = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)parModel);
+		    data[(int)ConcreteIndex.Behavior] = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)behaviorModel);
+		    data[(int)ConcreteIndex.fc]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.Strength);
+		    data[(int)ConcreteIndex.AggType]  = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)parameters.Type);
+		    data[(int)ConcreteIndex.AggDiam]  = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.AggregateDiameter);
+		    data[(int)ConcreteIndex.ft]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.TensileStrength);
+		    data[(int)ConcreteIndex.Ec]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.InitialModule);
+		    data[(int)ConcreteIndex.ec]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.PlasticStrain);
+		    data[(int)ConcreteIndex.ecu]      = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.UltimateStrain);
 
 		    // Create the entry in the NOD and add to the transaction
 		    using (var rb = new ResultBuffer(data))
@@ -120,19 +122,19 @@ namespace SPMTool.Database
 		    }
 
 		    // Get the parameters from XData
-		    var parModel    = (ParameterModel)Convert.ToInt32(data[(int) XData.Concrete.Model].Value);
-		    var constModel  = (ConstitutiveModel)Convert.ToInt32(data[(int) XData.Concrete.Behavior].Value);
-		    var aggType     = (AggregateType)Convert.ToInt32(data[(int) XData.Concrete.AggType].Value);
+		    var parModel    = (ParameterModel)Convert.ToInt32(data[(int) ConcreteIndex.Model].Value);
+		    var constModel  = (ConstitutiveModel)Convert.ToInt32(data[(int) ConcreteIndex.Behavior].Value);
+		    var aggType     = (AggregateType)Convert.ToInt32(data[(int) ConcreteIndex.AggType].Value);
 
 		    double
-			    fc      = Convert.ToDouble(data[(int)XData.Concrete.fc].Value),
-			    phiAg   = Convert.ToDouble(data[(int)XData.Concrete.AggDiam].Value), 
+			    fc      = Convert.ToDouble(data[(int)ConcreteIndex.fc].Value),
+			    phiAg   = Convert.ToDouble(data[(int)ConcreteIndex.AggDiam].Value), 
                 
 			    // Get additional parameters
-			    fcr =  Convert.ToDouble(data[(int)XData.Concrete.ft].Value),
-			    Ec  =  Convert.ToDouble(data[(int)XData.Concrete.Ec].Value),
-			    ec  = -Convert.ToDouble(data[(int)XData.Concrete.ec].Value),
-			    ecu = -Convert.ToDouble(data[(int)XData.Concrete.ecu].Value);
+			    fcr =  Convert.ToDouble(data[(int)ConcreteIndex.ft].Value),
+			    Ec  =  Convert.ToDouble(data[(int)ConcreteIndex.Ec].Value),
+			    ec  = -Convert.ToDouble(data[(int)ConcreteIndex.ec].Value),
+			    ecu = -Convert.ToDouble(data[(int)ConcreteIndex.ecu].Value);
 
 		    // Get parameters and constitutive
 		    var parameters = Parameters.ReadParameters(parModel, fc, phiAg, aggType, fcr, Ec, ec, ecu);

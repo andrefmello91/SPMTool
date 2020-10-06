@@ -9,7 +9,7 @@ using Material;
 using Material.Reinforcement;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
-using SPMTool.Database.Model.Conditions;
+using SPMTool.Model.Conditions;
 using SPMTool.Database;
 using UnitsNet;
 using UnitsNet.Units;
@@ -61,12 +61,12 @@ namespace SPMTool.UserInterface
 	        _objectId         = stringer.ObjectId;
 
             // Read units
-            _units = DataBase.Units;
+            _units = Database.Units;
 
             InitializeComponent();
 
             // Get stringer image
-            StringerImage.Source = Database.Model.Conditions.UserInterface.getBitmap(Properties.Resources.stringer_cross_section);
+            StringerImage.Source = Model.Conditions.UserInterface.getBitmap(Properties.Resources.stringer_cross_section);
 
             GetInitialData(stringer);
 

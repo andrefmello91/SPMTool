@@ -8,12 +8,13 @@ using Extensions.Number;
 using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.Database;
+using SPMTool.Enums;
 using SPMTool.UserInterface;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
-[assembly: CommandClass(typeof(SPMTool.Database.Model.Conditions.Results))]
+[assembly: CommandClass(typeof(SPMTool.Model.Conditions.Results))]
 
-namespace SPMTool.Database.Model.Conditions
+namespace SPMTool.Model.Conditions
 {
 	public static partial class Results
 	{
@@ -50,15 +51,15 @@ namespace SPMTool.Database.Model.Conditions
             CreatePanelStressesBlock();
 
 			// Erase all the panel forces in the drawing
-			Database.Drawing.EraseObjects(Layer.PanelForce);
-			Database.Drawing.EraseObjects(Layer.CompressivePanelStress);
-			Database.Drawing.EraseObjects(Layer.TensilePanelStress);
+			Database.Model.EraseObjects(Layer.PanelForce);
+			Database.Model.EraseObjects(Layer.CompressivePanelStress);
+			Database.Model.EraseObjects(Layer.TensilePanelStress);
 
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (Transaction trans = Database.DataBase.StartTransaction())
 			{
 				// Open the Block table for read
-				BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
+				BlockTable blkTbl = trans.GetObject(Database.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
 				// Read the object Ids of the support blocks
 				ObjectId shearBlock = blkTbl[ShearBlock];
@@ -85,7 +86,7 @@ namespace SPMTool.Database.Model.Conditions
 					using (BlockReference blkRef = new BlockReference(cntrPt, shearBlock))
 					{
 						blkRef.Layer = PanelForceLayer;
-						Global.Extensions.Add(blkRef);
+						Extensions.Add(blkRef);
 
 						// Set the scale of the block
 						blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
@@ -93,7 +94,7 @@ namespace SPMTool.Database.Model.Conditions
 						// If the shear is negative, mirror the block
 						if (tauAvg < 0)
 						{
-							blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, DataBase.Ucs.Yaxis, cntrPt));
+							blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, Database.DataBase.Ucs.Yaxis, cntrPt));
 						}
 					}
 
@@ -112,7 +113,7 @@ namespace SPMTool.Database.Model.Conditions
 						tauTxt.AlignmentPoint = algnPt;
 
 						// Add the text to the drawing
-						Global.Extensions.Add(tauTxt);
+						Extensions.Add(tauTxt);
 					}
 
 					// Create stress block
@@ -125,7 +126,7 @@ namespace SPMTool.Database.Model.Conditions
 						{
 							blkRef.Layer = CompStressLayer;
 							blkRef.ColorIndex = (int)Color.Blue1;
-							Global.Extensions.Add(blkRef);
+							Extensions.Add(blkRef);
 
 							// Set the scale of the block
 							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
@@ -133,7 +134,7 @@ namespace SPMTool.Database.Model.Conditions
 							// Rotate the block in theta angle
 							if (!stresses.Theta2.ApproxZero())
 							{
-								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, DataBase.Ucs.Zaxis, cntrPt));
+								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, Database.DataBase.Ucs.Zaxis, cntrPt));
 							}
 						}
 
@@ -147,7 +148,7 @@ namespace SPMTool.Database.Model.Conditions
 								EndPoint = new Point3d(cntrPt.X + 210 * scFctr, cntrPt.Y, 0)
 							};
 
-							ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, DataBase.Ucs.Zaxis, cntrPt));
+							ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, Database.DataBase.Ucs.Zaxis, cntrPt));
 
                             // Set the alignment point
 							Point3d algnPt = ln.EndPoint;
@@ -161,7 +162,7 @@ namespace SPMTool.Database.Model.Conditions
                             sigTxt.AlignmentPoint = algnPt;
 
                             // Add the text to the drawing
-                            Global.Extensions.Add(sigTxt);
+                            Extensions.Add(sigTxt);
 						}
                     }
 
@@ -172,7 +173,7 @@ namespace SPMTool.Database.Model.Conditions
 						using (BlockReference blkRef = new BlockReference(cntrPt, tensStress))
 						{
 							blkRef.Layer = TenStressLayer;
-							Global.Extensions.Add(blkRef);
+							Extensions.Add(blkRef);
 
 							// Set the scale of the block
 							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
@@ -180,7 +181,7 @@ namespace SPMTool.Database.Model.Conditions
 							// Rotate the block in theta angle
 							if (!stresses.Theta2.ApproxZero())
 							{
-								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, DataBase.Ucs.Zaxis, cntrPt));
+								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, Database.DataBase.Ucs.Zaxis, cntrPt));
 							}
 						}
 
@@ -194,7 +195,7 @@ namespace SPMTool.Database.Model.Conditions
 								EndPoint = new Point3d(cntrPt.X, cntrPt.Y + 210 * scFctr, 0)
 							};
 
-							ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, DataBase.Ucs.Zaxis, cntrPt));
+							ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, Database.DataBase.Ucs.Zaxis, cntrPt));
 
                             // Set the alignment point
 							Point3d algnPt = ln.EndPoint;
@@ -208,7 +209,7 @@ namespace SPMTool.Database.Model.Conditions
                             sigTxt.AlignmentPoint = algnPt;
 
                             // Add the text to the drawing
-                            Global.Extensions.Add(sigTxt);
+                            Extensions.Add(sigTxt);
 						}
                     }
                 }
@@ -230,15 +231,15 @@ namespace SPMTool.Database.Model.Conditions
 			Auxiliary.CreateLayer(Layer.StringerForce, Color.Grey);
 
 			// Erase all the Stringer forces in the drawing
-			ObjectIdCollection strFs = Database.Drawing.GetObjectsOnLayer(Layer.StringerForce);
+			ObjectIdCollection strFs = Database.Model.GetObjectsOnLayer(Layer.StringerForce);
 			if (strFs.Count > 0) 
-				Database.Drawing.EraseObjects(strFs);
+				Database.Model.EraseObjects(strFs);
 
 			// Get the scale factor
-			var scFctr = Auxiliary.ScaleFactor(units.Geometry);
+			var scFctr = Extensions.ScaleFactor(units.Geometry);
 
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (Transaction trans = Database.DataBase.StartTransaction())
 			{
 				// Get the stringers stiffness matrix and add to the global stiffness matrix
 				foreach (var stringer in stringers)
@@ -279,7 +280,7 @@ namespace SPMTool.Database.Model.Conditions
 							{
 								// Set the layer and transparency
 								dgrm.Layer = StrForceLayer;
-								dgrm.Transparency = Auxiliary.Transparency(80);
+								dgrm.Transparency = Extensions.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
 								if (Math.Max(N1, N3) > 0)
@@ -288,10 +289,10 @@ namespace SPMTool.Database.Model.Conditions
 									dgrm.ColorIndex = (short) Color.Red;
 
 								// Add the diagram to the drawing
-								Global.Extensions.Add(dgrm);
+								Extensions.Add(dgrm);
 
 								// Rotate the diagram
-								dgrm.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
+								dgrm.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
 							}
 						}
 
@@ -321,7 +322,7 @@ namespace SPMTool.Database.Model.Conditions
 							{
 								// Set the layer and transparency
 								dgrm1.Layer = StrForceLayer;
-								dgrm1.Transparency = Auxiliary.Transparency(80);
+								dgrm1.Transparency = Extensions.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
 								if (N1 > 0)
@@ -330,17 +331,17 @@ namespace SPMTool.Database.Model.Conditions
 									dgrm1.ColorIndex = (short) Color.Red;
 
 								// Add the diagram to the drawing
-								Global.Extensions.Add(dgrm1);
+								Extensions.Add(dgrm1);
 
 								// Rotate the diagram
-								dgrm1.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
+								dgrm1.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
 							}
 
 							using (Solid dgrm3 = new Solid(vrts3[0], vrts3[1], vrts3[2]))
 							{
 								// Set the layer and transparency
 								dgrm3.Layer = StrForceLayer;
-								dgrm3.Transparency = Auxiliary.Transparency(80);
+								dgrm3.Transparency = Extensions.Transparency(80);
 
 								// Set the color (blue to compression and red to tension)
 								if (N3 > 0)
@@ -349,10 +350,10 @@ namespace SPMTool.Database.Model.Conditions
 									dgrm3.ColorIndex = (short) Color.Red;
 
 								// Add the diagram to the drawing
-								Global.Extensions.Add(dgrm3);
+								Extensions.Add(dgrm3);
 
 								// Rotate the diagram
-								dgrm3.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
+								dgrm3.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
 							}
 						}
 
@@ -381,10 +382,10 @@ namespace SPMTool.Database.Model.Conditions
 								}
 
 								// Add the text to the drawing
-								Global.Extensions.Add(txt1);
+								Extensions.Add(txt1);
 
 								// Rotate the text
-								txt1.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
+								txt1.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
 							}
 						}
 
@@ -416,10 +417,10 @@ namespace SPMTool.Database.Model.Conditions
 								txt3.AlignmentPoint = txt3.Position;
 
 								// Add the text to the drawing
-								Global.Extensions.Add(txt3);
+								Extensions.Add(txt3);
 
 								// Rotate the text
-								txt3.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
+								txt3.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
 							}
 						}
 					}
@@ -443,18 +444,18 @@ namespace SPMTool.Database.Model.Conditions
 			Auxiliary.LayerOff(Layer.Displacements);
 
 			// Erase all the displaced objects in the drawing
-			ObjectIdCollection dispObjs = Database.Drawing.GetObjectsOnLayer(Layer.Displacements);
+			ObjectIdCollection dispObjs = Database.Model.GetObjectsOnLayer(Layer.Displacements);
 			if (dispObjs.Count > 0)
-				Database.Drawing.EraseObjects(dispObjs);
+				Database.Model.EraseObjects(dispObjs);
 
 			// Set a scale factor for displacements
-			double scFctr = 100 * Auxiliary.ScaleFactor(units.Geometry);
+			double scFctr = 100 * Extensions.ScaleFactor(units.Geometry);
 
 			// Create lists of points for adding the nodes later
 			List<Point3d> dispNds = new List<Point3d>();
 
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (Transaction trans = Database.DataBase.StartTransaction())
 			{
 				foreach (var str in stringers)
 				{
@@ -515,7 +516,7 @@ namespace SPMTool.Database.Model.Conditions
 						newStr.Layer = DispLayer;
 
 						// Add the line to the drawing
-						Global.Extensions.Add(newStr);
+						Extensions.Add(newStr);
 					}
 
 					// Add the position of the nodes to the list
@@ -541,7 +542,7 @@ namespace SPMTool.Database.Model.Conditions
 		private static void SetDisplacements(Node[] nodes)
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (Transaction trans = Database.DataBase.StartTransaction())
 			{
 				// Get the stringers stifness matrix and add to the global stifness matrix
 				foreach (var nd in nodes)
@@ -550,12 +551,12 @@ namespace SPMTool.Database.Model.Conditions
 					DBPoint ndPt = trans.GetObject(nd.ObjectId, OpenMode.ForWrite) as DBPoint;
 
 					// Get the result buffer as an array
-					ResultBuffer rb = ndPt.GetXDataForApplication(DataBase.AppName);
+					ResultBuffer rb = ndPt.GetXDataForApplication(Database.DataBase.AppName);
 					TypedValue[] data = rb.AsArray();
 
 					// Save the displacements on the XData
-					data[(int) XData.Node.Ux] = new TypedValue((int) DxfCode.ExtendedDataReal, nd.Displacement.ComponentX);
-					data[(int) XData.Node.Uy] = new TypedValue((int) DxfCode.ExtendedDataReal, nd.Displacement.ComponentY);
+					data[(int) NodeIndex.Ux] = new TypedValue((int) DxfCode.ExtendedDataReal, nd.Displacement.ComponentX);
+					data[(int) NodeIndex.Uy] = new TypedValue((int) DxfCode.ExtendedDataReal, nd.Displacement.ComponentY);
 
 					// Add the new XData
 					ndPt.XData = new ResultBuffer(data);
@@ -571,10 +572,10 @@ namespace SPMTool.Database.Model.Conditions
         private static void CreatePanelShearBlock()
         {
             // Start a transaction
-            using (Transaction trans = DataBase.StartTransaction())
+            using (Transaction trans = Database.DataBase.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Database.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Id
                 ObjectId shearBlock = ObjectId.Null;
@@ -656,10 +657,10 @@ namespace SPMTool.Database.Model.Conditions
         private static void CreatePanelStressesBlock()
         {
             // Start a transaction
-            using (Transaction trans = DataBase.StartTransaction())
+            using (Transaction trans = Database.DataBase.StartTransaction())
             {
                 // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTable blkTbl = trans.GetObject(Database.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
                 // Initialize the block Ids
                 ObjectId compStressBlock = ObjectId.Null;
@@ -848,7 +849,7 @@ namespace SPMTool.Database.Model.Conditions
 				}
 
 				else
-					Application.ShowAlertDialog(DataBase.AppName + "\n\n" + element);
+					Application.ShowAlertDialog(Database.DataBase.AppName + "\n\n" + element);
 			}
 		}
 

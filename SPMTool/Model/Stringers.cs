@@ -10,9 +10,9 @@ using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
-using SPMTool.Database.Model.Conditions;
+using SPMTool.Model.Conditions;
 using SPMTool.Database;
-using SPMTool.Global;
+using SPMTool.Enums;
 using UnitsNet;
 using static SPMTool.Database.DataBase;
 
@@ -67,12 +67,12 @@ namespace SPMTool.Database
             var data = line.ReadXData(AppName);
 
             // Get the Stringer number
-            int number = data[(int)XData.Stringer.Number].ToInt();
+            int number = data[(int)StringerIndex.Number].ToInt();
 
             // Get geometry
 			double
-				width  = data[(int)XData.Stringer.Width].ToDouble(), 
-				height = data[(int)XData.Stringer.Height].ToDouble();
+				width  = data[(int)StringerIndex.Width].ToDouble(), 
+				height = data[(int)StringerIndex.Height].ToDouble();
 
             // Get reinforcement
             var reinforcement = GetReinforcement(data, width * height);
@@ -89,16 +89,16 @@ namespace SPMTool.Database
         public static UniaxialReinforcement GetReinforcement(TypedValue[] stringerXData, double stringerArea)
         {
 	        // Get reinforcement
-	        int numOfBars = stringerXData[(int)XData.Stringer.NumOfBars].ToInt();
-	        double phi    = stringerXData[(int)XData.Stringer.BarDiam].ToDouble();
+	        int numOfBars = stringerXData[(int)StringerIndex.NumOfBars].ToInt();
+	        double phi    = stringerXData[(int)StringerIndex.BarDiam].ToDouble();
 
 	        if (numOfBars == 0 || phi.ApproxZero())
 		        return null;
 
 	        // Get steel data
 	        double
-		        fy = stringerXData[(int)XData.Stringer.Steelfy].ToDouble(),
-		        Es = stringerXData[(int)XData.Stringer.SteelEs].ToDouble();
+		        fy = stringerXData[(int)StringerIndex.Steelfy].ToDouble(),
+		        Es = stringerXData[(int)StringerIndex.SteelEs].ToDouble();
 
 	        // Set reinforcement
 	        return new UniaxialReinforcement(numOfBars, phi, new Steel(fy, Es), stringerArea);
@@ -128,14 +128,14 @@ namespace SPMTool.Database
 				var data = ent.ReadXData();
 
 				// Set the new geometry
-				data[(int)XData.Stringer.Width] = new TypedValue((int)DxfCode.ExtendedDataReal,  geometry.Width);
-				data[(int)XData.Stringer.Height] = new TypedValue((int)DxfCode.ExtendedDataReal, geometry.Height);
+				data[(int)StringerIndex.Width] = new TypedValue((int)DxfCode.ExtendedDataReal,  geometry.Width);
+				data[(int)StringerIndex.Height] = new TypedValue((int)DxfCode.ExtendedDataReal, geometry.Height);
 
 				// Save reinforcement
-				data[(int)XData.Stringer.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataInteger32, reinforcement?.NumberOfBars         ?? 0);
-				data[(int)XData.Stringer.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.BarDiameter          ?? 0);
-				data[(int)XData.Stringer.Steelfy]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.Steel?.YieldStress   ?? 0);
-				data[(int)XData.Stringer.SteelEs]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.Steel?.ElasticModule ?? 0);
+				data[(int)StringerIndex.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataInteger32, reinforcement?.NumberOfBars         ?? 0);
+				data[(int)StringerIndex.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.BarDiameter          ?? 0);
+				data[(int)StringerIndex.Steelfy]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.Steel?.YieldStress   ?? 0);
+				data[(int)StringerIndex.SteelEs]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.Steel?.ElasticModule ?? 0);
 
 				// Add the new XData
 				ent.XData = new ResultBuffer(data);

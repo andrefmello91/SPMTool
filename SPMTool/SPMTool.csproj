@@ -124,35 +124,33 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Database\DataBase.cs" />
-    <Compile Include="AutoCAD\Units.cs" />
+    <Compile Include="Database\UnitsData.cs" />
     <Compile Include="AutoCAD\UserInput.cs" />
     <Compile Include="Analysis\Analysis.cs" />
-    <Compile Include="Database\Model\Conditions\Forces.cs" />
+    <Compile Include="Database\ElementData.cs" />
     <Compile Include="Database\Materials\ReinforcementData.cs" />
     <Compile Include="Database\Materials\ConcreteData.cs" />
-    <Compile Include="Database\Model\Geometry.Panel .cs" />
-    <Compile Include="Database\Model\Geometry.Stringer .cs" />
-    <Compile Include="Database\Model\Geometry.Node.cs" />
-    <Compile Include="AutoCAD\Global.cs" />
+    <Compile Include="Global\Enums.cs" />
     <Compile Include="AutoCAD\Reinforcement.cs" />
-    <Compile Include="AutoCAD\Supports.cs" />
+    <Compile Include="Database\Conditions\Supports.cs" />
     <Compile Include="Global\Extensions.cs" />
     <Compile Include="Global\Units.cs" />
-    <Compile Include="Global\GlobalVariables.cs" />
-    <Compile Include="Database\Model\Conditions.cs" />
-    <Compile Include="Database\Model\InputData.cs" />
-    <Compile Include="Database\Model\Nodes.cs" />
-    <Compile Include="Database\Model\Panels.cs" />
-    <Compile Include="Database\Model\Stringers.cs" />
-    <Compile Include="Database\Model\Model.cs" />
+    <Compile Include="Database\Conditions\Forces.cs" />
+    <Compile Include="Model\Geometry.cs" />
+    <Compile Include="Model\Geometry.Node.cs" />
+    <Compile Include="Model\Geometry.Panel .cs" />
+    <Compile Include="Model\Geometry.Stringer .cs" />
+    <Compile Include="Model\InputData.cs" />
+    <Compile Include="Model\Model.cs" />
+    <Compile Include="Model\Nodes.cs" />
+    <Compile Include="Model\Panels.cs" />
+    <Compile Include="Model\Stringers.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="AutoCAD\Results.cs" />
-    <Compile Include="Database\Model\Geometry.cs" />
-    <Compile Include="Global\GlobalAuxiliary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserInterface\StringerWindow.xaml.cs">
       <DependentUpon>StringerWindow.xaml</DependentUpon>

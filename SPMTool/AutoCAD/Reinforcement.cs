@@ -7,15 +7,17 @@ using Extensions.AutoCAD;
 using Extensions.Number;
 using Material.Reinforcement;
 using SPMTool.Database;
+using SPMTool.Database.Materials;
+using SPMTool.Enums;
 using UnitsNet;
 
-[assembly: CommandClass(typeof(SPMTool.Database.Model.Conditions.Material))]
+[assembly: CommandClass(typeof(SPMTool.Model.Conditions.Material))]
 
-namespace SPMTool.Database.Model.Conditions
+namespace SPMTool.Model.Conditions
 {
-    public static partial class Material
+    public static class Material
     {
-	    private static char Phi = (char)Characters.Phi;
+	    private static char Phi = (char)Character.Phi;
 
 		/// <summary>
         /// Set the reinforcement in a collection of stringers.
@@ -24,7 +26,7 @@ namespace SPMTool.Database.Model.Conditions
 	    public static void SetStringerReinforcement()
 	    {
 		    // Read units
-		    var units = DataBase.Units;
+		    var units = Database.DataBase.Units;
 
             // Request objects to be selected in the drawing area
             var strs = UserInput.SelectStringers("Select the stringers to assign reinforcement (you can select other elements, the properties will be only applied to stringers).");
@@ -39,7 +41,7 @@ namespace SPMTool.Database.Model.Conditions
 				return;
 
 		    // Start a transaction
-		    using (var trans = DataBase.StartTransaction())
+		    using (var trans = Database.DataBase.StartTransaction())
 		    {
 			    // Save the properties
 			    foreach (DBObject obj in strs)
@@ -48,21 +50,18 @@ namespace SPMTool.Database.Model.Conditions
 				    var ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForWrite);
 
 				    // Access the XData as an array
-				    var data = Auxiliary.ReadXData(ent);
+				    var data = ent.ReadXData();
 
 				    // Set values
-				    if (reinforcement != null)
-				    {
-					    data[(int) XData.Stringer.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, reinforcement.NumberOfBars);
-					    data[(int) XData.Stringer.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal, reinforcement.BarDiameter);
-				    }
+				    data[(int) StringerIndex.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, reinforcement.NumberOfBars);
+				    data[(int) StringerIndex.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal, reinforcement.BarDiameter);
 
-				    var steel = reinforcement?.Steel;
+				    var steel = reinforcement.Steel;
 
 				    if (steel != null)
 				    {
-					    data[(int) XData.Stringer.Steelfy] = new TypedValue((int) DxfCode.ExtendedDataReal, steel.YieldStress);
-					    data[(int) XData.Stringer.SteelEs] = new TypedValue((int) DxfCode.ExtendedDataReal, steel.ElasticModule);
+					    data[(int) StringerIndex.Steelfy] = new TypedValue((int) DxfCode.ExtendedDataReal, steel.YieldStress);
+					    data[(int) StringerIndex.SteelEs] = new TypedValue((int) DxfCode.ExtendedDataReal, steel.ElasticModule);
 				    }
 
 				    // Add the new XData
@@ -81,7 +80,7 @@ namespace SPMTool.Database.Model.Conditions
         private static UniaxialReinforcement GetStringerReinforcement(Units units)
 		{
 			// Get saved reinforcement options
-			var savedRef = DataBase.SavedStringerReinforcement;
+			var savedRef = Database.DataBase.SavedStringerReinforcement;
 
 			// Get unit abreviation
 			var dimAbrev = Length.GetAbbreviation(units.Reinforcement);
@@ -148,7 +147,7 @@ namespace SPMTool.Database.Model.Conditions
 		private static Steel GetSteel(Units units)
 		{
 			// Get steel data saved on database
-			var savedSteel = DataBase.SavedSteel;
+			var savedSteel = Database.DataBase.SavedSteel;
 
 			// Get unit abbreviation
 			var matAbrev = Pressure.GetAbbreviation(units.MaterialStrength);
@@ -209,7 +208,7 @@ namespace SPMTool.Database.Model.Conditions
 		public static void SetPanelReinforcement()
 		{
 			// Read units
-			var units = DataBase.Units;
+			var units = Database.DataBase.Units;
 
             // Request objects to be selected in the drawing area
             var pnls = UserInput.SelectPanels("Select the panels to assign reinforcement (you can select other elements, the properties will be only applied to panels).");
@@ -218,14 +217,14 @@ namespace SPMTool.Database.Model.Conditions
 				return;
 
 			// Get the values
-			var refX   = GetPanelReinforcement(Directions.X, units);
-			var refY   = GetPanelReinforcement(Directions.Y, units);
+			var refX   = GetPanelReinforcement(Direction.X, units);
+			var refY   = GetPanelReinforcement(Direction.Y, units);
 
 			if (refX is null && refY is null)
 				return;
 
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (Transaction trans = Database.DataBase.StartTransaction())
 			{
 				foreach (DBObject obj in pnls)
 				{
@@ -233,34 +232,34 @@ namespace SPMTool.Database.Model.Conditions
 					var ent = trans.GetObject(obj.ObjectId, OpenMode.ForWrite) as Entity;
 
 					// Access the XData as an array
-					var data = ent.ReadXData(DataBase.AppName);
+					var data = ent.ReadXData(Database.DataBase.AppName);
 
 					// Set the new reinforcement (line 7 to 9 of the array)
 					if (refX != null)
 					{
-						data[(int) XData.Panel.XDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, refX.BarDiameter);
-						data[(int) XData.Panel.Sx]    = new TypedValue((int) DxfCode.ExtendedDataReal, refX.BarSpacing);
+						data[(int) PanelIndex.XDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, refX.BarDiameter);
+						data[(int) PanelIndex.Sx]    = new TypedValue((int) DxfCode.ExtendedDataReal, refX.BarSpacing);
 
 						var steelX = refX.Steel;
 
 						if (steelX != null)
 						{
-							data[(int) XData.Panel.fyx] = new TypedValue((int) DxfCode.ExtendedDataReal, steelX.YieldStress);
-							data[(int) XData.Panel.Esx] = new TypedValue((int) DxfCode.ExtendedDataReal, steelX.ElasticModule);
+							data[(int) PanelIndex.fyx] = new TypedValue((int) DxfCode.ExtendedDataReal, steelX.YieldStress);
+							data[(int) PanelIndex.Esx] = new TypedValue((int) DxfCode.ExtendedDataReal, steelX.ElasticModule);
 						}
 					}
 
 					if (refY != null)
 					{
-						data[(int) XData.Panel.YDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, refY.BarDiameter);
-						data[(int) XData.Panel.Sy]    = new TypedValue((int) DxfCode.ExtendedDataReal, refY.BarSpacing);
+						data[(int) PanelIndex.YDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, refY.BarDiameter);
+						data[(int) PanelIndex.Sy]    = new TypedValue((int) DxfCode.ExtendedDataReal, refY.BarSpacing);
 
 						var steelY = refY.Steel;
 
 						if (steelY != null)
 						{
-							data[(int) XData.Panel.fyy]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelY.YieldStress);
-							data[(int) XData.Panel.Esy]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelY.ElasticModule);
+							data[(int) PanelIndex.fyy]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelY.YieldStress);
+							data[(int) PanelIndex.Esy]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelY.ElasticModule);
 						}
 					}
 
@@ -278,10 +277,10 @@ namespace SPMTool.Database.Model.Conditions
         /// </summary>
         /// <param name="direction">The direction of reinforcement.</param>
         /// <param name="units">Current <see cref="Units"/>.</param>
-        private static WebReinforcementDirection GetPanelReinforcement(Directions direction, Units units)
+        private static WebReinforcementDirection GetPanelReinforcement(Direction direction, Units units)
 		{
 			// Get saved reinforcement options
-			var savedRef = DataBase.SavedPanelReinforcement;
+			var savedRef = Database.DataBase.SavedPanelReinforcement;
 
 			// Get unit abreviation
 			var dimAbrev = Length.GetAbbreviation(units.Geometry);

@@ -1,9 +1,8 @@
 ﻿using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Material.Reinforcement;
-using SPMTool.Global;
 
-namespace SPMTool.Database
+namespace SPMTool.Database.Materials
 {
     /// <summary>
     /// Reinforcement database class.
@@ -95,8 +94,8 @@ namespace SPMTool.Database
 		    // Create a list of steel
 		    var stList = Enumerable.ToArray<Steel>((from r in entries
 			    let t   = r.AsArray()
-			    let fy  = Extensions.AutoCAD.Extensions.ToDouble(t[2])
-			    let Es  = Extensions.AutoCAD.Extensions.ToDouble(t[3])
+			    let fy  = global::Extensions.AutoCAD.Extensions.ToDouble(t[2])
+			    let Es  = global::Extensions.AutoCAD.Extensions.ToDouble(t[3])
 			    select new Steel(fy, Es)));
 
 		    return stList.Length > 0 ? stList.ToArray() : null;
@@ -116,8 +115,8 @@ namespace SPMTool.Database
 		    // Create a list of reinforcement
 		    var refList = Enumerable.ToArray<UniaxialReinforcement>(from r in entries
 			    let t   = r.AsArray()
-			    let num = Extensions.AutoCAD.Extensions.ToInt(t[2])
-			    let phi = Extensions.AutoCAD.Extensions.ToDouble(t[3])
+			    let num = global::Extensions.AutoCAD.Extensions.ToInt(t[2])
+			    let phi = global::Extensions.AutoCAD.Extensions.ToDouble(t[3])
 			    select new UniaxialReinforcement(num, phi, null));
 
 		    return refList.Length > 0 ? refList.ToArray() : null;
@@ -137,8 +136,8 @@ namespace SPMTool.Database
 
 		    var refList = Enumerable.ToArray<WebReinforcementDirection>((from r in entries
 			    let t   = r.AsArray()
-			    let phi = Extensions.AutoCAD.Extensions.ToDouble(t[2])
-			    let s   = Extensions.AutoCAD.Extensions.ToDouble(t[3])
+			    let phi = global::Extensions.AutoCAD.Extensions.ToDouble(t[2])
+			    let s   = global::Extensions.AutoCAD.Extensions.ToDouble(t[3])
 			    select new WebReinforcementDirection(phi, s, null, 0, 0)));
 
 		    return refList.Length > 0 ? refList.ToArray() : null;

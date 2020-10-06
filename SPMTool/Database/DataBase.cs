@@ -9,9 +9,11 @@ using Extensions.AutoCAD;
 using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements.StringerProperties;
-using SPMTool.Database.Model.Conditions;
-using SPMTool.Global;
 using SPMTool.Database;
+using SPMTool.Database.Elements;
+using SPMTool.Database.Materials;
+using SPMTool.Database.Settings;
+using SPMTool.Model.Conditions;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Database
@@ -24,7 +26,7 @@ namespace SPMTool.Database
 		/// <summary>
 		/// Get the application name.
 		/// </summary>
-		public static string AppName => "SPMTool";
+		public const string AppName = "SPMTool";
 
         /// <summary>
         /// Get current active <see cref="Autodesk.AutoCAD.ApplicationServices.Document"/>.
@@ -58,6 +60,16 @@ namespace SPMTool.Database
         /// </summary>
         public static ObjectId NodId => Database.NamedObjectsDictionaryId;
 
+        /// <summary>
+        /// Get the Block Table <see cref="ObjectId"/>.
+        /// </summary>
+        public static ObjectId BlockTableId => Database.BlockTableId;
+
+        /// <summary>
+        /// Get the Layer Table <see cref="ObjectId"/>.
+        /// </summary>
+        public static ObjectId LayerTableId => Database.LayerTableId;
+
 		/// <summary>
         /// Get current user coordinate system.
         /// </summary>
@@ -71,7 +83,7 @@ namespace SPMTool.Database
 		/// <summary>
         /// Get <see cref="SPMTool.Units"/> saved in database.
         /// </summary>
-		public static Units Units => Config.ReadUnits();
+		public static Units Units => UnitsData.ReadUnits();
 
 		/// <summary>
         /// Get <see cref="Concrete"/> saved in database.
@@ -96,12 +108,12 @@ namespace SPMTool.Database
         /// <summary>
         /// Get <see cref="StringerGeometry"/> objects saved in database.
         /// </summary>
-        public static StringerGeometry[] SavedStringerGeometry => ReadStringerGeometries();
+        public static StringerGeometry[] SavedStringerGeometry => ElementData.ReadStringerGeometries();
 
         /// <summary>
         /// Get panel widths saved in database.
         /// </summary>
-        public static double[] SavedPanelWidth => ReadPanelWidths();
+        public static double[] SavedPanelWidth => ElementData.ReadPanelWidths();
 
 		/// <summary>
         /// Start a new transaction in <see cref="Database"/>.
@@ -109,85 +121,6 @@ namespace SPMTool.Database
 		public static Transaction StartTransaction() => Database.TransactionManager.StartTransaction();
 
 		/// <summary>
-        /// Save stringer geometry configuration on database.
-        /// </summary>
-        /// <param name="geometry">The <see cref="StringerGeometry"/> object.</param>
-        public static void Save(StringerGeometry geometry)
-        {
-	        var saveCode = geometry.SaveName();
-
-	        // Save the variables on the Xrecord
-	        using (ResultBuffer rb = new ResultBuffer())
-	        {
-		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName));   // 0
-		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, saveCode));          // 1
-		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, geometry.Width));    // 2
-		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, geometry.Height));   // 3
-
-		        // Save on NOD if it doesn't exist
-		        SaveDictionary(rb, saveCode, false);
-	        }
-        }
-
-        /// <summary>
-        /// Save panel width configuration on database.
-        /// </summary>
-        /// <param name="panelWidth">The width of panel, in mm.</param>
-        public static void Save(double panelWidth)
-        {
-	        // Get the name to save
-	        var name = panelWidth.SaveName();
-
-	        // Save the variables on the Xrecord
-	        using (ResultBuffer rb = new ResultBuffer())
-	        {
-		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName)); // 0
-		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));             // 1
-		        rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, panelWidth));       // 2
-
-		        // Create the entry in the NOD if it doesn't exist
-		        SaveDictionary(rb, name, false);
-	        }
-        }
-
-        /// <summary>
-        /// Read <see cref="StringerGeometry"/> objects saved on database.
-        /// </summary>
-        private static StringerGeometry[] ReadStringerGeometries()
-        {
-	        // Get dictionary entries
-	        var entries = ReadDictionaryEntries("StrGeo");
-
-	        if (entries is null)
-		        return null;
-
-	        var geoList = Enumerable.ToArray<StringerGeometry>((from r in entries
-		        let t   = r.AsArray()
-		        let w   = Extensions.AutoCAD.Extensions.ToDouble(t[2])
-		        let h   = Extensions.AutoCAD.Extensions.ToDouble(t[3])
-		        select new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h)));
-
-	        return
-		        geoList.Length > 0 ? geoList : null;
-        }
-
-        /// <summary>
-        /// Read panel widths saved in database.
-        /// </summary>
-        private static double[] ReadPanelWidths()
-        {
-	        // Get dictionary entries
-	        var entries = ReadDictionaryEntries("PnlW");
-
-	        if (entries is null)
-		        return null;
-
-	        var geoList = Enumerable.Select<ResultBuffer, double>(entries, entry => Extensions.AutoCAD.Extensions.ToDouble(entry.AsArray()[2])).ToArray();
-
-	        return geoList.Length > 0 ? geoList : null;
-        }
-
-        /// <summary>
         /// Add the app to the Registered Applications Record.
         /// </summary>
         public static void RegisterApp()
@@ -260,10 +193,10 @@ namespace SPMTool.Database
         public static TypedValue[] ReadDictionaryEntry(string name, bool fullName = true)
         {
 	        // Start a transaction
-	        using (var trans = DataBase.StartTransaction())
+	        using (var trans = StartTransaction())
 			
 		        // Get the NOD in the database
-	        using (var nod = (DBDictionary)trans.GetObject(DataBase.NodId, OpenMode.ForWrite))
+	        using (var nod = (DBDictionary)trans.GetObject(NodId, OpenMode.ForWrite))
 	        {
 		        // Check if it exists as full name
 		        if (fullName && nod.Contains(name))
@@ -299,7 +232,7 @@ namespace SPMTool.Database
         public static ResultBuffer[] ReadDictionaryEntries(string name)
         {
 	        // Start a transaction
-	        using (var trans = DataBase.StartTransaction())
+	        using (var trans = StartTransaction())
 
 		    // Get the NOD in the database
 	        using (var nod = (DBDictionary)trans.GetObject(NodId, OpenMode.ForRead))

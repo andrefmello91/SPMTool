@@ -8,7 +8,7 @@ using System.Windows.Controls;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
 using Autodesk.AutoCAD.Runtime;
-using SPMTool.Database.Model.Conditions;
+using SPMTool.Model.Conditions;
 using SPMTool.Database;
 
 
@@ -24,12 +24,12 @@ namespace SPMTool
             AddAppEvent();
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-            DataBase.RegisterApp();
+            Database.RegisterApp();
         }
 
         public void on_ApplicationIdle(object sender, EventArgs e)
         {
-            Database.Model.Conditions.UserInterface.RibbonButtons();
+            Model.Conditions.UserInterface.RibbonButtons();
             Autodesk.AutoCAD.ApplicationServices.Application.Idle -= on_ApplicationIdle;
         }
 
@@ -63,12 +63,12 @@ namespace SPMTool
             if (sysVarChEvtArgs.Name == "COLORTHEME")
             {
                 // Reinitialize the ribbon buttons
-                Database.Model.Conditions.UserInterface.RibbonButtons();
+                Model.Conditions.UserInterface.RibbonButtons();
             }
         }
     }
 
-    namespace Database.Model.Conditions
+    namespace Model.Conditions
     {
 	    public class UserInterface
 	    {
@@ -115,7 +115,7 @@ namespace SPMTool
 			    RibbonControl ribbonControl = ComponentManager.Ribbon;
 
 			    // Check if the tab already exists
-			    RibbonTab tab = ribbonControl.FindTab(DataBase.AppName);
+			    RibbonTab tab = ribbonControl.FindTab(Database.DataBase.AppName);
 
 			    if (tab != null)
 			    {
@@ -185,8 +185,8 @@ namespace SPMTool
                 // Create the Ribbon Tab
                 RibbonTab Tab = new RibbonTab()
 			    {
-				    Title = DataBase.AppName,
-				    Id    = DataBase.AppName
+				    Title = Database.DataBase.AppName,
+				    Id    = Database.DataBase.AppName
 			    };
 			    ribbonControl.Tabs.Add(Tab);
 
@@ -737,7 +737,7 @@ namespace SPMTool
 						    if (!cmdText.EndsWith(";"))
 							    cmdText = cmdText + " ";
 
-						    DataBase.Document.SendStringToExecute(esc + cmdText, true, false, true);
+						    Database.DataBase.Document.SendStringToExecute(esc + cmdText, true, false, true);
 					    }
 				    }
 			    }

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Windows;
-using SPMTool.Database.Model.Conditions;
+using SPMTool.Model.Conditions;
 using SPMTool.Database;
 using SPMTool.Elements;
 using UnitsNet;
@@ -27,7 +27,7 @@ namespace SPMTool.UserInterface
 			Node = node;
 
 			// Read units
-			Units = DataBase.Units;
+			Units = Database.Units;
 
             // Get forces and displacements
             double

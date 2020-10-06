@@ -8,9 +8,10 @@ using Extensions.AutoCAD;
 using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements;
-using SPMTool.Database.Model.Conditions;
+using SPMTool.Enums;
+using SPMTool.Model.Conditions;
 using UnitsNet;
-using static SPMTool.Database.Model.Conditions.Auxiliary;
+using static SPMTool.Model.Conditions.Auxiliary;
 using static SPMTool.Database.DataBase;
 
 namespace SPMTool.Database
@@ -55,7 +56,7 @@ namespace SPMTool.Database
 		    var data = ndPt.ReadXData(AppName);
 
 		    // Get the node number
-		    int number = data[(int)XData.Node.Number].ToInt();
+		    int number = data[(int)NodeIndex.Number].ToInt();
 
 			return
 				new Node(objectId, number, ndPt.Position, GetNodeType(ndPt), units.Geometry, units.Displacements);

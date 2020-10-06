@@ -7,8 +7,9 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using SPM.Elements;
 using SPMTool.Database;
+using SPMTool.Enums;
 
-namespace SPMTool.Database.Model.Conditions
+namespace SPMTool.Model.Conditions
 {
 	public static class UserInput
 	{
@@ -24,7 +25,7 @@ namespace SPMTool.Database.Model.Conditions
 				ptOp.BasePoint = basePoint.Value;
 			}
 
-			PromptPointResult ptRes = DataBase.Editor.GetPoint(ptOp);
+			PromptPointResult ptRes = Database.DataBase.Editor.GetPoint(ptOp);
 
 			if (ptRes.Status == PromptStatus.OK)
 				return ptRes.Value;
@@ -40,13 +41,13 @@ namespace SPMTool.Database.Model.Conditions
 			{
 				// Request the object to be selected in the drawing area
 				PromptEntityOptions entOp = new PromptEntityOptions("\n" + message);
-				PromptEntityResult entRes = DataBase.Editor.GetEntity(entOp);
+				PromptEntityResult entRes = Database.DataBase.Editor.GetEntity(entOp);
 
 				if (entRes.Status == PromptStatus.Cancel)
 					return null;
 
 				// Start a transaction
-				using (Transaction trans = DataBase.StartTransaction())
+				using (Transaction trans = Database.DataBase.StartTransaction())
 				{
 					// Get the entity for read
 					Entity ent = trans.GetObject(entRes.ObjectId, OpenMode.ForRead) as Entity;
@@ -71,7 +72,7 @@ namespace SPMTool.Database.Model.Conditions
 				MessageForAdding = "\n" + message
 			};
 
-			PromptSelectionResult selRes = DataBase.Editor.GetSelection(selOp);
+			PromptSelectionResult selRes = Database.DataBase.Editor.GetSelection(selOp);
 
 			if (selRes.Status == PromptStatus.Cancel)
 				return null;
@@ -83,7 +84,7 @@ namespace SPMTool.Database.Model.Conditions
 			if (set.Count > 0)
 			{
 				// Start a transaction
-				using (Transaction trans = DataBase.StartTransaction())
+				using (Transaction trans = Database.DataBase.StartTransaction())
 				{
 					// Get the objects in the selection and add to the collection only the external nodes
 					foreach (SelectedObject obj in set)
@@ -186,7 +187,7 @@ namespace SPMTool.Database.Model.Conditions
 			};
 
 			// Get the number
-			PromptIntegerResult intRes = DataBase.Editor.GetInteger(intOp);
+			PromptIntegerResult intRes = Database.DataBase.Editor.GetInteger(intOp);
 
 			if (intRes.Status == PromptStatus.OK)
 				return intRes.Value;
@@ -206,7 +207,7 @@ namespace SPMTool.Database.Model.Conditions
 			};
 
 			// Get the result
-			PromptDoubleResult dbRes = DataBase.Editor.GetDouble(dbOp);
+			PromptDoubleResult dbRes = Database.DataBase.Editor.GetDouble(dbOp);
 
 			if (dbRes.Status == PromptStatus.OK)
 				return dbRes.Value;
@@ -232,7 +233,7 @@ namespace SPMTool.Database.Model.Conditions
 			if (defaultKeyword != null)
 				keyOp.Keywords.Default = defaultKeyword;
 
-			PromptResult result = DataBase.Editor.GetKeywords(keyOp);
+			PromptResult result = Database.DataBase.Editor.GetKeywords(keyOp);
 			
 			if (result.Status == PromptStatus.Cancel)
 				return null;

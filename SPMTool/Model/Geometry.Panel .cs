@@ -8,11 +8,11 @@ using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
 using Extensions.Number;
 using SPM.Elements;
-using SPMTool.Database.Model.Conditions;
 using SPMTool.Database;
-using SPMTool.Global;
+using SPMTool.Database.Elements;
+using SPMTool.Enums;
+using SPMTool.Model.Conditions;
 using UnitsNet;
-using PanelData = SPMTool.XData.Panel;
 
 [assembly: CommandClass(typeof(Geometry.Panel))]
 
@@ -65,7 +65,7 @@ namespace SPMTool.Database
 					};
 
 					// Add the object
-					Global.Extensions.Add(SolidObject);
+					Extensions.Add(SolidObject);
 				}
 			}
 
@@ -162,10 +162,10 @@ namespace SPMTool.Database
 				var newStrList = new List<(Point3d start, Point3d end)>();
 
 				// Access the stringers in the model
-				ObjectIdCollection strs = Drawing.GetObjectsOnLayer(Layer.Stringer);
+				ObjectIdCollection strs = Model.GetObjectsOnLayer(Layer.Stringer);
 
 				// Access the internal nodes in the model
-				ObjectIdCollection intNds = Drawing.GetObjectsOnLayer(Layer.IntNode);
+				ObjectIdCollection intNds = Model.GetObjectsOnLayer(Layer.IntNode);
 
 				// Start a transaction
 				using (Transaction trans = DataBase.StartTransaction())
@@ -349,7 +349,7 @@ namespace SPMTool.Database
 						TypedValue[] data = Auxiliary.ReadXData(ent);
 
 						// Set the new geometry and reinforcement (line 7 to 9 of the array)
-						data[(int) PanelData.Width] = new TypedValue((int) DxfCode.ExtendedDataReal, wn.Value);
+						data[(int) PanelIndex.Width] = new TypedValue((int) DxfCode.ExtendedDataReal, wn.Value);
 
 						// Add the new XData
 						ent.XData = new ResultBuffer(data);
@@ -401,7 +401,7 @@ namespace SPMTool.Database
 	            var width = widthn.Value.Convert(units.Geometry);
 
 	            // Save geometry
-	            DataBase.Save(width);
+	            ElementData.Save(width);
 
 	            return width;
             }
@@ -410,10 +410,10 @@ namespace SPMTool.Database
             public static ObjectIdCollection UpdatePanels()
 			{
 				// Get the internal nodes of the model
-				ObjectIdCollection intNds = Drawing.GetObjectsOnLayer(Layer.IntNode);
+				ObjectIdCollection intNds = Model.GetObjectsOnLayer(Layer.IntNode);
 
 				// Create the panels collection and initialize getting the elements on node layer
-				ObjectIdCollection pnls = Drawing.GetObjectsOnLayer(Layer.Panel);
+				ObjectIdCollection pnls = Model.GetObjectsOnLayer(Layer.Panel);
 
 				// Create a point collection
 				List<Point3d> cntrPts = new List<Point3d>();
@@ -455,7 +455,7 @@ namespace SPMTool.Database
 						TypedValue[] data;
 
 						// Get the Xdata size
-						int size = Enum.GetNames(typeof(PanelData)).Length;
+						int size = Enum.GetNames(typeof(PanelIndex)).Length;
 
 						// Check if the XData already exist. If not, create it
 						if (pnl.XData == null)
@@ -508,13 +508,13 @@ namespace SPMTool.Database
 						}
 
 						// Set the updated panel number
-						data[(int) PanelData.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, pnlNum);
+						data[(int) PanelIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, pnlNum);
 
 						// Set the updated node numbers in the necessary order
-						data[(int) PanelData.Grip1] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[0]);
-						data[(int) PanelData.Grip2] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[1]);
-						data[(int) PanelData.Grip3] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[2]);
-						data[(int) PanelData.Grip4] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[3]);
+						data[(int) PanelIndex.Grip1] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[0]);
+						data[(int) PanelIndex.Grip2] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[1]);
+						data[(int) PanelIndex.Grip3] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[2]);
+						data[(int) PanelIndex.Grip4] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[3]);
 
 						// Add the new XData
 						pnl.XData = new ResultBuffer(data);
@@ -544,7 +544,7 @@ namespace SPMTool.Database
 			public static List<Vertices> ListOfPanelVertices()
 			{
 				// Get the stringers in the model
-				ObjectIdCollection pnls = Drawing.GetObjectsOnLayer(Layer.Panel);
+				ObjectIdCollection pnls = Model.GetObjectsOnLayer(Layer.Panel);
 
 				// Initialize a list
 				var pnlList = new List<Vertices>();
@@ -579,23 +579,23 @@ namespace SPMTool.Database
 				string xdataStr = "Panel Data";
 
 				// Get the Xdata size
-				int size = Enum.GetNames(typeof(PanelData)).Length;
+				int size = Enum.GetNames(typeof(PanelIndex)).Length;
 
 				TypedValue[] newData = new TypedValue[size];
 
 				// Set the initial parameters
-				newData[(int) PanelData.AppName]  =
+				newData[(int) PanelIndex.AppName]  =
 					new TypedValue((int) DxfCode.ExtendedDataRegAppName, DataBase.AppName);
-				newData[(int) PanelData.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-				newData[(int) PanelData.Width]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
-				newData[(int) PanelData.XDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-				newData[(int) PanelData.Sx]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-				newData[(int) PanelData.fyx]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-				newData[(int) PanelData.Esx]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-				newData[(int) PanelData.YDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-				newData[(int) PanelData.Sy]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-				newData[(int) PanelData.fyy]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-				newData[(int) PanelData.Esy]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
+				newData[(int) PanelIndex.Width]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
+				newData[(int) PanelIndex.XDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelIndex.Sx]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelIndex.fyx]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelIndex.Esx]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelIndex.YDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelIndex.Sy]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelIndex.fyy]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+				newData[(int) PanelIndex.Esy]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
 
 				return newData;
 			}

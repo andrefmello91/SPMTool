@@ -8,11 +8,12 @@ using Extensions.AutoCAD;
 using Material.Concrete;
 using SPM.Analysis;
 using SPM.Elements;
-using SPMTool.Database.Model.Conditions;
 using SPMTool.Database;
-using static SPMTool.Database.Model.Conditions.Auxiliary;
-using static SPMTool.Database.Model.Conditions.Material;
-using static SPMTool.Database.Model.Conditions.Config;
+using SPMTool.Enums;
+using SPMTool.Model.Conditions;
+using static SPMTool.Model.Conditions.Auxiliary;
+using static SPMTool.Model.Conditions.Material;
+using static SPMTool.Database.Settings.UnitsData;
 
 namespace SPMTool.Database
 {

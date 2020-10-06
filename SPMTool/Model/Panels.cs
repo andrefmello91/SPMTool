@@ -9,8 +9,9 @@ using Extensions.AutoCAD;
 using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements;
-using SPMTool.Database.Model.Conditions;
-using static SPMTool.Database.Model.Conditions.Auxiliary;
+using SPMTool.Enums;
+using SPMTool.Model.Conditions;
+using static SPMTool.Model.Conditions.Auxiliary;
 using static SPMTool.Database.DataBase;
 
 namespace SPMTool.Database
@@ -63,22 +64,22 @@ namespace SPMTool.Database
             var pnlData = pnl.ReadXData(AppName);
 
             // Get the panel parameters
-            var number = pnlData[(int)XData.Panel.Number].ToInt();
-            var width  = pnlData[(int)XData.Panel.Width].ToDouble();
+            var number = pnlData[(int)PanelIndex.Number].ToInt();
+            var width  = pnlData[(int)PanelIndex.Width].ToDouble();
 
             // Get reinforcement
             double
-                phiX = pnlData[(int)XData.Panel.XDiam].ToDouble(),
-                phiY = pnlData[(int)XData.Panel.YDiam].ToDouble(),
-                sx   = pnlData[(int)XData.Panel.Sx].ToDouble(),
-                sy   = pnlData[(int)XData.Panel.Sy].ToDouble();
+                phiX = pnlData[(int)PanelIndex.XDiam].ToDouble(),
+                phiY = pnlData[(int)PanelIndex.YDiam].ToDouble(),
+                sx   = pnlData[(int)PanelIndex.Sx].ToDouble(),
+                sy   = pnlData[(int)PanelIndex.Sy].ToDouble();
 
             // Get steel data
             double
-                fyx = pnlData[(int)XData.Panel.fyx].ToDouble(),
-                Esx = pnlData[(int)XData.Panel.Esx].ToDouble(),
-                fyy = pnlData[(int)XData.Panel.fyy].ToDouble(),
-                Esy = pnlData[(int)XData.Panel.Esy].ToDouble();
+                fyx = pnlData[(int)PanelIndex.fyx].ToDouble(),
+                Esx = pnlData[(int)PanelIndex.Esx].ToDouble(),
+                fyy = pnlData[(int)PanelIndex.fyy].ToDouble(),
+                Esy = pnlData[(int)PanelIndex.Esy].ToDouble();
 
             Steel
 	            steelX = new Steel(fyx, Esx),

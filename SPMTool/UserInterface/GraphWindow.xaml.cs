@@ -8,7 +8,7 @@ using LiveCharts.Defaults;
 using LiveCharts.Wpf;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.Data.Text;
-using SPMTool.Database.Model.Conditions;
+using SPMTool.Model.Conditions;
 using SPMTool.Database;
 using UnitsNet;
 using UnitsNet.Units;
@@ -123,7 +123,7 @@ namespace SPMTool.UserInterface
 
 			// Convert displacements
 			if (DisplacementUnit != LengthUnit.Millimeter)
-				u = u.Multiply(Auxiliary.ScaleFactor(DisplacementUnit));
+				u = u.Multiply(Extensions.ScaleFactor(DisplacementUnit));
 
 			// Get matrix
 			var result = Matrix<double>.Build.DenseOfColumnVectors(lf, u);
@@ -134,8 +134,8 @@ namespace SPMTool.UserInterface
 
 			// Get location and name
 			string
-				path   = DataBase.GetFilePath(),
-				name   = Path.GetFileNameWithoutExtension(DataBase.Document.Name),
+				path   = Database.GetFilePath(),
+				name   = Path.GetFileNameWithoutExtension(Database.Document.Name),
 				svName = path + name + "_SPMResult.csv";
 
             // Export

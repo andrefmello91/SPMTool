@@ -1,13 +1,14 @@
 ﻿using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
-using SPMTool.Database.Model.Conditions;
+using SPMTool.Enums;
+using SPMTool.Model.Conditions;
 
 namespace SPMTool.Database
 {
     /// <summary>
     /// Model class
     /// </summary>
-    public static class Drawing
+    public static class Model
     {
 	    /// <summary>
 	    /// Get the collection of nodes in the model.

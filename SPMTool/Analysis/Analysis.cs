@@ -5,12 +5,13 @@ using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.UserInterface;
 using SPMTool.Database;
+using SPMTool.Enums;
 using static SPMTool.Database.Data;
 
 
-[assembly: CommandClass(typeof(SPMTool.Database.Model.Conditions.Results))]
+[assembly: CommandClass(typeof(SPMTool.Model.Conditions.Results))]
 
-namespace SPMTool.Database.Model.Conditions
+namespace SPMTool.Model.Conditions
 {
 	public static partial class Results
 	{
@@ -78,8 +79,8 @@ namespace SPMTool.Database.Model.Conditions
 			// Ask direction to monitor
 			var options = new []
 			{
-				Directions.X.ToString(),
-				Directions.Y.ToString()
+				Direction.X.ToString(),
+				Direction.Y.ToString()
 			};
 			var res = UserInput.SelectKeyword("Select a direction to monitor displacement:", options, options[0]);
 

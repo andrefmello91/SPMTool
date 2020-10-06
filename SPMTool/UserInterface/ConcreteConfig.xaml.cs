@@ -11,14 +11,15 @@ using Material;
 using Material.Concrete;
 using Parameters = Material.Concrete.Parameters;
 using Material.Concrete;
-using SPMTool.Database.Model.Conditions;
+using SPMTool.Model.Conditions;
 using SPMTool.Database;
+using SPMTool.Database.Materials;
 using UnitsNet;
 using UnitsNet.Units;
 using ComboBox = System.Windows.Controls.ComboBox;
 using MessageBox = System.Windows.MessageBox;
 using TextBox = System.Windows.Controls.TextBox;
-using static SPMTool.Database.ConcreteData;
+using static SPMTool.Database.Materials.ConcreteData;
 
 namespace SPMTool.UserInterface
 {
@@ -43,7 +44,7 @@ namespace SPMTool.UserInterface
 		public Concrete OutputConcrete => new Concrete(_parameters, _constitutiveModel);
 
         public ConcreteConfig()
-	        : this (DataBase.Concrete)
+	        : this (Database.Concrete)
         {
         }
 
@@ -60,7 +61,7 @@ namespace SPMTool.UserInterface
 		public ConcreteConfig(Parameters parameters, ConstitutiveModel constitutiveModel)
 		{
 			// Read units
-			_units = DataBase.Units;
+			_units = Database.Units;
 
             InitializeComponent();
 
