@@ -30,7 +30,7 @@ namespace SPMTool.Database
         /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
         /// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
         /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-	    public static Panel[] Read(ObjectIdCollection panelObjectsIds, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
+	    public static Panel[] Read(ObjectIdCollection panelObjectsIds, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
 	    {
 		    var panels = new Panel[panelObjectsIds.Count];
 
@@ -55,7 +55,7 @@ namespace SPMTool.Database
         /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
         /// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
         /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-        public static Panel Read(ObjectId objectId, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
+        public static Panel Read(ObjectId objectId, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
         {
             // Read as a solid
             var pnl = (Solid) objectId.ToDBObject();

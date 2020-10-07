@@ -125,22 +125,21 @@
   <ItemGroup>
     <Compile Include="Database\DataBase.cs" />
     <Compile Include="Database\UnitsData.cs" />
-    <Compile Include="AutoCAD\UserInput.cs" />
+    <Compile Include="Editor\UserInput.cs" />
     <Compile Include="Analysis\Analysis.cs" />
     <Compile Include="Database\ElementData.cs" />
     <Compile Include="Database\Materials\ReinforcementData.cs" />
     <Compile Include="Database\Materials\ConcreteData.cs" />
     <Compile Include="Global\Enums.cs" />
-    <Compile Include="AutoCAD\Reinforcement.cs" />
+    <Compile Include="Editor\Reinforcement.cs" />
     <Compile Include="Database\Conditions\Supports.cs" />
     <Compile Include="Global\Extensions.cs" />
     <Compile Include="Global\Units.cs" />
     <Compile Include="Database\Conditions\Forces.cs" />
     <Compile Include="Model\Geometry.cs" />
-    <Compile Include="Model\Geometry.Node.cs" />
-    <Compile Include="Model\Geometry.Panel .cs" />
-    <Compile Include="Model\Geometry.Stringer .cs" />
-    <Compile Include="Model\InputData.cs" />
+    <Compile Include="Model\Elements\Nodes.cs" />
+    <Compile Include="Model\Elements\Geometry.Panel .cs" />
+    <Compile Include="Model\Elements\Geometry.Stringer .cs" />
     <Compile Include="Model\Model.cs" />
     <Compile Include="Model\Nodes.cs" />
     <Compile Include="Model\Panels.cs" />
@@ -150,7 +149,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="AutoCAD\Results.cs" />
+    <Compile Include="Editor\Results.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserInterface\StringerWindow.xaml.cs">
       <DependentUpon>StringerWindow.xaml</DependentUpon>

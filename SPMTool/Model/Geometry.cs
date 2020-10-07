@@ -1,8 +1,10 @@
 ﻿using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Database;
+using SPMTool.Editor;
 using SPMTool.Enums;
 using SPMTool.Model.Conditions;
+using SPMTool.Model.Elements;
 
 [assembly: CommandClass(typeof(Geometry))]
 
@@ -17,7 +19,7 @@ namespace SPMTool.Database
 		public static void UpdateElements()
 		{
 			// Enumerate and get the number of nodes
-			var nds = Node.UpdateNodes();
+			var nds = SPMTool.Model.Elements.Nodes.UpdateNodes();
 			int numNds = nds.Count;
 
 			// Update and get the number of stringers
@@ -29,7 +31,7 @@ namespace SPMTool.Database
 			int numPnls = pnls.Count;
 
 			// Display the number of updated elements
-			DataBase.Editor.WriteMessage("\n" + numNds + " nodes, " + numStrs + " stringers and " + numPnls +
+			UserInput.Editor.WriteMessage("\n" + numNds + " nodes, " + numStrs + " stringers and " + numPnls +
 			                          " panels updated.");
 		}
 

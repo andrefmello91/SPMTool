@@ -8,9 +8,11 @@ using Extensions.Number;
 using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.Database;
+using SPMTool.Editor;
 using SPMTool.Enums;
 using SPMTool.UserInterface;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
+using Node = SPM.Elements.Node;
 
 [assembly: CommandClass(typeof(SPMTool.Model.Conditions.Results))]
 
@@ -535,7 +537,7 @@ namespace SPMTool.Model.Conditions
 			}
 
 			// Add the nodes
-			new Geometry.Node(dispNds, NodeType.Displaced);
+			new Elements.Nodes(dispNds, NodeType.Displaced);
 		}
 
 		// Set displacement to nodes
@@ -840,7 +842,7 @@ namespace SPMTool.Model.Conditions
 					return;
 
 				// Read the element
-				var element = Data.GetElement(ent);
+				var element = Database.Model.GetElement(ent);
 
 				if (element is Stringer stringer)
 				{

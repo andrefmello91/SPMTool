@@ -3,8 +3,10 @@ using System.Windows;
 using SPMTool.Model.Conditions;
 using SPMTool.Database;
 using SPMTool.Elements;
+using SPMTool.Model.Elements;
 using UnitsNet;
 using Force = UnitsNet.Force;
+using Nodes = SPMTool.Model.Elements.Nodes;
 
 namespace SPMTool.UserInterface
 {
@@ -15,14 +17,14 @@ namespace SPMTool.UserInterface
 	{
 		// Properties
 		private Units  Units { get; }
-		public  Node   Node  { get; }
+		public  Nodes   Node  { get; }
 		private Force  Fx    { get; }
 		private Force  Fy    { get; }
 		private Length Ux    { get; }
 		private Length Uy    { get; }
 
 
-		public NodeWindow(Node node)
+		public NodeWindow(Nodes node)
 		{
 			Node = node;
 

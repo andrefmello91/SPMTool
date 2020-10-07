@@ -32,7 +32,7 @@ namespace SPMTool.Database
         /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
         /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
         /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-        public static Stringer[] Read(ObjectIdCollection stringerObjectsIds, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
+        public static Stringer[] Read(ObjectIdCollection stringerObjectsIds, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
 	    {
 		    var stringers = new Stringer[stringerObjectsIds.Count];
 
@@ -58,7 +58,7 @@ namespace SPMTool.Database
         /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
         /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
         /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-        public static Stringer Read(ObjectId objectId, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
+        public static Stringer Read(ObjectId objectId, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
         {
             // Read the object as a line
             var line = (Line) objectId.ToDBObject();

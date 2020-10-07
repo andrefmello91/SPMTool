@@ -6,6 +6,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Extensions.AutoCAD;
 using SPM.Elements;
+using SPMTool.Editor;
 using SPMTool.Enums;
 using SPMTool.Model.Conditions;
 using UnitsNet.Units;
@@ -33,38 +34,38 @@ namespace SPMTool.Database.Conditions
 	        Layer.Support.Create(Color.Red);
 
 	        // Read units
-	        var units     = DataBase.Units;
+	        var units = DataBase.Units;
 
             // Check if the support blocks already exist. If not, create the blocks
             CreateBlocks();
 
-	        // Request objects to be selected in the drawing area
-	        var nds = UserInput.SelectNodes("Select nodes to add support conditions:", NodeType.External);
+            // Request objects to be selected in the drawing area
+            using (var nds = UserInput.SelectNodes("Select nodes to add support conditions:", NodeType.External))
+            {
+	            if (nds is null)
+		            return;
 
-	        if (nds is null)
-		        return;
+	            // Ask the user set the support conditions:
+	            var options = Enum.GetNames(typeof(Constraint));
 
-	        // Ask the user set the support conditions:
-	        var options = Enum.GetNames(typeof(Constraint));
+	            var supn = UserInput.SelectKeyword("Add support in which direction?", options, "Free");
 
-	        var supn = UserInput.SelectKeyword("Add support in which direction?", options, "Free");
+	            if (!supn.HasValue)
+		            return;
 
-	        if (!supn.HasValue)
-		        return;
+	            // Set the support
+	            var support = (Constraint) Enum.Parse(typeof(Constraint), supn.Value.keyword);
 
-	        // Set the support
-	        var support = (Constraint) Enum.Parse(typeof(Constraint), supn.Value.keyword);
+	            // Get positions
+	            var positions = (from DBPoint pt in nds select pt.Position).ToArray();
 
-			// Get positions
-			var positions = (from DBPoint pt in nds select pt.Position).ToArray();
+	            // Erase blocks
+	            EraseBlocks(positions);
 
-			// Erase blocks
-			EraseBlocks(positions);
-
-			// If the node is not Free, add the support blocks
-			if (support != Constraint.Free)
-				AddBlocks(positions, support, units.Geometry);
-
+	            // If the node is not Free, add the support blocks
+	            if (support != Constraint.Free)
+		            AddBlocks(positions, support, units.Geometry);
+            }
         }
 
         /// <summary>
@@ -79,32 +80,24 @@ namespace SPMTool.Database.Conditions
             // Get all the force blocks in the model
             var sups = Model.SupportCollection;
 
-            if (sups is null)
+            if (sups is null || sups.Count == 0)
                 return;
 
             // Start a transaction
             using (var trans = DataBase.StartTransaction())
             {
                 foreach (var position in positions)
-                {
-                    // Check if there is a force block at the node position
-                    if (sups != null && sups.Count > 0)
-                    {
-                        foreach (ObjectId supObj in sups)
-                        {
-                            // Read as a block reference
-                            var supBlk = (BlockReference)trans.GetObject(supObj, OpenMode.ForRead);
+	                foreach (ObjectId supObj in sups)
+		                using (var supBlk = (BlockReference) trans.GetObject(supObj, OpenMode.ForRead))
+		                {
+			                // Check if the position is equal to the selected node
+			                if (supBlk.Position != position)
+				                continue;
 
-                            // Check if the position is equal to the selected node
-                            if (supBlk.Position != position)
-                                continue;
-
-                            // Erase the force block
-                            supBlk.UpgradeOpen();
-                            supBlk.Erase();
-                        }
-                    }
-                }
+			                // Erase the force block
+			                supBlk.UpgradeOpen();
+			                supBlk.Erase();
+		                }
 
                 trans.Commit();
             }
@@ -113,42 +106,35 @@ namespace SPMTool.Database.Conditions
         /// <summary>
         /// Add the force blocks to the model.
         /// </summary>
-        /// <param name="positions">The collection of nodes to add</param>
-        /// <param name="force"></param>
-        /// <param name="geometryUnit"></param>
+        /// <param name="positions">The collection of nodes to add.</param>
+        /// <param name="constraint">The <see cref="Constraint"/> type.</param>
+        /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
         private static void AddBlocks(IReadOnlyCollection<Point3d> positions, Constraint constraint, LengthUnit geometryUnit)
         {
             if (positions is null || positions.Count == 0)
                 return;
 
-            // Get scale factor
-            var scFctr = geometryUnit.ScaleFactor();
-
             // Start a transaction
             using (var trans = DataBase.StartTransaction())
-            // Open the Block table for read
             using (var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
             {
                 // Read the force block
                 var supBlock = blkTbl[BlockName(constraint)];
 
                 foreach (var pos in positions)
-                {
-                    // Insert the block into the current space
-                    using (var blkRef = new BlockReference(pos, supBlock))
-                    {
-	                    blkRef.Layer = SupportLayer;
-	                    blkRef.Add();
+	                // Insert the block into the current space
+	                using (var blkRef = new BlockReference(pos, supBlock))
+	                {
+		                blkRef.Layer = SupportLayer;
+		                blkRef.Add();
 
-	                    // Set scale to the block
-	                    if (geometryUnit != LengthUnit.Millimeter)
-		                    blkRef.TransformBy(Matrix3d.Scaling(scFctr, pos));
+		                // Set scale to the block
+		                if (geometryUnit != LengthUnit.Millimeter)
+			                blkRef.TransformBy(Matrix3d.Scaling(geometryUnit.ScaleFactor(), pos));
 
-	                    // Set XData
-	                    blkRef.XData = SupportXData(constraint);
-                    }
-
-                }
+		                // Set XData
+		                blkRef.XData = SupportXData(constraint);
+	                }
 
                 trans.Commit();
             }
@@ -368,7 +354,7 @@ namespace SPMTool.Database.Conditions
         /// <summary>
         /// Create XData for supports.
         /// </summary>
-        /// <param name="constraint"></param>
+        /// <param name="constraint">The <see cref="Constraint"/> type.</param>
         private static ResultBuffer SupportXData(Constraint constraint)
         {
             // Definition for the Extended Data
@@ -396,35 +382,35 @@ namespace SPMTool.Database.Conditions
         }
 
         /// <summary>
-        /// Set constraints to nodes.
+        /// Set constraints to a collection of nodes.
         /// </summary>
         /// <param name="supportObjectIds">The <see cref="ObjectIdCollection"/> of support objects in the drawing.</param>
-        /// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
-        public static void SetConstraints(ObjectIdCollection supportObjectIds, Node[] nodes)
+        /// <param name="nodes">The collection containing all nodes of SPM model.</param>
+        public static void Set(ObjectIdCollection supportObjectIds, IEnumerable<SPM.Elements.Node> nodes)
         {
 	        foreach (ObjectId obj in supportObjectIds)
-		        SetConstraints(obj, nodes);
+		        Set(obj, nodes);
         }
 
         /// <summary>
-        /// Set constraint to nodes.
+        /// Set constraints to a collection of nodes.
         /// </summary>
         /// <param name="objectId">The <see cref="ObjectId"/> of support object in the drawing.</param>
-        /// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
-        private static void SetConstraints(ObjectId objectId, Node[] nodes)
+        /// <param name="nodes">The collection containing all nodes of SPM model.</param>
+        private static void Set(ObjectId objectId, IEnumerable<SPM.Elements.Node> nodes)
         {
-	        // Read object
-	        var sBlock = (BlockReference) objectId.ToDBObject();
+            // Read object
+            using (var sBlock = (BlockReference)objectId.ToDBObject())
 
-	        // Set to node
-	        foreach (var node in nodes)
-	        {
-		        if (node.Position.Approx(sBlock.Position))
-		        {
-			        node.Constraint = ReadConstraint(sBlock);
-			        break;
-		        }
-	        }
+                // Set to node
+                foreach (var node in nodes)
+                {
+                    if (!node.Position.Approx(sBlock.Position))
+                        continue;
+
+                    node.Constraint = ReadConstraint(sBlock);
+                    break;
+                }
         }
 
         /// <summary>
@@ -440,7 +426,7 @@ namespace SPMTool.Database.Conditions
         public static Constraint ReadConstraint(BlockReference supportBlock)
         {
 	        // Read the XData and get the necessary data
-	        var data = supportBlock.ReadXData(DataBase.AppName);
+	        var data = supportBlock.ReadXData();
 
 	        // Get the direction
 	        return (Constraint)data[(int)SupportIndex.Direction].ToInt();

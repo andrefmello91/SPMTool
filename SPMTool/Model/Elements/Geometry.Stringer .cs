@@ -11,6 +11,7 @@ using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database;
 using SPMTool.Database.Elements;
+using SPMTool.Editor;
 using SPMTool.Enums;
 using SPMTool.Model.Conditions;
 using UnitsNet;
@@ -141,11 +142,11 @@ namespace SPMTool.Database
 					}
 
 				// Create the nodes
-				new Node(newExtNds, NodeType.External);
-				new Node(newIntNds, NodeType.Internal);
+				new SPMTool.Model.Elements.Nodes(newExtNds, NodeType.External);
+				new SPMTool.Model.Elements.Nodes(newIntNds, NodeType.Internal);
 
 				// Update the nodes and stringers
-				Node.UpdateNodes(units);
+				SPMTool.Model.Elements.Nodes.UpdateNodes(units);
 				UpdateStringers();
 			}
 
@@ -271,11 +272,11 @@ namespace SPMTool.Database
 				}
 
 				// Create the nodes
-				new Node(newExtNds, NodeType.External);
-				new Node(newIntNds, NodeType.Internal);
+				new SPMTool.Model.Elements.Nodes(newExtNds, NodeType.External);
+				new SPMTool.Model.Elements.Nodes(newIntNds, NodeType.Internal);
 
 				// Update nodes and stringers
-				Node.UpdateNodes(units);
+				SPMTool.Model.Elements.Nodes.UpdateNodes(units);
 				UpdateStringers();
 			}
 
@@ -286,7 +287,7 @@ namespace SPMTool.Database
 				var strs = Model.GetObjectsOnLayer(Layer.Stringer);
 
 				// Get all the nodes in the model
-				using (var nds = updateNodes ? Node.UpdateNodes(DataBase.Units) : Node.AllNodes())
+				using (var nds = updateNodes ? SPMTool.Model.Elements.Nodes.UpdateNodes(DataBase.Units) : SPMTool.Model.Elements.Nodes.AllNodes())
 					
 				// Start a transaction
 				using (var trans = DataBase.StartTransaction())
@@ -349,9 +350,9 @@ namespace SPMTool.Database
 						int strNum = midPtsList.IndexOf(midPt) + 1;
 
 						// Get the start, mid and end nodes
-						int strStNd  = Node.GetNodeNumber(str.StartPoint, nds),
-							strMidNd = Node.GetNodeNumber(midPt, nds),
-							strEnNd  = Node.GetNodeNumber(str.EndPoint, nds);
+						int strStNd  = SPMTool.Model.Elements.Nodes.GetNumber(str.StartPoint, nds),
+							strMidNd = SPMTool.Model.Elements.Nodes.GetNumber(midPt, nds),
+							strEnNd  = SPMTool.Model.Elements.Nodes.GetNumber(str.EndPoint, nds);
 
 						// Set the updated number and nodes in ascending number and length (line 2 to 6)
 						data[(int) StringerIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, strNum);

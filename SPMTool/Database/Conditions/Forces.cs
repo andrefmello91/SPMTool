@@ -13,6 +13,7 @@ using SPM.Elements;
 using UnitsNet.Units;
 using OnPlaneComponents;
 using SPMTool.Database;
+using SPMTool.Editor;
 using SPMTool.Enums;
 using SPMTool.Model.Conditions;
 
@@ -39,7 +40,7 @@ namespace SPMTool.Database.Conditions
 			var units = DataBase.Units;
 
             // Check if the force block already exist. If not, create the blocks
-            CreateForceBlock();
+            CreateBlock();
 
             // Request objects to be selected in the drawing area
             using (var nds = UserInput.SelectNodes("Select nodes to add load:", NodeType.External))
@@ -60,7 +61,7 @@ namespace SPMTool.Database.Conditions
 	            EraseBlocks(positions);
 
 	            // Add force blocks
-	            AddForceBlocks(positions, force.Value, units.Geometry);
+	            AddBlocks(positions, force.Value, units.Geometry);
             }
         }
 
@@ -93,13 +94,13 @@ namespace SPMTool.Database.Conditions
         /// <param name="positions">The collection of nodes to add</param>
         /// <param name="force"></param>
         /// <param name="geometryUnit"></param>
-		private static void AddForceBlocks(IReadOnlyCollection<Point3d> positions, Force force, LengthUnit geometryUnit)
+		private static void AddBlocks(IReadOnlyCollection<Point3d> positions, Force force, LengthUnit geometryUnit)
 		{
 			if (positions is null || positions.Count == 0)
 				return;
 
 			// Get scale factor
-			var scFctr = Extensions.ScaleFactor(geometryUnit);
+			var scFctr = geometryUnit.ScaleFactor();
 
 			// Start a transaction
 			using (var trans = DataBase.StartTransaction())
@@ -176,15 +177,12 @@ namespace SPMTool.Database.Conditions
 		/// <summary>
         /// Create the force block.
         /// </summary>
-        private static void CreateForceBlock()
+        private static void CreateBlock()
         {
             using (var trans = DataBase.StartTransaction())
 	        // Open the Block table for read
             using (var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
             {
-                // Initialize the block Ids
-                var forceBlock = ObjectId.Null;
-
                 // Check if the support blocks already exist in the drawing
                 if (!blkTbl.Has(BlockName))
                 {
@@ -197,9 +195,6 @@ namespace SPMTool.Database.Conditions
                         blkTbl.UpgradeOpen();
                         blkTbl.Add(blkTblRec);
                         trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-                        // Set the name
-                        forceBlock = blkTblRec.Id;
 
                         // Set the insertion point for the block
                         var origin = new Point3d(0, 0, 0);
@@ -261,47 +256,42 @@ namespace SPMTool.Database.Conditions
 	            {
 		            // Check if there is a force block at the node position
 		            if (fcs != null && fcs.Count > 0)
-		            {
 			            foreach (ObjectId fcObj in fcs)
-			            {
-				            // Read as a block reference
-				            var fcBlk = (BlockReference) trans.GetObject(fcObj, OpenMode.ForRead);
+							using (var fcBlk = (BlockReference)trans.GetObject(fcObj, OpenMode.ForRead))
+				            {
+					            // Check if the position is equal to the selected node
+					            if (fcBlk.Position != position)
+						            continue;
 
-				            // Check if the position is equal to the selected node
-				            if (fcBlk.Position != position)
-					            continue;
-
-				            // Erase the force block
-				            fcBlk.UpgradeOpen();
-				            fcBlk.Erase();
-			            }
-		            }
+					            // Erase the force block
+					            fcBlk.UpgradeOpen();
+					            fcBlk.Erase();
+				            }
 
 		            // Check if there is a force text at the node position
 		            if (fcTxts is null || fcTxts.Count == 0)
 			            continue;
 
 		            foreach (ObjectId txtObj in fcTxts)
-		            {
-			            // Read as text
-			            var txtEnt = (Entity) trans.GetObject(txtObj, OpenMode.ForRead);
-			            var txtData = txtEnt.ReadXData(DataBase.AppName);
+						using (var txtEnt = (Entity)trans.GetObject(txtObj, OpenMode.ForRead))
+			            {
+				            var txtData = txtEnt.ReadXData(DataBase.AppName);
 
-			            // Get the position of the node of the text
-			            double
-				            ndX = txtData[(int) ForceTextIndex.XPosition].ToDouble(),
-				            ndY = txtData[(int) ForceTextIndex.YPosition].ToDouble();
+				            // Get the position of the node of the text
+				            double
+					            ndX = txtData[(int) ForceTextIndex.XPosition].ToDouble(),
+					            ndY = txtData[(int) ForceTextIndex.YPosition].ToDouble();
 
-			            var ndTxtPos = new Point3d(ndX, ndY, 0);
+				            var ndTxtPos = new Point3d(ndX, ndY, 0);
 
-			            // Check if the position is equal to the selected node
-			            if (ndTxtPos != position)
-				            continue;
+				            // Check if the position is equal to the selected node
+				            if (ndTxtPos != position)
+					            continue;
 
-			            // Erase the text
-			            txtEnt.UpgradeOpen();
-			            txtEnt.Erase();
-		            }
+				            // Erase the text
+				            txtEnt.UpgradeOpen();
+				            txtEnt.Erase();
+			            }
 	            }
 
 				trans.Commit();
@@ -363,34 +353,35 @@ namespace SPMTool.Database.Conditions
         }
 
         /// <summary>
-        /// Set forces to nodes.
+        /// Set forces to a collection of nodes.
         /// </summary>
         /// <param name="forceObjectIds">The <see cref="ObjectIdCollection"/> of force objects in the drawing.</param>
-        /// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
-        public static void SetForces(ObjectIdCollection forceObjectIds, Node[] nodes)
+        /// <param name="nodes">The collection containing all nodes of SPM model.</param>
+        public static void Set(ObjectIdCollection forceObjectIds, IEnumerable<SPM.Elements.Node> nodes)
         {
-	        foreach (ObjectId obj in forceObjectIds) SetForces(obj, nodes);
+	        foreach (ObjectId obj in forceObjectIds)
+		        Set(obj, nodes);
         }
 
         /// <summary>
-        /// Set forces to nodes.
+        /// Set forces to a collection of nodes.
         /// </summary>
         /// <param name="objectId">The <see cref="ObjectId"/> of force object in the drawing.</param>
-        /// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
-        private static void SetForces(ObjectId objectId, Node[] nodes)
+        /// <param name="nodes">The collection containing all nodes of SPM model.</param>
+        private static void Set(ObjectId objectId, IEnumerable<SPM.Elements.Node> nodes)
         {
-	        // Read object
-	        var fBlock = (BlockReference) objectId.ToDBObject();
+            // Read object
+            using (var fBlock = (BlockReference)objectId.ToDBObject())
 
-	        // Set to node
-	        foreach (var node in nodes)
-	        {
-		        if (node.Position.Approx(fBlock.Position))
-		        {
-			        node.Force += ReadForce(fBlock);
-			        break;
-		        }
-	        }
+                // Set to node
+                foreach (var node in nodes)
+                {
+                    if (!node.Position.Approx(fBlock.Position))
+                        continue;
+
+                    node.Force += ReadForce(fBlock);
+                    break;
+                }
         }
 
         /// <summary>
@@ -406,7 +397,7 @@ namespace SPMTool.Database.Conditions
         public static Force ReadForce(BlockReference forceBlock)
         {
 	        // Read the XData and get the necessary data
-	        var data = forceBlock.ReadXData(DataBase.AppName);
+	        var data = forceBlock.ReadXData();
 
 	        // Get value and direction
 	        var value     = data[(int)ForceIndex.Value].ToDouble();

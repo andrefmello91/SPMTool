@@ -22,13 +22,13 @@ namespace SPMTool.Database
     public static class Nodes
     {
         /// <summary>
-        /// Read <see cref="Node"/> objects from an <see cref="ObjectIdCollection"/>.
+        /// Read <see cref="SPM.Elements.Node"/> objects from an <see cref="ObjectIdCollection"/>.
         /// </summary>
         /// <param name="nodeObjectsIds">The <see cref="ObjectIdCollection"/> containing the nodes of drawing.</param>
         /// <param name="units">Current <see cref="Units"/>.</param>
-        public static Node[] Read(ObjectIdCollection nodeObjectsIds, Units units)
+        public static SPM.Elements.Node[] Read(ObjectIdCollection nodeObjectsIds, Units units)
 	    {
-		   var nodes = new Node[nodeObjectsIds.Count];
+		   var nodes = new SPM.Elements.Node[nodeObjectsIds.Count];
 
 		    foreach (ObjectId ndObj in nodeObjectsIds)
 		    {
@@ -43,11 +43,11 @@ namespace SPMTool.Database
 	    }
 
         /// <summary>
-        /// Read a <see cref="Node"/> in the drawing.
+        /// Read a <see cref="SPM.Elements.Node"/> in the drawing.
         /// </summary>
         /// <param name="objectId">The <see cref="ObjectId"/> of the node.</param>
         /// <param name="units">Current <see cref="Units"/>.</param>
-        public static Node Read(ObjectId objectId, Units units)
+        public static SPM.Elements.Node Read(ObjectId objectId, Units units)
 	    {
 		    // Read the object as a point
 		    var ndPt = (DBPoint) objectId.ToDBObject();
@@ -59,7 +59,7 @@ namespace SPMTool.Database
 		    int number = data[(int)NodeIndex.Number].ToInt();
 
 			return
-				new Node(objectId, number, ndPt.Position, GetNodeType(ndPt), units.Geometry, units.Displacements);
+				new SPM.Elements.Node(objectId, number, ndPt.Position, GetNodeType(ndPt), units.Geometry, units.Displacements);
 	    }
 
 		/// <summary>

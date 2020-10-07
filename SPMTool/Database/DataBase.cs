@@ -13,6 +13,7 @@ using SPMTool.Database;
 using SPMTool.Database.Elements;
 using SPMTool.Database.Materials;
 using SPMTool.Database.Settings;
+using SPMTool.Editor;
 using SPMTool.Model.Conditions;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
@@ -37,11 +38,6 @@ namespace SPMTool.Database
         /// Get current <see cref="Autodesk.AutoCAD.DatabaseServices.Database"/>.
         /// </summary>
         public static Autodesk.AutoCAD.DatabaseServices.Database Database => Document.Database;
-
-        /// <summary>
-        /// Get application <see cref="Autodesk.AutoCAD.EditorInput.Editor"/>.
-        /// </summary>
-        public static Editor Editor => Document.Editor;
 
         /// <summary>
         /// Get Named Objects Dictionary for read.
@@ -73,7 +69,7 @@ namespace SPMTool.Database
 		/// <summary>
         /// Get current user coordinate system.
         /// </summary>
-		public static Matrix3d UcsMatrix => Editor.CurrentUserCoordinateSystem;
+		public static Matrix3d UcsMatrix => UserInput.Editor.CurrentUserCoordinateSystem;
 
 		/// <summary>
         /// Get coordinate system.

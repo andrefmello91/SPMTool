@@ -1,21 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
-using Extensions.AutoCAD;
 using Extensions.Number;
 using Material.Reinforcement;
 using SPMTool.Database;
 using SPMTool.Database.Materials;
+using SPMTool.Editor;
 using SPMTool.Enums;
 using UnitsNet;
 
-[assembly: CommandClass(typeof(SPMTool.Model.Conditions.Material))]
+[assembly: CommandClass(typeof(ElementReinforcement))]
 
-namespace SPMTool.Model.Conditions
+namespace SPMTool.Editor
 {
-    public static class Material
+	/// <summary>
+    /// Element reinforcement class.
+    /// </summary>
+    public static class ElementReinforcement
     {
 	    private static char Phi = (char)Character.Phi;
 
@@ -26,7 +27,7 @@ namespace SPMTool.Model.Conditions
 	    public static void SetStringerReinforcement()
 	    {
 		    // Read units
-		    var units = Database.DataBase.Units;
+		    var units = DataBase.Units;
 
             // Request objects to be selected in the drawing area
             var strs = UserInput.SelectStringers("Select the stringers to assign reinforcement (you can select other elements, the properties will be only applied to stringers).");
@@ -41,32 +42,30 @@ namespace SPMTool.Model.Conditions
 				return;
 
 		    // Start a transaction
-		    using (var trans = Database.DataBase.StartTransaction())
+		    using (var trans = DataBase.StartTransaction())
 		    {
 			    // Save the properties
 			    foreach (DBObject obj in strs)
-			    {
-				    // Open the selected object for read
-				    var ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForWrite);
-
-				    // Access the XData as an array
-				    var data = ent.ReadXData();
-
-				    // Set values
-				    data[(int) StringerIndex.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, reinforcement.NumberOfBars);
-				    data[(int) StringerIndex.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal, reinforcement.BarDiameter);
-
-				    var steel = reinforcement.Steel;
-
-				    if (steel != null)
+					using(var ent = (Entity)trans.GetObject(obj.ObjectId, OpenMode.ForWrite))
 				    {
-					    data[(int) StringerIndex.Steelfy] = new TypedValue((int) DxfCode.ExtendedDataReal, steel.YieldStress);
-					    data[(int) StringerIndex.SteelEs] = new TypedValue((int) DxfCode.ExtendedDataReal, steel.ElasticModule);
-				    }
+					    // Access the XData as an array
+					    var data = ent.ReadXData();
 
-				    // Add the new XData
-				    ent.XData = new ResultBuffer(data);
-			    }
+					    // Set values
+					    data[(int) StringerIndex.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, reinforcement.NumberOfBars);
+					    data[(int) StringerIndex.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal, reinforcement.BarDiameter);
+
+					    var steel = reinforcement.Steel;
+
+					    if (steel != null)
+					    {
+						    data[(int) StringerIndex.Steelfy] = new TypedValue((int) DxfCode.ExtendedDataReal, steel.YieldStress);
+						    data[(int) StringerIndex.SteelEs] = new TypedValue((int) DxfCode.ExtendedDataReal, steel.ElasticModule);
+					    }
+
+					    // Add the new XData
+					    ent.XData = new ResultBuffer(data);
+				    }
 
 			    // Save the new object to the database
 			    trans.Commit();
@@ -80,7 +79,7 @@ namespace SPMTool.Model.Conditions
         private static UniaxialReinforcement GetStringerReinforcement(Units units)
 		{
 			// Get saved reinforcement options
-			var savedRef = Database.DataBase.SavedStringerReinforcement;
+			var savedRef = DataBase.SavedStringerReinforcement;
 
 			// Get unit abreviation
 			var dimAbrev = Length.GetAbbreviation(units.Reinforcement);
@@ -95,16 +94,13 @@ namespace SPMTool.Model.Conditions
 				options.Add("New");
 
 				// Ask the user to choose the options
-				var res = UserInput.SelectKeyword($"Choose a reinforcement option ({dimAbrev}) or add a new one:", options.ToArray(), options[0]);
+				var res = UserInput.SelectKeyword($"Choose a reinforcement option ({dimAbrev}) or add a new one:", options, out var index, options[0]);
 
-				if (!res.HasValue)
+				if (res is null)
 					return null;
 
-				// Get string result
-				var (index, keyword) = res.Value;
-
 				// Get the index
-				if (keyword != "New")
+				if (res != "New")
 					return savedRef[index];
 			}
 
@@ -116,7 +112,7 @@ namespace SPMTool.Model.Conditions
 				return null;
 
 			// Ask the user to input the Stringer height
-			double def = 10.ConvertFromMillimeter(units.Reinforcement);
+			var def  = 10.ConvertFromMillimeter(units.Reinforcement);
 			var phin = UserInput.GetDouble($"Input the diameter ({dimAbrev}) of Stringer reinforcement bars:", def);
 
 			if (!phin.HasValue)
@@ -129,8 +125,8 @@ namespace SPMTool.Model.Conditions
 				return null;
 
             // Get reinforcement
-            int num    = numn.Value;
-			double phi = phin.Value.Convert(units.Reinforcement);
+            var num = numn.Value;
+			var phi = phin.Value.Convert(units.Reinforcement);
 
 			var reinforcement = new UniaxialReinforcement(num, phi, steel);
 
@@ -162,16 +158,13 @@ namespace SPMTool.Model.Conditions
                 options.Add("New");
 
 				// Ask the user to choose the options
-				var res = UserInput.SelectKeyword($"Choose a steel option (fy | Es) ({matAbrev}) or add a new one:", options.ToArray(), options[0]);
+				var res = UserInput.SelectKeyword($"Choose a steel option (fy | Es) ({matAbrev}) or add a new one:", options, out var index, options[0]);
 
-				if (!res.HasValue)
+				if (res is null)
 					return null;
 
-				// Get string result
-				var (index, keyword) = res.Value;
-
 				// Get the index
-				if (keyword != "New")
+				if (res != "New")
 					return savedSteel[index];
 			}
 
@@ -224,48 +217,46 @@ namespace SPMTool.Model.Conditions
 				return;
 
 			// Start a transaction
-			using (Transaction trans = Database.DataBase.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
 			{
 				foreach (DBObject obj in pnls)
-				{
-					// Open the selected object for read
-					var ent = trans.GetObject(obj.ObjectId, OpenMode.ForWrite) as Entity;
-
-					// Access the XData as an array
-					var data = ent.ReadXData(Database.DataBase.AppName);
-
-					// Set the new reinforcement (line 7 to 9 of the array)
-					if (refX != null)
+					using (var ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForWrite))
 					{
-						data[(int) PanelIndex.XDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, refX.BarDiameter);
-						data[(int) PanelIndex.Sx]    = new TypedValue((int) DxfCode.ExtendedDataReal, refX.BarSpacing);
+						// Access the XData as an array
+						var data = ent.ReadXData();
 
-						var steelX = refX.Steel;
-
-						if (steelX != null)
+						// Set the new reinforcement (line 7 to 9 of the array)
+						if (refX != null)
 						{
-							data[(int) PanelIndex.fyx] = new TypedValue((int) DxfCode.ExtendedDataReal, steelX.YieldStress);
-							data[(int) PanelIndex.Esx] = new TypedValue((int) DxfCode.ExtendedDataReal, steelX.ElasticModule);
+							data[(int) PanelIndex.XDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, refX.BarDiameter);
+							data[(int) PanelIndex.Sx]    = new TypedValue((int) DxfCode.ExtendedDataReal, refX.BarSpacing);
+
+							var steelX = refX.Steel;
+
+							if (steelX != null)
+							{
+								data[(int) PanelIndex.fyx] = new TypedValue((int) DxfCode.ExtendedDataReal, steelX.YieldStress);
+								data[(int) PanelIndex.Esx] = new TypedValue((int) DxfCode.ExtendedDataReal, steelX.ElasticModule);
+							}
 						}
-					}
 
-					if (refY != null)
-					{
-						data[(int) PanelIndex.YDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, refY.BarDiameter);
-						data[(int) PanelIndex.Sy]    = new TypedValue((int) DxfCode.ExtendedDataReal, refY.BarSpacing);
-
-						var steelY = refY.Steel;
-
-						if (steelY != null)
+						if (refY != null)
 						{
-							data[(int) PanelIndex.fyy]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelY.YieldStress);
-							data[(int) PanelIndex.Esy]   = new TypedValue((int) DxfCode.ExtendedDataReal, steelY.ElasticModule);
-						}
-					}
+							data[(int) PanelIndex.YDiam] = new TypedValue((int) DxfCode.ExtendedDataReal, refY.BarDiameter);
+							data[(int) PanelIndex.Sy]    = new TypedValue((int) DxfCode.ExtendedDataReal, refY.BarSpacing);
 
-					// Add the new XData
-					ent.XData = new ResultBuffer(data);
-				}
+							var steelY = refY.Steel;
+
+							if (steelY != null)
+							{
+								data[(int) PanelIndex.fyy] = new TypedValue((int) DxfCode.ExtendedDataReal, steelY.YieldStress);
+								data[(int) PanelIndex.Esy] = new TypedValue((int) DxfCode.ExtendedDataReal, steelY.ElasticModule);
+							}
+						}
+
+						// Add the new XData
+						ent.XData = new ResultBuffer(data);
+					}
 
 				// Save the new object to the database
 				trans.Commit();
@@ -280,7 +271,7 @@ namespace SPMTool.Model.Conditions
         private static WebReinforcementDirection GetPanelReinforcement(Direction direction, Units units)
 		{
 			// Get saved reinforcement options
-			var savedRef = Database.DataBase.SavedPanelReinforcement;
+			var savedRef = DataBase.SavedPanelReinforcement;
 
 			// Get unit abreviation
 			var dimAbrev = Length.GetAbbreviation(units.Geometry);
@@ -296,16 +287,13 @@ namespace SPMTool.Model.Conditions
                 options.Add("New");
 
 				// Ask the user to choose the options
-				var res = UserInput.SelectKeyword($"Choose a reinforcement option ({Phi} | s)({refAbrev} | {dimAbrev}) for {direction} direction or add a new one:", options.ToArray(), options[0]);
+				var res = UserInput.SelectKeyword($"Choose a reinforcement option ({Phi} | s)({refAbrev} | {dimAbrev}) for {direction} direction or add a new one:", options, out var index, options[0]);
 
-				if (!res.HasValue)
+				if (res is null)
 					return null;
 
-				// Get string result
-				var (index, keyword) = res.Value;
-
 				// Get the index
-				if (keyword != "New")
+				if (res != "New")
 					return savedRef[index];
 			}
 

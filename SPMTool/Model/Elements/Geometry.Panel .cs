@@ -10,6 +10,7 @@ using Extensions.Number;
 using SPM.Elements;
 using SPMTool.Database;
 using SPMTool.Database.Elements;
+using SPMTool.Editor;
 using SPMTool.Enums;
 using SPMTool.Model.Conditions;
 using UnitsNet;
@@ -114,7 +115,7 @@ namespace SPMTool.Database
 				}
 
 				// Update nodes and panels
-				Node.UpdateNodes(units);
+				SPMTool.Model.Elements.Nodes.UpdateNodes(units);
 				UpdatePanels();
 			}
 
@@ -288,7 +289,7 @@ namespace SPMTool.Database
 							}
 
 							else // panel is not rectangular
-								DataBase.Editor.WriteMessage($"\nPanel {pnlNum} is not rectangular");
+								UserInput.Editor.WriteMessage($"\nPanel {pnlNum} is not rectangular");
 					}
 
 					// Save the new object to the database
@@ -307,11 +308,11 @@ namespace SPMTool.Database
 				}
 
 				// Create the nodes
-				new Node(newExtNds, NodeType.External);
-				new Node(newIntNds, NodeType.Internal);
+				new SPMTool.Model.Elements.Nodes(newExtNds, NodeType.External);
+				new SPMTool.Model.Elements.Nodes(newIntNds, NodeType.Internal);
 
 				// Update the elements
-				Node.UpdateNodes(units);
+				SPMTool.Model.Elements.Nodes.UpdateNodes(units);
 				Stringer.UpdateStringers();
 				UpdatePanels();
 
@@ -504,7 +505,7 @@ namespace SPMTool.Database
 							int i = pnlGrips.IndexOf(grip);
 
 							// Get the node number
-							grips[i] = Node.GetNodeNumber(grip, intNds);
+							grips[i] = SPMTool.Model.Elements.Nodes.GetNumber(grip, intNds);
 						}
 
 						// Set the updated panel number
