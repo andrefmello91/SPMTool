@@ -11,7 +11,7 @@ using Material;
 using Material.Concrete;
 using Parameters = Material.Concrete.Parameters;
 using Material.Concrete;
-using SPMTool.Model.Conditions;
+using SPMTool.Database.Conditions;
 using SPMTool.Database;
 using SPMTool.Database.Materials;
 using UnitsNet;

@@ -9,13 +9,14 @@ using Material;
 using Material.Reinforcement;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
-using SPMTool.Model.Conditions;
+using SPMTool.Database.Conditions;
 using SPMTool.Database;
 using UnitsNet;
 using UnitsNet.Units;
 using MessageBox = System.Windows.MessageBox;
 using static SPMTool.Auxiliary;
 using Stringer = SPM.Elements.Stringer;
+using Stringers = SPMTool.Database.Elements.Stringers;
 
 namespace SPMTool.UserInterface
 {
@@ -67,7 +68,7 @@ namespace SPMTool.UserInterface
             InitializeComponent();
 
             // Get stringer image
-            StringerImage.Source = Model.Conditions.UserInterface.getBitmap(Properties.Resources.stringer_cross_section);
+            StringerImage.Source = Database.Conditions.UserInterface.getBitmap(Properties.Resources.stringer_cross_section);
 
             GetInitialData(stringer);
 

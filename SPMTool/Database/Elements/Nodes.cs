@@ -9,11 +9,11 @@ using SPM.Elements;
 using SPMTool.Database;
 using SPMTool.Enums;
 using UnitsNet.Units;
-using Nodes = SPMTool.Model.Elements.Nodes;
+using Nodes = SPMTool.Database.Elements.Nodes;
 
 [assembly: CommandClass(typeof(Nodes))]
 
-namespace SPMTool.Model.Elements
+namespace SPMTool.Database.Elements
 {
 	/// <summary>
     /// Node class.
@@ -25,11 +25,24 @@ namespace SPMTool.Model.Elements
 		/// </summary>
 		/// <param name="position">The <see cref="Point3d"/> position.</param>
 		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
-		/// <param name="existentNodes">The collection containing the position of existent nodes in the drawing.</param>
-		public static void Add(Point3d position, NodeType nodeType, IEnumerable<Point3d> existentNodes = null)
+		public static void Add(Point3d position, NodeType nodeType)
 		{
             // Get the list of nodes
-            var ndList = (existentNodes ?? NodePositions(NodeType.All)).ToList();
+            var ndList = NodePositions(NodeType.All);
+
+			Add(position, nodeType, ref ndList);
+		}
+
+		/// <summary>
+		/// Add a node to drawing in this <paramref name="position"/>.
+		/// </summary>
+		/// <param name="position">The <see cref="Point3d"/> position.</param>
+		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
+		/// <param name="existentNodes">The collection containing the position of existent nodes in the drawing.</param>
+		public static void Add(Point3d position, NodeType nodeType, ref IEnumerable<Point3d> existentNodes)
+		{
+            // Get the list of nodes
+            var ndList = existentNodes.ToList();
 
             // Check if a node already exists at the position. If not, its created
             if (ndList.Contains(position))
@@ -37,6 +50,7 @@ namespace SPMTool.Model.Elements
 
 			// Add to the list
 			ndList.Add(position);
+			existentNodes = ndList;
 
 			// Create the node and set the layer
 			var dbPoint = new DBPoint(position)
@@ -48,19 +62,27 @@ namespace SPMTool.Model.Elements
 			dbPoint.Add();
 		}
 
-        /// <summary>
+		/// <summary>
+		/// Add nodes to drawing in these <paramref name="positions"/>.
+		/// </summary>
+		/// <param name="positions">The collection of <see cref="Point3d"/> positions.</param>
+		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
+		public static void Add(IEnumerable<Point3d> positions, NodeType nodeType)
+		{
+			var ndList = NodePositions(NodeType.All);
+			Add(positions, nodeType, ref ndList);
+		}
+
+		/// <summary>
         /// Add nodes to drawing in these <paramref name="positions"/>.
         /// </summary>
         /// <param name="positions">The collection of <see cref="Point3d"/> positions.</param>
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
         /// <param name="existentNodes">The collection containing the position of existent nodes in the drawing.</param>
-        public static void Add(IEnumerable<Point3d> positions, NodeType nodeType, IEnumerable<Point3d> existentNodes = null)
+        public static void Add(IEnumerable<Point3d> positions, NodeType nodeType, ref IEnumerable<Point3d> existentNodes)
 		{
-            // Get the list of nodes
-            var ndList = (existentNodes ?? NodePositions(NodeType.All)).ToList();
-
             foreach (var position in positions)
-				Add(position, nodeType, ndList);
+				Add(position, nodeType, ref existentNodes);
 		}
 
         /// <summary>
@@ -112,29 +134,19 @@ namespace SPMTool.Model.Elements
         public static IEnumerable<Point3d> NodePositions(NodeType nodeType)
 		{
 			// Initialize an object collection
-			var nds = new ObjectIdCollection();
+			var ndObjs = new ObjectIdCollection();
 
 			// Select the node type
 			if (nodeType == NodeType.All)
-				nds = AllNodes();
+				ndObjs = AllNodes();
 
 			if (nodeType == NodeType.Internal)
-				nds = Model.GetObjectsOnLayer(Layer.IntNode);
+				ndObjs = Model.GetObjectsOnLayer(Layer.IntNode);
 
 			if (nodeType == NodeType.External)
-				nds = Model.GetObjectsOnLayer(Layer.ExtNode);
+				ndObjs = Model.GetObjectsOnLayer(Layer.ExtNode);
 
-			// Create a point collection
-			var pts = new List<Point3d>();
-
-			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
-            using (nds)
-	            pts.AddRange(from ObjectId ndObj in nds select (DBPoint) trans.GetObject(ndObj, OpenMode.ForRead) into nd select nd.Position);
-			
-			// Return the node list ordered
-			return
-				pts.Order();
+			return (from DBPoint nd in ndObjs.ToDBObjectCollection() select nd.Position).Order();
 		}
 
         /// <summary>
@@ -143,20 +155,17 @@ namespace SPMTool.Model.Elements
         public static ObjectIdCollection AllNodes()
 		{
 			// Create a unique collection for all the nodes
-			var nds = new ObjectIdCollection();
+			var nds = new List<ObjectId>();
 
             // Create the nodes collection and initialize getting the elements on node layer
             using (var extNds = Model.GetObjectsOnLayer(Layer.ExtNode))
             using (var intNds = Model.GetObjectsOnLayer(Layer.IntNode))
             {
-	            foreach (ObjectId ndObj in extNds)
-		            nds.Add(ndObj);
-
-	            foreach (ObjectId ndObj in intNds)
-		            nds.Add(ndObj);
+				nds.AddRange(extNds.Cast<ObjectId>());
+				nds.AddRange(intNds.Cast<ObjectId>());
             }
 
-            return nds;
+            return new ObjectIdCollection(nds.ToArray());
 		}
 
         /// <summary>
@@ -230,7 +239,6 @@ namespace SPMTool.Model.Elements
         /// <summary>
         /// Create node XData.
         /// </summary>
-        /// <returns></returns>
         private static TypedValue[] NewXData()
 		{
 			// Definition for the Extended Data

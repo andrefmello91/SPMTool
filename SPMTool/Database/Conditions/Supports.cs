@@ -9,12 +9,12 @@ using SPM.Elements;
 using SPMTool.Database;
 using SPMTool.Editor;
 using SPMTool.Enums;
-using SPMTool.Model.Conditions;
+using SPMTool.Database.Conditions;
 using UnitsNet.Units;
 
 [assembly: CommandClass(typeof(Supports))]
 
-namespace SPMTool.Model.Conditions
+namespace SPMTool.Database.Conditions
 {
 	/// <summary>
     /// Supports class.
@@ -73,7 +73,7 @@ namespace SPMTool.Model.Conditions
                 return;
 
             // Get all the force blocks in the model
-            var sups = SPMTool.Model.Model.SupportCollection;
+            var sups = Model.SupportCollection;
 
             if (sups is null || sups.Count == 0)
                 return;

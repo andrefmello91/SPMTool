@@ -2,7 +2,7 @@
 using System.Windows.Controls;
 using System.Windows.Forms;
 using SPMTool.Database.Settings;
-using SPMTool.Model.Conditions;
+using SPMTool.Database.Conditions;
 using UnitsNet;
 using UnitsNet.Units;
 using ComboBox = System.Windows.Controls.ComboBox;

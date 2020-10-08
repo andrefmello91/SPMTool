@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Windows;
-using SPMTool.Model.Conditions;
+using SPMTool.Database.Conditions;
 using SPMTool.Database;
 using SPMTool.Elements;
-using SPMTool.Model.Elements;
+using SPMTool.Database.Elements;
 using UnitsNet;
 using Force = UnitsNet.Force;
-using Nodes = SPMTool.Model.Elements.Nodes;
+using Nodes = SPMTool.Database.Elements.Nodes;
 
 namespace SPMTool.UserInterface
 {

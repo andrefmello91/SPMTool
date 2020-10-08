@@ -15,11 +15,11 @@ using OnPlaneComponents;
 using SPMTool.Database;
 using SPMTool.Editor;
 using SPMTool.Enums;
-using SPMTool.Model.Conditions;
+using SPMTool.Database.Conditions;
 
 [assembly: CommandClass(typeof(Forces))]
 
-namespace SPMTool.Model.Conditions
+namespace SPMTool.Database.Conditions
 {
     public static class Forces
     {
@@ -234,10 +234,10 @@ namespace SPMTool.Model.Conditions
 				return;
 
 	        // Get all the force blocks in the model
-	        var fcs    = SPMTool.Model.Model.ForceCollection;
+	        var fcs    = Model.ForceCollection;
 
 	        // Get all the force texts in the model
-	        var fcTxts = SPMTool.Model.Model.ForceTextCollection;
+	        var fcTxts = Model.ForceTextCollection;
 
 			if (fcs is null && fcTxts is null)
 				return;

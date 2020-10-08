@@ -15,7 +15,7 @@ using SPMTool.Database.Materials;
 using SPMTool.Database.Settings;
 using SPMTool.Editor;
 using SPMTool.Enums;
-using SPMTool.Model.Conditions;
+using SPMTool.Database.Conditions;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Database

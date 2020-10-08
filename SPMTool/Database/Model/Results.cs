@@ -16,9 +16,9 @@ using Node = SPM.Elements.Node;
 using Panel = SPM.Elements.Panel;
 using Stringer = SPM.Elements.Stringer;
 
-[assembly: CommandClass(typeof(SPMTool.Model.Conditions.Results))]
+[assembly: CommandClass(typeof(SPMTool.Database.Conditions.Results))]
 
-namespace SPMTool.Model.Conditions
+namespace SPMTool.Database.Conditions
 {
 	public static partial class Results
 	{

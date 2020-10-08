@@ -9,16 +9,16 @@ using Extensions.AutoCAD;
 using Extensions.Number;
 using SPM.Elements;
 using SPMTool.Database;
+using SPMTool.Database.Conditions;
 using SPMTool.Database.Elements;
 using SPMTool.Editor;
 using SPMTool.Enums;
-using SPMTool.Model.Conditions;
 using UnitsNet;
-using Panel = SPMTool.Model.Elements.Panel;
+using Panel = SPMTool.Database.Elements.Panel;
 
 [assembly: CommandClass(typeof(Panel))]
 
-namespace SPMTool.Model.Elements
+namespace SPMTool.Database.Elements
 {
 	public class Panel
 	{

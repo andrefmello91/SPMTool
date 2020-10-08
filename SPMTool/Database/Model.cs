@@ -6,13 +6,14 @@ using Extensions.AutoCAD;
 using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.Database;
+using SPMTool.Database.Conditions;
+using SPMTool.Database.Elements;
 using SPMTool.Editor;
 using SPMTool.Enums;
-using SPMTool.Model.Conditions;
-using Nodes = SPMTool.Model.Elements.Nodes;
-using Panel = SPMTool.Model.Elements.Panel;
+using Nodes = SPMTool.Database.Elements.Nodes;
+using Panel = SPMTool.Database.Elements.Panel;
 
-namespace SPMTool.Model
+namespace SPMTool.Database
 {
     /// <summary>
     /// Model class
@@ -22,7 +23,7 @@ namespace SPMTool.Model
 	    /// <summary>
 	    /// Get the collection of nodes in the model.
 	    /// </summary>
-	    public static ObjectIdCollection NodeCollection => SPMTool.Model.Elements.Nodes.Update(DataBase.Units.Geometry);
+	    public static ObjectIdCollection NodeCollection => Nodes.Update(DataBase.Units.Geometry);
 
 	    /// <summary>
 	    /// Get the collection of stringers in the model.
@@ -32,7 +33,7 @@ namespace SPMTool.Model
 	    /// <summary>
 	    /// Get the collection of panels in the model.
 	    /// </summary>
-	    public static ObjectIdCollection PanelCollection => Panel.UpdatePanels();
+	    public static ObjectIdCollection PanelCollection => SPM.Elements.Panel.UpdatePanels();
 
 	    /// <summary>
 	    /// Get the collection of forces in the model.
@@ -130,16 +131,19 @@ namespace SPMTool.Model
 	        using (var trans = DataBase.StartTransaction())
 	        {
 		        foreach (ObjectId obj in objects)
-		        {
-                    // Read as entity
                     using (var ent = (Entity)trans.GetObject(obj, OpenMode.ForWrite))
                         ent.Erase();
-		        }
 
 		        // Commit changes
 		        trans.Commit();
 	        }
         }
+
+        /// <summary>
+        /// Erase all the objects in this <see cref="DBObjectCollection"/>.
+        /// </summary>
+        /// <param name="objects">The <see cref="DBObjectCollection"/> containing the objects to erase.</param>
+        public static void EraseObjects(DBObjectCollection objects) => EraseObjects(objects.ToObjectIdCollection());
 
         /// <summary>
         /// Erase all the objects in this <paramref name="layer"/>.
@@ -208,7 +212,7 @@ namespace SPMTool.Model
         {
 	        Forces.CreateBlock();
 			Supports.CreateBlocks();
-			Panel.CreateBlocks();
+			SPM.Elements.Panel.CreateBlocks();
         }
     }
 }

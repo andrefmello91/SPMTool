@@ -11,7 +11,7 @@ using SPMTool.Database;
 using Extensions;
 using Extensions.AutoCAD;
 using SPMTool.Enums;
-using SPMTool.Model.Conditions;
+using SPMTool.Database.Conditions;
 using UnitsNet;
 using UnitsNet.Units;
 using Color = SPMTool.Enums.Color;

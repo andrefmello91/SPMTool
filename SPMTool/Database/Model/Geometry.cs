@@ -3,8 +3,8 @@ using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Database;
 using SPMTool.Editor;
 using SPMTool.Enums;
-using SPMTool.Model.Conditions;
-using SPMTool.Model.Elements;
+using SPMTool.Database.Conditions;
+using SPMTool.Database.Elements;
 
 [assembly: CommandClass(typeof(Geometry))]
 
@@ -19,11 +19,11 @@ namespace SPMTool.Database
 		public static void UpdateElements()
 		{
 			// Enumerate and get the number of nodes
-			var nds = SPMTool.Model.Elements.Nodes.Update();
+			var nds = SPMTool.Database.Elements.Nodes.Update();
 			int numNds = nds.Count;
 
 			// Update and get the number of stringers
-			var strs = Model.Elements.Stringers.UpdateStringers();
+			var strs = Database.Elements.Stringers.UpdateStringers();
 			int numStrs = strs.Count;
 
 			// Update and get the number of panels

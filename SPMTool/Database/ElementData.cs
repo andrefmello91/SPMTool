@@ -28,7 +28,7 @@ namespace SPMTool.Database.Elements
 			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, geometry.Height));   // 3
 
 			    // Save on NOD if it doesn't exist
-			    Database.DataBase.SaveDictionary(rb, saveCode, false);
+			    DataBase.SaveDictionary(rb, saveCode, false);
 		    }
 	    }
 

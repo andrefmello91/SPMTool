@@ -10,8 +10,8 @@ using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements;
 using SPMTool.Enums;
-using SPMTool.Model.Conditions;
-using static SPMTool.Model.Conditions.Auxiliary;
+using SPMTool.Database.Conditions;
+using static SPMTool.Database.Conditions.Auxiliary;
 using static SPMTool.Database.DataBase;
 
 namespace SPMTool.Database
