@@ -8,8 +8,11 @@ using System.Windows.Controls;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
 using Autodesk.AutoCAD.Runtime;
+using SPMTool.Model;
 using SPMTool.Model.Conditions;
 using SPMTool.Database;
+using static Autodesk.AutoCAD.ApplicationServices.Application;
+using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 
 namespace SPMTool
@@ -18,19 +21,22 @@ namespace SPMTool
     {
         public void Initialize()
         {
-            Autodesk.AutoCAD.ApplicationServices.Application.Idle +=
-            new EventHandler(on_ApplicationIdle);
+            Application.Idle += on_ApplicationIdle;
 
             AddAppEvent();
 
             // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-            Database.RegisterApp();
+            DataBase.RegisterApp();
+
+			// Create layers and blocks
+			DataBase.CreateLayers();
+			Model.Model.CreateBlocks();
         }
 
         public void on_ApplicationIdle(object sender, EventArgs e)
         {
             Model.Conditions.UserInterface.RibbonButtons();
-            Autodesk.AutoCAD.ApplicationServices.Application.Idle -= on_ApplicationIdle;
+            Application.Idle -= on_ApplicationIdle;
         }
 
         public void Terminate()
@@ -41,14 +47,14 @@ namespace SPMTool
         // Event handler for changing colortheme
         public void AddAppEvent()
         {
-            Application.SystemVariableChanged +=
+            Autodesk.AutoCAD.ApplicationServices.Core.Application.SystemVariableChanged +=
                 new Autodesk.AutoCAD.ApplicationServices.
                     SystemVariableChangedEventHandler(appSysVarChanged);
         }
 
         public void RemoveAppEvent()
         {
-            Application.SystemVariableChanged -=
+            Autodesk.AutoCAD.ApplicationServices.Core.Application.SystemVariableChanged -=
                 new Autodesk.AutoCAD.ApplicationServices.
                     SystemVariableChangedEventHandler(appSysVarChanged);
         }
@@ -124,7 +130,7 @@ namespace SPMTool
 			    }
 
 			    // Check the current theme
-			    short theme = (short) Application.GetSystemVariable("COLORTHEME");
+			    short theme = (short) Autodesk.AutoCAD.ApplicationServices.Core.Application.GetSystemVariable("COLORTHEME");
 
 			    // If the theme is dark (0), get the light icons
 			    if (theme == 0)

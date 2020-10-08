@@ -24,7 +24,7 @@ namespace SPMTool.Database
     public static class Stringers
     {
         /// <summary>
-        /// Read <see cref="Stringer"/> objects in drawing.
+        /// Read <see cref="SPM.Elements.Stringer"/> objects in drawing.
         /// </summary>
         /// <param name="stringerObjectsIds">The <see cref="ObjectIdCollection"/> of the stringers from AutoCAD drawing.</param>
         /// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
@@ -32,9 +32,9 @@ namespace SPMTool.Database
         /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
         /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
         /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-        public static Stringer[] Read(ObjectIdCollection stringerObjectsIds, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
+        public static SPM.Elements.Stringer[] Read(ObjectIdCollection stringerObjectsIds, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
 	    {
-		    var stringers = new Stringer[stringerObjectsIds.Count];
+		    var stringers = new SPM.Elements.Stringer[stringerObjectsIds.Count];
 
 		    foreach (ObjectId strObj in stringerObjectsIds)
 		    {
@@ -50,7 +50,7 @@ namespace SPMTool.Database
 	    }
 
         /// <summary>
-        /// Read a <see cref="Stringer"/> in drawing.
+        /// Read a <see cref="SPM.Elements.Stringer"/> in drawing.
         /// </summary>
         /// <param name="objectId">The <see cref="ObjectId"/> of the stringer from AutoCAD drawing.</param>
         /// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
@@ -58,7 +58,7 @@ namespace SPMTool.Database
         /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
         /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
         /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-        public static Stringer Read(ObjectId objectId, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
+        public static SPM.Elements.Stringer Read(ObjectId objectId, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
         {
             // Read the object as a line
             var line = (Line) objectId.ToDBObject();
@@ -77,7 +77,7 @@ namespace SPMTool.Database
             // Get reinforcement
             var reinforcement = GetReinforcement(data, width * height);
 
-			return Stringer.Read(analysisType, objectId, number, nodes, line.StartPoint, line.EndPoint, width, height, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
+			return SPM.Elements.Stringer.Read(analysisType, objectId, number, nodes, line.StartPoint, line.EndPoint, width, height, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
         }
 
 		/// <summary>
@@ -107,8 +107,8 @@ namespace SPMTool.Database
 		/// <summary>
 		/// Save extended data to this <paramref name="stringer"/>.
 		/// </summary>
-		/// <param name="stringer">The <see cref="Stringer"/>.</param>
-		public static void SaveStringerData(Stringer stringer) => SaveStringerData(stringer.ObjectId, stringer.Geometry, stringer.Reinforcement);
+		/// <param name="stringer">The <see cref="SPM.Elements.Stringer"/>.</param>
+		public static void SaveStringerData(SPM.Elements.Stringer stringer) => SaveStringerData(stringer.ObjectId, stringer.Geometry, stringer.Reinforcement);
 
 		/// <summary>
 		/// Save extended data to the stringer related to this <paramref name="objectId"/>.

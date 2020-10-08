@@ -15,6 +15,7 @@ using UnitsNet;
 using UnitsNet.Units;
 using MessageBox = System.Windows.MessageBox;
 using static SPMTool.Auxiliary;
+using Stringer = SPM.Elements.Stringer;
 
 namespace SPMTool.UserInterface
 {

@@ -13,6 +13,8 @@ using SPMTool.Enums;
 using SPMTool.UserInterface;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using Node = SPM.Elements.Node;
+using Panel = SPM.Elements.Panel;
+using Stringer = SPM.Elements.Stringer;
 
 [assembly: CommandClass(typeof(SPMTool.Model.Conditions.Results))]
 
@@ -43,19 +45,10 @@ namespace SPMTool.Model.Conditions
         // Draw the panel shear blocks
         private static void DrawPanelStresses(Panel[] panels, Units units)
 		{
-			// Check if the layer already exists in the drawing. If it doesn't, then it's created:
-			Auxiliary.CreateLayer(Layer.PanelForce, Color.Green);
-			Auxiliary.CreateLayer(Layer.CompressivePanelStress, Color.Blue1, 80);
-			Auxiliary.CreateLayer(Layer.TensilePanelStress, Color.Red, 80);
-
-            // Check if the shear blocks already exist. If not, create the blocks
-            CreatePanelShearBlock();
-            CreatePanelStressesBlock();
-
 			// Erase all the panel forces in the drawing
-			Database.Model.EraseObjects(Layer.PanelForce);
-			Database.Model.EraseObjects(Layer.CompressivePanelStress);
-			Database.Model.EraseObjects(Layer.TensilePanelStress);
+			Model.EraseObjects(Layer.PanelForce);
+			Model.EraseObjects(Layer.CompressivePanelStress);
+			Model.EraseObjects(Layer.TensilePanelStress);
 
 			// Start a transaction
 			using (Transaction trans = Database.DataBase.StartTransaction())
@@ -229,13 +222,10 @@ namespace SPMTool.Model.Conditions
 		// Draw the Stringer forces diagrams
 		private static void DrawStringerForces(Stringer[] stringers, double maxForce, Units units)
 		{
-			// Check if the layer already exists in the drawing. If it doesn't, then it's created:
-			Auxiliary.CreateLayer(Layer.StringerForce, Color.Grey);
-
 			// Erase all the Stringer forces in the drawing
-			ObjectIdCollection strFs = Database.Model.GetObjectsOnLayer(Layer.StringerForce);
+			ObjectIdCollection strFs = Model.GetObjectsOnLayer(Layer.StringerForce);
 			if (strFs.Count > 0) 
-				Database.Model.EraseObjects(strFs);
+				Model.EraseObjects(strFs);
 
 			// Get the scale factor
 			var scFctr = Extensions.ScaleFactor(units.Geometry);
@@ -439,16 +429,13 @@ namespace SPMTool.Model.Conditions
 		// Draw the displaced model
 		private static void DrawDisplacements(Stringer[] stringers, Node[] nodes, Units units)
 		{
-			// Create the layer
-			Auxiliary.CreateLayer(Layer.Displacements, Color.Yellow1, 0);
-
 			// Turn the layer off
 			Auxiliary.LayerOff(Layer.Displacements);
 
 			// Erase all the displaced objects in the drawing
-			ObjectIdCollection dispObjs = Database.Model.GetObjectsOnLayer(Layer.Displacements);
+			ObjectIdCollection dispObjs = Model.GetObjectsOnLayer(Layer.Displacements);
 			if (dispObjs.Count > 0)
-				Database.Model.EraseObjects(dispObjs);
+				Model.EraseObjects(dispObjs);
 
 			// Set a scale factor for displacements
 			double scFctr = 100 * Extensions.ScaleFactor(units.Geometry);
@@ -570,266 +557,7 @@ namespace SPMTool.Model.Conditions
 
 		}
 
-        // Create the block for panel shear stress
-        private static void CreatePanelShearBlock()
-        {
-            // Start a transaction
-            using (Transaction trans = Database.DataBase.StartTransaction())
-            {
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Database.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Initialize the block Id
-                ObjectId shearBlock = ObjectId.Null;
-
-                // Check if the support blocks already exist in the drawing
-                if (!blkTbl.Has(ShearBlock))
-                {
-                    // Create the X block
-                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
-                    {
-                        blkTblRec.Name = ShearBlock;
-
-                        // Add the block table record to the block table and to the transaction
-                        blkTbl.UpgradeOpen();
-                        blkTbl.Add(blkTblRec);
-                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-                        // Set the name
-                        shearBlock = blkTblRec.Id;
-
-                        // Set the insertion point for the block
-                        Point3d origin = new Point3d(0, 0, 0);
-                        blkTblRec.Origin = origin;
-
-                        // Create a object collection and add the lines
-                        using (DBObjectCollection lines = new DBObjectCollection())
-                        {
-                            // Define the points to add the lines
-                            Point3d[] blkPts =
-                            {
-                                new Point3d(-140, -230, 0),
-                                new Point3d(-175, -200, 0),
-                                new Point3d( 175, -200, 0),
-                                new Point3d(-230, -140, 0),
-                                new Point3d(-200, -175, 0),
-                                new Point3d(-200,  175, 0),
-                                new Point3d( 140,  230, 0),
-                                new Point3d( 175,  200, 0),
-                                new Point3d(-175,  200, 0),
-                                new Point3d( 230,  140, 0),
-                                new Point3d( 200,  175, 0),
-                                new Point3d( 200, -175, 0),
-                            };
-
-                            // Define the lines and add to the collection
-                            for (int i = 0; i < 4; i++)
-                            {
-                                Line line1 = new Line()
-                                {
-                                    StartPoint = blkPts[3 * i],
-                                    EndPoint = blkPts[3 * i + 1]
-                                };
-                                lines.Add(line1);
-
-                                Line line2 = new Line()
-                                {
-                                    StartPoint = blkPts[3 * i + 1],
-                                    EndPoint = blkPts[3 * i + 2]
-                                };
-                                lines.Add(line2);
-                            }
-
-                            // Add the lines to the block table record
-                            foreach (Entity ent in lines)
-                            {
-                                blkTblRec.AppendEntity(ent);
-                                trans.AddNewlyCreatedDBObject(ent, true);
-                            }
-                        }
-                    }
-
-                    // Commit and dispose the transaction
-                    trans.Commit();
-                }
-            }
-        }
-
-        // Create the block for panel principal stresses
-        private static void CreatePanelStressesBlock()
-        {
-            // Start a transaction
-            using (Transaction trans = Database.DataBase.StartTransaction())
-            {
-                // Open the Block table for read
-                BlockTable blkTbl = trans.GetObject(Database.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-                // Initialize the block Ids
-                ObjectId compStressBlock = ObjectId.Null;
-                ObjectId tensStressBlock = ObjectId.Null;
-
-                // Check if the stress blocks already exist in the drawing
-                if (!blkTbl.Has(CompressiveBlock))
-                {
-                    // Create the X block
-                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
-                    {
-                        blkTblRec.Name = CompressiveBlock;
-
-                        // Add the block table record to the block table and to the transaction
-                        blkTbl.UpgradeOpen();
-                        blkTbl.Add(blkTblRec);
-                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-                        // Set the name
-                        compStressBlock = blkTblRec.Id;
-
-                        // Set the insertion point for the block
-                        Point3d origin = new Point3d(0, 0, 0);
-                        blkTblRec.Origin = origin;
-
-                        // Create a object collection and add the lines
-                        using (DBObjectCollection objCollection = new DBObjectCollection())
-                        {
-                            // Get vertices of the solid
-                            Point3d[] verts1 =
-                            {
-                                new Point3d(-50, -50, 0),
-                                new Point3d( 50, -50, 0),
-                                new Point3d(-50,  50, 0),
-                                new Point3d( 50,  50, 0)
-                            };
-
-                            // Create a solid
-                            var solid = new Solid(verts1[0], verts1[1], verts1[2], verts1[3]);
-                            objCollection.Add(solid);
-
-                            // Create two arrows for compressive stress
-                            // Create lines
-                            Line line1 = new Line()
-                            {
-                                StartPoint = new Point3d(-175, 0, 0),
-                                EndPoint = new Point3d(-87.5, 0, 0)
-                            };
-                            objCollection.Add(line1);
-
-                            Line line2 = new Line()
-                            {
-                                StartPoint = new Point3d(87.5, 0, 0),
-                                EndPoint = new Point3d(175, 0, 0)
-                            };
-                            objCollection.Add(line2);
-
-                            // Get vertices of the solids
-                            Point3d[] verts2 =
-                            {
-                                new Point3d(-87.5, -25, 0),
-                                new Point3d(-87.5,  25, 0),
-                                new Point3d(  -50,   0, 0)
-                            };
-
-                            Point3d[] verts3 =
-                            {
-                                new Point3d(  50,   0, 0),
-                                new Point3d(87.5, -25, 0),
-                                new Point3d(87.5,  25, 0)
-                            };
-
-
-                            // Create the solids and add to the collection
-                            Solid arrow1 = new Solid(verts2[0], verts2[1], verts2[2]);
-                            Solid arrow2 = new Solid(verts3[0], verts3[1], verts3[2]);
-                            objCollection.Add(arrow1);
-                            objCollection.Add(arrow2);
-
-                            // Add the objects to the block table record
-                            foreach (Entity ent in objCollection)
-                            {
-                                blkTblRec.AppendEntity(ent);
-                                trans.AddNewlyCreatedDBObject(ent, true);
-                            }
-                        }
-                    }
-                }
-
-                // Check if tensile stress block exists
-                if (!blkTbl.Has(TensileBlock))
-                {
-                    // Create the X block
-                    using (BlockTableRecord blkTblRec = new BlockTableRecord())
-                    {
-                        blkTblRec.Name = TensileBlock;
-
-                        // Add the block table record to the block table and to the transaction
-                        blkTbl.UpgradeOpen();
-                        blkTbl.Add(blkTblRec);
-                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-                        // Set the name
-                        tensStressBlock = blkTblRec.Id;
-
-                        // Set the insertion point for the block
-                        Point3d origin = new Point3d(0, 0, 0);
-                        blkTblRec.Origin = origin;
-
-                        // Create a object collection and add the lines
-                        using (DBObjectCollection objCollection = new DBObjectCollection())
-                        {
-                            // Create two arrows for tensile stress
-                            // Create lines
-                            Line line1 = new Line()
-                            {
-                                StartPoint = new Point3d(0, 50, 0),
-                                EndPoint = new Point3d(0, 137.5, 0)
-                            };
-                            objCollection.Add(line1);
-
-                            Line line2 = new Line()
-                            {
-                                StartPoint = new Point3d(0, -50, 0),
-                                EndPoint = new Point3d(0, -137.5, 0)
-                            };
-                            objCollection.Add(line2);
-
-                            // Get vertices of the solids
-                            Point3d[] verts2 =
-                            {
-                                new Point3d(-25, 137.5, 0),
-                                new Point3d(  0,   175, 0),
-                                new Point3d( 25, 137.5, 0),
-                            };
-
-                            Point3d[] verts3 =
-                            {
-                                new Point3d(-25, -137.5, 0),
-                                new Point3d(  0,   -175, 0),
-                                new Point3d( 25, -137.5, 0),
-                            };
-
-
-                            // Create the solids and add to the collection
-                            Solid arrow1 = new Solid(verts2[0], verts2[1], verts2[2]);
-                            Solid arrow2 = new Solid(verts3[0], verts3[1], verts3[2]);
-                            objCollection.Add(arrow1);
-                            objCollection.Add(arrow2);
-
-                            // Add the objects to the block table record
-                            foreach (Entity ent in objCollection)
-                            {
-                                blkTblRec.AppendEntity(ent);
-                                trans.AddNewlyCreatedDBObject(ent, true);
-                            }
-                        }
-                    }
-                }
-
-                // Commit and dispose the transaction
-                trans.Commit();
-            }
-
-        }
-
-        [CommandMethod("ViewElementData")]
+		[CommandMethod("ViewElementData")]
 		public static void ViewElementData()
 		{
 			// Start a loop for viewing continuous elements
@@ -842,7 +570,7 @@ namespace SPMTool.Model.Conditions
 					return;
 
 				// Read the element
-				var element = Database.Model.GetElement(ent);
+				var element = Model.GetElement(ent);
 
 				if (element is Stringer stringer)
 				{

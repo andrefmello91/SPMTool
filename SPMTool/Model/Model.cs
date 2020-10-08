@@ -5,12 +5,14 @@ using Autodesk.AutoCAD.EditorInput;
 using Extensions.AutoCAD;
 using SPM.Analysis;
 using SPM.Elements;
-using SPMTool.Database.Conditions;
+using SPMTool.Database;
 using SPMTool.Editor;
 using SPMTool.Enums;
 using SPMTool.Model.Conditions;
+using Nodes = SPMTool.Model.Elements.Nodes;
+using Panel = SPMTool.Model.Elements.Panel;
 
-namespace SPMTool.Database
+namespace SPMTool.Model
 {
     /// <summary>
     /// Model class
@@ -20,17 +22,17 @@ namespace SPMTool.Database
 	    /// <summary>
 	    /// Get the collection of nodes in the model.
 	    /// </summary>
-	    public static ObjectIdCollection NodeCollection => SPMTool.Model.Elements.Nodes.UpdateNodes(DataBase.Units);
+	    public static ObjectIdCollection NodeCollection => SPMTool.Model.Elements.Nodes.Update(DataBase.Units.Geometry);
 
 	    /// <summary>
 	    /// Get the collection of stringers in the model.
 	    /// </summary>
-	    public static ObjectIdCollection StringerCollection => Geometry.Stringer.UpdateStringers();
+	    public static ObjectIdCollection StringerCollection => Elements.Stringers.UpdateStringers();
 
 	    /// <summary>
 	    /// Get the collection of panels in the model.
 	    /// </summary>
-	    public static ObjectIdCollection PanelCollection => Geometry.Panel.UpdatePanels();
+	    public static ObjectIdCollection PanelCollection => Panel.UpdatePanels();
 
 	    /// <summary>
 	    /// Get the collection of forces in the model.
@@ -198,5 +200,15 @@ namespace SPMTool.Database
         /// </summary>
         /// <param name="objectId">The <see cref="ObjectId"/> of SPM object.</param>
         public static SPMElement GetElement(ObjectId objectId) => GetElement(objectId.ToEntity());
+
+		/// <summary>
+        /// Create blocks for use in SPMTool.
+        /// </summary>
+        public static void CreateBlocks()
+        {
+	        Forces.CreateBlock();
+			Supports.CreateBlocks();
+			Panel.CreateBlocks();
+        }
     }
 }

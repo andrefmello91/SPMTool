@@ -17,9 +17,9 @@ using SPMTool.Editor;
 using SPMTool.Enums;
 using SPMTool.Model.Conditions;
 
-[assembly: CommandClass(typeof(SPMTool.Database.Conditions.Forces))]
+[assembly: CommandClass(typeof(Forces))]
 
-namespace SPMTool.Database.Conditions
+namespace SPMTool.Model.Conditions
 {
     public static class Forces
     {
@@ -32,15 +32,8 @@ namespace SPMTool.Database.Conditions
         [CommandMethod("AddForce")]
         public static void AddForce()
         {
-            // Check if the layer Force and ForceText already exists in the drawing. If it doesn't, then it's created:
-            Layer.Force.Create(Color.Yellow);
-            Layer.ForceText.Create(Color.Yellow);
-
 			// Read units
 			var units = DataBase.Units;
-
-            // Check if the force block already exist. If not, create the blocks
-            CreateBlock();
 
             // Request objects to be selected in the drawing area
             using (var nds = UserInput.SelectNodes("Select nodes to add load:", NodeType.External))
@@ -177,7 +170,7 @@ namespace SPMTool.Database.Conditions
 		/// <summary>
         /// Create the force block.
         /// </summary>
-        private static void CreateBlock()
+        public static void CreateBlock()
         {
             using (var trans = DataBase.StartTransaction())
 	        // Open the Block table for read
@@ -241,10 +234,10 @@ namespace SPMTool.Database.Conditions
 				return;
 
 	        // Get all the force blocks in the model
-	        var fcs    = Model.ForceCollection;
+	        var fcs    = SPMTool.Model.Model.ForceCollection;
 
 	        // Get all the force texts in the model
-	        var fcTxts = Model.ForceTextCollection;
+	        var fcTxts = SPMTool.Model.Model.ForceTextCollection;
 
 			if (fcs is null && fcTxts is null)
 				return;

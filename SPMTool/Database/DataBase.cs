@@ -14,6 +14,7 @@ using SPMTool.Database.Elements;
 using SPMTool.Database.Materials;
 using SPMTool.Database.Settings;
 using SPMTool.Editor;
+using SPMTool.Enums;
 using SPMTool.Model.Conditions;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
@@ -142,6 +143,26 @@ namespace SPMTool.Database
 		        trans.Commit();
 	        }
         }
+
+		/// <summary>
+        /// Create layers for use with SPMTool.
+        /// </summary>
+		public static void CreateLayers()
+		{
+			// Check if the layers already exists in the drawing. If it doesn't, then it's created:
+			Layer.ExtNode.Create(Color.Red);
+			Layer.IntNode.Create(Color.Blue);
+			Layer.Stringer.Create(Color.Cyan);
+			Layer.Panel.Create(Color.Grey, 80);
+			Layer.Support.Create(Color.Red);
+			Layer.Force.Create(Color.Yellow);
+			Layer.ForceText.Create(Color.Yellow);
+			Layer.PanelForce.Create(Color.Green);
+			Layer.CompressivePanelStress.Create(Color.Blue1, 80);
+			Layer.TensilePanelStress.Create(Color.Red, 80);
+			Layer.StringerForce.Create(Color.Grey);
+			Layer.Displacements.Create(Color.Yellow1, 0);
+		}
 
         /// <summary>
         /// Get folder path of current file.

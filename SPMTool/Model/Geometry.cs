@@ -19,11 +19,11 @@ namespace SPMTool.Database
 		public static void UpdateElements()
 		{
 			// Enumerate and get the number of nodes
-			var nds = SPMTool.Model.Elements.Nodes.UpdateNodes();
+			var nds = SPMTool.Model.Elements.Nodes.Update();
 			int numNds = nds.Count;
 
 			// Update and get the number of stringers
-			var strs = Stringer.UpdateStringers();
+			var strs = Model.Elements.Stringers.UpdateStringers();
 			int numStrs = strs.Count;
 
 			// Update and get the number of panels

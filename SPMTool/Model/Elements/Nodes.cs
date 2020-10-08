@@ -28,11 +28,11 @@ namespace SPMTool.Model.Elements
 		/// <param name="existentNodes">The collection containing the position of existent nodes in the drawing.</param>
 		public static void Add(Point3d position, NodeType nodeType, IEnumerable<Point3d> existentNodes = null)
 		{
-			// Get the list of nodes
-			var ndList = existentNodes?.ToList() ?? NodePositions(NodeType.All).ToList();
+            // Get the list of nodes
+            var ndList = (existentNodes ?? NodePositions(NodeType.All)).ToList();
 
-			// Check if a node already exists at the position. If not, its created
-			if (ndList.Contains(position))
+            // Check if a node already exists at the position. If not, its created
+            if (ndList.Contains(position))
 				return;
 
 			// Add to the list
@@ -57,7 +57,7 @@ namespace SPMTool.Model.Elements
         public static void Add(IEnumerable<Point3d> positions, NodeType nodeType, IEnumerable<Point3d> existentNodes = null)
 		{
             // Get the list of nodes
-            var ndList = existentNodes?.ToList() ?? NodePositions(NodeType.All).ToList();
+            var ndList = (existentNodes ?? NodePositions(NodeType.All)).ToList();
 
             foreach (var position in positions)
 				Add(position, nodeType, ndList);
@@ -67,7 +67,7 @@ namespace SPMTool.Model.Elements
         /// Enumerate all the nodes in the model and return the collection of nodes.
         /// </summary>
         /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
-        public static ObjectIdCollection UpdateNodes(LengthUnit geometryUnit)
+        public static ObjectIdCollection Update(LengthUnit geometryUnit)
 		{
 			// Get all the nodes as points
 			var ndObjs = AllNodes();
@@ -119,10 +119,10 @@ namespace SPMTool.Model.Elements
 				nds = AllNodes();
 
 			if (nodeType == NodeType.Internal)
-				nds = Database.Model.GetObjectsOnLayer(Layer.IntNode);
+				nds = Model.GetObjectsOnLayer(Layer.IntNode);
 
 			if (nodeType == NodeType.External)
-				nds = Database.Model.GetObjectsOnLayer(Enums.Layer.ExtNode);
+				nds = Model.GetObjectsOnLayer(Layer.ExtNode);
 
 			// Create a point collection
 			var pts = new List<Point3d>();
@@ -146,8 +146,8 @@ namespace SPMTool.Model.Elements
 			var nds = new ObjectIdCollection();
 
             // Create the nodes collection and initialize getting the elements on node layer
-            using (var extNds = Database.Model.GetObjectsOnLayer(Layer.ExtNode))
-            using (var intNds = Database.Model.GetObjectsOnLayer(Layer.IntNode))
+            using (var extNds = Model.GetObjectsOnLayer(Layer.ExtNode))
+            using (var intNds = Model.GetObjectsOnLayer(Layer.IntNode))
             {
 	            foreach (ObjectId ndObj in extNds)
 		            nds.Add(ndObj);
@@ -158,6 +158,39 @@ namespace SPMTool.Model.Elements
 
             return nds;
 		}
+
+        /// <summary>
+        /// Read <see cref="Node"/> objects from an <see cref="ObjectIdCollection"/>.
+        /// </summary>
+        /// <param name="nodeObjectsIds">The <see cref="ObjectIdCollection"/> containing the nodes of drawing.</param>
+        /// <param name="units">Current <see cref="Units"/>.</param>
+        public static IEnumerable<Node> Read(ObjectIdCollection nodeObjectsIds, Units units) => (from ObjectId ndObj in nodeObjectsIds select Read(ndObj, units)).OrderBy(node => node.Number);
+
+        /// <summary>
+        /// Read a <see cref="Node"/> in the drawing.
+        /// </summary>
+        /// <param name="objectId">The <see cref="ObjectId"/> of the node.</param>
+        /// <param name="units">Current <see cref="Units"/>.</param>
+        public static Node Read(ObjectId objectId, Units units)
+        {
+	        // Read the object as a point
+	        var ndPt = (DBPoint)objectId.ToDBObject();
+
+	        // Read the XData and get the necessary data
+	        var data = ndPt.ReadXData();
+
+	        // Get the node number
+	        var number = data[(int)NodeIndex.Number].ToInt();
+
+	        return
+		        new Node(objectId, number, ndPt.Position, GetNodeType(ndPt), units.Geometry, units.Displacements);
+        }
+
+        /// <summary>
+        /// Get <see cref="NodeType"/>.
+        /// </summary>
+        /// <param name="nodePoint">The <see cref="Entity"/> object.</param>
+        private static NodeType GetNodeType(Entity nodePoint) => nodePoint.Layer == Layer.ExtNode.ToString() ? NodeType.External : NodeType.Internal;
 
         /// <summary>
         /// Get the layer name based on <paramref name="nodeType"/>.

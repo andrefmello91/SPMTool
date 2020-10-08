@@ -6,14 +6,15 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Extensions.AutoCAD;
 using SPM.Elements;
+using SPMTool.Database;
 using SPMTool.Editor;
 using SPMTool.Enums;
 using SPMTool.Model.Conditions;
 using UnitsNet.Units;
 
-[assembly: CommandClass(typeof(SPMTool.Database.Conditions.Supports))]
+[assembly: CommandClass(typeof(Supports))]
 
-namespace SPMTool.Database.Conditions
+namespace SPMTool.Model.Conditions
 {
 	/// <summary>
     /// Supports class.
@@ -30,17 +31,11 @@ namespace SPMTool.Database.Conditions
         [CommandMethod("AddConstraint")]
         public static void AddConstraint()
         {
-	        // Check if the layer Node already exists in the drawing. If it doesn't, then it's created:
-	        Layer.Support.Create(Color.Red);
-
 	        // Read units
 	        var units = DataBase.Units;
 
-            // Check if the support blocks already exist. If not, create the blocks
-            CreateBlocks();
-
             // Request objects to be selected in the drawing area
-            using (var nds = UserInput.SelectNodes("Select nodes to add support conditions:", NodeType.External))
+            using (var nds = UserInput.SelectNodes("Select nodes to add support conditions:"))
             {
 	            if (nds is null)
 		            return;
@@ -48,13 +43,13 @@ namespace SPMTool.Database.Conditions
 	            // Ask the user set the support conditions:
 	            var options = Enum.GetNames(typeof(Constraint));
 
-	            var supn = UserInput.SelectKeyword("Add support in which direction?", options, "Free");
+	            var keyword = UserInput.SelectKeyword("Add support in which direction?", options, "Free");
 
-	            if (!supn.HasValue)
+	            if (keyword is null)
 		            return;
 
 	            // Set the support
-	            var support = (Constraint) Enum.Parse(typeof(Constraint), supn.Value.keyword);
+	            var support = (Constraint) Enum.Parse(typeof(Constraint), keyword);
 
 	            // Get positions
 	            var positions = (from DBPoint pt in nds select pt.Position).ToArray();
@@ -78,7 +73,7 @@ namespace SPMTool.Database.Conditions
                 return;
 
             // Get all the force blocks in the model
-            var sups = Model.SupportCollection;
+            var sups = SPMTool.Model.Model.SupportCollection;
 
             if (sups is null || sups.Count == 0)
                 return;

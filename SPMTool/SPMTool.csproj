@@ -132,16 +132,15 @@
     <Compile Include="Database\Materials\ConcreteData.cs" />
     <Compile Include="Global\Enums.cs" />
     <Compile Include="Editor\Reinforcement.cs" />
-    <Compile Include="Database\Conditions\Supports.cs" />
+    <Compile Include="Model\Conditions\Supports.cs" />
     <Compile Include="Global\Extensions.cs" />
     <Compile Include="Global\Units.cs" />
-    <Compile Include="Database\Conditions\Forces.cs" />
+    <Compile Include="Model\Conditions\Forces.cs" />
     <Compile Include="Model\Geometry.cs" />
     <Compile Include="Model\Elements\Nodes.cs" />
-    <Compile Include="Model\Elements\Geometry.Panel .cs" />
-    <Compile Include="Model\Elements\Geometry.Stringer .cs" />
+    <Compile Include="Model\Elements\Panels.cs" />
+    <Compile Include="Model\Elements\Stringers.cs" />
     <Compile Include="Model\Model.cs" />
-    <Compile Include="Model\Nodes.cs" />
     <Compile Include="Model\Panels.cs" />
     <Compile Include="Model\Stringers.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -149,7 +148,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Editor\Results.cs" />
+    <Compile Include="Model\Results.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserInterface\StringerWindow.xaml.cs">
       <DependentUpon>StringerWindow.xaml</DependentUpon>

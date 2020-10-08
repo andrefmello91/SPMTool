@@ -8,6 +8,7 @@ using SPMTool.Database;
 using SPMTool.Editor;
 using SPMTool.Enums;
 using static SPMTool.Database.Data;
+using Nodes = SPMTool.Model.Elements.Nodes;
 
 
 [assembly: CommandClass(typeof(SPMTool.Model.Conditions.Results))]
@@ -20,7 +21,7 @@ namespace SPMTool.Model.Conditions
 		public static void DoLinearAnalysis()
 		{
             // Get input data
-            var input = Database.Model.GenerateInput(AnalysisType.Linear, out var dataOk, out var message);
+            var input = Model.GenerateInput(AnalysisType.Linear, out var dataOk, out var message);
 
             if (!dataOk)
             {

@@ -22,7 +22,7 @@ namespace SPMTool.Database
     public static class Panels
     {
         /// <summary>
-        /// Read the <see cref="Panel"/> objects in the drawing.
+        /// Read the <see cref="SPM.Elements.Panel"/> objects in the drawing.
         /// </summary>
         /// <param name="panelObjectsIds">The <see cref="ObjectIdCollection"/> of panels in the drawing.</param>
         /// <param name="units">Units current in use <see cref="Units"/>.</param>
@@ -30,9 +30,9 @@ namespace SPMTool.Database
         /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
         /// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
         /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-	    public static Panel[] Read(ObjectIdCollection panelObjectsIds, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
+	    public static SPM.Elements.Panel[] Read(ObjectIdCollection panelObjectsIds, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
 	    {
-		    var panels = new Panel[panelObjectsIds.Count];
+		    var panels = new SPM.Elements.Panel[panelObjectsIds.Count];
 
 		    foreach (ObjectId pnlObj in panelObjectsIds)
 		    {
@@ -47,7 +47,7 @@ namespace SPMTool.Database
 	    }
 
         /// <summary>
-        /// Read a <see cref="Panel"/> in drawing.
+        /// Read a <see cref="SPM.Elements.Panel"/> in drawing.
         /// </summary>
         /// <param name="objectId">The object ID of the panel from AutoCAD drawing.</param>
         /// <param name="units">Units current in use <see cref="Units"/>.</param>
@@ -55,7 +55,7 @@ namespace SPMTool.Database
         /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
         /// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
         /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-        public static Panel Read(ObjectId objectId, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
+        public static SPM.Elements.Panel Read(ObjectId objectId, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
         {
             // Read as a solid
             var pnl = (Solid) objectId.ToDBObject();
@@ -88,7 +88,7 @@ namespace SPMTool.Database
 			// Get reinforcement
             var reinforcement = new WebReinforcement(phiX, sx, steelX, phiY, sy, steelY, width);
 
-            return Panel.Read(analysisType, objectId, number, nodes, PanelVertices(pnl), width, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
+            return SPM.Elements.Panel.Read(analysisType, objectId, number, nodes, PanelVertices(pnl), width, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
         }
 
         /// <summary>
