@@ -27,7 +27,7 @@ namespace SPMTool.Database
 			int numStrs = strs.Count;
 
 			// Update and get the number of panels
-			var pnls = Panel.UpdatePanels();
+			var pnls = Elements.Panels.UpdatePanels();
 			int numPnls = pnls.Count;
 
 			// Display the number of updated elements

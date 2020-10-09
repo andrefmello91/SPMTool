@@ -11,7 +11,6 @@ using SPMTool.Database.Elements;
 using SPMTool.Editor;
 using SPMTool.Enums;
 using Nodes = SPMTool.Database.Elements.Nodes;
-using Panel = SPMTool.Database.Elements.Panel;
 
 namespace SPMTool.Database
 {

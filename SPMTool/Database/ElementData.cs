@@ -49,7 +49,7 @@ namespace SPMTool.Database.Elements
 			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, panelWidth));       // 2
 
 			    // Create the entry in the NOD if it doesn't exist
-			    Database.DataBase.SaveDictionary(rb, name, false);
+			    DataBase.SaveDictionary(rb, name, false);
 		    }
 	    }
 
@@ -59,7 +59,7 @@ namespace SPMTool.Database.Elements
 	    public static StringerGeometry[] ReadStringerGeometries()
 	    {
 		    // Get dictionary entries
-		    var entries = Database.DataBase.ReadDictionaryEntries("StrGeo");
+		    var entries = DataBase.ReadDictionaryEntries("StrGeo");
 
 		    if (entries is null)
 			    return null;
@@ -80,7 +80,7 @@ namespace SPMTool.Database.Elements
 	    public static double[] ReadPanelWidths()
 	    {
 		    // Get dictionary entries
-		    var entries = Database.DataBase.ReadDictionaryEntries("PnlW");
+		    var entries = DataBase.ReadDictionaryEntries("PnlW");
 
 		    var geoList = entries?.Select(entry => entry.AsArray()[2].ToDouble()).ToArray();
 

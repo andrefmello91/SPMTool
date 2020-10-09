@@ -5,9 +5,16 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using Extensions.AutoCAD;
+using Extensions.Number;
+using Material.Reinforcement;
 using SPM.Elements;
+using SPM.Elements.StringerProperties;
 using SPMTool.Database;
+using SPMTool.Database.Elements;
 using SPMTool.Enums;
+using UnitsNet;
+using UnitsNet.Units;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Editor
@@ -307,6 +314,60 @@ namespace SPMTool.Editor
 			var keyword = result.StringResult;
 
 			return keyword;
+        }
+
+        /// <summary>
+        /// Get <see cref="StringerGeometry"/> from user.
+        /// </summary>
+        /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
+        public static StringerGeometry? GetStringerGeometry(LengthUnit geometryUnit)
+        {
+	        // Get unit abbreviation
+	        var dimAbrev = Length.GetAbbreviation(geometryUnit);
+
+	        // Get saved reinforcement options
+	        var savedGeo = DataBase.SavedStringerGeometry;
+
+	        // Get saved reinforcement options
+	        if (savedGeo != null)
+	        {
+		        // Get the options
+		        var options = savedGeo.Select(g => $"{g.Width:0.00} {(char)Character.Times} {g.Height:0.00}").ToList();
+
+		        // Add option to set new reinforcement
+		        options.Add("New");
+
+		        // Get string result
+		        var res = UserInput.SelectKeyword($"Choose a geometry option ({dimAbrev} x {dimAbrev}) or add a new one:", options, out var index, options[0]);
+
+		        if (res is null)
+			        return null;
+
+		        // Get the index
+		        if (res != "New")
+			        return savedGeo[index];
+	        }
+
+	        // New reinforcement
+	        var def = 100.ConvertFromMillimeter(geometryUnit);
+
+	        // Ask the user to input the Stringer width
+	        var wn = GetDouble($"Input width ({dimAbrev}) for selected stringers:", def);
+
+	        // Ask the user to input the Stringer height
+	        var hn = GetDouble($"Input height ({dimAbrev}) for selected stringers:", def);
+
+	        if (!wn.HasValue || !hn.HasValue)
+		        return null;
+
+	        double
+		        w = wn.Value.Convert(geometryUnit),
+		        h = hn.Value.Convert(geometryUnit);
+
+	        // Save geometry
+	        var strGeo = new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h);
+	        ElementData.Save(strGeo);
+	        return strGeo;
         }
 	}
 }

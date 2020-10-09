@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
 using SPM.Elements;
-using SPMTool.Database;
 using SPMTool.Enums;
 using UnitsNet.Units;
-using Nodes = SPMTool.Database.Elements.Nodes;
-
-[assembly: CommandClass(typeof(Nodes))]
 
 namespace SPMTool.Database.Elements
 {
@@ -93,32 +88,33 @@ namespace SPMTool.Database.Elements
 		{
 			// Get all the nodes as points
 			var ndObjs = AllNodes();
-			var nds = ndObjs.ToDBObjectCollection();
-
-			// Get the list of nodes ordered
-			var ndList = NodePositions(NodeType.All).ToList();
-
-			// Get the Xdata size
-			int size = Enum.GetNames(typeof(NodeIndex)).Length;
-
-			// Access the nodes on the document
-			foreach (DBPoint nd in nds)
+			using (var nds = ndObjs.ToDBObjectCollection())
 			{
-				// Get the node number on the list
-				double ndNum = ndList.IndexOf(nd.Position) + 1;
+				// Get the list of nodes ordered
+				var ndList = NodePositions(NodeType.All).ToList();
 
-				// Initialize the array of typed values for XData
-				var data = nd.XData?.AsArray();
-				data = data?.Length == size ? data : NewXData();
+				// Get the Xdata size
+				int size = Enum.GetNames(typeof(NodeIndex)).Length;
 
-				// Set the updated number
-				data[(int)NodeIndex.Number] = new TypedValue((int)DxfCode.ExtendedDataReal, ndNum);
+				// Access the nodes on the document
+				foreach (DBPoint nd in nds)
+				{
+					// Get the node number on the list
+					double ndNum = ndList.IndexOf(nd.Position) + 1;
 
-				// Add the new XData
-				nd.XData = new ResultBuffer(data);
+					// Initialize the array of typed values for XData
+					var data = nd.XData?.AsArray();
+					data = data?.Length == size ? data : NewXData();
+
+					// Set the updated number
+					data[(int) NodeIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
+
+					// Add the new XData
+					nd.SetXData(data);
+				}
 			}
 
-            // Set the style for all point objects in the drawing
+			// Set the style for all point objects in the drawing
             DataBase.Database.Pdmode = 32;
             DataBase.Database.Pdsize = 40 * geometryUnit.ScaleFactor();
 
@@ -137,14 +133,20 @@ namespace SPMTool.Database.Elements
 			var ndObjs = new ObjectIdCollection();
 
 			// Select the node type
-			if (nodeType == NodeType.All)
-				ndObjs = AllNodes();
+			switch (nodeType)
+			{
+				case NodeType.All:
+					ndObjs = AllNodes();
+					break;
 
-			if (nodeType == NodeType.Internal)
-				ndObjs = Model.GetObjectsOnLayer(Layer.IntNode);
+				case NodeType.Internal:
+					ndObjs = Model.GetObjectsOnLayer(Layer.IntNode);
+					break;
 
-			if (nodeType == NodeType.External)
-				ndObjs = Model.GetObjectsOnLayer(Layer.ExtNode);
+				case NodeType.External:
+					ndObjs = Model.GetObjectsOnLayer(Layer.ExtNode);
+					break;
+			}
 
 			return (from DBPoint nd in ndObjs.ToDBObjectCollection() select nd.Position).Order();
 		}
@@ -233,7 +235,7 @@ namespace SPMTool.Database.Elements
 			var collection = (nodes ?? AllNodes()).ToDBObjectCollection();
 
 			// Compare to the nodes collection
-			return (from DBPoint nd in collection where position.Approx(nd.Position) select nd.ReadXData() into data select Convert.ToInt32(data[(int) NodeIndex.Number].Value)).FirstOrDefault();
+			return (from DBPoint nd in collection where position.Approx(nd.Position) select nd.ReadXData() into data select data[(int) NodeIndex.Number].ToInt()).FirstOrDefault();
 		}
 
         /// <summary>

@@ -125,6 +125,9 @@
   <ItemGroup>
     <Compile Include="Database\DataBase.cs" />
     <Compile Include="Database\UnitsData.cs" />
+    <Compile Include="Editor\Commands\ElementEditor.cs" />
+    <Compile Include="Editor\Commands\ElementInput.cs" />
+    <Compile Include="Editor\Commands\Settings.cs" />
     <Compile Include="Editor\UserInput.cs" />
     <Compile Include="Analysis\Analysis.cs" />
     <Compile Include="Database\ElementData.cs" />
@@ -141,7 +144,6 @@
     <Compile Include="Database\Elements\Panels.cs" />
     <Compile Include="Database\Elements\Stringers.cs" />
     <Compile Include="Database\Model.cs" />
-    <Compile Include="Database\Model\Panels.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

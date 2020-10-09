@@ -7,112 +7,104 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
 using Extensions.Number;
+using Material.Concrete;
+using Material.Reinforcement;
 using SPM.Elements;
+using SPM.Elements.PanelProperties;
 using SPMTool.Database;
 using SPMTool.Database.Conditions;
 using SPMTool.Database.Elements;
 using SPMTool.Editor;
 using SPMTool.Enums;
 using UnitsNet;
-using Panel = SPMTool.Database.Elements.Panel;
+using UnitsNet.Units;
+using Panels = SPMTool.Database.Elements.Panels;
 
-[assembly: CommandClass(typeof(Panel))]
+[assembly: CommandClass(typeof(Panels))]
 
 namespace SPMTool.Database.Elements
 {
-	public class Panel
+	/// <summary>
+    /// Panels class.
+    /// </summary>
+	public static class Panels
 	{
-		// Properties
-		public Solid         SolidObject { get; }
-
-		// Layer name
-		public static readonly string PanelLayer = Layer.Panel.ToString();
-
 		// Width database
 		private static readonly string PnlW = "PnlW";
 
-		// Vertices implementation
-		public class Vertices : Tuple<Point3d, Point3d, Point3d, Point3d>
+        /// <summary>
+        /// Add a panel to the drawing.
+        /// </summary>
+        /// <param name="vertices">The collection of <see cref="Point3d"/> vertices.</param>
+        /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
+        /// <param name="data">Extended data to add. If null, default data will be added.</param>
+        public static void Add(IEnumerable<Point3d> vertices, LengthUnit geometryUnit = LengthUnit.Millimeter, ResultBuffer data = null)
 		{
-			public Vertices(Point3d vertex1, Point3d vertex2, Point3d vertex3, Point3d vertex4) : base(vertex1, vertex2, vertex3, vertex4)
-			{
-			}
+			var vertList = PanelVertices();
 
-			public Vertices(Point3dCollection vertices) : base(vertices[0], vertices[1], vertices[2], vertices[3])
-			{
-			}
+			Add(vertices, ref vertList, geometryUnit, data);
 		}
 
-		// Constructor
-		public Panel(Vertices vertices, List<Vertices> panelList = null)
+        /// <summary>
+        /// Add a panel to the drawing.
+        /// </summary>
+        /// <param name="vertices">The collection of <see cref="Point3d"/> vertices.</param>
+        /// <param name="vertexCollection">The collection of <see cref="Vertices"/> of existing panels.</param>
+        /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
+        /// <param name="data">Extended data to add. If null, default data will be added.</param>
+        public static void Add(IEnumerable<Point3d> vertices, ref IEnumerable<Vertices> vertexCollection, LengthUnit geometryUnit = LengthUnit.Millimeter, ResultBuffer data = null)
 		{
-			// Check if list of panels is null
-			panelList = panelList ?? ListOfPanelVertices();
+			var verts = new Vertices(vertices, geometryUnit);
+			var vertList = vertexCollection.ToList();
 
 			// Check if a panel already exist on that position. If not, create it
-			if (!panelList.Contains(vertices))
-			{
-				// Add to the list
-				panelList.Add(vertices);
+			if (vertList.Contains(verts))
+				return;
 
-				// Create the panel as a solid with 4 segments (4 points)
-				SolidObject = new Solid(vertices.Item1, vertices.Item2, vertices.Item3, vertices.Item4)
-				{
-					// Set the layer to Panel
-					Layer = PanelLayer
-				};
+			// Add to the list
+			vertList.Add(verts);
+			vertexCollection = vertList;
 
-				// Add the object
-				Extensions.Add(SolidObject);
-			}
+			// Order vertices
+			var ordered = vertices.Order().ToArray();
+
+            // Create the panel as a solid with 4 segments (4 points)
+            using (var solid = new Solid(ordered[0], ordered[1], ordered[2], ordered[3]) { Layer = $"{Layer.Panel}"})
+            {
+	            solid.Add();
+	            solid.SetXData(data ?? new ResultBuffer(NewPanelXData()));
+            }
 		}
 
 		[CommandMethod("AddPanel")]
 		public static void AddPanel()
 		{
-			// Check if the layer panel already exists in the drawing. If it doesn't, then it's created:
-			Auxiliary.CreateLayer(Layer.Panel, Color.Grey, 80);
-
-			// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-			DataBase.RegisterApp();
-
 			// Read units
 			var units = DataBase.Units;
 
 			// Get the list of panel vertices
-			var pnlList = ListOfPanelVertices();
+			var pnlList = PanelVertices();
 
 			// Create a loop for creating infinite panels
 			for ( ; ; )
 			{
 				// Prompt for user select 4 vertices of the panel
-				var nds = UserInput.SelectNodes("Select four nodes to be the vertices of the panel", NodeType.External);
+				var nds = UserInput.SelectNodes("Select four nodes to be the vertices of the panel");
 
 				if (nds is null)
 					break;
 
 				// Check if there are four points
 				if (nds.Count == 4)
-				{
-					List<Point3d> vrts = new List<Point3d>();
-
-					foreach (DBPoint nd in nds)
-						vrts.Add(nd.Position);
-
-					// Order the vertices in ascending Y and ascending X
-					vrts = Auxiliary.OrderPoints(vrts);
-
 					// Create the panel if it doesn't exist
-					var pnlPts = new Vertices(vrts[0], vrts[1], vrts[2], vrts[3]);
-					new Panel(pnlPts, pnlList);
-				}
+					Add(from DBPoint nd in nds select nd.Position, ref pnlList, units.Geometry);
 
 				else
 					Application.ShowAlertDialog("Please select four external nodes.");
 			}
 
 			// Update nodes and panels
-			Nodes.Update(units);
+			Nodes.Update(units.Geometry);
 			UpdatePanels();
 		}
 
@@ -146,10 +138,10 @@ namespace SPMTool.Database.Elements
 				cln = clnn.Value;
 
 			// Get the list of start and endpoints
-			var strList = Stringers.StringerGeometries();
+			var strList = Stringers.StringerGeometries().ToList();
 
 			// Get the list of panels
-			var pnlList = ListOfPanelVertices();
+			var pnlList = PanelVertices().ToList();
 
 			// Create lists of points for adding the nodes later
 			List<Point3d> newIntNds = new List<Point3d>(),
@@ -158,142 +150,115 @@ namespace SPMTool.Database.Elements
 			// Create a list of start and end points for adding the stringers later
 			var newStrList = new List<(Point3d start, Point3d end)>();
 
-			// Access the stringers in the model
-			ObjectIdCollection strs = Model.GetObjectsOnLayer(Layer.Stringer);
+			// Auxiliary rectangular panel error
+			var error = false;
 
-			// Access the internal nodes in the model
-			ObjectIdCollection intNds = Model.GetObjectsOnLayer(Layer.IntNode);
+			// Create a collection of stringers and nodes to erase
+			using (var toErase = new ObjectIdCollection())
 
-			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
-			{
-				// Get the selection set and analyse the elements
-				foreach (DBObject obj in pnls)
-				{
-					// Open the selected object for read
-					Solid pnl = (Solid) trans.GetObject(obj.ObjectId, OpenMode.ForWrite);
+            // Access the stringers in the model
+            using (var strs = Model.GetObjectsOnLayer(Layer.Stringer).ToDBObjectCollection())
 
-					// Get the panel
-					var panel = new Database.Elements.Panel(obj.ObjectId, units);
+            // Access the internal nodes in the model
+            using (var intNds = Model.GetObjectsOnLayer(Layer.IntNode).ToDBObjectCollection())
+            {
+                // Get the selection set and analyse the elements
+                foreach (Solid pnl in pnls)
+                {
+                    // Get vertices
+                    var verts = pnl.GetVertices().ToArray();
 
-					// Get vertices
-					var grpPts = panel.Vertices;
+					// Get panel geometry
+					var geometry = new PanelGeometry(verts, 0, units.Geometry);
 
-					// Get the panel number
-					int pnlNum = panel.Number;
+                    // Verify if the panel is rectangular
+                    if (geometry.Rectangular) // panel is rectangular
+                    {
+	                    // Get the surrounding stringers to erase
+	                    foreach (Line str in strs)
+	                    {
+		                    // Read geometry
+		                    var strGeo = Stringers.GetGeometry(str, units.Geometry, false);
 
-					// Verify if the panel is rectangular
-					if (panel.Rectangular) // panel is rectangular
-					{
-						// Get the surrounding stringers to erase
-						foreach (ObjectId strObj in strs)
-						{
-							// Read as a stringer
-							var str = new Database.Elements.Stringer(strObj, units);
+		                    // Verify if the Stringer starts and ends in a panel vertex
+		                    if (!verts.Contains(strGeo.InitialPoint) || !verts.Contains(strGeo.EndPoint))
+			                    continue;
 
-							// Verify if the Stringer starts and ends in a panel vertex
-							if (grpPts.Contains(str.StartPoint) && grpPts.Contains(str.EndPoint))
-							{
-								// Read the internal nodes
-								foreach (ObjectId intNd in intNds)
-								{
-									// Read as point
-									DBPoint nd = (DBPoint) trans.GetObject(intNd, OpenMode.ForRead);
+		                    // Read the internal nodes
+		                    foreach (DBPoint nd in intNds)
+			                    // Erase the internal node and remove from the list
+			                    if (nd.Position.Approx(strGeo.CenterPoint))
+				                    toErase.Add(nd.ObjectId);
 
-									// Erase the internal node and remove from the list
-									if (nd.Position == str.MidPoint)
-									{
-										nd.UpgradeOpen();
-										nd.Erase();
-										break;
-									}
-								}
+		                    // Erase and remove from the list
+		                    strList.Remove(strGeo);
+		                    toErase.Add(str.ObjectId);
+	                    }
 
-								// Erase and remove from the list
-								strList.Remove(new Stringers.PointsConnected(str.StartPoint, str.EndPoint));
+	                    // Calculate the distance of the points in X and Y
+	                    double
+		                    distX = (geometry.Edge1.Length / cln).ConvertFromMillimeter(units.Geometry),
+		                    distY = (geometry.Edge2.Length / row).ConvertFromMillimeter(units.Geometry);
 
-								var strEnt = (Entity) trans.GetObject(strObj, OpenMode.ForWrite);
-								strEnt.Erase();
-							}
-						}
+	                    // Initialize the start point
+	                    var stPt = verts[0];
 
-						// Calculate the distance of the points in X and Y
-						double distX = units.ConvertFromMillimeter((panel.Edges.Length[0]) / cln, units.Geometry);
-						double distY = units.ConvertFromMillimeter((panel.Edges.Length[1]) / row, units.Geometry);
+	                    // Create the new panels
+	                    for (int i = 0; i < row; i++)
+	                    {
+		                    for (int j = 0; j < cln; j++)
+		                    {
+			                    // Get the vertices of the panel and add to a list
+			                    var newVerts = new[]
+			                    {
+				                    new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
+				                    new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0),
+				                    new Point3d(stPt.X + j * distX, stPt.Y + (i + 1) * distY, 0),
+				                    new Point3d(stPt.X + (j + 1) * distX, stPt.Y + (i + 1) * distY, 0)
+			                    };
 
-						// Initialize the start point
-						Point3d stPt = grpPts[0];
+			                    // Create the panel with XData of the original panel
+			                    Add(newVerts, units.Geometry, pnl.XData);
 
-						// Create the new panels
-						for (int i = 0; i < row; i++)
-						{
-							for (int j = 0; j < cln; j++)
-							{
-								// Get the vertices of the panel and add to a list
-								var verts = new List<Point3d>();
-								verts.Add(
-									new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0));
-								verts.Add(new Point3d(stPt.X + (j + 1) * distX,
-									stPt.Y + i * distY, 0));
-								verts.Add(new Point3d(stPt.X + j * distX,
-									stPt.Y + (i + 1) * distY, 0));
-								verts.Add(new Point3d(stPt.X + (j + 1) * distX,
-									stPt.Y + (i + 1) * distY, 0));
+			                    // Add the vertices to the list for creating external nodes
+			                    foreach (var pt in newVerts.Where(pt => !newExtNds.Contains(pt)))
+				                    newExtNds.Add(pt);
 
-								// Create the panel
-								var pnlPts = new Vertices(verts[0], verts[1], verts[2], verts[3]);
-								var newPnl = new Panel(pnlPts, pnlList);
+			                    // Create tuples to adding the stringers later
+			                    var strsToAdd = new[]
+			                    {
+				                    (newVerts[0], newVerts[1]),
+				                    (newVerts[0], newVerts[2]),
+				                    (newVerts[2], newVerts[3]),
+				                    (newVerts[1], newVerts[3])
+			                    };
 
-								// Get the solid object
-								var pnlSolid = newPnl.SolidObject;
+			                    // Add to the list of new stringers
+			                    foreach (var pts in strsToAdd.Where(pts => !newStrList.Contains(pts)))
+				                    newStrList.Add(pts);
+		                    }
+	                    }
 
-								// Append the XData of the original panel
-								if (pnlSolid != null)
-									pnlSolid.XData = pnl.XData;
+	                    // Add to objects to erase
+	                    toErase.Add(pnl.ObjectId);
 
-								// Add the vertices to the list for creating external nodes
-								foreach (Point3d pt in verts)
-								{
-									if (!newExtNds.Contains(pt))
-										newExtNds.Add(pt);
-								}
+	                    // Remove from the list
+	                    pnlList.Remove(geometry.Vertices);
+                    }
 
-								// Create tuples to adding the stringers later
-								var strsToAdd = new []
-								{
-									(verts[0], verts[1]),
-									(verts[0], verts[2]),
-									(verts[2], verts[3]),
-									(verts[1], verts[3])
-								};
+                    else // panel is not rectangular
+                    {
+	                    error = true;
+						break;
+                    }
+                }
 
-								// Add to the list of new stringers
-								foreach (var pts in strsToAdd)
-								{
-									if (!newStrList.Contains(pts))
-										newStrList.Add(pts);
-								}
-							}
-						}
+				if (error)
+					UserInput.Editor.WriteMessage("\nAt least one selected panel is not rectangular.");
+            }
 
-						// Erase the original panel
-						pnl.UpgradeOpen();
-						pnl.Erase();
-
-						// Remove from the list
-						pnlList.Remove(new Vertices(grpPts[0], grpPts[1], grpPts[2], grpPts[3]));
-					}
-
-					else // panel is not rectangular
-						UserInput.Editor.WriteMessage($"\nPanel {pnlNum} is not rectangular");
-				}
-
-				// Save the new object to the database
-				trans.Commit();
-			}
-
-			// Create the stringers
-			foreach (var pts in newStrList)
+            // Create the stringers
+            foreach (var pts in newStrList)
 			{
 				new Stringers(pts.start, pts.end, strList);
 
@@ -537,36 +502,22 @@ namespace SPMTool.Database.Elements
 			return pnls;
 		}
 
-		// List of panels (collection of vertices)
-		public static List<Vertices> ListOfPanelVertices()
+		/// <summary>
+        /// Get the collection of <see cref="Vertices"/> of existing panels.
+        /// </summary>
+		public static IEnumerable<Vertices> PanelVertices()
 		{
-			// Get the stringers in the model
-			ObjectIdCollection pnls = Model.GetObjectsOnLayer(Layer.Panel);
+            // Get the panels in the model
+            using (var pnls = Model.GetObjectsOnLayer(Layer.Panel).ToDBObjectCollection())
+            {
+                if (pnls is null || pnls.Count == 0)
+		            yield break;
 
-			// Initialize a list
-			var pnlList = new List<Vertices>();
+	            var unit = DataBase.Units.Geometry;
 
-			if (pnls.Count > 0)
-			{
-				// Start a transaction
-				using (Transaction trans = DataBase.StartTransaction())
-				{
-					foreach (ObjectId obj in pnls)
-					{
-						// Read the object as a solid
-						Solid pnl = trans.GetObject(obj, OpenMode.ForRead) as Solid;
-
-						// Get the vertices
-						Point3dCollection pnlVerts = new Point3dCollection();
-						pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
-
-						// Add to the list
-						pnlList.Add(new Vertices(pnlVerts));
-					}
-				}
-			}
-
-			return pnlList;
+	            foreach (Solid pnl in pnls)
+		            yield return new Vertices(pnl.GetVertices(), unit);
+            }
 		}
 
 		// Method to set panel data
@@ -642,10 +593,10 @@ namespace SPMTool.Database.Elements
 		private static void CreateShearBlock()
 		{
 			// Start a transaction
-			using (Transaction trans = Database.DataBase.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Open the Block table for read
-				BlockTable blkTbl = trans.GetObject(Database.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
+				BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
 				// Initialize the block Id
 				ObjectId shearBlock = ObjectId.Null;
@@ -729,10 +680,10 @@ namespace SPMTool.Database.Elements
 		private static void CreateStressesBlock()
 		{
 			// Start a transaction
-			using (Transaction trans = Database.DataBase.StartTransaction())
+			using (Transaction trans = DataBase.StartTransaction())
 			{
 				// Open the Block table for read
-				BlockTable blkTbl = trans.GetObject(Database.DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
+				BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
 				// Initialize the block Ids
 				ObjectId compStressBlock = ObjectId.Null;
@@ -897,6 +848,91 @@ namespace SPMTool.Database.Elements
 				trans.Commit();
 			}
 
+		}
+
+		/// <summary>
+		/// Read the <see cref="SPM.Elements.Panel"/> objects in the drawing.
+		/// </summary>
+		/// <param name="panelObjectsIds">The <see cref="ObjectIdCollection"/> of panels in the drawing.</param>
+		/// <param name="units">Units current in use <see cref="Units"/>.</param>
+		/// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
+		/// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
+		/// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
+		/// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
+		public static SPM.Elements.Panel[] Read(ObjectIdCollection panelObjectsIds, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
+		{
+			var panels = new SPM.Elements.Panel[panelObjectsIds.Count];
+
+			foreach (ObjectId pnlObj in panelObjectsIds)
+			{
+				var panel = Read(pnlObj, units, concreteParameters, concreteConstitutive, nodes, analysisType);
+
+				// Set to the array
+				int i = panel.Number - 1;
+				panels[i] = panel;
+			}
+
+			return panels;
+		}
+
+		/// <summary>
+		/// Read a <see cref="SPM.Elements.Panel"/> in drawing.
+		/// </summary>
+		/// <param name="objectId">The object ID of the panel from AutoCAD drawing.</param>
+		/// <param name="units">Units current in use <see cref="Units"/>.</param>
+		/// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
+		/// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
+		/// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
+		/// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
+		public static SPM.Elements.Panel Read(ObjectId objectId, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
+		{
+			// Read as a solid
+			var pnl = (Solid) objectId.ToDBObject();
+
+			// Read the XData and get the necessary data
+			var pnlData = pnl.ReadXData(DataBase.AppName);
+
+			// Get the panel parameters
+			var number = pnlData[(int)PanelIndex.Number].ToInt();
+			var width  = pnlData[(int)PanelIndex.Width].ToDouble();
+
+			// Get reinforcement
+			double
+				phiX = pnlData[(int)PanelIndex.XDiam].ToDouble(),
+				phiY = pnlData[(int)PanelIndex.YDiam].ToDouble(),
+				sx   = pnlData[(int)PanelIndex.Sx].ToDouble(),
+				sy   = pnlData[(int)PanelIndex.Sy].ToDouble();
+
+			// Get steel data
+			double
+				fyx = pnlData[(int)PanelIndex.fyx].ToDouble(),
+				Esx = pnlData[(int)PanelIndex.Esx].ToDouble(),
+				fyy = pnlData[(int)PanelIndex.fyy].ToDouble(),
+				Esy = pnlData[(int)PanelIndex.Esy].ToDouble();
+
+			Steel
+				steelX = new Steel(fyx, Esx),
+				steelY = new Steel(fyy, Esy);
+            
+			// Get reinforcement
+			var reinforcement = new WebReinforcement(phiX, sx, steelX, phiY, sy, steelY, width);
+
+			return SPM.Elements.Panel.Read(analysisType, objectId, number, nodes, PanelVertices(pnl), width, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
+		}
+
+		/// <summary>
+		/// Read panel vertices.
+		/// </summary>
+		/// <param name="panel">Panel <see cref="Solid"/> object.</param>
+		/// <returns></returns>
+		private static Point3d[] PanelVertices(Solid panel)
+		{
+			// Get the vertices
+			var pnlVerts = new Point3dCollection();
+			panel.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
+
+			return
+				pnlVerts.ToArray();
 		}
 	}
 }

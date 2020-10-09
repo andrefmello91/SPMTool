@@ -14,7 +14,9 @@ using StressUnit = UnitsNet.Units.PressureUnit;
 
 namespace SPMTool.Database.Settings
 {
-	// Concrete
+	/// <summary>
+    /// Units data class.
+    /// </summary>
 	public static class UnitsData
 	{
 		// Unit names
@@ -41,17 +43,6 @@ namespace SPMTool.Database.Settings
 				Pressure.GetAbbreviation(StressUnit.Megapascal),
 				Pressure.GetAbbreviation(StressUnit.Gigapascal)
 			};
-
-		[CommandMethod("SetUnits")]
-		public static void SetUnits()
-		{
-			// Read data
-			var units = ReadUnits(false);
-
-			// Start the window of units configuration
-			var unitConfig = new UnitsConfig(units);
-			Application.ShowModalWindow(Application.MainWindow.Handle, unitConfig, false);
-		}
 
 		/// <summary>
         /// Save this <paramref name="units"/> in database.
@@ -89,7 +80,7 @@ namespace SPMTool.Database.Settings
 			if (data is null)
 			{
 				if (setUnits)
-					SetUnits();
+					Editor.Commands.Settings.SetUnits();
 				else
 					return SPMTool.Units.Default;
 			}
