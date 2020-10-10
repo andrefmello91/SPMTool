@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
@@ -20,34 +21,44 @@ namespace SPMTool.Database
     public static class Model
     {
 	    /// <summary>
-	    /// Get the collection of nodes in the model.
+	    /// Get the collection of all nodes in the model.
 	    /// </summary>
-	    public static ObjectIdCollection NodeCollection => Nodes.Update(DataBase.Units.Geometry);
+	    public static IEnumerable<DBPoint> NodeCollection => Nodes.Update(DataBase.Units.Geometry);
+
+	    /// <summary>
+	    /// Get the collection of external nodes in the model.
+	    /// </summary>
+	    public static IEnumerable<DBPoint> ExtNodeCollection => Layer.ExtNode.GetDBObjects().ToPoints();
+
+	    /// <summary>
+	    /// Get the collection of internal nodes in the model.
+	    /// </summary>
+	    public static IEnumerable<DBPoint> IntNodeCollection => Layer.IntNode.GetDBObjects().ToPoints();
 
 	    /// <summary>
 	    /// Get the collection of stringers in the model.
 	    /// </summary>
-	    public static ObjectIdCollection StringerCollection => Elements.Stringers.UpdateStringers();
+	    public static IEnumerable<Line> StringerCollection => Stringers.Update();
 
 	    /// <summary>
 	    /// Get the collection of panels in the model.
 	    /// </summary>
-	    public static ObjectIdCollection PanelCollection => SPM.Elements.Panel.UpdatePanels();
+	    public static IEnumerable<Solid> PanelCollection => Panels.Update();
 
 	    /// <summary>
 	    /// Get the collection of forces in the model.
 	    /// </summary>
-	    public static ObjectIdCollection ForceCollection => GetObjectsOnLayer(Layer.Force);
+	    public static IEnumerable<BlockReference> ForceCollection => Layer.Force.GetDBObjects().ToBlocks();
 
 	    /// <summary>
 	    /// Get the collection of supports in the model.
 	    /// </summary>
-	    public static ObjectIdCollection SupportCollection => GetObjectsOnLayer(Layer.Support);
+	    public static IEnumerable<BlockReference> SupportCollection => Layer.Support.GetDBObjects().ToBlocks();
 
         /// <summary>
         /// Get the collection of force texts in the model.
         /// </summary>
-        public static ObjectIdCollection ForceTextCollection => GetObjectsOnLayer(Layer.ForceText);
+        public static IEnumerable<DBText> ForceTextCollection => Layer.ForceText.GetDBObjects().ToTexts();
 
         /// <summary>
         /// Get the <see cref="InputData"/> from objects in drawing.
@@ -91,80 +102,6 @@ namespace SPMTool.Database
 	        dataOk = true;
 	        message = null;
 	        return new InputData(nodes, stringers, panels, analysisType);
-        }
-
-        /// <summary>
-        /// Get a <see cref="ObjectIdCollection"/> containing all the objects in this <see cref="Layer"/>.
-        /// </summary>
-        /// <param name="layer">The <see cref="Layer"/>.</param>
-        public static ObjectIdCollection GetObjectsOnLayer(Layer layer)
-        {
-	        // Get layer name
-	        var layerName = layer.ToString();
-
-	        // Build a filter list so that only entities on the specified layer are selected
-	        TypedValue[] tvs =
-	        {
-		        new TypedValue((int) DxfCode.LayerName, layerName)
-	        };
-
-	        var selFt = new SelectionFilter(tvs);
-
-	        // Get the entities on the layername
-	        var selRes = UserInput.Editor.SelectAll(selFt);
-
-	        return
-		        selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 ? new ObjectIdCollection(selRes.Value.GetObjectIds()) : null;
-        }
-
-        /// <summary>
-        /// Erase all the objects in this <see cref="ObjectIdCollection"/>.
-        /// </summary>
-        /// <param name="objects">The <see cref="ObjectIdCollection"/> containing the objects to erase.</param>
-        public static void EraseObjects(ObjectIdCollection objects)
-        {
-	        if (objects is null || objects.Count == 0)
-		        return;
-
-	        // Start a transaction
-	        using (var trans = DataBase.StartTransaction())
-	        {
-		        foreach (ObjectId obj in objects)
-                    using (var ent = (Entity)trans.GetObject(obj, OpenMode.ForWrite))
-                        ent.Erase();
-
-		        // Commit changes
-		        trans.Commit();
-	        }
-        }
-
-        /// <summary>
-        /// Erase all the objects in this <see cref="DBObjectCollection"/>.
-        /// </summary>
-        /// <param name="objects">The <see cref="DBObjectCollection"/> containing the objects to erase.</param>
-        public static void EraseObjects(DBObjectCollection objects) => EraseObjects(objects.ToObjectIdCollection());
-
-        /// <summary>
-        /// Erase all the objects in this <paramref name="layer"/>.
-        /// </summary>
-        /// <param name="layer">The <see cref="Layer"/>.</param>
-        public static void EraseObjects(Layer layer)
-        {
-	        // Get objects
-	        using (var objs = GetObjectsOnLayer(layer))
-		        EraseObjects(objs);
-        }
-
-        /// <summary>
-        /// Read a <see cref="DBObject"/> in the drawing.
-        /// </summary>
-        /// <param name="objectId">The <see cref="ObjectId"/> of the <see cref="DBObject"/>.</param>
-        public static DBObject ReadDBObject(ObjectId objectId)
-        {
-	        // Start a transaction
-	        using (var trans = DataBase.StartTransaction())
-		        return
-			        trans.GetObject(objectId, OpenMode.ForRead);
         }
 
         /// <summary>

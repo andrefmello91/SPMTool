@@ -5,6 +5,7 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using Extensions;
 using Extensions.AutoCAD;
 using Extensions.Number;
 using Material.Reinforcement;
@@ -16,6 +17,7 @@ using SPMTool.Enums;
 using UnitsNet;
 using UnitsNet.Units;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
+using Force = OnPlaneComponents.Force;
 
 namespace SPMTool.Editor
 {
@@ -90,7 +92,7 @@ namespace SPMTool.Editor
         /// </summary>
         /// <param name="message">The message to display.</param>
         /// <param name="layers">The collection of layers to filter the objects.</param>
-        public static DBObjectCollection SelectObjects(string message, Layer[] layers = null)
+        public static IEnumerable<DBObject> SelectObjects(string message, IEnumerable<Layer> layers = null)
 		{
 			// Prompt for user select elements
 			var selOp = new PromptSelectionOptions()
@@ -105,29 +107,30 @@ namespace SPMTool.Editor
 
 			var set = selRes.Value;
 
-			using (var collection = new DBObjectCollection())
+			var collection = new List<DBObject>();
+
+			if (set.Count == 0)
+				return collection;
+
+			var filter = layers?.ToArray();
+			
+			// Start a transaction
+			using (var trans = DataBase.StartTransaction())
 			{
-				if (set.Count == 0)
-					return collection;
+				// Get the objects in the selection and add to the collection only the external nodes
+				foreach (SelectedObject obj in set)
+					using (var ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForRead))
+					{
+						// Get layername
+						var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
 
-				// Start a transaction
-				using (var trans = DataBase.StartTransaction())
-				{
-					// Get the objects in the selection and add to the collection only the external nodes
-					foreach (SelectedObject obj in set)
-						using (var ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForRead))
-						{
-							// Get layername
-							var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
-
-							// Check if it is a external node
-							if (layers is null || layers.Contains(layer))
-								collection.Add(ent);
-						}
-
-					return collection;
-				}
+						// Check if it is a external node
+						if (layers is null || filter.Contains(layer))
+							collection.Add(ent);
+					}
 			}
+
+			return collection;
 		}
 
         /// <summary>
@@ -135,10 +138,9 @@ namespace SPMTool.Editor
         /// </summary>
         /// <param name="message">The message to display.</param>
         /// <param name="nodeType">The <see cref="NodeType"/> to filter selection.</param>
-        public static DBObjectCollection SelectNodes(string message, NodeType nodeType = NodeType.External)
+        public static IEnumerable<DBPoint> SelectNodes(string message, NodeType nodeType = NodeType.External)
 		{
-			DBObjectCollection nds;
-            var layers = new List<Layer>();
+			var layers = new List<Layer>();
 
 			if (nodeType == NodeType.External || nodeType == NodeType.All)
 				layers.Add(Layer.ExtNode);
@@ -149,13 +151,13 @@ namespace SPMTool.Editor
 			// Create an infinite loop for selecting elements
 			for ( ; ; )
 			{
-				nds = SelectObjects(message, layers.ToArray());
+				var nds = SelectObjects(message, layers)?.ToArray();
 
 				if (nds is null)
 					return null;
 
-				if (nds.Count > 0)
-					return nds;
+				if (nds.Length > 0)
+					return nds.ToPoints();
 
                 // No nodes selected
                 Application.ShowAlertDialog($"Please select at least one {nodeType} nodes.");
@@ -166,21 +168,20 @@ namespace SPMTool.Editor
         /// Get a collection of stringers from user.
         /// </summary>
         /// <param name="message">The message to display.</param>
-        public static DBObjectCollection SelectStringers(string message)
+        public static IEnumerable<Line> SelectStringers(string message)
 		{
-			DBObjectCollection strs;
 			var layers = new[] { Layer.Stringer };
 
             // Create an infinite loop for selecting elements
             for ( ; ; )
 			{
-				strs = SelectObjects(message, layers);
+				var strs = SelectObjects(message, layers)?.ToArray();
 
 				if (strs is null)
 					return null;
 
-				if (strs.Count > 0)
-					return strs;
+				if (strs.Length > 0)
+					return strs.ToLines();
 
                 Application.ShowAlertDialog("Please select at least one stringer.");
 			}
@@ -190,21 +191,20 @@ namespace SPMTool.Editor
         /// Get a collection of panels from user.
         /// </summary>
         /// <param name="message">The message to display.</param>
-		public static DBObjectCollection SelectPanels(string message)
+		public static IEnumerable<Solid> SelectPanels(string message)
 		{
-			DBObjectCollection pnls;
 			var layers = new[] { Layer.Panel };
 
             // Create an infinite loop for selecting elements
             for ( ; ; )
 			{
-				pnls = SelectObjects(message, layers);
+				var pnls = SelectObjects(message, layers)?.ToArray();
 
 				if (pnls is null)
 					return null;
 
-				if (pnls.Count > 0)
-					return pnls;
+				if (pnls.Length > 0)
+					return pnls.ToSolids();
 
                 Application.ShowAlertDialog("Please select at least one panel.");
 			}
@@ -338,7 +338,7 @@ namespace SPMTool.Editor
 		        options.Add("New");
 
 		        // Get string result
-		        var res = UserInput.SelectKeyword($"Choose a geometry option ({dimAbrev} x {dimAbrev}) or add a new one:", options, out var index, options[0]);
+		        var res = SelectKeyword($"Choose a geometry option ({dimAbrev} x {dimAbrev}) or add a new one:", options, out var index, options[0]);
 
 		        if (res is null)
 			        return null;
@@ -368,6 +368,76 @@ namespace SPMTool.Editor
 	        var strGeo = new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h);
 	        ElementData.Save(strGeo);
 	        return strGeo;
+        }
+
+        /// <summary>
+        /// Get panel width from user.
+        /// </summary>
+        /// <param name="unit">The <see cref="LengthUnit"/> of geometry.</param>
+        public static double? GetPanelWidth(LengthUnit unit)
+        {
+	        // Get saved reinforcement options
+	        var savedGeo = DataBase.SavedPanelWidth;
+
+	        // Get unit abreviation
+	        var dimAbrev = Length.GetAbbreviation(unit);
+
+	        // Get saved reinforcement options
+	        if (savedGeo != null)
+	        {
+		        // Get the options
+		        var options = savedGeo.Select(t => $"{t.ConvertFromMillimeter(unit):0.00}").ToList();
+
+		        // Add option to set new reinforcement
+		        options.Add("New");
+
+		        // Get string result
+		        var res = SelectKeyword($"Choose panel width ({dimAbrev}) or add a new one:", options, out var index, options[0]);
+
+		        if (res is null)
+			        return null;
+
+		        // Get the index
+		        if (res != "New")
+			        return savedGeo[index];
+	        }
+
+	        // New reinforcement
+	        double def = 100.ConvertFromMillimeter(unit);
+	        var widthn = GetDouble($"Input width ({dimAbrev}) for selected panels:", def);
+
+	        if (!widthn.HasValue)
+		        return null;
+
+	        var width = widthn.Value.Convert(unit);
+
+	        // Save geometry
+	        ElementData.Save(width);
+
+	        return width;
+        }
+
+        /// <summary>
+        /// Get the force values from user.
+        /// </summary>
+        /// <param name="forceUnit">The current <see cref="ForceUnit"/>.</param>
+        public static Force? GetForceValue(ForceUnit forceUnit)
+        {
+	        var fAbrev = forceUnit.Abbrev();
+
+	        // Ask the user set the load value in x direction:
+	        var xFn = GetDouble($"Enter force (in {fAbrev}) in X direction(positive following axis direction)?", 0, true, true);
+
+	        if (!xFn.HasValue)
+		        return null;
+
+	        // Ask the user set the load value in y direction:
+	        var yFn = GetDouble($"Enter force (in {fAbrev}) in Y direction(positive following axis direction)?", 0, true, true);
+
+	        if (!yFn.HasValue)
+		        return null;
+
+	        return new Force(xFn.Value, yFn.Value, forceUnit);
         }
 	}
 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.EditorInput;
 using Material.Reinforcement;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database;
@@ -12,6 +13,7 @@ using Extensions;
 using Extensions.AutoCAD;
 using SPMTool.Enums;
 using SPMTool.Database.Conditions;
+using SPMTool.Editor;
 using UnitsNet;
 using UnitsNet.Units;
 using Color = SPMTool.Enums.Color;
@@ -266,5 +268,39 @@ namespace SPMTool
 	        var alpha = (byte) (255 * (100 - transparency) / 100);
 	        return new Transparency(alpha);
         }
+
+        /// <summary>
+        /// Get a collection containing all the <see cref="ObjectId"/>'s in this <see cref="Layer"/>.
+        /// </summary>
+        public static IEnumerable<ObjectId> GetObjectIds(this Layer layer)
+        {
+	        // Get layer name
+	        var layerName = layer.ToString();
+
+	        // Build a filter list so that only entities on the specified layer are selected
+	        TypedValue[] tvs =
+	        {
+		        new TypedValue((int) DxfCode.LayerName, layerName)
+	        };
+
+	        var selFt = new SelectionFilter(tvs);
+
+	        // Get the entities on the layername
+	        var selRes = UserInput.Editor.SelectAll(selFt);
+
+	        return
+		        selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 ? selRes.Value.GetObjectIds() : null;
+        }
+
+        /// <summary>
+        /// Get a collection containing all the <see cref="DBObject"/>'s in this <see cref="Layer"/>.
+        /// </summary>
+        public static IEnumerable<DBObject> GetDBObjects(this Layer layer) => layer.GetObjectIds()?.GetDBObjects();
+
+        /// <summary>
+        /// Erase all the objects in this <paramref name="layer"/>.
+        /// </summary>
+        /// <param name="layer">The <see cref="Layer"/>.</param>
+        public static void EraseObjects(this Layer layer) => layer.GetObjectIds()?.Erase();
     }
 }

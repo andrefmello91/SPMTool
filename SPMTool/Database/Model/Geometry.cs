@@ -23,11 +23,11 @@ namespace SPMTool.Database
 			int numNds = nds.Count;
 
 			// Update and get the number of stringers
-			var strs = Database.Elements.Stringers.UpdateStringers();
+			var strs = Database.Elements.Stringers.Update();
 			int numStrs = strs.Count;
 
 			// Update and get the number of panels
-			var pnls = Elements.Panels.UpdatePanels();
+			var pnls = Elements.Panels.Update();
 			int numPnls = pnls.Count;
 
 			// Display the number of updated elements

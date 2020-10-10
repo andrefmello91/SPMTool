@@ -20,21 +20,23 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		/// <param name="position">The <see cref="Point3d"/> position.</param>
 		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
-		public static void Add(Point3d position, NodeType nodeType)
+		/// <param name="data">The extended data for the node object.</param>
+		public static void Add(Point3d position, NodeType nodeType, ResultBuffer data = null)
 		{
             // Get the list of nodes
             var ndList = NodePositions(NodeType.All);
 
-			Add(position, nodeType, ref ndList);
+			Add(position, nodeType, ref ndList, data);
 		}
 
-		/// <summary>
-		/// Add a node to drawing in this <paramref name="position"/>.
-		/// </summary>
-		/// <param name="position">The <see cref="Point3d"/> position.</param>
-		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
-		/// <param name="existentNodes">The collection containing the position of existent nodes in the drawing.</param>
-		public static void Add(Point3d position, NodeType nodeType, ref IEnumerable<Point3d> existentNodes)
+        /// <summary>
+        /// Add a node to drawing in this <paramref name="position"/>.
+        /// </summary>
+        /// <param name="position">The <see cref="Point3d"/> position.</param>
+        /// <param name="nodeType">The <see cref="NodeType"/>.</param>
+        /// <param name="existentNodes">The collection containing the position of existent nodes in the drawing.</param>
+        /// <param name="data">The extended data for the node object.</param>
+		public static void Add(Point3d position, NodeType nodeType, ref IEnumerable<Point3d> existentNodes, ResultBuffer data = null)
 		{
             // Get the list of nodes
             var ndList = existentNodes.ToList();
@@ -55,6 +57,9 @@ namespace SPMTool.Database.Elements
 
 			// Add the new object
 			dbPoint.Add();
+
+			// Set Xdata
+			dbPoint.SetXData(data ?? new ResultBuffer(NewXData()));
 		}
 
 		/// <summary>
@@ -84,34 +89,32 @@ namespace SPMTool.Database.Elements
         /// Enumerate all the nodes in the model and return the collection of nodes.
         /// </summary>
         /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
-        public static ObjectIdCollection Update(LengthUnit geometryUnit)
+        public static IEnumerable<DBPoint> Update(LengthUnit geometryUnit)
 		{
 			// Get all the nodes as points
-			var ndObjs = AllNodes();
-			using (var nds = ndObjs.ToDBObjectCollection())
+			var ndObjs = AllNodes().ToArray();
+
+			// Get the list of nodes ordered
+			var ndList = NodePositions(NodeType.All).ToList();
+
+			// Get the Xdata size
+			int size = Enum.GetNames(typeof(NodeIndex)).Length;
+
+			// Access the nodes on the document
+			foreach (var nd in ndObjs)
 			{
-				// Get the list of nodes ordered
-				var ndList = NodePositions(NodeType.All).ToList();
+				// Get the node number on the list
+				double ndNum = ndList.IndexOf(nd.Position) + 1;
 
-				// Get the Xdata size
-				int size = Enum.GetNames(typeof(NodeIndex)).Length;
+				// Initialize the array of typed values for XData
+				var data = nd.XData?.AsArray();
+				data = data?.Length == size ? data : NewXData();
 
-				// Access the nodes on the document
-				foreach (DBPoint nd in nds)
-				{
-					// Get the node number on the list
-					double ndNum = ndList.IndexOf(nd.Position) + 1;
+				// Set the updated number
+				data[(int) NodeIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
 
-					// Initialize the array of typed values for XData
-					var data = nd.XData?.AsArray();
-					data = data?.Length == size ? data : NewXData();
-
-					// Set the updated number
-					data[(int) NodeIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
-
-					// Add the new XData
-					nd.SetXData(data);
-				}
+				// Add the new XData
+				nd.SetXData(data);
 			}
 
 			// Set the style for all point objects in the drawing
@@ -130,78 +133,71 @@ namespace SPMTool.Database.Elements
         public static IEnumerable<Point3d> NodePositions(NodeType nodeType)
 		{
 			// Initialize an object collection
-			var ndObjs = new ObjectIdCollection();
+			var ndObjs = new List<DBPoint>();
 
 			// Select the node type
 			switch (nodeType)
 			{
 				case NodeType.All:
-					ndObjs = AllNodes();
+					ndObjs = AllNodes().ToList();
 					break;
 
 				case NodeType.Internal:
-					ndObjs = Model.GetObjectsOnLayer(Layer.IntNode);
+					ndObjs = Layer.IntNode.GetDBObjects().ToPoints().ToList();
 					break;
 
 				case NodeType.External:
-					ndObjs = Model.GetObjectsOnLayer(Layer.ExtNode);
+					ndObjs = Layer.ExtNode.GetDBObjects().ToPoints().ToList();
 					break;
 			}
 
-			return (from DBPoint nd in ndObjs.ToDBObjectCollection() select nd.Position).Order();
+			return ndObjs.Select(nd => nd.Position).Order();
 		}
 
         /// <summary>
         /// Get the collection of all of the nodes in the drawing.
         /// </summary>
-        public static ObjectIdCollection AllNodes()
+        public static IEnumerable<DBPoint> AllNodes()
 		{
 			// Create a unique collection for all the nodes
-			var nds = new List<ObjectId>();
+			var nds = new List<DBPoint>();
 
             // Create the nodes collection and initialize getting the elements on node layer
-            using (var extNds = Model.GetObjectsOnLayer(Layer.ExtNode))
-            using (var intNds = Model.GetObjectsOnLayer(Layer.IntNode))
-            {
-				nds.AddRange(extNds.Cast<ObjectId>());
-				nds.AddRange(intNds.Cast<ObjectId>());
-            }
+			nds.AddRange(Layer.ExtNode.GetDBObjects().ToPoints());
+			nds.AddRange(Layer.IntNode.GetDBObjects().ToPoints());
 
-            return new ObjectIdCollection(nds.ToArray());
+            return nds;
 		}
 
         /// <summary>
         /// Read <see cref="Node"/> objects from an <see cref="ObjectIdCollection"/>.
         /// </summary>
-        /// <param name="nodeObjectsIds">The <see cref="ObjectIdCollection"/> containing the nodes of drawing.</param>
+        /// <param name="nodeObjects">The <see cref="ObjectIdCollection"/> containing the nodes of drawing.</param>
         /// <param name="units">Current <see cref="Units"/>.</param>
-        public static IEnumerable<Node> Read(ObjectIdCollection nodeObjectsIds, Units units) => (from ObjectId ndObj in nodeObjectsIds select Read(ndObj, units)).OrderBy(node => node.Number);
+        public static IEnumerable<Node> Read(IEnumerable<DBPoint> nodeObjects, Units units) => nodeObjects.Select(nd => Read(nd, units)).OrderBy(node => node.Number);
 
         /// <summary>
         /// Read a <see cref="Node"/> in the drawing.
         /// </summary>
-        /// <param name="objectId">The <see cref="ObjectId"/> of the node.</param>
+        /// <param name="nodeObject">The <see cref="DBPoint"/> object of the node.</param>
         /// <param name="units">Current <see cref="Units"/>.</param>
-        public static Node Read(ObjectId objectId, Units units)
+        public static Node Read(DBPoint nodeObject, Units units)
         {
-	        // Read the object as a point
-	        var ndPt = (DBPoint)objectId.ToDBObject();
-
 	        // Read the XData and get the necessary data
-	        var data = ndPt.ReadXData();
+	        var data = nodeObject.ReadXData();
 
 	        // Get the node number
 	        var number = data[(int)NodeIndex.Number].ToInt();
 
 	        return
-		        new Node(objectId, number, ndPt.Position, GetNodeType(ndPt), units.Geometry, units.Displacements);
+		        new Node(nodeObject.ObjectId, number, nodeObject.Position, GetNodeType(nodeObject), units.Geometry, units.Displacements);
         }
 
         /// <summary>
         /// Get <see cref="NodeType"/>.
         /// </summary>
         /// <param name="nodePoint">The <see cref="Entity"/> object.</param>
-        private static NodeType GetNodeType(Entity nodePoint) => nodePoint.Layer == Layer.ExtNode.ToString() ? NodeType.External : NodeType.Internal;
+        private static NodeType GetNodeType(Entity nodePoint) => nodePoint.Layer == $"{Layer.ExtNode}" ? NodeType.External : NodeType.Internal;
 
         /// <summary>
         /// Get the layer name based on <paramref name="nodeType"/>.
@@ -229,14 +225,8 @@ namespace SPMTool.Database.Elements
         /// Get the node number at this <paramref name="position"/>.
         /// </summary>
         /// <param name="position">The <see cref="Point3d"/> position.</param>
-        /// <param name="nodes"></param>
-        public static int GetNumber(Point3d position, ObjectIdCollection nodes = null)
-		{
-			var collection = (nodes ?? AllNodes()).ToDBObjectCollection();
-
-			// Compare to the nodes collection
-			return (from DBPoint nd in collection where position.Approx(nd.Position) select nd.ReadXData() into data select data[(int) NodeIndex.Number].ToInt()).FirstOrDefault();
-		}
+        /// <param name="nodeObjects">The collection of node <see cref="DBObject"/>'s</param>
+        public static int GetNumber(Point3d position, IEnumerable<DBPoint> nodeObjects = null) => (nodeObjects ?? AllNodes()).First(nd => nd.Position.Approx(position)).ReadXData()[(int) NodeIndex.Number].ToInt();
 
         /// <summary>
         /// Create node XData.

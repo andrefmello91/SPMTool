@@ -46,9 +46,9 @@ namespace SPMTool.Database.Conditions
         private static void DrawPanelStresses(Panel[] panels, Units units)
 		{
 			// Erase all the panel forces in the drawing
-			Model.EraseObjects(Layer.PanelForce);
-			Model.EraseObjects(Layer.CompressivePanelStress);
-			Model.EraseObjects(Layer.TensilePanelStress);
+			Extensions.EraseObjects(Layer.PanelForce);
+			Extensions.EraseObjects(Layer.CompressivePanelStress);
+			Extensions.EraseObjects(Layer.TensilePanelStress);
 
 			// Start a transaction
 			using (Transaction trans = Database.DataBase.StartTransaction())
@@ -223,9 +223,9 @@ namespace SPMTool.Database.Conditions
 		private static void DrawStringerForces(Stringer[] stringers, double maxForce, Units units)
 		{
 			// Erase all the Stringer forces in the drawing
-			ObjectIdCollection strFs = Model.GetObjectsOnLayer(Layer.StringerForce);
+			ObjectIdCollection strFs = Extensions.GetObjectIds(Layer.StringerForce);
 			if (strFs.Count > 0) 
-				Model.EraseObjects(strFs);
+				global::Extensions.AutoCAD.Extensions.Erase(strFs);
 
 			// Get the scale factor
 			var scFctr = Extensions.ScaleFactor(units.Geometry);
@@ -433,9 +433,9 @@ namespace SPMTool.Database.Conditions
 			Auxiliary.LayerOff(Layer.Displacements);
 
 			// Erase all the displaced objects in the drawing
-			ObjectIdCollection dispObjs = Model.GetObjectsOnLayer(Layer.Displacements);
+			ObjectIdCollection dispObjs = Extensions.GetObjectIds(Layer.Displacements);
 			if (dispObjs.Count > 0)
-				Model.EraseObjects(dispObjs);
+				global::Extensions.AutoCAD.Extensions.Erase(dispObjs);
 
 			// Set a scale factor for displacements
 			double scFctr = 100 * Extensions.ScaleFactor(units.Geometry);

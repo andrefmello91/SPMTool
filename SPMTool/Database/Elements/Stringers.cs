@@ -29,16 +29,17 @@ namespace SPMTool.Database.Elements
 	/// </summary>
 	public static class Stringers
 	{
-		/// <summary>
-		/// Add a stringer to drawing.
-		/// </summary>
-		/// <param name="line">The <see cref="Line"/> to be the stringer.</param>
-		public static void Add(Line line)
+        /// <summary>
+        /// Add a stringer to drawing.
+        /// </summary>
+        /// <param name="line">The <see cref="Line"/> to be the stringer.</param>
+        /// <param name="data">The extended data for the stringer object.</param>
+		public static void Add(Line line, ResultBuffer data = null)
 		{
 			// Get the list of stringers if it's not imposed
 			var strList = StringerGeometries();
 
-			Add(line, ref strList);
+			Add(line, ref strList, data);
 		}
 
         /// <summary>
@@ -46,7 +47,8 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="line">The <see cref="Line"/> to be the stringer.</param>
         /// <param name="stringerCollection">The collection containing all the stringer geometries in the drawing.</param>
-        public static void Add(Line line, ref IEnumerable<StringerGeometry> stringerCollection)
+        /// <param name="data">The extended data for the stringer object.</param>
+        public static void Add(Line line, ref IEnumerable<StringerGeometry> stringerCollection, ResultBuffer data = null)
 		{
 			// Get the list of stringers if it's not imposed
 			var strList = stringerCollection.ToList();
@@ -66,6 +68,9 @@ namespace SPMTool.Database.Elements
 
             // Add the object
             line.Add();
+
+			// Add Xdata
+			line.SetXData(data ?? new ResultBuffer(NewXData()));
 		}
 
         /// <summary>
@@ -73,10 +78,11 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="startPoint">The start <see cref="Point3d"/>.</param>
         /// <param name="endPoint">The end <see cref="Point3d"/>.</param>
-        public static void Add(Point3d startPoint, Point3d endPoint)
+        /// <param name="data">The extended data for the stringer object.</param>
+        public static void Add(Point3d startPoint, Point3d endPoint, ResultBuffer data = null)
         {
 	        using (var line = new Line(startPoint, endPoint))
-				Add(line);
+				Add(line, data);
         }
 
         /// <summary>
@@ -85,91 +91,90 @@ namespace SPMTool.Database.Elements
         /// <param name="startPoint">The start <see cref="Point3d"/>.</param>
         /// <param name="endPoint">The end <see cref="Point3d"/>.</param>
         /// <param name="stringerCollection">The collection containing all the stringer geometries in the drawing.</param>
-        public static void Add(Point3d startPoint, Point3d endPoint, ref IEnumerable<StringerGeometry> stringerCollection)
+        /// <param name="data">The extended data for the stringer object.</param>
+        public static void Add(Point3d startPoint, Point3d endPoint, ref IEnumerable<StringerGeometry> stringerCollection, ResultBuffer data = null)
         {
 	        using (var line = new Line(startPoint, endPoint))
-		        Add(line, ref stringerCollection);
+		        Add(line, ref stringerCollection, data);
         }
 
         /// <summary>
         /// Update the Stringer numbers on the XData of each Stringer in the model and return the collection of stringers.
         /// </summary>
         /// <param name="updateNodes">Update nodes too?</param>
-        public static ObjectIdCollection UpdateStringers(bool updateNodes = true)
-		{
-            // Create the Stringer collection and initialize getting the elements on layer
-            using (var strObjs  = Model.GetObjectsOnLayer(Layer.Stringer))
-            using (var strLines = strObjs.ToDBObjectCollection())
+        public static IEnumerable<Line> Update(bool updateNodes = true)
+        {
+	        // Get the Stringer collection
+	        var strLines = Layer.Stringer.GetDBObjects().ToLines().ToArray();
 
-            // Get all the nodes in the model
-            using (var nds = updateNodes ? Nodes.Update(DataBase.Units.Geometry) : Nodes.AllNodes())
-            {
-	            // Get the array of midpoints ordered
-	            var midPts = (from Line line in strLines select line.StartPoint.MidPoint(line.EndPoint)).Order().ToList();
+	        // Get all the nodes in the model
+	        var nds = (updateNodes ? Nodes.Update(DataBase.Units.Geometry) : Nodes.AllNodes()).ToArray();
 
-	            // Bool to alert the user
-	            bool userAlert = false;
+	        // Get the array of midpoints ordered
+	        var midPts = strLines.Select(str => str.MidPoint()).Order().ToList();
 
-	            // Access the stringers on the document
-	            foreach (Line str in strLines)
-	            {
-		            // Initialize the array of typed values for XData
-		            TypedValue[] data;
+	        // Bool to alert the user
+	        bool userAlert = false;
 
-		            // Get the Xdata size
-		            int size = Enum.GetNames(typeof(StringerIndex)).Length;
+	        // Access the stringers on the document
+	        foreach (var str in strLines)
+	        {
+		        // Initialize the array of typed values for XData
+		        TypedValue[] data;
 
-		            // If XData does not exist, create it
-		            if (str.XData is null)
-			            data = NewStringerData();
+		        // Get the Xdata size
+		        int size = Enum.GetNames(typeof(StringerIndex)).Length;
 
-		            else // Xdata exists
-		            {
-			            // Get the result buffer as an array
-			            data = str.ReadXData();
+		        // If XData does not exist, create it
+		        if (str.XData is null)
+			        data = NewXData();
 
-			            // Verify the size of XData
-			            if (data.Length != size)
-			            {
-				            data = NewStringerData();
+		        else // Xdata exists
+		        {
+			        // Get the result buffer as an array
+			        data = str.ReadXData();
 
-				            // Alert the user
-				            userAlert = true;
-			            }
-		            }
+			        // Verify the size of XData
+			        if (data.Length != size)
+			        {
+				        data = NewXData();
 
-		            // Get the coordinates of the midpoint of the Stringer
-		            var midPt = str.StartPoint.MidPoint(str.EndPoint);
+				        // Alert the user
+				        userAlert = true;
+			        }
+		        }
 
-		            // Get the Stringer number
-		            int strNum = midPts.IndexOf(midPt) + 1;
+		        // Get the coordinates of the midpoint of the Stringer
+		        var midPt = str.StartPoint.MidPoint(str.EndPoint);
 
-		            // Get the start, mid and end nodes
-		            int
-			            strStNd  = Nodes.GetNumber(str.StartPoint, nds),
-			            strMidNd = Nodes.GetNumber(midPt, nds),
-			            strEnNd  = Nodes.GetNumber(str.EndPoint, nds);
+		        // Get the Stringer number
+		        int strNum = midPts.IndexOf(midPt) + 1;
 
-		            // Set the updated number and nodes in ascending number and length (line 2 to 6)
-		            data[(int) StringerIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, strNum);
-		            data[(int) StringerIndex.Grip1]  = new TypedValue((int) DxfCode.ExtendedDataReal, strStNd);
-		            data[(int) StringerIndex.Grip2]  = new TypedValue((int) DxfCode.ExtendedDataReal, strMidNd);
-		            data[(int) StringerIndex.Grip3]  = new TypedValue((int) DxfCode.ExtendedDataReal, strEnNd);
+		        // Get the start, mid and end nodes
+		        int
+			        strStNd  = Nodes.GetNumber(str.StartPoint, nds),
+			        strMidNd = Nodes.GetNumber(midPt, nds),
+			        strEnNd  = Nodes.GetNumber(str.EndPoint, nds);
 
-		            // Add the new XData
-		            str.SetXData(data);
-	            }
+		        // Set the updated number and nodes in ascending number and length (line 2 to 6)
+		        data[(int) StringerIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, strNum);
+		        data[(int) StringerIndex.Grip1]  = new TypedValue((int) DxfCode.ExtendedDataReal, strStNd);
+		        data[(int) StringerIndex.Grip2]  = new TypedValue((int) DxfCode.ExtendedDataReal, strMidNd);
+		        data[(int) StringerIndex.Grip3]  = new TypedValue((int) DxfCode.ExtendedDataReal, strEnNd);
 
-	            // Alert the user
-	            if (userAlert)
-		            Application.ShowAlertDialog("Please set Stringer geometry and reinforcement again");
+		        // Add the new XData
+		        str.SetXData(data);
+	        }
 
-	            // Return the collection of stringers
-	            return strObjs;
-            }
-		}
+	        // Alert the user
+	        if (userAlert)
+		        Application.ShowAlertDialog("Please set Stringer geometry and reinforcement again");
 
-		/// <summary>
+	        // Return the collection of stringers
+	        return strLines;
+        }
+
+        /// <summary>
         /// Get the <see cref="StringerGeometry"/> from this <see cref="Line"/>.
         /// </summary>
         /// <param name="line">The <see cref="Line"/> object.</param>
@@ -197,19 +202,20 @@ namespace SPMTool.Database.Elements
 		public static IEnumerable<StringerGeometry> StringerGeometries()
 		{
 			// Get the stringers in the model
-			var strs = Model.GetObjectsOnLayer(Layer.Stringer).ToDBObjectCollection();
+			var strs = Layer.Stringer.GetDBObjects()?.ToLines()?.ToArray();
 
-			if (strs is null || strs.Count == 0)
+			if (strs.Length == 0)
 				yield break;
 
-			foreach (Line str in strs)
-				yield return new StringerGeometry(str.StartPoint, str.EndPoint, 0, 0);
+			foreach (var obj in strs)
+				using (var str = (Line) obj)
+					yield return new StringerGeometry(str.StartPoint, str.EndPoint, 0, 0);
 		}
 
 		/// <summary>
         /// Create new extended data for stringers.
         /// </summary>
-		private static TypedValue[] NewStringerData()
+		private static TypedValue[] NewXData()
 		{
 			// Definition for the Extended Data
 			string xdataStr = "Stringer Data";
@@ -235,29 +241,26 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		/// Read <see cref="Stringer"/> elements in drawing.
 		/// </summary>
-		/// <param name="stringerObjectsIds">The <see cref="ObjectIdCollection"/> of the stringers from AutoCAD drawing.</param>
+		/// <param name="lines">The collection of the stringer <see cref="Line"/>'s from AutoCAD drawing.</param>
 		/// <param name="nodes">The collection containing all <see cref="Node"/>'s of SPM model.</param>
 		/// <param name="units">Units current in use <see cref="Units"/>.</param>
 		/// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
 		/// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
 		/// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-		public static IEnumerable<Stringer> Read(ObjectIdCollection stringerObjectsIds, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
-			(from ObjectId obj in stringerObjectsIds select Read(obj, units, concreteParameters, concreteConstitutive, nodes, analysisType)).OrderBy(str => str.Number);
+		public static IEnumerable<Stringer> Read(IEnumerable<Line> lines, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
+			lines.Select(line => Read(line, units, concreteParameters, concreteConstitutive, nodes, analysisType)).OrderBy(str => str.Number);
 
         /// <summary>
         /// Read a <see cref="Stringer"/> in drawing.
         /// </summary>
-        /// <param name="objectId">The <see cref="ObjectId"/> of the stringer from AutoCAD drawing.</param>
+        /// <param name="line">The <see cref="Line"/> object of the stringer from AutoCAD drawing.</param>
         /// <param name="nodes">The collection containing all <see cref="Node"/>'s of SPM model.</param>
 		/// <param name="units">Units current in use <see cref="Units"/>.</param>
         /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
         /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
         /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-        public static Stringer Read(ObjectId objectId, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
+        public static Stringer Read(Line line, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
 		{
-			// Read the object as a line
-			var line = (Line) objectId.ToDBObject();
-
 			// Read the XData and get the necessary data
 			var data = line.ReadXData();
 
@@ -272,7 +275,7 @@ namespace SPMTool.Database.Elements
 			// Get reinforcement
 			var reinforcement = GetReinforcement(data, width * height);
 
-			return Stringer.Read(analysisType, objectId, number, nodes, line.StartPoint, line.EndPoint, width, height, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
+			return Stringer.Read(analysisType, line.ObjectId, number, nodes, line.StartPoint, line.EndPoint, width, height, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
 		}
 
         /// <summary>

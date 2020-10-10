@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Extensions.AutoCAD;
@@ -88,7 +90,39 @@ namespace SPMTool.Editor.Commands
 
 		    // Update the nodes and stringers
 		    Nodes.Update(units.Geometry);
-		    Stringers.UpdateStringers();
+		    Stringers.Update();
 	    }
+
+		[CommandMethod("AddPanel")]
+		public static void AddPanel()
+		{
+			// Read units
+			var units = DataBase.Units;
+
+			// Get the list of panel vertices
+			var pnlList = Panels.PanelVertices();
+
+			// Create a loop for creating infinite panels
+			for ( ; ; )
+			{
+				// Prompt for user select 4 vertices of the panel
+				var nds = UserInput.SelectNodes("Select four nodes to be the vertices of the panel")?.ToArray();
+
+				if (nds is null)
+					break;
+
+				// Check if there are four points
+				if (nds.Length == 4)
+					// Create the panel if it doesn't exist
+					Panels.Add(from DBPoint nd in nds select nd.Position, ref pnlList, units.Geometry);
+
+				else
+					Application.ShowAlertDialog("Please select four external nodes.");
+			}
+
+			// Update nodes and panels
+			Nodes.Update(units.Geometry);
+			Panels.Update();
+		}
     }
 }

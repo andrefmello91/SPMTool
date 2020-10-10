@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Extensions.AutoCAD;
+using Extensions.Number;
 using SPM.Elements;
+using SPM.Elements.PanelProperties;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database;
 using SPMTool.Database.Elements;
@@ -33,7 +36,7 @@ namespace SPMTool.Editor.Commands
 		    var units = DataBase.Units;
 
 		    // Prompt for select stringers
-		    var strs = UserInput.SelectStringers("Select stringers to divide");
+		    var strs = UserInput.SelectStringers("Select stringers to divide")?.ToArray();
 
 		    if (strs is null)
 			    return;
@@ -53,13 +56,15 @@ namespace SPMTool.Editor.Commands
 		    List<Point3d> newIntNds = new List<Point3d>(),
 			    newExtNds = new List<Point3d>();
 
-		    // Access the internal nodes in the model
-		    using (var intNds = Model.GetObjectsOnLayer(Layer.IntNode).ToDBObjectCollection())
-			    foreach (Line str in strs)
-			    {
-				    // Access the XData as an array
-				    var data = str.ReadXData();
+            // Create a list to erase the internal nodes
+            var ndsToErase = new List<DBObject>();
 
+            // Access the internal nodes in the model
+            var intNds = Layer.IntNode.GetDBObjects().ToArray();
+
+		    foreach (var obj in strs)
+			    using (var str = (Line) obj)
+			    {
 				    // Get the coordinates of the initial and end points
 				    Point3d
 					    strSt  = str.StartPoint,
@@ -67,8 +72,8 @@ namespace SPMTool.Editor.Commands
 
 				    // Calculate the distance of the points in X and Y
 				    double
-					    distX = (strEnd.X - strSt.X) / num,
-					    distY = (strEnd.Y - strSt.Y) / num;
+					    distX = strEnd.DistanceInX(strSt) / num,
+					    distY = strEnd.DistanceInY(strSt) / num;
 
 				    // Initialize the start point
 				    var stPt = strSt;
@@ -77,11 +82,8 @@ namespace SPMTool.Editor.Commands
 				    var midPt = strSt.MidPoint(strEnd);
 
 				    // Read the internal nodes to erase
-				    using (var ndsToErase = new ObjectIdCollection((from DBPoint intNd in intNds
-					    where intNd.Position.Approx(midPt)
-					    select intNd.ObjectId).ToArray()))
-					    Model.EraseObjects(ndsToErase);
-
+				    ndsToErase.AddRange(intNds.Where(nd => ((DBPoint) nd).Position.Approx(midPt)));
+				    
 				    // Create the new stringers
 				    for (int i = 1; i <= num; i++)
 				    {
@@ -93,13 +95,7 @@ namespace SPMTool.Editor.Commands
 					    var endPt = new Point3d(xCrd, yCrd, 0);
 
 					    // Create the Stringer
-					    using (var strLine = new Line(stPt, endPt))
-					    {
-						    Stringers.Add(strLine, ref stringerCollection);
-
-						    // Append the XData of the original Stringer
-						    strLine.XData = new ResultBuffer(data);
-					    }
+					    Stringers.Add(stPt, endPt, ref stringerCollection, str.XData);
 
 					    // Get the mid point
 					    midPt = stPt.MidPoint(endPt);
@@ -118,18 +114,15 @@ namespace SPMTool.Editor.Commands
 					    stPt = endPt;
 				    }
 
-				    // Erase the original Stringer
-				    str.UpgradeOpen();
-				    str.Erase();
-
 				    // Remove from the list
 				    var strList = stringerCollection.ToList();
 				    strList.Remove(new StringerGeometry(strSt, strEnd, 0, 0));
 				    stringerCollection = strList;
 			    }
 
-		    // Erase original stringers
-		    Model.EraseObjects(strs);
+		    // Erase original stringers and internal nodes
+		    strs.Erase();
+			ndsToErase.Erase();
 
 		    // Create the nodes
 		    Nodes.Add(newExtNds, NodeType.External);
@@ -137,7 +130,7 @@ namespace SPMTool.Editor.Commands
 
 		    // Update nodes and stringers
 		    Nodes.Update(units.Geometry);
-		    Stringers.UpdateStringers();
+		    Stringers.Update();
 	    }
 
 		/// <summary>
@@ -150,7 +143,7 @@ namespace SPMTool.Editor.Commands
 		    var units = DataBase.Units;
 
 		    // Request objects to be selected in the drawing area
-		    var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)");
+		    var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();
 
 		    if (strs is null)
 			    return;
@@ -164,7 +157,7 @@ namespace SPMTool.Editor.Commands
 		    var geometry = geometryn.Value;
 
 		    // Start a transaction
-		    foreach (DBObject obj in strs)
+		    foreach (var obj in strs)
 		    {
 			    // Access the XData as an array
 			    var data = obj.ReadXData();
@@ -177,5 +170,219 @@ namespace SPMTool.Editor.Commands
 			    obj.SetXData(data);
 		    }
 	    }
+
+		[CommandMethod("DividePanel")]
+		public static void DividePanel()
+		{
+			// Get units
+			var units = DataBase.Units;
+
+			// Prompt for select panels
+			var pnls = UserInput.SelectPanels("Select panels to divide");
+
+			if (pnls is null)
+				return;
+
+			// Prompt for the number of rows
+			var rown = UserInput.GetInteger("Enter the number of rows for division:", 2);
+
+			if (!rown.HasValue)
+				return;
+
+			// Prompt for the number of columns
+			var clnn = UserInput.GetInteger("Enter the number of columns for division:", 2);
+
+			if (!clnn.HasValue)
+				return;
+
+			// Get values
+			int 
+				row = rown.Value,
+				cln = clnn.Value;
+
+			// Get the list of start and endpoints
+			var strList = Stringers.StringerGeometries().ToList();
+
+			// Get the list of panels
+			var pnlList = Panels.PanelVertices().ToList();
+
+			// Create lists of points for adding the nodes later
+			List<Point3d> newIntNds = new List<Point3d>(),
+				newExtNds = new List<Point3d>();
+
+			// Create a list of start and end points for adding the stringers later
+			var newStrList = new List<(Point3d start, Point3d end)>();
+
+			// Auxiliary rectangular panel error
+			var error = false;
+
+			// Create a collection of stringers and nodes to erase
+			using (var toErase = new ObjectIdCollection())
+
+				// Access the stringers in the model
+			using (var strs = Extensions.GetObjectIds(Layer.Stringer).ToDBObjectCollection())
+
+				// Access the internal nodes in the model
+			using (var intNds = Extensions.GetObjectIds(Layer.IntNode).ToDBObjectCollection())
+			{
+				// Get the selection set and analyse the elements
+				foreach (Solid pnl in pnls)
+				{
+					// Get vertices
+					var verts = pnl.GetVertices().ToArray();
+
+					// Get panel geometry
+					var geometry = new PanelGeometry(verts, 0, units.Geometry);
+
+					// Verify if the panel is rectangular
+					if (geometry.Rectangular) // panel is rectangular
+					{
+						// Get the surrounding stringers to erase
+						foreach (Line str in strs)
+						{
+							// Read geometry
+							var strGeo = Stringers.GetGeometry(str, units.Geometry, false);
+
+							// Verify if the Stringer starts and ends in a panel vertex
+							if (!verts.Contains(strGeo.InitialPoint) || !verts.Contains(strGeo.EndPoint))
+								continue;
+
+							// Read the internal nodes
+							foreach (DBPoint nd in intNds)
+								// Erase the internal node and remove from the list
+								if (nd.Position.Approx(strGeo.CenterPoint))
+									toErase.Add(nd.ObjectId);
+
+							// Erase and remove from the list
+							strList.Remove(strGeo);
+							toErase.Add(str.ObjectId);
+						}
+
+						// Calculate the distance of the points in X and Y
+						double
+							distX = (geometry.Edge1.Length / cln).ConvertFromMillimeter(units.Geometry),
+							distY = (geometry.Edge2.Length / row).ConvertFromMillimeter(units.Geometry);
+
+						// Initialize the start point
+						var stPt = verts[0];
+
+						// Create the new panels
+						for (int i = 0; i < row; i++)
+						{
+							for (int j = 0; j < cln; j++)
+							{
+								// Get the vertices of the panel and add to a list
+								var newVerts = new[]
+								{
+									new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
+									new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0),
+									new Point3d(stPt.X + j * distX, stPt.Y + (i + 1) * distY, 0),
+									new Point3d(stPt.X + (j + 1) * distX, stPt.Y + (i + 1) * distY, 0)
+								};
+
+								// Create the panel with XData of the original panel
+								Panels.Add(newVerts, units.Geometry, pnl.XData);
+
+								// Add the vertices to the list for creating external nodes
+								foreach (var pt in newVerts.Where(pt => !newExtNds.Contains(pt)))
+									newExtNds.Add(pt);
+
+								// Create tuples to adding the stringers later
+								var strsToAdd = new[]
+								{
+									(newVerts[0], newVerts[1]),
+									(newVerts[0], newVerts[2]),
+									(newVerts[2], newVerts[3]),
+									(newVerts[1], newVerts[3])
+								};
+
+								// Add to the list of new stringers
+								foreach (var pts in strsToAdd.Where(pts => !newStrList.Contains(pts)))
+									newStrList.Add(pts);
+							}
+						}
+
+						// Add to objects to erase
+						toErase.Add(pnl.ObjectId);
+
+						// Remove from the list
+						pnlList.Remove(geometry.Vertices);
+					}
+
+					else // panel is not rectangular
+					{
+						error = true;
+						break;
+					}
+				}
+
+				if (error)
+					UserInput.Editor.WriteMessage("\nAt least one selected panel is not rectangular.");
+			}
+
+			// Create the stringers
+			foreach (var pts in newStrList)
+			{
+				new Stringers(pts.start, pts.end, strList);
+
+				// Get the midpoint to add the external node
+				Point3d midPt = Auxiliary.MidPoint(pts.Item1, pts.Item2);
+				if (!newIntNds.Contains(midPt))
+					newIntNds.Add(midPt);
+			}
+
+			// Create the nodes
+			new Nodes(newExtNds, NodeType.External);
+			new Nodes(newIntNds, NodeType.Internal);
+
+			// Update the elements
+			Nodes.Update(units);
+			Stringers.Update();
+			Panels.Update();
+
+			// Show an alert for editing stringers
+			Application.ShowAlertDialog("Alert: stringers parameters must be set again.");
+		}
+
+		[CommandMethod("SetPanelGeometry")]
+		public static void SetPanelGeometry()
+		{
+			// Read units
+			var units = DataBase.Units;
+
+			// Request objects to be selected in the drawing area
+			var pnls = UserInput.SelectPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)");
+
+			if (pnls is null)
+				return;
+
+			// Get width
+			var wn = UserInput.GetPanelWidth(units);
+
+			if (!wn.HasValue)
+				return;
+
+			// Start a transaction
+			using (var trans = DataBase.StartTransaction())
+			{
+				foreach (DBObject pnl in pnls)
+				{
+					// Open the selected object for read
+					Entity ent = (Entity) trans.GetObject(pnl.ObjectId, OpenMode.ForWrite);
+
+					// Access the XData as an array
+					TypedValue[] data = Auxiliary.ReadXData(ent);
+
+					// Set the new geometry and reinforcement (line 7 to 9 of the array)
+					data[(int) PanelIndex.Width] = new TypedValue((int) DxfCode.ExtendedDataReal, wn.Value);
+
+					// Add the new XData
+					ent.XData = new ResultBuffer(data);
+				}
+
+				// Save the new object to the database
+				trans.Commit();
+			}
+		}
     }
 }

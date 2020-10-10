@@ -72,434 +72,88 @@ namespace SPMTool.Database.Elements
             using (var solid = new Solid(ordered[0], ordered[1], ordered[2], ordered[3]) { Layer = $"{Layer.Panel}"})
             {
 	            solid.Add();
-	            solid.SetXData(data ?? new ResultBuffer(NewPanelXData()));
+	            solid.SetXData(data ?? new ResultBuffer(NewXData()));
             }
 		}
 
-		[CommandMethod("AddPanel")]
-		public static void AddPanel()
-		{
-			// Read units
-			var units = DataBase.Units;
-
-			// Get the list of panel vertices
-			var pnlList = PanelVertices();
-
-			// Create a loop for creating infinite panels
-			for ( ; ; )
-			{
-				// Prompt for user select 4 vertices of the panel
-				var nds = UserInput.SelectNodes("Select four nodes to be the vertices of the panel");
-
-				if (nds is null)
-					break;
-
-				// Check if there are four points
-				if (nds.Count == 4)
-					// Create the panel if it doesn't exist
-					Add(from DBPoint nd in nds select nd.Position, ref pnlList, units.Geometry);
-
-				else
-					Application.ShowAlertDialog("Please select four external nodes.");
-			}
-
-			// Update nodes and panels
-			Nodes.Update(units.Geometry);
-			UpdatePanels();
-		}
-
-		[CommandMethod("DividePanel")]
-		public static void DividePanel()
-		{
-			// Get units
-			var units = DataBase.Units;
-
-			// Prompt for select panels
-			var pnls = UserInput.SelectPanels("Select panels to divide");
-
-			if (pnls is null)
-				return;
-
-			// Prompt for the number of rows
-			var rown = UserInput.GetInteger("Enter the number of rows for division:", 2);
-
-			if (!rown.HasValue)
-				return;
-
-			// Prompt for the number of columns
-			var clnn = UserInput.GetInteger("Enter the number of columns for division:", 2);
-
-			if (!clnn.HasValue)
-				return;
-
-			// Get values
-			int 
-				row = rown.Value,
-				cln = clnn.Value;
-
-			// Get the list of start and endpoints
-			var strList = Stringers.StringerGeometries().ToList();
-
-			// Get the list of panels
-			var pnlList = PanelVertices().ToList();
-
-			// Create lists of points for adding the nodes later
-			List<Point3d> newIntNds = new List<Point3d>(),
-				newExtNds = new List<Point3d>();
-
-			// Create a list of start and end points for adding the stringers later
-			var newStrList = new List<(Point3d start, Point3d end)>();
-
-			// Auxiliary rectangular panel error
-			var error = false;
-
-			// Create a collection of stringers and nodes to erase
-			using (var toErase = new ObjectIdCollection())
-
-            // Access the stringers in the model
-            using (var strs = Model.GetObjectsOnLayer(Layer.Stringer).ToDBObjectCollection())
-
-            // Access the internal nodes in the model
-            using (var intNds = Model.GetObjectsOnLayer(Layer.IntNode).ToDBObjectCollection())
-            {
-                // Get the selection set and analyse the elements
-                foreach (Solid pnl in pnls)
-                {
-                    // Get vertices
-                    var verts = pnl.GetVertices().ToArray();
-
-					// Get panel geometry
-					var geometry = new PanelGeometry(verts, 0, units.Geometry);
-
-                    // Verify if the panel is rectangular
-                    if (geometry.Rectangular) // panel is rectangular
-                    {
-	                    // Get the surrounding stringers to erase
-	                    foreach (Line str in strs)
-	                    {
-		                    // Read geometry
-		                    var strGeo = Stringers.GetGeometry(str, units.Geometry, false);
-
-		                    // Verify if the Stringer starts and ends in a panel vertex
-		                    if (!verts.Contains(strGeo.InitialPoint) || !verts.Contains(strGeo.EndPoint))
-			                    continue;
-
-		                    // Read the internal nodes
-		                    foreach (DBPoint nd in intNds)
-			                    // Erase the internal node and remove from the list
-			                    if (nd.Position.Approx(strGeo.CenterPoint))
-				                    toErase.Add(nd.ObjectId);
-
-		                    // Erase and remove from the list
-		                    strList.Remove(strGeo);
-		                    toErase.Add(str.ObjectId);
-	                    }
-
-	                    // Calculate the distance of the points in X and Y
-	                    double
-		                    distX = (geometry.Edge1.Length / cln).ConvertFromMillimeter(units.Geometry),
-		                    distY = (geometry.Edge2.Length / row).ConvertFromMillimeter(units.Geometry);
-
-	                    // Initialize the start point
-	                    var stPt = verts[0];
-
-	                    // Create the new panels
-	                    for (int i = 0; i < row; i++)
-	                    {
-		                    for (int j = 0; j < cln; j++)
-		                    {
-			                    // Get the vertices of the panel and add to a list
-			                    var newVerts = new[]
-			                    {
-				                    new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
-				                    new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0),
-				                    new Point3d(stPt.X + j * distX, stPt.Y + (i + 1) * distY, 0),
-				                    new Point3d(stPt.X + (j + 1) * distX, stPt.Y + (i + 1) * distY, 0)
-			                    };
-
-			                    // Create the panel with XData of the original panel
-			                    Add(newVerts, units.Geometry, pnl.XData);
-
-			                    // Add the vertices to the list for creating external nodes
-			                    foreach (var pt in newVerts.Where(pt => !newExtNds.Contains(pt)))
-				                    newExtNds.Add(pt);
-
-			                    // Create tuples to adding the stringers later
-			                    var strsToAdd = new[]
-			                    {
-				                    (newVerts[0], newVerts[1]),
-				                    (newVerts[0], newVerts[2]),
-				                    (newVerts[2], newVerts[3]),
-				                    (newVerts[1], newVerts[3])
-			                    };
-
-			                    // Add to the list of new stringers
-			                    foreach (var pts in strsToAdd.Where(pts => !newStrList.Contains(pts)))
-				                    newStrList.Add(pts);
-		                    }
-	                    }
-
-	                    // Add to objects to erase
-	                    toErase.Add(pnl.ObjectId);
-
-	                    // Remove from the list
-	                    pnlList.Remove(geometry.Vertices);
-                    }
-
-                    else // panel is not rectangular
-                    {
-	                    error = true;
-						break;
-                    }
-                }
-
-				if (error)
-					UserInput.Editor.WriteMessage("\nAt least one selected panel is not rectangular.");
-            }
-
-            // Create the stringers
-            foreach (var pts in newStrList)
-			{
-				new Stringers(pts.start, pts.end, strList);
-
-				// Get the midpoint to add the external node
-				Point3d midPt = Auxiliary.MidPoint(pts.Item1, pts.Item2);
-				if (!newIntNds.Contains(midPt))
-					newIntNds.Add(midPt);
-			}
-
-			// Create the nodes
-			new Nodes(newExtNds, NodeType.External);
-			new Nodes(newIntNds, NodeType.Internal);
-
-			// Update the elements
-			Nodes.Update(units);
-			Stringers.UpdateStringers();
-			UpdatePanels();
-
-			// Show an alert for editing stringers
-			Application.ShowAlertDialog("Alert: stringers parameters must be set again.");
-		}
-
-		[CommandMethod("SetPanelGeometry")]
-		public static void SetPanelGeometry()
-		{
-			// Read units
-			var units = DataBase.Units;
-
-			// Request objects to be selected in the drawing area
-			var pnls = UserInput.SelectPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)");
-
-			if (pnls is null)
-				return;
-
-			// Get width
-			var wn = GetPanelGeometry(units);
-
-			if (!wn.HasValue)
-				return;
-
-			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
-			{
-				foreach (DBObject pnl in pnls)
-				{
-					// Open the selected object for read
-					Entity ent = (Entity) trans.GetObject(pnl.ObjectId, OpenMode.ForWrite);
-
-					// Access the XData as an array
-					TypedValue[] data = Auxiliary.ReadXData(ent);
-
-					// Set the new geometry and reinforcement (line 7 to 9 of the array)
-					data[(int) PanelIndex.Width] = new TypedValue((int) DxfCode.ExtendedDataReal, wn.Value);
-
-					// Add the new XData
-					ent.XData = new ResultBuffer(data);
-				}
-
-				// Save the new object to the database
-				trans.Commit();
-			}
-		}
-
-		// Get reinforcement parameters from user
-		private static double? GetPanelGeometry(Units units)
-		{
-			// Get saved reinforcement options
-			var savedGeo = DataBase.SavedPanelWidth;
-
-			// Get unit abreviation
-			var dimAbrev = Length.GetAbbreviation(units.Geometry);
-
-			// Get saved reinforcement options
-			if (savedGeo != null)
-			{
-				// Get the options
-				var options = savedGeo.Select(t => $"{t.ConvertFromMillimeter(units.Geometry):0.00}").ToList();
-
-				// Add option to set new reinforcement
-				options.Add("New");
-
-				// Get string result
-				var res = UserInput.SelectKeyword($"Choose panel width ({dimAbrev}) or add a new one:", options.ToArray(), options[0]);
-
-				if (!res.HasValue)
-					return null;
-
-				var (index, keyword) = res.Value;
-
-				// Get the index
-				if (keyword != "New")
-					return savedGeo[index];
-			}
-
-			// New reinforcement
-			double def = 100.ConvertFromMillimeter(units.Geometry);
-			var widthn = UserInput.GetDouble("Input width (" + dimAbrev + ") for selected panels:", def);
-
-			if (!widthn.HasValue)
-				return null;
-
-			var width = widthn.Value.Convert(units.Geometry);
-
-			// Save geometry
-			ElementData.Save(width);
-
-			return width;
-		}
-
-		// Update the panel numbers on the XData of each panel in the model and return the collection of panels
-		public static ObjectIdCollection UpdatePanels()
+        /// <summary>
+        /// Update panel numbers on the XData of each panel in the model and return the collection of panels.
+        /// </summary>
+        public static IEnumerable<Solid> Update()
 		{
 			// Get the internal nodes of the model
-			ObjectIdCollection intNds = Model.GetObjectsOnLayer(Layer.IntNode);
+			var intNds = Layer.IntNode.GetDBObjects().ToPoints().ToArray();
 
 			// Create the panels collection and initialize getting the elements on node layer
-			ObjectIdCollection pnls = Model.GetObjectsOnLayer(Layer.Panel);
+			var pnls = Model.PanelCollection.ToArray();
 
-			// Create a point collection
-			List<Point3d> cntrPts = new List<Point3d>();
+            // Create the centerpoint collection
+            var cntrPts = pnls.Select(pnl => pnl.CenterPoint()).Order().ToList();
 
-			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
-			{
-				// Open the Block table for read
-				BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
+            // Get the Xdata size
+            int size = Enum.GetNames(typeof(PanelIndex)).Length;
 
-				// Add the centerpoint of each panel to the collection
-				foreach (ObjectId pnlObj in pnls)
+            // Bool to alert the user
+            var userAlert = false;
+
+            foreach (var pnl in pnls)
+            {
+	            // Get XData
+	            var data = pnl.XData?.AsArray() ?? NewXData();
+
+	            // Verify the size of XData
+	            if (data.Length != size)
+	            {
+		            data = NewXData();
+
+		            // Alert user
+		            userAlert = true;
+	            }
+
+	            // Get the panel number
+	            int pnlNum = cntrPts.IndexOf(pnl.CenterPoint()) + 1;
+
+	            // Initialize an int array of grip numbers
+	            int[] grips = new int[4];
+
+                // Get panel geometry
+                var verts = pnl.GetVertices().ToArray();
+                var geometry = new PanelGeometry(verts, 0, DataBase.Units.Geometry);
+
+				// Get grip positions
+				var pnlGrips = geometry.GripPositions;
+
+				foreach (var grip in pnlGrips)
 				{
-					// Read the object as a solid
-					Solid pnl = trans.GetObject(pnlObj, OpenMode.ForRead) as Solid;
+					// Get the position of the vertex in the array
+					int i = Array.IndexOf(pnlGrips, grip);
 
-					// Get the vertices
-					Point3dCollection pnlVerts = new Point3dCollection();
-					pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
-
-					// Get the approximate coordinates of the center point of the panel
-					Point3d cntrPt = SPMTool.Auxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
-					cntrPts.Add(cntrPt);
+					// Get the node number
+					grips[i] = Nodes.GetNumber(grip, intNds);
 				}
 
-				// Get the list of center points ordered
-				List<Point3d> cntrPtsList = SPMTool.Auxiliary.OrderPoints(cntrPts);
+				// Set the updated panel number
+	            data[(int)PanelIndex.Number] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
 
-				// Bool to alert the user
-				bool userAlert = false;
+	            // Set the updated node numbers in the necessary order
+	            data[(int)PanelIndex.Grip1] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[0]);
+	            data[(int)PanelIndex.Grip2] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[1]);
+	            data[(int)PanelIndex.Grip3] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[2]);
+	            data[(int)PanelIndex.Grip4] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[3]);
 
-				// Access the panels on the document
-				foreach (ObjectId pnlObj in pnls)
-				{
-					// Open the selected object as a solid for write
-					Solid pnl = trans.GetObject(pnlObj, OpenMode.ForWrite) as Solid;
+	            // Add the new XData
+	            pnl.SetXData(data);
+            }
 
-					// Initialize the array of typed values for XData
-					TypedValue[] data;
+			// Move panels to bottom
+			pnls.MoveToBottom();
 
-					// Get the Xdata size
-					int size = Enum.GetNames(typeof(PanelIndex)).Length;
+            // Alert user
+            if (userAlert)
+	            Application.ShowAlertDialog("Please set panel geometry and reinforcement again");
 
-					// Check if the XData already exist. If not, create it
-					if (pnl.XData == null)
-						data = NewPanelXData();
-
-					else // Xdata exists
-					{
-						// Get the result buffer as an array
-						ResultBuffer rb = pnl.GetXDataForApplication(DataBase.AppName);
-						data = rb.AsArray();
-
-						// Verify the size of XData
-						if (data.Length != size)
-						{
-							data = NewPanelXData();
-
-							// Alert user
-							userAlert = true;
-						}
-					}
-
-					// Get the vertices
-					Point3dCollection pnlVerts = new Point3dCollection();
-					pnl.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
-
-					// Get the approximate coordinates of the center point of the panel
-					Point3d cntrPt = SPMTool.Auxiliary.MidPoint(pnlVerts[0], pnlVerts[3]);
-
-					// Get the coordinates of the panel DoFs in the necessary order
-					Point3dCollection pnlGrips = new Point3dCollection();
-					pnlGrips.Add(SPMTool.Auxiliary.MidPoint(pnlVerts[0], pnlVerts[1]));
-					pnlGrips.Add(SPMTool.Auxiliary.MidPoint(pnlVerts[1], pnlVerts[3]));
-					pnlGrips.Add(SPMTool.Auxiliary.MidPoint(pnlVerts[3], pnlVerts[2]));
-					pnlGrips.Add(SPMTool.Auxiliary.MidPoint(pnlVerts[2], pnlVerts[0]));
-
-					// Get the panel number
-					int pnlNum = cntrPtsList.IndexOf(cntrPt) + 1;
-
-					// Initialize an int array of grip numbers
-					int[] grips = new int[4];
-
-					// Compare the node position to the panel vertices
-					foreach (Point3d grip in pnlGrips)
-					{
-						// Get the position of the vertex in the array
-						int i = pnlGrips.IndexOf(grip);
-
-						// Get the node number
-						grips[i] = Nodes.GetNumber(grip, intNds);
-					}
-
-					// Set the updated panel number
-					data[(int) PanelIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, pnlNum);
-
-					// Set the updated node numbers in the necessary order
-					data[(int) PanelIndex.Grip1] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[0]);
-					data[(int) PanelIndex.Grip2] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[1]);
-					data[(int) PanelIndex.Grip3] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[2]);
-					data[(int) PanelIndex.Grip4] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[3]);
-
-					// Add the new XData
-					pnl.XData = new ResultBuffer(data);
-
-					// Read it as a block and get the draw order table
-					BlockTableRecord blck = trans.GetObject(pnl.BlockId, OpenMode.ForRead) as BlockTableRecord;
-					DrawOrderTable drawOrder =
-						trans.GetObject(blck.DrawOrderTableId, OpenMode.ForWrite) as DrawOrderTable;
-
-					// Move the panels to bottom
-					drawOrder.MoveToBottom(pnls);
-				}
-
-				// Alert user
-				if (userAlert)
-					Application.ShowAlertDialog("Please set panel geometry and reinforcement again");
-
-				// Commit and dispose the transaction
-				trans.Commit();
-			}
-
-			// Return the collection of panels
-			return pnls;
+            // Return the collection of panels
+            return pnls;
 		}
 
 		/// <summary>
@@ -508,20 +162,22 @@ namespace SPMTool.Database.Elements
 		public static IEnumerable<Vertices> PanelVertices()
 		{
             // Get the panels in the model
-            using (var pnls = Model.GetObjectsOnLayer(Layer.Panel).ToDBObjectCollection())
-            {
-                if (pnls is null || pnls.Count == 0)
-		            yield break;
+            var pnls = Layer.Panel.GetDBObjects()?.ToSolids()?.ToArray();
 
-	            var unit = DataBase.Units.Geometry;
+            if (pnls is null || pnls.Length == 0)
+	            return null;
 
-	            foreach (Solid pnl in pnls)
-		            yield return new Vertices(pnl.GetVertices(), unit);
-            }
+            var unit = DataBase.Units.Geometry;
+
+            return
+	            pnls.Select(pnl => new Vertices(pnl.GetVertices(), unit));
 		}
 
-		// Method to set panel data
-		private static TypedValue[] NewPanelXData()
+		/// <summary>
+        /// Create new XData for panels.
+        /// </summary>
+        /// <returns></returns>
+		private static TypedValue[] NewXData()
 		{
 			// Definition for the Extended Data
 			string xdataStr = "Panel Data";
@@ -532,8 +188,7 @@ namespace SPMTool.Database.Elements
 			TypedValue[] newData = new TypedValue[size];
 
 			// Set the initial parameters
-			newData[(int) PanelIndex.AppName]  =
-				new TypedValue((int) DxfCode.ExtendedDataRegAppName, DataBase.AppName);
+			newData[(int) PanelIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, DataBase.AppName);
 			newData[(int) PanelIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
 			newData[(int) PanelIndex.Width]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
 			newData[(int) PanelIndex.XDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
@@ -547,37 +202,6 @@ namespace SPMTool.Database.Elements
 
 			return newData;
 		}
-
-		// Read a panel in the drawing
-		public static Solid ReadPanel(ObjectId objectId, OpenMode openMode = OpenMode.ForRead)
-		{
-			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
-			{
-				// Read as a solid
-				return 
-					trans.GetObject(objectId, openMode) as Solid;
-			}
-		}
-
-		// Read panel vertices in the order needed for calculations
-		public static Point3d[] PanelVertices(Solid panel)
-		{
-			// Get the vertices
-			Point3dCollection pnlVerts = new Point3dCollection();
-			panel.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
-
-			// Get the vertices in the order needed for calculations
-			return 
-				new []
-				{
-					pnlVerts[0],
-					pnlVerts[1],
-					pnlVerts[3],
-					pnlVerts[2]
-				};
-		}
-
 		/// <summary>
         /// Create panel stresses blocks.
         /// </summary>
@@ -593,84 +217,82 @@ namespace SPMTool.Database.Elements
 		private static void CreateShearBlock()
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
 			{
 				// Open the Block table for read
-				BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
+				var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
 
 				// Initialize the block Id
-				ObjectId shearBlock = ObjectId.Null;
+				var shearBlock = ObjectId.Null;
 
 				// Check if the support blocks already exist in the drawing
-				if (!blkTbl.Has(Results.ShearBlock))
+				if (blkTbl.Has($"{Block.ShearBlock}"))
+					return;
+
+				// Create the X block
+				using (var blkTblRec = new BlockTableRecord())
 				{
-					// Create the X block
-					using (BlockTableRecord blkTblRec = new BlockTableRecord())
+					blkTblRec.Name = $"{Block.ShearBlock}";
+
+					// Add the block table record to the block table and to the transaction
+					blkTbl.UpgradeOpen();
+					blkTbl.Add(blkTblRec);
+					trans.AddNewlyCreatedDBObject(blkTblRec, true);
+
+					// Set the name
+					shearBlock = blkTblRec.Id;
+
+					// Set the insertion point for the block
+					Point3d origin = new Point3d(0, 0, 0);
+					blkTblRec.Origin = origin;
+
+					// Create a object collection and add the lines
+					using (var lines = new DBObjectCollection())
 					{
-						blkTblRec.Name = Results.ShearBlock;
-
-						// Add the block table record to the block table and to the transaction
-						blkTbl.UpgradeOpen();
-						blkTbl.Add(blkTblRec);
-						trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-						// Set the name
-						shearBlock = blkTblRec.Id;
-
-						// Set the insertion point for the block
-						Point3d origin = new Point3d(0, 0, 0);
-						blkTblRec.Origin = origin;
-
-						// Create a object collection and add the lines
-						using (DBObjectCollection lines = new DBObjectCollection())
+						// Define the points to add the lines
+						Point3d[] blkPts =
 						{
-							// Define the points to add the lines
-							Point3d[] blkPts =
-							{
-								new Point3d(-140, -230, 0),
-								new Point3d(-175, -200, 0),
-								new Point3d( 175, -200, 0),
-								new Point3d(-230, -140, 0),
-								new Point3d(-200, -175, 0),
-								new Point3d(-200,  175, 0),
-								new Point3d( 140,  230, 0),
-								new Point3d( 175,  200, 0),
-								new Point3d(-175,  200, 0),
-								new Point3d( 230,  140, 0),
-								new Point3d( 200,  175, 0),
-								new Point3d( 200, -175, 0),
-							};
+							new Point3d(-140, -230, 0),
+							new Point3d(-175, -200, 0),
+							new Point3d( 175, -200, 0),
+							new Point3d(-230, -140, 0),
+							new Point3d(-200, -175, 0),
+							new Point3d(-200,  175, 0),
+							new Point3d( 140,  230, 0),
+							new Point3d( 175,  200, 0),
+							new Point3d(-175,  200, 0),
+							new Point3d( 230,  140, 0),
+							new Point3d( 200,  175, 0),
+							new Point3d( 200, -175, 0),
+						};
 
-							// Define the lines and add to the collection
-							for (int i = 0; i < 4; i++)
+						// Define the lines and add to the collection
+						for (int i = 0; i < 4; i++)
+						{
+							lines.Add(new Line
 							{
-								Line line1 = new Line()
-								{
-									StartPoint = blkPts[3 * i],
-									EndPoint = blkPts[3 * i + 1]
-								};
-								lines.Add(line1);
+								StartPoint = blkPts[3 * i],
+								EndPoint   = blkPts[3 * i + 1]
+							});
 
-								Line line2 = new Line()
-								{
-									StartPoint = blkPts[3 * i + 1],
-									EndPoint = blkPts[3 * i + 2]
-								};
-								lines.Add(line2);
-							}
-
-							// Add the lines to the block table record
-							foreach (Entity ent in lines)
+							lines.Add(new Line
 							{
-								blkTblRec.AppendEntity(ent);
-								trans.AddNewlyCreatedDBObject(ent, true);
-							}
+								StartPoint = blkPts[3 * i + 1],
+								EndPoint   = blkPts[3 * i + 2]
+							});
+						}
+
+						// Add the lines to the block table record
+						foreach (Entity ent in lines)
+						{
+							blkTblRec.AppendEntity(ent);
+							trans.AddNewlyCreatedDBObject(ent, true);
 						}
 					}
-
-					// Commit and dispose the transaction
-					trans.Commit();
 				}
+
+				// Commit and dispose the transaction
+				trans.Commit();
 			}
 		}
 
@@ -680,22 +302,22 @@ namespace SPMTool.Database.Elements
 		private static void CreateStressesBlock()
 		{
 			// Start a transaction
-			using (Transaction trans = DataBase.StartTransaction())
+			using (var trans = DataBase.StartTransaction())
 			{
 				// Open the Block table for read
-				BlockTable blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
+				var blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
 				// Initialize the block Ids
-				ObjectId compStressBlock = ObjectId.Null;
-				ObjectId tensStressBlock = ObjectId.Null;
+				var compStressBlock = ObjectId.Null;
+				var tensStressBlock = ObjectId.Null;
 
 				// Check if the stress blocks already exist in the drawing
-				if (!blkTbl.Has(Results.CompressiveBlock))
+				if (!blkTbl.Has($"{Block.CompressiveStressBlock}"))
 				{
 					// Create the X block
-					using (BlockTableRecord blkTblRec = new BlockTableRecord())
+					using (var blkTblRec = new BlockTableRecord())
 					{
-						blkTblRec.Name = Results.CompressiveBlock;
+						blkTblRec.Name = $"{Block.CompressiveStressBlock}";
 
 						// Add the block table record to the block table and to the transaction
 						blkTbl.UpgradeOpen();
@@ -706,11 +328,11 @@ namespace SPMTool.Database.Elements
 						compStressBlock = blkTblRec.Id;
 
 						// Set the insertion point for the block
-						Point3d origin = new Point3d(0, 0, 0);
+						var origin = new Point3d(0, 0, 0);
 						blkTblRec.Origin = origin;
 
 						// Create a object collection and add the lines
-						using (DBObjectCollection objCollection = new DBObjectCollection())
+						using (var objCollection = new DBObjectCollection())
 						{
 							// Get vertices of the solid
 							Point3d[] verts1 =
@@ -727,19 +349,17 @@ namespace SPMTool.Database.Elements
 
 							// Create two arrows for compressive stress
 							// Create lines
-							Line line1 = new Line()
+							objCollection.Add(new Line
 							{
 								StartPoint = new Point3d(-175, 0, 0),
-								EndPoint = new Point3d(-87.5, 0, 0)
-							};
-							objCollection.Add(line1);
+								EndPoint   = new Point3d(-87.5, 0, 0)
+							});
 
-							Line line2 = new Line()
+							objCollection.Add(new Line
 							{
 								StartPoint = new Point3d(87.5, 0, 0),
-								EndPoint = new Point3d(175, 0, 0)
-							};
-							objCollection.Add(line2);
+								EndPoint   = new Point3d(175, 0, 0)
+							});
 
 							// Get vertices of the solids
 							Point3d[] verts2 =
@@ -757,11 +377,9 @@ namespace SPMTool.Database.Elements
 							};
 
 
-							// Create the solids and add to the collection
-							Solid arrow1 = new Solid(verts2[0], verts2[1], verts2[2]);
-							Solid arrow2 = new Solid(verts3[0], verts3[1], verts3[2]);
-							objCollection.Add(arrow1);
-							objCollection.Add(arrow2);
+							// Create the arrow solids and add to the collection
+							objCollection.Add(new Solid(verts2[0], verts2[1], verts2[2]));
+							objCollection.Add(new Solid(verts3[0], verts3[1], verts3[2]));
 
 							// Add the objects to the block table record
 							foreach (Entity ent in objCollection)
@@ -774,12 +392,12 @@ namespace SPMTool.Database.Elements
 				}
 
 				// Check if tensile stress block exists
-				if (!blkTbl.Has(Results.TensileBlock))
+				if (!blkTbl.Has($"{Block.TensileStressBlock}"))
 				{
 					// Create the X block
-					using (BlockTableRecord blkTblRec = new BlockTableRecord())
+					using (var blkTblRec = new BlockTableRecord())
 					{
-						blkTblRec.Name = Results.TensileBlock;
+						blkTblRec.Name = $"{Block.TensileStressBlock}";
 
 						// Add the block table record to the block table and to the transaction
 						blkTbl.UpgradeOpen();
@@ -790,27 +408,25 @@ namespace SPMTool.Database.Elements
 						tensStressBlock = blkTblRec.Id;
 
 						// Set the insertion point for the block
-						Point3d origin = new Point3d(0, 0, 0);
+						var origin = new Point3d(0, 0, 0);
 						blkTblRec.Origin = origin;
 
 						// Create a object collection and add the lines
-						using (DBObjectCollection objCollection = new DBObjectCollection())
+						using (var objCollection = new DBObjectCollection())
 						{
 							// Create two arrows for tensile stress
 							// Create lines
-							Line line1 = new Line()
+							objCollection.Add(new Line
 							{
 								StartPoint = new Point3d(0, 50, 0),
-								EndPoint = new Point3d(0, 137.5, 0)
-							};
-							objCollection.Add(line1);
+								EndPoint   = new Point3d(0, 137.5, 0)
+							});
 
-							Line line2 = new Line()
+							objCollection.Add(new Line
 							{
 								StartPoint = new Point3d(0, -50, 0),
-								EndPoint = new Point3d(0, -137.5, 0)
-							};
-							objCollection.Add(line2);
+								EndPoint   = new Point3d(0, -137.5, 0)
+							});
 
 							// Get vertices of the solids
 							Point3d[] verts2 =
@@ -828,11 +444,9 @@ namespace SPMTool.Database.Elements
 							};
 
 
-							// Create the solids and add to the collection
-							Solid arrow1 = new Solid(verts2[0], verts2[1], verts2[2]);
-							Solid arrow2 = new Solid(verts3[0], verts3[1], verts3[2]);
-							objCollection.Add(arrow1);
-							objCollection.Add(arrow2);
+							// Create the arrow solids and add to the collection
+							objCollection.Add(new Solid(verts2[0], verts2[1], verts2[2]));
+							objCollection.Add(new Solid(verts3[0], verts3[1], verts3[2]));
 
 							// Add the objects to the block table record
 							foreach (Entity ent in objCollection)
@@ -850,47 +464,31 @@ namespace SPMTool.Database.Elements
 
 		}
 
-		/// <summary>
-		/// Read the <see cref="SPM.Elements.Panel"/> objects in the drawing.
-		/// </summary>
-		/// <param name="panelObjectsIds">The <see cref="ObjectIdCollection"/> of panels in the drawing.</param>
-		/// <param name="units">Units current in use <see cref="Units"/>.</param>
-		/// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
-		/// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
-		/// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
+        /// <summary>
+        /// Read the <see cref="Panel"/> objects in the drawing.
+        /// </summary>
+        /// <param name="panelObjects">The collection of panels objects in the drawing.</param>
+        /// <param name="units">Units current in use <see cref="Units"/>.</param>
+        /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
+        /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
+        /// <param name="nodes">The collection containing all <see cref="Node"/>'s of SPM model.</param>
 		/// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-		public static SPM.Elements.Panel[] Read(ObjectIdCollection panelObjectsIds, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
-		{
-			var panels = new SPM.Elements.Panel[panelObjectsIds.Count];
-
-			foreach (ObjectId pnlObj in panelObjectsIds)
-			{
-				var panel = Read(pnlObj, units, concreteParameters, concreteConstitutive, nodes, analysisType);
-
-				// Set to the array
-				int i = panel.Number - 1;
-				panels[i] = panel;
-			}
-
-			return panels;
-		}
+        public static IEnumerable<Panel> Read(IEnumerable<Solid> panelObjects, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
+			panelObjects.Select(pnl => Read(pnl, units, concreteParameters, concreteConstitutive, nodes, analysisType)).OrderBy(pnl => pnl.Number);
 
 		/// <summary>
-		/// Read a <see cref="SPM.Elements.Panel"/> in drawing.
-		/// </summary>
-		/// <param name="objectId">The object ID of the panel from AutoCAD drawing.</param>
-		/// <param name="units">Units current in use <see cref="Units"/>.</param>
-		/// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
-		/// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
-		/// <param name="nodes">The <see cref="Array"/> containing all nodes of SPM model.</param>
-		/// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-		public static SPM.Elements.Panel Read(ObjectId objectId, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, SPM.Elements.Node[] nodes, AnalysisType analysisType = AnalysisType.Linear)
+        /// Read a <see cref="Panel"/> in drawing.
+        /// </summary>
+        /// <param name="panelObject">The <see cref="Solid"/> object of the panel from AutoCAD drawing.</param>
+        /// <param name="units">Units current in use <see cref="Units"/>.</param>
+        /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
+        /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
+        /// <param name="nodes">The collection containing all <see cref="Node"/>'s of SPM model.</param>
+        /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
+        public static Panel Read(Solid panelObject, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
 		{
-			// Read as a solid
-			var pnl = (Solid) objectId.ToDBObject();
-
 			// Read the XData and get the necessary data
-			var pnlData = pnl.ReadXData(DataBase.AppName);
+			var pnlData = panelObject.ReadXData(DataBase.AppName);
 
 			// Get the panel parameters
 			var number = pnlData[(int)PanelIndex.Number].ToInt();
@@ -917,22 +515,7 @@ namespace SPMTool.Database.Elements
 			// Get reinforcement
 			var reinforcement = new WebReinforcement(phiX, sx, steelX, phiY, sy, steelY, width);
 
-			return SPM.Elements.Panel.Read(analysisType, objectId, number, nodes, PanelVertices(pnl), width, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
-		}
-
-		/// <summary>
-		/// Read panel vertices.
-		/// </summary>
-		/// <param name="panel">Panel <see cref="Solid"/> object.</param>
-		/// <returns></returns>
-		private static Point3d[] PanelVertices(Solid panel)
-		{
-			// Get the vertices
-			var pnlVerts = new Point3dCollection();
-			panel.GetGripPoints(pnlVerts, new IntegerCollection(), new IntegerCollection());
-
-			return
-				pnlVerts.ToArray();
+			return Panel.Read(analysisType, panelObject.ObjectId, number, nodes, panelObject.GetVertices(), width, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
 		}
 	}
 }
