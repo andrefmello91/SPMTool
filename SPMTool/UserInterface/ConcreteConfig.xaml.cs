@@ -44,7 +44,7 @@ namespace SPMTool.UserInterface
 		public Concrete OutputConcrete => new Concrete(_parameters, _constitutiveModel);
 
         public ConcreteConfig()
-	        : this (Database.Concrete)
+	        : this (Read(false))
         {
         }
 
@@ -61,7 +61,7 @@ namespace SPMTool.UserInterface
 		public ConcreteConfig(Parameters parameters, ConstitutiveModel constitutiveModel)
 		{
 			// Read units
-			_units = Database.Units;
+			_units = DataBase.Units;
 
             InitializeComponent();
 
@@ -119,13 +119,13 @@ namespace SPMTool.UserInterface
 
 			AggDiamBox.Text = $"{_units.ConvertFromMillimeter(_parameters.AggregateDiameter, _units.Reinforcement):0.00}";
 
-            AggTypeBox.ItemsSource  = AggregateTypes;
+            AggTypeBox.ItemsSource  = Enum.GetNames(typeof(AggregateType));
 			AggTypeBox.SelectedItem = _parameters.Type.ToString();
 
-			ConstitutiveBox.ItemsSource  = ConstitutiveModels;
+			ConstitutiveBox.ItemsSource  = Enum.GetNames(typeof(ConstitutiveModel));
 			ConstitutiveBox.SelectedItem = _constitutiveModel.ToString();
 
-			ParameterBox.ItemsSource = Models;
+			ParameterBox.ItemsSource = Enum.GetNames(typeof(ParameterModel));
 			ParameterBox.SelectedItem = _parameterModel.ToString();
 
             UpdateCustomParameters();
@@ -134,18 +134,18 @@ namespace SPMTool.UserInterface
 		// Update parameters
 		private void UpdateParameters()
 		{
-			if (_parameterModel != ParameterModel.Custom && StrengthBox.Text != string.Empty && AggDiamBox.Text != string.Empty && AggTypeBox.SelectedItem.ToString() != string.Empty)
-			{
-				// Read parameters
-				double
-					fc    = _units.ConvertToMPa(double.Parse(StrengthBox.Text, CultureInfo.InvariantCulture), _units.MaterialStrength),
-					phiAg = _units.ConvertToMillimeter(double.Parse(AggDiamBox.Text, CultureInfo.InvariantCulture), _units.Reinforcement);
+			if (_parameterModel == ParameterModel.Custom || StrengthBox.Text == string.Empty || AggDiamBox.Text == string.Empty || AggTypeBox.SelectedItem.ToString() == string.Empty)
+				return;
 
-				var aggType = (AggregateType) Enum.Parse(typeof(AggregateType), AggTypeBox.SelectedItem.ToString());
+			// Read parameters
+			double
+				fc    = _units.ConvertToMPa(double.Parse(StrengthBox.Text, CultureInfo.InvariantCulture), _units.MaterialStrength),
+				phiAg = _units.ConvertToMillimeter(double.Parse(AggDiamBox.Text, CultureInfo.InvariantCulture), _units.Reinforcement);
 
-				// Get parameters
-				_parameters = Parameters.ReadParameters(_parameterModel, fc, phiAg, aggType);
-			}
+			var aggType = (AggregateType) Enum.Parse(typeof(AggregateType), AggTypeBox.SelectedItem.ToString());
+
+			// Get parameters
+			_parameters = Parameters.ReadParameters(_parameterModel, fc, phiAg, aggType);
 		}
 
 		// Update custom parameters
@@ -153,9 +153,9 @@ namespace SPMTool.UserInterface
 		{
 			_parameters.UpdateParameters();
 
-			ModuleBox.Text  = $"{_units.ConvertFromMPa(_parameters.InitialModule, _units.MaterialStrength):0.00}";
+			ModuleBox.Text  = $"{_parameters.InitialModule.ConvertFromMPa(_units.MaterialStrength):0.00}";
 
-			TensileBox.Text = $"{_units.ConvertFromMPa(_parameters.TensileStrength, _units.MaterialStrength):0.00}";
+			TensileBox.Text = $"{_parameters.TensileStrength.ConvertFromMPa(_units.MaterialStrength):0.00}";
 
 			PlasticStrainBox.Text = $"{-1000 * _parameters.PlasticStrain:0.00}";
 
@@ -167,10 +167,10 @@ namespace SPMTool.UserInterface
 		{
 			// Read parameters
 			double
-				fc    = _units.ConvertToMPa(double.Parse(StrengthBox.Text), _units.MaterialStrength),
-				phiAg = _units.ConvertToMillimeter(double.Parse(AggDiamBox.Text), _units.Reinforcement),
-				Ec    = _units.ConvertToMPa(double.Parse(ModuleBox.Text), _units.MaterialStrength),
-				ft    = _units.ConvertToMPa(double.Parse(TensileBox.Text), _units.MaterialStrength),
+				fc    =  double.Parse(StrengthBox.Text).Convert(_units.MaterialStrength),
+				phiAg = double.Parse(AggDiamBox.Text).Convert(_units.Reinforcement),
+				Ec    = double.Parse(ModuleBox.Text).Convert(_units.MaterialStrength),
+				ft    = double.Parse(TensileBox.Text).Convert(_units.MaterialStrength),
 				ec    = double.Parse(PlasticStrainBox.Text) * -0.001,
 				ecu   = double.Parse(UltStrainBox.Text) * -0.001;
 
@@ -282,7 +282,7 @@ namespace SPMTool.UserInterface
 					UpdateParameters();
 
 				// Save units on database
-				ConcreteData.Save(_parameters, _constitutiveModel);
+				Save(_parameters, _constitutiveModel);
 				Close();
 			}
 		}

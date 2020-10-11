@@ -1,26 +1,16 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
-using Extensions.Number;
 using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements;
 using SPM.Elements.PanelProperties;
-using SPMTool.Database;
-using SPMTool.Database.Conditions;
-using SPMTool.Database.Elements;
-using SPMTool.Editor;
 using SPMTool.Enums;
-using UnitsNet;
 using UnitsNet.Units;
-using Panels = SPMTool.Database.Elements.Panels;
-
-[assembly: CommandClass(typeof(Panels))]
 
 namespace SPMTool.Database.Elements
 {
@@ -29,9 +19,6 @@ namespace SPMTool.Database.Elements
     /// </summary>
 	public static class Panels
 	{
-		// Width database
-		private static readonly string PnlW = "PnlW";
-
         /// <summary>
         /// Add a panel to the drawing.
         /// </summary>
@@ -516,6 +503,67 @@ namespace SPMTool.Database.Elements
 			var reinforcement = new WebReinforcement(phiX, sx, steelX, phiY, sy, steelY, width);
 
 			return Panel.Read(analysisType, panelObject.ObjectId, number, nodes, panelObject.GetVertices(), width, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
+		}
+
+		/// <summary>
+		/// Set <paramref name="width"/> to a <paramref name="panel"/>
+		/// </summary>
+		/// <param name="panel">The panel <see cref="Solid"/> object.</param>
+		/// <param name="width">The width, in mm.</param>
+		public static void SetWidth(Solid panel, double width)
+		{
+			// Access the XData as an array
+			var data = panel.ReadXData();
+
+			// Set the new geometry and reinforcement (line 7 to 9 of the array)
+			data[(int)PanelIndex.Width] = new TypedValue((int)DxfCode.ExtendedDataReal, width);
+
+			// Add the new XData
+			panel.SetXData(data);
+		}
+
+        /// <summary>
+        /// Set reinforcement to a <paramref name="panel"/>
+        /// </summary>
+        /// <param name="panel">The panel <see cref="Solid"/> object.</param>
+        /// <param name="directionX">The <see cref="WebReinforcementDirection"/> for horizontal direction.</param>
+        /// <param name="directionY">The <see cref="WebReinforcementDirection"/> for vertical direction.</param>
+        public static void SetReinforcement(Solid panel, WebReinforcementDirection directionX, WebReinforcementDirection directionY)
+		{
+			// Access the XData as an array
+			var data = panel.ReadXData();
+
+			// Set the new reinforcement (line 7 to 9 of the array)
+			if (directionX != null)
+			{
+				data[(int)PanelIndex.XDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, directionX.BarDiameter);
+				data[(int)PanelIndex.Sx]    = new TypedValue((int)DxfCode.ExtendedDataReal, directionX.BarSpacing);
+
+				var steelX = directionX.Steel;
+
+				if (steelX != null)
+				{
+					data[(int)PanelIndex.fyx] = new TypedValue((int)DxfCode.ExtendedDataReal, steelX.YieldStress);
+					data[(int)PanelIndex.Esx] = new TypedValue((int)DxfCode.ExtendedDataReal, steelX.ElasticModule);
+				}
+			}
+
+			if (directionY != null)
+			{
+				data[(int)PanelIndex.YDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, directionY.BarDiameter);
+				data[(int)PanelIndex.Sy]    = new TypedValue((int)DxfCode.ExtendedDataReal, directionY.BarSpacing);
+
+				var steelY = directionY.Steel;
+
+				if (steelY != null)
+				{
+					data[(int)PanelIndex.fyy] = new TypedValue((int)DxfCode.ExtendedDataReal, steelY.YieldStress);
+					data[(int)PanelIndex.Esy] = new TypedValue((int)DxfCode.ExtendedDataReal, steelY.ElasticModule);
+				}
+			}
+
+			// Add the new XData
+			panel.SetXData(data);
 		}
 	}
 }

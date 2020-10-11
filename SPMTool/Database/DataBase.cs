@@ -80,37 +80,37 @@ namespace SPMTool.Database
 		/// <summary>
         /// Get <see cref="SPMTool.Units"/> saved in database.
         /// </summary>
-		public static Units Units => UnitsData.ReadUnits();
+		public static Units Units => UnitsData.Read();
 
 		/// <summary>
         /// Get <see cref="Concrete"/> saved in database.
         /// </summary>
-		public static Concrete Concrete => ConcreteData.ReadConcreteData();
+		public static Concrete Concrete => ConcreteData.Read();
 
 		/// <summary>
         /// Get <see cref="Steel"/> objects saved in database.
         /// </summary>
-		public static Steel[] SavedSteel => ReinforcementData.ReadSteel();
+		public static IEnumerable<Steel> SavedSteel => ReinforcementData.ReadSteel();
 
         /// <summary>
         /// Get <see cref="UniaxialReinforcement"/> objects saved in database.
         /// </summary>
-        public static UniaxialReinforcement[] SavedStringerReinforcement => ReinforcementData.ReadStringerReinforcement();
+        public static IEnumerable<UniaxialReinforcement> SavedStringerReinforcement => ReinforcementData.ReadStringerReinforcement();
 
         /// <summary>
         /// Get <see cref="WebReinforcementDirection"/> objects saved in database.
         /// </summary>
-        public static WebReinforcementDirection[] SavedPanelReinforcement => ReinforcementData.ReadPanelReinforcement();
+        public static IEnumerable<WebReinforcementDirection> SavedPanelReinforcement => ReinforcementData.ReadPanelReinforcement();
 
         /// <summary>
         /// Get <see cref="StringerGeometry"/> objects saved in database.
         /// </summary>
-        public static StringerGeometry[] SavedStringerGeometry => ElementData.ReadStringerGeometries();
+        public static IEnumerable<StringerGeometry> SavedStringerGeometry => ElementData.ReadStringerGeometries();
 
         /// <summary>
         /// Get panel widths saved in database.
         /// </summary>
-        public static double[] SavedPanelWidth => ElementData.ReadPanelWidths();
+        public static IEnumerable<double> SavedPanelWidth => ElementData.ReadPanelWidths();
 
 		/// <summary>
         /// Start a new transaction in <see cref="Database"/>.
@@ -181,7 +181,7 @@ namespace SPMTool.Database
 	        using (var trans = StartTransaction())
 
 		        // Get the NOD in the database
-	        using (var nod = (DBDictionary)trans.GetObject(DataBase.NodId, OpenMode.ForWrite))
+	        using (var nod = (DBDictionary)trans.GetObject(NodId, OpenMode.ForWrite))
 	        {
 		        // Verify if object exists and must be overwrote
 		        if (!overwrite && nod.Contains(name))

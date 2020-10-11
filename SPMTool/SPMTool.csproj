@@ -128,6 +128,7 @@
     <Compile Include="Editor\Commands\ConditionsInput.cs" />
     <Compile Include="Editor\Commands\ElementEditor.cs" />
     <Compile Include="Editor\Commands\ElementInput.cs" />
+    <Compile Include="Editor\Commands\MaterialInput.cs" />
     <Compile Include="Editor\Commands\Settings.cs" />
     <Compile Include="Editor\Commands\View.cs" />
     <Compile Include="Editor\UserInput.cs" />
@@ -136,7 +137,6 @@
     <Compile Include="Database\Materials\ReinforcementData.cs" />
     <Compile Include="Database\Materials\ConcreteData.cs" />
     <Compile Include="Global\Enums.cs" />
-    <Compile Include="Editor\Reinforcement.cs" />
     <Compile Include="Database\Conditions\Supports.cs" />
     <Compile Include="Global\Extensions.cs" />
     <Compile Include="Global\Units.cs" />

@@ -13,6 +13,7 @@ using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database;
 using SPMTool.Database.Elements;
+using SPMTool.Database.Materials;
 using SPMTool.Enums;
 using UnitsNet;
 using UnitsNet.Units;
@@ -326,7 +327,7 @@ namespace SPMTool.Editor
 	        var dimAbrev = Length.GetAbbreviation(geometryUnit);
 
 	        // Get saved reinforcement options
-	        var savedGeo = DataBase.SavedStringerGeometry;
+	        var savedGeo = DataBase.SavedStringerGeometry?.ToArray();
 
 	        // Get saved reinforcement options
 	        if (savedGeo != null)
@@ -371,13 +372,13 @@ namespace SPMTool.Editor
         }
 
         /// <summary>
-        /// Get panel width from user.
+        /// Get panel width (in mm) from user.
         /// </summary>
         /// <param name="unit">The <see cref="LengthUnit"/> of geometry.</param>
         public static double? GetPanelWidth(LengthUnit unit)
         {
 	        // Get saved reinforcement options
-	        var savedGeo = DataBase.SavedPanelWidth;
+	        var savedGeo = DataBase.SavedPanelWidth?.ToArray();
 
 	        // Get unit abreviation
 	        var dimAbrev = Length.GetAbbreviation(unit);
@@ -403,7 +404,7 @@ namespace SPMTool.Editor
 	        }
 
 	        // New reinforcement
-	        double def = 100.ConvertFromMillimeter(unit);
+	        var def    = 100.ConvertFromMillimeter(unit);
 	        var widthn = GetDouble($"Input width ({dimAbrev}) for selected panels:", def);
 
 	        if (!widthn.HasValue)
@@ -438,6 +439,193 @@ namespace SPMTool.Editor
 		        return null;
 
 	        return new Force(xFn.Value, yFn.Value, forceUnit);
+        }
+
+        /// <summary>
+        /// Get reinforcement parameters from user.
+        /// </summary>
+        /// <param name="units">Current <see cref="Units"/>.</param>
+        public static UniaxialReinforcement GetUniaxialReinforcement(Units units)
+        {
+	        // Get saved reinforcement options
+	        var savedRef = DataBase.SavedStringerReinforcement?.ToArray();
+
+	        // Get unit abbreviation
+	        var dimAbbrev = units.Reinforcement.Abbrev();
+
+	        // Get saved reinforcement options
+	        if (savedRef != null)
+	        {
+		        // Get the options
+		        var options = savedRef.Select(r => $"{r.NumberOfBars}{Character.Phi}{r.BarDiameter.ConvertFromMillimeter(units.Reinforcement):0.00}").ToList();
+
+		        // Add option to set new reinforcement
+		        options.Add("New");
+
+		        // Ask the user to choose the options
+		        var res = SelectKeyword($"Choose a reinforcement option ({dimAbbrev}) or add a new one:", options, out var index, options[0]);
+
+		        if (res is null)
+			        return null;
+
+		        // Get the index
+		        if (res != "New")
+			        return savedRef[index];
+	        }
+
+	        // New reinforcement
+	        // Ask the user to input the number of bars
+	        var numn = GetInteger("Input the number of Stringer reinforcement bars (only needed for nonlinear analysis):", 2);
+
+	        if (!numn.HasValue)
+		        return null;
+
+	        // Ask the user to input the Stringer height
+	        var def  = 10.ConvertFromMillimeter(units.Reinforcement);
+	        var phin = GetDouble($"Input the diameter ({dimAbbrev}) of Stringer reinforcement bars:", def);
+
+	        if (!phin.HasValue)
+		        return null;
+
+	        // Get steel
+	        var steel = GetSteel(units);
+
+	        if (steel is null)
+		        return null;
+
+	        // Get reinforcement
+	        var num = numn.Value;
+	        var phi = phin.Value.Convert(units.Reinforcement);
+
+	        var reinforcement = new UniaxialReinforcement(num, phi, steel);
+
+	        // Save the reinforcement
+	        ReinforcementData.Save(reinforcement);
+
+	        return reinforcement;
+        }
+
+        /// <summary>
+        /// Get steel parameters from user.
+        /// </summary>
+        /// <param name="units">Current <see cref="Units"/>.</param>
+        public static Steel GetSteel(Units units)
+        {
+	        // Get steel data saved on database
+	        var savedSteel = DataBase.SavedSteel?.ToArray();
+
+	        // Get unit abbreviation
+	        var matAbrev = Pressure.GetAbbreviation(units.MaterialStrength);
+
+	        // Get saved reinforcement options
+	        if (savedSteel != null)
+	        {
+		        // Get the options
+		        var options = savedSteel.Select(s => $"{s.YieldStress.ConvertFromMPa(units.MaterialStrength):0.00}|{s.ElasticModule.ConvertFromMPa(units.MaterialStrength):0.00}").ToList();
+
+		        // Add option to set new reinforcement
+		        options.Add("New");
+
+		        // Ask the user to choose the options
+		        var res = SelectKeyword($"Choose a steel option (fy | Es) ({matAbrev}) or add a new one:", options, out var index, options[0]);
+
+		        if (res is null)
+			        return null;
+
+		        // Get the index
+		        if (res != "New")
+			        return savedSteel[index];
+	        }
+
+	        // Ask the user to input the Steel yield strength
+	        var fDef = 500.ConvertFromMPa(units.MaterialStrength);
+	        var fyn  = GetDouble($"Input the yield strength ({matAbrev}) of Steel:", fDef);
+
+	        if (!fyn.HasValue)
+		        return null;
+
+	        // Ask the user to input the Steel elastic modulus
+	        var eDef = 210000.ConvertFromMPa(units.MaterialStrength);
+	        var Esn  = GetDouble($"Input the elastic modulus ({matAbrev}) of Steel:", eDef);
+
+	        if (!Esn.HasValue)
+		        return null;
+
+	        double
+		        fy = fyn.Value.Convert(units.MaterialStrength),
+		        Es = Esn.Value.Convert(units.MaterialStrength);
+
+	        var steel = new Steel(fy, Es);
+
+	        // Save steel
+	        ReinforcementData.Save(steel);
+
+	        return steel;
+        }
+
+        /// <summary>
+        /// Get panel reinforcement parameters from user.
+        /// </summary>
+        /// <param name="direction">The direction of reinforcement.</param>
+        /// <param name="units">Current <see cref="Units"/>.</param>
+        public static WebReinforcementDirection GetWebReinforcement(Direction direction, Units units)
+        {
+	        // Get saved reinforcement options
+	        var savedRef = DataBase.SavedPanelReinforcement.ToArray();
+
+	        // Get unit abreviation
+	        var dimAbrev = Length.GetAbbreviation(units.Geometry);
+	        var refAbrev = Length.GetAbbreviation(units.Reinforcement);
+
+	        // Get saved reinforcement options
+	        if (savedRef != null)
+	        {
+		        // Get the options
+		        var options = savedRef.Select(r => $"{Character.Phi}{r.BarDiameter.ConvertFromMillimeter(units.Reinforcement):0.00}|{r.BarSpacing.ConvertFromMillimeter(units.Geometry):0.00}").ToList();
+
+		        // Add option to set new reinforcement
+		        options.Add("New");
+
+		        // Ask the user to choose the options
+		        var res = SelectKeyword($"Choose a reinforcement option ({Character.Phi} | s)({refAbrev} | {dimAbrev}) for {direction} direction or add a new one:", options, out var index, options[0]);
+
+		        if (res is null)
+			        return null;
+
+		        // Get the index
+		        if (res != "New")
+			        return savedRef[index];
+	        }
+
+	        // New reinforcement
+	        // Ask the user to input the diameter of bars
+	        var phin = GetDouble($"Input the reinforcement bar diameter ({refAbrev}) for {direction} direction for selected panels (only needed for nonlinear analysis):", 10.ConvertFromMillimeter(units.Reinforcement));
+
+	        if (!phin.HasValue)
+		        return null;
+
+	        // Ask the user to input the bar spacing
+	        var sn = GetDouble($"Input the bar spacing ({dimAbrev}) for {direction} direction:", 100.ConvertFromMillimeter(units.Geometry));
+
+	        if (!sn.HasValue)
+		        return null;
+
+	        // Get steel
+	        var steel = GetSteel(units);
+
+	        if (steel is null)
+		        return null;
+
+	        // Save the reinforcement
+	        double
+		        phi = phin.Value.Convert(units.Reinforcement),
+		        s   = sn.Value.Convert(units.Geometry);
+
+	        var reinforcement = new WebReinforcementDirection(phi, s, steel, 0, 0);
+
+	        ReinforcementData.Save(reinforcement);
+
+	        return reinforcement;
         }
 	}
 }

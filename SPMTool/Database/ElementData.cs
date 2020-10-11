@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
@@ -56,7 +57,7 @@ namespace SPMTool.Database.Elements
 	    /// <summary>
 	    /// Read <see cref="StringerGeometry"/> objects saved on database.
 	    /// </summary>
-	    public static StringerGeometry[] ReadStringerGeometries()
+	    public static IEnumerable<StringerGeometry> ReadStringerGeometries()
 	    {
 		    // Get dictionary entries
 		    var entries = DataBase.ReadDictionaryEntries("StrGeo");
@@ -77,7 +78,7 @@ namespace SPMTool.Database.Elements
 	    /// <summary>
 	    /// Read panel widths saved in database.
 	    /// </summary>
-	    public static double[] ReadPanelWidths()
+	    public static IEnumerable<double> ReadPanelWidths()
 	    {
 		    // Get dictionary entries
 		    var entries = DataBase.ReadDictionaryEntries("PnlW");
@@ -85,7 +86,7 @@ namespace SPMTool.Database.Elements
 		    var geoList = entries?.Select(entry => entry.AsArray()[2].ToDouble()).ToArray();
 
 		    return
-			    geoList != null && geoList.Length > 0 ? geoList : null;
+			    geoList?.Length > 0 ? geoList : null;
 	    }
     }
 }

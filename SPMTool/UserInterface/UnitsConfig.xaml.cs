@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
+using Extensions;
 using SPMTool.Database.Settings;
 using SPMTool.Database.Conditions;
 using UnitsNet;
@@ -20,14 +21,14 @@ namespace SPMTool.UserInterface
 
 		// Unit options
 		private readonly string[]
-			DimOpts = UnitsData.DimOpts,
-			FOpts   = UnitsData.FOpts,
-			StOpts  = UnitsData.StOpts;
+			_dimOpts = UnitsData.DimOpts,
+			_fOpts   = UnitsData.FOpts,
+			_stOpts  = UnitsData.StOpts;
 
-        /// <summary>
-        /// Get output <see cref="Units"/>.
-        /// </summary>
-        public Units OutputUnits => _outputUnits;
+        public UnitsConfig()
+			: this (UnitsData.Read(false))
+        {
+        }
 
         public UnitsConfig(Units units)
         {
@@ -37,7 +38,7 @@ namespace SPMTool.UserInterface
             _inputUnits = units;
 
 			// Initiate output
-			_outputUnits = Units.Default;
+			_outputUnits = units;
 
 			// Initiate combo boxes with units set
 			InitiateComboBoxes();
@@ -46,26 +47,26 @@ namespace SPMTool.UserInterface
         // Get combo boxes items
         private void InitiateComboBoxes()
         {
-	        GeometryBox.ItemsSource  = DimOpts;
-	        GeometryBox.SelectedItem = Length.GetAbbreviation(_inputUnits.Geometry);
+	        GeometryBox.ItemsSource  = _dimOpts;
+	        GeometryBox.SelectedItem = _inputUnits.Geometry.Abbrev();
 
-	        ReinforcementBox.ItemsSource  = DimOpts;
-	        ReinforcementBox.SelectedItem = Length.GetAbbreviation(_inputUnits.Reinforcement);
+	        ReinforcementBox.ItemsSource  = _dimOpts;
+	        ReinforcementBox.SelectedItem = _inputUnits.Reinforcement.Abbrev();
 
-	        DisplacementsBox.ItemsSource  = DimOpts;
-	        DisplacementsBox.SelectedItem = Length.GetAbbreviation(_inputUnits.Displacements);
+	        DisplacementsBox.ItemsSource  = _dimOpts;
+	        DisplacementsBox.SelectedItem = _inputUnits.Displacements.Abbrev();
 
-	        AppliedForcesBox.ItemsSource  = FOpts;
-	        AppliedForcesBox.SelectedItem = Force.GetAbbreviation(_inputUnits.AppliedForces);
+	        AppliedForcesBox.ItemsSource  = _fOpts;
+	        AppliedForcesBox.SelectedItem = _inputUnits.AppliedForces.Abbrev();
 
-	        StringerForcesBox.ItemsSource  = FOpts;
-	        StringerForcesBox.SelectedItem = Force.GetAbbreviation(_inputUnits.StringerForces);
+	        StringerForcesBox.ItemsSource  = _fOpts;
+	        StringerForcesBox.SelectedItem = _inputUnits.StringerForces.Abbrev();
 
-	        PanelStressesBox.ItemsSource  = StOpts;
-	        PanelStressesBox.SelectedItem = Pressure.GetAbbreviation(_inputUnits.PanelStresses);
+	        PanelStressesBox.ItemsSource  = _stOpts;
+	        PanelStressesBox.SelectedItem = _inputUnits.PanelStresses.Abbrev();
 
-	        MaterialBox.ItemsSource  = StOpts;
-	        MaterialBox.SelectedItem = Pressure.GetAbbreviation(_inputUnits.MaterialStrength);
+	        MaterialBox.ItemsSource  = _stOpts;
+	        MaterialBox.SelectedItem = _inputUnits.MaterialStrength.Abbrev();
         }
 
         private void Box_SelectionChanged(object sender, SelectionChangedEventArgs e)

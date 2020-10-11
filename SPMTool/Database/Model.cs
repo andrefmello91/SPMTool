@@ -75,12 +75,12 @@ namespace SPMTool.Database
 	        var concrete = DataBase.Concrete;
 
 	        // Read elements
-	        var ndObjs = NodeCollection;
-	        var strObjs = StringerCollection;
-	        var pnlObjs = PanelCollection;
+	        var ndObjs  = NodeCollection.ToArray();
+	        var strObjs = StringerCollection.ToArray();
+	        var pnlObjs = PanelCollection.ToArray();
 
 	        // Verify if there is stringers and nodes at least
-	        if (ndObjs.Count == 0 || strObjs.Count == 0)
+	        if (ndObjs.Length == 0 || strObjs.Length == 0)
 	        {
 		        dataOk = false;
 		        message = "Please input model geometry";
@@ -88,7 +88,7 @@ namespace SPMTool.Database
 	        }
 
 	        // Get nodes
-	        var nodes = Nodes.Read(ndObjs, units);
+	        var nodes = Nodes.Read(ndObjs, units).ToArray();
 
 	        // Set supports and forces
 	        Forces.Set(ForceCollection, nodes);
@@ -121,16 +121,16 @@ namespace SPMTool.Database
 	        var units    = DataBase.Units;
 
 	        if (layer is Layer.IntNode || layer is Layer.ExtNode)
-		        return Nodes.Read(entity.ObjectId, units);
+		        return Nodes.Read((DBPoint) entity, units);
 
 	        // Read nodes
 	        var nodes = Nodes.Read(NodeCollection, units);
 
 	        if (layer is Layer.Stringer)
-		        return Stringers.Read(entity.ObjectId, units, concrete.Parameters, concrete.Constitutive, nodes);
+		        return Stringers.Read((Line) entity, units, concrete.Parameters, concrete.Constitutive, nodes);
 
 	        if (layer is Layer.Panel)
-		        return Panels.Read(entity.ObjectId, units, concrete.Parameters, concrete.Constitutive, nodes);
+		        return Panels.Read((Solid) entity, units, concrete.Parameters, concrete.Constitutive, nodes);
 
 	        return null;
         }
@@ -148,7 +148,7 @@ namespace SPMTool.Database
         {
 	        Forces.CreateBlock();
 			Supports.CreateBlocks();
-			SPM.Elements.Panel.CreateBlocks();
+			Panels.CreateBlocks();
         }
     }
 }

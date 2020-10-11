@@ -1,13 +1,9 @@
 ﻿using System;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Runtime;
+using Extensions.AutoCAD;
 using Material.Concrete;
-using SPMTool.Database.Materials;
+using SPMTool.Editor.Commands;
 using SPMTool.Enums;
-using SPMTool.UserInterface;
-
-[assembly: CommandClass(typeof(ConcreteData))]
 
 namespace SPMTool.Database.Materials
 {
@@ -21,50 +17,7 @@ namespace SPMTool.Database.Materials
         /// </summary>
 	    private const string ConcreteParams = "ConcreteParams";
 
-        /// <summary>
-        /// Model names.
-        /// </summary>
-        public static readonly string[] Models =
-	    {
-		    ParameterModel.MC2010.ToString(),
-		    ParameterModel.NBR6118.ToString(),
-		    ParameterModel.MCFT.ToString(),
-		    ParameterModel.DSFM.ToString(),
-		    ParameterModel.Custom.ToString()
-	    };
-
 		/// <summary>
-        /// Constitutive names
-        /// </summary>
-	    public static readonly string[] ConstitutiveModels =
-	    {
-		    ConstitutiveModel.MCFT.ToString(),
-		    ConstitutiveModel.DSFM.ToString()
-	    };
-
-        /// <summary>
-        /// Aggregate types
-        /// </summary>
-        public static readonly string[] AggregateTypes =
-	    {
-		    AggregateType.Basalt.ToString(),
-		    AggregateType.Quartzite.ToString(),
-		    AggregateType.Limestone.ToString(),
-		    AggregateType.Sandstone.ToString()
-	    };
-
-        [CommandMethod("SetConcreteParameters")]
-        public static void SetConcreteParameters()
-        {
-	        // Read data
-	        var concrete = ReadConcreteData(false);
-
-	        // Start the config window
-	        var concreteConfig = new ConcreteConfig(concrete);
-	        Application.ShowModalWindow(Application.MainWindow.Handle, concreteConfig, false);
-        }
-
-        /// <summary>
         /// Save concrete <see cref="Parameters"/> and <see cref="ConstitutiveModel"/> in database.
         /// </summary>
         /// <param name="concrete">The <see cref="ConcreteData"/> object.</param>
@@ -108,33 +61,30 @@ namespace SPMTool.Database.Materials
 	    /// Read concrete saved in database.
 	    /// </summary>
 	    /// <param name="setConcrete">Concrete must be set by user?</param>
-	    public static Concrete ReadConcreteData(bool setConcrete = true)
+	    public static Concrete Read(bool setConcrete = true)
 	    {
 		    var data = DataBase.ReadDictionaryEntry(ConcreteParams);
 
-		    if (data is null)
-		    {
-			    if (setConcrete)
-				    SetConcreteParameters();
+		    if (data is null && setConcrete)
+			    MaterialInput.SetConcreteParameters();
 
-			    else
-				    return null;
-		    }
+		    else
+			    return null;
 
-		    // Get the parameters from XData
-		    var parModel    = (ParameterModel)Convert.ToInt32(data[(int) ConcreteIndex.Model].Value);
-		    var constModel  = (ConstitutiveModel)Convert.ToInt32(data[(int) ConcreteIndex.Behavior].Value);
-		    var aggType     = (AggregateType)Convert.ToInt32(data[(int) ConcreteIndex.AggType].Value);
+            // Get the parameters from XData
+            var parModel    = (ParameterModel)data[(int) ConcreteIndex.Model].ToInt();
+		    var constModel  = (ConstitutiveModel)data[(int) ConcreteIndex.Behavior].ToInt();
+		    var aggType     = (AggregateType)data[(int) ConcreteIndex.AggType].ToInt();
 
 		    double
-			    fc      = Convert.ToDouble(data[(int)ConcreteIndex.fc].Value),
-			    phiAg   = Convert.ToDouble(data[(int)ConcreteIndex.AggDiam].Value), 
+			    fc      = data[(int)ConcreteIndex.fc].ToDouble(),
+			    phiAg   = data[(int)ConcreteIndex.AggDiam].ToDouble(), 
                 
 			    // Get additional parameters
-			    fcr =  Convert.ToDouble(data[(int)ConcreteIndex.ft].Value),
-			    Ec  =  Convert.ToDouble(data[(int)ConcreteIndex.Ec].Value),
-			    ec  = -Convert.ToDouble(data[(int)ConcreteIndex.ec].Value),
-			    ecu = -Convert.ToDouble(data[(int)ConcreteIndex.ecu].Value);
+			    fcr =  data[(int)ConcreteIndex.ft].ToDouble(),
+			    Ec  =  data[(int)ConcreteIndex.Ec].ToDouble(),
+			    ec  = -data[(int)ConcreteIndex.ec].ToDouble(),
+			    ecu = -data[(int)ConcreteIndex.ecu].ToDouble();
 
 		    // Get parameters and constitutive
 		    var parameters = Parameters.ReadParameters(parModel, fc, phiAg, aggType, fcr, Ec, ec, ecu);

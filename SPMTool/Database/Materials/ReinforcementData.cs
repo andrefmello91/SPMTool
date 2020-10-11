@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
+using Extensions.AutoCAD;
 using Material.Reinforcement;
 
 namespace SPMTool.Database.Materials
@@ -22,7 +24,7 @@ namespace SPMTool.Database.Materials
 		    var name = steel.SaveName();
 
 		    // Save the variables on the Xrecord
-		    using (ResultBuffer rb = new ResultBuffer())
+		    using (var rb = new ResultBuffer())
 		    {
 			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName));   // 0
 			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));              // 1
@@ -47,7 +49,7 @@ namespace SPMTool.Database.Materials
 		    var name = reinforcement.SaveName();
 
 		    // Save the variables on the Xrecord
-		    using (ResultBuffer rb = new ResultBuffer())
+		    using (var rb = new ResultBuffer())
 		    {
 			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName));                  // 0
 			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));                             // 1
@@ -83,7 +85,7 @@ namespace SPMTool.Database.Materials
 	    /// <summary>
 	    /// Read steel parameters saved in database.
 	    /// </summary>
-	    public static Steel[] ReadSteel()
+	    public static IEnumerable<Steel> ReadSteel()
 	    {
 		    // Get dictionary entries
 		    var entries = DataBase.ReadDictionaryEntries("Steel");
@@ -92,19 +94,19 @@ namespace SPMTool.Database.Materials
 			    return null;
 
 		    // Create a list of steel
-		    var stList = Enumerable.ToArray<Steel>((from r in entries
+		    var stList = (from r in entries
 			    let t   = r.AsArray()
-			    let fy  = global::Extensions.AutoCAD.Extensions.ToDouble(t[2])
-			    let Es  = global::Extensions.AutoCAD.Extensions.ToDouble(t[3])
-			    select new Steel(fy, Es)));
+			    let fy  = t[2].ToDouble()
+			    let Es  = t[3].ToDouble()
+			    select new Steel(fy, Es)).ToArray();
 
-		    return stList.Length > 0 ? stList.ToArray() : null;
+		    return stList.Length > 0 ? stList : null;
 	    }
 
 	    /// <summary>
 	    /// Read stringer reinforcement parameters saved in database.
 	    /// </summary>
-	    public static UniaxialReinforcement[] ReadStringerReinforcement()
+	    public static IEnumerable<UniaxialReinforcement> ReadStringerReinforcement()
 	    {
 		    // Get dictionary entries
 		    var entries = DataBase.ReadDictionaryEntries("StrRef");
@@ -113,20 +115,20 @@ namespace SPMTool.Database.Materials
 			    return null;
 
 		    // Create a list of reinforcement
-		    var refList = Enumerable.ToArray<UniaxialReinforcement>(from r in entries
+		    var refList = (from r in entries
 			    let t   = r.AsArray()
-			    let num = global::Extensions.AutoCAD.Extensions.ToInt(t[2])
-			    let phi = global::Extensions.AutoCAD.Extensions.ToDouble(t[3])
-			    select new UniaxialReinforcement(num, phi, null));
+			    let num = t[2].ToInt()
+			    let phi = t[3].ToDouble()
+			    select new UniaxialReinforcement(num, phi, null)).ToArray();
 
-		    return refList.Length > 0 ? refList.ToArray() : null;
+		    return refList.Length > 0 ? refList : null;
 	    }
 
 	    /// <summary>
 	    /// Read panel reinforcement on database.
 	    /// </summary>
 	    /// <returns></returns>
-	    public static WebReinforcementDirection[] ReadPanelReinforcement()
+	    public static IEnumerable<WebReinforcementDirection> ReadPanelReinforcement()
 	    {
 		    // Get dictionary entries
 		    var entries = DataBase.ReadDictionaryEntries("PnlRef");
@@ -134,13 +136,13 @@ namespace SPMTool.Database.Materials
 		    if (entries is null)
 			    return null;
 
-		    var refList = Enumerable.ToArray<WebReinforcementDirection>((from r in entries
+		    var refList = (from r in entries
 			    let t   = r.AsArray()
-			    let phi = global::Extensions.AutoCAD.Extensions.ToDouble(t[2])
-			    let s   = global::Extensions.AutoCAD.Extensions.ToDouble(t[3])
-			    select new WebReinforcementDirection(phi, s, null, 0, 0)));
+			    let phi = t[2].ToDouble()
+			    let s   = t[3].ToDouble()
+			    select new WebReinforcementDirection(phi, s, null, 0, 0)).ToArray();
 
-		    return refList.Length > 0 ? refList.ToArray() : null;
+		    return refList.Length > 0 ? refList : null;
 	    }
     }
 }

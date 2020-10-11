@@ -133,44 +133,6 @@ namespace SPMTool.Editor.Commands
 		    Stringers.Update();
 	    }
 
-		/// <summary>
-        /// Set geometry to a selection of stringers.
-        /// </summary>
-	    [CommandMethod("SetStringerGeometry")]
-	    public static void SetStringerGeometry()
-	    {
-		    // Read units
-		    var units = DataBase.Units;
-
-		    // Request objects to be selected in the drawing area
-		    var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();
-
-		    if (strs is null)
-			    return;
-
-		    // Get geometry
-		    var geometryn = UserInput.GetStringerGeometry(units.Geometry);
-
-		    if (!geometryn.HasValue)
-			    return;
-
-		    var geometry = geometryn.Value;
-
-		    // Start a transaction
-		    foreach (var obj in strs)
-		    {
-			    // Access the XData as an array
-			    var data = obj.ReadXData();
-
-			    // Set the new geometry and reinforcement (line 7 to 9 of the array)
-			    data[(int) StringerIndex.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.Width);
-			    data[(int) StringerIndex.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.Height);
-
-			    // Add the new XData
-			    obj.SetXData(data);
-		    }
-	    }
-
 		[CommandMethod("DividePanel")]
 		public static void DividePanel()
 		{
@@ -344,45 +306,108 @@ namespace SPMTool.Editor.Commands
 			Application.ShowAlertDialog("Alert: stringers parameters must be set again.");
 		}
 
-		[CommandMethod("SetPanelGeometry")]
+		/// <summary>
+		/// Set geometry to a selection of stringers.
+		/// </summary>
+		[CommandMethod("SetStringerGeometry")]
+		public static void SetStringerGeometry()
+		{
+			// Read units
+			var units = DataBase.Units;
+
+			// Request objects to be selected in the drawing area
+			var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();
+
+			if (strs is null)
+				return;
+
+			// Get geometry
+			var geometry = UserInput.GetStringerGeometry(units.Geometry);
+
+			if (!geometry.HasValue)
+				return;
+
+			// Start a transaction
+			foreach (var str in strs)
+				Stringers.SetGeometry(str, geometry.Value);
+		}
+
+		/// <summary>
+        /// Set geometry to a selection of panels.
+        /// </summary>
+        [CommandMethod("SetPanelGeometry")]
 		public static void SetPanelGeometry()
 		{
 			// Read units
 			var units = DataBase.Units;
 
 			// Request objects to be selected in the drawing area
-			var pnls = UserInput.SelectPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)");
+			var pnls = UserInput.SelectPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)")?.ToArray();
 
 			if (pnls is null)
 				return;
 
 			// Get width
-			var wn = UserInput.GetPanelWidth(units);
+			var wn = UserInput.GetPanelWidth(units.Geometry);
 
 			if (!wn.HasValue)
 				return;
 
 			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
-			{
-				foreach (DBObject pnl in pnls)
-				{
-					// Open the selected object for read
-					Entity ent = (Entity) trans.GetObject(pnl.ObjectId, OpenMode.ForWrite);
+			foreach (var pnl in pnls)
+				Panels.SetWidth(pnl, wn.Value);
+		}
 
-					// Access the XData as an array
-					TypedValue[] data = Auxiliary.ReadXData(ent);
+		/// <summary>
+		/// Set the reinforcement in a collection of stringers.
+		/// </summary>
+		[CommandMethod("SetStringerReinforcement")]
+		public static void SetStringerReinforcement()
+		{
+			// Read units
+			var units = DataBase.Units;
 
-					// Set the new geometry and reinforcement (line 7 to 9 of the array)
-					data[(int) PanelIndex.Width] = new TypedValue((int) DxfCode.ExtendedDataReal, wn.Value);
+			// Request objects to be selected in the drawing area
+			var strs = UserInput.SelectStringers("Select the stringers to assign reinforcement (you can select other elements, the properties will be only applied to stringers).")?.ToArray();
 
-					// Add the new XData
-					ent.XData = new ResultBuffer(data);
-				}
+			if (strs is null)
+				return;
 
-				// Save the new object to the database
-				trans.Commit();
-			}
+			// Get steel parameters and reinforcement from user
+			var reinforcement = UserInput.GetUniaxialReinforcement(units);
+
+			if (reinforcement is null)
+				return;
+
+			// Save the properties
+			foreach (var str in strs)
+				Stringers.SetUniaxialReinforcement(str, reinforcement);
+		}
+
+		/// <summary>
+		/// Set reinforcement to a collection of panels.
+		/// </summary>
+		[CommandMethod("SetPanelReinforcement")]
+		public static void SetPanelReinforcement()
+		{
+			// Read units
+			var units = DataBase.Units;
+
+			// Request objects to be selected in the drawing area
+			var pnls = UserInput.SelectPanels("Select the panels to assign reinforcement (you can select other elements, the properties will be only applied to panels).")?.ToArray();
+
+			if (pnls is null)
+				return;
+
+			// Get the values
+			var refX   = UserInput.GetWebReinforcement(Direction.X, units);
+			var refY   = UserInput.GetWebReinforcement(Direction.Y, units);
+
+			if (refX is null && refY is null)
+				return;
+
+			foreach (var pnl in pnls)
+				Panels.SetReinforcement(pnl, refX, refY);
 		}
     }
 }

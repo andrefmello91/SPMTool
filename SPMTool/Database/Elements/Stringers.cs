@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
@@ -11,16 +10,8 @@ using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
-using SPMTool.Database;
-using SPMTool.Database.Elements;
-using SPMTool.Editor;
 using SPMTool.Enums;
-using SPMTool.Database.Conditions;
-using UnitsNet;
 using UnitsNet.Units;
-using Stringers = SPMTool.Database.Elements.Stringers;
-
-[assembly: CommandClass(typeof(Stringers))]
 
 namespace SPMTool.Database.Elements
 {
@@ -332,6 +323,50 @@ namespace SPMTool.Database.Elements
 
 			// Set reinforcement
 			return new UniaxialReinforcement(numOfBars, phi, new Steel(fy, Es), stringerArea);
+		}
+
+		/// <summary>
+		/// Set <paramref name="geometry"/> to a <paramref name="stringer"/>
+		/// </summary>
+		/// <param name="stringer">The stringer <see cref="Line"/> object.</param>
+		/// <param name="geometry">The <see cref="StringerGeometry"/> to set.</param>
+		public static void SetGeometry(Line stringer, StringerGeometry geometry)
+		{
+			// Access the XData as an array
+			var data = stringer.ReadXData();
+
+			// Set the new geometry and reinforcement (line 7 to 9 of the array)
+			data[(int)StringerIndex.Width]  = new TypedValue((int)DxfCode.ExtendedDataReal, geometry.Width);
+			data[(int)StringerIndex.Height] = new TypedValue((int)DxfCode.ExtendedDataReal, geometry.Height);
+
+            // Add the new XData
+            stringer.SetXData(data);
+		}
+
+        /// <summary>
+        /// Set <paramref name="reinforcement"/> to a <paramref name="stringer"/>
+        /// </summary>
+        /// <param name="stringer">The stringer <see cref="Line"/> object.</param>
+        /// <param name="reinforcement">The <see cref="UniaxialReinforcement"/> to set.</param>
+        public static void SetUniaxialReinforcement(Line stringer, UniaxialReinforcement reinforcement)
+		{
+			// Access the XData as an array
+			var data = stringer.ReadXData();
+
+			// Set values
+			data[(int)StringerIndex.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataInteger32, reinforcement.NumberOfBars);
+			data[(int)StringerIndex.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal, reinforcement.BarDiameter);
+
+			var steel = reinforcement.Steel;
+
+			if (steel != null)
+			{
+				data[(int)StringerIndex.Steelfy] = new TypedValue((int)DxfCode.ExtendedDataReal, steel.YieldStress);
+				data[(int)StringerIndex.SteelEs] = new TypedValue((int)DxfCode.ExtendedDataReal, steel.ElasticModule);
+			}
+
+			// Add the new XData
+			stringer.SetXData(data);
 		}
 	}
 }

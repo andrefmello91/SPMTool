@@ -25,5 +25,14 @@ namespace SPMTool.Editor.Commands
 		    Layer.Force.Toogle();
 		    Layer.ForceText.Toogle();
 	    }
+
+	    /// <summary>
+	    /// Toggle view for supports.
+	    /// </summary>
+	    [CommandMethod("ToogleSupports")]
+	    public static void ToogleSupports()
+	    {
+		    Layer.Support.Toogle();
+	    }
     }
 }

@@ -1,32 +1,20 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.Runtime;
-using Extensions;
 using Extensions.AutoCAD;
 using Extensions.Number;
 using MathNet.Numerics;
 using SPM.Elements;
 using UnitsNet.Units;
 using OnPlaneComponents;
-using SPMTool.Database;
-using SPMTool.Editor;
 using SPMTool.Enums;
-using SPMTool.Database.Conditions;
 
 namespace SPMTool.Database.Conditions
 {
     public static class Forces
     {
-        // Layer and block names
-        public static readonly string
-	        ForceLayer = Layer.Force.ToString(),
-			TxtLayer   = Layer.ForceText.ToString(),
-			BlockName  = Block.ForceBlock.ToString();
-
         /// <summary>
         /// Add the force blocks to the model.
         /// </summary>
@@ -37,7 +25,7 @@ namespace SPMTool.Database.Conditions
 		{
 			if (positions is null || positions.Count == 0)
 				return;
-
+            
 			// Get scale factor
 			var scFctr = geometryUnit.ScaleFactor();
 
@@ -47,7 +35,7 @@ namespace SPMTool.Database.Conditions
 			using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
 			{
 				// Read the force block
-				var forceBlock = blkTbl[BlockName];
+				var forceBlock = blkTbl[$"{Block.ForceBlock}"];
 
 				foreach (var pos in positions)
 				{
@@ -78,7 +66,7 @@ namespace SPMTool.Database.Conditions
                         using (var blkRef = new BlockReference(pos, forceBlock))
 						{
 							// Append the block to drawing
-							blkRef.Layer = ForceLayer;
+							blkRef.Layer = $"{Layer.Force}";
 							blkRef.Add();
 
 							// Rotate and scale the block
@@ -97,7 +85,7 @@ namespace SPMTool.Database.Conditions
 								TextString = $"{forceValue.Abs():0.00}",
 								Position = txtPos,
 								Height = 30 * scFctr,
-								Layer = TxtLayer
+								Layer = $"{Layer.ForceText}"
 							};
 
 							// Append the text to drawing
@@ -123,12 +111,12 @@ namespace SPMTool.Database.Conditions
             using (var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
             {
                 // Check if the support blocks already exist in the drawing
-                if (!blkTbl.Has(BlockName))
+                if (!blkTbl.Has($"{Block.ForceBlock}"))
                 {
                     // Create the X block
                     using (var blkTblRec = new BlockTableRecord())
                     {
-                        blkTblRec.Name = BlockName;
+                        blkTblRec.Name = $"{Block.ForceBlock}";
 
                         // Add the block table record to the block table and to the transaction
                         blkTbl.UpgradeOpen();

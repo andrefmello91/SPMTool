@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Autodesk.AutoCAD.ApplicationServices;
+﻿using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Runtime;
-using SPMTool.Database.Settings;
+using SPMTool.Editor.Commands;
 using SPMTool.UserInterface;
+
+[assembly: CommandClass(typeof(Settings))]
 
 namespace SPMTool.Editor.Commands
 {
@@ -21,11 +18,8 @@ namespace SPMTool.Editor.Commands
 	    [CommandMethod("SetUnits")]
 	    public static void SetUnits()
 	    {
-		    // Read data
-		    var units = UnitsData.ReadUnits(false);
-
 		    // Start the window of units configuration
-		    var unitConfig = new UnitsConfig(units);
+		    var unitConfig = new UnitsConfig();
 		    Application.ShowModalWindow(Application.MainWindow.Handle, unitConfig, false);
 	    }
     }
