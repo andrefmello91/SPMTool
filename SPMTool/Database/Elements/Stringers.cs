@@ -190,18 +190,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
         /// Get a collection containing all the stringer geometries in the drawing.
         /// </summary>
-		public static IEnumerable<StringerGeometry> StringerGeometries()
-		{
-			// Get the stringers in the model
-			var strs = Layer.Stringer.GetDBObjects()?.ToLines()?.ToArray();
-
-			if (strs.Length == 0)
-				yield break;
-
-			foreach (var obj in strs)
-				using (var str = (Line) obj)
-					yield return new StringerGeometry(str.StartPoint, str.EndPoint, 0, 0);
-		}
+		public static IEnumerable<StringerGeometry> StringerGeometries() => Layer.Stringer.GetDBObjects()?.ToLines()?.Select(str => new StringerGeometry(str.StartPoint, str.EndPoint, 0, 0));
 
 		/// <summary>
         /// Create new extended data for stringers.
@@ -239,7 +228,7 @@ namespace SPMTool.Database.Elements
 		/// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
 		/// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
 		public static IEnumerable<Stringer> Read(IEnumerable<Line> lines, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
-			lines.Select(line => Read(line, units, concreteParameters, concreteConstitutive, nodes, analysisType)).OrderBy(str => str.Number);
+			lines?.Select(line => Read(line, units, concreteParameters, concreteConstitutive, nodes, analysisType)).OrderBy(str => str.Number);
 
         /// <summary>
         /// Read a <see cref="Stringer"/> in drawing.
@@ -368,5 +357,206 @@ namespace SPMTool.Database.Elements
 			// Add the new XData
 			stringer.SetXData(data);
 		}
+
+		/// <summary>
+        /// Draw stringer forces.
+        /// </summary>
+        /// <param name="stringers">The collection of <see cref="Stringer"/>'s.</param>
+        /// <param name="maxForce">The maximum stringer force.</param>
+        /// <param name="units">Current <see cref="Units"/>.</param>
+        public static void DrawForces(IEnumerable<Stringer> stringers, double maxForce, Units units)
+        {
+	        // Erase all the Stringer forces in the drawing
+	        Layer.StringerForce.EraseObjects();
+
+	        // Get the scale factor
+	        var scFctr = units.Geometry.ScaleFactor();
+
+	        foreach (var stringer in stringers)
+	        {
+		        // Check if the stringer is loaded
+		        if (stringer.State is Stringer.ForceState.Unloaded)
+			        continue;
+
+		        // Get the parameters of the Stringer
+		        double
+			        l   = stringer.Geometry.Length.ConvertFromMillimeter(units.Geometry),
+			        ang = stringer.Geometry.Angle;
+
+		        // Get the start point
+		        var stPt = stringer.Geometry.InitialPoint;
+
+		        // Get normal forces
+		        var (N1, N3) = stringer.NormalForces;
+
+		        // Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
+		        double
+			        h1 = (150 * N1 / maxForce).ConvertFromMillimeter(units.Geometry),
+			        h3 = (150 * N3 / maxForce).ConvertFromMillimeter(units.Geometry);
+
+		        // Check if load state is pure tension or compression
+		        if (stringer.State != Stringer.ForceState.Combined)
+					PureTensionOrCompression();
+
+                else
+					Combined();
+
+		        // Create the texts if forces are not zero
+				AddTexts();
+
+		        void PureTensionOrCompression()
+		        {
+			        // Calculate the points (the solid will be rotated later)
+			        Point3d[] vrts =
+			        {
+				        stPt,
+				        new Point3d(stPt.X + l,      stPt.Y, 0),
+				        new Point3d(    stPt.X, stPt.Y + h1, 0),
+				        new Point3d(stPt.X + l, stPt.Y + h3, 0)
+			        };
+
+			        // Create the diagram as a solid with 4 segments (4 points)
+			        using (var dgrm = new Solid(vrts[0], vrts[1], vrts[2], vrts[3]))
+			        {
+				        // Set the layer and transparency
+				        dgrm.Layer = $"{Layer.StringerForce}";
+				        dgrm.Transparency = 80.Transparency();
+
+				        // Set the color (blue to compression and red to tension)
+				        dgrm.ColorIndex = Math.Max(N1, N3) > 0 ? (short)Color.Blue1 : (short)Color.Red;
+
+				        // Rotate the diagram
+				        dgrm.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
+
+				        // Add the diagram to the drawing
+				        dgrm.Add();
+			        }
+		        }
+
+		        void Combined()
+		        {
+                    // Calculate the point where the Stringer force will be zero
+                    double x = h1.Abs() * l / (h1.Abs() + h3.Abs());
+                    var invPt = new Point3d(stPt.X + x, stPt.Y, 0);
+
+                    // Calculate the points (the solid will be rotated later)
+                    Point3d[] vrts1 =
+                    {
+                        stPt,
+                        invPt,
+                        new Point3d(stPt.X, stPt.Y + h1, 0),
+                    };
+
+                    Point3d[] vrts3 =
+                    {
+                        invPt,
+                        new Point3d(stPt.X + l, stPt.Y,      0),
+                        new Point3d(stPt.X + l, stPt.Y + h3, 0),
+                    };
+
+                    // Create the diagrams as solids with 3 segments (3 points)
+                    using (var dgrm1 = new Solid(vrts1[0], vrts1[1], vrts1[2]))
+                    {
+                        // Set the layer and transparency
+                        dgrm1.Layer = $"{Layer.StringerForce}";
+                        dgrm1.Transparency = 80.Transparency();
+
+                        // Set the color (blue to compression and red to tension)
+                        dgrm1.ColorIndex = N1 > 0 ? (short) Color.Blue1 : (short) Color.Red;
+
+                        // Rotate the diagram
+                        dgrm1.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
+
+                        // Add the diagram to the drawing
+                        dgrm1.Add();
+                    }
+
+                    using (var dgrm3 = new Solid(vrts3[0], vrts3[1], vrts3[2]))
+                    {
+                        // Set the layer and transparency
+                        dgrm3.Layer = $"{Layer.StringerForce}";
+                        dgrm3.Transparency = 80.Transparency();
+
+                        // Set the color (blue to compression and red to tension)
+                        dgrm3.ColorIndex = N3 > 0 ? (short) Color.Blue1 : (short) Color.Red;
+
+                        // Rotate the diagram
+                        dgrm3.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
+
+                        // Add the diagram to the drawing
+                        dgrm3.Add();
+                    }
+
+                }
+
+                void AddTexts()
+                {
+                    if (!N1.ApproxZero())
+                        using (var txt1 = new DBText())
+                        {
+                            // Set the parameters
+                            txt1.Layer = $"{Layer.StringerForce}";
+                            txt1.Height = 30 * scFctr;
+
+                            // Write force in unit
+                            txt1.TextString = $"{N1.ConvertFromNewton(units.StringerForces).Abs():0.00}";
+
+                            // Set the color (blue to compression and red to tension) and position
+                            if (N1 > 0)
+                            {
+                                txt1.ColorIndex = (short)Color.Blue1;
+                                txt1.Position = new Point3d(stPt.X + 10 * scFctr, stPt.Y + h1 + 20 * scFctr, 0);
+                            }
+                            else
+                            {
+                                txt1.ColorIndex = (short)Color.Red;
+                                txt1.Position = new Point3d(stPt.X + 10 * scFctr, stPt.Y + h1 - 50 * scFctr, 0);
+                            }
+
+                            // Rotate the text
+                            txt1.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
+
+                            // Add the text to the drawing
+                            txt1.Add();
+                        }
+
+                    if (!N3.ApproxZero())
+                        using (var txt3 = new DBText())
+                        {
+                            // Set the parameters
+                            txt3.Layer = $"{Layer.StringerForce}";
+                            txt3.Height = 30 * scFctr;
+
+                            // Write force in unit
+                            txt3.TextString = $"{N3.ConvertFromNewton(units.StringerForces).Abs():0.00}";
+
+                            // Set the color (blue to compression and red to tension) and position
+                            if (N3 > 0)
+                            {
+                                txt3.ColorIndex = (short)Color.Blue1;
+                                txt3.Position = new Point3d(stPt.X + l - 10 * scFctr, stPt.Y + h3 + 20 * scFctr, 0);
+                            }
+                            else
+                            {
+                                txt3.ColorIndex = (short)Color.Red;
+                                txt3.Position = new Point3d(stPt.X + l - 10 * scFctr, stPt.Y + h3 - 50 * scFctr, 0);
+                            }
+
+                            // Adjust the alignment
+                            txt3.HorizontalMode = TextHorizontalMode.TextRight;
+                            txt3.AlignmentPoint = txt3.Position;
+
+                            // Rotate the text
+                            txt3.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
+
+                            // Add the text to the drawing
+                            txt3.Add();
+                        }
+                }
+	        }
+
+	        // Turn the layer on
+	        Layer.StringerForce.On();
+        }
 	}
 }

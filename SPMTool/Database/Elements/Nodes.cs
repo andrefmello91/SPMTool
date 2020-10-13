@@ -16,12 +16,34 @@ namespace SPMTool.Database.Elements
 	public static class Nodes
 	{
 		/// <summary>
-		/// Add a node to drawing in this <paramref name="position"/>.
+		/// Add nodes in all necessary positions (stringer start, mid and end points).
 		/// </summary>
-		/// <param name="position">The <see cref="Point3d"/> position.</param>
-		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
 		/// <param name="data">The extended data for the node object.</param>
-		public static void Add(Point3d position, NodeType nodeType, ResultBuffer data = null)
+		public static void Add(ResultBuffer data = null)
+		{
+            // Get the list of nodes
+            var ndList = NodePositions(NodeType.All);
+
+			// Get stringers
+			var strList = Model.StringerCollection;
+
+			// Get points
+			var intNds = strList.Where(str => !ndList.Contains(str.MidPoint())).Select(str => str.MidPoint()).ToList();
+			var extNds = strList.Where(str => !ndList.Contains(str.StartPoint)).Select(str => str.StartPoint).ToList();
+			extNds.AddRange(strList.Where(str => !ndList.Contains(str.EndPoint)).Select(str => str.EndPoint));
+
+            // Add nodes
+			Add(intNds, NodeType.Internal, ref ndList, data);
+			Add(extNds, NodeType.External, ref ndList, data);
+		}
+
+        /// <summary>
+        /// Add a node to drawing in this <paramref name="position"/>.
+        /// </summary>
+        /// <param name="position">The <see cref="Point3d"/> position.</param>
+        /// <param name="nodeType">The <see cref="NodeType"/>.</param>
+        /// <param name="data">The extended data for the node object.</param>
+        public static void Add(Point3d position, NodeType nodeType, ResultBuffer data = null)
 		{
             // Get the list of nodes
             var ndList = NodePositions(NodeType.All);
@@ -62,35 +84,44 @@ namespace SPMTool.Database.Elements
 			dbPoint.SetXData(data ?? new ResultBuffer(NewXData()));
 		}
 
-		/// <summary>
-		/// Add nodes to drawing in these <paramref name="positions"/>.
-		/// </summary>
-		/// <param name="positions">The collection of <see cref="Point3d"/> positions.</param>
-		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
-		public static void Add(IEnumerable<Point3d> positions, NodeType nodeType)
-		{
-			var ndList = NodePositions(NodeType.All);
-			Add(positions, nodeType, ref ndList);
-		}
-
-		/// <summary>
+        /// <summary>
         /// Add nodes to drawing in these <paramref name="positions"/>.
         /// </summary>
         /// <param name="positions">The collection of <see cref="Point3d"/> positions.</param>
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
         /// <param name="existentNodes">The collection containing the position of existent nodes in the drawing.</param>
-        public static void Add(IEnumerable<Point3d> positions, NodeType nodeType, ref IEnumerable<Point3d> existentNodes)
+        /// <param name="data">The extended data for the node object.</param>
+        public static void Add(IEnumerable<Point3d> positions, NodeType nodeType, ref IEnumerable<Point3d> existentNodes, ResultBuffer data = null)
 		{
             foreach (var position in positions)
-				Add(position, nodeType, ref existentNodes);
+				Add(position, nodeType, ref existentNodes, data);
+		}
+
+        /// <summary>
+        /// Add nodes to drawing in these <paramref name="positions"/>.
+        /// </summary>
+        /// <param name="positions">The collection of <see cref="Point3d"/> positions.</param>
+        /// <param name="nodeType">The <see cref="NodeType"/>.</param>
+        /// <param name="data">The extended data for the node object.</param>
+        public static void Add(IEnumerable<Point3d> positions, NodeType nodeType, ResultBuffer data = null)
+		{
+			// Get the list of nodes
+			var ndList = NodePositions(NodeType.All);
+
+			Add(positions, nodeType, ref ndList, data);
 		}
 
         /// <summary>
         /// Enumerate all the nodes in the model and return the collection of nodes.
         /// </summary>
         /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
-        public static IEnumerable<DBPoint> Update(LengthUnit geometryUnit)
+        /// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
+        public static IEnumerable<DBPoint> Update(LengthUnit geometryUnit, bool addNodes = true)
 		{
+			// Add nodes to all needed positions
+			if (addNodes)
+				Add();
+
 			// Get all the nodes as points
 			var ndObjs = AllNodes().ToArray();
 
@@ -132,8 +163,8 @@ namespace SPMTool.Database.Elements
         /// <returns></returns>
         public static IEnumerable<Point3d> NodePositions(NodeType nodeType)
 		{
-			// Initialize an object collection
-			var ndObjs = new List<DBPoint>();
+            // Initialize an object collection
+            List<DBPoint> ndObjs;
 
 			// Select the node type
 			switch (nodeType)
@@ -149,9 +180,13 @@ namespace SPMTool.Database.Elements
 				case NodeType.External:
 					ndObjs = Layer.ExtNode.GetDBObjects().ToPoints().ToList();
 					break;
+
+				default:
+					ndObjs = null;
+					break;
 			}
 
-			return ndObjs.Select(nd => nd.Position).Order();
+			return ndObjs?.Select(nd => nd.Position).Order();
 		}
 
         /// <summary>
@@ -226,7 +261,7 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="position">The <see cref="Point3d"/> position.</param>
         /// <param name="nodeObjects">The collection of node <see cref="DBObject"/>'s</param>
-        public static int GetNumber(Point3d position, IEnumerable<DBPoint> nodeObjects = null) => (nodeObjects ?? AllNodes()).First(nd => nd.Position.Approx(position)).ReadXData()[(int) NodeIndex.Number].ToInt();
+        public static int? GetNumber(Point3d position, IEnumerable<DBPoint> nodeObjects = null) => (nodeObjects ?? AllNodes())?.First(nd => nd.Position.Approx(position))?.ReadXData()[(int) NodeIndex.Number].ToInt();
 
         /// <summary>
         /// Create node XData.
@@ -250,5 +285,32 @@ namespace SPMTool.Database.Elements
 
 			return data;
 		}
+
+        /// <summary>
+        /// Set displacements to the collection of <see cref="Node"/>'s.
+        /// </summary>
+        /// <param name="nodes">The collection of <see cref="Node"/>'s.</param>
+        public static void SetDisplacements(IEnumerable<Node> nodes)
+        {
+	        foreach (var nd in nodes)
+				SetDisplacements(nd);
+        }
+
+        /// <summary>
+        /// Set displacements to a <see cref="Node"/>.
+        /// </summary>
+        /// <param name="node">The <see cref="Node"/>.</param>
+        public static void SetDisplacements(Node node)
+        {
+			// Get extended data
+	        var data = node.ObjectId.ReadXData();
+
+	        // Save the displacements on the XData
+	        data[(int)NodeIndex.Ux] = new TypedValue((int)DxfCode.ExtendedDataReal, node.Displacement.ComponentX);
+	        data[(int)NodeIndex.Uy] = new TypedValue((int)DxfCode.ExtendedDataReal, node.Displacement.ComponentY);
+
+            // Save new XData
+            node.ObjectId.SetXData(data);
+        }
 	}
 }

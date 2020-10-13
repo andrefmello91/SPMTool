@@ -5,8 +5,10 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
+using Extensions.Number;
 using Material.Concrete;
 using Material.Reinforcement;
+using MathNet.Numerics;
 using SPM.Elements;
 using SPM.Elements.PanelProperties;
 using SPMTool.Enums;
@@ -69,10 +71,13 @@ namespace SPMTool.Database.Elements
         public static IEnumerable<Solid> Update()
 		{
 			// Get the internal nodes of the model
-			var intNds = Layer.IntNode.GetDBObjects().ToPoints().ToArray();
+			var intNds = Layer.IntNode.GetDBObjects()?.ToPoints()?.ToArray();
 
 			// Create the panels collection and initialize getting the elements on node layer
-			var pnls = Model.PanelCollection.ToArray();
+			var pnls = Layer.Panel.GetDBObjects()?.ToSolids()?.ToArray();
+
+			if (pnls is null || !pnls.Any())
+				return null;
 
             // Create the centerpoint collection
             var cntrPts = pnls.Select(pnl => pnl.CenterPoint()).Order().ToList();
@@ -116,7 +121,7 @@ namespace SPMTool.Database.Elements
 					int i = Array.IndexOf(pnlGrips, grip);
 
 					// Get the node number
-					grips[i] = Nodes.GetNumber(grip, intNds);
+					grips[i] = Nodes.GetNumber(grip, intNds) ?? 0;
 				}
 
 				// Set the updated panel number
@@ -148,16 +153,10 @@ namespace SPMTool.Database.Elements
         /// </summary>
 		public static IEnumerable<Vertices> PanelVertices()
 		{
-            // Get the panels in the model
-            var pnls = Layer.Panel.GetDBObjects()?.ToSolids()?.ToArray();
-
-            if (pnls is null || pnls.Length == 0)
-	            return null;
-
             var unit = DataBase.Units.Geometry;
 
             return
-	            pnls.Select(pnl => new Vertices(pnl.GetVertices(), unit));
+	            Layer.Panel.GetDBObjects()?.ToSolids()?.Select(pnl => new Vertices(pnl.GetVertices(), unit));
 		}
 
 		/// <summary>
@@ -565,5 +564,209 @@ namespace SPMTool.Database.Elements
 			// Add the new XData
 			panel.SetXData(data);
 		}
+
+		/// <summary>
+        /// Draw panel stresses.
+        /// </summary>
+        /// <param name="panels">The collection of <see cref="Panel"/>'s.</param>
+        /// <param name="units">Current <see cref="Units"/>.</param>
+        public static void DrawStresses(IEnumerable<Panel> panels, Units units)
+        {
+	        // Erase all the panel forces in the drawing
+	        Layer.PanelForce.EraseObjects();
+	        Layer.CompressivePanelStress.EraseObjects();
+	        Layer.TensilePanelStress.EraseObjects();
+
+	        // Start a transaction
+	        using (var trans = DataBase.StartTransaction())
+	        using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
+	        {
+		        // Read the object Ids of the support blocks
+		        ObjectId
+			        shearBlock = blkTbl[$"{Block.ShearBlock}"],
+					compStress = blkTbl[$"{Block.CompressiveStressBlock}"],
+					tensStress = blkTbl[$"{Block.TensileStressBlock}"];
+
+		        foreach (var pnl in panels)
+		        {
+			        // Get panel data
+			        var l      = pnl.Geometry.EdgeLengths;
+			        var cntrPt = pnl.Geometry.Vertices.CenterPoint;
+
+			        // Get the maximum length of the panel
+			        double lMax = l.Max().ConvertFromMillimeter(units.Geometry);
+
+			        // Get the average stress
+			        double tauAvg = pnl.AverageStresses.TauXY.ConvertFromMPa(units.PanelStresses);
+
+			        // Calculate the scale factor for the block and text
+			        double scFctr = 0.001 * lMax;
+
+			        // Get principal stresses
+			        var stresses = pnl.ConcretePrincipalStresses;
+
+					// Add blocks
+					AddShearBlock();
+					AddCompressiveBlock();
+					AddTensileBlock();
+
+                    // Create shear block
+                    void AddShearBlock()
+			        {
+						if (tauAvg.ApproxZero())
+							return;
+
+				        // Insert the block into the current space
+				        using (var blkRef = new BlockReference(cntrPt, shearBlock))
+				        {
+					        blkRef.Layer = $"{Layer.PanelForce}";
+
+					        // Set the scale of the block
+					        blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
+
+					        // If the shear is negative, mirror the block
+					        if (tauAvg < 0)
+					        {
+						        blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, DataBase.Ucs.Yaxis, cntrPt));
+					        }
+
+					        blkRef.Add();
+				        }
+
+				        // Create the texts
+				        using (var tauTxt = new DBText())
+				        {
+					        // Set the alignment point
+					        var algnPt = new Point3d(cntrPt.X, cntrPt.Y, 0);
+
+					        // Set the parameters
+					        tauTxt.Layer = $"{Layer.PanelForce}";
+					        tauTxt.Height = 30 * scFctr;
+					        tauTxt.TextString = $"{Math.Abs(tauAvg):0.00}";
+					        tauTxt.Position = algnPt;
+					        tauTxt.HorizontalMode = TextHorizontalMode.TextCenter;
+					        tauTxt.AlignmentPoint = algnPt;
+
+					        // Add the text to the drawing
+					        tauTxt.Add();
+				        }
+			        }
+
+			        // Create compressive stress block
+			        void AddCompressiveBlock()
+			        {
+				        if (stresses.Sigma2.ApproxZero())
+					        return;
+
+				        // Create compressive stress block
+				        using (var blkRef = new BlockReference(cntrPt, compStress))
+				        {
+					        blkRef.Layer = $"{Layer.CompressivePanelStress}";
+					        blkRef.ColorIndex = (int) Color.Blue1;
+
+					        // Set the scale of the block
+					        blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
+
+					        // Rotate the block in theta angle
+					        if (!stresses.Theta2.ApproxZero())
+					        {
+						        blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, Database.DataBase.Ucs.Zaxis,
+							        cntrPt));
+					        }
+
+					        blkRef.Add();
+				        }
+
+				        // Create the text
+				        using (var sigTxt = new DBText())
+				        {
+					        // Create a line and rotate to get insertion point
+					        var ln = new Line
+					        {
+						        StartPoint = cntrPt,
+						        EndPoint = new Point3d(cntrPt.X + 210 * scFctr, cntrPt.Y, 0)
+					        };
+
+					        ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, Database.DataBase.Ucs.Zaxis, cntrPt));
+
+					        // Set the alignment point
+					        var algnPt = ln.EndPoint;
+
+					        // Set the parameters
+					        sigTxt.Layer = $"{Layer.CompressivePanelStress}";
+					        sigTxt.Height = 30 * scFctr;
+					        sigTxt.TextString = $"{stresses.Sigma2.Abs().ConvertFromMPa(units.PanelStresses):0.00}";
+					        sigTxt.Position = algnPt;
+					        sigTxt.HorizontalMode = TextHorizontalMode.TextCenter;
+					        sigTxt.AlignmentPoint = algnPt;
+
+					        // Add the text to the drawing
+					        sigTxt.Add();
+				        }
+			        }
+
+			        // Create tensile stress block
+			        void AddTensileBlock()
+			        {
+				        // Verify tensile stress
+				        if (stresses.Sigma1.ApproxZero())
+					        return;
+
+				        // Create tensile stress block
+				        using (var blkRef = new BlockReference(cntrPt, tensStress))
+				        {
+					        blkRef.Layer = $"{Layer.TensilePanelStress}";
+
+					        // Set the scale of the block
+					        blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
+
+					        // Rotate the block in theta angle
+					        if (!stresses.Theta2.ApproxZero())
+					        {
+						        blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, Database.DataBase.Ucs.Zaxis,
+							        cntrPt));
+					        }
+
+					        blkRef.Add();
+				        }
+
+				        // Create the text
+				        using (var sigTxt = new DBText())
+				        {
+					        // Create a line and rotate to get insertion point
+					        var ln = new Line
+					        {
+						        StartPoint = cntrPt,
+						        EndPoint = new Point3d(cntrPt.X, cntrPt.Y + 210 * scFctr, 0)
+					        };
+
+					        ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, Database.DataBase.Ucs.Zaxis, cntrPt));
+
+					        // Set the alignment point
+					        var algnPt = ln.EndPoint;
+
+					        // Set the parameters
+					        sigTxt.Layer = $"{Layer.TensilePanelStress}";
+					        sigTxt.Height = 30 * scFctr;
+					        sigTxt.TextString = $"{stresses.Sigma1.Abs().ConvertFromMPa(units.PanelStresses):0.00}";
+					        sigTxt.Position = algnPt;
+					        sigTxt.HorizontalMode = TextHorizontalMode.TextCenter;
+					        sigTxt.AlignmentPoint = algnPt;
+
+					        // Add the text to the drawing
+					        sigTxt.Add();
+				        }
+			        }
+		        }
+
+		        // Save the new objects to the database
+		        trans.Commit();
+	        }
+
+	        // Turn the layer on
+	        Layer.PanelForce.On();
+	        Layer.CompressivePanelStress.Off();
+	        Layer.TensilePanelStress.Off();
+        }
 	}
 }

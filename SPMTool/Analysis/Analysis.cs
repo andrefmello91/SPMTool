@@ -33,7 +33,7 @@ namespace SPMTool.Database.Conditions
 			var analysis = new LinearAnalysis(input);
 
 			// Draw results of analysis
-			Draw(analysis, input.Units);
+			Model.DrawResults(analysis, input.Units);
 		}
 
 		[CommandMethod("DoNonLinearAnalysis")]
@@ -61,7 +61,7 @@ namespace SPMTool.Database.Conditions
                 Application.ShowModelessWindow(Application.MainWindow.Handle, new GraphWindow(u, lf, input.Units.Displacements));
 
                 // Draw results of analysis
-                Draw(analysis, input.Units);
+                Model.DrawResults(analysis, input.Units);
 			}
 
 			else

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
+using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
 using SPM.Analysis;
 using SPM.Elements;
@@ -21,44 +22,49 @@ namespace SPMTool.Database
     public static class Model
     {
 	    /// <summary>
-	    /// Get the collection of all nodes in the model.
+	    /// Collection of element <see cref="Layer"/>'s.
 	    /// </summary>
-	    public static IEnumerable<DBPoint> NodeCollection => Nodes.Update(DataBase.Units.Geometry);
+	    public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
+
+        /// <summary>
+        /// Get the collection of all nodes in the model.
+        /// </summary>
+        public static DBPoint[] NodeCollection => Nodes.Update(DataBase.Units.Geometry).ToArray();
 
 	    /// <summary>
 	    /// Get the collection of external nodes in the model.
 	    /// </summary>
-	    public static IEnumerable<DBPoint> ExtNodeCollection => Layer.ExtNode.GetDBObjects().ToPoints();
+	    public static DBPoint[] ExtNodeCollection => Layer.ExtNode.GetDBObjects().ToPoints().ToArray();
 
 	    /// <summary>
 	    /// Get the collection of internal nodes in the model.
 	    /// </summary>
-	    public static IEnumerable<DBPoint> IntNodeCollection => Layer.IntNode.GetDBObjects().ToPoints();
+	    public static DBPoint[] IntNodeCollection => Layer.IntNode.GetDBObjects().ToPoints().ToArray();
 
 	    /// <summary>
 	    /// Get the collection of stringers in the model.
 	    /// </summary>
-	    public static IEnumerable<Line> StringerCollection => Stringers.Update();
+	    public static Line[] StringerCollection => Stringers.Update(false).ToArray();
 
 	    /// <summary>
 	    /// Get the collection of panels in the model.
 	    /// </summary>
-	    public static IEnumerable<Solid> PanelCollection => Panels.Update();
+	    public static Solid[] PanelCollection => Panels.Update().ToArray();
 
 	    /// <summary>
 	    /// Get the collection of forces in the model.
 	    /// </summary>
-	    public static IEnumerable<BlockReference> ForceCollection => Layer.Force.GetDBObjects().ToBlocks();
+	    public static BlockReference[] ForceCollection => Layer.Force.GetDBObjects().ToBlocks().ToArray();
 
 	    /// <summary>
 	    /// Get the collection of supports in the model.
 	    /// </summary>
-	    public static IEnumerable<BlockReference> SupportCollection => Layer.Support.GetDBObjects().ToBlocks();
+	    public static BlockReference[] SupportCollection => Layer.Support.GetDBObjects().ToBlocks().ToArray();
 
         /// <summary>
         /// Get the collection of force texts in the model.
         /// </summary>
-        public static IEnumerable<DBText> ForceTextCollection => Layer.ForceText.GetDBObjects().ToTexts();
+        public static DBText[] ForceTextCollection => Layer.ForceText.GetDBObjects().ToTexts().ToArray();
 
         /// <summary>
         /// Get the <see cref="InputData"/> from objects in drawing.
@@ -113,7 +119,7 @@ namespace SPMTool.Database
 	        // Get element layer
 	        var layer = (Layer) Enum.Parse(typeof(Layer), entity.Layer);
 
-	        if (!Geometry.ElementLayers.Contains(layer))
+	        if (!ElementLayers.Contains(layer))
 		        return null;
 
 	        // Get concrete and units
@@ -150,5 +156,75 @@ namespace SPMTool.Database
 			Supports.CreateBlocks();
 			Panels.CreateBlocks();
         }
+
+		/// <summary>
+        /// Draw results of <paramref name="analysis"/>.
+        /// </summary>
+        /// <param name="analysis">The <see cref="Analysis"/> done.</param>
+        /// <param name="units">Current <see cref="Units"/>.</param>
+		public static void DrawResults(Analysis analysis, Units units)
+		{
+			Nodes.SetDisplacements(analysis.Nodes);
+			DrawDisplacements(analysis.Stringers, analysis.Nodes, units);
+			Stringers.DrawForces(analysis.Stringers, analysis.MaxStringerForce, units);
+			Panels.DrawStresses(analysis.Panels, units);
+		}
+
+        /// <summary>
+        /// Draw displacements.
+        /// </summary>
+        /// <param name="stringers">The collection of <see cref="Stringer"/>'s.</param>
+        /// <param name="nodes">The collection of <see cref="Node"/>'s</param>
+        /// <param name="units">Current <see cref="Units"/>.</param>
+		private static void DrawDisplacements(IEnumerable<Stringer> stringers, IEnumerable<Node> nodes, Units units)
+		{
+			// Turn the layer off
+			Layer.Displacements.Off();
+
+			// Erase all the displaced objects in the drawing
+			Layer.Displacements.EraseObjects();
+
+			// Set a scale factor for displacements
+			double scFctr = 100 * units.Geometry.ScaleFactor();
+
+			// Create lists of points for adding the nodes later
+			var dispNds = new List<Point3d>();
+
+			foreach (var str in stringers)
+			{
+				// Initialize the displacements of the initial and end nodes
+				var (ux1, uy1) = nodes.Where(nd => nd.Type is NodeType.External && str.Grips[0] == nd.Number).Select(nd => (nd.Displacement.ComponentX * scFctr, nd.Displacement.ComponentY * scFctr)).First();
+				var (ux3, uy3) = nodes.Where(nd => nd.Type is NodeType.External && str.Grips[2] == nd.Number).Select(nd => (nd.Displacement.ComponentX * scFctr, nd.Displacement.ComponentY * scFctr)).First();
+
+				// Calculate the displaced nodes
+				Point3d
+					stPt = new Point3d(str.Geometry.InitialPoint.X + ux1, str.Geometry.InitialPoint.Y + uy1, 0),
+					enPt = new Point3d(str.Geometry.EndPoint.X + ux3, str.Geometry.EndPoint.Y + uy3, 0),
+					midPt = stPt.MidPoint(enPt);
+
+				// Draw the displaced Stringer
+				using (var newStr = new Line(stPt, enPt))
+				{
+					// Set the layer to Stringer
+					newStr.Layer = $"{Layer.Displacements}";
+
+					// Add the line to the drawing
+					newStr.Add();
+				}
+
+				// Add the position of the nodes to the list
+				if (!dispNds.Contains(stPt))
+					dispNds.Add(stPt);
+
+				if (!dispNds.Contains(enPt))
+					dispNds.Add(enPt);
+
+				if (!dispNds.Contains(midPt))
+					dispNds.Add(midPt);
+			}
+
+			// Add the nodes
+			Nodes.Add(dispNds, NodeType.Displaced);
+		}
     }
 }

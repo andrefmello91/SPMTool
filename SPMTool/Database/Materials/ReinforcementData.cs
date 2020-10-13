@@ -90,17 +90,16 @@ namespace SPMTool.Database.Materials
 		    // Get dictionary entries
 		    var entries = DataBase.ReadDictionaryEntries("Steel");
 
-		    if (entries is null)
+		    if (entries is null || !entries.Any())
 			    return null;
 
 		    // Create a list of steel
-		    var stList = (from r in entries
+		    return
+			    from r in entries
 			    let t   = r.AsArray()
 			    let fy  = t[2].ToDouble()
 			    let Es  = t[3].ToDouble()
-			    select new Steel(fy, Es)).ToArray();
-
-		    return stList.Length > 0 ? stList : null;
+			    select new Steel(fy, Es);
 	    }
 
 	    /// <summary>
@@ -111,17 +110,16 @@ namespace SPMTool.Database.Materials
 		    // Get dictionary entries
 		    var entries = DataBase.ReadDictionaryEntries("StrRef");
 
-		    if (entries is null)
+		    if (entries is null || !entries.Any())
 			    return null;
 
 		    // Create a list of reinforcement
-		    var refList = (from r in entries
+		    return
+			    from r in entries
 			    let t   = r.AsArray()
 			    let num = t[2].ToInt()
 			    let phi = t[3].ToDouble()
-			    select new UniaxialReinforcement(num, phi, null)).ToArray();
-
-		    return refList.Length > 0 ? refList : null;
+			    select new UniaxialReinforcement(num, phi, null);
 	    }
 
 	    /// <summary>
@@ -133,16 +131,15 @@ namespace SPMTool.Database.Materials
 		    // Get dictionary entries
 		    var entries = DataBase.ReadDictionaryEntries("PnlRef");
 
-		    if (entries is null)
+		    if (entries is null || !entries.Any())
 			    return null;
 
-		    var refList = (from r in entries
+		    return
+			    from r in entries
 			    let t   = r.AsArray()
 			    let phi = t[2].ToDouble()
 			    let s   = t[3].ToDouble()
-			    select new WebReinforcementDirection(phi, s, null, 0, 0)).ToArray();
-
-		    return refList.Length > 0 ? refList : null;
+			    select new WebReinforcementDirection(phi, s, null, 0, 0);
 	    }
     }
 }

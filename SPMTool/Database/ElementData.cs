@@ -62,17 +62,15 @@ namespace SPMTool.Database.Elements
 		    // Get dictionary entries
 		    var entries = DataBase.ReadDictionaryEntries("StrGeo");
 
-		    if (entries is null)
+		    if (entries is null || !entries.Any())
 			    return null;
 
-		    var geoList = (from r in entries
+		    return 
+			    from r in entries
 			    let t   = r.AsArray()
 			    let w   = t[2].ToDouble()
 			    let h   = t[3].ToDouble()
-			    select new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h)).ToArray();
-
-		    return
-			    geoList.Length > 0 ? geoList : null;
+			    select new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h);
 	    }
 
 	    /// <summary>
@@ -83,10 +81,10 @@ namespace SPMTool.Database.Elements
 		    // Get dictionary entries
 		    var entries = DataBase.ReadDictionaryEntries("PnlW");
 
-		    var geoList = entries?.Select(entry => entry.AsArray()[2].ToDouble()).ToArray();
+		    if (entries is null || !entries.Any())
+			    return null;
 
-		    return
-			    geoList?.Length > 0 ? geoList : null;
+		    return entries.Select(entry => entry.AsArray()[2].ToDouble()).ToArray();
 	    }
     }
 }

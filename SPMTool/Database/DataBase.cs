@@ -90,27 +90,27 @@ namespace SPMTool.Database
 		/// <summary>
         /// Get <see cref="Steel"/> objects saved in database.
         /// </summary>
-		public static IEnumerable<Steel> SavedSteel => ReinforcementData.ReadSteel();
+		public static Steel[] SavedSteel => ReinforcementData.ReadSteel().ToArray();
 
         /// <summary>
         /// Get <see cref="UniaxialReinforcement"/> objects saved in database.
         /// </summary>
-        public static IEnumerable<UniaxialReinforcement> SavedStringerReinforcement => ReinforcementData.ReadStringerReinforcement();
+        public static UniaxialReinforcement[] SavedStringerReinforcement => ReinforcementData.ReadStringerReinforcement().ToArray();
 
         /// <summary>
         /// Get <see cref="WebReinforcementDirection"/> objects saved in database.
         /// </summary>
-        public static IEnumerable<WebReinforcementDirection> SavedPanelReinforcement => ReinforcementData.ReadPanelReinforcement();
+        public static WebReinforcementDirection[] SavedPanelReinforcement => ReinforcementData.ReadPanelReinforcement().ToArray();
 
         /// <summary>
         /// Get <see cref="StringerGeometry"/> objects saved in database.
         /// </summary>
-        public static IEnumerable<StringerGeometry> SavedStringerGeometry => ElementData.ReadStringerGeometries();
+        public static StringerGeometry[] SavedStringerGeometry => ElementData.ReadStringerGeometries().ToArray();
 
         /// <summary>
         /// Get panel widths saved in database.
         /// </summary>
-        public static IEnumerable<double> SavedPanelWidth => ElementData.ReadPanelWidths();
+        public static double[] SavedPanelWidth => ElementData.ReadPanelWidths().ToArray();
 
 		/// <summary>
         /// Start a new transaction in <see cref="Database"/>.

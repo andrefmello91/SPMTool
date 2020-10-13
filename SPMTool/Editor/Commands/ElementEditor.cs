@@ -409,5 +409,24 @@ namespace SPMTool.Editor.Commands
 			foreach (var pnl in pnls)
 				Panels.SetReinforcement(pnl, refX, refY);
 		}
+
+		/// <summary>
+		/// Update all the elements in the drawing.
+		/// </summary>
+		[CommandMethod("UpdateElements")]
+		public static void UpdateElements()
+		{
+			// Enumerate and get the number of nodes
+			var nds = Model.NodeCollection;
+
+			// Update and get the number of stringers
+			var strs = Model.StringerCollection;
+
+			// Update and get the number of panels
+			var pnls = Model.PanelCollection;
+
+			// Display the number of updated elements
+			UserInput.Editor.WriteMessage($"\n{nds.Length} nodes, {strs.Length} stringers and {pnls.Length} panels updated.");
+		}
     }
 }

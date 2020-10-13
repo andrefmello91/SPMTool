@@ -141,7 +141,6 @@
     <Compile Include="Global\Extensions.cs" />
     <Compile Include="Global\Units.cs" />
     <Compile Include="Database\Conditions\Forces.cs" />
-    <Compile Include="Database\Model\Geometry.cs" />
     <Compile Include="Database\Elements\Nodes.cs" />
     <Compile Include="Database\Elements\Panels.cs" />
     <Compile Include="Database\Elements\Stringers.cs" />
@@ -151,7 +150,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Database\Model\Results.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserInterface\StringerWindow.xaml.cs">
       <DependentUpon>StringerWindow.xaml</DependentUpon>

@@ -47,41 +47,7 @@ namespace SPMTool
         /// </summary>
         public static string SaveName(this double panelWidth) => $"PnlW{panelWidth:0.00}";
 
-        /// <summary>
-        /// Add this <paramref name="dbObject"/> to the drawing.
-        /// </summary>
-        /// <param name="dbObject">The <see cref="Entity"/>.</param>
-        public static void Add(this DBObject dbObject) => ((Entity) dbObject).Add();
-
-        /// <summary>
-        /// Add this <paramref name="entity"/> to the drawing.
-        /// </summary>
-        /// <param name="entity">The <see cref="Entity"/>.</param>
-        public static void Add(this Entity entity)
-        {
-	        if (entity is null)
-		        return;
-
-	        // Start a transaction
-	        using (var trans = DataBase.StartTransaction())
-
-		        // Open the Block table for read
-	        using (var blkTbl = (BlockTable)trans.GetObject(DataBase.BlockTableId, OpenMode.ForRead))
-
-		        // Open the Block table record Model space for write
-	        using (var blkTblRec = (BlockTableRecord)trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite))
-	        {
-		        // Add the object to the drawing
-		        blkTblRec.AppendEntity(entity);
-		        trans.AddNewlyCreatedDBObject(entity, true);
-
-		        // Commit changes
-		        trans.Commit();
-	        }
-        }
-
-
-        /// <summary>
+		/// <summary>
         /// Read an object <see cref="Layer"/>.
         /// </summary>
         /// <param name="objectId">The <see cref="ObjectId"/> of the SPM element.</param>
@@ -125,8 +91,7 @@ namespace SPMTool
                 using (var lyrTblRec = new LayerTableRecord())
                 {
                     // Assign the layer the ACI color and a name
-                    lyrTblRec.Color =
-                        Autodesk.AutoCAD.Colors.Color.FromColorIndex(ColorMethod.ByAci, (short)color);
+                    lyrTblRec.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(ColorMethod.ByAci, (short)color);
 
                     // Upgrade the Layer table for write
                     lyrTbl.UpgradeOpen();
@@ -190,7 +155,7 @@ namespace SPMTool
                 if (!lyrTbl.Has(layerName))
                     return;
 
-                using (var lyrTblRec = trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite) as LayerTableRecord)
+                using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
                 {
                     // Verify the state
                     if (!lyrTblRec.IsOff)
