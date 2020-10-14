@@ -61,7 +61,7 @@ namespace SPMTool.Database.Elements
 		public static void Add(Point3d position, NodeType nodeType, ref IEnumerable<Point3d> existentNodes, ResultBuffer data = null)
 		{
             // Get the list of nodes
-            var ndList = existentNodes.ToList();
+            var ndList = existentNodes?.ToList() ?? new List<Point3d>();
 
             // Check if a node already exists at the position. If not, its created
             if (ndList.Contains(position))
@@ -109,7 +109,22 @@ namespace SPMTool.Database.Elements
 			var ndList = NodePositions(NodeType.All);
 
 			Add(positions, nodeType, ref ndList, data);
-		}
+        }
+
+        /// <summary>
+        /// Get the collection of internal nodes in the drawing.
+        /// </summary>
+        public static IEnumerable<DBPoint> GetIntNodes() => Layer.IntNode.GetDBObjects()?.ToPoints();
+
+        /// <summary>
+        /// Get the collection of external nodes in the drawing.
+        /// </summary>
+        public static IEnumerable<DBPoint> GetExtNodes() => Layer.ExtNode.GetDBObjects()?.ToPoints();
+
+        /// <summary>
+        /// Get the collection of internal and external nodes in the drawing.
+        /// </summary>
+        public static IEnumerable<DBPoint> GetAllNodes() => GetIntNodes()?.Concat(GetExtNodes());
 
         /// <summary>
         /// Enumerate all the nodes in the model and return the collection of nodes.
@@ -123,7 +138,7 @@ namespace SPMTool.Database.Elements
 				Add();
 
 			// Get all the nodes as points
-			var ndObjs = AllNodes().ToArray();
+			var ndObjs = GetAllNodes().ToArray();
 
 			// Get the list of nodes ordered
 			var ndList = NodePositions(NodeType.All).ToList();
@@ -170,15 +185,15 @@ namespace SPMTool.Database.Elements
 			switch (nodeType)
 			{
 				case NodeType.All:
-					ndObjs = AllNodes().ToList();
+					ndObjs = GetAllNodes()?.ToList();
 					break;
 
 				case NodeType.Internal:
-					ndObjs = Layer.IntNode.GetDBObjects().ToPoints().ToList();
+					ndObjs = Layer.IntNode.GetDBObjects()?.ToPoints()?.ToList();
 					break;
 
 				case NodeType.External:
-					ndObjs = Layer.ExtNode.GetDBObjects().ToPoints().ToList();
+					ndObjs = Layer.ExtNode.GetDBObjects()?.ToPoints()?.ToList();
 					break;
 
 				default:
@@ -190,26 +205,11 @@ namespace SPMTool.Database.Elements
 		}
 
         /// <summary>
-        /// Get the collection of all of the nodes in the drawing.
-        /// </summary>
-        public static IEnumerable<DBPoint> AllNodes()
-		{
-			// Create a unique collection for all the nodes
-			var nds = new List<DBPoint>();
-
-            // Create the nodes collection and initialize getting the elements on node layer
-			nds.AddRange(Layer.ExtNode.GetDBObjects().ToPoints());
-			nds.AddRange(Layer.IntNode.GetDBObjects().ToPoints());
-
-            return nds;
-		}
-
-        /// <summary>
         /// Read <see cref="Node"/> objects from an <see cref="ObjectIdCollection"/>.
         /// </summary>
         /// <param name="nodeObjects">The <see cref="ObjectIdCollection"/> containing the nodes of drawing.</param>
         /// <param name="units">Current <see cref="Units"/>.</param>
-        public static IEnumerable<Node> Read(IEnumerable<DBPoint> nodeObjects, Units units) => nodeObjects.Select(nd => Read(nd, units)).OrderBy(node => node.Number);
+        public static IEnumerable<Node> Read(IEnumerable<DBPoint> nodeObjects, Units units) => nodeObjects?.Select(nd => Read(nd, units)).OrderBy(node => node.Number);
 
         /// <summary>
         /// Read a <see cref="Node"/> in the drawing.
@@ -261,7 +261,7 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="position">The <see cref="Point3d"/> position.</param>
         /// <param name="nodeObjects">The collection of node <see cref="DBObject"/>'s</param>
-        public static int? GetNumber(Point3d position, IEnumerable<DBPoint> nodeObjects = null) => (nodeObjects ?? AllNodes())?.First(nd => nd.Position.Approx(position))?.ReadXData()[(int) NodeIndex.Number].ToInt();
+        public static int? GetNumber(Point3d position, IEnumerable<DBPoint> nodeObjects = null) => (nodeObjects ?? GetAllNodes())?.First(nd => nd.Position.Approx(position))?.ReadXData()[(int) NodeIndex.Number].ToInt();
 
         /// <summary>
         /// Create node XData.

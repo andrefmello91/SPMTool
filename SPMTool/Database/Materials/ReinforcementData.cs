@@ -11,6 +11,21 @@ namespace SPMTool.Database.Materials
     /// </summary>
     public static class ReinforcementData
     {
+        /// <summary>
+        /// <see cref="Material.Reinforcement.Steel"/> save name.
+        /// </summary>
+        private const string Steel = "Steel";
+
+		/// <summary>
+        /// Stringer reinforcement save name.
+        /// </summary>
+	    private const string StrRef = "StrRef";
+
+		/// <summary>
+        /// Panel reinforcement save name.
+        /// </summary>
+	    private const string PnlRef = "PnlRef";
+
 	    /// <summary>
 	    /// Save steel configuration on database.
 	    /// </summary>
@@ -88,7 +103,7 @@ namespace SPMTool.Database.Materials
 	    public static IEnumerable<Steel> ReadSteel()
 	    {
 		    // Get dictionary entries
-		    var entries = DataBase.ReadDictionaryEntries("Steel");
+		    var entries = DataBase.ReadDictionaryEntries(Steel);
 
 		    if (entries is null || !entries.Any())
 			    return null;
@@ -108,7 +123,7 @@ namespace SPMTool.Database.Materials
 	    public static IEnumerable<UniaxialReinforcement> ReadStringerReinforcement()
 	    {
 		    // Get dictionary entries
-		    var entries = DataBase.ReadDictionaryEntries("StrRef");
+		    var entries = DataBase.ReadDictionaryEntries(StrRef);
 
 		    if (entries is null || !entries.Any())
 			    return null;
@@ -129,7 +144,7 @@ namespace SPMTool.Database.Materials
 	    public static IEnumerable<WebReinforcementDirection> ReadPanelReinforcement()
 	    {
 		    // Get dictionary entries
-		    var entries = DataBase.ReadDictionaryEntries("PnlRef");
+		    var entries = DataBase.ReadDictionaryEntries(PnlRef);
 
 		    if (entries is null || !entries.Any())
 			    return null;

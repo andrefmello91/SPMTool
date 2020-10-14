@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
+using Extensions;
+using Extensions.Number;
 using LiveCharts;
 using LiveCharts.Defaults;
 using LiveCharts.Wpf;
@@ -27,21 +30,21 @@ namespace SPMTool.UserInterface
 		public double[]         LoadFactors       { get; }
 		public string           DisplacementTitle { get; }
 
-        public GraphWindow(double[] displacements = null, double[] loadFactors = null, LengthUnit displacementUnit = LengthUnit.Millimeter)
+        public GraphWindow(IEnumerable<double> displacements = null, IEnumerable<double> loadFactors = null, LengthUnit displacementUnit = LengthUnit.Millimeter)
         {
             InitializeComponent();
 
-            Displacements    = displacements;
-            LoadFactors      = loadFactors;
+            Displacements    = displacements.ToArray();
+            LoadFactors      = loadFactors.ToArray();
             DisplacementUnit = displacementUnit;
-            DisplacementTitle = "Displacement (" + Length.GetAbbreviation(DisplacementUnit) + ")";
+            DisplacementTitle = $"Displacement ({DisplacementUnit.Abbrev()})";
 
             var values = GetValues();
 
 			// Initiate series
 			LoadDisplacement = new SeriesCollection
 			{
-				new LineSeries()
+				new LineSeries
 				{
 					Title           = "Load Factor x Displacement", 
 					Values          = values, 
@@ -97,8 +100,8 @@ namespace SPMTool.UserInterface
 		private string Label(ChartPoint point)
 		{
 			return
-				"LF = " + Math.Round(point.Y, 2) + "\n" +
-				"u  = " + Length.FromMillimeters(point.X).ToUnit(DisplacementUnit);
+				$"LF = {point.Y.Round(2)}\n" +
+				$"u  = {Length.FromMillimeters(point.X).ToUnit(DisplacementUnit)}";
 		}
 
         // When a point is clicked
@@ -107,7 +110,7 @@ namespace SPMTool.UserInterface
 	        //point instance contains many useful information...
 	        //sender is the shape that called the event.
 
-	        MessageBox.Show("LF: " + point.X + " , Displacement: " + point.Y);
+	        MessageBox.Show($"LF: {point.X} , Displacement: {point.Y}");
         }
 
         private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
@@ -123,19 +126,19 @@ namespace SPMTool.UserInterface
 
 			// Convert displacements
 			if (DisplacementUnit != LengthUnit.Millimeter)
-				u = u.Multiply(Extensions.ScaleFactor(DisplacementUnit));
+				u = u.Multiply(DisplacementUnit.ScaleFactor());
 
 			// Get matrix
 			var result = Matrix<double>.Build.DenseOfColumnVectors(lf, u);
 
 			// Create headers
-			var headers = new[] { "Load Factor", "Displacement (" + Length.GetAbbreviation(DisplacementUnit) + ")" };
+			var headers = new[] { "Load Factor", $"Displacement ({DisplacementUnit.Abbrev()})" };
 			var headerList = headers.ToList();
 
 			// Get location and name
 			string
-				path   = Database.GetFilePath(),
-				name   = Path.GetFileNameWithoutExtension(Database.Document.Name),
+				path   = DataBase.GetFilePath(),
+				name   = Path.GetFileNameWithoutExtension(DataBase.Document.Name),
 				svName = path + name + "_SPMResult.csv";
 
             // Export

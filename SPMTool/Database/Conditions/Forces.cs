@@ -15,13 +15,23 @@ namespace SPMTool.Database.Conditions
 {
     public static class Forces
     {
+		/// <summary>
+        /// Get the force objects in the drawing.
+        /// </summary>
+	    public static IEnumerable<BlockReference> GetObjects() => Layer.Force.GetDBObjects()?.ToBlocks();
+
+		/// <summary>
+        /// Get the force text objects in the drawing.
+        /// </summary>
+	    public static IEnumerable<DBText> GetTexts() => Layer.ForceText.GetDBObjects()?.ToTexts();
+
         /// <summary>
         /// Add the force blocks to the model.
         /// </summary>
         /// <param name="positions">The collection of nodes to add</param>
         /// <param name="force"></param>
         /// <param name="geometryUnit"></param>
-		public static void AddBlocks(IReadOnlyCollection<Point3d> positions, Force force, LengthUnit geometryUnit)
+        public static void AddBlocks(IReadOnlyCollection<Point3d> positions, Force force, LengthUnit geometryUnit)
 		{
 			if (positions is null || positions.Count == 0)
 				return;

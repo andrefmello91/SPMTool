@@ -12,6 +12,7 @@ using SPMTool.Database.Conditions;
 using SPMTool.Database.Elements;
 using SPMTool.Editor;
 using SPMTool.Enums;
+using Analysis = SPM.Analysis.Analysis;
 using Nodes = SPMTool.Database.Elements.Nodes;
 
 namespace SPMTool.Database
@@ -27,44 +28,44 @@ namespace SPMTool.Database
 	    public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
 
         /// <summary>
-        /// Get the collection of all nodes in the model.
+        /// Get the updated collection of all nodes in the model.
         /// </summary>
-        public static DBPoint[] NodeCollection => Nodes.Update(DataBase.Units.Geometry).ToArray();
+        public static DBPoint[] NodeCollection => Nodes.Update(DataBase.Units.Geometry)?.ToArray();
 
 	    /// <summary>
 	    /// Get the collection of external nodes in the model.
 	    /// </summary>
-	    public static DBPoint[] ExtNodeCollection => Layer.ExtNode.GetDBObjects().ToPoints().ToArray();
+	    public static DBPoint[] ExtNodeCollection => Nodes.GetExtNodes()?.ToArray();
 
 	    /// <summary>
 	    /// Get the collection of internal nodes in the model.
 	    /// </summary>
-	    public static DBPoint[] IntNodeCollection => Layer.IntNode.GetDBObjects().ToPoints().ToArray();
+	    public static DBPoint[] IntNodeCollection => Nodes.GetIntNodes()?.ToArray();
 
 	    /// <summary>
-	    /// Get the collection of stringers in the model.
+	    /// Get the updated collection of stringers in the model.
 	    /// </summary>
-	    public static Line[] StringerCollection => Stringers.Update(false).ToArray();
+	    public static Line[] StringerCollection => Stringers.Update(false)?.ToArray();
 
 	    /// <summary>
-	    /// Get the collection of panels in the model.
+	    /// Get the updated collection of panels in the model.
 	    /// </summary>
-	    public static Solid[] PanelCollection => Panels.Update().ToArray();
+	    public static Solid[] PanelCollection => Panels.Update()?.ToArray();
 
 	    /// <summary>
 	    /// Get the collection of forces in the model.
 	    /// </summary>
-	    public static BlockReference[] ForceCollection => Layer.Force.GetDBObjects().ToBlocks().ToArray();
+	    public static BlockReference[] ForceCollection => Forces.GetObjects()?.ToArray();
 
 	    /// <summary>
 	    /// Get the collection of supports in the model.
 	    /// </summary>
-	    public static BlockReference[] SupportCollection => Layer.Support.GetDBObjects().ToBlocks().ToArray();
+	    public static BlockReference[] SupportCollection => Supports.GetObjects()?.ToArray();
 
         /// <summary>
         /// Get the collection of force texts in the model.
         /// </summary>
-        public static DBText[] ForceTextCollection => Layer.ForceText.GetDBObjects().ToTexts().ToArray();
+        public static DBText[] ForceTextCollection => Forces.GetTexts()?.ToArray();
 
         /// <summary>
         /// Get the <see cref="InputData"/> from objects in drawing.
@@ -81,9 +82,9 @@ namespace SPMTool.Database
 	        var concrete = DataBase.Concrete;
 
 	        // Read elements
-	        var ndObjs  = NodeCollection.ToArray();
-	        var strObjs = StringerCollection.ToArray();
-	        var pnlObjs = PanelCollection.ToArray();
+	        var ndObjs  = NodeCollection;
+	        var strObjs = StringerCollection;
+	        var pnlObjs = PanelCollection;
 
 	        // Verify if there is stringers and nodes at least
 	        if (ndObjs.Length == 0 || strObjs.Length == 0)
@@ -160,7 +161,7 @@ namespace SPMTool.Database
 		/// <summary>
         /// Draw results of <paramref name="analysis"/>.
         /// </summary>
-        /// <param name="analysis">The <see cref="Analysis"/> done.</param>
+        /// <param name="analysis">The <see cref="SPM.Analysis.Analysis"/> done.</param>
         /// <param name="units">Current <see cref="Units"/>.</param>
 		public static void DrawResults(Analysis analysis, Units units)
 		{
@@ -193,8 +194,8 @@ namespace SPMTool.Database
 			foreach (var str in stringers)
 			{
 				// Initialize the displacements of the initial and end nodes
-				var (ux1, uy1) = nodes.Where(nd => nd.Type is NodeType.External && str.Grips[0] == nd.Number).Select(nd => (nd.Displacement.ComponentX * scFctr, nd.Displacement.ComponentY * scFctr)).First();
-				var (ux3, uy3) = nodes.Where(nd => nd.Type is NodeType.External && str.Grips[2] == nd.Number).Select(nd => (nd.Displacement.ComponentX * scFctr, nd.Displacement.ComponentY * scFctr)).First();
+				var (ux1, uy1) = nodes.Where(nd => nd.Type is NodeType.External && str.Grip1 == nd).Select(nd => (nd.Displacement.ComponentX * scFctr, nd.Displacement.ComponentY * scFctr)).First();
+				var (ux3, uy3) = nodes.Where(nd => nd.Type is NodeType.External && str.Grip3 == nd).Select(nd => (nd.Displacement.ComponentX * scFctr, nd.Displacement.ComponentY * scFctr)).First();
 
 				// Calculate the displaced nodes
 				Point3d

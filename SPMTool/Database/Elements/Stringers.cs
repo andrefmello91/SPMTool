@@ -42,7 +42,7 @@ namespace SPMTool.Database.Elements
         public static void Add(Line line, ref IEnumerable<StringerGeometry> stringerCollection, ResultBuffer data = null)
 		{
 			// Get the list of stringers if it's not imposed
-			var strList = stringerCollection.ToList();
+			var strList = stringerCollection?.ToList() ?? new List<StringerGeometry>();
 
 			// Check if a Stringer already exist on that position. If not, create it
 			var geometry = new StringerGeometry(line.StartPoint, line.EndPoint, 0, 0);
@@ -89,6 +89,11 @@ namespace SPMTool.Database.Elements
 		        Add(line, ref stringerCollection, data);
         }
 
+		/// <summary>
+        /// Get the collection of stringers in the drawing.
+        /// </summary>
+        public static IEnumerable<Line> GetObjects() => Layer.Stringer.GetDBObjects().ToLines();
+
         /// <summary>
         /// Update the Stringer numbers on the XData of each Stringer in the model and return the collection of stringers.
         /// </summary>
@@ -96,10 +101,10 @@ namespace SPMTool.Database.Elements
         public static IEnumerable<Line> Update(bool updateNodes = true)
         {
 	        // Get the Stringer collection
-	        var strLines = Layer.Stringer.GetDBObjects().ToLines().ToArray();
+	        var strLines = GetObjects().ToArray();
 
 	        // Get all the nodes in the model
-	        var nds = (updateNodes ? Nodes.Update(DataBase.Units.Geometry) : Nodes.AllNodes()).ToArray();
+	        var nds = (updateNodes ? Nodes.Update(DataBase.Units.Geometry) : Nodes.GetAllNodes()).ToArray();
 
 	        // Get the array of midpoints ordered
 	        var midPts = strLines.Select(str => str.MidPoint()).Order().ToList();
@@ -143,9 +148,9 @@ namespace SPMTool.Database.Elements
 
 		        // Get the start, mid and end nodes
 		        int
-			        strStNd  = Nodes.GetNumber(str.StartPoint, nds),
-			        strMidNd = Nodes.GetNumber(midPt, nds),
-			        strEnNd  = Nodes.GetNumber(str.EndPoint, nds);
+			        strStNd  = Nodes.GetNumber(str.StartPoint, nds) ?? 0,
+			        strMidNd = Nodes.GetNumber(midPt, nds)          ?? 0,
+			        strEnNd  = Nodes.GetNumber(str.EndPoint, nds)   ?? 0;
 
 		        // Set the updated number and nodes in ascending number and length (line 2 to 6)
 		        data[(int) StringerIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, strNum);

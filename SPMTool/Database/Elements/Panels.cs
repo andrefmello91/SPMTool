@@ -44,7 +44,7 @@ namespace SPMTool.Database.Elements
         public static void Add(IEnumerable<Point3d> vertices, ref IEnumerable<Vertices> vertexCollection, LengthUnit geometryUnit = LengthUnit.Millimeter, ResultBuffer data = null)
 		{
 			var verts = new Vertices(vertices, geometryUnit);
-			var vertList = vertexCollection.ToList();
+			var vertList = vertexCollection?.ToList() ?? new List<Vertices>();
 
 			// Check if a panel already exist on that position. If not, create it
 			if (vertList.Contains(verts))
@@ -66,6 +66,11 @@ namespace SPMTool.Database.Elements
 		}
 
         /// <summary>
+        /// Get the collection of panels in the drawing.
+        /// </summary>
+        public static IEnumerable<Solid> GetObjects() => Layer.Panel.GetDBObjects().ToSolids();
+
+        /// <summary>
         /// Update panel numbers on the XData of each panel in the model and return the collection of panels.
         /// </summary>
         public static IEnumerable<Solid> Update()
@@ -74,7 +79,7 @@ namespace SPMTool.Database.Elements
 			var intNds = Layer.IntNode.GetDBObjects()?.ToPoints()?.ToArray();
 
 			// Create the panels collection and initialize getting the elements on node layer
-			var pnls = Layer.Panel.GetDBObjects()?.ToSolids()?.ToArray();
+			var pnls = GetObjects()?.ToArray();
 
 			if (pnls is null || !pnls.Any())
 				return null;

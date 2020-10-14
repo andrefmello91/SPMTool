@@ -324,10 +324,10 @@ namespace SPMTool.Editor
         public static StringerGeometry? GetStringerGeometry(LengthUnit geometryUnit)
         {
 	        // Get unit abbreviation
-	        var dimAbrev = Length.GetAbbreviation(geometryUnit);
+	        var dimAbrev = geometryUnit.Abbrev();
 
 	        // Get saved reinforcement options
-	        var savedGeo = DataBase.SavedStringerGeometry?.ToArray();
+	        var savedGeo = DataBase.SavedStringerGeometry;
 
 	        // Get saved reinforcement options
 	        if (savedGeo != null)
@@ -378,10 +378,10 @@ namespace SPMTool.Editor
         public static double? GetPanelWidth(LengthUnit unit)
         {
 	        // Get saved reinforcement options
-	        var savedGeo = DataBase.SavedPanelWidth?.ToArray();
+	        var savedGeo = DataBase.SavedPanelWidth;
 
 	        // Get unit abreviation
-	        var dimAbrev = Length.GetAbbreviation(unit);
+	        var dimAbrev = unit.Abbrev();
 
 	        // Get saved reinforcement options
 	        if (savedGeo != null)
@@ -448,7 +448,7 @@ namespace SPMTool.Editor
         public static UniaxialReinforcement GetUniaxialReinforcement(Units units)
         {
 	        // Get saved reinforcement options
-	        var savedRef = DataBase.SavedStringerReinforcement?.ToArray();
+	        var savedRef = DataBase.SavedStringerReinforcement;
 
 	        // Get unit abbreviation
 	        var dimAbbrev = units.Reinforcement.Abbrev();
@@ -488,7 +488,7 @@ namespace SPMTool.Editor
 		        return null;
 
 	        // Get steel
-	        var steel = GetSteel(units);
+	        var steel = GetSteel(units.MaterialStrength);
 
 	        if (steel is null)
 		        return null;
@@ -508,20 +508,20 @@ namespace SPMTool.Editor
         /// <summary>
         /// Get steel parameters from user.
         /// </summary>
-        /// <param name="units">Current <see cref="Units"/>.</param>
-        public static Steel GetSteel(Units units)
+        /// <param name="unit">The <see cref="PressureUnit"/> of steel parameters.</param>
+        public static Steel GetSteel(PressureUnit unit)
         {
 	        // Get steel data saved on database
-	        var savedSteel = DataBase.SavedSteel?.ToArray();
+	        var savedSteel = DataBase.SavedSteel;
 
 	        // Get unit abbreviation
-	        var matAbrev = Pressure.GetAbbreviation(units.MaterialStrength);
+	        var matAbrev = unit.Abbrev();
 
 	        // Get saved reinforcement options
 	        if (savedSteel != null)
 	        {
 		        // Get the options
-		        var options = savedSteel.Select(s => $"{s.YieldStress.ConvertFromMPa(units.MaterialStrength):0.00}|{s.ElasticModule.ConvertFromMPa(units.MaterialStrength):0.00}").ToList();
+		        var options = savedSteel.Select(s => $"{s.YieldStress.ConvertFromMPa(unit):0.00}|{s.ElasticModule.ConvertFromMPa(unit):0.00}").ToList();
 
 		        // Add option to set new reinforcement
 		        options.Add("New");
@@ -538,22 +538,22 @@ namespace SPMTool.Editor
 	        }
 
 	        // Ask the user to input the Steel yield strength
-	        var fDef = 500.ConvertFromMPa(units.MaterialStrength);
+	        var fDef = 500.ConvertFromMPa(unit);
 	        var fyn  = GetDouble($"Input the yield strength ({matAbrev}) of Steel:", fDef);
 
 	        if (!fyn.HasValue)
 		        return null;
 
 	        // Ask the user to input the Steel elastic modulus
-	        var eDef = 210000.ConvertFromMPa(units.MaterialStrength);
+	        var eDef = 210000.ConvertFromMPa(unit);
 	        var Esn  = GetDouble($"Input the elastic modulus ({matAbrev}) of Steel:", eDef);
 
 	        if (!Esn.HasValue)
 		        return null;
 
 	        double
-		        fy = fyn.Value.Convert(units.MaterialStrength),
-		        Es = Esn.Value.Convert(units.MaterialStrength);
+		        fy = fyn.Value.Convert(unit),
+		        Es = Esn.Value.Convert(unit);
 
 	        var steel = new Steel(fy, Es);
 
@@ -571,11 +571,11 @@ namespace SPMTool.Editor
         public static WebReinforcementDirection GetWebReinforcement(Direction direction, Units units)
         {
 	        // Get saved reinforcement options
-	        var savedRef = DataBase.SavedPanelReinforcement.ToArray();
+	        var savedRef = DataBase.SavedPanelReinforcement;
 
-	        // Get unit abreviation
-	        var dimAbrev = Length.GetAbbreviation(units.Geometry);
-	        var refAbrev = Length.GetAbbreviation(units.Reinforcement);
+	        // Get unit abbreviation
+	        var dimAbrev = units.Geometry.Abbrev();
+	        var refAbrev = units.Reinforcement.Abbrev();
 
 	        // Get saved reinforcement options
 	        if (savedRef != null)
@@ -611,7 +611,7 @@ namespace SPMTool.Editor
 		        return null;
 
 	        // Get steel
-	        var steel = GetSteel(units);
+	        var steel = GetSteel(units.MaterialStrength);
 
 	        if (steel is null)
 		        return null;
@@ -626,6 +626,36 @@ namespace SPMTool.Editor
 	        ReinforcementData.Save(reinforcement);
 
 	        return reinforcement;
+        }
+
+        /// <summary>
+        /// Ask the user to select a node to monitor and return the DoF index.
+        /// </summary>
+        public static int? MonitoredIndex()
+        {
+	        // Ask user to select a node
+	        var nd = SelectEntity("Select a node to monitor displacement:", new [] { Layer.ExtNode, Layer.IntNode });
+
+	        if (nd is null)
+		        return null;
+
+	        // Ask direction to monitor
+	        var options = new []
+	        {
+		        $"{Direction.X}",
+		        $"{Direction.Y}"
+	        };
+	        var res = SelectKeyword("Select a direction to monitor displacement:", options, out var dirIndex, options[0]);
+
+	        if (res is null)
+		        return null;
+
+	        // Get the node global indexes
+	        var node  = Nodes.Read((DBPoint) nd, Units.Default);
+	        var index = node.DoFIndex;
+
+	        return
+		        index[dirIndex];
         }
 	}
 }

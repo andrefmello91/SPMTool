@@ -132,7 +132,7 @@
     <Compile Include="Editor\Commands\Settings.cs" />
     <Compile Include="Editor\Commands\View.cs" />
     <Compile Include="Editor\UserInput.cs" />
-    <Compile Include="Analysis\Analysis.cs" />
+    <Compile Include="Editor\Commands\Analysis.cs" />
     <Compile Include="Database\ElementData.cs" />
     <Compile Include="Database\Materials\ReinforcementData.cs" />
     <Compile Include="Database\Materials\ConcreteData.cs" />
@@ -377,6 +377,8 @@
   <ItemGroup>
     <None Include="Resources\stringer-cross-section.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Analysis\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

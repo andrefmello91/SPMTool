@@ -34,10 +34,6 @@ namespace SPMTool.Editor.Commands
 		    // Get the list of start and endpoints
 		    var strList = Stringers.StringerGeometries();
 
-		    // Create lists of points for adding the nodes later
-		    List<Point3d> newIntNds = new List<Point3d>(),
-			    newExtNds = new List<Point3d>();
-
 		    // Prompt for the start point of Stringer
 		    var stPtn = UserInput.GetPoint("Enter the start point:");
 
@@ -67,30 +63,13 @@ namespace SPMTool.Editor.Commands
 			    // Create the Stringer and add to drawing
 			    Stringers.Add(extNds[0], extNds[1], ref strList);
 
-			    // Get the midpoint
-			    var midPt = extNds[0].MidPoint(extNds[1]);
-
-			    // Add the position of the nodes to the list
-			    if (!newExtNds.Contains(extNds[0]))
-				    newExtNds.Add(extNds[0]);
-
-			    if (!newExtNds.Contains(extNds[1]))
-				    newExtNds.Add(extNds[1]);
-
-			    if (!newIntNds.Contains(midPt))
-				    newIntNds.Add(midPt);
-
 			    // Set the start point of the new Stringer
 			    stPt = endPtn.Value;
 		    }
 
-		    // Create the nodes
-		    Nodes.Add(newExtNds, NodeType.External);
-		    Nodes.Add(newIntNds, NodeType.Internal);
-
 		    // Update the nodes and stringers
 		    Nodes.Update(units.Geometry);
-		    Stringers.Update();
+		    Stringers.Update(false);
 	    }
 
 		[CommandMethod("AddPanel")]
@@ -121,7 +100,7 @@ namespace SPMTool.Editor.Commands
 			}
 
 			// Update nodes and panels
-			Nodes.Update(units.Geometry);
+			Nodes.Update(units.Geometry, false);
 			Panels.Update();
 		}
     }

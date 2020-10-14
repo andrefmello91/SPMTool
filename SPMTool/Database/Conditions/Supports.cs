@@ -21,6 +21,12 @@ namespace SPMTool.Database.Conditions
     /// </summary>
     public static class Supports
     {
+
+	    /// <summary>
+	    /// Get the support objects in the drawing.
+	    /// </summary>
+	    public static IEnumerable<BlockReference> GetObjects() => Layer.Support.GetDBObjects()?.ToBlocks();
+
         /// <summary>
         /// Add the force blocks to the model.
         /// </summary>
