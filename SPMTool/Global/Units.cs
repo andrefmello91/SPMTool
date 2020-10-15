@@ -1,5 +1,4 @@
 ﻿using System;
-using UnitsNet;
 using UnitsNet.Units;
 
 namespace SPMTool
@@ -112,75 +111,15 @@ namespace SPMTool
 			MaterialStrength = PressureUnit.Megapascal
 		};
 
-        /// <summary>
-        /// Convert length to millimeters.
-        /// </summary>
-        /// <param name="dimension">Length value.</param>
-        /// <param name="fromUnit">Current unit.</param>
-        public double ConvertToMillimeter(double dimension, LengthUnit fromUnit) =>
-			UnitConverter.Convert(dimension, fromUnit, LengthUnit.Millimeter);
-
-        /// <summary>
-        /// Convert length from millimeters.
-        /// </summary>
-        /// <param name="millimeter">Length value, in mm.</param>
-        /// <param name="toUnit">Length unit to convert.</param>
-        public double ConvertFromMillimeter(double millimeter, LengthUnit toUnit) =>
-			UnitConverter.Convert(millimeter, LengthUnit.Millimeter, toUnit);
-
-        /// <summary>
-        /// Convert force to Newtons.
-        /// </summary>
-        /// <param name="force">Force value.</param>
-        /// <param name="fromUnit">Current unit.</param>
-        public double ConvertToNewton(double force, ForceUnit fromUnit) =>
-			UnitConverter.Convert(force, fromUnit, ForceUnit.Newton);
-
-		/// <summary>
-        /// Convert force from Newtons.
-        /// </summary>
-        /// <param name="newton">Force value, in N.</param>
-        /// <param name="toUnit">Force unit to convert.</param>
-		public double ConvertFromNewton(double newton, ForceUnit toUnit) =>
-			UnitConverter.Convert(newton, ForceUnit.Newton, toUnit);
-
-		/// <summary>
-		/// Convert force to KiloNewtons.
-		/// </summary>
-		/// <param name="force">Force value.</param>
-		/// <param name="fromUnit">Current unit.</param>
-		public double ConvertToKiloNewton(double force, ForceUnit fromUnit) =>
-			UnitConverter.Convert(force, fromUnit, ForceUnit.Kilonewton);
-
-        /// <summary>
-        /// Convert force from KiloNewtons.
-        /// </summary>
-        /// <param name="kiloNewton">Force value, in kN.</param>
-        /// <param name="toUnit">Force unit to convert.</param>
-        public double ConvertFromKiloNewton(double kiloNewton, ForceUnit toUnit) =>
-			UnitConverter.Convert(kiloNewton, ForceUnit.Kilonewton, toUnit);
-
-        /// <summary>
-        /// Convert stress/pressure to MegaPascals.
-        /// </summary>
-        /// <param name="stress">Stress value.</param>
-        /// <param name="fromUnit">Current unit.</param>
-        public double ConvertToMPa(double stress, PressureUnit fromUnit) =>
-			UnitConverter.Convert(stress, fromUnit, PressureUnit.Megapascal);
-
-        /// <summary>
-        /// Convert stress/pressure from MegaPascals.
-        /// </summary>
-        /// <param name="megapascal">Stress/pressure value, in MPa.</param>
-        /// <param name="toUnit">Stress/pressure unit to convert.</param>
-		public double ConvertFromMPa(double megapascal, PressureUnit toUnit) =>
-			UnitConverter.Convert(megapascal, PressureUnit.Megapascal, toUnit);
-
 		/// <summary>
         /// Returns true if all units coincide.
         /// </summary>
         /// <param name="other">The other <see cref="Units"/> object.</param>
         public bool Equals(Units other) => Geometry == other.Geometry && Reinforcement == other.Reinforcement && Displacements == other.Displacements && AppliedForces == other.AppliedForces && StringerForces == other.StringerForces && PanelStresses == other.PanelStresses && MaterialStrength == other.MaterialStrength;
+
+		public override bool Equals(object obj) => obj is Units units && Equals(units);
+
+		public override int GetHashCode() => base.GetHashCode();
 
 		/// <summary>
 		/// Returns true if all units coincide.

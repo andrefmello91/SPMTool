@@ -12,8 +12,6 @@ using SPMTool.Enums;
 using SPMTool.Database.Conditions;
 using UnitsNet.Units;
 
-[assembly: CommandClass(typeof(Supports))]
-
 namespace SPMTool.Database.Conditions
 {
 	/// <summary>

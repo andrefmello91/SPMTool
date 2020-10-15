@@ -1,12 +1,17 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using Extensions;
+using Extensions.Interface;
 using Extensions.Number;
 using Material;
 using Material.Reinforcement;
+using MathNet.Numerics;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database.Conditions;
@@ -14,9 +19,9 @@ using SPMTool.Database;
 using UnitsNet;
 using UnitsNet.Units;
 using MessageBox = System.Windows.MessageBox;
-using static SPMTool.Auxiliary;
 using Stringer = SPM.Elements.Stringer;
 using Stringers = SPMTool.Database.Elements.Stringers;
+using Window = System.Windows.Window;
 
 namespace SPMTool.UserInterface
 {
@@ -31,13 +36,13 @@ namespace SPMTool.UserInterface
 	    private readonly Units _units;
 
         // Properties
-        public string GeometryUnit => Length.GetAbbreviation(_units.Geometry);
+        public string GeometryUnit => _units.Geometry.Abbrev();
 
-        public string ReinforcementUnit => Length.GetAbbreviation(_units.Reinforcement);
+        public string ReinforcementUnit => _units.Reinforcement.Abbrev();
 
-        public string StressUnit => Pressure.GetAbbreviation(_units.MaterialStrength);
+        public string StressUnit => _units.MaterialStrength.Abbrev();
 
-        public string ReinforcementAreaUnit => Area.GetAbbreviation(_units.ReinforcementArea);
+        public string ReinforcementAreaUnit => _units.ReinforcementArea.Abbrev();
 
         /// <summary>
         /// Gets and sets reinforcement checkbox state.
@@ -48,13 +53,33 @@ namespace SPMTool.UserInterface
 			set
 			{
 				if (value)
-					EnableReinforcementBoxes();
+					ReinforcementBoxes.Enable();
 				else
-					DisableReinforcementBoxes();
+					ReinforcementBoxes.Disable();
 
 				ReinforcementCheck.IsChecked = value;
 			}
 		}
+
+		/// <summary>
+        /// Get geometry <see cref="TextBox"/>'s.
+        /// </summary>
+        private IEnumerable<TextBox> GeometryBoxes => new[] { WidthBox, HeigthBox };
+
+		/// <summary>
+        /// Get reinforcement <see cref="TextBox"/>'s.
+        /// </summary>
+        private IEnumerable<TextBox> ReinforcementBoxes => new[] { NumBarsBox, BarDiamBox, YieldBox, ModuleBox };
+
+        /// <summary>
+        /// Verify if geometry text boxes are filled.
+        /// </summary>
+        private bool GeometrySet => CheckBoxes(GeometryBoxes);
+
+        /// <summary>
+        /// Verify if reinforcement text boxes are filled.
+        /// </summary>
+        private bool ReinforcementSet => CheckBoxes(ReinforcementBoxes);
 
         public StringerWindow(Stringer stringer)
         {
@@ -63,12 +88,12 @@ namespace SPMTool.UserInterface
 	        _objectId         = stringer.ObjectId;
 
             // Read units
-            _units = Database.Units;
+            _units = DataBase.Units;
 
             InitializeComponent();
 
             // Get stringer image
-            StringerImage.Source = Database.Conditions.UserInterface.getBitmap(Properties.Resources.stringer_cross_section);
+            StringerImage.Source = Ribbon.GetBitmap(Properties.Resources.stringer_cross_section);
 
             GetInitialData(stringer);
 
@@ -77,57 +102,32 @@ namespace SPMTool.UserInterface
             DataContext = this;
 		}
 
-        /// <summary>
-        /// Verify if geometry text boxes are filled.
-        /// </summary>
-        private bool GeometrySet
-        {
-	        get
-	        {
-		        var textBoxes = new[] { WidthBox, HeigthBox };
-		        foreach (var textBox in textBoxes)
-		        {
-			        if (!ParsedAndNotZero(textBox.Text))
-				        return false;
-		        }
-
-                return true;
-	        }
-        }
-
 		/// <summary>
-        /// Verify if reinforcement text boxes are filled.
+        /// Get the initial data of the stringer.
         /// </summary>
-        private bool ReinforcementSet
-        {
-			get
-			{
-				var textBoxes = new[] { NumBarsBox, BarDiamBox, YieldBox, ModuleBox };
-				foreach (var textBox in textBoxes)
-				{
-					if (!ParsedAndNotZero(textBox.Text))
-						return false;
-				}
-
-                return true;
-			}
-		}
-
         private void GetInitialData(Stringer stringer)
 		{
 			StringerNumberBlock.Text = $"Stringer {stringer.Number}";
 			StringerGripsBlock.Text  = $"Grips: {stringer.Grips[0]} - {stringer.Grips[1]} - {stringer.Grips[2]}";
 		}
 
-		//private void GetUnits()
-		//{
-  //          GeometryUnit          = Length.GetAbbreviation(_units.Geometry);
-		//	ReinforcementUnit     = Length.GetAbbreviation(_units.Reinforcement);
-		//	StressUnit            = Pressure.GetAbbreviation(_units.MaterialStrength);
-		//	ReinforcementAreaUnit = Area.GetAbbreviation(_units.ReinforcementArea);
-		//}
+        /// <summary>
+        /// Check if <paramref name="textBoxes"/> are filled and not zero.
+        /// </summary>
+        private bool CheckBoxes(IEnumerable<TextBox> textBoxes) => textBoxes.All(textBox => textBox.Text.ParsedAndNotZero(out _));
 
-		private void InitiateBoxes()
+        //private void GetUnits()
+        //{
+        //          GeometryUnit          = Length.GetAbbreviation(_units.Geometry);
+        //	ReinforcementUnit     = Length.GetAbbreviation(_units.Reinforcement);
+        //	StressUnit            = Pressure.GetAbbreviation(_units.MaterialStrength);
+        //	ReinforcementAreaUnit = Area.GetAbbreviation(_units.ReinforcementArea);
+        //}
+
+		/// <summary>
+        /// Initiate boxes.
+        /// </summary>
+        private void InitiateBoxes()
 		{
 			LengthBox.Text  = $"{_geometry.Length.ConvertFromMillimeter(_units.Geometry):0.00}";
 			WidthBox.Text   = $"{_geometry.Width.ConvertFromMillimeter(_units.Geometry):0.00}";
@@ -141,7 +141,7 @@ namespace SPMTool.UserInterface
 			{
 				ReinforcementChecked = true;
 				NumBarsBox.Text = $"{_reinforcement.NumberOfBars}";
-				BarDiamBox.Text = $"{_units.ConvertFromMillimeter(_reinforcement.BarDiameter, _units.Reinforcement):0.00}";
+				BarDiamBox.Text = $"{_reinforcement.BarDiameter.ConvertFromMillimeter(_units.Reinforcement):0.00}";
 
 				AreaBox.Text =
 					_reinforcement.Area > 0 ?
@@ -164,34 +164,21 @@ namespace SPMTool.UserInterface
 			return 0;
 		}
 
-		private void EnableReinforcementBoxes()
-		{
-			NumBarsBox.IsEnabled = true;
-			BarDiamBox.IsEnabled = true;
-			YieldBox.IsEnabled   = true;
-			ModuleBox.IsEnabled  = true;
-		}
-
-		private void DisableReinforcementBoxes()
-		{
-			NumBarsBox.IsEnabled = false;
-			BarDiamBox.IsEnabled = false;
-			YieldBox.IsEnabled   = false;
-			ModuleBox.IsEnabled  = false;
-		}
-
         private void DoubleValidationTextBox(object sender, TextCompositionEventArgs e)
 		{
-			Regex regex = new Regex("[^0-9.]+");
+			var regex = new Regex("[^0-9.]+");
 			e.Handled = regex.IsMatch(e.Text);
 		}
 
 		private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
 		{
-			Regex regex = new Regex("[^0-9]+");
+			var regex = new Regex("[^0-9]+");
 			e.Handled = regex.IsMatch(e.Text);
 		}
 
+		/// <summary>
+        /// Save data in the stringer object.
+        /// </summary>
 		private void SaveData()
 		{
 			// Get values
@@ -222,15 +209,11 @@ namespace SPMTool.UserInterface
 		{
 			// Check geometry
 			if (!GeometrySet)
-			{
 				MessageBox.Show("Please set stringer geometry.", "Alert");
-			}
 
             // Check if reinforcement is set
             else if (ReinforcementChecked && !ReinforcementSet)
-			{
 				MessageBox.Show("Please set all reinforcement properties or uncheck reinforcement checkbox.", "Alert");
-			}
 
 			else
 			{

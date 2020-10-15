@@ -1,19 +1,12 @@
 ﻿using System;
-using System.Globalization;
-using System.Threading;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions.AutoCAD;
 using SPMTool.Enums;
-using SPMTool.UserInterface;
 using UnitsNet.Units;
 using UnitsNet;
-using StressUnit = UnitsNet.Units.PressureUnit;
 
-[assembly: CommandClass(typeof(SPMTool.Database.Settings.UnitsData))]
-
-namespace SPMTool.Database.Settings
+namespace SPMTool.Database
 {
 	/// <summary>
     /// Units data class.
@@ -39,10 +32,10 @@ namespace SPMTool.Database.Settings
 			},
 			StOpts  =
 			{
-				Pressure.GetAbbreviation(StressUnit.Pascal),
-				Pressure.GetAbbreviation(StressUnit.Kilopascal),
-				Pressure.GetAbbreviation(StressUnit.Megapascal),
-				Pressure.GetAbbreviation(StressUnit.Gigapascal)
+				Pressure.GetAbbreviation(PressureUnit.Pascal),
+				Pressure.GetAbbreviation(PressureUnit.Kilopascal),
+				Pressure.GetAbbreviation(PressureUnit.Megapascal),
+				Pressure.GetAbbreviation(PressureUnit.Gigapascal)
 			};
 
 		/// <summary>
@@ -93,8 +86,8 @@ namespace SPMTool.Database.Settings
 					Displacements     = (LengthUnit) data[(int) UnitsIndex.Displacements].ToInt(),
 					AppliedForces     = (ForceUnit)  data[(int) UnitsIndex.AppliedForces].ToInt(),
 					StringerForces    = (ForceUnit)  data[(int) UnitsIndex.StringerForces].ToInt(),
-					PanelStresses     = (StressUnit) data[(int) UnitsIndex.PanelStresses].ToInt(),
-					MaterialStrength  = (StressUnit) data[(int) UnitsIndex.MaterialStrength].ToInt(),
+					PanelStresses     = (PressureUnit) data[(int) UnitsIndex.PanelStresses].ToInt(),
+					MaterialStrength  = (PressureUnit) data[(int) UnitsIndex.MaterialStrength].ToInt(),
 				};
 		}
     }

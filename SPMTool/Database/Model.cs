@@ -2,15 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
 using SPM.Analysis;
 using SPM.Elements;
-using SPMTool.Database;
 using SPMTool.Database.Conditions;
 using SPMTool.Database.Elements;
-using SPMTool.Editor;
 using SPMTool.Enums;
 using Analysis = SPM.Analysis.Analysis;
 using Nodes = SPMTool.Database.Elements.Nodes;

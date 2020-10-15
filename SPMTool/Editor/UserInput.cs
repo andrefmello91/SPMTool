@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -15,7 +14,6 @@ using SPMTool.Database;
 using SPMTool.Database.Elements;
 using SPMTool.Database.Materials;
 using SPMTool.Enums;
-using UnitsNet;
 using UnitsNet.Units;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using Force = OnPlaneComponents.Force;

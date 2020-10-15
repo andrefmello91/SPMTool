@@ -6,7 +6,7 @@
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         xmlns:local="clr-namespace:SPMTool.UserInterface"
         mc:Ignorable="d"
-        Title="Load x Displacement - Monitored Node" Height="500" Width="700">
+        Title="Load x Displacement - Monitored Node" Height="500" Width="700" d:DataContext="{d:DesignData }">
     <Grid Background="#282c34">
         <lvc:CartesianChart Series="{Binding LoadDisplacement}" Background="#282c34" DisableAnimations="True" Hoverable="False" Margin="0,0,0,31">
             <lvc:CartesianChart.AxisX>

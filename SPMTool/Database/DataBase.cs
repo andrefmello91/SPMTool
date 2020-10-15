@@ -1,21 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Extensions.AutoCAD;
 using Material.Concrete;
 using Material.Reinforcement;
 using SPM.Elements.StringerProperties;
-using SPMTool.Database;
 using SPMTool.Database.Elements;
 using SPMTool.Database.Materials;
-using SPMTool.Database.Settings;
 using SPMTool.Editor;
 using SPMTool.Enums;
-using SPMTool.Database.Conditions;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Database

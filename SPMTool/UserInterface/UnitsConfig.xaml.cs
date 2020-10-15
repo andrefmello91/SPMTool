@@ -2,11 +2,10 @@
 using System.Windows.Controls;
 using System.Windows.Forms;
 using Extensions;
-using SPMTool.Database.Settings;
-using SPMTool.Database.Conditions;
 using UnitsNet;
 using UnitsNet.Units;
 using ComboBox = System.Windows.Controls.ComboBox;
+using static SPMTool.Database.UnitsData;
 
 namespace SPMTool.UserInterface
 {
@@ -16,17 +15,10 @@ namespace SPMTool.UserInterface
     public partial class UnitsConfig : Window
     {
 		// Properties
-		private Units _inputUnits;
-		private Units _outputUnits;
-
-		// Unit options
-		private readonly string[]
-			_dimOpts = UnitsData.DimOpts,
-			_fOpts   = UnitsData.FOpts,
-			_stOpts  = UnitsData.StOpts;
+		private Units _units;
 
         public UnitsConfig()
-			: this (UnitsData.Read(false))
+			: this (Read(false))
         {
         }
 
@@ -35,40 +27,42 @@ namespace SPMTool.UserInterface
 	        InitializeComponent();
 
             // Read units
-            _inputUnits = units;
-
-			// Initiate output
-			_outputUnits = units;
+            _units = units;
 
 			// Initiate combo boxes with units set
 			InitiateComboBoxes();
         }
 
-        // Get combo boxes items
+        /// <summary>
+        /// Get combo boxes items.
+        /// </summary>
         private void InitiateComboBoxes()
         {
-	        GeometryBox.ItemsSource  = _dimOpts;
-	        GeometryBox.SelectedItem = _inputUnits.Geometry.Abbrev();
+	        GeometryBox.ItemsSource  = DimOpts;
+	        GeometryBox.SelectedItem = _units.Geometry.Abbrev();
 
-	        ReinforcementBox.ItemsSource  = _dimOpts;
-	        ReinforcementBox.SelectedItem = _inputUnits.Reinforcement.Abbrev();
+	        ReinforcementBox.ItemsSource  = DimOpts;
+	        ReinforcementBox.SelectedItem = _units.Reinforcement.Abbrev();
 
-	        DisplacementsBox.ItemsSource  = _dimOpts;
-	        DisplacementsBox.SelectedItem = _inputUnits.Displacements.Abbrev();
+	        DisplacementsBox.ItemsSource  = DimOpts;
+	        DisplacementsBox.SelectedItem = _units.Displacements.Abbrev();
 
-	        AppliedForcesBox.ItemsSource  = _fOpts;
-	        AppliedForcesBox.SelectedItem = _inputUnits.AppliedForces.Abbrev();
+	        AppliedForcesBox.ItemsSource  = FOpts;
+	        AppliedForcesBox.SelectedItem = _units.AppliedForces.Abbrev();
 
-	        StringerForcesBox.ItemsSource  = _fOpts;
-	        StringerForcesBox.SelectedItem = _inputUnits.StringerForces.Abbrev();
+	        StringerForcesBox.ItemsSource  = FOpts;
+	        StringerForcesBox.SelectedItem = _units.StringerForces.Abbrev();
 
-	        PanelStressesBox.ItemsSource  = _stOpts;
-	        PanelStressesBox.SelectedItem = _inputUnits.PanelStresses.Abbrev();
+	        PanelStressesBox.ItemsSource  = StOpts;
+	        PanelStressesBox.SelectedItem = _units.PanelStresses.Abbrev();
 
-	        MaterialBox.ItemsSource  = _stOpts;
-	        MaterialBox.SelectedItem = _inputUnits.MaterialStrength.Abbrev();
+	        MaterialBox.ItemsSource  = StOpts;
+	        MaterialBox.SelectedItem = _units.MaterialStrength.Abbrev();
         }
 
+		/// <summary>
+        /// Update units after selection changes.
+        /// </summary>
         private void Box_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 	        var cmbx = (ComboBox) sender;
@@ -76,44 +70,47 @@ namespace SPMTool.UserInterface
 	        switch (cmbx.Name)
 	        {
                 case "GeometryBox":
-	                _outputUnits.Geometry = UnitParser.Default.Parse<LengthUnit>((string) cmbx.SelectedItem);
+	                _units.Geometry = UnitParser.Default.Parse<LengthUnit>((string) cmbx.SelectedItem);
 					break;
 
                 case "ReinforcementBox":
-	                _outputUnits.Reinforcement = UnitParser.Default.Parse<LengthUnit>((string)cmbx.SelectedItem);
+	                _units.Reinforcement = UnitParser.Default.Parse<LengthUnit>((string)cmbx.SelectedItem);
 	                break;
 
                 case "DisplacementsBox":
-	                _outputUnits.Displacements = UnitParser.Default.Parse<LengthUnit>((string)cmbx.SelectedItem);
+	                _units.Displacements = UnitParser.Default.Parse<LengthUnit>((string)cmbx.SelectedItem);
 	                break;
 
                 case "AppliedForcesBox":
-	                _outputUnits.AppliedForces = UnitParser.Default.Parse<ForceUnit>((string)cmbx.SelectedItem);
+	                _units.AppliedForces = UnitParser.Default.Parse<ForceUnit>((string)cmbx.SelectedItem);
 	                break;
 
                 case "StringerForcesBox":
-	                _outputUnits.StringerForces = UnitParser.Default.Parse<ForceUnit>((string)cmbx.SelectedItem);
+	                _units.StringerForces = UnitParser.Default.Parse<ForceUnit>((string)cmbx.SelectedItem);
 	                break;
 
                 case "PanelStressesBox":
-	                _outputUnits.PanelStresses = UnitParser.Default.Parse<PressureUnit>((string)cmbx.SelectedItem);
+	                _units.PanelStresses = UnitParser.Default.Parse<PressureUnit>((string)cmbx.SelectedItem);
 	                break;
 
                 case "MaterialBox":
-	                _outputUnits.MaterialStrength = UnitParser.Default.Parse<PressureUnit>((string)cmbx.SelectedItem);
+	                _units.MaterialStrength = UnitParser.Default.Parse<PressureUnit>((string)cmbx.SelectedItem);
 	                break;
 	        }
         }
 
-        private void ButtonCancel_OnClick(object sender, RoutedEventArgs e)
-        {
-	        Close();
-        }
+		/// <summary>
+        /// Close window if cancel button is clicked.
+        /// </summary>
+        private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
 
+		/// <summary>
+        /// Save units if OK button is clicked.
+        /// </summary>
         private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
         {
 			// Save units on database
-			UnitsData.Save(_outputUnits);
+			Save(_units);
 
 			Close();
         }

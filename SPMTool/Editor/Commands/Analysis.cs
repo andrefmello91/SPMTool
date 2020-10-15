@@ -1,15 +1,10 @@
-﻿using System.Threading;
-using Autodesk.AutoCAD.Runtime;
+﻿using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.UserInterface;
 using SPMTool.Database;
-using SPMTool.Database.Elements;
-using SPM.Analysis;
-using SPMTool.Enums;
 using Analysis = SPMTool.Editor.Commands.Analysis;
-using Nodes = SPMTool.Database.Elements.Nodes;
 
 
 [assembly: CommandClass(typeof(Analysis))]

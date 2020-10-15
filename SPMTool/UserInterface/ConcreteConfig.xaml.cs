@@ -1,21 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Forms;
 using System.Windows.Input;
+using Extensions;
+using Extensions.Interface;
 using Extensions.Number;
 using Material;
 using Material.Concrete;
 using Parameters = Material.Concrete.Parameters;
-using Material.Concrete;
-using SPMTool.Database.Conditions;
 using SPMTool.Database;
 using SPMTool.Database.Materials;
-using UnitsNet;
-using UnitsNet.Units;
 using ComboBox = System.Windows.Controls.ComboBox;
 using MessageBox = System.Windows.MessageBox;
 using TextBox = System.Windows.Controls.TextBox;
@@ -34,9 +33,15 @@ namespace SPMTool.UserInterface
 		private ConstitutiveModel _constitutiveModel;
 		private Parameters _parameters;
 
-		public string StressUnit => Pressure.GetAbbreviation(_units.MaterialStrength);
+		/// <summary>
+        /// Get the stress unit.
+        /// </summary>
+		protected string StressUnit => _units.MaterialStrength.Abbrev();
 
-        public string AggregateUnit => Length.GetAbbreviation(_units.Reinforcement);
+		/// <summary>
+        /// Get aggregate diameter unit.
+        /// </summary>
+        protected string AggregateUnit => _units.Reinforcement.Abbrev();
 
 		/// <summary>
         /// Get the output <see cref="ConcreteData"/> object.
@@ -66,7 +71,7 @@ namespace SPMTool.UserInterface
             InitializeComponent();
 
 			// Get settings
-			_parameters         = parameters;
+			_parameters        = parameters;
 			_parameterModel    = Parameters.ReadParameterModel(_parameters);
 			_constitutiveModel = constitutiveModel;
 
@@ -79,45 +84,26 @@ namespace SPMTool.UserInterface
 		/// <summary>
 		/// Verify if strength and aggregate diameter text boxes are filled.
 		/// </summary>
-		private bool ParametersSet
-		{
-			get
-			{
-				var textBoxes = new[] { StrengthBox, AggDiamBox };
-				foreach (var textBox in textBoxes)
-				{
-					if (textBox.Text.ParsedAndNotZero(out var x))
-						return false;
-				}
-
-				return true;
-			}
-		}
+		private bool ParametersSet => CheckBoxes(new[] { StrengthBox, AggDiamBox });
 
 		/// <summary>
 		/// Verify if custom parameters text boxes are filled.
 		/// </summary>
-		private bool CustomParametersSet
-		{
-			get
-			{
-				var textBoxes = new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox };
-				foreach (var textBox in textBoxes)
-				{
-					if (textBox.Text.ParsedAndNotZero(out var x))
-						return false;
-				}
+		private bool CustomParametersSet => CheckBoxes(new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox });
 
-				return true;
-			}
-		}
+		/// <summary>
+        /// Check if <paramref name="textBoxes"/> are filled and not zero.
+        /// </summary>
+		private bool CheckBoxes(IEnumerable<TextBox> textBoxes) => textBoxes.All(textBox => textBox.Text.ParsedAndNotZero(out _));
 
-        // Get combo boxes items
+        /// <summary>
+        /// Initiate combo boxes items.
+        /// </summary>
         private void InitiateComboBoxes()
 		{
-			StrengthBox.Text = $"{_units.ConvertFromMPa(_parameters.Strength, _units.MaterialStrength):0.00}";
+			StrengthBox.Text = $"{_parameters.Strength.ConvertFromMPa(_units.MaterialStrength):0.00}";
 
-			AggDiamBox.Text = $"{_units.ConvertFromMillimeter(_parameters.AggregateDiameter, _units.Reinforcement):0.00}";
+			AggDiamBox.Text = $"{_parameters.AggregateDiameter.ConvertFromMillimeter(_units.Reinforcement):0.00}";
 
             AggTypeBox.ItemsSource  = Enum.GetNames(typeof(AggregateType));
 			AggTypeBox.SelectedItem = _parameters.Type.ToString();
@@ -131,16 +117,18 @@ namespace SPMTool.UserInterface
             UpdateCustomParameters();
 		}
 
-		// Update parameters
-		private void UpdateParameters()
+        /// <summary>
+        /// Update parameters.
+        /// </summary>
+        private void UpdateParameters()
 		{
 			if (_parameterModel == ParameterModel.Custom || StrengthBox.Text == string.Empty || AggDiamBox.Text == string.Empty || AggTypeBox.SelectedItem.ToString() == string.Empty)
 				return;
 
 			// Read parameters
 			double
-				fc    = _units.ConvertToMPa(double.Parse(StrengthBox.Text, CultureInfo.InvariantCulture), _units.MaterialStrength),
-				phiAg = _units.ConvertToMillimeter(double.Parse(AggDiamBox.Text, CultureInfo.InvariantCulture), _units.Reinforcement);
+				fc    = double.Parse(StrengthBox.Text, CultureInfo.InvariantCulture).Convert(_units.MaterialStrength),
+				phiAg = double.Parse(AggDiamBox.Text, CultureInfo.InvariantCulture).Convert(_units.Reinforcement);
 
 			var aggType = (AggregateType) Enum.Parse(typeof(AggregateType), AggTypeBox.SelectedItem.ToString());
 
@@ -148,8 +136,10 @@ namespace SPMTool.UserInterface
 			_parameters = Parameters.ReadParameters(_parameterModel, fc, phiAg, aggType);
 		}
 
-		// Update custom parameters
-		private void UpdateCustomParameters()
+        /// <summary>
+        /// Update custom parameters.
+        /// </summary>
+        private void UpdateCustomParameters()
 		{
 			_parameters.UpdateParameters();
 
@@ -162,12 +152,14 @@ namespace SPMTool.UserInterface
 			UltStrainBox.Text = $"{-1000 * _parameters.UltimateStrain:0.00}";
 		}
 
-		// Get custom parameters
-		private void GetCustomParameters()
+        /// <summary>
+        /// Get custom parameters.
+        /// </summary>
+        private void GetCustomParameters()
 		{
 			// Read parameters
 			double
-				fc    =  double.Parse(StrengthBox.Text).Convert(_units.MaterialStrength),
+				fc    = double.Parse(StrengthBox.Text).Convert(_units.MaterialStrength),
 				phiAg = double.Parse(AggDiamBox.Text).Convert(_units.Reinforcement),
 				Ec    = double.Parse(ModuleBox.Text).Convert(_units.MaterialStrength),
 				ft    = double.Parse(TensileBox.Text).Convert(_units.MaterialStrength),
@@ -177,44 +169,25 @@ namespace SPMTool.UserInterface
 			_parameters = new CustomParameters(fc, phiAg, ft, Ec, ec, ecu);
 		}
 
-		// Disable a textbox
-		private void DisableTextBox(TextBox textBox)
-		{
-			textBox.IsEnabled = false;
-		}
-
-		// Enable a textbox
-		private void EnableTextBox(TextBox textBox)
-		{
-			textBox.IsEnabled = true;
-		}
-
 		private void ParameterBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			var parBox = (ComboBox) sender;
 
-			if (parBox.SelectedItem.ToString() != string.Empty)
+			if (parBox.SelectedItem.ToString() == string.Empty)
+				return;
+
+			_parameterModel = (ParameterModel) Enum.Parse(typeof(ParameterModel), parBox.SelectedItem.ToString());
+
+			var customBoxes = new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox };
+
+			if (_parameterModel == ParameterModel.Custom)
+				customBoxes.Enable();
+
+			else
 			{
-				_parameterModel = (ParameterModel) Enum.Parse(typeof(ParameterModel), parBox.SelectedItem.ToString());
-
-				var customBoxes = new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox };
-
-				if (_parameterModel == ParameterModel.Custom)
-				{
-					foreach (var box in customBoxes)
-					{
-						EnableTextBox(box);
-					}
-				}
-				else
-				{
-					UpdateParameters();
-					UpdateCustomParameters();
-					foreach (var box in customBoxes)
-					{
-						DisableTextBox(box);
-					}
-				}
+				UpdateParameters();
+				UpdateCustomParameters();
+				customBoxes.Disable();
 			}
 		}
 
@@ -222,22 +195,22 @@ namespace SPMTool.UserInterface
 		{
 			var fcBox = (TextBox) sender;
 
-            if (_parameterModel != ParameterModel.Custom && fcBox.Text != string.Empty)
-            {
-	            _parameters.Strength = double.Parse(fcBox.Text);
-				UpdateCustomParameters();
-			}
+			if (_parameterModel == ParameterModel.Custom || fcBox.Text == string.Empty)
+				return;
+
+			_parameters.Strength = double.Parse(fcBox.Text);
+            UpdateCustomParameters();
 		}
 
 		private void AggTypeBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			var aggBox = (ComboBox) sender;
 
-			if (_parameterModel != ParameterModel.Custom && aggBox.SelectedItem.ToString() != string.Empty)
-			{
-				_parameters.Type = (AggregateType)Enum.Parse(typeof(AggregateType), aggBox.SelectedItem.ToString());
-                UpdateCustomParameters();
-			}
+			if (_parameterModel == ParameterModel.Custom || aggBox.SelectedItem.ToString() == string.Empty)
+				return;
+
+			_parameters.Type = (AggregateType)Enum.Parse(typeof(AggregateType), aggBox.SelectedItem.ToString());
+			UpdateCustomParameters();
 		}
 
 		private void ConstitutiveBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -252,7 +225,7 @@ namespace SPMTool.UserInterface
 
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
 		{
-			Regex regex = new Regex("[^0-9.]+");
+			var regex = new Regex("[^0-9.]+");
 			e.Handled = regex.IsMatch(e.Text);
 		}
 
@@ -265,14 +238,10 @@ namespace SPMTool.UserInterface
 		{
 			// Verify if text boxes are filled
 			if (!ParametersSet)
-			{
 				MessageBox.Show("Please set concrete strength and aggregate diameter.", "Alert");
-			}
 
 			else if (_parameterModel == ParameterModel.Custom && !CustomParametersSet)
-			{
 				MessageBox.Show("Please set concrete custom parameters.", "Alert");
-			}
 
 			else
 			{

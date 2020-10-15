@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Windows;
-using SPMTool.Database.Conditions;
+using OnPlaneComponents;
+using SPM.Elements;
 using SPMTool.Database;
-using SPMTool.Elements;
-using SPMTool.Database.Elements;
 using UnitsNet;
-using Force = UnitsNet.Force;
-using Nodes = SPMTool.Database.Elements.Nodes;
+using Force = OnPlaneComponents.Force;
 
 namespace SPMTool.UserInterface
 {
@@ -16,36 +14,25 @@ namespace SPMTool.UserInterface
     public partial class NodeWindow : Window
 	{
 		// Properties
-		private Units  Units { get; }
-		public  Nodes   Node  { get; }
-		private Force  Fx    { get; }
-		private Force  Fy    { get; }
-		private Length Ux    { get; }
-		private Length Uy    { get; }
+		private Units        _units;
+		private Node         _node;
+		private Force        _force;
+		private Displacement _displacement;
 
 
-		public NodeWindow(Nodes node)
+		public NodeWindow(Node node)
 		{
-			Node = node;
+			_node = node;
 
 			// Read units
-			Units = Database.Units;
+			_units = DataBase.Units;
 
-            // Get forces and displacements
-            double
-				fx = 0,
-				fy = 0;
+			// Get forces and displacements
+			_force = node.Force.Copy();
+			_force.ChangeUnit(_units.AppliedForces);
 
-			if (Node.Forces.X != null)
-				fx = Node.Forces.X.Value;
-
-			if (Node.Forces.X != null)
-				fy = Node.Forces.Y.Value;
-
-			Fx = Force.FromNewtons(fx).ToUnit(Units.AppliedForces);
-			Fy = Force.FromNewtons(fy).ToUnit(Units.AppliedForces);
-			Ux = Length.FromMillimeters(Node.Displacement.X).ToUnit(Units.Displacements);
-			Uy = Length.FromMillimeters(Node.Displacement.Y).ToUnit(Units.Displacements);
+			_displacement = node.Displacement.Copy();
+			_displacement.ChangeUnit(_units.Displacements);
 
             InitializeComponent();
 
@@ -58,24 +45,24 @@ namespace SPMTool.UserInterface
 		// Get combo boxes items
 		private void InitiateBlocks()
 		{
-			NodeNumberBlock.Text = "Node " + Node.Number;
+			NodeNumberBlock.Text = $"Node {_node.Number}";
 
-			NodePositionBlock.Text = "Position: (" + Math.Round(Node.Position.X, 2) + ", " + Math.Round(Node.Position.Y, 2) + ")";
+			NodePositionBlock.Text = $"Position: ({_node.Position.X:0.00}, {_node.Position.Y:0.00})";
 
-			FxBlock.Text = "Fx = " + Fx;
+			//FxBlock.Text = "Fx = " + Fx;
 
-			FyBlock.Text = "Fy = " + Fy;
+			//FyBlock.Text = "Fy = " + Fy;
 
-			if (Node.DisplacementSet)
-			{
-				UxBlock.Text = "ux = " + Ux;
-				UyBlock.Text = "uy = " + Uy;
-			}
-			else
-			{
-				UxBlock.Text = "ux = NOT CALCULATED";
-				UyBlock.Text = "uy = NOT CALCULATED";
-			}
+			//if (_node.DisplacementSet)
+			//{
+			//	UxBlock.Text = "ux = " + Ux;
+			//	UyBlock.Text = "uy = " + Uy;
+			//}
+			//else
+			//{
+			//	UxBlock.Text = "ux = NOT CALCULATED";
+			//	UyBlock.Text = "uy = NOT CALCULATED";
+			//}
 		}
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
