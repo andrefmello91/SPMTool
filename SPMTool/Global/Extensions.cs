@@ -249,7 +249,7 @@ namespace SPMTool
 	        var selRes = UserInput.Editor.SelectAll(selFt);
 
 	        return
-		        selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 ? selRes.Value.GetObjectIds() : null;
+		        selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 ? selRes.Value.GetObjectIds() : new ObjectId[0];
         }
 
         /// <summary>

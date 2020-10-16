@@ -89,7 +89,7 @@ namespace SPMTool.Editor.Commands
 				// Check if there are four points
 				if (nds.Length == 4)
 					// Create the panel if it doesn't exist
-					Panels.Add(from DBPoint nd in nds select nd.Position, ref pnlList, units.Geometry);
+					Panels.Add(nds.Select(nd => nd.Position), ref pnlList, units.Geometry);
 
 				else
 					Application.ShowAlertDialog("Please select four external nodes.");

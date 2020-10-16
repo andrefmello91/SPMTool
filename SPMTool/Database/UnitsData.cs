@@ -48,7 +48,7 @@ namespace SPMTool.Database
 			var data = new TypedValue[size];
 
 			// Set data
-			data[(int) UnitsIndex.AppName]          = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  Database.DataBase.AppName);
+			data[(int) UnitsIndex.AppName]          = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
 			data[(int) UnitsIndex.XDataStr]         = new TypedValue((int) DxfCode.ExtendedDataAsciiString, Units);
 			data[(int) UnitsIndex.Geometry]         = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Geometry);
 			data[(int) UnitsIndex.Reinforcement]    = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Reinforcement);
@@ -72,9 +72,11 @@ namespace SPMTool.Database
 			var data = DataBase.ReadDictionaryEntry(Units);
 
 			if (data is null && setUnits)
+			{
 				Editor.Commands.Settings.SetUnits();
-
-			else
+				data = DataBase.ReadDictionaryEntry(Units);
+			}
+			else if (data is null) 
 				return SPMTool.Units.Default;
 
 			// Get the parameters from XData

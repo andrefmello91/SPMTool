@@ -86,7 +86,7 @@ namespace SPMTool.Editor.Commands
 		            var endPt = new Point3d(xCrd, yCrd, 0);
 
 		            // Create the Stringer
-		            Stringers.Add(stPt, endPt, ref stringerCollection, str.XData);
+		            Stringers.Add(stPt, endPt, ref stringerCollection);
 
 		            // Set the start point of the next Stringer
 		            stPt = endPt;
@@ -207,7 +207,7 @@ namespace SPMTool.Editor.Commands
 							};
 
 							// Create the panel with XData of the original panel
-							Panels.Add(newVerts, ref pnlList, units.Geometry, pnl.XData);
+							Panels.Add(newVerts, ref pnlList, units.Geometry);
 
 							// Create tuples to adding the stringers later
 							var strsToAdd = new[]
@@ -255,7 +255,7 @@ namespace SPMTool.Editor.Commands
 			Panels.Update();
 
 			// Show an alert for editing stringers
-			Application.ShowAlertDialog("Alert: stringers parameters must be set again.");
+			Application.ShowAlertDialog("Alert: stringers and panels' parameters must be set again.");
 		}
 
 		/// <summary>

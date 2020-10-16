@@ -119,7 +119,7 @@ namespace SPMTool.Database
 	        using (var trans = StartTransaction())
 
 		    // Open the Registered Applications table for read
-	        using (var regAppTbl = (RegAppTable)trans.GetObject(DataBase.Database.RegAppTableId, OpenMode.ForRead))
+	        using (var regAppTbl = (RegAppTable)trans.GetObject(Database.RegAppTableId, OpenMode.ForRead))
 	        {
 		        if (regAppTbl.Has(AppName))
 					return;
@@ -127,7 +127,7 @@ namespace SPMTool.Database
 		        using (var regAppTblRec = new RegAppTableRecord())
 		        {
 			        regAppTblRec.Name = AppName;
-			        trans.GetObject(Database.RegAppTableId, OpenMode.ForWrite);
+			        regAppTbl.UpgradeOpen();
 			        regAppTbl.Add(regAppTblRec);
 			        trans.AddNewlyCreatedDBObject(regAppTblRec, true);
 		        }
@@ -206,7 +206,7 @@ namespace SPMTool.Database
 	        using (var trans = StartTransaction())
 			
 		        // Get the NOD in the database
-	        using (var nod = (DBDictionary)trans.GetObject(NodId, OpenMode.ForWrite))
+	        using (var nod = (DBDictionary)trans.GetObject(NodId, OpenMode.ForRead))
 	        {
 		        // Check if it exists as full name
 		        if (fullName && nod.Contains(name))

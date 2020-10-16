@@ -18,8 +18,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		/// Add nodes in all necessary positions (stringer start, mid and end points).
 		/// </summary>
-		/// <param name="data">The extended data for the node object.</param>
-		public static void Add(ResultBuffer data = null)
+		public static void Add()
 		{
             // Get the list of nodes
             var ndList = NodePositions(NodeType.All);
@@ -27,14 +26,17 @@ namespace SPMTool.Database.Elements
 			// Get stringers
 			var strList = Model.StringerCollection;
 
+			if (strList is null)
+				return;
+
 			// Get points
-			var intNds = strList.Where(str => !ndList.Contains(str.MidPoint())).Select(str => str.MidPoint()).ToList();
-			var extNds = strList.Where(str => !ndList.Contains(str.StartPoint)).Select(str => str.StartPoint).ToList();
-			extNds.AddRange(strList.Where(str => !ndList.Contains(str.EndPoint)).Select(str => str.EndPoint));
+			var intNds = strList.Where(str => !ndList?.Contains(str.MidPoint()) ?? true).Select(str => str.MidPoint()).ToList();
+			var extNds = strList.Where(str => !ndList?.Contains(str.StartPoint) ?? true).Select(str => str.StartPoint).ToList();
+			extNds.AddRange(strList.Where(str => !ndList?.Contains(str.EndPoint) ?? true).Select(str => str.EndPoint));
 
             // Add nodes
-			Add(intNds, NodeType.Internal, ref ndList, data);
-			Add(extNds, NodeType.External, ref ndList, data);
+			Add(intNds, NodeType.Internal, ref ndList);
+			Add(extNds, NodeType.External, ref ndList);
 		}
 
         /// <summary>
@@ -42,13 +44,12 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="position">The <see cref="Point3d"/> position.</param>
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
-        /// <param name="data">The extended data for the node object.</param>
-        public static void Add(Point3d position, NodeType nodeType, ResultBuffer data = null)
+        public static void Add(Point3d position, NodeType nodeType)
 		{
             // Get the list of nodes
             var ndList = NodePositions(NodeType.All);
 
-			Add(position, nodeType, ref ndList, data);
+			Add(position, nodeType, ref ndList);
 		}
 
         /// <summary>
@@ -57,8 +58,7 @@ namespace SPMTool.Database.Elements
         /// <param name="position">The <see cref="Point3d"/> position.</param>
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
         /// <param name="existentNodes">The collection containing the position of existent nodes in the drawing.</param>
-        /// <param name="data">The extended data for the node object.</param>
-		public static void Add(Point3d position, NodeType nodeType, ref IEnumerable<Point3d> existentNodes, ResultBuffer data = null)
+		public static void Add(Point3d position, NodeType nodeType, ref IEnumerable<Point3d> existentNodes)
 		{
             // Get the list of nodes
             var ndList = existentNodes?.ToList() ?? new List<Point3d>();
@@ -79,9 +79,6 @@ namespace SPMTool.Database.Elements
 
 			// Add the new object
 			dbPoint.Add();
-
-			// Set Xdata
-			dbPoint.SetXData(data ?? new ResultBuffer(NewXData()));
 		}
 
         /// <summary>
@@ -90,11 +87,10 @@ namespace SPMTool.Database.Elements
         /// <param name="positions">The collection of <see cref="Point3d"/> positions.</param>
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
         /// <param name="existentNodes">The collection containing the position of existent nodes in the drawing.</param>
-        /// <param name="data">The extended data for the node object.</param>
-        public static void Add(IEnumerable<Point3d> positions, NodeType nodeType, ref IEnumerable<Point3d> existentNodes, ResultBuffer data = null)
+        public static void Add(IEnumerable<Point3d> positions, NodeType nodeType, ref IEnumerable<Point3d> existentNodes)
 		{
             foreach (var position in positions)
-				Add(position, nodeType, ref existentNodes, data);
+				Add(position, nodeType, ref existentNodes);
 		}
 
         /// <summary>
@@ -102,13 +98,12 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="positions">The collection of <see cref="Point3d"/> positions.</param>
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
-        /// <param name="data">The extended data for the node object.</param>
-        public static void Add(IEnumerable<Point3d> positions, NodeType nodeType, ResultBuffer data = null)
+        public static void Add(IEnumerable<Point3d> positions, NodeType nodeType)
 		{
 			// Get the list of nodes
 			var ndList = NodePositions(NodeType.All);
 
-			Add(positions, nodeType, ref ndList, data);
+			Add(positions, nodeType, ref ndList);
         }
 
         /// <summary>
@@ -138,29 +133,32 @@ namespace SPMTool.Database.Elements
 				Add();
 
 			// Get all the nodes as points
-			var ndObjs = GetAllNodes().ToArray();
-
-			// Get the list of nodes ordered
-			var ndList = NodePositions(NodeType.All).ToList();
+			var ndObjs = GetAllNodes()?.ToArray();
 
 			// Get the Xdata size
 			int size = Enum.GetNames(typeof(NodeIndex)).Length;
 
 			// Access the nodes on the document
-			foreach (var nd in ndObjs)
+			if (ndObjs != null && ndObjs.Any())
 			{
-				// Get the node number on the list
-				double ndNum = ndList.IndexOf(nd.Position) + 1;
+				// Order nodes
+				ndObjs = ndObjs.OrderBy(nd => nd.Position.Y).ThenBy(nd => nd.Position.X).ToArray();
 
-				// Initialize the array of typed values for XData
-				var data = nd.XData?.AsArray();
-				data = data?.Length == size ? data : NewXData();
+				for (var i = 0; i < ndObjs.Length; i++)
+				{
+					// Get the node number
+					double ndNum = i + 1;
 
-				// Set the updated number
-				data[(int) NodeIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
+					// Initialize the array of typed values for XData
+					var data = ndObjs[i].XData?.AsArray();
+					data = data?.Length == size ? data : NewXData();
 
-				// Add the new XData
-				nd.SetXData(data);
+					// Set the updated number
+					data[(int) NodeIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
+
+                    // Add the new XData
+                    ndObjs[i].SetXData(data);
+				}
 			}
 
 			// Set the style for all point objects in the drawing
@@ -197,7 +195,7 @@ namespace SPMTool.Database.Elements
 					break;
 
 				default:
-					ndObjs = null;
+					ndObjs = new List<DBPoint>();
 					break;
 			}
 

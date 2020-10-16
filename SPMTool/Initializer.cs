@@ -14,33 +14,36 @@ namespace SPMTool
 		/// <summary>
         /// Initialize application.
         /// </summary>
-		public void Initialize() => Application.Idle += On_ApplicationIdle;
-
-		/// <summary>
-        /// Terminate application.
-        /// </summary>
-		public void Terminate() => Application.SystemVariableChanged -= ColorThemeChanged;
-
-		/// <summary>
-		/// Initialize user interface and create layers and blocks.
-		/// </summary>
-		public void On_ApplicationIdle(object sender, EventArgs e)
+		public void Initialize()
 		{
+			Application.Idle += On_ApplicationIdle;
+
 			// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
 			DataBase.RegisterApp();
 
 			// Create layers and blocks
 			DataBase.CreateLayers();
 			Model.CreateBlocks();
+		}
 
-			Ribbon.AddButtons();
+        /// <summary>
+        /// Terminate application.
+        /// </summary>
+        public void Terminate() => Application.SystemVariableChanged -= ColorThemeChanged;
+
+		/// <summary>
+		/// Initialize user interface and create layers and blocks.
+		/// </summary>
+		public void On_ApplicationIdle(object sender, EventArgs e)
+		{
+            Ribbon.AddButtons();
 
 			Application.SystemVariableChanged += ColorThemeChanged;
 
 			Application.Idle -= On_ApplicationIdle;
 		}
 
-		/// <summary>
+        /// <summary>
         /// Alternate colors if theme is changed.
         /// </summary>
         public void ColorThemeChanged(object senderObj, Autodesk.AutoCAD.ApplicationServices.SystemVariableChangedEventArgs sysVarChEvtArgs)

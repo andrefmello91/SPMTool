@@ -25,9 +25,9 @@ namespace SPMTool.Database
 	    public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
 
         /// <summary>
-        /// Get the updated collection of all nodes in the model.
+        /// Get the collection of all nodes in the model.
         /// </summary>
-        public static DBPoint[] NodeCollection => Nodes.Update(DataBase.Units.Geometry)?.ToArray();
+        public static DBPoint[] NodeCollection => Nodes.GetAllNodes()?.ToArray();
 
 	    /// <summary>
 	    /// Get the collection of external nodes in the model.
@@ -40,14 +40,14 @@ namespace SPMTool.Database
 	    public static DBPoint[] IntNodeCollection => Nodes.GetIntNodes()?.ToArray();
 
 	    /// <summary>
-	    /// Get the updated collection of stringers in the model.
+	    /// Get the collection of stringers in the model.
 	    /// </summary>
-	    public static Line[] StringerCollection => Stringers.Update(false)?.ToArray();
+	    public static Line[] StringerCollection => Stringers.GetObjects()?.ToArray();
 
 	    /// <summary>
-	    /// Get the updated collection of panels in the model.
+	    /// Get the collection of panels in the model.
 	    /// </summary>
-	    public static Solid[] PanelCollection => Panels.Update()?.ToArray();
+	    public static Solid[] PanelCollection => Panels.GetObjects()?.ToArray();
 
 	    /// <summary>
 	    /// Get the collection of forces in the model.

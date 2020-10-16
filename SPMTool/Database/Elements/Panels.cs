@@ -26,12 +26,11 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="vertices">The collection of <see cref="Point3d"/> vertices.</param>
         /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
-        /// <param name="data">Extended data to add. If null, default data will be added.</param>
-        public static void Add(IEnumerable<Point3d> vertices, LengthUnit geometryUnit = LengthUnit.Millimeter, ResultBuffer data = null)
+        public static void Add(IEnumerable<Point3d> vertices, LengthUnit geometryUnit = LengthUnit.Millimeter)
 		{
 			var vertList = PanelVertices();
 
-			Add(vertices, ref vertList, geometryUnit, data);
+			Add(vertices, ref vertList, geometryUnit);
 		}
 
         /// <summary>
@@ -40,8 +39,7 @@ namespace SPMTool.Database.Elements
         /// <param name="vertices">The collection of <see cref="Point3d"/> vertices.</param>
         /// <param name="vertexCollection">The collection of <see cref="Vertices"/> of existing panels.</param>
         /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
-        /// <param name="data">Extended data to add. If null, default data will be added.</param>
-        public static void Add(IEnumerable<Point3d> vertices, ref IEnumerable<Vertices> vertexCollection, LengthUnit geometryUnit = LengthUnit.Millimeter, ResultBuffer data = null)
+        public static void Add(IEnumerable<Point3d> vertices, ref IEnumerable<Vertices> vertexCollection, LengthUnit geometryUnit = LengthUnit.Millimeter)
 		{
 			var verts = new Vertices(vertices, geometryUnit);
 			var vertList = vertexCollection?.ToList() ?? new List<Vertices>();
@@ -59,16 +57,13 @@ namespace SPMTool.Database.Elements
 
             // Create the panel as a solid with 4 segments (4 points)
             using (var solid = new Solid(ordered[0], ordered[1], ordered[2], ordered[3]) { Layer = $"{Layer.Panel}"})
-            {
 	            solid.Add();
-	            solid.SetXData(data ?? new ResultBuffer(NewXData()));
-            }
 		}
 
         /// <summary>
         /// Get the collection of panels in the drawing.
         /// </summary>
-        public static IEnumerable<Solid> GetObjects() => Layer.Panel.GetDBObjects().ToSolids();
+        public static IEnumerable<Solid> GetObjects() => Layer.Panel.GetDBObjects()?.ToSolids();
 
         /// <summary>
         /// Update panel numbers on the XData of each panel in the model and return the collection of panels.
@@ -82,7 +77,7 @@ namespace SPMTool.Database.Elements
 			var pnls = GetObjects()?.ToArray();
 
 			if (pnls is null || !pnls.Any())
-				return null;
+				return pnls;
 
             // Create the centerpoint collection
             var cntrPts = pnls.Select(pnl => pnl.CenterPoint()).Order().ToList();

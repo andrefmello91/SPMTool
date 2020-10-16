@@ -118,15 +118,16 @@ namespace SPMTool.Editor
 			{
 				// Get the objects in the selection and add to the collection only the external nodes
 				foreach (SelectedObject obj in set)
-					using (var ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForRead))
-					{
-						// Get layername
-						var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
+				{
+					var ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForRead);
 
-						// Check if it is a external node
-						if (layers is null || filter.Contains(layer))
-							collection.Add(ent);
-					}
+                    // Get layername
+                    var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
+
+					// Check if it is a external node
+					if (layers is null || filter.Contains(layer))
+						collection.Add(ent);
+				}
 			}
 
 			return collection;
@@ -150,12 +151,12 @@ namespace SPMTool.Editor
 			// Create an infinite loop for selecting elements
 			for ( ; ; )
 			{
-				var nds = SelectObjects(message, layers)?.ToArray();
+				var nds = SelectObjects(message, layers);
 
 				if (nds is null)
 					return null;
 
-				if (nds.Length > 0)
+				if (nds.Any())
 					return nds.ToPoints();
 
                 // No nodes selected
@@ -174,12 +175,12 @@ namespace SPMTool.Editor
             // Create an infinite loop for selecting elements
             for ( ; ; )
 			{
-				var strs = SelectObjects(message, layers)?.ToArray();
+				var strs = SelectObjects(message, layers);
 
 				if (strs is null)
 					return null;
 
-				if (strs.Length > 0)
+				if (strs.Any())
 					return strs.ToLines();
 
                 Application.ShowAlertDialog("Please select at least one stringer.");
@@ -197,12 +198,12 @@ namespace SPMTool.Editor
             // Create an infinite loop for selecting elements
             for ( ; ; )
 			{
-				var pnls = SelectObjects(message, layers)?.ToArray();
+				var pnls = SelectObjects(message, layers);
 
 				if (pnls is null)
 					return null;
 
-				if (pnls.Length > 0)
+				if (pnls.Any())
 					return pnls.ToSolids();
 
                 Application.ShowAlertDialog("Please select at least one panel.");

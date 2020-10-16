@@ -24,13 +24,12 @@ namespace SPMTool.Database.Elements
         /// Add a stringer to drawing.
         /// </summary>
         /// <param name="line">The <see cref="Line"/> to be the stringer.</param>
-        /// <param name="data">The extended data for the stringer object.</param>
-		public static void Add(Line line, ResultBuffer data = null)
+		public static void Add(Line line)
 		{
 			// Get the list of stringers if it's not imposed
 			var strList = StringerGeometries();
 
-			Add(line, ref strList, data);
+			Add(line, ref strList);
 		}
 
         /// <summary>
@@ -38,8 +37,7 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="line">The <see cref="Line"/> to be the stringer.</param>
         /// <param name="stringerCollection">The collection containing all the stringer geometries in the drawing.</param>
-        /// <param name="data">The extended data for the stringer object.</param>
-        public static void Add(Line line, ref IEnumerable<StringerGeometry> stringerCollection, ResultBuffer data = null)
+        public static void Add(Line line, ref IEnumerable<StringerGeometry> stringerCollection)
 		{
 			// Get the list of stringers if it's not imposed
 			var strList = stringerCollection?.ToList() ?? new List<StringerGeometry>();
@@ -59,21 +57,17 @@ namespace SPMTool.Database.Elements
 
             // Add the object
             line.Add();
-
-			// Add Xdata
-			line.SetXData(data ?? new ResultBuffer(NewXData()));
-		}
+        }
 
         /// <summary>
         /// Add a stringer to drawing.
         /// </summary>
         /// <param name="startPoint">The start <see cref="Point3d"/>.</param>
         /// <param name="endPoint">The end <see cref="Point3d"/>.</param>
-        /// <param name="data">The extended data for the stringer object.</param>
-        public static void Add(Point3d startPoint, Point3d endPoint, ResultBuffer data = null)
+        public static void Add(Point3d startPoint, Point3d endPoint)
         {
 	        using (var line = new Line(startPoint, endPoint))
-				Add(line, data);
+				Add(line);
         }
 
         /// <summary>
@@ -82,11 +76,10 @@ namespace SPMTool.Database.Elements
         /// <param name="startPoint">The start <see cref="Point3d"/>.</param>
         /// <param name="endPoint">The end <see cref="Point3d"/>.</param>
         /// <param name="stringerCollection">The collection containing all the stringer geometries in the drawing.</param>
-        /// <param name="data">The extended data for the stringer object.</param>
-        public static void Add(Point3d startPoint, Point3d endPoint, ref IEnumerable<StringerGeometry> stringerCollection, ResultBuffer data = null)
+        public static void Add(Point3d startPoint, Point3d endPoint, ref IEnumerable<StringerGeometry> stringerCollection)
         {
 	        using (var line = new Line(startPoint, endPoint))
-		        Add(line, ref stringerCollection, data);
+		        Add(line, ref stringerCollection);
         }
 
 		/// <summary>
@@ -104,7 +97,7 @@ namespace SPMTool.Database.Elements
 	        var strLines = GetObjects().ToArray();
 
 	        // Get all the nodes in the model
-	        var nds = (updateNodes ? Nodes.Update(DataBase.Units.Geometry) : Nodes.GetAllNodes()).ToArray();
+	        var nds = (updateNodes ? Nodes.Update(DataBase.Units.Geometry) : Nodes.GetAllNodes())?.ToArray();
 
 	        // Get the array of midpoints ordered
 	        var midPts = strLines.Select(str => str.MidPoint()).Order().ToList();
@@ -215,7 +208,7 @@ namespace SPMTool.Database.Elements
 			newData[(int) StringerIndex.XDataStr]  = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
 			newData[(int) StringerIndex.Width]     = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
 			newData[(int) StringerIndex.Height]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
-			newData[(int) StringerIndex.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+			newData[(int) StringerIndex.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, 0);
 			newData[(int) StringerIndex.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
 			newData[(int) StringerIndex.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
 			newData[(int) StringerIndex.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
