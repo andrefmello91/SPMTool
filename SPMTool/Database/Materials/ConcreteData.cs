@@ -18,6 +18,11 @@ namespace SPMTool.Database.Materials
 	    private const string ConcreteParams = "ConcreteParams";
 
 		/// <summary>
+        /// Auxiliary concrete field.
+        /// </summary>
+		private static Concrete _concrete;
+
+		/// <summary>
         /// Save concrete <see cref="Parameters"/> and <see cref="ConstitutiveModel"/> in database.
         /// </summary>
         /// <param name="concrete">The <see cref="ConcreteData"/> object.</param>
@@ -30,6 +35,9 @@ namespace SPMTool.Database.Materials
 	    /// <param name="behaviorModel">Concrete <see cref="ConstitutiveModel"/>.</param>
 	    public static void Save(Parameters parameters, ConstitutiveModel behaviorModel)
 	    {
+			// Set to concrete field
+			_concrete = new Concrete(parameters, behaviorModel);
+
 		    // Definition for the Extended Data
 		    var xdataStr = "Concrete data";
 
@@ -57,19 +65,28 @@ namespace SPMTool.Database.Materials
 			    DataBase.SaveDictionary(rb, ConcreteParams);
 	    }
 
+        /// <summary>
+        /// Read concrete saved in database.
+        /// </summary>
+        /// <param name="setConcrete">Concrete must be set by user if it's not set yet?</param>
+	    public static Concrete Read(bool setConcrete = true) => _concrete ?? ReadFromDictionary(setConcrete);
+
 	    /// <summary>
 	    /// Read concrete saved in database.
 	    /// </summary>
-	    /// <param name="setConcrete">Concrete must be set by user?</param>
-	    public static Concrete Read(bool setConcrete = true)
+	    /// <param name="setConcrete">Concrete must be set by user if it's not set yet?</param>
+	    private static Concrete ReadFromDictionary(bool setConcrete = true)
 	    {
 		    var data = DataBase.ReadDictionaryEntry(ConcreteParams);
 
-		    if (data is null && setConcrete)
-			    MaterialInput.SetConcreteParameters();
-
-		    else
-			    return null;
+		    if (data is null)
+			    if (setConcrete)
+			    {
+				    MaterialInput.SetConcreteParameters();
+				    return _concrete;
+			    }
+			    else
+					return null;
 
             // Get the parameters from XData
             var parModel    = (ParameterModel)data[(int) ConcreteIndex.Model].ToInt();
@@ -89,7 +106,8 @@ namespace SPMTool.Database.Materials
 		    // Get parameters and constitutive
 		    var parameters = Parameters.ReadParameters(parModel, fc, phiAg, aggType, fcr, Ec, ec, ecu);
 
-		    return new Concrete(parameters, constModel);
+		    _concrete = new Concrete(parameters, constModel);
+		    return _concrete;
 	    }
     }
 }

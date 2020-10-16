@@ -21,6 +21,11 @@ namespace SPMTool.Database.Elements
     /// </summary>
 	public static class Panels
 	{
+		/// <summary>
+		/// Auxiliary list of <see cref="Vertices"/>'s.
+		/// </summary>
+		private static List<Vertices> _verticesList;
+
         /// <summary>
         /// Add a panel to the drawing.
         /// </summary>
@@ -28,36 +33,24 @@ namespace SPMTool.Database.Elements
         /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
         public static void Add(IEnumerable<Point3d> vertices, LengthUnit geometryUnit = LengthUnit.Millimeter)
 		{
-			var vertList = PanelVertices();
+			if (_verticesList is null)
+				_verticesList = new List<Vertices>(PanelVertices());
 
-			Add(vertices, ref vertList, geometryUnit);
-		}
-
-        /// <summary>
-        /// Add a panel to the drawing.
-        /// </summary>
-        /// <param name="vertices">The collection of <see cref="Point3d"/> vertices.</param>
-        /// <param name="vertexCollection">The collection of <see cref="Vertices"/> of existing panels.</param>
-        /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
-        public static void Add(IEnumerable<Point3d> vertices, ref IEnumerable<Vertices> vertexCollection, LengthUnit geometryUnit = LengthUnit.Millimeter)
-		{
 			var verts = new Vertices(vertices, geometryUnit);
-			var vertList = vertexCollection?.ToList() ?? new List<Vertices>();
 
 			// Check if a panel already exist on that position. If not, create it
-			if (vertList.Contains(verts))
+			if (_verticesList.Contains(verts))
 				return;
 
-			// Add to the list
-			vertList.Add(verts);
-			vertexCollection = vertList;
+            // Add to the list
+            _verticesList.Add(verts);
 
 			// Order vertices
 			var ordered = vertices.Order().ToArray();
 
             // Create the panel as a solid with 4 segments (4 points)
             using (var solid = new Solid(ordered[0], ordered[1], ordered[2], ordered[3]) { Layer = $"{Layer.Panel}"})
-	            solid.Add();
+	            solid.Add(On_PanelErase);
 		}
 
         /// <summary>
@@ -68,30 +61,31 @@ namespace SPMTool.Database.Elements
         /// <summary>
         /// Update panel numbers on the XData of each panel in the model and return the collection of panels.
         /// </summary>
-        public static IEnumerable<Solid> Update()
+        /// <param name="updateNodes">Update nodes too?</param>
+        public static void Update(bool updateNodes = true)
 		{
-			// Get the internal nodes of the model
-			var intNds = Layer.IntNode.GetDBObjects()?.ToPoints()?.ToArray();
+			if (updateNodes)
+				Nodes.Update(DataBase.Units.Geometry);
 
 			// Create the panels collection and initialize getting the elements on node layer
-			var pnls = GetObjects()?.ToArray();
+			var pnls = GetObjects()?.Order()?.ToArray();
 
 			if (pnls is null || !pnls.Any())
-				return pnls;
+				return;
 
-            // Create the centerpoint collection
-            var cntrPts = pnls.Select(pnl => pnl.CenterPoint()).Order().ToList();
-
+            // Get the internal nodes of the model
+            var intNds = Model.IntNodeCollection;
+			
             // Get the Xdata size
             int size = Enum.GetNames(typeof(PanelIndex)).Length;
 
             // Bool to alert the user
             var userAlert = false;
 
-            foreach (var pnl in pnls)
+            for (var i = 0; i < pnls.Length; i++)
             {
 	            // Get XData
-	            var data = pnl.XData?.AsArray() ?? NewXData();
+	            var data = pnls[i].XData?.AsArray() ?? NewXData();
 
 	            // Verify the size of XData
 	            if (data.Length != size)
@@ -103,61 +97,61 @@ namespace SPMTool.Database.Elements
 	            }
 
 	            // Get the panel number
-	            int pnlNum = cntrPts.IndexOf(pnl.CenterPoint()) + 1;
+	            int pnlNum = i + 1;
 
 	            // Initialize an int array of grip numbers
 	            int[] grips = new int[4];
 
-                // Get panel geometry
-                var verts = pnl.GetVertices().ToArray();
-                var geometry = new PanelGeometry(verts, 0, DataBase.Units.Geometry);
+	            // Get panel geometry
+	            var verts = pnls[i].GetVertices().ToArray();
+	            var geometry = new PanelGeometry(verts, 0, DataBase.Units.Geometry);
 
-				// Get grip positions
-				var pnlGrips = geometry.GripPositions;
+	            // Get grip positions
+	            var pnlGrips = geometry.GripPositions;
 
-				foreach (var grip in pnlGrips)
-				{
-					// Get the position of the vertex in the array
-					int i = Array.IndexOf(pnlGrips, grip);
+	            foreach (var grip in pnlGrips)
+	            {
+		            // Get the position of the vertex in the array
+		            int j = Array.IndexOf(pnlGrips, grip);
 
-					// Get the node number
-					grips[i] = Nodes.GetNumber(grip, intNds) ?? 0;
-				}
+		            // Get the node number
+		            grips[j] = Nodes.GetNumber(grip, intNds) ?? 0;
+	            }
 
-				// Set the updated panel number
-	            data[(int)PanelIndex.Number] = new TypedValue((int)DxfCode.ExtendedDataReal, pnlNum);
+	            // Set the updated panel number
+	            data[(int) PanelIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, pnlNum);
 
 	            // Set the updated node numbers in the necessary order
-	            data[(int)PanelIndex.Grip1] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[0]);
-	            data[(int)PanelIndex.Grip2] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[1]);
-	            data[(int)PanelIndex.Grip3] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[2]);
-	            data[(int)PanelIndex.Grip4] = new TypedValue((int)DxfCode.ExtendedDataReal, grips[3]);
+	            data[(int) PanelIndex.Grip1] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[0]);
+	            data[(int) PanelIndex.Grip2] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[1]);
+	            data[(int) PanelIndex.Grip3] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[2]);
+	            data[(int) PanelIndex.Grip4] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[3]);
 
-	            // Add the new XData
-	            pnl.SetXData(data);
+                // Add the new XData
+                pnls[i].SetXData(data);
             }
 
-			// Move panels to bottom
+			// Update vertices
+			_verticesList = new List<Vertices>(pnls.Select(GetVertices));
+
+            // Move panels to bottom
 			pnls.MoveToBottom();
 
             // Alert user
             if (userAlert)
 	            Application.ShowAlertDialog("Please set panel geometry and reinforcement again");
-
-            // Return the collection of panels
-            return pnls;
 		}
 
 		/// <summary>
+        /// Get <see cref="Vertices"/> of a <see cref="Solid"/>.
+        /// </summary>
+        /// <param name="panel">The quadrilateral <see cref="Solid"/> object.</param>
+        public static Vertices GetVertices(Solid panel) => new Vertices(panel.GetVertices(), DataBase.Units.Geometry);
+
+        /// <summary>
         /// Get the collection of <see cref="Vertices"/> of existing panels.
         /// </summary>
-		public static IEnumerable<Vertices> PanelVertices()
-		{
-            var unit = DataBase.Units.Geometry;
-
-            return
-	            Layer.Panel.GetDBObjects()?.ToSolids()?.Select(pnl => new Vertices(pnl.GetVertices(), unit));
-		}
+        public static IEnumerable<Vertices> PanelVertices() => GetObjects()?.Select(GetVertices);
 
 		/// <summary>
         /// Create new XData for panels.
@@ -768,5 +762,20 @@ namespace SPMTool.Database.Elements
 	        Layer.CompressivePanelStress.Off();
 	        Layer.TensilePanelStress.Off();
         }
-	}
+
+		/// <summary>
+		/// Event to execute when a panel is erased.
+		/// </summary>
+		private static void On_PanelErase(object sender, ObjectErasedEventArgs e)
+		{
+			if (_verticesList is null || !_verticesList.Any() || !(sender is Solid pnl))
+				return;
+
+			var vertices = GetVertices(pnl);
+
+			if (_verticesList.Contains(vertices))
+				_verticesList.Remove(vertices);
+		}
+
+    }
 }

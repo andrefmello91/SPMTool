@@ -20,43 +20,35 @@ namespace SPMTool.Database.Elements
 	/// </summary>
 	public static class Stringers
 	{
-        /// <summary>
-        /// Add a stringer to drawing.
-        /// </summary>
-        /// <param name="line">The <see cref="Line"/> to be the stringer.</param>
-		public static void Add(Line line)
-		{
-			// Get the list of stringers if it's not imposed
-			var strList = StringerGeometries();
-
-			Add(line, ref strList);
-		}
+		/// <summary>
+		/// Auxiliary list of <see cref="StringerGeometry"/>'s.
+		/// </summary>
+		private static List<StringerGeometry> _geometries;
 
         /// <summary>
         /// Add a stringer to drawing.
         /// </summary>
         /// <param name="line">The <see cref="Line"/> to be the stringer.</param>
-        /// <param name="stringerCollection">The collection containing all the stringer geometries in the drawing.</param>
-        public static void Add(Line line, ref IEnumerable<StringerGeometry> stringerCollection)
+        public static void Add(Line line)
 		{
 			// Get the list of stringers if it's not imposed
-			var strList = stringerCollection?.ToList() ?? new List<StringerGeometry>();
+			if (_geometries is null)
+				_geometries = new List<StringerGeometry>(StringerGeometries());
 
 			// Check if a Stringer already exist on that position. If not, create it
 			var geometry = new StringerGeometry(line.StartPoint, line.EndPoint, 0, 0);
 
-			if (strList.Contains(geometry))
+			if (_geometries.Contains(geometry))
 				return;
 
-			// Add to the list
-			strList.Add(geometry);
-			stringerCollection = strList;
+            // Add to the list
+            _geometries.Add(geometry);
 
             // Set layer
             line.Layer = $"{Layer.Stringer}";
 
             // Add the object
-            line.Add();
+            line.Add(On_StringerErase);
         }
 
         /// <summary>
@@ -70,18 +62,6 @@ namespace SPMTool.Database.Elements
 				Add(line);
         }
 
-        /// <summary>
-        /// Add a stringer to drawing.
-        /// </summary>
-        /// <param name="startPoint">The start <see cref="Point3d"/>.</param>
-        /// <param name="endPoint">The end <see cref="Point3d"/>.</param>
-        /// <param name="stringerCollection">The collection containing all the stringer geometries in the drawing.</param>
-        public static void Add(Point3d startPoint, Point3d endPoint, ref IEnumerable<StringerGeometry> stringerCollection)
-        {
-	        using (var line = new Line(startPoint, endPoint))
-		        Add(line, ref stringerCollection);
-        }
-
 		/// <summary>
         /// Get the collection of stringers in the drawing.
         /// </summary>
@@ -91,22 +71,25 @@ namespace SPMTool.Database.Elements
         /// Update the Stringer numbers on the XData of each Stringer in the model and return the collection of stringers.
         /// </summary>
         /// <param name="updateNodes">Update nodes too?</param>
-        public static IEnumerable<Line> Update(bool updateNodes = true)
+        public static void Update(bool updateNodes = true)
         {
-	        // Get the Stringer collection
-	        var strLines = GetObjects().ToArray();
-
 	        // Get all the nodes in the model
-	        var nds = (updateNodes ? Nodes.Update(DataBase.Units.Geometry) : Nodes.GetAllNodes())?.ToArray();
+			if (updateNodes)
+				Nodes.Update(DataBase.Units.Geometry);
 
-	        // Get the array of midpoints ordered
-	        var midPts = strLines.Select(str => str.MidPoint()).Order().ToList();
+			// Get the Stringer collection
+			var strs = GetObjects()?.Order()?.ToArray();
+
+			if (strs is null || !strs.Any())
+				return;
+
+            var nds = Model.NodeCollection;
 
 	        // Bool to alert the user
 	        bool userAlert = false;
 
 	        // Access the stringers on the document
-	        foreach (var str in strLines)
+	        for (var i = 0; i < strs.Length; i++)
 	        {
 		        // Initialize the array of typed values for XData
 		        TypedValue[] data;
@@ -115,13 +98,13 @@ namespace SPMTool.Database.Elements
 		        int size = Enum.GetNames(typeof(StringerIndex)).Length;
 
 		        // If XData does not exist, create it
-		        if (str.XData is null)
+		        if (strs[i].XData is null)
 			        data = NewXData();
 
 		        else // Xdata exists
 		        {
 			        // Get the result buffer as an array
-			        data = str.ReadXData();
+			        data = strs[i].ReadXData();
 
 			        // Verify the size of XData
 			        if (data.Length != size)
@@ -132,18 +115,14 @@ namespace SPMTool.Database.Elements
 				        userAlert = true;
 			        }
 		        }
-
-		        // Get the coordinates of the midpoint of the Stringer
-		        var midPt = str.StartPoint.MidPoint(str.EndPoint);
-
 		        // Get the Stringer number
-		        int strNum = midPts.IndexOf(midPt) + 1;
+		        int strNum = i + 1;
 
 		        // Get the start, mid and end nodes
 		        int
-			        strStNd  = Nodes.GetNumber(str.StartPoint, nds) ?? 0,
-			        strMidNd = Nodes.GetNumber(midPt, nds)          ?? 0,
-			        strEnNd  = Nodes.GetNumber(str.EndPoint, nds)   ?? 0;
+			        strStNd  = Nodes.GetNumber(strs[i].StartPoint, nds) ?? 0,
+			        strMidNd = Nodes.GetNumber(strs[i].MidPoint(), nds) ?? 0,
+			        strEnNd  = Nodes.GetNumber(strs[i].EndPoint,   nds) ?? 0;
 
 		        // Set the updated number and nodes in ascending number and length (line 2 to 6)
 		        data[(int) StringerIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, strNum);
@@ -151,29 +130,30 @@ namespace SPMTool.Database.Elements
 		        data[(int) StringerIndex.Grip2]  = new TypedValue((int) DxfCode.ExtendedDataReal, strMidNd);
 		        data[(int) StringerIndex.Grip3]  = new TypedValue((int) DxfCode.ExtendedDataReal, strEnNd);
 
-		        // Add the new XData
-		        str.SetXData(data);
+                // Add the new XData
+                strs[i].SetXData(data);
 	        }
+
+			// Save geometries
+			_geometries = strs.Select(str => GetGeometry(str, false)).ToList();
 
 	        // Alert the user
 	        if (userAlert)
 		        Application.ShowAlertDialog("Please set Stringer geometry and reinforcement again");
-
-	        // Return the collection of stringers
-	        return strLines;
         }
 
         /// <summary>
         /// Get the <see cref="StringerGeometry"/> from this <see cref="Line"/>.
         /// </summary>
         /// <param name="line">The <see cref="Line"/> object.</param>
-        /// <param name="unit">The <see cref="LengthUnit"/> of geometry.</param>
         /// <param name="readXData">Read extended data of <paramref name="line"/>?</param>
-        public static StringerGeometry GetGeometry(Line line, LengthUnit unit = LengthUnit.Millimeter, bool readXData = true)
+        public static StringerGeometry GetGeometry(Line line, bool readXData = true)
         {
 	        double
 		        w = 0,
 		        h = 0;
+
+	        var unit = DataBase.Units.Geometry;
 
 	        if (readXData)
 	        {
@@ -188,7 +168,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
         /// Get a collection containing all the stringer geometries in the drawing.
         /// </summary>
-		public static IEnumerable<StringerGeometry> StringerGeometries() => Layer.Stringer.GetDBObjects()?.ToLines()?.Select(str => new StringerGeometry(str.StartPoint, str.EndPoint, 0, 0));
+		public static IEnumerable<StringerGeometry> StringerGeometries() => GetObjects()?.Select(str => GetGeometry(str, false));
 
 		/// <summary>
         /// Create new extended data for stringers.
@@ -556,5 +536,19 @@ namespace SPMTool.Database.Elements
 	        // Turn the layer on
 	        Layer.StringerForce.On();
         }
+
+		/// <summary>
+		/// Event to execute when a stringer is erased.
+		/// </summary>
+		private static void On_StringerErase(object sender, ObjectErasedEventArgs e)
+		{
+			if (_geometries is null || !_geometries.Any() || !(sender is Line str))
+				return;
+
+			var geometry = GetGeometry(str, false);
+
+			if (_geometries.Contains(geometry))
+				_geometries.Remove(geometry);
+		}
 	}
 }

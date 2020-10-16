@@ -8,6 +8,7 @@ using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.Database.Conditions;
 using SPMTool.Database.Elements;
+using SPMTool.Editor;
 using SPMTool.Enums;
 using Analysis = SPM.Analysis.Analysis;
 using Nodes = SPMTool.Database.Elements.Nodes;
@@ -63,6 +64,16 @@ namespace SPMTool.Database
         /// Get the collection of force texts in the model.
         /// </summary>
         public static DBText[] ForceTextCollection => Forces.GetTexts()?.ToArray();
+
+        /// <summary>
+        /// Update all the elements in the drawing.
+        /// </summary>
+        public static void UpdateElements()
+        {
+	        Nodes.Update(DataBase.Units.Geometry);
+	        Stringers.Update(false);
+	        Panels.Update(false);
+        }
 
         /// <summary>
         /// Get the <see cref="InputData"/> from objects in drawing.

@@ -57,7 +57,7 @@ namespace SPMTool.Editor.Commands
 			    var extNds = nds.Order().ToList();
 
 			    // Create the Stringer and add to drawing
-			    Stringers.Add(extNds[0], extNds[1], ref strList);
+			    Stringers.Add(extNds[0], extNds[1]);
 
 			    // Set the start point of the new Stringer
 			    stPt = endPtn.Value;
@@ -89,7 +89,7 @@ namespace SPMTool.Editor.Commands
 				// Check if there are four points
 				if (nds.Length == 4)
 					// Create the panel if it doesn't exist
-					Panels.Add(nds.Select(nd => nd.Position), ref pnlList, units.Geometry);
+					Panels.Add(nds.Select(nd => nd.Position), units.Geometry);
 
 				else
 					Application.ShowAlertDialog("Please select four external nodes.");
@@ -97,7 +97,7 @@ namespace SPMTool.Editor.Commands
 
 			// Update nodes and panels
 			Nodes.Update(units.Geometry, false);
-			Panels.Update();
+			Panels.Update(false);
 		}
     }
 }

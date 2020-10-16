@@ -13,6 +13,11 @@ namespace SPMTool.Database
     /// </summary>
 	public static class UnitsData
 	{
+		/// <summary>
+		/// Auxiliary <see cref="SPMTool.Units"/> field.
+		/// </summary>
+		private static Units? _units;
+
 		// Unit names
 		private const string Units = "Units";
 
@@ -43,6 +48,8 @@ namespace SPMTool.Database
         /// </summary>
 		public static void Save(Units units)
 		{
+			_units = units;
+
 			// Get the Xdata size
 			int size = Enum.GetNames(typeof(UnitsIndex)).Length;
 			var data = new TypedValue[size];
@@ -66,31 +73,40 @@ namespace SPMTool.Database
         /// <summary>
         /// Read units on database.
         /// </summary>
-        /// <param name="setUnits">Units must be set by user?</param>
-        public static Units Read(bool setUnits = true)
-		{
-			var data = DataBase.ReadDictionaryEntry(Units);
+        /// <param name="setUnits">Units must be set by user if it's not set yet?</param>
+		public static Units Read(bool setUnits = true) => _units ?? ReadFromDictionary(setUnits);
 
-			if (data is null && setUnits)
-			{
-				Editor.Commands.Settings.SetUnits();
-				data = DataBase.ReadDictionaryEntry(Units);
-			}
-			else if (data is null) 
-				return SPMTool.Units.Default;
+		/// <summary>
+		/// Read units on dictionary.
+		/// </summary>
+		/// <param name="setUnits">Units must be set by user if it's not set yet?</param>
+		private static Units ReadFromDictionary(bool setUnits = true)
+        {
+	        var data = DataBase.ReadDictionaryEntry(Units);
 
-			// Get the parameters from XData
-			return
-				new Units
-				{
-					Geometry          = (LengthUnit) data[(int) UnitsIndex.Geometry].ToInt(),
-					Reinforcement     = (LengthUnit) data[(int) UnitsIndex.Reinforcement].ToInt(),
-					Displacements     = (LengthUnit) data[(int) UnitsIndex.Displacements].ToInt(),
-					AppliedForces     = (ForceUnit)  data[(int) UnitsIndex.AppliedForces].ToInt(),
-					StringerForces    = (ForceUnit)  data[(int) UnitsIndex.StringerForces].ToInt(),
-					PanelStresses     = (PressureUnit) data[(int) UnitsIndex.PanelStresses].ToInt(),
-					MaterialStrength  = (PressureUnit) data[(int) UnitsIndex.MaterialStrength].ToInt(),
-				};
-		}
+	        switch (data)
+	        {
+		        case null when setUnits:
+			        Editor.Commands.Settings.SetUnits();
+			        data = DataBase.ReadDictionaryEntry(Units);
+			        break;
+		        case null:
+			        return SPMTool.Units.Default;
+	        }
+
+	        // Get the parameters from XData
+	        _units = new Units
+	        {
+		        Geometry = (LengthUnit)data[(int)UnitsIndex.Geometry].ToInt(),
+		        Reinforcement = (LengthUnit)data[(int)UnitsIndex.Reinforcement].ToInt(),
+		        Displacements = (LengthUnit)data[(int)UnitsIndex.Displacements].ToInt(),
+		        AppliedForces = (ForceUnit)data[(int)UnitsIndex.AppliedForces].ToInt(),
+		        StringerForces = (ForceUnit)data[(int)UnitsIndex.StringerForces].ToInt(),
+		        PanelStresses = (PressureUnit)data[(int)UnitsIndex.PanelStresses].ToInt(),
+		        MaterialStrength = (PressureUnit)data[(int)UnitsIndex.MaterialStrength].ToInt(),
+	        };
+
+	        return _units.Value;
+        }
     }
 }

@@ -16,27 +16,32 @@ namespace SPMTool.Database.Elements
 	public static class Nodes
 	{
 		/// <summary>
+        /// Auxiliary list of nodes' <see cref="Point3d"/> positions.
+        /// </summary>
+		private static List<Point3d> _positions;
+
+		/// <summary>
 		/// Add nodes in all necessary positions (stringer start, mid and end points).
 		/// </summary>
 		public static void Add()
 		{
-            // Get the list of nodes
-            var ndList = NodePositions(NodeType.All);
+			if (_positions is null)
+				_positions = new List<Point3d>(NodePositions(NodeType.All));
 
 			// Get stringers
 			var strList = Model.StringerCollection;
 
-			if (strList is null)
+			if (strList is null || !strList.Any())
 				return;
 
 			// Get points
-			var intNds = strList.Where(str => !ndList?.Contains(str.MidPoint()) ?? true).Select(str => str.MidPoint()).ToList();
-			var extNds = strList.Where(str => !ndList?.Contains(str.StartPoint) ?? true).Select(str => str.StartPoint).ToList();
-			extNds.AddRange(strList.Where(str => !ndList?.Contains(str.EndPoint) ?? true).Select(str => str.EndPoint));
+			var intNds = strList.Select(str => str.MidPoint()).ToList();
+			var extNds = strList.Select(str => str.StartPoint).ToList();
+			extNds.AddRange(strList.Select(str => str.EndPoint));
 
             // Add nodes
-			Add(intNds, NodeType.Internal, ref ndList);
-			Add(extNds, NodeType.External, ref ndList);
+			Add(intNds, NodeType.Internal);
+			Add(extNds, NodeType.External);
 		}
 
         /// <summary>
@@ -44,32 +49,17 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="position">The <see cref="Point3d"/> position.</param>
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
-        public static void Add(Point3d position, NodeType nodeType)
+		public static void Add(Point3d position, NodeType nodeType)
 		{
-            // Get the list of nodes
-            var ndList = NodePositions(NodeType.All);
-
-			Add(position, nodeType, ref ndList);
-		}
-
-        /// <summary>
-        /// Add a node to drawing in this <paramref name="position"/>.
-        /// </summary>
-        /// <param name="position">The <see cref="Point3d"/> position.</param>
-        /// <param name="nodeType">The <see cref="NodeType"/>.</param>
-        /// <param name="existentNodes">The collection containing the position of existent nodes in the drawing.</param>
-		public static void Add(Point3d position, NodeType nodeType, ref IEnumerable<Point3d> existentNodes)
-		{
-            // Get the list of nodes
-            var ndList = existentNodes?.ToList() ?? new List<Point3d>();
+			if (_positions is null)
+				_positions = new List<Point3d>(NodePositions(NodeType.All));
 
             // Check if a node already exists at the position. If not, its created
-            if (ndList.Contains(position))
+            if (_positions.Contains(position))
 				return;
 
-			// Add to the list
-			ndList.Add(position);
-			existentNodes = ndList;
+            // Add to the list
+            _positions.Add(position);
 
 			// Create the node and set the layer
 			var dbPoint = new DBPoint(position)
@@ -78,19 +68,7 @@ namespace SPMTool.Database.Elements
 			};
 
 			// Add the new object
-			dbPoint.Add();
-		}
-
-        /// <summary>
-        /// Add nodes to drawing in these <paramref name="positions"/>.
-        /// </summary>
-        /// <param name="positions">The collection of <see cref="Point3d"/> positions.</param>
-        /// <param name="nodeType">The <see cref="NodeType"/>.</param>
-        /// <param name="existentNodes">The collection containing the position of existent nodes in the drawing.</param>
-        public static void Add(IEnumerable<Point3d> positions, NodeType nodeType, ref IEnumerable<Point3d> existentNodes)
-		{
-            foreach (var position in positions)
-				Add(position, nodeType, ref existentNodes);
+			dbPoint.Add(On_NodeErase);
 		}
 
         /// <summary>
@@ -100,10 +78,8 @@ namespace SPMTool.Database.Elements
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
         public static void Add(IEnumerable<Point3d> positions, NodeType nodeType)
 		{
-			// Get the list of nodes
-			var ndList = NodePositions(NodeType.All);
-
-			Add(positions, nodeType, ref ndList);
+			foreach (var position in positions)
+				Add(position, nodeType);
         }
 
         /// <summary>
@@ -126,25 +102,25 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
         /// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
-        public static IEnumerable<DBPoint> Update(LengthUnit geometryUnit, bool addNodes = true)
+        public static void Update(LengthUnit geometryUnit, bool addNodes = true)
 		{
 			// Add nodes to all needed positions
 			if (addNodes)
 				Add();
 
 			// Get all the nodes as points
-			var ndObjs = GetAllNodes()?.ToArray();
-
-			// Get the Xdata size
-			int size = Enum.GetNames(typeof(NodeIndex)).Length;
-
+			var ndObjs = GetAllNodes()?.ToList() ?? new List<DBPoint>();
+			
 			// Access the nodes on the document
-			if (ndObjs != null && ndObjs.Any())
+			if (ndObjs.Any())
 			{
-				// Order nodes
-				ndObjs = ndObjs.OrderBy(nd => nd.Position.Y).ThenBy(nd => nd.Position.X).ToArray();
+				// Get the Xdata size
+				int size = Enum.GetNames(typeof(NodeIndex)).Length;
 
-				for (var i = 0; i < ndObjs.Length; i++)
+                // Order nodes
+                ndObjs = ndObjs.OrderBy(nd => nd.Position.Y).ThenBy(nd => nd.Position.X).ToList();
+
+				for (var i = 0; i < ndObjs.Count; i++)
 				{
 					// Get the node number
 					double ndNum = i + 1;
@@ -161,12 +137,12 @@ namespace SPMTool.Database.Elements
 				}
 			}
 
+			// Save positions
+			_positions = ndObjs.Select(nd => nd.Position).ToList();
+
 			// Set the style for all point objects in the drawing
             DataBase.Database.Pdmode = 32;
             DataBase.Database.Pdsize = 40 * geometryUnit.ScaleFactor();
-
-            // Return the collection of nodes
-            return ndObjs;
 		}
 
         /// <summary>
@@ -187,11 +163,11 @@ namespace SPMTool.Database.Elements
 					break;
 
 				case NodeType.Internal:
-					ndObjs = Layer.IntNode.GetDBObjects()?.ToPoints()?.ToList();
+					ndObjs = GetIntNodes()?.ToList();
 					break;
 
 				case NodeType.External:
-					ndObjs = Layer.ExtNode.GetDBObjects()?.ToPoints()?.ToList();
+					ndObjs = GetExtNodes()?.ToList();
 					break;
 
 				default:
@@ -199,7 +175,7 @@ namespace SPMTool.Database.Elements
 					break;
 			}
 
-			return ndObjs?.Select(nd => nd.Position).Order();
+			return ndObjs?.Select(nd => nd.Position).Order() ?? new List<Point3d>();
 		}
 
         /// <summary>
@@ -310,5 +286,17 @@ namespace SPMTool.Database.Elements
             // Save new XData
             node.ObjectId.SetXData(data);
         }
+
+		/// <summary>
+        /// Event to execute when a node is erased.
+        /// </summary>
+        private static void On_NodeErase(object sender, ObjectErasedEventArgs e)
+		{
+			if (_positions is null || !_positions.Any() || !(sender is DBPoint nd))
+				return;
+
+			if (_positions.Contains(nd.Position))
+				_positions.Remove(nd.Position);
+		}
 	}
 }

@@ -7,6 +7,7 @@ using Material.Reinforcement;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database;
 using Extensions.AutoCAD;
+using Extensions.Number;
 using SPMTool.Enums;
 using SPMTool.Editor;
 using UnitsNet;
@@ -210,14 +211,7 @@ namespace SPMTool
         /// Get the drawing scale factor.
         /// </summary>
         /// <param name="drawingUnit"></param>
-        public static double ScaleFactor(this LengthUnit drawingUnit)
-        {
-	        if (drawingUnit == LengthUnit.Millimeter)
-		        return 1;
-
-	        return
-		        UnitConverter.Convert(1, LengthUnit.Millimeter, drawingUnit);
-        }
+        public static double ScaleFactor(this LengthUnit drawingUnit) => drawingUnit is LengthUnit.Millimeter ? 1 : 1.ConvertFromMillimeter(drawingUnit);
 
         /// <summary>
         /// Convert transparency to alpha.
