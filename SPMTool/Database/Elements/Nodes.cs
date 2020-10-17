@@ -66,7 +66,7 @@ namespace SPMTool.Database.Elements
 			{
 				Layer = $"{GetLayer(nodeType)}"
 			};
-
+			
 			// Add the new object
 			dbPoint.Add(On_NodeErase);
 		}
@@ -100,9 +100,8 @@ namespace SPMTool.Database.Elements
         /// <summary>
         /// Enumerate all the nodes in the model and return the collection of nodes.
         /// </summary>
-        /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
         /// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
-        public static void Update(LengthUnit geometryUnit, bool addNodes = true)
+        public static void Update(bool addNodes = true)
 		{
 			// Add nodes to all needed positions
 			if (addNodes)
@@ -142,7 +141,7 @@ namespace SPMTool.Database.Elements
 
 			// Set the style for all point objects in the drawing
             DataBase.Database.Pdmode = 32;
-            DataBase.Database.Pdsize = 40 * geometryUnit.ScaleFactor();
+            DataBase.Database.Pdsize = 40 * DataBase.Units.Geometry.ScaleFactor();
 		}
 
         /// <summary>
@@ -296,7 +295,10 @@ namespace SPMTool.Database.Elements
 				return;
 
 			if (_positions.Contains(nd.Position))
+			{
 				_positions.Remove(nd.Position);
-		}
+				Editor.UserInput.Editor.WriteMessage($"\nRemoved: {nd.Position}");
+			}
+        }
 	}
 }

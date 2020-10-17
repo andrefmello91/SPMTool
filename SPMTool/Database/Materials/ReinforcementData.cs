@@ -135,48 +135,52 @@ namespace SPMTool.Database.Materials
 	    /// </summary>
 	    public static IEnumerable<Steel> ReadSteel()
 	    {
-		    if (_steelList != null)
+		    return _steelList ?? ReadFromDictionary();
+			
+		    IEnumerable<Steel> ReadFromDictionary()
+		    {
+			    // Get dictionary entries
+			    var entries = DataBase.ReadDictionaryEntries(Steel);
+
+			    if (entries is null || !entries.Any())
+				    return null;
+
+			    // Create a list of steel
+			    _steelList = new List<Steel>(from r in entries
+				    let t = r.AsArray()
+				    let fy = t[2].ToDouble()
+				    let Es = t[3].ToDouble()
+				    select new Steel(fy, Es));
+
 			    return _steelList;
-
-		    // Get dictionary entries
-		    var entries = DataBase.ReadDictionaryEntries(Steel);
-
-		    if (entries is null || !entries.Any())
-			    return null;
-
-		    // Create a list of steel
-		    _steelList = new List<Steel>(from r in entries
-			    let t = r.AsArray()
-			    let fy = t[2].ToDouble()
-			    let Es = t[3].ToDouble()
-			    select new Steel(fy, Es));
-
-		    return _steelList;
+		    }
 	    }
 
-	    /// <summary>
-	    /// Read stringer reinforcement parameters saved in database.
-	    /// </summary>
-	    public static IEnumerable<UniaxialReinforcement> ReadStringerReinforcement()
+        /// <summary>
+        /// Read stringer reinforcement parameters saved in database.
+        /// </summary>
+        public static IEnumerable<UniaxialReinforcement> ReadStringerReinforcement()
 	    {
-		    if (_strRefList != null)
-			    return _strRefList;
+		    return _strRefList ?? ReadFromDictionary();
+			
+            IEnumerable<UniaxialReinforcement> ReadFromDictionary()
+            {
+	            // Get dictionary entries
+	            var entries = DataBase.ReadDictionaryEntries(StrRef);
 
-		    // Get dictionary entries
-		    var entries = DataBase.ReadDictionaryEntries(StrRef);
+	            if (entries is null || !entries.Any())
+		            return null;
 
-		    if (entries is null || !entries.Any())
-			    return null;
+	            // Create a list of reinforcement
+	            _strRefList = new List<UniaxialReinforcement>(
+		            from r in entries
+		            let t = r.AsArray()
+		            let num = t[2].ToInt()
+		            let phi = t[3].ToDouble()
+		            select new UniaxialReinforcement(num, phi, null));
 
-            // Create a list of reinforcement
-            _strRefList = new List<UniaxialReinforcement>(
-                from r in entries
-			    let t   = r.AsArray()
-			    let num = t[2].ToInt()
-			    let phi = t[3].ToDouble()
-			    select new UniaxialReinforcement(num, phi, null));
-
-            return _strRefList;
+	            return _strRefList;
+            }
 	    }
 
 	    /// <summary>
@@ -185,23 +189,26 @@ namespace SPMTool.Database.Materials
 	    /// <returns></returns>
 	    public static IEnumerable<WebReinforcementDirection> ReadPanelReinforcement()
 	    {
-		    if (_pnlRefList != null)
+		    return
+			    _pnlRefList ?? ReadFromDictionary();
+			
+		    IEnumerable<WebReinforcementDirection> ReadFromDictionary()
+		    {
+			    // Get dictionary entries
+			    var entries = DataBase.ReadDictionaryEntries(PnlRef);
+
+			    if (entries is null || !entries.Any())
+				    return null;
+
+			    _pnlRefList = new List<WebReinforcementDirection>(
+				    from r in entries
+				    let t = r.AsArray()
+				    let phi = t[2].ToDouble()
+				    let s = t[3].ToDouble()
+				    select new WebReinforcementDirection(phi, s, null, 0, 0));
+
 			    return _pnlRefList;
-
-            // Get dictionary entries
-            var entries = DataBase.ReadDictionaryEntries(PnlRef);
-
-		    if (entries is null || !entries.Any())
-			    return null;
-
-		    _pnlRefList = new List<WebReinforcementDirection>(
-                from r in entries
-			    let t   = r.AsArray()
-			    let phi = t[2].ToDouble()
-			    let s   = t[3].ToDouble()
-			    select new WebReinforcementDirection(phi, s, null, 0, 0));
-
-		    return _pnlRefList;
+		    }
 	    }
     }
 }

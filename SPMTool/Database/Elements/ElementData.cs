@@ -13,20 +13,36 @@ namespace SPMTool.Database.Elements
     public static class ElementData
     {
 	    /// <summary>
-	    /// Save stringer geometry configuration on database.
+	    /// Auxiliary <see cref="StringerGeometry"/> list.
 	    /// </summary>
-	    /// <param name="geometry">The <see cref="StringerGeometry"/> object.</param>
-	    public static void Save(StringerGeometry geometry)
+	    private static List<StringerGeometry> _stringerGeometries;
+
+	    /// <summary>
+	    /// Auxiliary panel width list.
+	    /// </summary>
+	    private static List<double> _panelWList;
+
+        /// <summary>
+        /// Save stringer geometry configuration on database.
+        /// </summary>
+        /// <param name="geometry">The <see cref="StringerGeometry"/> object.</param>
+        public static void Save(StringerGeometry geometry)
 	    {
-		    var saveCode = geometry.SaveName();
+		    if (_stringerGeometries is null)
+			    _stringerGeometries = new List<StringerGeometry>(ReadStringerGeometries());
+
+		    if (!_stringerGeometries.Contains(geometry))
+			    _stringerGeometries.Add(geometry);
+
+            var saveCode = geometry.SaveName();
 
 		    // Save the variables on the Xrecord
 		    using (var rb = new ResultBuffer())
 		    {
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Database.DataBase.AppName));   // 0
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, saveCode));          // 1
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, geometry.Width));    // 2
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal, geometry.Height));   // 3
+			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName));   // 0
+			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, saveCode));           // 1
+			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32,   geometry.Width));     // 2
+			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal,        geometry.Height));    // 3
 
 			    // Save on NOD if it doesn't exist
 			    DataBase.SaveDictionary(rb, saveCode, false);
@@ -39,15 +55,21 @@ namespace SPMTool.Database.Elements
 	    /// <param name="panelWidth">The width of panel, in mm.</param>
 	    public static void Save(double panelWidth)
 	    {
-		    // Get the name to save
-		    var name = panelWidth.SaveName();
+		    if (_panelWList is null)
+			    _panelWList = new List<double>(ReadPanelWidths());
+
+		    if (!_panelWList.Contains(panelWidth))
+			    _panelWList.Add(panelWidth);
+
+            // Get the name to save
+            var name = panelWidth.SaveName();
 
 		    // Save the variables on the Xrecord
 		    using (var rb = new ResultBuffer())
 		    {
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, Database.DataBase.AppName)); // 0
+			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName));  // 0
 			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));             // 1
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, panelWidth));       // 2
+			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, panelWidth));         // 2
 
 			    // Create the entry in the NOD if it doesn't exist
 			    DataBase.SaveDictionary(rb, name, false);
@@ -59,18 +81,25 @@ namespace SPMTool.Database.Elements
 	    /// </summary>
 	    public static IEnumerable<StringerGeometry> ReadStringerGeometries()
 	    {
-		    // Get dictionary entries
-		    var entries = DataBase.ReadDictionaryEntries("StrGeo");
+		    return _stringerGeometries ?? ReadFromDictionary();
 
-		    if (entries is null || !entries.Any())
-			    return null;
+		    IEnumerable<StringerGeometry> ReadFromDictionary()
+		    {
+			    // Get dictionary entries
+			    var entries = DataBase.ReadDictionaryEntries("StrGeo");
 
-		    return 
-			    from r in entries
-			    let t   = r.AsArray()
-			    let w   = t[2].ToDouble()
-			    let h   = t[3].ToDouble()
-			    select new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h);
+			    if (entries is null || !entries.Any())
+				    return null;
+
+			    _stringerGeometries = new List<StringerGeometry>(
+				    from r in entries
+				    let t   = r.AsArray()
+				    let w   = t[2].ToDouble()
+				    let h   = t[3].ToDouble()
+				    select new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h));
+
+			    return _stringerGeometries;
+		    }
 	    }
 
 	    /// <summary>
@@ -78,13 +107,19 @@ namespace SPMTool.Database.Elements
 	    /// </summary>
 	    public static IEnumerable<double> ReadPanelWidths()
 	    {
-		    // Get dictionary entries
-		    var entries = DataBase.ReadDictionaryEntries("PnlW");
+		    return _panelWList ?? ReadFromDictionary();
 
-		    if (entries is null || !entries.Any())
-			    return null;
+		    IEnumerable<double> ReadFromDictionary()
+		    {
+			    // Get dictionary entries
+			    var entries = DataBase.ReadDictionaryEntries("PnlW");
 
-		    return entries.Select(entry => entry.AsArray()[2].ToDouble()).ToArray();
+			    if (entries is null || !entries.Any())
+				    return null;
+
+			    _panelWList = entries.Select(entry => entry.AsArray()[2].ToDouble()).ToList();
+			    return _panelWList;
+		    }
 	    }
     }
 }

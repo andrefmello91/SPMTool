@@ -65,7 +65,7 @@ namespace SPMTool.Database.Elements
         public static void Update(bool updateNodes = true)
 		{
 			if (updateNodes)
-				Nodes.Update(DataBase.Units.Geometry);
+				Nodes.Update();
 
 			// Create the panels collection and initialize getting the elements on node layer
 			var pnls = GetObjects()?.Order()?.ToArray();

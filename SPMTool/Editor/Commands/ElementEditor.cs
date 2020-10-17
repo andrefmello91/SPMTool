@@ -103,7 +103,7 @@ namespace SPMTool.Editor.Commands
 			ndsToErase.Erase();
 
 		    // Create the nodes and update stringers
-		    Nodes.Update(units.Geometry);
+		    Nodes.Update();
 		    Stringers.Update(false);
 	    }
 
@@ -250,7 +250,7 @@ namespace SPMTool.Editor.Commands
 				Stringers.Add(str);
 
 			// Create the nodes and update elements
-			Nodes.Update(units.Geometry);
+			Nodes.Update();
 			Stringers.Update(false);
 			Panels.Update(false);
 

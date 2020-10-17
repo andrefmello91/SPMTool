@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
@@ -68,9 +69,10 @@ namespace SPMTool.Database
         /// <summary>
         /// Update all the elements in the drawing.
         /// </summary>
-        public static void UpdateElements()
+        /// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
+        public static void UpdateElements(bool addNodes = true)
         {
-	        Nodes.Update(DataBase.Units.Geometry);
+	        Nodes.Update(addNodes);
 	        Stringers.Update(false);
 	        Panels.Update(false);
         }
@@ -235,5 +237,19 @@ namespace SPMTool.Database
 			// Add the nodes
 			Nodes.Add(dispNds, NodeType.Displaced);
 		}
+
+		/// <summary>
+        /// Event to run after undo or redo commands.
+        /// </summary>
+        public static void On_UndoOrRedo(object sender, CommandEventArgs e)
+		{
+			if (_cmdNames.Any(cmd => cmd.Contains(e.GlobalCommandName.ToUpper())))
+	        {
+				UserInput.Editor.WriteMessage("Undoing changes.");
+		        UpdateElements(false);
+	        }
+        }
+
+		private static string[] _cmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" };
     }
 }

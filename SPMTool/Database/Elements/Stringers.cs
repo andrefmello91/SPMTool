@@ -75,7 +75,7 @@ namespace SPMTool.Database.Elements
         {
 	        // Get all the nodes in the model
 			if (updateNodes)
-				Nodes.Update(DataBase.Units.Geometry);
+				Nodes.Update();
 
 			// Get the Stringer collection
 			var strs = GetObjects()?.Order()?.ToArray();
@@ -548,7 +548,10 @@ namespace SPMTool.Database.Elements
 			var geometry = GetGeometry(str, false);
 
 			if (_geometries.Contains(geometry))
+			{
 				_geometries.Remove(geometry);
+				Editor.UserInput.Editor.WriteMessage($"\nRemoved: {geometry}");
+			}
 		}
 	}
 }

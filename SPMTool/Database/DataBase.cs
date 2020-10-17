@@ -123,7 +123,7 @@ namespace SPMTool.Database
 	        {
 		        if (regAppTbl.Has(AppName))
 					return;
-
+				
 		        using (var regAppTblRec = new RegAppTableRecord())
 		        {
 			        regAppTblRec.Name = AppName;

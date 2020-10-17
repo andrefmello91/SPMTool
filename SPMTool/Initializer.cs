@@ -24,6 +24,9 @@ namespace SPMTool
 			// Create layers and blocks
 			DataBase.CreateLayers();
 			Model.CreateBlocks();
+
+			// Add command event handler
+			DataBase.Document.CommandEnded += Model.On_UndoOrRedo;
 		}
 
         /// <summary>

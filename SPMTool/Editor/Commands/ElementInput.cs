@@ -64,7 +64,7 @@ namespace SPMTool.Editor.Commands
 		    }
 
 		    // Update the nodes and stringers
-		    Nodes.Update(units.Geometry);
+		    Nodes.Update();
 		    Stringers.Update(false);
 	    }
 
@@ -96,7 +96,7 @@ namespace SPMTool.Editor.Commands
 			}
 
 			// Update nodes and panels
-			Nodes.Update(units.Geometry, false);
+			Nodes.Update(false);
 			Panels.Update(false);
 		}
     }
