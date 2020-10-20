@@ -158,11 +158,32 @@ namespace SPMTool.Database.Elements
 	        if (readXData)
 	        {
 		        var data = line.ReadXData();
-		        w = data[(int) StringerIndex.Width].ToDouble().Convert(LengthUnit.Millimeter, unit);
-		        h = data[(int) StringerIndex.Height].ToDouble().Convert(LengthUnit.Millimeter, unit);
+		        w = data[(int) StringerIndex.Width].ToDouble().ConvertFromMillimeter(unit);
+		        h = data[(int) StringerIndex.Height].ToDouble().ConvertFromMillimeter(unit);
 	        }
 
 			return new StringerGeometry(line.StartPoint, line.EndPoint, w, h, unit);
+        }
+
+        /// <summary>
+        /// Get the <see cref="UniaxialReinforcement"/> from this <see cref="Line"/>.
+        /// </summary>
+        /// <param name="line">The <see cref="Line"/> object.</param>
+        public static UniaxialReinforcement GetReinforcement(Line line)
+        {
+	        var data = line.ReadXData();
+
+	        var n = data[(int) StringerIndex.NumOfBars].ToInt();
+	        var d = data[(int) StringerIndex.BarDiam].ToDouble();
+
+	        if (n == 0 || d.ApproxZero())
+		        return null;
+
+	        double
+		        fy = data[(int) StringerIndex.Steelfy].ToDouble(),
+		        Es = data[(int) StringerIndex.SteelEs].ToDouble();
+
+			return new UniaxialReinforcement(n, d, new Steel(fy, Es));
         }
 
 		/// <summary>
@@ -227,8 +248,8 @@ namespace SPMTool.Database.Elements
 
 			// Get geometry
 			double
-				width  = data[(int)StringerIndex.Width].ToDouble(), 
-				height = data[(int)StringerIndex.Height].ToDouble();
+				width  = data[(int)StringerIndex.Width].ToDouble().ConvertFromMillimeter(units.Geometry), 
+				height = data[(int)StringerIndex.Height].ToDouble().ConvertFromMillimeter(units.Geometry);
 
 			// Get reinforcement
 			var reinforcement = GetReinforcement(data, width * height);
@@ -315,22 +336,17 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="stringer">The stringer <see cref="Line"/> object.</param>
         /// <param name="reinforcement">The <see cref="UniaxialReinforcement"/> to set.</param>
-        public static void SetUniaxialReinforcement(Line stringer, UniaxialReinforcement reinforcement)
+        public static void SetReinforcement(Line stringer, UniaxialReinforcement reinforcement)
 		{
 			// Access the XData as an array
 			var data = stringer.ReadXData();
+			
+            // Set values
+            data[(int)StringerIndex.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataInteger32, reinforcement?.NumberOfBars ?? 0);
+			data[(int)StringerIndex.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.BarDiameter  ?? 0);
 
-			// Set values
-			data[(int)StringerIndex.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataInteger32, reinforcement.NumberOfBars);
-			data[(int)StringerIndex.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal, reinforcement.BarDiameter);
-
-			var steel = reinforcement.Steel;
-
-			if (steel != null)
-			{
-				data[(int)StringerIndex.Steelfy] = new TypedValue((int)DxfCode.ExtendedDataReal, steel.YieldStress);
-				data[(int)StringerIndex.SteelEs] = new TypedValue((int)DxfCode.ExtendedDataReal, steel.ElasticModule);
-			}
+			data[(int)StringerIndex.Steelfy] = new TypedValue((int)DxfCode.ExtendedDataReal, reinforcement?.Steel?.YieldStress   ?? 0);
+			data[(int)StringerIndex.SteelEs] = new TypedValue((int)DxfCode.ExtendedDataReal, reinforcement?.Steel?.ElasticModule ?? 0);
 
 			// Add the new XData
 			stringer.SetXData(data);
@@ -550,7 +566,7 @@ namespace SPMTool.Database.Elements
 			if (_geometries.Contains(geometry))
 			{
 				_geometries.Remove(geometry);
-				Editor.UserInput.Editor.WriteMessage($"\nRemoved: {geometry}");
+				Model.Editor.WriteMessage($"\nRemoved: {geometry}");
 			}
 		}
 	}

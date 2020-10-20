@@ -84,7 +84,7 @@ namespace SPMTool.Database.Materials
 		    if (_strRefList is null)
 			    _strRefList = new List<UniaxialReinforcement>();
 
-		    if (!_strRefList.Contains(reinforcement))
+		    if (!_strRefList.Any(r => r.EqualsNumberAndDiameter(reinforcement)))
 			    _strRefList.Add(reinforcement);
 
             // Get the name to save
@@ -112,7 +112,7 @@ namespace SPMTool.Database.Materials
 		    if (_pnlRefList is null)
 			    _pnlRefList = new List<WebReinforcementDirection>();
 
-		    if (!_pnlRefList.Contains(reinforcement))
+		    if (!_pnlRefList.Any(r => r.EqualsDiameterAndSpacing(reinforcement)))
 			    _pnlRefList.Add(reinforcement);
 
             // Get the names to save
@@ -140,10 +140,10 @@ namespace SPMTool.Database.Materials
 		    IEnumerable<Steel> ReadFromDictionary()
 		    {
 			    // Get dictionary entries
-			    var entries = DataBase.ReadDictionaryEntries(Steel);
+			    var entries = DataBase.ReadDictionaryEntries(Steel)?.ToArray();
 
 			    if (entries is null || !entries.Any())
-				    return null;
+				    return new List<Steel>();
 
 			    // Create a list of steel
 			    _steelList = new List<Steel>(from r in entries
@@ -166,10 +166,10 @@ namespace SPMTool.Database.Materials
             IEnumerable<UniaxialReinforcement> ReadFromDictionary()
             {
 	            // Get dictionary entries
-	            var entries = DataBase.ReadDictionaryEntries(StrRef);
+	            var entries = DataBase.ReadDictionaryEntries(StrRef)?.ToArray();
 
 	            if (entries is null || !entries.Any())
-		            return null;
+		            return new List<UniaxialReinforcement>();
 
 	            // Create a list of reinforcement
 	            _strRefList = new List<UniaxialReinforcement>(
@@ -195,10 +195,10 @@ namespace SPMTool.Database.Materials
 		    IEnumerable<WebReinforcementDirection> ReadFromDictionary()
 		    {
 			    // Get dictionary entries
-			    var entries = DataBase.ReadDictionaryEntries(PnlRef);
+			    var entries = DataBase.ReadDictionaryEntries(PnlRef)?.ToArray();
 
 			    if (entries is null || !entries.Any())
-				    return null;
+				    return new List<WebReinforcementDirection>();
 
 			    _pnlRefList = new List<WebReinforcementDirection>(
 				    from r in entries

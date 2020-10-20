@@ -1,7 +1,10 @@
-﻿using Autodesk.AutoCAD.ApplicationServices.Core;
+﻿using System;
+using Autodesk.AutoCAD.ApplicationServices.Core;
+using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Runtime;
 using SPM.Elements;
 using SPMTool.Database;
+using SPMTool.Database.Conditions;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using SPMTool.UserInterface;
@@ -16,9 +19,46 @@ namespace SPMTool.Editor.Commands
     public static class View
     {
 	    /// <summary>
-	    /// Toggle view for forces.
+	    /// View data of a selected element.
 	    /// </summary>
-	    [CommandMethod("ToogleForces")]
+	    [CommandMethod("ViewElementData")]
+	    public static void ViewElementData()
+	    {
+		    // Start a loop for viewing continuous elements
+		    for ( ; ; )
+		    {
+			    // Get the entity for read
+			    var ent = UserInput.SelectEntity("Select an element to view data:", Model.ElementLayers);
+
+			    if (ent is null)
+				    return;
+
+			    string message;
+
+			    if (ent.Layer == $"{Layer.Force}")
+				    message = Forces.ReadForce((BlockReference) ent).ToString();
+
+			    else if (ent.Layer == $"{Layer.Support}")
+			    {
+				    message = $"Constraint in {Supports.ReadConstraint((BlockReference) ent)}";
+			    }
+
+			    else
+			    {
+				    // Read the element
+				    var element = Model.GetElement(ent);
+
+				    message = element is null ? "Not a SPM element." : element.ToString();
+			    }
+
+				Model.Editor.WriteMessage($"\n{message}");
+		    }
+	    }
+
+        /// <summary>
+        /// Toggle view for forces.
+        /// </summary>
+        [CommandMethod("ToogleForces")]
 	    public static void ToogleForces()
 	    {
 		    Layer.Force.Toogle();
@@ -52,35 +92,6 @@ namespace SPMTool.Editor.Commands
 	    /// </summary>
 	    [CommandMethod("TooglePanels")]
 	    public static void TooglePanels() => Layer.Panel.Toogle();
-
-	    /// <summary>
-	    /// View data of a selected element.
-	    /// </summary>
-	    [CommandMethod("ViewElementData")]
-	    public static void ViewElementData()
-	    {
-		    // Start a loop for viewing continuous elements
-		    for ( ; ; )
-		    {
-			    // Get the entity for read
-			    var ent = UserInput.SelectEntity("Select an element to view data:", Model.ElementLayers);
-
-			    if (ent is null)
-				    return;
-
-			    // Read the element
-			    var element = Model.GetElement(ent);
-
-			    if (element is Stringer stringer)
-			    {
-				    var window = new StringerWindow(stringer);
-				    Application.ShowModalWindow(Application.MainWindow.Handle, window, true);
-			    }
-
-			    else
-				    Application.ShowAlertDialog($"{DataBase.AppName}\n\n{element}");
-		    }
-	    }
 
 	    /// <summary>
 	    /// Toggle view for stringer forces.

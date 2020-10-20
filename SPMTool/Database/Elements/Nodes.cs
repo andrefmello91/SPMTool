@@ -140,8 +140,7 @@ namespace SPMTool.Database.Elements
 			_positions = ndObjs.Select(nd => nd.Position).ToList();
 
 			// Set the style for all point objects in the drawing
-            DataBase.Database.Pdmode = 32;
-            DataBase.Database.Pdsize = 40 * DataBase.Units.Geometry.ScaleFactor();
+            Model.SetPointSize();
 		}
 
         /// <summary>
@@ -234,7 +233,7 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="position">The <see cref="Point3d"/> position.</param>
         /// <param name="nodeObjects">The collection of node <see cref="DBObject"/>'s</param>
-        public static int? GetNumber(Point3d position, IEnumerable<DBPoint> nodeObjects = null) => (nodeObjects ?? GetAllNodes())?.First(nd => nd.Position.Approx(position))?.ReadXData()[(int) NodeIndex.Number].ToInt();
+        public static int? GetNumber(Point3d position, IEnumerable<DBPoint> nodeObjects = null) => (nodeObjects ?? GetAllNodes())?.First(nd => nd.Position.Approx(position))?.ReadXData()?[(int) NodeIndex.Number].ToInt();
 
         /// <summary>
         /// Create node XData.
@@ -297,7 +296,7 @@ namespace SPMTool.Database.Elements
 			if (_positions.Contains(nd.Position))
 			{
 				_positions.Remove(nd.Position);
-				Editor.UserInput.Editor.WriteMessage($"\nRemoved: {nd.Position}");
+				Model.Editor.WriteMessage($"\nRemoved: {nd.Position}");
 			}
         }
 	}

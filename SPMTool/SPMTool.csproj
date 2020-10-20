@@ -152,19 +152,25 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Initializer.cs" />
-    <Compile Include="UserInterface\StringerWindow.xaml.cs">
+    <Compile Include="UserInterface\Windows\PanelGeometryWindow.xaml.cs">
+      <DependentUpon>PanelGeometryWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserInterface\Windows\StringerWindow.xaml.cs">
       <DependentUpon>StringerWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserInterface\NodeWindow.xaml.cs">
+    <Compile Include="UserInterface\Windows\StringerGeometryWindow.xaml.cs">
+      <DependentUpon>StringerGeometryWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserInterface\Windows\NodeWindow.xaml.cs">
       <DependentUpon>NodeWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserInterface\GraphWindow.xaml.cs">
+    <Compile Include="UserInterface\Windows\GraphWindow.xaml.cs">
       <DependentUpon>GraphWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserInterface\ConcreteConfig.xaml.cs">
+    <Compile Include="UserInterface\Windows\ConcreteConfig.xaml.cs">
       <DependentUpon>ConcreteConfig.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserInterface\UnitsConfig.xaml.cs">
+    <Compile Include="UserInterface\Windows\UnitsConfig.xaml.cs">
       <DependentUpon>UnitsConfig.xaml</DependentUpon>
     </Compile>
     <Compile Include="UserInterface\UserInterface.cs" />
@@ -322,23 +328,31 @@
     <None Include="Resources\viewsupport_large_light.png" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="UserInterface\StringerWindow.xaml">
+    <Page Include="UserInterface\Windows\PanelGeometryWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="UserInterface\NodeWindow.xaml">
+    <Page Include="UserInterface\Windows\StringerWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="UserInterface\GraphWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="UserInterface\ConcreteConfig.xaml">
+    <Page Include="UserInterface\Windows\StringerGeometryWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="UserInterface\UnitsConfig.xaml">
+    <Page Include="UserInterface\Windows\NodeWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserInterface\Windows\GraphWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserInterface\Windows\ConcreteConfig.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserInterface\Windows\UnitsConfig.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

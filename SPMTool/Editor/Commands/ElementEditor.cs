@@ -12,6 +12,8 @@ using SPMTool.Database;
 using SPMTool.Database.Elements;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
+using SPMTool.UserInterface;
+using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 [assembly: CommandClass(typeof(ElementEditor))]
 
@@ -241,7 +243,7 @@ namespace SPMTool.Editor.Commands
 
 			if (error)
 			{
-				UserInput.Editor.WriteMessage("\nAt least one selected panel is not rectangular.");
+				Model.Editor.WriteMessage("\nAt least one selected panel is not rectangular.");
 				return;
 			}
 
@@ -264,24 +266,15 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod("SetStringerGeometry")]
 		public static void SetStringerGeometry()
 		{
-			// Read units
-			var units = DataBase.Units;
-
 			// Request objects to be selected in the drawing area
 			var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();
 
-			if (strs is null)
+			if (strs is null || !strs.Any())
 				return;
 
-			// Get geometry
-			var geometry = UserInput.GetStringerGeometry(units.Geometry);
-
-			if (!geometry.HasValue)
-				return;
-
-			// Start a transaction
-			foreach (var str in strs)
-				Stringers.SetGeometry(str, geometry.Value);
+			// Start the config window
+			var geoWindow = new StringerWindow(strs);
+			ShowModalWindow(MainWindow.Handle, geoWindow, false);
 		}
 
 		/// <summary>
@@ -290,24 +283,25 @@ namespace SPMTool.Editor.Commands
         [CommandMethod("SetPanelGeometry")]
 		public static void SetPanelGeometry()
 		{
-			// Read units
-			var units = DataBase.Units;
-
 			// Request objects to be selected in the drawing area
 			var pnls = UserInput.SelectPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)")?.ToArray();
 
-			if (pnls is null)
+			if (pnls is null || !pnls.Any())
 				return;
 
-			// Get width
-			var wn = UserInput.GetPanelWidth(units.Geometry);
+			// Start the config window
+			var geoWindow = new PanelGeometryWindow(pnls);
+			ShowModalWindow(MainWindow.Handle, geoWindow, false);
 
-			if (!wn.HasValue)
-				return;
+   //         // Get width
+   //         var wn = UserInput.GetPanelWidth(units.Geometry);
 
-			// Start a transaction
-			foreach (var pnl in pnls)
-				Panels.SetWidth(pnl, wn.Value);
+			//if (!wn.HasValue)
+			//	return;
+
+			//// Start a transaction
+			//foreach (var pnl in pnls)
+			//	Panels.SetWidth(pnl, wn.Value);
 		}
 
 		/// <summary>
@@ -333,7 +327,7 @@ namespace SPMTool.Editor.Commands
 
 			// Save the properties
 			foreach (var str in strs)
-				Stringers.SetUniaxialReinforcement(str, reinforcement);
+				Stringers.SetReinforcement(str, reinforcement);
 		}
 
 		/// <summary>
@@ -380,7 +374,7 @@ namespace SPMTool.Editor.Commands
 			var pnls = Model.PanelCollection;
 
 			// Display the number of updated elements
-			UserInput.Editor.WriteMessage($"\n{nds.Length} nodes, {strs.Length} stringers and {pnls.Length} panels updated.");
+			Model.Editor.WriteMessage($"\n{nds.Length} nodes, {strs.Length} stringers and {pnls.Length} panels updated.");
 		}
     }
 }

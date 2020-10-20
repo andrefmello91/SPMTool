@@ -26,11 +26,6 @@ namespace SPMTool.Editor
 	public static class UserInput
 	{
 		/// <summary>
-		/// Get application <see cref="Autodesk.AutoCAD.EditorInput.Editor"/>.
-		/// </summary>
-		public static Autodesk.AutoCAD.EditorInput.Editor Editor => DataBase.Document.Editor;
-
-        /// <summary>
         /// Get a <see cref="Point3d"/> from user.
         /// </summary>
         /// <param name="message">The message to display.</param>
@@ -46,7 +41,7 @@ namespace SPMTool.Editor
 				ptOp.BasePoint = basePoint.Value;
 			}
 
-			var ptRes = Editor.GetPoint(ptOp);
+			var ptRes = Model.Editor.GetPoint(ptOp);
 
 			if (ptRes.Status == PromptStatus.OK)
 				return ptRes.Value;
@@ -66,17 +61,18 @@ namespace SPMTool.Editor
 			{
 				// Request the object to be selected in the drawing area
 				var entOp  = new PromptEntityOptions($"\n{message}");
-				var entRes = Editor.GetEntity(entOp);
+				var entRes = Model.Editor.GetEntity(entOp);
 
 				if (entRes.Status == PromptStatus.Cancel)
 					return null;
 
 				// Start a transaction
 				using (var trans = DataBase.StartTransaction())
-				using (var ent   = (Entity) trans.GetObject(entRes.ObjectId, OpenMode.ForRead))
 				{
-					// Get layername
-					var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
+					var ent = (Entity) trans.GetObject(entRes.ObjectId, OpenMode.ForRead);
+
+                    // Get layername
+                    var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
 
 					if (layers is null || layers.Contains(layer))
 						return ent;
@@ -99,7 +95,7 @@ namespace SPMTool.Editor
 				MessageForAdding = $"\n{message}"
 			};
 
-			var selRes = Editor.GetSelection(selOp);
+			var selRes = Model.Editor.GetSelection(selOp);
 
 			if (selRes.Status == PromptStatus.Cancel)
 				return null;
@@ -228,7 +224,7 @@ namespace SPMTool.Editor
 			};
 
 			// Get the number
-			var intRes = Editor.GetInteger(intOp);
+			var intRes = Model.Editor.GetInteger(intOp);
 
 			if (intRes.Status == PromptStatus.OK)
 				return intRes.Value;
@@ -254,7 +250,7 @@ namespace SPMTool.Editor
 			};
 
 			// Get the result
-			var dbRes = Editor.GetDouble(dbOp);
+			var dbRes = Model.Editor.GetDouble(dbOp);
 
 			if (dbRes.Status == PromptStatus.OK)
 				return dbRes.Value;
@@ -306,11 +302,11 @@ namespace SPMTool.Editor
 			if (defaultKeyword != null)
 				keyOp.Keywords.Default = defaultKeyword;
 
-			var result = Editor.GetKeywords(keyOp);
+			var result = Model.Editor.GetKeywords(keyOp);
 			
 			if (result.Status == PromptStatus.Cancel)
 				return null;
-
+			
 			var keyword = result.StringResult;
 
 			return keyword;

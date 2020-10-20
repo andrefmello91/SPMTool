@@ -472,7 +472,7 @@ namespace SPMTool.Database.Elements
 
 			// Get the panel parameters
 			var number = pnlData[(int)PanelIndex.Number].ToInt();
-			var width  = pnlData[(int)PanelIndex.Width].ToDouble();
+			var width  = pnlData[(int)PanelIndex.Width].ToDouble().ConvertFromMillimeter(units.Geometry);
 
 			// Get reinforcement
 			double

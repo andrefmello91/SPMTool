@@ -25,8 +25,11 @@ namespace SPMTool
 			DataBase.CreateLayers();
 			Model.CreateBlocks();
 
-			// Add command event handler
-			DataBase.Document.CommandEnded += Model.On_UndoOrRedo;
+			// Set the style for all point objects in the drawing
+			Model.SetPointSize();
+
+            // Add command event handler
+            DataBase.Document.CommandEnded += Model.On_UndoOrRedo;
 		}
 
         /// <summary>

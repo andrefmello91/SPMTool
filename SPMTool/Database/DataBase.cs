@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
@@ -63,7 +64,7 @@ namespace SPMTool.Database
 		/// <summary>
         /// Get current user coordinate system.
         /// </summary>
-		public static Matrix3d UcsMatrix => UserInput.Editor.CurrentUserCoordinateSystem;
+		public static Matrix3d UcsMatrix => Model.Editor.CurrentUserCoordinateSystem;
 
 		/// <summary>
         /// Get coordinate system.
@@ -83,27 +84,27 @@ namespace SPMTool.Database
 		/// <summary>
         /// Get <see cref="Steel"/> objects saved in database.
         /// </summary>
-		public static Steel[] SavedSteel => ReinforcementData.ReadSteel().ToArray();
+		public static Steel[] SavedSteel => ReinforcementData.ReadSteel()?.ToArray();
 
         /// <summary>
         /// Get <see cref="UniaxialReinforcement"/> objects saved in database.
         /// </summary>
-        public static UniaxialReinforcement[] SavedStringerReinforcement => ReinforcementData.ReadStringerReinforcement().ToArray();
+        public static UniaxialReinforcement[] SavedStringerReinforcement => ReinforcementData.ReadStringerReinforcement()?.ToArray();
 
         /// <summary>
         /// Get <see cref="WebReinforcementDirection"/> objects saved in database.
         /// </summary>
-        public static WebReinforcementDirection[] SavedPanelReinforcement => ReinforcementData.ReadPanelReinforcement().ToArray();
+        public static WebReinforcementDirection[] SavedPanelReinforcement => ReinforcementData.ReadPanelReinforcement()?.ToArray();
 
         /// <summary>
         /// Get <see cref="StringerGeometry"/> objects saved in database.
         /// </summary>
-        public static StringerGeometry[] SavedStringerGeometry => ElementData.ReadStringerGeometries().ToArray();
+        public static StringerGeometry[] SavedStringerGeometry => ElementData.ReadStringerGeometries()?.ToArray();
 
         /// <summary>
         /// Get panel widths saved in database.
         /// </summary>
-        public static double[] SavedPanelWidth => ElementData.ReadPanelWidths().ToArray();
+        public static double[] SavedPanelWidth => ElementData.ReadPanelWidths()?.ToArray();
 
 		/// <summary>
         /// Start a new transaction in <see cref="Database"/>.
@@ -239,7 +240,7 @@ namespace SPMTool.Database
         /// Read dictionary entries that contains <paramref name="name"/>.
         /// </summary>
         /// <param name="name">The name of entry.</param>
-        public static ResultBuffer[] ReadDictionaryEntries(string name)
+        public static IEnumerable<ResultBuffer> ReadDictionaryEntries(string name)
         {
 	        // Start a transaction
 	        using (var trans = StartTransaction())
@@ -247,21 +248,21 @@ namespace SPMTool.Database
 		    // Get the NOD in the database
 	        using (var nod = (DBDictionary)trans.GetObject(NodId, OpenMode.ForRead))
 	        {
-		        var resList = (from DBDictionaryEntry entry in nod where entry.Key.Contains(name) select ((Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead)).Data).ToArray();
+		        var resList = new List<ResultBuffer>();
 
-		        return resList.Length > 0 ? resList.ToArray() : null;
+                // Check if name contains
+                foreach (var entry in nod)
+                {
+                    if (!entry.Key.Contains(name))
+                        continue;
 
-		        // Check if name contains
-		        //            foreach (var entry in nod)
-		        //{
-		        //	if (!entry.Key.Contains(name))
-		        //		continue;
+                    var xRec = (Xrecord)trans.GetObject(entry.Value, OpenMode.ForRead);
 
-		        //	var xRec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+                    // Add data
+                    resList.Add(xRec.Data);
+                }
 
-		        //	// Add data
-		        //	resList.Add(xRec.Data);
-		        //}
+                return resList;
 	        }
         }
 	}

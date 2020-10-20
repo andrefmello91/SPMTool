@@ -31,7 +31,7 @@ namespace SPMTool.Database.Elements
 		    if (_stringerGeometries is null)
 			    _stringerGeometries = new List<StringerGeometry>(ReadStringerGeometries());
 
-		    if (!_stringerGeometries.Contains(geometry))
+		    if (!_stringerGeometries.Any(geo => geo.EqualsWidthAndHeight(geometry)))
 			    _stringerGeometries.Add(geometry);
 
             var saveCode = geometry.SaveName();
@@ -86,10 +86,10 @@ namespace SPMTool.Database.Elements
 		    IEnumerable<StringerGeometry> ReadFromDictionary()
 		    {
 			    // Get dictionary entries
-			    var entries = DataBase.ReadDictionaryEntries("StrGeo");
+			    var entries = DataBase.ReadDictionaryEntries("StrGeo")?.ToArray();
 
 			    if (entries is null || !entries.Any())
-				    return null;
+				    return new List<StringerGeometry>();
 
 			    _stringerGeometries = new List<StringerGeometry>(
 				    from r in entries
@@ -112,10 +112,10 @@ namespace SPMTool.Database.Elements
 		    IEnumerable<double> ReadFromDictionary()
 		    {
 			    // Get dictionary entries
-			    var entries = DataBase.ReadDictionaryEntries("PnlW");
+			    var entries = DataBase.ReadDictionaryEntries("PnlW")?.ToArray();
 
 			    if (entries is null || !entries.Any())
-				    return null;
+				    return new List<double>();
 
 			    _panelWList = entries.Select(entry => entry.AsArray()[2].ToDouble()).ToList();
 			    return _panelWList;

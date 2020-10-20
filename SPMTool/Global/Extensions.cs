@@ -240,7 +240,7 @@ namespace SPMTool
 	        var selFt = new SelectionFilter(tvs);
 
 	        // Get the entities on the layername
-	        var selRes = UserInput.Editor.SelectAll(selFt);
+	        var selRes = Model.Editor.SelectAll(selFt);
 
 	        return
 		        selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 ? selRes.Value.GetObjectIds() : new ObjectId[0];

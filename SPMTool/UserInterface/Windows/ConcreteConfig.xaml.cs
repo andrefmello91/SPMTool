@@ -36,12 +36,12 @@ namespace SPMTool.UserInterface
 		/// <summary>
         /// Get the stress unit.
         /// </summary>
-		protected string StressUnit => _units.MaterialStrength.Abbrev();
+		public string StressUnit => _units.MaterialStrength.Abbrev();
 
 		/// <summary>
         /// Get aggregate diameter unit.
         /// </summary>
-        protected string AggregateUnit => _units.Reinforcement.Abbrev();
+        public  string AggregateUnit => _units.Reinforcement.Abbrev();
 
 		/// <summary>
         /// Get the output <see cref="ConcreteData"/> object.
