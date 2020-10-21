@@ -252,6 +252,11 @@ namespace SPMTool.Database
 	        DataBase.Database.Pdsize = 40 * DataBase.Units.Geometry.ScaleFactor();
         }
 
+        /// <summary>
+        /// Set to OFF the <see cref="DataBase.Database.Fillmode"/> setting.
+        /// </summary>
+        public static void SetFillMode() => DataBase.Database.Fillmode = false;
+
 		/// <summary>
         /// Command names for undo and redo.
         /// </summary>

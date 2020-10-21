@@ -283,8 +283,7 @@ namespace SPMTool.UserInterface
 			else
 			{
 				SavedSteel.Disable();
-				YieldStress = 500;
-				ElasticModule = 210000;
+				OutputSteel = null;
 			}
 
             _savedReinforcements = DataBase.SavedStringerReinforcement?.OrderBy(r => r.BarDiameter).ThenBy(r => r.NumberOfBars).ToArray();
@@ -300,8 +299,7 @@ namespace SPMTool.UserInterface
 			else
 			{
 				SavedReinforcement.Disable();
-				NumOfBars   = 2;
-				BarDiameter = 10;
+				OutputReinforcement = null;
 			}
 			
             if (_stringers.Length == 1)
@@ -362,6 +360,9 @@ namespace SPMTool.UserInterface
 
 			// Save on database
 			Save(geometry);
+
+			// Save width for panels
+			Save(StrWidth);
 
 			// Set to stringers
 			foreach (var str in _stringers)

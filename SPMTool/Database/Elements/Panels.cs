@@ -12,6 +12,7 @@ using MathNet.Numerics;
 using SPM.Elements;
 using SPM.Elements.PanelProperties;
 using SPMTool.Enums;
+using UnitsNet;
 using UnitsNet.Units;
 
 namespace SPMTool.Database.Elements
@@ -147,6 +148,43 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="panel">The quadrilateral <see cref="Solid"/> object.</param>
         public static Vertices GetVertices(Solid panel) => new Vertices(panel.GetVertices(), DataBase.Units.Geometry);
+
+		/// <summary>
+        /// Get the width of a panel.
+        /// </summary>
+        /// <param name="panel">The quadrilateral <see cref="Solid"/> object.</param>
+        public static double GetWidth(Solid panel) => panel.ReadXData()[(int) PanelIndex.Width].ToDouble();
+
+		/// <summary>
+		/// Get the <see cref="WebReinforcement"/> of a panel.
+		/// </summary>
+		/// <param name="panel">The quadrilateral <see cref="Solid"/> object.</param>
+		public static WebReinforcement GetReinforcement(Solid panel)
+		{
+			var data = panel.ReadXData();
+
+			// Get reinforcement
+			double
+				width = data[(int)PanelIndex.Width].ToDouble(),
+				phiX  = data[(int)PanelIndex.XDiam].ToDouble(),
+				phiY  = data[(int)PanelIndex.YDiam].ToDouble(),
+				sx    = data[(int)PanelIndex.Sx].ToDouble(),
+				sy    = data[(int)PanelIndex.Sy].ToDouble();
+
+			// Get steel data
+			double
+				fyx = data[(int)PanelIndex.fyx].ToDouble(),
+				Esx = data[(int)PanelIndex.Esx].ToDouble(),
+				fyy = data[(int)PanelIndex.fyy].ToDouble(),
+				Esy = data[(int)PanelIndex.Esy].ToDouble();
+
+			Steel
+				steelX = new Steel(fyx, Esx),
+				steelY = new Steel(fyy, Esy);
+
+			// Get reinforcement
+			return new WebReinforcement(phiX, sx, steelX, phiY, sy, steelY, width);
+		}
 
         /// <summary>
         /// Get the collection of <see cref="Vertices"/> of existing panels.
@@ -472,30 +510,30 @@ namespace SPMTool.Database.Elements
 
 			// Get the panel parameters
 			var number = pnlData[(int)PanelIndex.Number].ToInt();
-			var width  = pnlData[(int)PanelIndex.Width].ToDouble().ConvertFromMillimeter(units.Geometry);
+			var width  = pnlData[(int)PanelIndex.Width].ToDouble();
 
 			// Get reinforcement
-			double
-				phiX = pnlData[(int)PanelIndex.XDiam].ToDouble(),
-				phiY = pnlData[(int)PanelIndex.YDiam].ToDouble(),
-				sx   = pnlData[(int)PanelIndex.Sx].ToDouble(),
-				sy   = pnlData[(int)PanelIndex.Sy].ToDouble();
+			Length
+				phiX = Length.FromMillimeters(pnlData[(int)PanelIndex.XDiam].ToDouble()).ToUnit(units.Reinforcement),
+				phiY = Length.FromMillimeters(pnlData[(int)PanelIndex.YDiam].ToDouble()).ToUnit(units.Reinforcement),
+				sx   = Length.FromMillimeters(pnlData[(int)PanelIndex.Sx].ToDouble()).ToUnit(units.Geometry),
+				sy   = Length.FromMillimeters(pnlData[(int)PanelIndex.Sy].ToDouble()).ToUnit(units.Geometry);
 
 			// Get steel data
-			double
-				fyx = pnlData[(int)PanelIndex.fyx].ToDouble(),
-				Esx = pnlData[(int)PanelIndex.Esx].ToDouble(),
-				fyy = pnlData[(int)PanelIndex.fyy].ToDouble(),
-				Esy = pnlData[(int)PanelIndex.Esy].ToDouble();
+			Pressure
+				fyx = Pressure.FromMegapascals(pnlData[(int)PanelIndex.fyx].ToDouble()).ToUnit(units.MaterialStrength),
+				Esx = Pressure.FromMegapascals(pnlData[(int)PanelIndex.Esx].ToDouble()).ToUnit(units.MaterialStrength),
+				fyy = Pressure.FromMegapascals(pnlData[(int)PanelIndex.fyy].ToDouble()).ToUnit(units.MaterialStrength),
+				Esy = Pressure.FromMegapascals(pnlData[(int)PanelIndex.Esy].ToDouble()).ToUnit(units.MaterialStrength);
 
 			Steel
 				steelX = new Steel(fyx, Esx),
 				steelY = new Steel(fyy, Esy);
             
 			// Get reinforcement
-			var reinforcement = new WebReinforcement(phiX, sx, steelX, phiY, sy, steelY, width);
+			var reinforcement = new WebReinforcement(phiX, sx, steelX, phiY, sy, steelY, Length.FromMillimeters(width).ToUnit(units.Geometry));
 
-			return Panel.Read(analysisType, panelObject.ObjectId, number, nodes, panelObject.GetVertices(), width, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
+			return Panel.Read(analysisType, panelObject.ObjectId, number, nodes, panelObject.GetVertices(), width.ConvertFromMillimeter(units.Geometry), concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
 		}
 
 		/// <summary>
@@ -526,38 +564,28 @@ namespace SPMTool.Database.Elements
 			// Access the XData as an array
 			var data = panel.ReadXData();
 
-			// Set the new reinforcement (line 7 to 9 of the array)
-			if (directionX != null)
-			{
-				data[(int)PanelIndex.XDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, directionX.BarDiameter);
-				data[(int)PanelIndex.Sx]    = new TypedValue((int)DxfCode.ExtendedDataReal, directionX.BarSpacing);
+			// Set X direction
+			data[(int)PanelIndex.XDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, directionX?.BarDiameter ?? 0);
+			data[(int)PanelIndex.Sx]    = new TypedValue((int)DxfCode.ExtendedDataReal, directionX?.BarSpacing  ?? 0);
+			data[(int)PanelIndex.fyx]   = new TypedValue((int)DxfCode.ExtendedDataReal, directionX?.Steel?.YieldStress   ?? 0);
+			data[(int)PanelIndex.Esx]   = new TypedValue((int)DxfCode.ExtendedDataReal, directionX?.Steel?.ElasticModule ?? 0);
 
-				var steelX = directionX.Steel;
-
-				if (steelX != null)
-				{
-					data[(int)PanelIndex.fyx] = new TypedValue((int)DxfCode.ExtendedDataReal, steelX.YieldStress);
-					data[(int)PanelIndex.Esx] = new TypedValue((int)DxfCode.ExtendedDataReal, steelX.ElasticModule);
-				}
-			}
-
-			if (directionY != null)
-			{
-				data[(int)PanelIndex.YDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, directionY.BarDiameter);
-				data[(int)PanelIndex.Sy]    = new TypedValue((int)DxfCode.ExtendedDataReal, directionY.BarSpacing);
-
-				var steelY = directionY.Steel;
-
-				if (steelY != null)
-				{
-					data[(int)PanelIndex.fyy] = new TypedValue((int)DxfCode.ExtendedDataReal, steelY.YieldStress);
-					data[(int)PanelIndex.Esy] = new TypedValue((int)DxfCode.ExtendedDataReal, steelY.ElasticModule);
-				}
-			}
+			// Set Y direction
+			data[(int)PanelIndex.YDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, directionY?.BarDiameter ?? 0);
+			data[(int)PanelIndex.Sy]    = new TypedValue((int)DxfCode.ExtendedDataReal, directionY?.BarSpacing  ?? 0);
+			data[(int)PanelIndex.fyy]   = new TypedValue((int)DxfCode.ExtendedDataReal, directionY?.Steel?.YieldStress   ?? 0);
+			data[(int)PanelIndex.Esy]   = new TypedValue((int)DxfCode.ExtendedDataReal, directionY?.Steel?.ElasticModule ?? 0);
 
 			// Add the new XData
 			panel.SetXData(data);
 		}
+
+        /// <summary>
+        /// Set reinforcement to a <paramref name="panel"/>
+        /// </summary>
+        /// <param name="panel">The panel <see cref="Solid"/> object.</param>
+        /// <param name="reinforcement">The <see cref="WebReinforcement"/>.</param>
+        public static void SetReinforcement(Solid panel, WebReinforcement reinforcement) => SetReinforcement(panel, reinforcement?.DirectionX, reinforcement?.DirectionY);
 
 		/// <summary>
         /// Draw panel stresses.

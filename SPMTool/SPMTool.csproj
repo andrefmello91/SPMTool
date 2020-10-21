@@ -155,6 +155,9 @@
     <Compile Include="UserInterface\Windows\PanelGeometryWindow.xaml.cs">
       <DependentUpon>PanelGeometryWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UserInterface\Windows\PanelWindow.xaml.cs">
+      <DependentUpon>PanelWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserInterface\Windows\StringerWindow.xaml.cs">
       <DependentUpon>StringerWindow.xaml</DependentUpon>
     </Compile>
@@ -332,6 +335,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="UserInterface\Windows\PanelWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="UserInterface\Windows\StringerWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -392,6 +399,8 @@
   <ItemGroup>
     <None Include="Resources\stringer-cross-section.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="Resources\panel-geometry.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -54,7 +54,7 @@ namespace SPMTool.Editor.Commands
 			    nds.Add(endPtn.Value);
 
 			    // Get the points ordered in ascending Y and ascending X:
-			    var extNds = nds.Order().ToList();
+			    var extNds = nds.Order().ToArray();
 
 			    // Create the Stringer and add to drawing
 			    Stringers.Add(extNds[0], extNds[1]);
@@ -74,9 +74,6 @@ namespace SPMTool.Editor.Commands
 			// Read units
 			var units = DataBase.Units;
 
-			// Get the list of panel vertices
-			var pnlList = Panels.PanelVertices();
-
 			// Create a loop for creating infinite panels
 			for ( ; ; )
 			{
@@ -89,14 +86,13 @@ namespace SPMTool.Editor.Commands
 				// Check if there are four points
 				if (nds.Length == 4)
 					// Create the panel if it doesn't exist
-					Panels.Add(nds.Select(nd => nd.Position), units.Geometry);
+					Panels.Add(nds.Select(nd => nd.Position).ToArray(), units.Geometry);
 
 				else
 					Application.ShowAlertDialog("Please select four external nodes.");
 			}
 
-			// Update nodes and panels
-			Nodes.Update(false);
+			// Update panels
 			Panels.Update(false);
 		}
     }

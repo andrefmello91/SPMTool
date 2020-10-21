@@ -290,7 +290,7 @@ namespace SPMTool.Editor.Commands
 				return;
 
 			// Start the config window
-			var geoWindow = new PanelGeometryWindow(pnls);
+			var geoWindow = new PanelWindow(pnls);
 			ShowModalWindow(MainWindow.Handle, geoWindow, false);
 
    //         // Get width

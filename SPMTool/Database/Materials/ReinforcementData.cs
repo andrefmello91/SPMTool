@@ -109,6 +109,9 @@ namespace SPMTool.Database.Materials
 	    /// <param name="reinforcement">The <see cref="WebReinforcementDirection"/> object.</param>
 	    public static void Save(WebReinforcementDirection reinforcement)
 	    {
+			if (reinforcement is null)
+				return;
+
 		    if (_pnlRefList is null)
 			    _pnlRefList = new List<WebReinforcementDirection>();
 
