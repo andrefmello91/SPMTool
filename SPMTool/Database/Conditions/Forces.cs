@@ -200,11 +200,16 @@ namespace SPMTool.Database.Conditions
 			{
                 var blks = fcs.Where(fc => fc.Position.Approx(position)).ToArray();
 
-                // Add force blocks
-                toErase.AddRange(blks.GetObjectIds());
+                // Get associated texts
+                var txts = blks.Select(AssociatedText).ToArray();
+				
+                // Unregister erased event
+                blks.GetObjectIds().UnregisterErasedEvent(On_ForceErase);
+				txts.UnregisterErasedEvent(On_ForceTextErase);
 
-                // Add texts
-                toErase.AddRange(blks.Select(AssociatedText));
+                // Add force blocks and texts to erase
+                toErase.AddRange(blks.GetObjectIds());
+                toErase.AddRange(txts);
             }
 
 			// Erase objects
@@ -326,18 +331,14 @@ namespace SPMTool.Database.Conditions
         {
 	        var text = AssociatedText((Entity) sender);
 
-	        try
-	        {
-		        text.Remove();
-	        }
-	        catch
-	        {
-		        // ignored
-	        }
-	        finally
-	        {
-				Update();
-	        }
+			// Remove event handler
+			text.UnregisterErasedEvent(On_ForceTextErase);
+
+			// Erase it
+	        text.Remove();
+
+			// Update forces
+	        Update();
         }
 
         /// <summary>
@@ -347,18 +348,14 @@ namespace SPMTool.Database.Conditions
 		{
 			var block = AssociatedBlock((Entity)sender);
 
-			try
-			{
-				block.Remove();
-			}
-			catch
-			{
-				// ignored
-			}
-			finally
-			{
-				Update();
-			}
+            // Remove event handler
+            block.UnregisterErasedEvent(On_ForceErase);
+
+            // Erase it
+            block.Remove();
+
+			// Update forces
+			Update();
 		}
     }
 }
