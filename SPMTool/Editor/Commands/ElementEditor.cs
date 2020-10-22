@@ -101,8 +101,8 @@ namespace SPMTool.Editor.Commands
             }
 
             // Erase original stringers and internal nodes
-		    strs.Erase();
-			ndsToErase.Erase();
+		    strs.Remove();
+			ndsToErase.Remove();
 
 		    // Create the nodes and update stringers
 		    Nodes.Update();

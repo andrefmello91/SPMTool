@@ -44,6 +44,9 @@ namespace SPMTool.Editor.Commands
 
 		    // Add force blocks
 		    Forces.AddBlocks(positions, force.Value, units.Geometry);
+
+			// Update
+			Forces.Update();
 	    }
 
 		/// <summary>

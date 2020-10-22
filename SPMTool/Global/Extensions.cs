@@ -255,6 +255,6 @@ namespace SPMTool
         /// Erase all the objects in this <paramref name="layer"/>.
         /// </summary>
         /// <param name="layer">The <see cref="Layer"/>.</param>
-        public static void EraseObjects(this Layer layer) => layer.GetObjectIds()?.Erase();
+        public static void EraseObjects(this Layer layer) => layer.GetObjectIds()?.Remove();
     }
 }

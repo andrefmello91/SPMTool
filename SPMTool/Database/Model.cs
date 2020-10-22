@@ -112,8 +112,8 @@ namespace SPMTool.Database
 	        var nodes = Nodes.Read(ndObjs, units).ToArray();
 
 	        // Set supports and forces
-	        Forces.Set(ForceCollection, nodes);
-	        Supports.Set(SupportCollection, nodes);
+	        //Forces.Set(ForceCollection, nodes);
+	        //Supports.Set(SupportCollection, nodes);
 
 	        // Get stringers and panels
 	        var stringers = Stringers.Read(strObjs, units, concrete.Parameters, concrete.Constitutive, nodes, analysisType);

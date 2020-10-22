@@ -133,7 +133,8 @@
 		AppName,
 		XDataStr,
 		Value,
-		Direction
+		Direction,
+		TextHandle
 	}
 
 	/// <summary>
@@ -143,9 +144,7 @@
 	{
 		AppName,
 		XDataStr,
-		XPosition,
-		YPosition,
-		Direction
+		BlockHandle
 	}
 
 	/// <summary>

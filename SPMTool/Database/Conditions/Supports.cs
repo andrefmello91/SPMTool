@@ -83,7 +83,7 @@ namespace SPMTool.Database.Conditions
             foreach (var position in positions)
 				toErase.AddRange(sups.Where(sup => sup.Position.Approx(position)));
 
-			toErase.Erase();
+			toErase.Remove();
         }
 
         /// <summary>

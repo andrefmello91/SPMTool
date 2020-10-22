@@ -13,8 +13,13 @@ using SPMTool.Enums;
 
 namespace SPMTool.Database.Conditions
 {
-    public static class Forces
+    public static partial class Forces
     {
+	    /// <summary>
+        /// Auxiliary list of forces and positions.
+        /// </summary>
+	    private static List<BlockReference> _forceList;
+
 		/// <summary>
         /// Get the force objects in the drawing.
         /// </summary>
@@ -77,7 +82,7 @@ namespace SPMTool.Database.Conditions
 						{
 							// Append the block to drawing
 							blkRef.Layer = $"{Layer.Force}";
-							blkRef.Add();
+							blkRef.Add(On_ForceErase);
 
 							// Rotate and scale the block
 							if (!rotAng.ApproxZero())
@@ -85,9 +90,6 @@ namespace SPMTool.Database.Conditions
 
 							if (geometryUnit != LengthUnit.Millimeter)
 								blkRef.TransformBy(Matrix3d.Scaling(scFctr, pos));
-
-							// Set XData to force block
-							blkRef.SetXData(ForceXData(forceValue.Convert(force.Unit), direction));
 
 							// Define the force text
 							var text = new DBText
@@ -99,10 +101,13 @@ namespace SPMTool.Database.Conditions
 							};
 
 							// Append the text to drawing
-							text.Add();
+							text.Add(On_ForceTextErase);
 
 							// Add the node position to the text XData
-							text.SetXData(ForceTextXData(pos, direction));
+							text.SetXData(ForceTextXData(blkRef.Handle));
+
+                            // Set XData to force block
+                            blkRef.SetXData(ForceXData(forceValue.Convert(force.Unit), direction, text.Handle));
 						}
 					}
                 }
@@ -110,6 +115,11 @@ namespace SPMTool.Database.Conditions
 				trans.Commit();
 			}
 		}
+
+        /// <summary>
+        /// Update force list.
+        /// </summary>
+        public static void Update() => _forceList = GetObjects()?.ToList();
 
 		/// <summary>
         /// Create the force block.
@@ -156,13 +166,13 @@ namespace SPMTool.Database.Conditions
                             // Add the lines to the block table record
                             foreach (Entity ent in arrow)
                             {
-                                blkTblRec.AppendEntity(ent);
+	                            blkTblRec.AppendEntity(ent);
                                 trans.AddNewlyCreatedDBObject(ent, true);
                             }
                         }
                     }
                 }
-
+				
                 // Commit and dispose the transaction
                 trans.Commit();
             }
@@ -180,60 +190,46 @@ namespace SPMTool.Database.Conditions
 	        // Get all the force blocks in the model
 	        var fcs    = Model.ForceCollection?.ToArray();
 
-	        // Get all the force texts in the model
-	        var fcTxts = Model.ForceTextCollection?.ToArray();
-
-			if (fcs is null && fcTxts is null)
+			if (fcs is null || !fcs.Any())
 				return;
 
-			var toErase = new List<DBObject>();
+			var toErase = new List<ObjectId>();
 
             // Erase force blocks that are located in positions
-			if (fcs != null)
-				foreach (var position in positions)
-					// Add force blocks
-					toErase.AddRange(fcs.Where(fc => fc.Position.Approx(position)));
+			foreach (var position in positions)
+			{
+                var blks = fcs.Where(fc => fc.Position.Approx(position)).ToArray();
 
-			if (fcTxts != null && fcTxts.Length > 0)
-				foreach (var fcTxt in fcTxts)
-				{
-					var pt = AssociatedPoint(fcTxt);
+                // Add force blocks
+                toErase.AddRange(blks.GetObjectIds());
 
-					if (pt.HasValue)
-						toErase.AddRange(from position in positions where position.Approx(pt.Value) select fcTxt);
-				}
+                // Add texts
+                toErase.AddRange(blks.Select(AssociatedText));
+            }
 
 			// Erase objects
-			toErase.Erase();
+			toErase.Remove();
         }
 
-		/// <summary>
-        /// Get the position associated to this <paramref name="forceText"/>.
+        /// <summary>
+        /// Get the <see cref="Entity"/> associated to this <paramref name="forceBlock"/>.
         /// </summary>
-        /// <param name="forceText">The <see cref="DBText"/>.</param>
-		private static Point3d? AssociatedPoint(DBText forceText)
-		{
-			var txtData = forceText?.ReadXData();
-
-			if (txtData is null)
-				return null;
-
-			// Get the position of the node of the text
-			double
-				ndX = txtData[(int)ForceTextIndex.XPosition].ToDouble(),
-				ndY = txtData[(int)ForceTextIndex.YPosition].ToDouble();
-
-			return new Point3d(ndX, ndY, 0);
-		}
-
+        /// <param name="forceBlock">The force block.</param>
+        private static ObjectId AssociatedText(Entity forceBlock) => new Handle(Convert.ToInt64(forceBlock.ReadXData()[(int) ForceIndex.TextHandle].Value.ToString(), 16)).ToObjectId();
 
         /// <summary>
-        /// Create XData for forces
+        /// Get the <see cref="Entity"/> associated to this <paramref name="forceText"/>.
         /// </summary>
-        /// <param name="forceValue">The force value, in N.</param>
-        /// <param name="forceDirection">The force direction.</param>
-        /// <returns></returns>
-        private static TypedValue[] ForceXData(double forceValue, Direction forceDirection)
+        /// <param name="forceText">The force block.</param>
+        private static ObjectId AssociatedBlock(Entity forceText) => new Handle(Convert.ToInt64(forceText.ReadXData()[(int) ForceTextIndex.BlockHandle].Value.ToString(), 16)).ToObjectId();
+		
+        /// <summary>
+		/// Create XData for forces
+		/// </summary>
+		/// <param name="forceValue">The force value, in N.</param>
+		/// <param name="forceDirection">The force direction.</param>
+		/// <param name="textHandle">The <see cref="Handle"/> of the text object.</param>
+		private static TypedValue[] ForceXData(double forceValue, Direction forceDirection, Handle textHandle)
         {
             // Definition for the Extended Data
             var xdataStr = "Force Data";
@@ -243,29 +239,28 @@ namespace SPMTool.Database.Conditions
             var data = new TypedValue[size];
 
             // Set values
-            data[(int)ForceIndex.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
-            data[(int)ForceIndex.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-            data[(int)ForceIndex.Value]     = new TypedValue((int)DxfCode.ExtendedDataReal,        forceValue);
-            data[(int)ForceIndex.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32,  (int)forceDirection);
+            data[(int)ForceIndex.AppName]    = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
+            data[(int)ForceIndex.XDataStr]   = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+            data[(int)ForceIndex.Value]      = new TypedValue((int)DxfCode.ExtendedDataReal,        forceValue);
+            data[(int)ForceIndex.Direction]  = new TypedValue((int)DxfCode.ExtendedDataInteger32,  (int)forceDirection);
+            data[(int)ForceIndex.TextHandle] = new TypedValue((int)DxfCode.ExtendedDataHandle,      textHandle);
 
             // Add XData to force block
             return data;
         }
 
         // Create XData for force text
-        private static TypedValue[] ForceTextXData(Point3d forcePosition, Direction forceDirection)
+        private static TypedValue[] ForceTextXData(Handle blockHandle)
         {
             // Get the Xdata size
             var size = Enum.GetNames(typeof(ForceTextIndex)).Length;
             var data = new TypedValue[size];
 
             // Set values
-            data[(int)ForceTextIndex.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
-            data[(int)ForceTextIndex.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Force at nodes");
-            data[(int)ForceTextIndex.XPosition] = new TypedValue((int)DxfCode.ExtendedDataReal,         forcePosition.X);
-            data[(int)ForceTextIndex.YPosition] = new TypedValue((int)DxfCode.ExtendedDataReal,         forcePosition.Y);
-            data[(int)ForceTextIndex.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)forceDirection);
-
+            data[(int)ForceTextIndex.AppName]     = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
+            data[(int)ForceTextIndex.XDataStr]    = new TypedValue((int)DxfCode.ExtendedDataAsciiString, "Force at nodes");
+            data[(int)ForceTextIndex.BlockHandle] = new TypedValue((int)DxfCode.ExtendedDataHandle,      blockHandle);
+			
             // Add XData to force block
             return data;
         }
@@ -273,30 +268,31 @@ namespace SPMTool.Database.Conditions
         /// <summary>
         /// Set forces to a collection of nodes.
         /// </summary>
-        /// <param name="forceObjectIds">The collection of force objects in the drawing.</param>
         /// <param name="nodes">The collection containing all nodes of SPM model.</param>
-        public static void Set(IEnumerable<BlockReference> forceObjectIds, IEnumerable<Node> nodes)
+        public static void Set(IEnumerable<Node> nodes)
         {
-	        foreach (var obj in forceObjectIds)
-		        Set(obj, nodes);
+	        foreach (var node in nodes)
+		        Set(node);
         }
 
         /// <summary>
-        /// Set forces to a collection of nodes.
+        /// Set forces to a node.
         /// </summary>
-        /// <param name="forceObject">The <see cref="BlockReference"/> of force object in the drawing.</param>
-        /// <param name="nodes">The collection containing all nodes of SPM model.</param>
-        private static void Set(BlockReference forceObject, IEnumerable<Node> nodes)
+        /// <param name="node">The node.</param>
+        public static void Set(Node node)
         {
-            // Set to node
-            foreach (var node in nodes)
-            {
-                if (!node.Position.Approx(forceObject.Position))
-                    continue;
+			// Get forces at node position
+			if (_forceList is null)
+				Update();
 
-                node.Force += ReadForce(forceObject);
-                break;
-            }
+			var fcs = _forceList?.Where(f => f.Position == node.Position).ToArray();
+
+			if (fcs is null || !fcs.Any())
+				return;
+
+			// Set to node
+			foreach (var fc in fcs)
+				node.Force += ReadForce(fc);
         }
 
         /// <summary>
@@ -315,12 +311,54 @@ namespace SPMTool.Database.Conditions
 	        var data = forceBlock.ReadXData();
 
 	        // Get value and direction
-	        var value     = data[(int)ForceIndex.Value].ToDouble();
+	        var force     = UnitsNet.Force.FromNewtons(data[(int)ForceIndex.Value].ToDouble()).ToUnit(DataBase.Units.AppliedForces);
 	        var direction = (Direction)data[(int)ForceIndex.Direction].ToInt();
 
 	        // Get force
 	        return
-		        direction is Direction.X ? Force.InX(value) : Force.InY(value);
+		        direction == Direction.X ? Force.InX(force) : Force.InY(force);
         }
+
+        /// <summary>
+        /// Execute when the force block is erased.
+        /// </summary>
+        private static void On_ForceErase(object sender, ObjectErasedEventArgs e)
+        {
+	        var text = AssociatedText((Entity) sender);
+
+	        try
+	        {
+		        text.Remove();
+	        }
+	        catch
+	        {
+		        // ignored
+	        }
+	        finally
+	        {
+				Update();
+	        }
+        }
+
+        /// <summary>
+        /// Execute when the force text is erased.
+        /// </summary>
+        private static void On_ForceTextErase(object sender, ObjectErasedEventArgs e)
+		{
+			var block = AssociatedBlock((Entity)sender);
+
+			try
+			{
+				block.Remove();
+			}
+			catch
+			{
+				// ignored
+			}
+			finally
+			{
+				Update();
+			}
+		}
     }
 }

@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
 using SPM.Elements;
+using SPMTool.Database.Conditions;
 using SPMTool.Enums;
 using UnitsNet.Units;
 
@@ -196,8 +197,12 @@ namespace SPMTool.Database.Elements
 	        // Get the node number
 	        var number = data[(int)NodeIndex.Number].ToInt();
 
-	        return
-		        new Node(nodeObject.ObjectId, number, nodeObject.Position, GetNodeType(nodeObject), units.Geometry, units.Displacements);
+	        var node = new Node(nodeObject.ObjectId, number, nodeObject.Position, GetNodeType(nodeObject), units.Geometry, units.Displacements);
+
+			// Set forces
+			Forces.Set(node);
+
+			return node;
         }
 
         /// <summary>

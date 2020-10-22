@@ -123,6 +123,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Database\Conditions\ForcePosition.cs" />
     <Compile Include="Database\DataBase.cs" />
     <Compile Include="Database\UnitsData.cs" />
     <Compile Include="Editor\Commands\ConditionsInput.cs" />
