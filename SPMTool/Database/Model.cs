@@ -181,8 +181,8 @@ namespace SPMTool.Database
 		{
 			Nodes.SetDisplacements(analysis.Nodes);
             DrawDisplacements(analysis.Stringers, analysis.Nodes, units);
-            //Stringers.DrawForces(analysis.Stringers, analysis.MaxStringerForce, units);
-            //Panels.DrawStresses(analysis.Panels, units);
+            Stringers.DrawForces(analysis.Stringers, analysis.MaxStringerForce, units);
+            Panels.DrawStresses(analysis.Panels, units);
         }
 
         /// <summary>
@@ -207,10 +207,6 @@ namespace SPMTool.Database
 
 			foreach (var str in stringers)
 			{
-				// Initialize the displacements of the initial and end nodes
-				//var (ux1, uy1) = nodes.Where(nd => nd.Type is NodeType.External && str.Grip1 == nd).Select(nd => (nd.Displacement.ComponentX * scFctr, nd.Displacement.ComponentY * scFctr)).First();
-				//var (ux3, uy3) = nodes.Where(nd => nd.Type is NodeType.External && str.Grip3 == nd).Select(nd => (nd.Displacement.ComponentX * scFctr, nd.Displacement.ComponentY * scFctr)).First();
-
 				// Get displacements of the initial and end nodes
 				var d1 = str.Grip1.Displacement.Copy();
 				var d3 = str.Grip3.Displacement.Copy();

@@ -100,7 +100,7 @@ namespace SPMTool.UserInterface
 		private string Label(ChartPoint point)
 		{
 			return
-				$"LF = {point.Y.Round(2)}\n" +
+				$"LF = {point.Y:0.00}\n" +
 				$"u  = {Length.FromMillimeters(point.X).ToUnit(DisplacementUnit)}";
 		}
 
@@ -110,7 +110,7 @@ namespace SPMTool.UserInterface
 	        //point instance contains many useful information...
 	        //sender is the shape that called the event.
 
-	        MessageBox.Show($"LF: {point.X} , Displacement: {point.Y}");
+	        MessageBox.Show($"LF: {point.X:0.00} , Displacement: {point.Y:0.00}");
         }
 
         private void ButtonOK_OnClick(object sender, RoutedEventArgs e)

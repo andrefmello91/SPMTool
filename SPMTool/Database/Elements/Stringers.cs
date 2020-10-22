@@ -83,8 +83,6 @@ namespace SPMTool.Database.Elements
 			if (strs is null || !strs.Any())
 				return;
 
-            var nds = Model.NodeCollection;
-
 	        // Bool to alert the user
 	        bool userAlert = false;
 
@@ -118,17 +116,8 @@ namespace SPMTool.Database.Elements
 		        // Get the Stringer number
 		        int strNum = i + 1;
 
-		        // Get the start, mid and end nodes
-		        int
-			        strStNd  = Nodes.GetNumber(strs[i].StartPoint, nds) ?? 0,
-			        strMidNd = Nodes.GetNumber(strs[i].MidPoint(), nds) ?? 0,
-			        strEnNd  = Nodes.GetNumber(strs[i].EndPoint,   nds) ?? 0;
-
 		        // Set the updated number and nodes in ascending number and length (line 2 to 6)
 		        data[(int) StringerIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, strNum);
-		        data[(int) StringerIndex.Grip1]  = new TypedValue((int) DxfCode.ExtendedDataReal, strStNd);
-		        data[(int) StringerIndex.Grip2]  = new TypedValue((int) DxfCode.ExtendedDataReal, strMidNd);
-		        data[(int) StringerIndex.Grip3]  = new TypedValue((int) DxfCode.ExtendedDataReal, strEnNd);
 
                 // Add the new XData
                 strs[i].SetXData(data);
@@ -139,7 +128,7 @@ namespace SPMTool.Database.Elements
 
 	        // Alert the user
 	        if (userAlert)
-		        Application.ShowAlertDialog("Please set Stringer geometry and reinforcement again");
+		        Application.ShowAlertDialog("Please set Stringer geometry and reinforcement again.");
         }
 
         /// <summary>

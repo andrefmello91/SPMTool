@@ -58,9 +58,8 @@ namespace SPMTool.Editor.Commands
 
             // Show load-displacement diagram
             var units = DataBase.Units;
-            var u  = analysis.MonitoredDisplacements.ToArray();
-            var lf = analysis.MonitoredLoadFactor.ToArray();
-            Application.ShowModelessWindow(Application.MainWindow.Handle, new GraphWindow(u, lf, units.Displacements));
+
+            Application.ShowModelessWindow(Application.MainWindow.Handle, new GraphWindow(analysis.MonitoredDisplacements, analysis.MonitoredLoadFactor, units.Displacements));
 
             // Draw results of analysis
             Model.DrawResults(analysis, units);

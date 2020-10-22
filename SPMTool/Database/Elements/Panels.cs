@@ -74,9 +74,6 @@ namespace SPMTool.Database.Elements
 			if (pnls is null || !pnls.Any())
 				return;
 
-            // Get the internal nodes of the model
-            var intNds = Model.IntNodeCollection;
-			
             // Get the Xdata size
             int size = Enum.GetNames(typeof(PanelIndex)).Length;
 
@@ -100,33 +97,8 @@ namespace SPMTool.Database.Elements
 	            // Get the panel number
 	            int pnlNum = i + 1;
 
-	            // Initialize an int array of grip numbers
-	            int[] grips = new int[4];
-
-	            // Get panel geometry
-	            var verts = pnls[i].GetVertices().ToArray();
-	            var geometry = new PanelGeometry(verts, 0, DataBase.Units.Geometry);
-
-	            // Get grip positions
-	            var pnlGrips = geometry.GripPositions;
-
-	            foreach (var grip in pnlGrips)
-	            {
-		            // Get the position of the vertex in the array
-		            int j = Array.IndexOf(pnlGrips, grip);
-
-		            // Get the node number
-		            grips[j] = Nodes.GetNumber(grip, intNds) ?? 0;
-	            }
-
 	            // Set the updated panel number
 	            data[(int) PanelIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, pnlNum);
-
-	            // Set the updated node numbers in the necessary order
-	            data[(int) PanelIndex.Grip1] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[0]);
-	            data[(int) PanelIndex.Grip2] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[1]);
-	            data[(int) PanelIndex.Grip3] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[2]);
-	            data[(int) PanelIndex.Grip4] = new TypedValue((int) DxfCode.ExtendedDataReal, grips[3]);
 
                 // Add the new XData
                 pnls[i].SetXData(data);
@@ -140,7 +112,7 @@ namespace SPMTool.Database.Elements
 
             // Alert user
             if (userAlert)
-	            Application.ShowAlertDialog("Please set panel geometry and reinforcement again");
+	            Application.ShowAlertDialog("Please set panel geometry and reinforcement again.");
 		}
 
 		/// <summary>
@@ -203,7 +175,7 @@ namespace SPMTool.Database.Elements
 			// Get the Xdata size
 			int size = Enum.GetNames(typeof(PanelIndex)).Length;
 
-			TypedValue[] newData = new TypedValue[size];
+			var newData = new TypedValue[size];
 
 			// Set the initial parameters
 			newData[(int) PanelIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, DataBase.AppName);
