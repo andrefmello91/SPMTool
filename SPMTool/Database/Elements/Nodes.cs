@@ -4,9 +4,11 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
+using OnPlaneComponents;
 using SPM.Elements;
 using SPMTool.Database.Conditions;
 using SPMTool.Enums;
+using UnitsNet;
 using UnitsNet.Units;
 
 namespace SPMTool.Database.Elements
@@ -69,7 +71,10 @@ namespace SPMTool.Database.Elements
 			};
 			
 			// Add the new object
-			dbPoint.Add(On_NodeErase);
+			if (nodeType != NodeType.Displaced)
+				dbPoint.Add(On_NodeErase);
+			else
+				dbPoint.Add();
 		}
 
         /// <summary>
@@ -197,10 +202,17 @@ namespace SPMTool.Database.Elements
 	        // Get the node number
 	        var number = data[(int)NodeIndex.Number].ToInt();
 
+			// Get displacement
+			var ux = Length.FromMillimeters(data[(int) NodeIndex.Ux].ToDouble()).ToUnit(units.Displacements);
+			var uy = Length.FromMillimeters(data[(int) NodeIndex.Uy].ToDouble()).ToUnit(units.Displacements);
+			var disp = new Displacement(ux, uy);
+
 	        var node = new Node(nodeObject.ObjectId, number, nodeObject.Position, GetNodeType(nodeObject), units.Geometry, units.Displacements);
 
-			// Set forces
+			// Set forces, support and displacements
 			Forces.Set(node);
+			Supports.Set(node);
+			node.SetDisplacements(disp);
 
 			return node;
         }
@@ -299,10 +311,7 @@ namespace SPMTool.Database.Elements
 				return;
 
 			if (_positions.Contains(nd.Position))
-			{
 				_positions.Remove(nd.Position);
-				Model.Editor.WriteMessage($"\nRemoved: {nd.Position}");
-			}
         }
 	}
 }

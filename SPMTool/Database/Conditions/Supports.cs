@@ -19,11 +19,15 @@ namespace SPMTool.Database.Conditions
     /// </summary>
     public static class Supports
     {
-
 	    /// <summary>
-	    /// Get the support objects in the drawing.
+	    /// Auxiliary list of support blocks.
 	    /// </summary>
-	    public static IEnumerable<BlockReference> GetObjects() => Layer.Support.GetDBObjects()?.ToBlocks();
+	    private static List<BlockReference> _supportList;
+
+        /// <summary>
+        /// Get the support objects in the drawing.
+        /// </summary>
+        public static IEnumerable<BlockReference> GetObjects() => Layer.Support.GetDBObjects()?.ToBlocks();
 
         /// <summary>
         /// Add the force blocks to the model.
@@ -61,6 +65,11 @@ namespace SPMTool.Database.Conditions
                 trans.Commit();
             }
         }
+
+        /// <summary>
+        /// Update support list.
+        /// </summary>
+        public static void Update() => _supportList = GetObjects()?.ToList();
 
         /// <summary>
         /// Erase the supports blocks in the model.
@@ -320,32 +329,32 @@ namespace SPMTool.Database.Conditions
         }
 
         /// <summary>
-        /// Set constraints to a collection of nodes.
+        /// Set supports to a collection of nodes.
         /// </summary>
-        /// <param name="supportObjectIds">The collection of support objects in the drawing.</param>
         /// <param name="nodes">The collection containing all nodes of SPM model.</param>
-        public static void Set(IEnumerable<BlockReference> supportObjectIds, IEnumerable<Node> nodes)
+        public static void Set(IEnumerable<Node> nodes)
         {
-	        foreach (var obj in supportObjectIds)
-		        Set(obj, nodes);
+	        foreach (var node in nodes)
+		        Set(node);
         }
 
         /// <summary>
-        /// Set constraints to a collection of nodes.
+        /// Set support to a node.
         /// </summary>
-        /// <param name="supportObject">The <see cref="BlockReference"/> of support object in the drawing.</param>
-        /// <param name="nodes">The collection containing all nodes of SPM model.</param>
-        private static void Set(BlockReference supportObject, IEnumerable<Node> nodes)
+        /// <param name="node">The node.</param>
+        public static void Set(Node node)
         {
-            // Set to node
-            foreach (var node in nodes)
-            {
-                if (!node.Position.Approx(supportObject.Position))
-                    continue;
+	        // Get forces at node position
+	        if (_supportList is null)
+		        Update();
 
-                node.Constraint = ReadConstraint(supportObject);
-                break;
-            }
+	        var i = _supportList?.FindIndex(s => s.Position == node.Position);
+
+	        if (i is null || i == -1)
+		        return;
+
+	        // Set to node
+	        node.Constraint = ReadConstraint(_supportList[i.Value]);
         }
 
         /// <summary>

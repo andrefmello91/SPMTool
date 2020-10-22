@@ -13,10 +13,10 @@ using SPMTool.Enums;
 
 namespace SPMTool.Database.Conditions
 {
-    public static partial class Forces
+    public static class Forces
     {
 	    /// <summary>
-        /// Auxiliary list of forces and positions.
+        /// Auxiliary list of force blocks.
         /// </summary>
 	    private static List<BlockReference> _forceList;
 

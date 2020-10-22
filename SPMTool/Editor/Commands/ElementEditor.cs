@@ -292,16 +292,6 @@ namespace SPMTool.Editor.Commands
 			// Start the config window
 			var geoWindow = new PanelWindow(pnls);
 			ShowModalWindow(MainWindow.Handle, geoWindow, false);
-
-   //         // Get width
-   //         var wn = UserInput.GetPanelWidth(units.Geometry);
-
-			//if (!wn.HasValue)
-			//	return;
-
-			//// Start a transaction
-			//foreach (var pnl in pnls)
-			//	Panels.SetWidth(pnl, wn.Value);
 		}
 
 		/// <summary>
@@ -310,56 +300,38 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod("SetStringerReinforcement")]
 		public static void SetStringerReinforcement()
 		{
-			// Read units
-			var units = DataBase.Units;
-
 			// Request objects to be selected in the drawing area
 			var strs = UserInput.SelectStringers("Select the stringers to assign reinforcement (you can select other elements, the properties will be only applied to stringers).")?.ToArray();
 
-			if (strs is null)
+			if (strs is null || !strs.Any())
 				return;
 
-			// Get steel parameters and reinforcement from user
-			var reinforcement = UserInput.GetUniaxialReinforcement(units);
-
-			if (reinforcement is null)
-				return;
-
-			// Save the properties
-			foreach (var str in strs)
-				Stringers.SetReinforcement(str, reinforcement);
+			// Start the config window
+			var geoWindow = new StringerWindow(strs);
+			ShowModalWindow(MainWindow.Handle, geoWindow, false);
 		}
 
-		/// <summary>
-		/// Set reinforcement to a collection of panels.
-		/// </summary>
-		[CommandMethod("SetPanelReinforcement")]
+        /// <summary>
+        /// Set reinforcement to a collection of panels.
+        /// </summary>
+        [CommandMethod("SetPanelReinforcement")]
 		public static void SetPanelReinforcement()
 		{
-			// Read units
-			var units = DataBase.Units;
-
 			// Request objects to be selected in the drawing area
 			var pnls = UserInput.SelectPanels("Select the panels to assign reinforcement (you can select other elements, the properties will be only applied to panels).")?.ToArray();
 
-			if (pnls is null)
+			if (pnls is null || !pnls.Any())
 				return;
 
-			// Get the values
-			var refX   = UserInput.GetWebReinforcement(Direction.X, units);
-			var refY   = UserInput.GetWebReinforcement(Direction.Y, units);
-
-			if (refX is null && refY is null)
-				return;
-
-			foreach (var pnl in pnls)
-				Panels.SetReinforcement(pnl, refX, refY);
+			// Start the config window
+			var geoWindow = new PanelWindow(pnls);
+			ShowModalWindow(MainWindow.Handle, geoWindow, false);
 		}
 
-		/// <summary>
-		/// Update all the elements in the drawing.
-		/// </summary>
-		[CommandMethod("UpdateElements")]
+        /// <summary>
+        /// Update all the elements in the drawing.
+        /// </summary>
+        [CommandMethod("UpdateElements")]
 		public static void UpdateElements()
 		{
 			Model.UpdateElements();

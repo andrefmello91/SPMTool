@@ -84,6 +84,9 @@ namespace SPMTool.Editor.Commands
 			// If the node is not Free, add the support blocks
 			if (support != Constraint.Free)
 				Supports.AddBlocks(positions, support, units.Geometry);
+
+			// Update
+			Supports.Update();
 		}
     }
 }

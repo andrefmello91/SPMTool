@@ -24,14 +24,16 @@ namespace SPMTool.Editor.Commands
 	            Application.ShowAlertDialog(message);
 				return;
             }
-			// Do a linear analysis
-			var analysis = new LinearAnalysis(input);
 
-			// Draw results of analysis
-			Model.DrawResults(analysis, DataBase.Units);
-		}
 
-		[CommandMethod("DoNonLinearAnalysis")]
+            // Do a linear analysis
+            var analysis = new LinearAnalysis(input);
+
+            // Draw results of analysis
+            Model.DrawResults(analysis, DataBase.Units);
+        }
+
+        [CommandMethod("DoNonLinearAnalysis")]
 		public static void DoNonLinearAnalysis()
 		{
 			// Get input data
