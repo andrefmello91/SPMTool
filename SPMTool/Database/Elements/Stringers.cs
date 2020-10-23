@@ -474,7 +474,7 @@ namespace SPMTool.Database.Elements
 
                 void AddTexts()
                 {
-                    if (!N1.ApproxZero())
+                    if (!N1.ApproxZero(0.01))
                         using (var txt1 = new DBText())
                         {
                             // Set the parameters
@@ -503,7 +503,7 @@ namespace SPMTool.Database.Elements
                             txt1.Add();
                         }
 
-                    if (!N3.ApproxZero())
+                    if (!N3.ApproxZero(0.01))
                         using (var txt3 = new DBText())
                         {
                             // Set the parameters
