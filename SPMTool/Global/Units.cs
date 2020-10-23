@@ -98,10 +98,20 @@ namespace SPMTool
         public bool IsDefault => Equals(Default);
 
         /// <summary>
+        /// Get the displacement magnifier factor (to implement in settings).
+        /// </summary>
+        public double DisplacementMagnifier => 100;
+
+        /// <summary>
         /// Get the drawing scale factor.
         /// </summary>
         public double ScaleFactor => Geometry is LengthUnit.Millimeter ? 1 : 1.ConvertFromMillimeter(Geometry);
-		
+
+        /// <summary>
+        /// Get the displacement scale factor.
+        /// </summary>
+        public double DisplacementScaleFactor => DisplacementMagnifier * ScaleFactor;
+
         /// <summary>
         /// Default units object.
         /// <para>Default units: mm, kN, MPa.</para>

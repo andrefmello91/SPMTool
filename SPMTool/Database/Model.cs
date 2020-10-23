@@ -199,7 +199,7 @@ namespace SPMTool.Database
 			Layer.Displacements.EraseObjects();
 
 			// Set a scale factor for displacements
-			double scFctr = 100 * units.ScaleFactor;
+			double scFctr = units.DisplacementScaleFactor;
 
 			// Create lists of points for adding the nodes later
 			var dispNds = new List<Point3d>();
