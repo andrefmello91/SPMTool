@@ -1,4 +1,5 @@
 ﻿using System;
+using Extensions.Number;
 using UnitsNet.Units;
 
 namespace SPMTool
@@ -96,6 +97,11 @@ namespace SPMTool
         /// </summary>
         public bool IsDefault => Equals(Default);
 
+        /// <summary>
+        /// Get the drawing scale factor.
+        /// </summary>
+        public double ScaleFactor => Geometry is LengthUnit.Millimeter ? 1 : 1.ConvertFromMillimeter(Geometry);
+		
         /// <summary>
         /// Default units object.
         /// <para>Default units: mm, kN, MPa.</para>

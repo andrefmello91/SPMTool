@@ -180,7 +180,7 @@ namespace SPMTool.Database
 		public static void DrawResults(Analysis analysis, Units units)
 		{
 			Nodes.SetDisplacements(analysis.Nodes);
-            DrawDisplacements(analysis.Stringers, analysis.Nodes, units);
+            DrawDisplacements(analysis.Stringers, units);
             Stringers.DrawForces(analysis.Stringers, analysis.MaxStringerForce, units);
             Panels.DrawStresses(analysis.Panels, units);
         }
@@ -189,9 +189,8 @@ namespace SPMTool.Database
         /// Draw displacements.
         /// </summary>
         /// <param name="stringers">The collection of <see cref="Stringer"/>'s.</param>
-        /// <param name="nodes">The collection of <see cref="Node"/>'s</param>
         /// <param name="units">Current <see cref="Units"/>.</param>
-		private static void DrawDisplacements(IEnumerable<Stringer> stringers, IEnumerable<Node> nodes, Units units)
+		private static void DrawDisplacements(IEnumerable<Stringer> stringers, Units units)
 		{
 			// Turn the layer off
 			Layer.Displacements.Off();
@@ -200,7 +199,7 @@ namespace SPMTool.Database
 			Layer.Displacements.EraseObjects();
 
 			// Set a scale factor for displacements
-			double scFctr = 100 * units.Geometry.ScaleFactor();
+			double scFctr = 100 * units.ScaleFactor;
 
 			// Create lists of points for adding the nodes later
 			var dispNds = new List<Point3d>();
@@ -257,7 +256,7 @@ namespace SPMTool.Database
         {
 	        // Set the style for all point objects in the drawing
 	        DataBase.Database.Pdmode = 32;
-	        DataBase.Database.Pdsize = 40 * DataBase.Units.Geometry.ScaleFactor();
+	        DataBase.Database.Pdsize = 40 * DataBase.Units.ScaleFactor;
         }
 
         /// <summary>

@@ -208,12 +208,6 @@ namespace SPMTool
         public static TypedValue[] ReadXData(this ObjectId objectId) => objectId.ReadXData(DataBase.AppName);
 
         /// <summary>
-        /// Get the drawing scale factor.
-        /// </summary>
-        /// <param name="drawingUnit"></param>
-        public static double ScaleFactor(this LengthUnit drawingUnit) => drawingUnit is LengthUnit.Millimeter ? 1 : 1.ConvertFromMillimeter(drawingUnit);
-
-        /// <summary>
         /// Convert transparency to alpha.
         /// </summary>
         /// <param name="transparency">Transparency percent.</param>

@@ -353,7 +353,7 @@ namespace SPMTool.Database.Elements
 	        Layer.StringerForce.EraseObjects();
 
 	        // Get the scale factor
-	        var scFctr = units.Geometry.ScaleFactor();
+	        var scFctr = units.ScaleFactor;
 
 	        foreach (var stringer in stringers)
 	        {

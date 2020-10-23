@@ -35,10 +35,13 @@ namespace SPMTool.Database.Conditions
         /// <param name="positions">The collection of nodes to add.</param>
         /// <param name="constraint">The <see cref="Constraint"/> type.</param>
         /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
-        public static void AddBlocks(IReadOnlyCollection<Point3d> positions, Constraint constraint, LengthUnit geometryUnit)
+        public static void AddBlocks(IReadOnlyCollection<Point3d> positions, Constraint constraint)
         {
             if (positions is null || positions.Count == 0)
                 return;
+
+			// Get units
+			var units = DataBase.Units;
 
             // Start a transaction
             using (var trans = DataBase.StartTransaction())
@@ -55,8 +58,8 @@ namespace SPMTool.Database.Conditions
 		                blkRef.Add();
 
 		                // Set scale to the block
-		                if (geometryUnit != LengthUnit.Millimeter)
-			                blkRef.TransformBy(Matrix3d.Scaling(geometryUnit.ScaleFactor(), pos));
+		                if (units.Geometry != LengthUnit.Millimeter)
+			                blkRef.TransformBy(Matrix3d.Scaling(units.ScaleFactor, pos));
 
 		                // Set XData
 		                blkRef.SetXData(SupportXData(constraint));

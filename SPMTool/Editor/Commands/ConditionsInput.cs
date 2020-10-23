@@ -43,7 +43,7 @@ namespace SPMTool.Editor.Commands
 		    Forces.EraseBlocks(positions);
 
 		    // Add force blocks
-		    Forces.AddBlocks(positions, force.Value, units.Geometry);
+		    Forces.AddBlocks(positions, force.Value);
 
 			// Update
 			Forces.Update();
@@ -55,9 +55,6 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod("AddConstraint")]
 		public static void AddConstraint()
 		{
-			// Read units
-			var units = DataBase.Units;
-
 			// Request objects to be selected in the drawing area
 			var nds = UserInput.SelectNodes("Select nodes to add support conditions:")?.ToArray();
 
@@ -83,7 +80,7 @@ namespace SPMTool.Editor.Commands
 
 			// If the node is not Free, add the support blocks
 			if (support != Constraint.Free)
-				Supports.AddBlocks(positions, support, units.Geometry);
+				Supports.AddBlocks(positions, support);
 
 			// Update
 			Supports.Update();

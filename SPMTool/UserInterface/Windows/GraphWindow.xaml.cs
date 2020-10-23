@@ -126,7 +126,7 @@ namespace SPMTool.UserInterface
 
 			// Convert displacements
 			if (DisplacementUnit != LengthUnit.Millimeter)
-				u = u.Multiply(DisplacementUnit.ScaleFactor());
+				u = u.Multiply(1.ConvertFromMillimeter(DisplacementUnit));
 
 			// Get matrix
 			var result = Matrix<double>.Build.DenseOfColumnVectors(lf, u);

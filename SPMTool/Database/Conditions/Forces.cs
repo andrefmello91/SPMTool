@@ -35,14 +35,16 @@ namespace SPMTool.Database.Conditions
         /// </summary>
         /// <param name="positions">The collection of nodes to add</param>
         /// <param name="force"></param>
-        /// <param name="geometryUnit"></param>
-        public static void AddBlocks(IReadOnlyCollection<Point3d> positions, Force force, LengthUnit geometryUnit)
+        public static void AddBlocks(IReadOnlyCollection<Point3d> positions, Force force)
 		{
 			if (positions is null || positions.Count == 0)
 				return;
             
+			// Get units
+			var units = DataBase.Units;
+
 			// Get scale factor
-			var scFctr = geometryUnit.ScaleFactor();
+			var scFctr = units.ScaleFactor;
 
 			// Start a transaction
 			using (var trans = DataBase.StartTransaction())
@@ -88,7 +90,7 @@ namespace SPMTool.Database.Conditions
 							if (!rotAng.ApproxZero())
 								blkRef.TransformBy(Matrix3d.Rotation(rotAng, DataBase.Ucs.Zaxis, pos));
 
-							if (geometryUnit != LengthUnit.Millimeter)
+							if (units.Geometry != LengthUnit.Millimeter)
 								blkRef.TransformBy(Matrix3d.Scaling(scFctr, pos));
 
 							// Define the force text
