@@ -54,7 +54,7 @@ namespace SPMTool.Editor.Commands
 			int uIndex = uIndexn.Value;
 
             // Do analysis
-            var analysis = new NonlinearAnalysis(input, uIndex);
+            var analysis = new SecantAnalysis(input, uIndex);
 
             // Show load-displacement diagram
             var units = DataBase.Units;
@@ -63,6 +63,9 @@ namespace SPMTool.Editor.Commands
 
             // Draw results of analysis
             Model.DrawResults(analysis, units);
+
+			if (analysis.Stop)
+				Application.ShowAlertDialog(analysis.StopMessage);
 		}
 	}
 }
