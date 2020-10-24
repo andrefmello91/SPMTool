@@ -5,32 +5,101 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SPMTool.UserInterface"
         mc:Ignorable="d"
-        Title="Units Configuration" Height="459.054" Width="304.728">
+        Title="Units Configuration" Height="440" Width="290">
     <Grid Background="#cfd2d4">
-        <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="104" Margin="10,41,0,0" VerticalAlignment="Top" Width="275" Opacity="0.3"></Border>
-        <TextBlock Text="Dimension units:" HorizontalAlignment="Left" Margin="10,15,0,0" VerticalAlignment="Top"/>
-        <TextBlock Text="Geometry:"     HorizontalAlignment="Left" Margin="20,55,0,0" VerticalAlignment="Top"/>
-        <ComboBox Name="GeometryBox" HorizontalAlignment="Left" Margin="210,50,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
-        <TextBlock Text="Reinforcement / aggregate size:"     HorizontalAlignment="Left" Margin="20,85,0,0" VerticalAlignment="Top"/>
-        <ComboBox Name="ReinforcementBox" HorizontalAlignment="Left" Margin="210,80,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
-        <TextBlock Text="Displacements:"     HorizontalAlignment="Left" Margin="20,115,0,0" VerticalAlignment="Top"/>
-        <ComboBox Name="DisplacementsBox" HorizontalAlignment="Left" Margin="210,110,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="10"/>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="10"/>
+        </Grid.ColumnDefinitions>
 
-        <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="74" Margin="10,186,0,0" VerticalAlignment="Top" Width="275" Opacity="0.3"/>
-        <TextBlock Text="Force Units:"      HorizontalAlignment="Left" Margin="10,160,0,0" VerticalAlignment="Top"/>
-        <TextBlock Text="Applied forces:"   HorizontalAlignment="Left" Margin="20,200,0,0" VerticalAlignment="Top"/>
-        <ComboBox Name="AppliedForcesBox"  HorizontalAlignment="Left" Margin="210,195,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
-        <TextBlock Text="Stringer Forces:"  HorizontalAlignment="Left" Margin="20,230,0,0" VerticalAlignment="Top"/>
-        <ComboBox Name="StringerForcesBox" HorizontalAlignment="Left" Margin="210,225,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
+        <TextBlock Text="Dimension units:" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="0" Grid.Column="1"/>
+        <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="1" Grid.Column="1">
+            <StackPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="5"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="5"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="5"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="70"/>
+                        <ColumnDefinition Width="5"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Geometry:"  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"/>
+                    <ComboBox Name="GeometryBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <TextBlock Text="Reinforcement / aggregate size:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
+                    <ComboBox Name="ReinforcementBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <TextBlock Text="Displacements:"     HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="3" Grid.Column="1"/>
+                    <ComboBox Name="DisplacementsBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="3" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <TextBlock Text="Displacement magnifier factor:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="1"/>
+                    <TextBox Name="FactorBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="4" Grid.Column="2" PreviewTextInput="IntValidationTextBox"/>
+                </Grid>
+            </StackPanel>
+        </Border>
 
-        <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="74" Margin="10,305,0,0" VerticalAlignment="Top" Width="275" Opacity="0.3"/>
-        <TextBlock Text="Stress Units:" HorizontalAlignment="Left" Margin="10,280,0,0" VerticalAlignment="Top"/>
-        <TextBlock Text="Panel stresses:"     HorizontalAlignment="Left" Margin="20,320,0,0" VerticalAlignment="Top"/>
-        <ComboBox Name="PanelStressesBox" HorizontalAlignment="Left" Margin="210,314,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
-        <TextBlock Text="Material Strength / Module:"     HorizontalAlignment="Left" Margin="20,350,0,0" VerticalAlignment="Top"/>
-        <ComboBox Name="MaterialBox" HorizontalAlignment="Left" Margin="210,344,0,0" VerticalAlignment="Top" Width="60" Height="26" SelectionChanged="Box_SelectionChanged"/>
+        <TextBlock Text="Force Units:" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
+        <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="3" Grid.Column="1">
+            <StackPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="5"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="5"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="5"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="70"/>
+                        <ColumnDefinition Width="5"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Applied forces:"  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"/>
+                    <ComboBox Name="AppliedForcesBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <TextBlock Text="Stringer Forces:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
+                    <ComboBox Name="StringerForcesBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                </Grid>
+            </StackPanel>
+        </Border>
 
-        <Button Content="OK" HorizontalAlignment="Left" Margin="212,398,0,0" VerticalAlignment="Top" Width="75" Click="ButtonOK_OnClick" ToolTip="Save units"/>
-        <Button Content="Cancel" HorizontalAlignment="Left" Margin="123,398,0,0" VerticalAlignment="Top" Width="75" Click="ButtonCancel_OnClick" ToolTip="Discard changes"/>
+        <TextBlock Text="Stress Units:" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="1"/>
+        <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="5" Grid.Column="1">
+            <StackPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="5"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="5"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="5"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="70"/>
+                        <ColumnDefinition Width="5"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Panel stresses:"  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"/>
+                    <ComboBox Name="PanelStressesBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <TextBlock Text="Material Strength / Module:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
+                    <ComboBox Name="MaterialBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+        <Button Content="OK" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonOK_OnClick" ToolTip="Save units"/>
+        <Button Content="Cancel" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonCancel_OnClick" ToolTip="Discard changes" Margin="0,0,80,0"/>
     </Grid>
 </Window>

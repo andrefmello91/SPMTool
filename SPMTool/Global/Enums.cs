@@ -181,6 +181,7 @@
 		AppliedForces,
 		StringerForces,
 		PanelStresses,
-		MaterialStrength
+		MaterialStrength,
+		DisplacementFactor
 	}
 }

@@ -98,9 +98,9 @@ namespace SPMTool
         public bool IsDefault => Equals(Default);
 
         /// <summary>
-        /// Get the displacement magnifier factor (to implement in settings).
+        /// Get/set the displacement magnifier factor.
         /// </summary>
-        public double DisplacementMagnifier => 100;
+        public int DisplacementMagnifier { get; set; }
 
         /// <summary>
         /// Get the drawing scale factor.
@@ -110,7 +110,7 @@ namespace SPMTool
         /// <summary>
         /// Get the displacement scale factor.
         /// </summary>
-        public double DisplacementScaleFactor => DisplacementMagnifier * ScaleFactor;
+        public double DisplacementScaleFactor => DisplacementMagnifier > 0 ? DisplacementMagnifier * ScaleFactor : 200 * ScaleFactor;
 
         /// <summary>
         /// Default units object.
@@ -118,13 +118,14 @@ namespace SPMTool
         /// </summary>
         public static Units Default => new Units
 		{
-			Geometry         = LengthUnit.Millimeter,
-			Reinforcement    = LengthUnit.Millimeter,
-			Displacements    = LengthUnit.Millimeter,
-			AppliedForces    = ForceUnit.Kilonewton,
-			StringerForces   = ForceUnit.Kilonewton,
-			PanelStresses    = PressureUnit.Megapascal,
-			MaterialStrength = PressureUnit.Megapascal
+			Geometry              = LengthUnit.Millimeter,
+			Reinforcement         = LengthUnit.Millimeter,
+			Displacements         = LengthUnit.Millimeter,
+			AppliedForces         = ForceUnit.Kilonewton,
+			StringerForces        = ForceUnit.Kilonewton,
+			PanelStresses         = PressureUnit.Megapascal,
+			MaterialStrength      = PressureUnit.Megapascal,
+			DisplacementMagnifier = 200
 		};
 
 		/// <summary>

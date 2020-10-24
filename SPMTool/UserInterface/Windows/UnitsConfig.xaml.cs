@@ -1,11 +1,15 @@
-﻿using System.Windows;
+﻿using System.Text.RegularExpressions;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
+using System.Windows.Input;
 using Extensions;
+using Extensions.Number;
 using UnitsNet;
 using UnitsNet.Units;
 using ComboBox = System.Windows.Controls.ComboBox;
 using static SPMTool.Database.UnitsData;
+using MessageBox = System.Windows.MessageBox;
 
 namespace SPMTool.UserInterface
 {
@@ -16,6 +20,11 @@ namespace SPMTool.UserInterface
     {
 		// Properties
 		private Units _units;
+
+		/// <summary>
+        /// Verify if factor box is filled.
+        /// </summary>
+		private bool FactorBoxFilled => FactorBox.Text.ParsedAndNotZero(out _);
 
         public UnitsConfig()
 			: this (Read(false))
@@ -58,9 +67,17 @@ namespace SPMTool.UserInterface
 
 	        MaterialBox.ItemsSource  = StOpts;
 	        MaterialBox.SelectedItem = _units.MaterialStrength.Abbrev();
+
+	        FactorBox.Text = $"{_units.DisplacementMagnifier:0}";
         }
 
-		/// <summary>
+        private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
+        {
+	        var regex = new Regex("[^0-9]+");
+	        e.Handled = regex.IsMatch(e.Text);
+        }
+
+        /// <summary>
         /// Update units after selection changes.
         /// </summary>
         private void Box_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -70,7 +87,7 @@ namespace SPMTool.UserInterface
 	        switch (cmbx.Name)
 	        {
                 case "GeometryBox":
-	                _units.Geometry = UnitParser.Default.Parse<LengthUnit>((string) cmbx.SelectedItem);
+	                _units.Geometry = UnitParser.Default.Parse<LengthUnit>((string)cmbx.SelectedItem);
 					break;
 
                 case "ReinforcementBox":
@@ -108,7 +125,16 @@ namespace SPMTool.UserInterface
         /// Save units if OK button is clicked.
         /// </summary>
         private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
-        {
+		{
+			if (!FactorBoxFilled)
+			{
+				MessageBox.Show("Please set valid displacement magnifier factor.");
+				return;
+			}
+
+			// Set displacement factor
+			_units.DisplacementMagnifier = int.Parse(FactorBox.Text);
+
 			// Save units on database
 			Save(_units);
 

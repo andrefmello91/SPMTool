@@ -55,15 +55,16 @@ namespace SPMTool.Database
 			var data = new TypedValue[size];
 
 			// Set data
-			data[(int) UnitsIndex.AppName]          = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
-			data[(int) UnitsIndex.XDataStr]         = new TypedValue((int) DxfCode.ExtendedDataAsciiString, Units);
-			data[(int) UnitsIndex.Geometry]         = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Geometry);
-			data[(int) UnitsIndex.Reinforcement]    = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Reinforcement);
-			data[(int) UnitsIndex.Displacements]    = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Displacements);
-			data[(int) UnitsIndex.AppliedForces]    = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.AppliedForces);
-			data[(int) UnitsIndex.StringerForces]   = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.StringerForces);
-			data[(int) UnitsIndex.PanelStresses]    = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.PanelStresses);
-			data[(int) UnitsIndex.MaterialStrength] = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.MaterialStrength);
+			data[(int) UnitsIndex.AppName]            = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
+			data[(int) UnitsIndex.XDataStr]           = new TypedValue((int) DxfCode.ExtendedDataAsciiString, Units);
+			data[(int) UnitsIndex.Geometry]           = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Geometry);
+			data[(int) UnitsIndex.Reinforcement]      = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Reinforcement);
+			data[(int) UnitsIndex.Displacements]      = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Displacements);
+			data[(int) UnitsIndex.AppliedForces]      = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.AppliedForces);
+			data[(int) UnitsIndex.StringerForces]     = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.StringerForces);
+			data[(int) UnitsIndex.PanelStresses]      = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.PanelStresses);
+			data[(int) UnitsIndex.MaterialStrength]   = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.MaterialStrength);
+			data[(int) UnitsIndex.DisplacementFactor] = new TypedValue((int) DxfCode.ExtendedDataReal,      units.DisplacementMagnifier);
 
 			// Create the entry in the NOD and add to the transaction
 			using (var rb = new ResultBuffer(data))
@@ -97,14 +98,15 @@ namespace SPMTool.Database
 	        // Get the parameters from XData
 	        _units = new Units
 	        {
-		        Geometry = (LengthUnit)data[(int)UnitsIndex.Geometry].ToInt(),
-		        Reinforcement = (LengthUnit)data[(int)UnitsIndex.Reinforcement].ToInt(),
-		        Displacements = (LengthUnit)data[(int)UnitsIndex.Displacements].ToInt(),
-		        AppliedForces = (ForceUnit)data[(int)UnitsIndex.AppliedForces].ToInt(),
-		        StringerForces = (ForceUnit)data[(int)UnitsIndex.StringerForces].ToInt(),
-		        PanelStresses = (PressureUnit)data[(int)UnitsIndex.PanelStresses].ToInt(),
-		        MaterialStrength = (PressureUnit)data[(int)UnitsIndex.MaterialStrength].ToInt(),
-	        };
+		        Geometry              = (LengthUnit)data[(int)UnitsIndex.Geometry].ToInt(),
+		        Reinforcement         = (LengthUnit)data[(int)UnitsIndex.Reinforcement].ToInt(),
+		        Displacements         = (LengthUnit)data[(int)UnitsIndex.Displacements].ToInt(),
+		        AppliedForces         = (ForceUnit)data[(int)UnitsIndex.AppliedForces].ToInt(),
+		        StringerForces        = (ForceUnit)data[(int)UnitsIndex.StringerForces].ToInt(),
+		        PanelStresses         = (PressureUnit)data[(int)UnitsIndex.PanelStresses].ToInt(),
+		        MaterialStrength      = (PressureUnit)data[(int)UnitsIndex.MaterialStrength].ToInt(),
+                DisplacementMagnifier = data[(int)UnitsIndex.DisplacementFactor].ToInt()
+            };
 
 	        return _units.Value;
         }
