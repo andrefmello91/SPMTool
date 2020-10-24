@@ -41,13 +41,13 @@
                         <ColumnDefinition Width="5"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Geometry:"  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"/>
-                    <ComboBox Name="GeometryBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <ComboBox Name="GeometryBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
                     <TextBlock Text="Reinforcement / aggregate size:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
-                    <ComboBox Name="ReinforcementBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <ComboBox Name="ReinforcementBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
                     <TextBlock Text="Displacements:"     HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="3" Grid.Column="1"/>
-                    <ComboBox Name="DisplacementsBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="3" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <ComboBox Name="DisplacementsBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="3" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
                     <TextBlock Text="Displacement magnifier factor:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="1"/>
-                    <TextBox Name="FactorBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="4" Grid.Column="2" PreviewTextInput="IntValidationTextBox"/>
+                    <TextBox Name="FactorBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="4" Grid.Column="2" PreviewTextInput="IntValidationTextBox"/>
                 </Grid>
             </StackPanel>
         </Border>
@@ -69,9 +69,9 @@
                         <ColumnDefinition Width="5"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Applied forces:"  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"/>
-                    <ComboBox Name="AppliedForcesBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <ComboBox Name="AppliedForcesBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
                     <TextBlock Text="Stringer Forces:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
-                    <ComboBox Name="StringerForcesBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <ComboBox Name="StringerForcesBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
                 </Grid>
             </StackPanel>
         </Border>
@@ -93,13 +93,14 @@
                         <ColumnDefinition Width="5"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Panel stresses:"  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"/>
-                    <ComboBox Name="PanelStressesBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <ComboBox Name="PanelStressesBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
                     <TextBlock Text="Material Strength / Module:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
-                    <ComboBox Name="MaterialBox" VerticalAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <ComboBox Name="MaterialBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
                 </Grid>
             </StackPanel>
         </Border>
         <Button Content="OK" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonOK_OnClick" ToolTip="Save units"/>
         <Button Content="Cancel" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonCancel_OnClick" ToolTip="Discard changes" Margin="0,0,80,0"/>
+        <Button Content="Default" HorizontalAlignment="Left" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonDefault_OnClick" ToolTip="Set default units" Margin="0,0,0,0"/>
     </Grid>
 </Window>

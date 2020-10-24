@@ -140,5 +140,14 @@ namespace SPMTool.UserInterface
 
 			Close();
         }
+
+		/// <summary>
+        /// Set default units.
+        /// </summary>
+		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e)
+		{
+			_units = Units.Default;
+			InitiateComboBoxes();
+		}
     }
 }

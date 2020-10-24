@@ -28,7 +28,7 @@ namespace SPMTool.UserInterface
     public partial class ConcreteConfig : Window
 	{
 		// Properties
-		private Units _units;
+		private readonly Units _units;
 		private ParameterModel _parameterModel;
 		private ConstitutiveModel _constitutiveModel;
 		private Parameters _parameters;
@@ -44,9 +44,14 @@ namespace SPMTool.UserInterface
         public  string AggregateUnit => _units.Reinforcement.Abbrev();
 
 		/// <summary>
-        /// Get the output <see cref="ConcreteData"/> object.
-        /// </summary>
-		public Concrete OutputConcrete => new Concrete(_parameters, _constitutiveModel);
+		/// Verify if strength and aggregate diameter text boxes are filled.
+		/// </summary>
+		private bool ParametersSet => CheckBoxes(new[] { StrengthBox, AggDiamBox });
+
+		/// <summary>
+		/// Verify if custom parameters text boxes are filled.
+		/// </summary>
+		private bool CustomParametersSet => CheckBoxes(new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox });
 
         public ConcreteConfig()
 	        : this (Read(false))
@@ -68,28 +73,21 @@ namespace SPMTool.UserInterface
 			// Read units
 			_units = DataBase.Units;
 
+			// Get settings
+			_parameters = parameters;
+			_parameterModel = Parameters.ReadParameterModel(_parameters);
+			_constitutiveModel = constitutiveModel;
+
             InitializeComponent();
 
-			// Get settings
-			_parameters        = parameters;
-			_parameterModel    = Parameters.ReadParameterModel(_parameters);
-			_constitutiveModel = constitutiveModel;
+            // Get image
+            Graph.Source = Ribbon.GetBitmap(Properties.Resources.concrete_constitutive);
 
 			// Initiate combo boxes with units set
             InitiateComboBoxes();
 
             DataContext = this;
 		}
-
-		/// <summary>
-		/// Verify if strength and aggregate diameter text boxes are filled.
-		/// </summary>
-		private bool ParametersSet => CheckBoxes(new[] { StrengthBox, AggDiamBox });
-
-		/// <summary>
-		/// Verify if custom parameters text boxes are filled.
-		/// </summary>
-		private bool CustomParametersSet => CheckBoxes(new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox });
 
 		/// <summary>
         /// Check if <paramref name="textBoxes"/> are filled and not zero.
@@ -126,7 +124,7 @@ namespace SPMTool.UserInterface
 				return;
 
 			// Read parameters
-			double
+            double
 				fc    = double.Parse(StrengthBox.Text, CultureInfo.InvariantCulture).Convert(_units.MaterialStrength),
 				phiAg = double.Parse(AggDiamBox.Text, CultureInfo.InvariantCulture).Convert(_units.Reinforcement);
 
@@ -229,32 +227,32 @@ namespace SPMTool.UserInterface
 			e.Handled = regex.IsMatch(e.Text);
 		}
 
-        private void ButtonCancel_OnClick(object sender, RoutedEventArgs e)
-		{
-			Close();
-		}
+        private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
 
-		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
+        private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Verify if text boxes are filled
 			if (!ParametersSet)
-				MessageBox.Show("Please set concrete strength and aggregate diameter.", "Alert");
-
-			else if (_parameterModel == ParameterModel.Custom && !CustomParametersSet)
-				MessageBox.Show("Please set concrete custom parameters.", "Alert");
-
-			else
 			{
-				if (_parameterModel == ParameterModel.Custom)
-					GetCustomParameters();
-				else
-					UpdateParameters();
-
-				// Save units on database
-				Save(_parameters, _constitutiveModel);
-				Close();
+				MessageBox.Show("Please set concrete strength and aggregate diameter.", "Alert");
+				return;
 			}
-		}
 
+			if (_parameterModel == ParameterModel.Custom)
+			{
+				if (!CustomParametersSet)
+				{
+					MessageBox.Show("Please set concrete custom parameters.", "Alert");
+					return;
+				}
+				GetCustomParameters();
+			}
+			else
+				UpdateParameters();
+
+			// Save units on database
+			Save(_parameters, _constitutiveModel);
+			Close();
+		}
 	}
 }

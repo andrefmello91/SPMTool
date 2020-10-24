@@ -388,5 +388,8 @@
   <ItemGroup>
     <None Include="Resources\panel-geometry.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\concrete_constitutive.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

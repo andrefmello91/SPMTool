@@ -63,6 +63,16 @@ namespace SPMTool.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap concrete_constitutive {
+            get {
+                object obj = ResourceManager.GetObject("concrete_constitutive", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap concrete_large {
             get {
                 object obj = ResourceManager.GetObject("concrete_large", resourceCulture);

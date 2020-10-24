@@ -4,22 +4,23 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Set geometry and reinforcement to selected stringers" Height="290" Width="420">
-    <Grid Background="#cfd2d4" Margin="0,0,0,0">
+        Title="Set geometry and reinforcement to selected stringers" Height="300" Width="470">
+    <Grid Background="#cfd2d4">
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition Height="30"/>
             <RowDefinition Height="67"/>
-            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="30"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="10"></ColumnDefinition>
-            <ColumnDefinition Width="170"></ColumnDefinition>
-            <ColumnDefinition Width="225"></ColumnDefinition>
+            <ColumnDefinition Width="200"></ColumnDefinition>
+            <ColumnDefinition Width="235"></ColumnDefinition>
+            <ColumnDefinition Width="10"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <TextBlock Text="{Binding HeaderText}" FontWeight="SemiBold" Grid.Column="2"></TextBlock>
-        <Image Name="CrossSection" HorizontalAlignment="Left" Width="150" Height="100" Grid.Column="1" Margin="5,0,0,0" Grid.RowSpan="3"/>
+        <Image Name="CrossSection" HorizontalAlignment="Left" Width="190" Height="120" Grid.Column="1" Grid.RowSpan="3"/>
         <Grid Margin="0,0,0,0" Grid.Row="3" Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="30"/>
@@ -27,11 +28,11 @@
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="65"></ColumnDefinition>
-                <ColumnDefinition Width="65"></ColumnDefinition>
-                <ColumnDefinition Width="30"></ColumnDefinition>
+                <ColumnDefinition Width="80"></ColumnDefinition>
+                <ColumnDefinition Width="45"></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <TextBlock Text="Geometry:" HorizontalAlignment="Left" VerticalAlignment="Center" FontWeight="SemiBold" Grid.Column="0" Margin="5,0,0,0" />
-            <ComboBox Name="SavedGeometries" HorizontalAlignment="left" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Width="97" Height="23" SelectionChanged="SavedGeometries_OnSelectionChanged"></ComboBox>
+            <ComboBox Name="SavedGeometries" HorizontalAlignment="left" VerticalContentAlignment="Center" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Width="125" Height="23" SelectionChanged="SavedGeometries_OnSelectionChanged"></ComboBox>
             <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="1" Grid.ColumnSpan="3">
                 <StackPanel>
                     <Grid>
@@ -43,15 +44,15 @@
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="65"></ColumnDefinition>
-                            <ColumnDefinition Width="65"></ColumnDefinition>
-                            <ColumnDefinition Width="30"></ColumnDefinition>
+                            <ColumnDefinition Width="80"></ColumnDefinition>
+                            <ColumnDefinition Width="45"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Width (b):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" Margin="5,0,0,0" />
                         <TextBlock Text="Height (h):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0" Margin="5,0,0,0" />
-                        <TextBox Name="WBox" HorizontalAlignment="Center" Width="65" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="1"/>
-                        <TextBox Name="HBox" HorizontalAlignment="Center" Width="65" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="2"/>
-                        <TextBlock Text="{Binding GeometryUnit}" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="2" Grid.Row="1" Width="20"/>
-                        <TextBlock Text="{Binding GeometryUnit}" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="2" Grid.Row="2" Width="20"/>
+                        <TextBox Name="WBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="80" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="1"/>
+                        <TextBox Name="HBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="80" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="2"/>
+                        <TextBlock Text="{Binding GeometryUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="1" Width="20" Margin="5,0,0,0"/>
+                        <TextBlock Text="{Binding GeometryUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="2" Width="20" Margin="5,0,0,0"/>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -64,11 +65,11 @@
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="110"></ColumnDefinition>
-                <ColumnDefinition Width="65"></ColumnDefinition>
+                <ColumnDefinition Width="80"></ColumnDefinition>
                 <ColumnDefinition Width="45"></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <CheckBox Name="ReinforcementCheck" Content="Reinforcement" ToolTip="Apply reinforcement. Disable to set pure concrete cross-section." HorizontalAlignment="Left" VerticalAlignment="Center" FontWeight="SemiBold" Grid.ColumnSpan="2" Margin="0,0,0,0" Checked="ReinforcementCheck_OnCheck" Unchecked="ReinforcementCheck_OnCheck"/>
-            <ComboBox Name="SavedReinforcement" HorizontalAlignment="left" Grid.Column="1" Grid.ColumnSpan="2" Width="110" Height="23" SelectionChanged="SavedReinforcement_OnSelectionChanged"></ComboBox>
+            <ComboBox Name="SavedReinforcement" HorizontalAlignment="left" VerticalContentAlignment="Center" Grid.Column="1" Grid.ColumnSpan="2" Width="125" Height="23" SelectionChanged="SavedReinforcement_OnSelectionChanged"></ComboBox>
             <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="1" Grid.ColumnSpan="3">
                 <StackPanel>
                     <Grid>
@@ -85,7 +86,7 @@
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="110"></ColumnDefinition>
-                            <ColumnDefinition Width="65"></ColumnDefinition>
+                            <ColumnDefinition Width="80"></ColumnDefinition>
                             <ColumnDefinition Width="45"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Number of bars:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" Margin="5,0,0,0" />
@@ -93,11 +94,11 @@
                         <TextBlock Text="Steel:" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="0" Margin="5,0,0,0" />
                         <TextBlock Text="Yield Stress:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="6" Grid.Column="0" Margin="5,0,0,0" />
                         <TextBlock Text="Elastic Module:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="7" Grid.Column="0" Margin="5,0,0,0" />
-                        <TextBox Name="NumBox" HorizontalAlignment="Center" Width="65" Height="23" TextWrapping="NoWrap" PreviewTextInput="IntValidationTextBox" Grid.Column="1" Grid.Row="1"/>
-                        <TextBox Name="PhiBox" HorizontalAlignment="Center" Width="65" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="2"/>
-                        <TextBox Name="FBox" HorizontalAlignment="Center" Width="65" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="6"/>
-                        <TextBox Name="EBox" HorizontalAlignment="Center" Width="65" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="7"/>
-                        <ComboBox Name="SavedSteel" HorizontalAlignment="left" Grid.Column="1" Grid.Row="4" Grid.ColumnSpan="2" Width="92" Height="23" SelectionChanged="SavedSteel_OnSelectionChanged"></ComboBox>
+                        <TextBox Name="NumBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="80" Height="23" TextWrapping="NoWrap" PreviewTextInput="IntValidationTextBox" Grid.Column="1" Grid.Row="1"/>
+                        <TextBox Name="PhiBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="80" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="2"/>
+                        <TextBox Name="FBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="80" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="6"/>
+                        <TextBox Name="EBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="80" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="7"/>
+                        <ComboBox Name="SavedSteel" HorizontalAlignment="left" Grid.Column="1" Grid.Row="4" Grid.ColumnSpan="2" Width="120" Height="23" SelectionChanged="SavedSteel_OnSelectionChanged"></ComboBox>
                         <TextBlock Text="{Binding DiameterUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="2" Width="20" Margin="5,7,0,7"/>
                         <TextBlock Text="{Binding StressUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="6" Width="30" Margin="5,7,0,7"/>
                         <TextBlock Text="{Binding StressUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="7" Width="30" Margin="5,7,0,7"/>
@@ -108,7 +109,7 @@
         <TextBlock Text="Set:" Grid.Row="4" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="25" Margin="0,0,0,2.5"></TextBlock>
         <CheckBox Name="SetGeometryBox" Content="Geometry" ToolTip="Set geometry. Disable to leave each stringer geometry unchanged." HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="1" Margin="25,0,0,0" Checked="SetGeometry_OnCheck" Unchecked="SetGeometry_OnCheck"/>
         <CheckBox Name="SetReinforcementBox" Content="Reinforcement" ToolTip="Set reinforcement. Disable to leave each stringer reinforcement unchanged." HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Margin="105,0,0,0" Checked="SetReinforcement_OnCheck" Unchecked="SetReinforcement_OnCheck"/>
-        <Button Content="OK" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Click="ButtonOK_OnClick" ToolTip="Save stringer parameters" Grid.Row="4" Grid.Column="2" Height="20" Margin="0,5,3,5"/>
-        <Button Content="Cancel" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Click="ButtonCancel_OnClick" ToolTip="Discard changes" Grid.Row="4" Grid.Column="2" Height="20" Margin="0,5,85,5"/>
+        <Button Content="OK" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Click="ButtonOK_OnClick" ToolTip="Save stringer parameters" Grid.Row="4" Grid.Column="2" Height="20" Margin="0,0,0,0"/>
+        <Button Content="Cancel" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Click="ButtonCancel_OnClick" ToolTip="Discard changes" Grid.Row="4" Grid.Column="2" Height="20" Margin="0,0,85,0"/>
     </Grid>
 </Window>
