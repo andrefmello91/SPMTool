@@ -32,10 +32,16 @@ namespace SPMTool.UserInterface
 		private ConstitutiveModel _constitutiveModel;
 		private Parameters _parameters;
 
-		/// <summary>
+		// Options
+		private readonly string[]
+			_aggTypeOptions     = Enum.GetNames(typeof(AggregateType)),
+			_contitutiveOptions = { ConstitutiveModel.MCFT.ToString(), ConstitutiveModel.DSFM.ToString() },
+			_parameterOptions   = Enum.GetNames(typeof(ParameterModel));
+
+        /// <summary>
         /// Get the stress unit.
         /// </summary>
-		public string StressUnit => _units.MaterialStrength.Abbrev();
+        public string StressUnit => _units.MaterialStrength.Abbrev();
 
 		/// <summary>
         /// Get aggregate diameter unit.
@@ -102,14 +108,14 @@ namespace SPMTool.UserInterface
 
 			AggDiamBox.Text = $"{_parameters.AggregateDiameter.ConvertFromMillimeter(_units.Reinforcement):0.00}";
 
-            AggTypeBox.ItemsSource  = Enum.GetNames(typeof(AggregateType));
+            AggTypeBox.ItemsSource  = _aggTypeOptions;
 			AggTypeBox.SelectedItem = _parameters.Type.ToString();
 
-			ConstitutiveBox.ItemsSource  = new [] { ConstitutiveModel.MCFT, ConstitutiveModel.DSFM};
-			ConstitutiveBox.SelectedItem = _constitutiveModel.ToString();
-
-			ParameterBox.ItemsSource = Enum.GetNames(typeof(ParameterModel));
+			ParameterBox.ItemsSource = _parameterOptions;
 			ParameterBox.SelectedItem = _parameterModel.ToString();
+
+            ConstitutiveBox.ItemsSource   = _contitutiveOptions;
+			ConstitutiveBox.SelectedItem = _constitutiveModel.ToString();
 
             UpdateCustomParameters();
 		}
