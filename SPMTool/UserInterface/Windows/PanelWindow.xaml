@@ -90,18 +90,18 @@
                             <ColumnDefinition Width="65"></ColumnDefinition>
                             <ColumnDefinition Width="45"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Spacing (x):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" Margin="5,0,0,0" />
-                        <TextBlock Text="Bar diameter (x):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0" Margin="5,0,0,0" />
-                        <TextBlock Text="Steel (x):" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="0" Margin="5,0,0,0" />
-                        <TextBlock Text="Yield Stress (x):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="6" Grid.Column="0" Margin="5,0,0,0" />
-                        <TextBlock Text="Elastic Module (x):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="7" Grid.Column="0" Margin="5,0,0,0" />
-                        <TextBox Name="SxBox" HorizontalAlignment="Center" Width="65" Height="23" VerticalContentAlignment="Center" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="1"/>
-                        <TextBox Name="PhiXBox" HorizontalAlignment="Center" Width="65" Height="23" VerticalContentAlignment="Center" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="2"/>
+                        <TextBlock Text="Bar diameter (x):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Margin="5,0,0,0" />
+                        <TextBlock Text="Spacing (x):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Margin="5,0,0,0" />
+                        <TextBlock Text="Steel (x):" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Margin="5,0,0,0" />
+                        <TextBlock Text="Yield Stress (x):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="6" Margin="5,0,0,0" />
+                        <TextBlock Text="Elastic Module (x):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="7" Margin="5,0,0,0" />
+                        <TextBox Name="PhiXBox" HorizontalAlignment="Center" Width="65" Height="23" VerticalContentAlignment="Center" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="1"/>
+                        <TextBox Name="SxBox" HorizontalAlignment="Center" Width="65" Height="23" VerticalContentAlignment="Center" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="2"/>
                         <TextBox Name="FxBox" HorizontalAlignment="Center" Width="65" Height="23" VerticalContentAlignment="Center" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="6"/>
                         <TextBox Name="ExBox" HorizontalAlignment="Center" Width="65" Height="23" VerticalContentAlignment="Center" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="7"/>
                         <ComboBox Name="SavedSteelX" HorizontalAlignment="left" VerticalContentAlignment="Center" Grid.Column="1" Grid.Row="4" Grid.ColumnSpan="2" Width="105" Height="23" SelectionChanged="SavedSteelX_OnSelectionChanged"></ComboBox>
-                        <TextBlock Text="{Binding GeometryUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="1" Width="20" Margin="5,7,0,7"/>
-                        <TextBlock Text="{Binding DiameterUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="2" Width="20" Margin="5,7,0,7"/>
+                        <TextBlock Text="{Binding DiameterUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="1" Width="20" Margin="5,7,0,7"/>
+                        <TextBlock Text="{Binding GeometryUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="2" Width="20" Margin="5,7,0,7"/>
                         <TextBlock Text="{Binding StressUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="6" Width="30" Margin="5,7,0,7"/>
                         <TextBlock Text="{Binding StressUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="7" Width="30" Margin="5,7,0,7"/>
                     </Grid>
@@ -140,18 +140,18 @@
                             <ColumnDefinition Width="65"></ColumnDefinition>
                             <ColumnDefinition Width="45"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Spacing (y):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" Margin="5,0,0,0" />
-                        <TextBlock Text="Bar diameter (y):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0" Margin="5,0,0,0" />
-                        <TextBlock Text="Steel (y):" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="0" Margin="5,0,0,0" />
-                        <TextBlock Text="Yield Stress (y):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="6" Grid.Column="0" Margin="5,0,0,0" />
-                        <TextBlock Text="Elastic Module (y):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="7" Grid.Column="0" Margin="5,0,0,0" />
-                        <TextBox Name="SyBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="65" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="1"/>
-                        <TextBox Name="PhiYBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="65" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="2"/>
+                        <TextBlock Text="Bar diameter (y):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Margin="5,0,0,0" />
+                        <TextBlock Text="Spacing (y):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Margin="5,0,0,0" />
+                        <TextBlock Text="Steel (y):" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Margin="5,0,0,0" />
+                        <TextBlock Text="Yield Stress (y):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="6" Margin="5,0,0,0" />
+                        <TextBlock Text="Elastic Module (y):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="7" Margin="5,0,0,0" />
+                        <TextBox Name="PhiYBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="65" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="1"/>
+                        <TextBox Name="SyBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="65" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="2"/>
                         <TextBox Name="FyBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="65" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="6"/>
                         <TextBox Name="EyBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="65" Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="7"/>
                         <ComboBox Name="SavedSteelY" VerticalContentAlignment="Center" HorizontalAlignment="left" Grid.Column="1" Grid.Row="4" Grid.ColumnSpan="2" Width="105" Height="23" SelectionChanged="SavedSteelY_OnSelectionChanged"></ComboBox>
-                        <TextBlock Text="{Binding GeometryUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="1" Width="20" Margin="5,7,0,7"/>
-                        <TextBlock Text="{Binding DiameterUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="2" Width="20" Margin="5,7,0,7"/>
+                        <TextBlock Text="{Binding DiameterUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="1" Width="20" Margin="5,7,0,7"/>
+                        <TextBlock Text="{Binding GeometryUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="2" Width="20" Margin="5,7,0,7"/>
                         <TextBlock Text="{Binding StressUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="6" Width="30" Margin="5,7,0,7"/>
                         <TextBlock Text="{Binding StressUnit}" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2" Grid.Row="7" Width="30" Margin="5,7,0,7"/>
                     </Grid>
