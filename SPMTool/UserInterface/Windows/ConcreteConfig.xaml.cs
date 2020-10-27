@@ -18,7 +18,6 @@ using SPMTool.Database.Materials;
 using ComboBox = System.Windows.Controls.ComboBox;
 using MessageBox = System.Windows.MessageBox;
 using TextBox = System.Windows.Controls.TextBox;
-using static SPMTool.Database.Materials.ConcreteData;
 
 namespace SPMTool.UserInterface
 {
@@ -54,7 +53,7 @@ namespace SPMTool.UserInterface
 		private bool CustomParametersSet => CheckBoxes(new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox });
 
         public ConcreteConfig()
-	        : this (Read(false))
+	        : this (ConcreteData.Read(false), ConcreteData.ConstitutiveModel)
         {
         }
 
@@ -71,7 +70,7 @@ namespace SPMTool.UserInterface
 		public ConcreteConfig(Parameters parameters, ConstitutiveModel constitutiveModel)
 		{
 			// Read units
-			_units = DataBase.Units;
+			_units = UnitsData.SavedUnits;
 
 			// Get settings
 			_parameters = parameters;
@@ -106,7 +105,7 @@ namespace SPMTool.UserInterface
             AggTypeBox.ItemsSource  = Enum.GetNames(typeof(AggregateType));
 			AggTypeBox.SelectedItem = _parameters.Type.ToString();
 
-			ConstitutiveBox.ItemsSource  = Enum.GetNames(typeof(ConstitutiveModel));
+			ConstitutiveBox.ItemsSource  = new [] { ConstitutiveModel.MCFT, ConstitutiveModel.DSFM};
 			ConstitutiveBox.SelectedItem = _constitutiveModel.ToString();
 
 			ParameterBox.ItemsSource = Enum.GetNames(typeof(ParameterModel));
@@ -251,7 +250,7 @@ namespace SPMTool.UserInterface
 				UpdateParameters();
 
 			// Save units on database
-			Save(_parameters, _constitutiveModel);
+			ConcreteData.Save(_parameters, _constitutiveModel);
 			Close();
 		}
 	}

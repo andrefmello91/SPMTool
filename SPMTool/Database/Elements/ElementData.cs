@@ -22,6 +22,16 @@ namespace SPMTool.Database.Elements
 	    /// </summary>
 	    private static List<double> _panelWList;
 
+	    /// <summary>
+	    /// Get <see cref="StringerGeometry"/> objects saved in database.
+	    /// </summary>
+	    public static StringerGeometry[] SavedStringerGeometry => (_stringerGeometries ?? ReadStringerGeometries()).ToArray();
+
+	    /// <summary>
+	    /// Get panel widths saved in database.
+	    /// </summary>
+	    public static double[] SavedPanelWidth => (_panelWList ?? ReadPanelWidths()).ToArray();
+
         /// <summary>
         /// Save stringer geometry configuration on database.
         /// </summary>
@@ -81,25 +91,19 @@ namespace SPMTool.Database.Elements
 	    /// </summary>
 	    public static IEnumerable<StringerGeometry> ReadStringerGeometries()
 	    {
-		    return _stringerGeometries ?? ReadFromDictionary();
+		    // Get dictionary entries
+		    var entries = DataBase.ReadDictionaryEntries("StrGeo")?.ToArray();
 
-		    IEnumerable<StringerGeometry> ReadFromDictionary()
-		    {
-			    // Get dictionary entries
-			    var entries = DataBase.ReadDictionaryEntries("StrGeo")?.ToArray();
-
-			    if (entries is null || !entries.Any())
-				    return new List<StringerGeometry>();
-
-			    _stringerGeometries = new List<StringerGeometry>(
+		    _stringerGeometries = entries is null || !entries.Any()
+			    ? new List<StringerGeometry>()
+			    : new List<StringerGeometry>(
 				    from r in entries
 				    let t   = r.AsArray()
 				    let w   = t[2].ToDouble()
 				    let h   = t[3].ToDouble()
 				    select new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h));
 
-			    return _stringerGeometries;
-		    }
+		    return _stringerGeometries;
 	    }
 
 	    /// <summary>
@@ -107,19 +111,14 @@ namespace SPMTool.Database.Elements
 	    /// </summary>
 	    public static IEnumerable<double> ReadPanelWidths()
 	    {
-		    return _panelWList ?? ReadFromDictionary();
+		    // Get dictionary entries
+		    var entries = DataBase.ReadDictionaryEntries("PnlW")?.ToArray();
 
-		    IEnumerable<double> ReadFromDictionary()
-		    {
-			    // Get dictionary entries
-			    var entries = DataBase.ReadDictionaryEntries("PnlW")?.ToArray();
+		    _panelWList = entries is null || !entries.Any()
+			    ? new List<double>()
+			    : entries.Select(entry => entry.AsArray()[2].ToDouble()).ToList();
 
-			    if (entries is null || !entries.Any())
-				    return new List<double>();
-
-			    _panelWList = entries.Select(entry => entry.AsArray()[2].ToDouble()).ToList();
-			    return _panelWList;
-		    }
+		    return _panelWList;
 	    }
     }
 }

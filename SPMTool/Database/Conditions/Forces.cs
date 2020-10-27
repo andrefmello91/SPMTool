@@ -41,7 +41,7 @@ namespace SPMTool.Database.Conditions
 				return;
             
 			// Get units
-			var units = DataBase.Units;
+			var units = UnitsData.SavedUnits;
 
 			// Get scale factor
 			var scFctr = units.ScaleFactor;
@@ -318,7 +318,7 @@ namespace SPMTool.Database.Conditions
 	        var data = forceBlock.ReadXData();
 
 	        // Get value and direction
-	        var force     = UnitsNet.Force.FromNewtons(data[(int)ForceIndex.Value].ToDouble()).ToUnit(DataBase.Units.AppliedForces);
+	        var force     = UnitsNet.Force.FromNewtons(data[(int)ForceIndex.Value].ToDouble()).ToUnit(UnitsData.SavedUnits.AppliedForces);
 	        var direction = (Direction)data[(int)ForceIndex.Direction].ToInt();
 
 	        // Get force

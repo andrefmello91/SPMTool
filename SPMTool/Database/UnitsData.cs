@@ -2,6 +2,7 @@
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions.AutoCAD;
+using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using UnitsNet.Units;
 using UnitsNet;
@@ -44,9 +45,14 @@ namespace SPMTool.Database
 			};
 
 		/// <summary>
+		/// Get <see cref="SPMTool.Units"/> saved in database.
+		/// </summary>
+		public static Units SavedUnits => _units ?? Read();
+
+        /// <summary>
         /// Save this <paramref name="units"/> in database.
         /// </summary>
-		public static void Save(Units units)
+        public static void Save(Units units)
 		{
 			_units = units;
 
@@ -72,23 +78,23 @@ namespace SPMTool.Database
 		}
 
         /// <summary>
-        /// Read units on database.
+        /// Read units on dictionary.
         /// </summary>
         /// <param name="setUnits">Units must be set by user if it's not set yet?</param>
-		public static Units Read(bool setUnits = true) => _units ?? ReadFromDictionary(setUnits);
+        public static Units Read(bool setUnits = true) => _units ?? ReadFromDatabase(setUnits);
 
 		/// <summary>
 		/// Read units on dictionary.
 		/// </summary>
 		/// <param name="setUnits">Units must be set by user if it's not set yet?</param>
-		private static Units ReadFromDictionary(bool setUnits = true)
+		public static Units ReadFromDatabase(bool setUnits = true)
         {
 	        var data = DataBase.ReadDictionaryEntry(Units);
 
 	        switch (data)
 	        {
 		        case null when setUnits:
-			        Editor.Commands.Settings.SetUnits();
+			        Settings.SetUnits();
 			        data = DataBase.ReadDictionaryEntry(Units);
 			        break;
 		        case null:
@@ -110,5 +116,5 @@ namespace SPMTool.Database
 
 	        return _units.Value;
         }
-    }
+	}
 }

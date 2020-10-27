@@ -9,6 +9,7 @@ using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.Database.Conditions;
 using SPMTool.Database.Elements;
+using SPMTool.Database.Materials;
 using SPMTool.Enums;
 using Analysis = SPM.Analysis.Analysis;
 using Nodes = SPMTool.Database.Elements.Nodes;
@@ -90,10 +91,11 @@ namespace SPMTool.Database
         public static InputData GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
         {
 	        // Get units
-	        var units = DataBase.Units;
+	        var units = UnitsData.SavedUnits;
 
 	        // Get concrete
-	        var concrete = DataBase.Concrete;
+	        var parameters   = ConcreteData.Parameters;
+	        var constitutive = ConcreteData.Constitutive;
 
 	        // Read elements
 	        var ndObjs  = NodeCollection;
@@ -116,8 +118,8 @@ namespace SPMTool.Database
 	        //Supports.Set(SupportCollection, nodes);
 
 	        // Get stringers and panels
-	        var stringers = Stringers.Read(strObjs, units, concrete.Parameters, concrete.Constitutive, nodes, analysisType);
-	        var panels = Panels.Read(pnlObjs, units, concrete.Parameters, concrete.Constitutive, nodes, analysisType);
+	        var stringers = Stringers.Read(strObjs, units, parameters, constitutive, nodes, analysisType);
+	        var panels = Panels.Read(pnlObjs, units, parameters, constitutive, nodes, analysisType);
 
 	        // Generate input
 	        dataOk = true;
@@ -137,9 +139,10 @@ namespace SPMTool.Database
 	        if (!ElementLayers.Contains(layer))
 		        return null;
 
-	        // Get concrete and units
-	        var concrete = DataBase.Concrete;
-	        var units    = DataBase.Units;
+            // Get concrete and units
+            var parameters   = ConcreteData.Parameters;
+            var constitutive = ConcreteData.Constitutive;
+	        var units        = UnitsData.SavedUnits;
 
 	        if (layer is Layer.IntNode || layer is Layer.ExtNode)
 		        return Nodes.Read((DBPoint) entity, units);
@@ -148,10 +151,10 @@ namespace SPMTool.Database
 	        var nodes = Nodes.Read(NodeCollection, units).ToArray();
 
 	        if (layer is Layer.Stringer)
-		        return Stringers.Read((Line) entity, units, concrete.Parameters, concrete.Constitutive, nodes);
+		        return Stringers.Read((Line) entity, units, parameters, constitutive, nodes);
 
 	        if (layer is Layer.Panel)
-		        return Panels.Read((Solid) entity, units, concrete.Parameters, concrete.Constitutive, nodes);
+		        return Panels.Read((Solid) entity, units, parameters, constitutive, nodes);
 
 	        return null;
         }
@@ -256,7 +259,7 @@ namespace SPMTool.Database
         {
 	        // Set the style for all point objects in the drawing
 	        DataBase.Database.Pdmode = 32;
-	        DataBase.Database.Pdsize = 40 * DataBase.Units.ScaleFactor;
+	        DataBase.Database.Pdsize = 40 * UnitsData.SavedUnits.ScaleFactor;
         }
 
         /// <summary>

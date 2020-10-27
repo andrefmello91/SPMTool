@@ -41,7 +41,7 @@ namespace SPMTool.Database.Conditions
                 return;
 
 			// Get units
-			var units = DataBase.Units;
+			var units = UnitsData.SavedUnits;
 
             // Start a transaction
             using (var trans = DataBase.StartTransaction())

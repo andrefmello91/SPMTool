@@ -25,7 +25,7 @@ namespace SPMTool.UserInterface
 			_node = node;
 
 			// Read units
-			_units = DataBase.Units;
+			_units = UnitsData.SavedUnits;
 
 			// Get forces and displacements
 			_force = node.Force.Copy();

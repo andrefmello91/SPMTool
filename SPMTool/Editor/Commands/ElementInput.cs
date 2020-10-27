@@ -25,7 +25,7 @@ namespace SPMTool.Editor.Commands
 	    public static void AddStringer()
 	    {
 		    // Get units
-		    var units = DataBase.Units;
+		    var units = UnitsData.SavedUnits;
 
 		    // Get the list of start and endpoints
 		    var strList = Stringers.StringerGeometries();
@@ -72,7 +72,7 @@ namespace SPMTool.Editor.Commands
 		public static void AddPanel()
 		{
 			// Read units
-			var units = DataBase.Units;
+			var units = UnitsData.SavedUnits;
 
 			// Create a loop for creating infinite panels
 			for ( ; ; )

@@ -322,7 +322,7 @@ namespace SPMTool.Editor
 	        var dimAbrev = geometryUnit.Abbrev();
 
 	        // Get saved reinforcement options
-	        var savedGeo = DataBase.SavedStringerGeometry;
+	        var savedGeo = ElementData.SavedStringerGeometry;
 
 	        // Get saved reinforcement options
 	        if (savedGeo != null)
@@ -373,7 +373,7 @@ namespace SPMTool.Editor
         public static double? GetPanelWidth(LengthUnit unit)
         {
 	        // Get saved reinforcement options
-	        var savedGeo = DataBase.SavedPanelWidth;
+	        var savedGeo = ElementData.SavedPanelWidth;
 
 	        // Get unit abreviation
 	        var dimAbrev = unit.Abbrev();
@@ -443,7 +443,7 @@ namespace SPMTool.Editor
         public static UniaxialReinforcement GetUniaxialReinforcement(Units units)
         {
 	        // Get saved reinforcement options
-	        var savedRef = DataBase.SavedStringerReinforcement;
+	        var savedRef = ReinforcementData.SavedStringerReinforcement;
 
 	        // Get unit abbreviation
 	        var dimAbbrev = units.Reinforcement.Abbrev();
@@ -507,7 +507,7 @@ namespace SPMTool.Editor
         public static Steel GetSteel(PressureUnit unit)
         {
 	        // Get steel data saved on database
-	        var savedSteel = DataBase.SavedSteel;
+	        var savedSteel = ReinforcementData.SavedSteel;
 
 	        // Get unit abbreviation
 	        var matAbrev = unit.Abbrev();
@@ -566,7 +566,7 @@ namespace SPMTool.Editor
         public static WebReinforcementDirection GetWebReinforcement(Direction direction, Units units)
         {
 	        // Get saved reinforcement options
-	        var savedRef = DataBase.SavedPanelReinforcement;
+	        var savedRef = ReinforcementData.SavedPanelReinforcement;
 
 	        // Get unit abbreviation
 	        var dimAbrev = units.Geometry.Abbrev();

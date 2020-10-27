@@ -42,10 +42,25 @@ namespace SPMTool.Database.Materials
 	    private const string PnlRef = "PnlRef";
 
 		/// <summary>
-	    /// Save steel configuration on database.
-	    /// </summary>
-	    /// <param name="steel">The steel object.</param>
-	    public static void Save(Steel steel)
+		/// Get <see cref="Steel"/> objects saved in database.
+		/// </summary>
+		public static Steel[] SavedSteel => (_steelList ?? ReadSteel()).ToArray();
+
+		/// <summary>
+		/// Get <see cref="UniaxialReinforcement"/> objects saved in database.
+		/// </summary>
+		public static UniaxialReinforcement[] SavedStringerReinforcement => (_strRefList ?? ReadStringerReinforcement()).ToArray();
+
+		/// <summary>
+		/// Get <see cref="WebReinforcementDirection"/> objects saved in database.
+		/// </summary>
+		public static WebReinforcementDirection[] SavedPanelReinforcement => (_pnlRefList ?? ReadPanelReinforcement()).ToArray();
+
+        /// <summary>
+        /// Save steel configuration on database.
+        /// </summary>
+        /// <param name="steel">The steel object.</param>
+        public static void Save(Steel steel)
 	    {
 		    if (steel is null)
 			    return;
@@ -138,25 +153,18 @@ namespace SPMTool.Database.Materials
 	    /// </summary>
 	    public static IEnumerable<Steel> ReadSteel()
 	    {
-		    return _steelList ?? ReadFromDictionary();
-			
-		    IEnumerable<Steel> ReadFromDictionary()
-		    {
-			    // Get dictionary entries
-			    var entries = DataBase.ReadDictionaryEntries(Steel)?.ToArray();
+		    // Get dictionary entries
+		    var entries = DataBase.ReadDictionaryEntries(Steel)?.ToArray();
 
-			    if (entries is null || !entries.Any())
-				    return new List<Steel>();
-
-			    // Create a list of steel
-			    _steelList = new List<Steel>(from r in entries
+		    _steelList = entries is null || !entries.Any()
+			    ? new List<Steel>()
+			    : new List<Steel>(from r in entries
 				    let t = r.AsArray()
 				    let fy = t[2].ToDouble()
 				    let Es = t[3].ToDouble()
 				    select new Steel(fy, Es));
 
-			    return _steelList;
-		    }
+		    return _steelList;
 	    }
 
         /// <summary>
@@ -164,26 +172,19 @@ namespace SPMTool.Database.Materials
         /// </summary>
         public static IEnumerable<UniaxialReinforcement> ReadStringerReinforcement()
 	    {
-		    return _strRefList ?? ReadFromDictionary();
-			
-            IEnumerable<UniaxialReinforcement> ReadFromDictionary()
-            {
-	            // Get dictionary entries
-	            var entries = DataBase.ReadDictionaryEntries(StrRef)?.ToArray();
+            // Get dictionary entries
+            var entries = DataBase.ReadDictionaryEntries(StrRef)?.ToArray();
 
-	            if (entries is null || !entries.Any())
-		            return new List<UniaxialReinforcement>();
-
-	            // Create a list of reinforcement
-	            _strRefList = new List<UniaxialReinforcement>(
+            _strRefList = entries is null || !entries.Any()
+	            ? new List<UniaxialReinforcement>()
+	            : new List<UniaxialReinforcement>(
 		            from r in entries
 		            let t = r.AsArray()
 		            let num = t[2].ToInt()
 		            let phi = t[3].ToDouble()
 		            select new UniaxialReinforcement(num, phi, null));
 
-	            return _strRefList;
-            }
+            return _strRefList;
 	    }
 
 	    /// <summary>
@@ -192,26 +193,19 @@ namespace SPMTool.Database.Materials
 	    /// <returns></returns>
 	    public static IEnumerable<WebReinforcementDirection> ReadPanelReinforcement()
 	    {
-		    return
-			    _pnlRefList ?? ReadFromDictionary();
-			
-		    IEnumerable<WebReinforcementDirection> ReadFromDictionary()
-		    {
-			    // Get dictionary entries
-			    var entries = DataBase.ReadDictionaryEntries(PnlRef)?.ToArray();
+		    // Get dictionary entries
+		    var entries = DataBase.ReadDictionaryEntries(PnlRef)?.ToArray();
 
-			    if (entries is null || !entries.Any())
-				    return new List<WebReinforcementDirection>();
-
-			    _pnlRefList = new List<WebReinforcementDirection>(
+		    _pnlRefList = entries is null || !entries.Any()
+			    ? new List<WebReinforcementDirection>()
+			    : new List<WebReinforcementDirection>(
 				    from r in entries
 				    let t = r.AsArray()
 				    let phi = t[2].ToDouble()
 				    let s = t[3].ToDouble()
 				    select new WebReinforcementDirection(phi, s, null, 0, 0));
 
-			    return _pnlRefList;
-		    }
+		    return _pnlRefList;
 	    }
     }
 }

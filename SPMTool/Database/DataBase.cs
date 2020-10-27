@@ -72,41 +72,6 @@ namespace SPMTool.Database
 		public static CoordinateSystem3d Ucs => UcsMatrix.CoordinateSystem3d;
 
 		/// <summary>
-        /// Get <see cref="SPMTool.Units"/> saved in database.
-        /// </summary>
-		public static Units Units => UnitsData.Read();
-
-		/// <summary>
-        /// Get <see cref="Concrete"/> saved in database.
-        /// </summary>
-		public static Concrete Concrete => ConcreteData.Read();
-
-		/// <summary>
-        /// Get <see cref="Steel"/> objects saved in database.
-        /// </summary>
-		public static Steel[] SavedSteel => ReinforcementData.ReadSteel()?.ToArray();
-
-        /// <summary>
-        /// Get <see cref="UniaxialReinforcement"/> objects saved in database.
-        /// </summary>
-        public static UniaxialReinforcement[] SavedStringerReinforcement => ReinforcementData.ReadStringerReinforcement()?.ToArray();
-
-        /// <summary>
-        /// Get <see cref="WebReinforcementDirection"/> objects saved in database.
-        /// </summary>
-        public static WebReinforcementDirection[] SavedPanelReinforcement => ReinforcementData.ReadPanelReinforcement()?.ToArray();
-
-        /// <summary>
-        /// Get <see cref="StringerGeometry"/> objects saved in database.
-        /// </summary>
-        public static StringerGeometry[] SavedStringerGeometry => ElementData.ReadStringerGeometries()?.ToArray();
-
-        /// <summary>
-        /// Get panel widths saved in database.
-        /// </summary>
-        public static double[] SavedPanelWidth => ElementData.ReadPanelWidths()?.ToArray();
-
-		/// <summary>
         /// Start a new transaction in <see cref="Database"/>.
         /// </summary>
 		public static Transaction StartTransaction() => Database.TransactionManager.StartTransaction();

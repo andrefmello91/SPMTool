@@ -30,7 +30,7 @@ namespace SPMTool.Editor.Commands
             var analysis = new LinearAnalysis(input);
 
             // Draw results of analysis
-            Model.DrawResults(analysis, DataBase.Units);
+            Model.DrawResults(analysis, UnitsData.SavedUnits);
         }
 
         [CommandMethod("DoNonLinearAnalysis")]
@@ -57,7 +57,7 @@ namespace SPMTool.Editor.Commands
             var analysis = new SecantAnalysis(input, uIndex);
 
             // Show load-displacement diagram
-            var units = DataBase.Units;
+            var units = UnitsData.SavedUnits;
 
             Application.ShowModelessWindow(Application.MainWindow.Handle, new GraphWindow(analysis.MonitoredDisplacements, analysis.MonitoredLoadFactor, units.Displacements));
 
