@@ -289,12 +289,6 @@
     <None Include="Resources\stringerforces_large_light.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\elementdata_large_light.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\elementdata_large.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\stringerreinforcement_large_light.png" />
   </ItemGroup>
   <ItemGroup>
@@ -390,6 +384,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\concrete_constitutive.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\elementdata_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\elementdata_small_light.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

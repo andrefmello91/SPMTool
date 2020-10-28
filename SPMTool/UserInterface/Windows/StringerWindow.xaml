@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Set geometry and reinforcement to selected stringers" Height="300" Width="470">
-    <Grid Background="#cfd2d4">
+    <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition Height="30"/>
@@ -19,7 +19,7 @@
             <ColumnDefinition Width="235"></ColumnDefinition>
             <ColumnDefinition Width="10"></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <TextBlock Text="{Binding HeaderText}" FontWeight="SemiBold" Grid.Column="2"></TextBlock>
+        <TextBlock Text="{Binding HeaderText}" HorizontalAlignment="Left" VerticalAlignment="Center" FontWeight="SemiBold" Grid.Column="2"></TextBlock>
         <Image Name="CrossSection" HorizontalAlignment="Left" Width="190" Height="120" Grid.Column="1" Grid.RowSpan="3"/>
         <Grid Margin="0,0,0,0" Grid.Row="3" Grid.Column="1">
             <Grid.RowDefinitions>
@@ -109,7 +109,7 @@
         <TextBlock Text="Set:" Grid.Row="4" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="25" Margin="0,0,0,2.5"></TextBlock>
         <CheckBox Name="SetGeometryBox" Content="Geometry" ToolTip="Set geometry. Disable to leave each stringer geometry unchanged." HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="1" Margin="25,0,0,0" Checked="SetGeometry_OnCheck" Unchecked="SetGeometry_OnCheck"/>
         <CheckBox Name="SetReinforcementBox" Content="Reinforcement" ToolTip="Set reinforcement. Disable to leave each stringer reinforcement unchanged." HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Margin="105,0,0,0" Checked="SetReinforcement_OnCheck" Unchecked="SetReinforcement_OnCheck"/>
-        <Button Content="OK" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Click="ButtonOK_OnClick" ToolTip="Save stringer parameters" Grid.Row="4" Grid.Column="2" Height="20" Margin="0,0,0,0"/>
-        <Button Content="Cancel" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Click="ButtonCancel_OnClick" ToolTip="Discard changes" Grid.Row="4" Grid.Column="2" Height="20" Margin="0,0,85,0"/>
+        <Button Content="OK" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Click="ButtonOK_OnClick" ToolTip="Save stringer parameters" Grid.Row="4" Grid.Column="2" Height="20" Margin="0,0,0,0"/>
+        <Button Content="Cancel" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Click="ButtonCancel_OnClick" ToolTip="Discard changes" Grid.Row="4" Grid.Column="2" Height="20" Margin="0,0,85,0"/>
     </Grid>
 </Window>

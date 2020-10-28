@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:SPMTool.UserInterface"
         mc:Ignorable="d"
         Title="Units Configuration" Height="440" Width="290">
-    <Grid Background="#cfd2d4">
+    <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition Height="Auto"/>
@@ -99,8 +99,8 @@
                 </Grid>
             </StackPanel>
         </Border>
-        <Button Content="OK" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonOK_OnClick" ToolTip="Save units"/>
-        <Button Content="Cancel" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonCancel_OnClick" ToolTip="Discard changes" Margin="0,0,80,0"/>
-        <Button Content="Default" HorizontalAlignment="Left" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonDefault_OnClick" ToolTip="Set default units" Margin="0,0,0,0"/>
+        <Button Content="OK" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonOK_OnClick" ToolTip="Save units"/>
+        <Button Content="Cancel" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonCancel_OnClick" ToolTip="Discard changes" Margin="0,0,80,0"/>
+        <Button Content="Default" Background="WhiteSmoke" HorizontalAlignment="Left" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonDefault_OnClick" ToolTip="Set default units" Margin="0,0,0,0"/>
     </Grid>
 </Window>

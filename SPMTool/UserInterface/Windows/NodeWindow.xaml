@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:SPMTool.UserInterface"
         mc:Ignorable="d"
         Title="Element Data" Height="350" Width="235">
-    <Grid Background="#cfd2d4">
+    <Grid Background="GhostWhite">
         <TextBlock Name="NodeNumberBlock" HorizontalAlignment="Left" Margin="10,15,0,0" VerticalAlignment="Top"/>
         <TextBlock Name="NodePositionBlock" HorizontalAlignment="Left" Margin="10,45,0,0" VerticalAlignment="Top"/>
 

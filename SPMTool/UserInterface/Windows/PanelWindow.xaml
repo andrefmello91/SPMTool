@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Set width and reinforcement to selected panels" Height="350" Width="770">
-    <Grid Background="#cfd2d4" Margin="0,0,0,0">
+    <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition Height="50"/>
@@ -161,7 +161,7 @@
         <TextBlock Text="Set:" Grid.Row="6" Grid.Column="3" HorizontalAlignment="Left" VerticalAlignment="Center" Width="25" Margin="0,0,0,0"></TextBlock>
         <CheckBox Name="SetGeometryBox" Content="Geometry" ToolTip="Set geometry. Disable to leave each panel widths unchanged." HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="6" Grid.Column="3" Margin="25,0,0,0" Checked="SetGeometry_OnCheck" Unchecked="SetGeometry_OnCheck"/>
         <CheckBox Name="SetReinforcementBox" Content="Reinforcement" ToolTip="Set reinforcement. Disable to leave each panel reinforcement unchanged." HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="6" Grid.Column="3" Margin="105,0,0,0" Checked="SetReinforcement_OnCheck" Unchecked="SetReinforcement_OnCheck"/>
-        <Button Content="OK" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Click="ButtonOK_OnClick" ToolTip="Save stringer parameters" Grid.Row="6" Grid.Column="5" Height="20" Margin="0,6,0,5"/>
-        <Button Content="Cancel" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Click="ButtonCancel_OnClick" ToolTip="Discard changes" Grid.Row="6" Grid.Column="5" Height="20" Margin="0,6,85,5"/>
+        <Button Content="OK" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Click="ButtonOK_OnClick" ToolTip="Save stringer parameters" Grid.Row="6" Grid.Column="5" Height="20" Margin="0,6,0,5"/>
+        <Button Content="Cancel" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Click="ButtonCancel_OnClick" ToolTip="Discard changes" Grid.Row="6" Grid.Column="5" Height="20" Margin="0,6,85,5"/>
     </Grid>
 </Window>

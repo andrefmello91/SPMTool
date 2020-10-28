@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:SPMTool.UserInterface"
         mc:Ignorable="d"
         Title="Concrete Configuration" Height="425" Width="670" d:DataContext="{d:DesignData }">
-    <Grid Background="#cfd2d4">
+    <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition Height="Auto"/>
@@ -104,7 +104,7 @@
             </StackPanel>
         </Border>
 
-        <Button Content="OK" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="2" Click="ButtonOK_OnClick" ToolTip="Save concrete parameters"/>
-        <Button Content="Cancel" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="2" Margin="0,0,80,0" Click="ButtonCancel_OnClick" ToolTip="Discard changes"/>
+        <Button Content="OK" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="2" Click="ButtonOK_OnClick" ToolTip="Save concrete parameters"/>
+        <Button Content="Cancel" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="2" Margin="0,0,80,0" Click="ButtonCancel_OnClick" ToolTip="Discard changes"/>
     </Grid>
 </Window>

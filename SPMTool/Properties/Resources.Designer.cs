@@ -153,9 +153,9 @@ namespace SPMTool.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap elementdata_large {
+        internal static System.Drawing.Bitmap elementdata_small {
             get {
-                object obj = ResourceManager.GetObject("elementdata_large", resourceCulture);
+                object obj = ResourceManager.GetObject("elementdata_small", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -163,9 +163,9 @@ namespace SPMTool.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap elementdata_large_light {
+        internal static System.Drawing.Bitmap elementdata_small_light {
             get {
-                object obj = ResourceManager.GetObject("elementdata_large_light", resourceCulture);
+                object obj = ResourceManager.GetObject("elementdata_small_light", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
