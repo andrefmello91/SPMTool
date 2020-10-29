@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SPMTool.UserInterface"
         mc:Ignorable="d"
-        Title="Concrete Configuration" Height="425" Width="670" d:DataContext="{d:DesignData }">
+        Title="Concrete Parameters" Height="425" Width="670" d:DataContext="{d:DesignData }">
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
