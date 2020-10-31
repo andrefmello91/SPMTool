@@ -54,6 +54,8 @@
 		PanelForce,
 		CompressivePanelStress,
 		TensilePanelStress,
+		ConcreteCompressiveStress,
+		ConcreteTensileStress,
 		Displacements
 	}
 

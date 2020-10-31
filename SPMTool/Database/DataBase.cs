@@ -119,6 +119,8 @@ namespace SPMTool.Database
 			Layer.PanelForce.Create(Color.Green);
 			Layer.CompressivePanelStress.Create(Color.Blue1, 80);
 			Layer.TensilePanelStress.Create(Color.Red, 80);
+			Layer.ConcreteCompressiveStress.Create(Color.Blue1, 80);
+			Layer.ConcreteTensileStress.Create(Color.Red, 80);
 			Layer.StringerForce.Create(Color.Grey);
 			Layer.Displacements.Create(Color.Yellow1);
 		}

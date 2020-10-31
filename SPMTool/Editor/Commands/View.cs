@@ -103,7 +103,16 @@ namespace SPMTool.Editor.Commands
 	    /// Toggle view for panel forces.
 	    /// </summary>
 	    [CommandMethod("TooglePanelForces")]
-	    public static void TooglePanelForces() => Layer.PanelForce.Toogle();
+	    public static void TooglePanelForces()
+	    {
+			// Turn off layers
+			Layer.CompressivePanelStress.Off();
+			Layer.TensilePanelStress.Off();
+		    Layer.ConcreteCompressiveStress.Off();
+		    Layer.ConcreteTensileStress.Off();
+
+			Layer.PanelForce.Toogle();
+	    }
 
 	    /// <summary>
 	    /// Toggle view for panel stresses.
@@ -111,8 +120,28 @@ namespace SPMTool.Editor.Commands
 	    [CommandMethod("TooglePanelStresses")]
 	    public static void TooglePanelStresses()
 	    {
-		    Layer.CompressivePanelStress.Toogle();
+			// Turn off layers
+			Layer.PanelForce.Off();
+		    Layer.ConcreteCompressiveStress.Off();
+		    Layer.ConcreteTensileStress.Off();
+
+			Layer.CompressivePanelStress.Toogle();
 		    Layer.TensilePanelStress.Toogle();
+	    }
+
+	    /// <summary>
+	    /// Toggle view for concrete principal stresses.
+	    /// </summary>
+	    [CommandMethod("ToogleConcreteStresses")]
+	    public static void ToogleConcreteStresses()
+	    {
+		    // Turn off layers
+		    Layer.PanelForce.Off();
+		    Layer.CompressivePanelStress.Off();
+		    Layer.TensilePanelStress.Off();
+
+			Layer.ConcreteCompressiveStress.Toogle();
+		    Layer.ConcreteTensileStress.Toogle();
 	    }
 
 	    /// <summary>

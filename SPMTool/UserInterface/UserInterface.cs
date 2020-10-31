@@ -8,6 +8,7 @@ using Autodesk.Windows;
 using SPMTool.Database;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using Image = System.Drawing.Image;
+using SPMTool.Properties;
 
 namespace SPMTool.UserInterface
 {
@@ -18,29 +19,10 @@ namespace SPMTool.UserInterface
 	{
 		// Auxiliary bitmaps
 		private static Bitmap
-			strBmp,
-			pnlBmp,
-			dvStrBmp,
-			dvPnlBmp,
-			elmDtBmp,
-			updtBmp,
-			strRefBmp,
-			pnlRefBmp,
-			cncrtBmp,
-			suprtBmp,
-			fcBmp,
-			linBMP,
-			nlinBMP,
-			viewNdBmp,
-			viewStrBmp,
-			viewPnlBmp,
-			viewFBmp,
-			viewSupBmp,
-			strFBMP,
-			pnlFBMP,
-			pnlSBMP,
-			dispBMP,
-			unitsBMP;
+			_strBmp, _pnlBmp, _dvStrBmp, _dvPnlBmp, _elmDtBmp, _updtBmp,
+			_strRefBmp, _pnlRefBmp, _cncrtBmp, _suprtBmp, _fcBmp, _linBmp,
+			_nlinBmp, _viewNdBmp, _viewStrBmp, _viewPnlBmp, _viewFBmp,
+			_viewSupBmp, _strFBmp, _pnlFBmp, _pnlSBmp, _concSBmp, _dispBmp, _unitsBmp;
 
 		/// <summary>
         /// Add ribbon buttons to user interface.
@@ -88,55 +70,57 @@ namespace SPMTool.UserInterface
             // If the theme is dark (0), get the light icons
             if (theme == 0)
             {
-                strBmp = Properties.Resources.stringer_large_light;
-                pnlBmp = Properties.Resources.panel_large_light;
-                dvStrBmp = Properties.Resources.divstr_small_light;
-                dvPnlBmp = Properties.Resources.divpnl_small_light;
-                updtBmp = Properties.Resources.update_small_light;
-                elmDtBmp = Properties.Resources.elementdata_small_light;
-                strRefBmp = Properties.Resources.stringerreinforcement_large_light;
-                pnlRefBmp = Properties.Resources.panelreinforcement_large_light;
-                cncrtBmp = Properties.Resources.concrete_large_light;
-                suprtBmp = Properties.Resources.support_large_light;
-                fcBmp = Properties.Resources.force_large_light;
-                linBMP = Properties.Resources.linear_large_light;
-                nlinBMP = Properties.Resources.nonlinear_large_light;
-                viewNdBmp = Properties.Resources.viewnode_large_light;
-                viewStrBmp = Properties.Resources.viewstringer_large_light;
-                viewPnlBmp = Properties.Resources.viewpanel_large_light;
-                viewFBmp = Properties.Resources.viewforce_large_light;
-                viewSupBmp = Properties.Resources.viewsupport_large_light;
-                strFBMP = Properties.Resources.stringerforces_large_light;
-                pnlFBMP = Properties.Resources.panelforces_large_light;
-                pnlSBMP = Properties.Resources.panelstresses_large_light;
-                dispBMP = Properties.Resources.displacements_large_light;
-                unitsBMP = Properties.Resources.units_light;
+                _strBmp = Resources.stringer_large_light;
+                _pnlBmp = Resources.panel_large_light;
+                _dvStrBmp = Resources.divstr_small_light;
+                _dvPnlBmp = Resources.divpnl_small_light;
+                _updtBmp = Resources.update_small_light;
+                _elmDtBmp = Resources.elementdata_small_light;
+                _strRefBmp = Resources.stringerreinforcement_large_light;
+                _pnlRefBmp = Resources.panelreinforcement_large_light;
+                _cncrtBmp = Resources.concrete_large_light;
+                _suprtBmp = Resources.support_large_light;
+                _fcBmp = Resources.force_large_light;
+                _linBmp = Resources.linear_large_light;
+                _nlinBmp = Resources.nonlinear_large_light;
+                _viewNdBmp = Resources.viewnode_large_light;
+                _viewStrBmp = Resources.viewstringer_large_light;
+                _viewPnlBmp = Resources.viewpanel_large_light;
+                _viewFBmp = Resources.viewforce_large_light;
+                _viewSupBmp = Resources.viewsupport_large_light;
+                _strFBmp = Resources.stringerforces_large_light;
+                _pnlFBmp = Resources.panelforces_large_light;
+                _pnlSBmp = Resources.panelstresses_large_light;
+                _concSBmp = Resources.concretestresses_large_light;
+                _dispBmp = Resources.displacements_large_light;
+                _unitsBmp = Resources.units_light;
             }
             else // If the theme is light
             {
-                strBmp = Properties.Resources.stringer_large;
-                pnlBmp = Properties.Resources.panel_large;
-                dvStrBmp = Properties.Resources.divstr_small;
-                dvPnlBmp = Properties.Resources.divpnl_small;
-                updtBmp = Properties.Resources.update_small;
-                elmDtBmp = Properties.Resources.elementdata_small;
-                strRefBmp = Properties.Resources.stringerreinforcement_large;
-                pnlRefBmp = Properties.Resources.panelreinforcement_large;
-                cncrtBmp = Properties.Resources.concrete_large;
-                suprtBmp = Properties.Resources.support_large;
-                fcBmp = Properties.Resources.force_large;
-                linBMP = Properties.Resources.linear_large;
-                nlinBMP = Properties.Resources.nonlinear_large;
-                viewNdBmp = Properties.Resources.viewnode_large;
-                viewStrBmp = Properties.Resources.viewstringer_large;
-                viewPnlBmp = Properties.Resources.viewpanel_large;
-                viewFBmp = Properties.Resources.viewforce_large;
-                viewSupBmp = Properties.Resources.viewsupport_large;
-                strFBMP = Properties.Resources.stringerforces_large;
-                pnlFBMP = Properties.Resources.panelforces_large;
-                pnlSBMP = Properties.Resources.panelstresses_large;
-                dispBMP = Properties.Resources.displacements_large;
-                unitsBMP = Properties.Resources.units;
+                _strBmp = Resources.stringer_large;
+                _pnlBmp = Resources.panel_large;
+                _dvStrBmp = Resources.divstr_small;
+                _dvPnlBmp = Resources.divpnl_small;
+                _updtBmp = Resources.update_small;
+                _elmDtBmp = Resources.elementdata_small;
+                _strRefBmp = Resources.stringerreinforcement_large;
+                _pnlRefBmp = Resources.panelreinforcement_large;
+                _cncrtBmp = Resources.concrete_large;
+                _suprtBmp = Resources.support_large;
+                _fcBmp = Resources.force_large;
+                _linBmp = Resources.linear_large;
+                _nlinBmp = Resources.nonlinear_large;
+                _viewNdBmp = Resources.viewnode_large;
+                _viewStrBmp = Resources.viewstringer_large;
+                _viewPnlBmp = Resources.viewpanel_large;
+                _viewFBmp = Resources.viewforce_large;
+                _viewSupBmp = Resources.viewsupport_large;
+                _strFBmp = Resources.stringerforces_large;
+                _pnlFBmp = Resources.panelforces_large;
+                _pnlSBmp = Resources.panelstresses_large;
+                _concSBmp = Resources.concretestresses_large;
+                _dispBmp = Resources.displacements_large;
+                _unitsBmp = Resources.units;
             }
 		}
 
@@ -164,7 +148,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Create a stringer connecting two nodes",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(strBmp),
+				LargeImage = GetBitmap(_strBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "AddStringer"
 			});
@@ -175,7 +159,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Create a panel connecting four nodes",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(pnlBmp),
+				LargeImage = GetBitmap(_pnlBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "AddPanel"
 			});
@@ -202,7 +186,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Set geometry and reinforcement to a selection of stringers",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(strRefBmp),
+				LargeImage = GetBitmap(_strRefBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "SetStringerReinforcement"
 			});
@@ -213,7 +197,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Set width and reinforcement to a selection of panels",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(pnlRefBmp),
+				LargeImage = GetBitmap(_pnlRefBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "SetPanelReinforcement"
 			});
@@ -240,7 +224,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Set constraint condition to a group of nodes",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(suprtBmp),
+				LargeImage = GetBitmap(_suprtBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "AddConstraint"
 			});
@@ -251,7 +235,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Add forces to a group of nodes",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(fcBmp),
+				LargeImage = GetBitmap(_fcBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "AddForce"
 			});
@@ -277,7 +261,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Divide a stringer into smaller ones",
 				ShowText = true,
 				ShowImage = true,
-				Image = GetBitmap(dvStrBmp),
+				Image = GetBitmap(_dvStrBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "DivideStringer"
 			});
@@ -288,7 +272,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Divide a panel and surrounding stringers",
 				ShowText = true,
 				ShowImage = true,
-				Image = GetBitmap(dvPnlBmp),
+				Image = GetBitmap(_dvPnlBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "DividePanel"
 			});
@@ -304,7 +288,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "View data of a selected element",
 				ShowText = true,
 				ShowImage = true,
-				Image = GetBitmap(elmDtBmp),
+				Image = GetBitmap(_elmDtBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ViewElementData"
 			});
@@ -316,7 +300,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Update the number of nodes, stringers and panels in the model",
 				ShowText = true,
 				ShowImage = true,
-				Image = GetBitmap(updtBmp),
+				Image = GetBitmap(_updtBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "UpdateElements"
 			});
@@ -342,7 +326,7 @@ namespace SPMTool.UserInterface
 				Orientation = Orientation.Vertical,
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(cncrtBmp),
+				LargeImage = GetBitmap(_cncrtBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "SetConcreteParameters"
 			});
@@ -370,7 +354,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Do an elastic analysis of the model",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(linBMP),
+				LargeImage = GetBitmap(_linBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "DoLinearAnalysis"
 			});
@@ -381,7 +365,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Do a nonlinear analysis of the model",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(nlinBMP),
+				LargeImage = GetBitmap(_nlinBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "DoNonlinearAnalysis"
 			});
@@ -413,7 +397,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Toogle view for nodes",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(viewNdBmp),
+				LargeImage = GetBitmap(_viewNdBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleNodes"
 			});
@@ -424,7 +408,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Toogle view for stringers",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(viewStrBmp),
+				LargeImage = GetBitmap(_viewStrBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleStringers"
 			});
@@ -435,7 +419,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Toogle view for panels",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(viewPnlBmp),
+				LargeImage = GetBitmap(_viewPnlBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "TooglePanels"
 			});
@@ -446,7 +430,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Toogle view for forces",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(viewFBmp),
+				LargeImage = GetBitmap(_viewFBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleForces"
 			});
@@ -457,7 +441,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Toogle view for supports",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(viewSupBmp),
+				LargeImage = GetBitmap(_viewSupBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleSupports"
 			});
@@ -489,7 +473,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Toogle view for Stringer forces",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(strFBMP),
+				LargeImage = GetBitmap(_strFBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleStringerForces"
 			});
@@ -500,7 +484,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "View panel shear stresses",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(pnlFBMP),
+				LargeImage = GetBitmap(_pnlFBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "TooglePanelForces"
 			});
@@ -511,9 +495,20 @@ namespace SPMTool.UserInterface
 				ToolTip = "View panel average principal stresses",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(pnlSBMP),
+				LargeImage = GetBitmap(_pnlSBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "TooglePanelStresses"
+			});
+
+			splitButton.Items.Add(new RibbonButton
+			{
+				Text = "Concrete principal stresses",
+				ToolTip = "View concrete principal stresses",
+				ShowText = true,
+				ShowImage = true,
+				LargeImage = GetBitmap(_concSBmp),
+				CommandHandler = new CmdHandler(),
+				CommandParameter = "ToogleConcreteStresses"
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -522,7 +517,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "View magnified displacements",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(dispBMP),
+				LargeImage = GetBitmap(_dispBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleDisplacements"
 			});
@@ -547,7 +542,7 @@ namespace SPMTool.UserInterface
 				Orientation = Orientation.Vertical,
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = GetBitmap(unitsBMP),
+				LargeImage = GetBitmap(_unitsBmp),
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "SetUnits"
 			});

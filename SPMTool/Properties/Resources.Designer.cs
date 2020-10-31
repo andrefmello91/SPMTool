@@ -93,6 +93,26 @@ namespace SPMTool.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap concretestresses_large {
+            get {
+                object obj = ResourceManager.GetObject("concretestresses_large", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap concretestresses_large_light {
+            get {
+                object obj = ResourceManager.GetObject("concretestresses_large_light", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap displacements_large {
             get {
                 object obj = ResourceManager.GetObject("displacements_large", resourceCulture);

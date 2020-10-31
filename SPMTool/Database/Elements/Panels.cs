@@ -597,12 +597,19 @@ namespace SPMTool.Database.Elements
 			        double scFctr = 0.001 * lMax;
 
 			        // Get principal stresses
-			        var stresses = pnl.ConcretePrincipalStresses;
 
-					// Add blocks
+					// Add shear block
 					AddShearBlock();
-					AddCompressiveBlock();
-					AddTensileBlock();
+
+					// Add average stresses blocks
+					var stresses = pnl.AveragePrincipalStresses;
+					AddCompressiveBlock(Layer.CompressivePanelStress);
+					AddTensileBlock(Layer.TensilePanelStress);
+
+					// Add concrete stresses blocks
+					stresses = pnl.ConcretePrincipalStresses;
+					AddCompressiveBlock(Layer.ConcreteCompressiveStress);
+					AddTensileBlock(Layer.ConcreteTensileStress);
 
                     // Create shear block
                     void AddShearBlock()
@@ -647,7 +654,7 @@ namespace SPMTool.Database.Elements
 			        }
 
 			        // Create compressive stress block
-			        void AddCompressiveBlock()
+			        void AddCompressiveBlock(Layer layer)
 			        {
 				        if (stresses.Sigma2.ApproxZero())
 					        return;
@@ -655,7 +662,7 @@ namespace SPMTool.Database.Elements
 				        // Create compressive stress block
 				        using (var blkRef = new BlockReference(cntrPt, compStress))
 				        {
-					        blkRef.Layer = $"{Layer.CompressivePanelStress}";
+					        blkRef.Layer = $"{layer}";
 					        blkRef.ColorIndex = (int) Color.Blue1;
 
 					        // Set the scale of the block
@@ -664,7 +671,7 @@ namespace SPMTool.Database.Elements
 					        // Rotate the block in theta angle
 					        if (!stresses.Theta2.ApproxZero())
 					        {
-						        blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, Database.DataBase.Ucs.Zaxis,
+						        blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, DataBase.Ucs.Zaxis,
 							        cntrPt));
 					        }
 
@@ -687,7 +694,7 @@ namespace SPMTool.Database.Elements
 					        var algnPt = ln.EndPoint;
 
 					        // Set the parameters
-					        sigTxt.Layer = $"{Layer.CompressivePanelStress}";
+					        sigTxt.Layer = $"{layer}";
 					        sigTxt.Height = 30 * scFctr;
 					        sigTxt.TextString = $"{stresses.Sigma2.Abs().ConvertFromMPa(units.PanelStresses):0.00}";
 					        sigTxt.Position = algnPt;
@@ -700,7 +707,7 @@ namespace SPMTool.Database.Elements
 			        }
 
 			        // Create tensile stress block
-			        void AddTensileBlock()
+			        void AddTensileBlock(Layer layer)
 			        {
 				        // Verify tensile stress
 				        if (stresses.Sigma1.ApproxZero())
@@ -709,7 +716,7 @@ namespace SPMTool.Database.Elements
 				        // Create tensile stress block
 				        using (var blkRef = new BlockReference(cntrPt, tensStress))
 				        {
-					        blkRef.Layer = $"{Layer.TensilePanelStress}";
+					        blkRef.Layer = $"{layer}";
 
 					        // Set the scale of the block
 					        blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
@@ -740,7 +747,7 @@ namespace SPMTool.Database.Elements
 					        var algnPt = ln.EndPoint;
 
 					        // Set the parameters
-					        sigTxt.Layer = $"{Layer.TensilePanelStress}";
+					        sigTxt.Layer = $"{layer}";
 					        sigTxt.Height = 30 * scFctr;
 					        sigTxt.TextString = $"{stresses.Sigma1.Abs().ConvertFromMPa(units.PanelStresses):0.00}";
 					        sigTxt.Position = algnPt;
@@ -761,8 +768,10 @@ namespace SPMTool.Database.Elements
 	        Layer.PanelForce.On();
 	        Layer.CompressivePanelStress.Off();
 	        Layer.TensilePanelStress.Off();
+	        Layer.ConcreteCompressiveStress.Off();
+	        Layer.ConcreteTensileStress.Off();
         }
-
+ 
 		/// <summary>
 		/// Event to execute when a panel is erased.
 		/// </summary>

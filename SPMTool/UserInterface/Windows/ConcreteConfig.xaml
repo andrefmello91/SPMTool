@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SPMTool.UserInterface"
         mc:Ignorable="d"
-        Title="Concrete Parameters" Height="425" Width="670" d:DataContext="{d:DesignData }">
+        Title="Concrete Parameters" Height="400" Width="640" d:DataContext="{d:DesignData }">
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
@@ -15,21 +15,22 @@
             <RowDefinition Height="30"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="330"/>
+            <ColumnDefinition Width="300"/>
             <ColumnDefinition Width="10"/>
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="185"/>
+            <ColumnDefinition Width="80"/>
+            <ColumnDefinition Width="45"/>
             <ColumnDefinition Width="10"/>
         </Grid.ColumnDefinitions>
 
-        <Image Name="Graph" Grid.Row="1" Grid.RowSpan="3" Width="325" Height="325" HorizontalAlignment="Left" Margin="5,0,0,0"/>
+        <Image Name="Graph" Grid.Row="1" Grid.RowSpan="3" Width="300" Height="300" HorizontalAlignment="Left" Margin="5,0,0,0"/>
 
         <TextBlock Text="Main parameters:" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="2"/>
-        <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="1" Grid.Column="2">
+        <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="3">
             <StackPanel>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="5"/>
-                        <RowDefinition Height="30"/>
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="30"/>
@@ -44,28 +45,26 @@
                         <ColumnDefinition Width="40"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Text="Parameter model:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"/>
-                    <ComboBox Name="ParameterBox" VerticalAlignment="Center" Width="80" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="ParameterBox_OnSelectionChanged"/>
+                    <TextBlock Text="Compressive strength (fc):"     HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"/>
+                    <TextBox Name="StrengthBox" VerticalAlignment="Center" Width="80" Height="25" Grid.Row="1" Grid.Column="2" VerticalContentAlignment="Center" TextWrapping="NoWrap" TextChanged="StrengthBox_OnTextChanged" PreviewTextInput="NumberValidationTextBox"/>
+                    <TextBlock Text="{Binding StressUnit}"   HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="4"/>
 
-                    <TextBlock Text="Nonlinear behavior:"     HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
-                    <ComboBox Name="ConstitutiveBox" VerticalAlignment="Center" Width="80" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="ConstitutiveBox_OnSelectionChanged"/>
-
+                    <TextBlock Text="Maximum aggregate diameter:"     HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2"  Grid.Column="1"/>
+                    <TextBox Name="AggDiamBox" VerticalAlignment="Center" Width="80" Height="25" Grid.Row="2" Grid.Column="2" VerticalContentAlignment="Center" TextWrapping="NoWrap" PreviewTextInput="NumberValidationTextBox"/>
+                    <TextBlock Text="{Binding AggregateUnit}"   HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="4"/>
+                    
                     <TextBlock Text="Aggregate type:"     HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="3" Grid.Column="1"/>
                     <ComboBox Name="AggTypeBox" VerticalAlignment="Center" Width="80" Height="25" Grid.Row="3" Grid.Column="2" SelectionChanged="AggTypeBox_OnSelectionChanged"/>
 
-                    <TextBlock Text="Compressive strength (fc):"     HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="1"/>
-                    <TextBox Name="StrengthBox" VerticalAlignment="Center" Width="80" Height="25" Grid.Row="4" Grid.Column="2" VerticalContentAlignment="Center" TextWrapping="NoWrap" TextChanged="StrengthBox_OnTextChanged" PreviewTextInput="NumberValidationTextBox"/>
-                    <TextBlock Text="{Binding StressUnit}"   HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="4"/>
-
-                    <TextBlock Text="Maximum aggregate diameter:"     HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="5"  Grid.Column="1"/>
-                    <TextBox Name="AggDiamBox" VerticalAlignment="Center" Width="80" Height="25" Grid.Row="5" Grid.Column="2" VerticalContentAlignment="Center" TextWrapping="NoWrap" PreviewTextInput="NumberValidationTextBox"/>
-                    <TextBlock Text="{Binding AggregateUnit}"   HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="5" Grid.Column="4"/>
+                    <TextBlock Text="Nonlinear constitutive model:"     HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="1"/>
+                    <ComboBox Name="ConstitutiveBox" VerticalAlignment="Center" Width="80" Height="25" Grid.Row="4" Grid.Column="2" SelectionChanged="ConstitutiveBox_OnSelectionChanged"/>
                 </Grid>
             </StackPanel>
         </Border>
 
-        <TextBlock Text="Custom parameters:" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2"  Grid.Column="2" ToolTip="Set custom parameter model to edit."/>
-        <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="3" Grid.Column="2">
+        <TextBlock Text="Auxiliary parameters:" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2"  Grid.Column="2" ToolTip="Set custom parameter model to edit."/>
+        <ComboBox Name="ParameterBox" VerticalAlignment="Center" Width="80" Height="25" Grid.Row="2" Grid.Column="3" ToolTip="Select a parameter model or custom" SelectionChanged="ParameterBox_OnSelectionChanged"/>
+        <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="3">
             <StackPanel>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -104,7 +103,7 @@
             </StackPanel>
         </Border>
 
-        <Button Content="OK" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="2" Click="ButtonOK_OnClick" ToolTip="Save concrete parameters"/>
-        <Button Content="Cancel" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="2" Margin="0,0,80,0" Click="ButtonCancel_OnClick" ToolTip="Discard changes"/>
+        <Button Content="OK" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="3" Grid.ColumnSpan="2" Click="ButtonOK_OnClick" ToolTip="Save concrete parameters"/>
+        <Button Content="Cancel" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75" Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="3" Margin="0,0,80,0" Click="ButtonCancel_OnClick" ToolTip="Discard changes"/>
     </Grid>
 </Window>
