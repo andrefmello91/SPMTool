@@ -8,6 +8,7 @@ using Extensions.AutoCAD;
 using Extensions.Number;
 using Material.Concrete;
 using Material.Reinforcement;
+using Material.Reinforcement.Uniaxial;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Enums;
@@ -213,10 +214,10 @@ namespace SPMTool.Database.Elements
 		/// <param name="nodes">The collection containing all <see cref="Node"/>'s of SPM model.</param>
 		/// <param name="units">Units current in use <see cref="Units"/>.</param>
 		/// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
-		/// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
+		/// <param name="model">The concrete <see cref="ConstitutiveModel"/>.</param>
 		/// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-		public static IEnumerable<Stringer> Read(IEnumerable<Line> lines, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
-			lines?.Select(line => Read(line, units, concreteParameters, concreteConstitutive, nodes, analysisType)).OrderBy(str => str.Number);
+		public static IEnumerable<Stringer> Read(IEnumerable<Line> lines, Units units, Parameters concreteParameters, ConstitutiveModel model, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
+			lines?.Select(line => Read(line, units, concreteParameters, model, nodes, analysisType)).OrderBy(str => str.Number);
 
         /// <summary>
         /// Read a <see cref="Stringer"/> in drawing.
@@ -225,9 +226,9 @@ namespace SPMTool.Database.Elements
         /// <param name="nodes">The collection containing all <see cref="Node"/>'s of SPM model.</param>
 		/// <param name="units">Units current in use <see cref="Units"/>.</param>
         /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
-        /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
+        /// <param name="model">The concrete <see cref="ConstitutiveModel"/>.</param>
         /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-        public static Stringer Read(Line line, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
+        public static Stringer Read(Line line, Units units, Parameters concreteParameters, ConstitutiveModel model, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
 		{
 			// Read the XData and get the necessary data
 			var data = line.ReadXData();
@@ -243,7 +244,7 @@ namespace SPMTool.Database.Elements
 			// Get reinforcement
 			var reinforcement = GetReinforcement(data, width * height);
 
-			return Stringer.Read(analysisType, line.ObjectId, number, nodes, line.StartPoint, line.EndPoint, width, height, concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
+			return Stringer.Read(analysisType, line.ObjectId, number, nodes, line.StartPoint, line.EndPoint, width, height, concreteParameters, model, reinforcement, units.Geometry);
 		}
 
         /// <summary>

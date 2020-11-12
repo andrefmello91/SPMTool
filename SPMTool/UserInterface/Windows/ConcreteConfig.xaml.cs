@@ -69,7 +69,7 @@ namespace SPMTool.UserInterface
 		}
 
         public ConcreteConfig(Parameters parameters, Constitutive constitutive)
-	        : this (parameters, Constitutive.ReadConstitutiveModel(constitutive))
+	        : this (parameters, Constitutive.ReadModel(constitutive))
         {
 		}
 

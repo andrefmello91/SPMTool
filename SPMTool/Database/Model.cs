@@ -95,7 +95,7 @@ namespace SPMTool.Database
 
 	        // Get concrete
 	        var parameters   = ConcreteData.Parameters;
-	        var constitutive = ConcreteData.Constitutive;
+	        var constitutive = ConcreteData.ConstitutiveModel;
 
 	        // Read elements
 	        var ndObjs  = NodeCollection;
@@ -141,7 +141,7 @@ namespace SPMTool.Database
 
             // Get concrete and units
             var parameters   = ConcreteData.Parameters;
-            var constitutive = ConcreteData.Constitutive;
+            var constitutive = ConcreteData.ConstitutiveModel;
 	        var units        = UnitsData.SavedUnits;
 
 	        if (layer is Layer.IntNode || layer is Layer.ExtNode)
