@@ -359,7 +359,7 @@ namespace SPMTool.Database.Elements
 	        foreach (var stringer in stringers)
 	        {
 		        // Check if the stringer is loaded
-		        if (stringer.State is Stringer.ForceState.Unloaded)
+		        if (stringer.State is ForceState.Unloaded)
 			        continue;
 
 		        // Get the parameters of the Stringer
@@ -379,7 +379,7 @@ namespace SPMTool.Database.Elements
 			        h3 = (150 * N3 / maxForce).ConvertFromMillimeter(units.Geometry);
 
 		        // Check if load state is pure tension or compression
-		        if (stringer.State != Stringer.ForceState.Combined)
+		        if (stringer.State != ForceState.Combined)
 					PureTensionOrCompression();
 
                 else
