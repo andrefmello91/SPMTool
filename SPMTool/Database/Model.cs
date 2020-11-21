@@ -118,8 +118,8 @@ namespace SPMTool.Database
 	        //Supports.Set(SupportCollection, nodes);
 
 	        // Get stringers and panels
-	        var stringers = Stringers.Read(strObjs, units, parameters, constitutive, nodes, analysisType);
-	        var panels = Panels.Read(pnlObjs, units, parameters, constitutive, nodes, analysisType);
+	        var stringers = Stringers.Read(strObjs, units, parameters, constitutive, nodes, analysisType).ToArray();
+	        var panels    = Panels.Read(pnlObjs, units, parameters, constitutive, nodes, analysisType).ToArray();
 
 	        // Generate input
 	        dataOk = true;
