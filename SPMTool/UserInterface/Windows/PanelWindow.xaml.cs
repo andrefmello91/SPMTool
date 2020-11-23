@@ -13,6 +13,7 @@ using Extensions.AutoCAD;
 using Extensions.Interface;
 using Extensions.Number;
 using Material.Reinforcement;
+using Material.Reinforcement.Biaxial;
 using MathNet.Numerics;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database;

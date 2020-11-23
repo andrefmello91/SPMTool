@@ -8,6 +8,8 @@ using Extensions;
 using Extensions.AutoCAD;
 using Extensions.Number;
 using Material.Reinforcement;
+using Material.Reinforcement.Biaxial;
+using Material.Reinforcement.Uniaxial;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database;

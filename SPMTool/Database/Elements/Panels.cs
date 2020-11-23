@@ -8,6 +8,7 @@ using Extensions.AutoCAD;
 using Extensions.Number;
 using Material.Concrete;
 using Material.Reinforcement;
+using Material.Reinforcement.Biaxial;
 using MathNet.Numerics;
 using SPM.Elements;
 using SPM.Elements.PanelProperties;
@@ -454,28 +455,28 @@ namespace SPMTool.Database.Elements
 
 		}
 
-        /// <summary>
-        /// Read the <see cref="Panel"/> objects in the drawing.
-        /// </summary>
-        /// <param name="panelObjects">The collection of panels objects in the drawing.</param>
-        /// <param name="units">Units current in use <see cref="Units"/>.</param>
-        /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
-        /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
+		/// <summary>
+		/// Read the <see cref="Panel"/> objects in the drawing.
+		/// </summary>
+		/// <param name="panelObjects">The collection of panels objects in the drawing.</param>
+		/// <param name="units">Units current in use <see cref="Units"/>.</param>
+		/// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
+		/// <param name="model">The concrete <see cref="ConstitutiveModel"/>.</param>
         /// <param name="nodes">The collection containing all <see cref="Node"/>'s of SPM model.</param>
 		/// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-        public static IEnumerable<Panel> Read(IEnumerable<Solid> panelObjects, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
-			panelObjects.Select(pnl => Read(pnl, units, concreteParameters, concreteConstitutive, nodes, analysisType)).OrderBy(pnl => pnl.Number);
+		public static IEnumerable<Panel> Read(IEnumerable<Solid> panelObjects, Units units, Parameters concreteParameters, ConstitutiveModel model, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
+			panelObjects.Select(pnl => Read(pnl, units, concreteParameters, model, nodes, analysisType)).OrderBy(pnl => pnl.Number);
 
 		/// <summary>
-        /// Read a <see cref="Panel"/> in drawing.
-        /// </summary>
-        /// <param name="panelObject">The <see cref="Solid"/> object of the panel from AutoCAD drawing.</param>
-        /// <param name="units">Units current in use <see cref="Units"/>.</param>
-        /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
-        /// <param name="concreteConstitutive">The concrete constitutive <see cref="Constitutive"/>.</param>
+		/// Read a <see cref="Panel"/> in drawing.
+		/// </summary>
+		/// <param name="panelObject">The <see cref="Solid"/> object of the panel from AutoCAD drawing.</param>
+		/// <param name="units">Units current in use <see cref="Units"/>.</param>
+		/// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
+		/// <param name="model">The concrete <see cref="ConstitutiveModel"/>.</param>
         /// <param name="nodes">The collection containing all <see cref="Node"/>'s of SPM model.</param>
-        /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-        public static Panel Read(Solid panelObject, Units units, Parameters concreteParameters, Constitutive concreteConstitutive, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
+		/// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
+		public static Panel Read(Solid panelObject, Units units, Parameters concreteParameters, ConstitutiveModel model, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
 		{
 			// Read the XData and get the necessary data
 			var pnlData = panelObject.ReadXData(DataBase.AppName);
@@ -505,7 +506,7 @@ namespace SPMTool.Database.Elements
 			// Get reinforcement
 			var reinforcement = new WebReinforcement(phiX, sx, steelX, phiY, sy, steelY, Length.FromMillimeters(width).ToUnit(units.Geometry));
 
-			return Panel.Read(analysisType, panelObject.ObjectId, number, nodes, panelObject.GetVertices(), width.ConvertFromMillimeter(units.Geometry), concreteParameters, concreteConstitutive, reinforcement, units.Geometry);
+			return Panel.Read(analysisType, panelObject.ObjectId, number, nodes, panelObject.GetVertices(), width.ConvertFromMillimeter(units.Geometry), concreteParameters, model, reinforcement, units.Geometry);
 		}
 
 		/// <summary>
