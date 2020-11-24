@@ -6,7 +6,7 @@
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         xmlns:local="clr-namespace:SPMTool.UserInterface"
         mc:Ignorable="d"
-        Title="Load x Displacement - Monitored Node" Height="520" Width="710" d:DataContext="{d:DesignData }">
+        Title="Load x Displacement - Monitored Node" Height="520" Width="710">
     <Grid Background="#282c34" Width="700" Height="Auto">
         <Grid.RowDefinitions>
             <RowDefinition Height="450"/>
