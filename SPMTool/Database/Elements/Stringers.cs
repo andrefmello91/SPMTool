@@ -219,16 +219,16 @@ namespace SPMTool.Database.Elements
 		public static IEnumerable<Stringer> Read(IEnumerable<Line> lines, Units units, Parameters concreteParameters, ConstitutiveModel model, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
 			lines?.Select(line => Read(line, units, concreteParameters, model, nodes, analysisType)).OrderBy(str => str.Number);
 
-        /// <summary>
-        /// Read a <see cref="Stringer"/> in drawing.
-        /// </summary>
-        /// <param name="line">The <see cref="Line"/> object of the stringer from AutoCAD drawing.</param>
-        /// <param name="nodes">The collection containing all <see cref="Node"/>'s of SPM model.</param>
+		/// <summary>
+		/// Read a <see cref="Stringer"/> in drawing.
+		/// </summary>
+		/// <param name="line">The <see cref="Line"/> object of the stringer from AutoCAD drawing.</param>
+		/// <param name="nodes">The collection containing all <see cref="Node"/>'s of SPM model.</param>
 		/// <param name="units">Units current in use <see cref="Units"/>.</param>
-        /// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
-        /// <param name="model">The concrete <see cref="ConstitutiveModel"/>.</param>
-        /// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
-        public static Stringer Read(Line line, Units units, Parameters concreteParameters, ConstitutiveModel model, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
+		/// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
+		/// <param name="model">The concrete <see cref="ConstitutiveModel"/>.</param>
+		/// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
+		public static Stringer Read(Line line, Units units, Parameters concreteParameters, ConstitutiveModel model, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
 		{
 			// Read the XData and get the necessary data
 			var data = line.ReadXData();
@@ -359,7 +359,7 @@ namespace SPMTool.Database.Elements
 	        foreach (var stringer in stringers)
 	        {
 		        // Check if the stringer is loaded
-		        if (stringer.State is ForceState.Unloaded)
+		        if (stringer.State is Stringer.ForceState.Unloaded)
 			        continue;
 
 		        // Get the parameters of the Stringer
@@ -379,7 +379,7 @@ namespace SPMTool.Database.Elements
 			        h3 = (150 * N3 / maxForce).ConvertFromMillimeter(units.Geometry);
 
 		        // Check if load state is pure tension or compression
-		        if (stringer.State != ForceState.Combined)
+		        if (stringer.State != Stringer.ForceState.Combined)
 					PureTensionOrCompression();
 
                 else

@@ -64,12 +64,7 @@ namespace SPMTool.UserInterface
         }
 
         public ConcreteConfig(Concrete concrete)
-	        : this (concrete?.Parameters ?? new MC2010Parameters(30, 19), ConstitutiveModel.MCFT)
-        {
-		}
-
-        public ConcreteConfig(Parameters parameters, Constitutive constitutive)
-	        : this (parameters, Constitutive.ReadModel(constitutive))
+	        : this (concrete?.Parameters ?? new MC2010Parameters(30, 19), concrete?.Model ?? ConstitutiveModel.MCFT)
         {
 		}
 

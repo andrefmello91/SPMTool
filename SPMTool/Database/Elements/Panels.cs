@@ -485,9 +485,6 @@ namespace SPMTool.Database.Elements
 			var number = pnlData[(int)PanelIndex.Number].ToInt();
 			var width  = pnlData[(int)PanelIndex.Width].ToDouble();
 
-			// Get vertices
-			var verts = panelObject.GetVertices().ToArray();
-
 			// Get reinforcement
 			Length
 				phiX = Length.FromMillimeters(pnlData[(int)PanelIndex.XDiam].ToDouble()).ToUnit(units.Reinforcement),
@@ -509,7 +506,7 @@ namespace SPMTool.Database.Elements
 			// Get reinforcement
 			var reinforcement = new WebReinforcement(phiX, sx, steelX, phiY, sy, steelY, Length.FromMillimeters(width).ToUnit(units.Geometry));
 
-			return Panel.Read(analysisType, panelObject.ObjectId, number, nodes, verts, width.ConvertFromMillimeter(units.Geometry), concreteParameters, model, reinforcement, units.Geometry);
+			return Panel.Read(analysisType, panelObject.ObjectId, number, nodes, panelObject.GetVertices(), width.ConvertFromMillimeter(units.Geometry), concreteParameters, model, reinforcement, units.Geometry);
 		}
 
 		/// <summary>
