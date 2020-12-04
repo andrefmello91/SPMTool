@@ -571,6 +571,8 @@ namespace SPMTool.Database.Elements
 	        Layer.PanelForce.EraseObjects();
 	        Layer.CompressivePanelStress.EraseObjects();
 	        Layer.TensilePanelStress.EraseObjects();
+			Layer.ConcreteCompressiveStress.EraseObjects();
+			Layer.ConcreteTensileStress.EraseObjects();
 
 	        // Start a transaction
 	        using (var trans = DataBase.StartTransaction())
