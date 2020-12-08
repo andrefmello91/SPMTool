@@ -27,6 +27,7 @@ namespace SPMTool.Editor.Commands
 
             // Do a linear analysis
             var analysis = new LinearAnalysis(input);
+			analysis.Do();
 
             // Draw results of analysis
             Model.DrawResults(analysis, UnitsData.SavedUnits);
@@ -50,10 +51,9 @@ namespace SPMTool.Editor.Commands
 			if(!uIndexn.HasValue)
 				return;
 
-			int uIndex = uIndexn.Value;
-
             // Do analysis
-            var analysis = new SecantAnalysis(input, uIndex);
+            var analysis = new SecantAnalysis(input);
+			analysis.Do(uIndexn.Value);
 
             // Show load-displacement diagram
             var units = UnitsData.SavedUnits;
