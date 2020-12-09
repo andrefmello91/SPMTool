@@ -223,7 +223,7 @@ namespace SPMTool.UserInterface
 			InitializeComponent();
 
             // Get stringer image
-            CrossSection.Source = Ribbon.GetBitmap(Properties.Resources.stringer_cross_section);
+            CrossSection.Source = Icons.GetBitmap(Properties.Resources.stringer_cross_section);
 
             GetInitialGeometry();
 

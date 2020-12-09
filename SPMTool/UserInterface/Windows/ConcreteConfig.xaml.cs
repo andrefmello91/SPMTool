@@ -81,7 +81,7 @@ namespace SPMTool.UserInterface
             InitializeComponent();
 
             // Get image
-            Graph.Source = Ribbon.GetBitmap(Properties.Resources.concrete_constitutive);
+            Graph.Source = Icons.GetBitmap(Properties.Resources.concrete_constitutive);
 
 			// Initiate combo boxes with units set
             InitiateComboBoxes();
