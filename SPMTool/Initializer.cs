@@ -1,8 +1,9 @@
 ﻿using System;
-using Autodesk.AutoCAD.ApplicationServices.Core;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Database;
 using SPMTool.UserInterface;
+using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool
 {
@@ -52,7 +53,7 @@ namespace SPMTool
         /// <summary>
         /// Alternate colors if theme is changed.
         /// </summary>
-        public void ColorThemeChanged(object senderObj, Autodesk.AutoCAD.ApplicationServices.SystemVariableChangedEventArgs sysVarChEvtArgs)
+        public void ColorThemeChanged(object senderObj, SystemVariableChangedEventArgs sysVarChEvtArgs)
 		{
 			// Check if it's a theme change
 			if (sysVarChEvtArgs.Name != "COLORTHEME")
