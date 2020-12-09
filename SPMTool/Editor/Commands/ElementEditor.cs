@@ -183,7 +183,7 @@ namespace SPMTool.Editor.Commands
 
 						// Erase and remove from the list
 						toErase.Add(str);
-						geoList?.Remove(new StringerGeometry(str.StartPoint, str.EndPoint, 0, 0));
+						geoList.Remove(new StringerGeometry(str.StartPoint, str.EndPoint, 0, 0));
 					}
 
 					// Calculate the distance of the points in X and Y
@@ -243,7 +243,7 @@ namespace SPMTool.Editor.Commands
 
 			if (error)
 			{
-				Model.Editor.WriteMessage("\nAt least one selected panel is not rectangular.");
+				Application.ShowAlertDialog("\nAt least one selected panel is not rectangular.");
 				return;
 			}
 

@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Extensions.AutoCAD;
 using SPMTool.Database;
 using SPMTool.Database.Elements;
 using SPMTool.Editor.Commands;
+using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
+
 
 [assembly: CommandClass(typeof(ElementInput))]
 
@@ -24,11 +25,11 @@ namespace SPMTool.Editor.Commands
 	    [CommandMethod("AddStringer")]
 	    public static void AddStringer()
 	    {
-		    // Get units
-		    var units = UnitsData.SavedUnits;
+			// Get current OSMODE
+			var osmode = GetSystemVariable("OSMODE");
 
-		    // Get the list of start and endpoints
-		    var strList = Stringers.StringerGeometries();
+			// Set OSMODE only to end point and node
+			SetSystemVariable("OSMODE", 9);
 
 		    // Prompt for the start point of Stringer
 		    var stPtn = UserInput.GetPoint("Enter the start point:");
@@ -66,6 +67,9 @@ namespace SPMTool.Editor.Commands
 		    // Update the nodes and stringers
 		    Nodes.Update();
 		    Stringers.Update(false);
+
+			// Set old OSMODE
+			SetSystemVariable("OSMODE", osmode);
 	    }
 
 		[CommandMethod("AddPanel")]
@@ -89,7 +93,7 @@ namespace SPMTool.Editor.Commands
 					Panels.Add(nds.Select(nd => nd.Position).ToArray(), units.Geometry);
 
 				else
-					Application.ShowAlertDialog("Please select four external nodes.");
+					ShowAlertDialog("Please select four external nodes.");
 			}
 
 			// Update panels

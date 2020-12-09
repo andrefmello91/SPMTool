@@ -97,38 +97,18 @@ namespace SPMTool.Editor
 				MessageForAdding = $"\n{message}"
 			};
 
-			var selRes = Model.Editor.GetSelection(selOp);
+			// Get the selection filter
+			var filter = LayerFilter(layers);
 
-			if (selRes.Status == PromptStatus.Cancel)
+			var selRes = filter is null
+				? Model.Editor.GetSelection(selOp) 
+				: Model.Editor.GetSelection(selOp, filter);
+
+			if (selRes.Status == PromptStatus.Cancel || selRes.Value is null)
 				return null;
 
-			var set = selRes.Value;
-
-			var collection = new List<DBObject>();
-
-			if (set.Count == 0)
-				return collection;
-
-			var filter = layers?.ToArray();
-			
-			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
-			{
-				// Get the objects in the selection and add to the collection only the external nodes
-				foreach (SelectedObject obj in set)
-				{
-					var ent = (Entity) trans.GetObject(obj.ObjectId, OpenMode.ForRead);
-
-                    // Get layername
-                    var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
-
-					// Check if it is a external node
-					if (layers is null || filter.Contains(layer))
-						collection.Add(ent);
-				}
-			}
-
-			return collection;
+			return
+				(from SelectedObject obj in selRes.Value select obj.ObjectId).GetDBObjects();
 		}
 
         /// <summary>
@@ -149,7 +129,7 @@ namespace SPMTool.Editor
 			// Create an infinite loop for selecting elements
 			for ( ; ; )
 			{
-				var nds = SelectObjects(message, layers);
+				var nds = SelectObjects(message, layers)?.ToArray();
 
 				if (nds is null)
 					return null;
@@ -654,5 +634,13 @@ namespace SPMTool.Editor
 	        return
 		        index[dirIndex];
         }
+
+		/// <summary>
+		/// Create a <see cref="SelectionFilter"/> based on <paramref name="layers"/>.
+		/// </summary>
+        private static SelectionFilter LayerFilter(IEnumerable<Layer> layers) =>
+	        layers is null || !layers.Any()
+		        ? null
+		        : new SelectionFilter(layers.Select(l => new TypedValue((int)DxfCode.LayerName, l.ToString())).ToArray());
 	}
 }
