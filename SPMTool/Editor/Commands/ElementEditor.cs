@@ -247,6 +247,9 @@ namespace SPMTool.Editor.Commands
 				return;
 			}
 
+			// Erase objects
+			toErase.Remove();
+
 			// Create the stringers
 			foreach (var str in newStrList)
 				Stringers.Add(str);
