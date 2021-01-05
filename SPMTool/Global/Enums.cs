@@ -28,6 +28,7 @@
     /// </summary>
     public enum Color : short
 	{
+		White   = 0,
 		Red     = 1,
 		Yellow  = 2,
 		Yellow1 = 41,
@@ -56,7 +57,8 @@
 		TensilePanelStress,
 		ConcreteCompressiveStress,
 		ConcreteTensileStress,
-		Displacements
+		Displacements,
+		Cracks
 	}
 
 	/// <summary>
@@ -70,7 +72,8 @@
 		ForceBlock,
 		ShearBlock,
 		CompressiveStressBlock,
-		TensileStressBlock
+		TensileStressBlock,
+		CrackBlock
 	}
 
 	/// <summary>

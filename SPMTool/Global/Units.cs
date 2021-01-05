@@ -24,6 +24,11 @@ namespace SPMTool
 		/// </summary>
 		public LengthUnit Displacements    { get; set; }
 
+		/// <summary>
+		/// Get/set the <see cref="LengthUnit"/> for crack openings.
+		/// </summary>
+		public LengthUnit CrackOpenings    { get; set; }
+
         /// <summary>
         /// Get/set the <see cref="ForceUnit"/> for applied forces.
         /// </summary>
@@ -121,6 +126,7 @@ namespace SPMTool
 			Geometry              = LengthUnit.Millimeter,
 			Reinforcement         = LengthUnit.Millimeter,
 			Displacements         = LengthUnit.Millimeter,
+			CrackOpenings         = LengthUnit.Millimeter,
 			AppliedForces         = ForceUnit.Kilonewton,
 			StringerForces        = ForceUnit.Kilonewton,
 			PanelStresses         = PressureUnit.Megapascal,

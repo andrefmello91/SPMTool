@@ -37,14 +37,12 @@ namespace SPMTool.Database
         /// <summary>
         /// Get Named Objects Dictionary for read.
         /// </summary>
-        public static DBDictionary Nod
-        {
-	        get
-	        {
-		        using (var trans = StartTransaction())
-			        return (DBDictionary) trans.GetObject(NodId, OpenMode.ForRead);
-	        }
-        }
+        public static DBDictionary Nod => (DBDictionary)StartTransaction().GetObject(NodId, OpenMode.ForRead);
+
+        /// <summary>
+        /// Get BlockTable for read.
+        /// </summary>
+        public static BlockTable BlockTable => (BlockTable) StartTransaction().GetObject(BlockTableId, OpenMode.ForRead);
 
         /// <summary>
         /// Get Named Objects <see cref="ObjectId"/>.
@@ -123,6 +121,7 @@ namespace SPMTool.Database
 			Layer.ConcreteTensileStress.Create(Color.Red, 80);
 			Layer.StringerForce.Create(Color.Grey);
 			Layer.Displacements.Create(Color.Yellow1);
+			Layer.Cracks.Create(Color.White);
 		}
 
         /// <summary>

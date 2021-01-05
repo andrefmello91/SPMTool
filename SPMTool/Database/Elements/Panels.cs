@@ -456,13 +456,93 @@ namespace SPMTool.Database.Elements
 		}
 
 		/// <summary>
+		/// Create the block for panel cracks.
+		/// </summary>
+		private static void CreateCrackBlock()
+		{
+			// Start a transaction
+			using (var trans = DataBase.StartTransaction())
+			{
+				// Open the Block table for read
+				var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
+
+				// Initialize the block Id
+				var crackBlock = ObjectId.Null;
+
+				// Check if the support blocks already exist in the drawing
+				if (blkTbl.Has($"{Block.CrackBlock}"))
+					return;
+
+				// Create the X block
+				using (var blkTblRec = new BlockTableRecord())
+				{
+					blkTblRec.Name = $"{Block.CrackBlock}";
+
+					// Add the block table record to the block table and to the transaction
+					blkTbl.UpgradeOpen();
+					blkTbl.Add(blkTblRec);
+					trans.AddNewlyCreatedDBObject(blkTblRec, true);
+
+					// Set the name
+					crackBlock = blkTblRec.Id;
+
+					// Set the insertion point for the block
+					blkTblRec.Origin = new Point3d(320, 0, 0);
+
+					// Define the points to add the lines
+					var crkPts = CrackPoints().ToArray();
+					IEnumerable<Point3d> CrackPoints()
+					{
+						for (int i = 0; i < 8; i++)
+						{
+							// Set the start X coordinate
+							double x = 80 * i;
+
+							yield return new Point3d(x, 0, 0);
+							yield return new Point3d(x + 20,  3.5265, 0);
+							yield return new Point3d(x + 60, -3.5265, 0);
+						}
+
+						// Add the end point
+						yield return new Point3d(640, 0, 0);
+					}
+
+					// Create a object collection and add the lines
+					using (var lines = new DBObjectCollection())
+					{
+						// Define the lines and add to the collection
+						for (int i = 0; i < crkPts.Length; i++)
+						{
+							lines.Add(new Line
+							{
+								StartPoint = crkPts[i],
+								EndPoint   = crkPts[i + 1],
+								LineWeight = LineWeight.LineWeight050
+							});
+						}
+
+						// Add the lines to the block table record
+						foreach (Entity ent in lines)
+						{
+							blkTblRec.AppendEntity(ent);
+							trans.AddNewlyCreatedDBObject(ent, true);
+						}
+					}
+				}
+
+				// Commit and dispose the transaction
+				trans.Commit();
+			}
+		}
+
+		/// <summary>
 		/// Read the <see cref="Panel"/> objects in the drawing.
 		/// </summary>
 		/// <param name="panelObjects">The collection of panels objects in the drawing.</param>
 		/// <param name="units">Units current in use <see cref="Units"/>.</param>
 		/// <param name="concreteParameters">The concrete parameters <see cref="Parameters"/>.</param>
 		/// <param name="model">The concrete <see cref="ConstitutiveModel"/>.</param>
-        /// <param name="nodes">The collection containing all <see cref="Node"/>'s of SPM model.</param>
+		/// <param name="nodes">The collection containing all <see cref="Node"/>'s of SPM model.</param>
 		/// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType"/>).</param>
 		public static IEnumerable<Panel> Read(IEnumerable<Solid> panelObjects, Units units, Parameters concreteParameters, ConstitutiveModel model, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
 			panelObjects.Select(pnl => Read(pnl, units, concreteParameters, model, nodes, analysisType)).OrderBy(pnl => pnl.Number);
@@ -574,8 +654,8 @@ namespace SPMTool.Database.Elements
 			Layer.ConcreteCompressiveStress.EraseObjects();
 			Layer.ConcreteTensileStress.EraseObjects();
 
-	        // Start a transaction
-	        using (var trans = DataBase.StartTransaction())
+			// Read the object Ids of the support blocks
+			using (var trans = DataBase.StartTransaction())
 	        using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
 	        {
 		        // Read the object Ids of the support blocks
@@ -598,8 +678,6 @@ namespace SPMTool.Database.Elements
 
 			        // Calculate the scale factor for the block and text
 			        double scFctr = 0.001 * lMax;
-
-			        // Get principal stresses
 
 					// Add shear block
 					AddShearBlock();
@@ -773,6 +851,93 @@ namespace SPMTool.Database.Elements
 	        Layer.TensilePanelStress.Off();
 	        Layer.ConcreteCompressiveStress.Off();
 	        Layer.ConcreteTensileStress.Off();
+			Layer.Cracks.Off();
+        }
+
+		/// <summary>
+        /// Draw panel cracks.
+        /// </summary>
+        /// <param name="panels">The collection of <see cref="Panel"/>'s.</param>
+        /// <param name="units">Current <see cref="Units"/>.</param>
+        public static void DrawCracks(IEnumerable<Panel> panels, Units units)
+        {
+	        // Erase all the panel cracks in the drawing
+	        Layer.Cracks.EraseObjects();
+
+	        // Start a transaction
+	        using (var trans = DataBase.StartTransaction())
+	        using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
+	        {
+		        // Read the object Id of the crack block
+		        var shearBlock = blkTbl[$"{Block.CrackBlock}"];
+
+		        foreach (var pnl in panels)
+		        {
+			        // Get panel data
+			        var l      = pnl.Geometry.EdgeLengths;
+			        var cntrPt = pnl.Geometry.Vertices.CenterPoint;
+
+			        // Get the maximum length of the panel
+			        double lMax = l.Max().ConvertFromMillimeter(units.Geometry);
+
+			        // Get the average crack opening
+			        double w = pnl.CrackOpening;
+
+			        // Calculate the scale factor for the block and text
+			        double scFctr = 0.001 * lMax;
+
+					// Add crack blocks
+					AddCrackBlock();
+
+                    // Create crack block
+                    void AddCrackBlock()
+			        {
+						if (w.ApproxZero(1E-6))
+							return;
+
+						// Get the cracking angle
+						var crkAngle = pnl.ConcretePrincipalStrains.Theta2;
+
+						// Insert the block into the current space
+						using (var blkRef = new BlockReference(cntrPt, shearBlock))
+				        {
+					        blkRef.Layer = $"{Layer.Cracks}";
+
+					        // Set the scale of the block
+					        blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
+
+							// Rotate
+							blkRef.TransformBy(Matrix3d.Rotation(crkAngle, DataBase.Ucs.Zaxis, cntrPt));
+
+					        blkRef.Add();
+				        }
+
+				        // Create the texts
+				        using (var crkTxt = new DBText())
+				        {
+					        // Set the alignment point
+					        var algnPt = new Point3d(cntrPt.X, cntrPt.Y, 0);
+
+					        // Set the parameters
+					        crkTxt.Layer = $"{Layer.Cracks}";
+					        crkTxt.Height = 30 * scFctr;
+					        crkTxt.TextString = $"{Math.Abs(w.ConvertFromMillimeter(units.CrackOpenings)):0.00}";
+					        crkTxt.Position = algnPt;
+					        crkTxt.HorizontalMode = TextHorizontalMode.TextCenter;
+					        crkTxt.AlignmentPoint = algnPt;
+
+							// Rotate text
+							crkTxt.TransformBy(Matrix3d.Rotation(crkAngle, DataBase.Ucs.Zaxis, cntrPt));
+
+							// Add the text to the drawing
+							crkTxt.Add();
+				        }
+			        }
+		        }
+
+		        // Save the new objects to the database
+		        trans.Commit();
+	        }
         }
  
 		/// <summary>
