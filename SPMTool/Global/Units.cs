@@ -5,9 +5,9 @@ using UnitsNet.Units;
 namespace SPMTool
 {
 	/// <summary>
-    /// Units struct.
+    /// Units class.
     /// </summary>
-	public struct Units : IEquatable<Units>
+	public class Units : IEquatable<Units>
     {
 		/// <summary>
         /// Get/set the <see cref="LengthUnit"/> for geometry.
@@ -138,7 +138,7 @@ namespace SPMTool
         /// Returns true if all units coincide.
         /// </summary>
         /// <param name="other">The other <see cref="Units"/> object.</param>
-        public bool Equals(Units other) => Geometry == other.Geometry && Reinforcement == other.Reinforcement && Displacements == other.Displacements && AppliedForces == other.AppliedForces && StringerForces == other.StringerForces && PanelStresses == other.PanelStresses && MaterialStrength == other.MaterialStrength;
+        public bool Equals(Units other) => !(other is null) && Geometry == other.Geometry && Reinforcement == other.Reinforcement && Displacements == other.Displacements && AppliedForces == other.AppliedForces && StringerForces == other.StringerForces && PanelStresses == other.PanelStresses && MaterialStrength == other.MaterialStrength;
 
 		public override bool Equals(object obj) => obj is Units units && Equals(units);
 
@@ -147,11 +147,11 @@ namespace SPMTool
 		/// <summary>
 		/// Returns true if all units coincide.
 		/// </summary>
-		public static bool operator == (Units left, Units right) => left.Equals(right);
+		public static bool operator == (Units left, Units right) => !(left is null) && left.Equals(right);
 
 		/// <summary>
 		/// Returns true if at least a unit do not coincide.
 		/// </summary>
-		public static bool operator != (Units left, Units right) => !left.Equals(right);
+		public static bool operator != (Units left, Units right) => !(left is null) && !left.Equals(right);
     }
 }

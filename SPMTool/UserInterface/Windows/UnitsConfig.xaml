@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SPMTool.UserInterface"
         mc:Ignorable="d"
-        Title="Units" Height="440" Width="290">
+        Title="Units" Height="470" Width="290" d:DataContext="{d:DesignData }">
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
@@ -32,6 +32,7 @@
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
                         <RowDefinition Height="5"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
@@ -41,13 +42,15 @@
                         <ColumnDefinition Width="5"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Geometry:"  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"/>
-                    <ComboBox Name="GeometryBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <ComboBox Name="GeometryBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2"/>
                     <TextBlock Text="Reinforcement / aggregate size:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
-                    <ComboBox Name="ReinforcementBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
-                    <TextBlock Text="Displacements:"     HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="3" Grid.Column="1"/>
-                    <ComboBox Name="DisplacementsBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="3" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
-                    <TextBlock Text="Displacement magnifier factor:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="1"/>
-                    <TextBox Name="FactorBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="4" Grid.Column="2" PreviewTextInput="IntValidationTextBox"/>
+                    <ComboBox Name="ReinforcementBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2"/>
+                    <TextBlock Text="Crack openings:"     HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="3" Grid.Column="1"/>
+                    <ComboBox Name="CracksBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="3" Grid.Column="2"/>
+                    <TextBlock Text="Displacements:"     HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4" Grid.Column="1"/>
+                    <ComboBox Name="DisplacementsBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="4" Grid.Column="2"/>
+                    <TextBlock Text="Displacement magnifier factor:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="5" Grid.Column="1"/>
+                    <TextBox Name="FactorBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="5" Grid.Column="2" PreviewTextInput="IntValidationTextBox"/>
                 </Grid>
             </StackPanel>
         </Border>
@@ -69,9 +72,9 @@
                         <ColumnDefinition Width="5"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Applied forces:"  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"/>
-                    <ComboBox Name="AppliedForcesBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <ComboBox Name="AppliedForcesBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2"/>
                     <TextBlock Text="Stringer Forces:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
-                    <ComboBox Name="StringerForcesBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <ComboBox Name="StringerForcesBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2"/>
                 </Grid>
             </StackPanel>
         </Border>
@@ -93,9 +96,9 @@
                         <ColumnDefinition Width="5"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Panel stresses:"  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"/>
-                    <ComboBox Name="PanelStressesBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <ComboBox Name="PanelStressesBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="1" Grid.Column="2"/>
                     <TextBlock Text="Material Strength / Module:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1"/>
-                    <ComboBox Name="MaterialBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2" SelectionChanged="Box_SelectionChanged"/>
+                    <ComboBox Name="MaterialBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70" Height="25" Grid.Row="2" Grid.Column="2"/>
                 </Grid>
             </StackPanel>
         </Border>

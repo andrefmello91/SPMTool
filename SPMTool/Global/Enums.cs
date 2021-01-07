@@ -187,6 +187,19 @@
 		StringerForces,
 		PanelStresses,
 		MaterialStrength,
-		DisplacementFactor
+		DisplacementFactor,
+		CrackOpenings
+	}
+
+	/// <summary>
+	/// Extended data index for analysis settings.
+	/// </summary>
+	public enum AnalysisIndex
+	{
+		AppName,
+		XDataStr,
+		Tolerance,
+		NumLoadSteps,
+		MaxIterations
 	}
 }
