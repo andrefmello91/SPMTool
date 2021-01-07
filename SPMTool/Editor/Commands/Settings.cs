@@ -22,5 +22,16 @@ namespace SPMTool.Editor.Commands
 		    var unitConfig = new UnitsConfig();
 		    Application.ShowModalWindow(Application.MainWindow.Handle, unitConfig, false);
 	    }
+
+		/// <summary>
+        /// Set analysis settings.
+        /// </summary>
+	    [CommandMethod("SetAnalysisSettings")]
+	    public static void SetAnalysisSettings()
+	    {
+		    // Start the window of units configuration
+		    var analysisConfig = new AnalysisConfig();
+		    Application.ShowModalWindow(Application.MainWindow.Handle, analysisConfig, false);
+	    }
     }
 }
