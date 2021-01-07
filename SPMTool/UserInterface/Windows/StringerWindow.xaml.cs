@@ -39,11 +39,11 @@ namespace SPMTool.UserInterface
 	    private Steel[] _savedSteel;
 
         // Properties
-        public string GeometryUnit => UnitsData.SavedUnits.Geometry.Abbrev();
+        public string GeometryUnit => SettingsData.SavedUnits.Geometry.Abbrev();
 
-        public string DiameterUnit => UnitsData.SavedUnits.Reinforcement.Abbrev();
+        public string DiameterUnit => SettingsData.SavedUnits.Reinforcement.Abbrev();
 
-        public string StressUnit => UnitsData.SavedUnits.MaterialStrength.Abbrev();
+        public string StressUnit => SettingsData.SavedUnits.MaterialStrength.Abbrev();
 
         /// <summary>
         /// Get header text.
@@ -128,8 +128,8 @@ namespace SPMTool.UserInterface
         /// </summary>
 		private double StrWidth
 		{
-			get => double.Parse(WBox.Text).Convert(UnitsData.SavedUnits.Geometry);
-			set => WBox.Text = $"{value.ConvertFromMillimeter(UnitsData.SavedUnits.Geometry):0.00}";
+			get => double.Parse(WBox.Text).Convert(SettingsData.SavedUnits.Geometry);
+			set => WBox.Text = $"{value.ConvertFromMillimeter(SettingsData.SavedUnits.Geometry):0.00}";
 		}
 
 		/// <summary>
@@ -137,8 +137,8 @@ namespace SPMTool.UserInterface
         /// </summary>
 		private double StrHeight
 		{
-			get => double.Parse(HBox.Text).Convert(UnitsData.SavedUnits.Geometry);
-			set => HBox.Text = $"{value.ConvertFromMillimeter(UnitsData.SavedUnits.Geometry):0.00}";
+			get => double.Parse(HBox.Text).Convert(SettingsData.SavedUnits.Geometry);
+			set => HBox.Text = $"{value.ConvertFromMillimeter(SettingsData.SavedUnits.Geometry):0.00}";
 		}
 
 		/// <summary>
@@ -155,8 +155,8 @@ namespace SPMTool.UserInterface
 		/// </summary>
 		private double BarDiameter
 		{
-			get => double.Parse(PhiBox.Text).Convert(UnitsData.SavedUnits.Reinforcement);
-			set => PhiBox.Text = $"{value.ConvertFromMillimeter(UnitsData.SavedUnits.Reinforcement):0.00}";
+			get => double.Parse(PhiBox.Text).Convert(SettingsData.SavedUnits.Reinforcement);
+			set => PhiBox.Text = $"{value.ConvertFromMillimeter(SettingsData.SavedUnits.Reinforcement):0.00}";
 		}
 
 		/// <summary>
@@ -164,8 +164,8 @@ namespace SPMTool.UserInterface
 		/// </summary>
 		private double YieldStress
 		{
-			get => double.Parse(FBox.Text).Convert(UnitsData.SavedUnits.MaterialStrength);
-			set => FBox.Text = $"{value.ConvertFromMPa(UnitsData.SavedUnits.MaterialStrength):0.00}";
+			get => double.Parse(FBox.Text).Convert(SettingsData.SavedUnits.MaterialStrength);
+			set => FBox.Text = $"{value.ConvertFromMPa(SettingsData.SavedUnits.MaterialStrength):0.00}";
 		}
 
 		/// <summary>
@@ -173,8 +173,8 @@ namespace SPMTool.UserInterface
 		/// </summary>
 		private double ElasticModule
 		{
-			get => double.Parse(EBox.Text).Convert(UnitsData.SavedUnits.MaterialStrength);
-			set => EBox.Text = $"{value.ConvertFromMPa(UnitsData.SavedUnits.MaterialStrength):0.00}";
+			get => double.Parse(EBox.Text).Convert(SettingsData.SavedUnits.MaterialStrength);
+			set => EBox.Text = $"{value.ConvertFromMPa(SettingsData.SavedUnits.MaterialStrength):0.00}";
 		}
 
 		/// <summary>
@@ -319,19 +319,19 @@ namespace SPMTool.UserInterface
         /// Get saved geometry options as string collection.
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<string> SavedGeoOptions() => _savedGeometries.Select(geo => $"{geo.Width.ConvertFromMillimeter(UnitsData.SavedUnits.Geometry):0.0} {(char) Character.Times} {geo.Height.ConvertFromMillimeter(UnitsData.SavedUnits.Geometry):0.0}");
+        private IEnumerable<string> SavedGeoOptions() => _savedGeometries.Select(geo => $"{geo.Width.ConvertFromMillimeter(SettingsData.SavedUnits.Geometry):0.0} {(char) Character.Times} {geo.Height.ConvertFromMillimeter(SettingsData.SavedUnits.Geometry):0.0}");
         
         /// <summary>
         /// Get saved reinforcement options as string collection.
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<string> SavedRefOptions() => _savedReinforcements.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.ConvertFromMillimeter(UnitsData.SavedUnits.Reinforcement):0.00}");
+        private IEnumerable<string> SavedRefOptions() => _savedReinforcements.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.ConvertFromMillimeter(SettingsData.SavedUnits.Reinforcement):0.00}");
         
         /// <summary>
         /// Get saved steel options as string collection.
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<string> SavedSteelOptions() => _savedSteel.Select(s => $"{s.YieldStress.ConvertFromMPa(UnitsData.SavedUnits.MaterialStrength):0.00} | {s.ElasticModule.ConvertFromMPa(UnitsData.SavedUnits.MaterialStrength):0.00}");
+        private IEnumerable<string> SavedSteelOptions() => _savedSteel.Select(s => $"{s.YieldStress.ConvertFromMPa(SettingsData.SavedUnits.MaterialStrength):0.00} | {s.ElasticModule.ConvertFromMPa(SettingsData.SavedUnits.MaterialStrength):0.00}");
 
         /// <summary>
         /// Check if <paramref name="textBoxes"/> are filled and not zero.

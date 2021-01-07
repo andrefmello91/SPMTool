@@ -143,7 +143,7 @@ namespace SPMTool.Database.Elements
 		        w = 0,
 		        h = 0;
 
-	        var unit = UnitsData.SavedUnits.Geometry;
+	        var unit = SettingsData.SavedUnits.Geometry;
 
 	        if (readXData)
 	        {

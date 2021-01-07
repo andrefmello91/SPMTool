@@ -91,7 +91,7 @@ namespace SPMTool.Database
         public static InputData GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
         {
 	        // Get units
-	        var units = UnitsData.SavedUnits;
+	        var units = SettingsData.SavedUnits;
 
 	        // Get concrete
 	        var parameters   = ConcreteData.Parameters;
@@ -142,7 +142,7 @@ namespace SPMTool.Database
             // Get concrete and units
             var parameters   = ConcreteData.Parameters;
             var constitutive = ConcreteData.ConstitutiveModel;
-	        var units        = UnitsData.SavedUnits;
+	        var units        = SettingsData.SavedUnits;
 
 	        if (layer is Layer.IntNode || layer is Layer.ExtNode)
 		        return Nodes.Read((DBPoint) entity, units);
@@ -259,7 +259,7 @@ namespace SPMTool.Database
         {
 	        // Set the style for all point objects in the drawing
 	        DataBase.Database.Pdmode = 32;
-	        DataBase.Database.Pdsize = 40 * UnitsData.SavedUnits.ScaleFactor;
+	        DataBase.Database.Pdsize = 40 * SettingsData.SavedUnits.ScaleFactor;
         }
 
         /// <summary>

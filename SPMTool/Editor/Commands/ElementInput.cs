@@ -76,7 +76,7 @@ namespace SPMTool.Editor.Commands
 		public static void AddPanel()
 		{
 			// Read units
-			var units = UnitsData.SavedUnits;
+			var units = SettingsData.SavedUnits;
 
 			// Create a loop for creating infinite panels
 			for ( ; ; )

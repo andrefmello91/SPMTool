@@ -30,7 +30,7 @@ namespace SPMTool.Editor.Commands
 			analysis.Do();
 
             // Draw results of analysis
-            Model.DrawResults(analysis, UnitsData.SavedUnits);
+            Model.DrawResults(analysis, SettingsData.SavedUnits);
         }
 
         [CommandMethod("DoNonLinearAnalysis")]
@@ -56,7 +56,7 @@ namespace SPMTool.Editor.Commands
 			analysis.Do(uIndexn.Value);
 
             // Show load-displacement diagram
-            var units = UnitsData.SavedUnits;
+            var units = SettingsData.SavedUnits;
 
             Application.ShowModelessWindow(Application.MainWindow.Handle, new GraphWindow(analysis.MonitoredDisplacements, analysis.MonitoredLoadFactor, units.Displacements));
 

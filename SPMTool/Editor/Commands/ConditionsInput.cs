@@ -22,7 +22,7 @@ namespace SPMTool.Editor.Commands
 	    public static void AddForce()
 	    {
 		    // Read units
-		    var units = UnitsData.SavedUnits;
+		    var units = SettingsData.SavedUnits;
 
 		    // Request objects to be selected in the drawing area
 		    var nds = UserInput.SelectNodes("Select nodes to add load:");

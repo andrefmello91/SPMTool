@@ -31,7 +31,7 @@ namespace SPMTool.Editor.Commands
 	    public static void DivideStringer()
 	    {
 		    // Get units
-		    var units = UnitsData.SavedUnits;
+		    var units = SettingsData.SavedUnits;
 
 		    // Prompt for select stringers
 		    var strs = UserInput.SelectStringers("Select stringers to divide")?.ToArray();
@@ -113,7 +113,7 @@ namespace SPMTool.Editor.Commands
 		public static void DividePanel()
 		{
 			// Get units
-			var units = UnitsData.SavedUnits;
+			var units = SettingsData.SavedUnits;
 
 			// Prompt for select panels
 			var pnls = UserInput.SelectPanels("Select panels to divide")?.ToArray();

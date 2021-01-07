@@ -71,7 +71,7 @@ namespace SPMTool.UserInterface
 		public ConcreteConfig(Parameters parameters, ConstitutiveModel constitutiveModel)
 		{
 			// Read units
-			_units = UnitsData.SavedUnits;
+			_units = SettingsData.SavedUnits;
 
 			// Get settings
 			_parameters = parameters;

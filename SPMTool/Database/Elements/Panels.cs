@@ -120,7 +120,7 @@ namespace SPMTool.Database.Elements
         /// Get <see cref="Vertices"/> of a <see cref="Solid"/>.
         /// </summary>
         /// <param name="panel">The quadrilateral <see cref="Solid"/> object.</param>
-        public static Vertices GetVertices(Solid panel) => new Vertices(panel.GetVertices(), UnitsData.SavedUnits.Geometry);
+        public static Vertices GetVertices(Solid panel) => new Vertices(panel.GetVertices(), SettingsData.SavedUnits.Geometry);
 
 		/// <summary>
         /// Get the width of a panel.

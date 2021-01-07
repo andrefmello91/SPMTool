@@ -58,7 +58,7 @@ namespace SPMTool.Database.Elements
 			if (_positions is null)
 				_positions = new List<Point3d>(NodePositions(NodeType.All));
 
-			var unit = UnitsData.SavedUnits.Geometry;
+			var unit = SettingsData.SavedUnits.Geometry;
 
             // Check if a node already exists at the position. If not, its created
             if (_positions.Exists(p => p.Approx(position, 0.1.ConvertFromMillimeter(unit))))

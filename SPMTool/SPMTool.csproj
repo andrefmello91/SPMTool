@@ -124,7 +124,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Database\DataBase.cs" />
-    <Compile Include="Database\UnitsData.cs" />
+    <Compile Include="Database\SettingsData.cs" />
     <Compile Include="Editor\Commands\ConditionsInput.cs" />
     <Compile Include="Editor\Commands\ElementEditor.cs" />
     <Compile Include="Editor\Commands\ElementInput.cs" />
@@ -139,6 +139,7 @@
     <Compile Include="Global\Enums.cs" />
     <Compile Include="Database\Conditions\Supports.cs" />
     <Compile Include="Global\Extensions.cs" />
+    <Compile Include="Global\AnalysisSettings.cs" />
     <Compile Include="Global\Units.cs" />
     <Compile Include="Database\Conditions\Forces.cs" />
     <Compile Include="Database\Elements\Nodes.cs" />
@@ -167,6 +168,9 @@
     </Compile>
     <Compile Include="UserInterface\Windows\ConcreteConfig.xaml.cs">
       <DependentUpon>ConcreteConfig.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserInterface\Windows\AnalysisConfig.xaml.cs">
+      <DependentUpon>AnalysisConfig.xaml</DependentUpon>
     </Compile>
     <Compile Include="UserInterface\Windows\UnitsConfig.xaml.cs">
       <DependentUpon>UnitsConfig.xaml</DependentUpon>
@@ -337,6 +341,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UserInterface\Windows\ConcreteConfig.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserInterface\Windows\AnalysisConfig.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
