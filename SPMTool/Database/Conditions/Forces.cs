@@ -84,7 +84,7 @@ namespace SPMTool.Database.Conditions
 						{
 							// Append the block to drawing
 							blkRef.Layer = $"{Layer.Force}";
-							blkRef.Add(On_ForceErase);
+							blkRef.Add(On_ForceErase, trans);
 
 							// Rotate and scale the block
 							if (!rotAng.ApproxZero())
@@ -103,7 +103,7 @@ namespace SPMTool.Database.Conditions
 							};
 
 							// Append the text to drawing
-							text.Add(On_ForceTextErase);
+							text.Add(On_ForceTextErase, trans);
 
 							// Add the node position to the text XData
 							text.SetXData(ForceTextXData(blkRef.Handle));

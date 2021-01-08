@@ -487,7 +487,7 @@ namespace SPMTool.Database.Elements
 					crackBlock = blkTblRec.Id;
 
 					// Set the insertion point for the block
-					blkTblRec.Origin = new Point3d(320, 0, 0);
+					blkTblRec.Origin = new Point3d(240, 0, 0);
 
 					// Define the points to add the lines
 					var crkPts = CrackPoints();
@@ -495,7 +495,7 @@ namespace SPMTool.Database.Elements
 					{
 						var pts = new List<Point3d>();
 
-						for (int i = 0; i < 8; i++)
+						for (int i = 0; i < 6; i++)
 						{
 							// Set the start X coordinate
 							double x = 80 * i;
@@ -506,7 +506,7 @@ namespace SPMTool.Database.Elements
 						}
 
 						// Add the end point
-						pts.Add(new Point3d(640, 0, 0));
+						pts.Add(new Point3d(480, 0, 0));
 
 						return pts;
 					}
@@ -662,8 +662,8 @@ namespace SPMTool.Database.Elements
 			using (var trans = DataBase.StartTransaction())
 	        using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
 	        {
-		        // Read the object Ids of the support blocks
-		        ObjectId
+				// Read the object Ids of the support blocks
+				ObjectId
 			        shearBlock = blkTbl[$"{Block.ShearBlock}"],
 					compStress = blkTbl[$"{Block.CompressiveStressBlock}"],
 					tensStress = blkTbl[$"{Block.TensileStressBlock}"];
@@ -716,7 +716,7 @@ namespace SPMTool.Database.Elements
 						        blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, DataBase.Ucs.Yaxis, cntrPt));
 					        }
 
-					        blkRef.Add();
+					        blkRef.Add(null, trans);
 				        }
 
 				        // Create the texts
@@ -734,7 +734,7 @@ namespace SPMTool.Database.Elements
 					        tauTxt.AlignmentPoint = algnPt;
 
 					        // Add the text to the drawing
-					        tauTxt.Add();
+					        tauTxt.Add(null, trans);
 				        }
 			        }
 
@@ -760,7 +760,7 @@ namespace SPMTool.Database.Elements
 							        cntrPt));
 					        }
 
-					        blkRef.Add();
+					        blkRef.Add(null, trans);
 				        }
 
 				        // Create the text
@@ -787,7 +787,7 @@ namespace SPMTool.Database.Elements
 					        sigTxt.AlignmentPoint = algnPt;
 
 					        // Add the text to the drawing
-					        sigTxt.Add();
+					        sigTxt.Add(null, trans);
 				        }
 			        }
 
@@ -813,7 +813,7 @@ namespace SPMTool.Database.Elements
 							        cntrPt));
 					        }
 
-					        blkRef.Add();
+					        blkRef.Add(null, trans);
 				        }
 
 				        // Create the text
@@ -826,7 +826,7 @@ namespace SPMTool.Database.Elements
 						        EndPoint = new Point3d(cntrPt.X, cntrPt.Y + 210 * scFctr, 0)
 					        };
 
-					        ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, Database.DataBase.Ucs.Zaxis, cntrPt));
+					        ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, DataBase.Ucs.Zaxis, cntrPt));
 
 					        // Set the alignment point
 					        var algnPt = ln.EndPoint;
@@ -840,7 +840,7 @@ namespace SPMTool.Database.Elements
 					        sigTxt.AlignmentPoint = algnPt;
 
 					        // Add the text to the drawing
-					        sigTxt.Add();
+					        sigTxt.Add(null, trans);
 				        }
 			        }
 		        }
@@ -897,7 +897,8 @@ namespace SPMTool.Database.Elements
                     void AddCrackBlock()
 			        {
 				        // Get the cracking angle
-						var crkAngle = pnl.ConcretePrincipalStrains.Theta2;
+				        var theta2   = pnl.ConcretePrincipalStrains.Theta2;
+						var crkAngle = theta2 <= Constants.PiOver2 ? theta2 : theta2 - Constants.Pi;
 
 						// Insert the block into the current space
 						using (var blkRef = new BlockReference(cntrPt, crackBlock))
@@ -908,30 +909,32 @@ namespace SPMTool.Database.Elements
 					        blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
 
 							// Rotate
-							blkRef.TransformBy(Matrix3d.Rotation(crkAngle, DataBase.Ucs.Zaxis, cntrPt));
+							if (!crkAngle.ApproxZero(1E-3))
+								blkRef.TransformBy(Matrix3d.Rotation(crkAngle, DataBase.Ucs.Zaxis, cntrPt));
 
-					        blkRef.Add();
+					        blkRef.Add(null, trans);
 				        }
 
 				        // Create the texts
 				        using (var crkTxt = new DBText())
 				        {
 					        // Set the alignment point
-					        var algnPt = new Point3d(cntrPt.X, cntrPt.Y, 0);
+					        var algnPt = new Point3d(cntrPt.X, cntrPt.Y - 50 * scFctr, 0);
 
 					        // Set the parameters
 					        crkTxt.Layer = $"{Layer.Cracks}";
 					        crkTxt.Height = 30 * scFctr;
-					        crkTxt.TextString = $"{Math.Abs(w.ConvertFromMillimeter(units.CrackOpenings)):0.00}";
+					        crkTxt.TextString = $"{Math.Abs(w.ConvertFromMillimeter(units.CrackOpenings)):0.000000}";
 					        crkTxt.Position = algnPt;
 					        crkTxt.HorizontalMode = TextHorizontalMode.TextCenter;
 					        crkTxt.AlignmentPoint = algnPt;
 
 							// Rotate text
-							crkTxt.TransformBy(Matrix3d.Rotation(crkAngle, DataBase.Ucs.Zaxis, cntrPt));
+							if (!crkAngle.ApproxZero(1E-3))
+								crkTxt.TransformBy(Matrix3d.Rotation(crkAngle, DataBase.Ucs.Zaxis, cntrPt));
 
 							// Add the text to the drawing
-							crkTxt.Add();
+							crkTxt.Add(null, trans);
 				        }
 			        }
 		        }

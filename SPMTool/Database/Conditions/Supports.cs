@@ -55,7 +55,7 @@ namespace SPMTool.Database.Conditions
 	                using (var blkRef = new BlockReference(pos, supBlock))
 	                {
 		                blkRef.Layer = $"{Layer.Support}";
-		                blkRef.Add();
+		                blkRef.Add(null, trans);
 
 		                // Set scale to the block
 		                if (units.Geometry != LengthUnit.Millimeter)
