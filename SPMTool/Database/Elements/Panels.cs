@@ -200,7 +200,8 @@ namespace SPMTool.Database.Elements
 		{
 			CreateShearBlock();
 			CreateStressesBlock();
-		}
+            CreateCrackBlock();
+        }
 
 		/// <summary>
 		/// Create the block for panel shear stress.
@@ -463,8 +464,7 @@ namespace SPMTool.Database.Elements
 			// Start a transaction
 			using (var trans = DataBase.StartTransaction())
 			{
-				// Open the Block table for read
-				var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
+				var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
 
 				// Initialize the block Id
 				var crackBlock = ObjectId.Null;
@@ -490,34 +490,38 @@ namespace SPMTool.Database.Elements
 					blkTblRec.Origin = new Point3d(320, 0, 0);
 
 					// Define the points to add the lines
-					var crkPts = CrackPoints().ToArray();
-					IEnumerable<Point3d> CrackPoints()
+					var crkPts = CrackPoints();
+					List<Point3d> CrackPoints()
 					{
+						var pts = new List<Point3d>();
+
 						for (int i = 0; i < 8; i++)
 						{
 							// Set the start X coordinate
 							double x = 80 * i;
 
-							yield return new Point3d(x, 0, 0);
-							yield return new Point3d(x + 20,  3.5265, 0);
-							yield return new Point3d(x + 60, -3.5265, 0);
+							pts.Add(new Point3d(x, 0, 0));
+							pts.Add(new Point3d(x + 20,  3.5265, 0));
+							pts.Add(new Point3d(x + 60, -3.5265, 0));
 						}
 
 						// Add the end point
-						yield return new Point3d(640, 0, 0);
+						pts.Add(new Point3d(640, 0, 0));
+
+						return pts;
 					}
 
 					// Create a object collection and add the lines
 					using (var lines = new DBObjectCollection())
 					{
 						// Define the lines and add to the collection
-						for (int i = 0; i < crkPts.Length; i++)
+						for (int i = 0; i < crkPts.Count - 1; i++)
 						{
 							lines.Add(new Line
 							{
 								StartPoint = crkPts[i],
 								EndPoint   = crkPts[i + 1],
-								LineWeight = LineWeight.LineWeight050
+								LineWeight = LineWeight.LineWeight035
 							});
 						}
 
@@ -861,27 +865,27 @@ namespace SPMTool.Database.Elements
         /// <param name="units">Current <see cref="Units"/>.</param>
         public static void DrawCracks(IEnumerable<Panel> panels, Units units)
         {
-	        // Erase all the panel cracks in the drawing
-	        Layer.Cracks.EraseObjects();
-
 	        // Start a transaction
 	        using (var trans = DataBase.StartTransaction())
 	        using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
 	        {
 		        // Read the object Id of the crack block
-		        var shearBlock = blkTbl[$"{Block.CrackBlock}"];
+		        var crackBlock = blkTbl[$"{Block.CrackBlock}"];
 
 		        foreach (var pnl in panels)
 		        {
-			        // Get panel data
-			        var l      = pnl.Geometry.EdgeLengths;
+			        // Get the average crack opening
+			        double w = pnl.CrackOpening;
+
+			        if (w.ApproxZero(1E-6))
+				        continue;
+
+					// Get panel data
+					var l      = pnl.Geometry.EdgeLengths;
 			        var cntrPt = pnl.Geometry.Vertices.CenterPoint;
 
 			        // Get the maximum length of the panel
 			        double lMax = l.Max().ConvertFromMillimeter(units.Geometry);
-
-			        // Get the average crack opening
-			        double w = pnl.CrackOpening;
 
 			        // Calculate the scale factor for the block and text
 			        double scFctr = 0.001 * lMax;
@@ -892,14 +896,11 @@ namespace SPMTool.Database.Elements
                     // Create crack block
                     void AddCrackBlock()
 			        {
-						if (w.ApproxZero(1E-6))
-							return;
-
-						// Get the cracking angle
+				        // Get the cracking angle
 						var crkAngle = pnl.ConcretePrincipalStrains.Theta2;
 
 						// Insert the block into the current space
-						using (var blkRef = new BlockReference(cntrPt, shearBlock))
+						using (var blkRef = new BlockReference(cntrPt, crackBlock))
 				        {
 					        blkRef.Layer = $"{Layer.Cracks}";
 
