@@ -58,52 +58,52 @@ namespace SPMTool.Editor.Commands
         /// <summary>
         /// Toggle view for forces.
         /// </summary>
-        [CommandMethod("ToogleForces")]
-	    public static void ToogleForces()
+        [CommandMethod("ToggleForces")]
+	    public static void ToggleForces()
 	    {
-		    Layer.Force.Toogle();
-		    Layer.ForceText.Toogle();
+		    Layer.Force.Toggle();
+		    Layer.ForceText.Toggle();
 	    }
 
 	    /// <summary>
 	    /// Toggle view for supports.
 	    /// </summary>
-	    [CommandMethod("ToogleSupports")]
-	    public static void ToogleSupports() => Layer.Support.Toogle();
+	    [CommandMethod("ToggleSupports")]
+	    public static void ToggleSupports() => Layer.Support.Toggle();
 
 	    /// <summary>
 	    /// Toggle view for nodes.
 	    /// </summary>
-	    [CommandMethod("ToogleNodes")]
-	    public static void ToogleNodes()
+	    [CommandMethod("ToggleNodes")]
+	    public static void ToggleNodes()
 	    {
-		    Layer.ExtNode.Toogle();
-		    Layer.IntNode.Toogle();
+		    Layer.ExtNode.Toggle();
+		    Layer.IntNode.Toggle();
 	    }
 
 	    /// <summary>
 	    /// Toggle view for stringers.
 	    /// </summary>
-	    [CommandMethod("ToogleStringers")]
-	    public static void ToogleStringers() => Layer.Stringer.Toogle();
+	    [CommandMethod("ToggleStringers")]
+	    public static void ToggleStringers() => Layer.Stringer.Toggle();
 
 	    /// <summary>
 	    /// Toggle view for panels.
 	    /// </summary>
-	    [CommandMethod("TooglePanels")]
-	    public static void TooglePanels() => Layer.Panel.Toogle();
+	    [CommandMethod("TogglePanels")]
+	    public static void TogglePanels() => Layer.Panel.Toggle();
 
 	    /// <summary>
 	    /// Toggle view for stringer forces.
 	    /// </summary>
-	    [CommandMethod("ToogleStringerForces")]
-	    public static void ToogleStringerForces() => Layer.StringerForce.Toogle();
+	    [CommandMethod("ToggleStringerForces")]
+	    public static void ToggleStringerForces() => Layer.StringerForce.Toggle();
 
 	    /// <summary>
 	    /// Toggle view for panel forces.
 	    /// </summary>
-	    [CommandMethod("TooglePanelForces")]
-	    public static void TooglePanelForces()
+	    [CommandMethod("TogglePanelForces")]
+	    public static void TogglePanelForces()
 	    {
 			// Turn off layers
 			Layer.CompressivePanelStress.Off();
@@ -111,43 +111,49 @@ namespace SPMTool.Editor.Commands
 		    Layer.ConcreteCompressiveStress.Off();
 		    Layer.ConcreteTensileStress.Off();
 
-			Layer.PanelForce.Toogle();
+			Layer.PanelForce.Toggle();
 	    }
 
 	    /// <summary>
 	    /// Toggle view for panel stresses.
 	    /// </summary>
-	    [CommandMethod("TooglePanelStresses")]
-	    public static void TooglePanelStresses()
+	    [CommandMethod("TogglePanelStresses")]
+	    public static void TogglePanelStresses()
 	    {
 			// Turn off layers
 			Layer.PanelForce.Off();
 		    Layer.ConcreteCompressiveStress.Off();
 		    Layer.ConcreteTensileStress.Off();
 
-			Layer.CompressivePanelStress.Toogle();
-		    Layer.TensilePanelStress.Toogle();
+			Layer.CompressivePanelStress.Toggle();
+		    Layer.TensilePanelStress.Toggle();
 	    }
 
 	    /// <summary>
 	    /// Toggle view for concrete principal stresses.
 	    /// </summary>
-	    [CommandMethod("ToogleConcreteStresses")]
-	    public static void ToogleConcreteStresses()
+	    [CommandMethod("ToggleConcreteStresses")]
+	    public static void ToggleConcreteStresses()
 	    {
 		    // Turn off layers
 		    Layer.PanelForce.Off();
 		    Layer.CompressivePanelStress.Off();
 		    Layer.TensilePanelStress.Off();
 
-			Layer.ConcreteCompressiveStress.Toogle();
-		    Layer.ConcreteTensileStress.Toogle();
+			Layer.ConcreteCompressiveStress.Toggle();
+		    Layer.ConcreteTensileStress.Toggle();
 	    }
 
 	    /// <summary>
 	    /// Toggle view for displacements.
 	    /// </summary>
-	    [CommandMethod("ToogleDisplacements")]
-	    public static void ToogleDisplacements() => Layer.Displacements.Toogle();
+	    [CommandMethod("ToggleDisplacements")]
+	    public static void ToggleDisplacements() => Layer.Displacements.Toggle();
+
+	    /// <summary>
+	    /// Toggle view for cracks.
+	    /// </summary>
+	    [CommandMethod("ToggleCracks")]
+	    public static void ToggleCracks() => Layer.Cracks.Toggle();
     }
 }

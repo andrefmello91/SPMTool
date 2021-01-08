@@ -113,7 +113,7 @@ namespace SPMTool
         /// <summary>
         /// Toogle view of this <see cref="Layer"/> (on and off).
         /// </summary>
-        public static void Toogle(this Layer layer)
+        public static void Toggle(this Layer layer)
         {
             // Get layer name
             var layerName = layer.ToString();

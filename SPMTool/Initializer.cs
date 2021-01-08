@@ -26,24 +26,25 @@ namespace SPMTool
 			DataBase.CreateLayers();
 			Model.CreateBlocks();
 
-			// Set the style for all point objects in the drawing
-			Model.SetPointSize();
-
-            // Add command event handler
-            DataBase.Document.CommandEnded += Model.On_UndoOrRedo;
+			// Set app parameters for drawing
+			Model.SetAppParameters();
 		}
 
-        /// <summary>
-        /// Terminate application.
-        /// </summary>
-        public void Terminate() => Application.SystemVariableChanged -= ColorThemeChanged;
+		/// <summary>
+		/// Terminate application.
+		/// </summary>
+		public void Terminate() => Application.SystemVariableChanged -= ColorThemeChanged;
 
 		/// <summary>
 		/// Initialize user interface and create layers and blocks.
 		/// </summary>
 		public void On_ApplicationIdle(object sender, EventArgs e)
 		{
-            Ribbon.AddButtons();
+			// Add command event handler
+			DataBase.Document.CommandEnded += Model.On_UndoOrRedo;
+
+			// Add application buttons
+			Ribbon.AddButtons();
 
 			Application.SystemVariableChanged += ColorThemeChanged;
 

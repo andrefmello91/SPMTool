@@ -74,11 +74,11 @@ namespace SPMTool.Database
         {
 	        // Start a transaction
 	        using (var trans = StartTransaction())
-
-		    // Open the Registered Applications table for read
-	        using (var regAppTbl = (RegAppTable)trans.GetObject(Database.RegAppTableId, OpenMode.ForRead))
 	        {
-		        if (regAppTbl.Has(AppName))
+		        // Open the Registered Applications table for read
+		        var regAppTbl = (RegAppTable) trans.GetObject(Database.RegAppTableId, OpenMode.ForRead);
+
+				if (regAppTbl.Has(AppName))
 					return;
 				
 		        using (var regAppTblRec = new RegAppTableRecord())

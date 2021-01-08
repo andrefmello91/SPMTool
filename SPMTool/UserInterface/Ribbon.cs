@@ -324,56 +324,56 @@ namespace SPMTool.UserInterface
 			splitButton.Items.Add(new RibbonButton
 			{
 				Text = "Nodes",
-				ToolTip = "Toogle view for nodes",
+				ToolTip = "Toggle view for nodes",
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.ViewNodes,
 				CommandHandler = new CmdHandler(),
-				CommandParameter = "ToogleNodes"
+				CommandParameter = "ToggleNodes"
 			});
 
 			splitButton.Items.Add(new RibbonButton
 			{
 				Text = "Stringers",
-				ToolTip = "Toogle view for stringers",
+				ToolTip = "Toggle view for stringers",
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.ViewStringers,
 				CommandHandler = new CmdHandler(),
-				CommandParameter = "ToogleStringers"
+				CommandParameter = "ToggleStringers"
 			});
 
 			splitButton.Items.Add(new RibbonButton
 			{
 				Text = "Panels",
-				ToolTip = "Toogle view for panels",
+				ToolTip = "Toggle view for panels",
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.ViewPanels,
 				CommandHandler = new CmdHandler(),
-				CommandParameter = "TooglePanels"
+				CommandParameter = "TogglePanels"
 			});
 
 			splitButton.Items.Add(new RibbonButton
 			{
 				Text = "Forces",
-				ToolTip = "Toogle view for forces",
+				ToolTip = "Toggle view for forces",
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.ViewForces,
 				CommandHandler = new CmdHandler(),
-				CommandParameter = "ToogleForces"
+				CommandParameter = "ToggleForces"
 			});
 
 			splitButton.Items.Add(new RibbonButton
 			{
 				Text = "Supports",
-				ToolTip = "Toogle view for supports",
+				ToolTip = "Toggle view for supports",
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.ViewSupports,
 				CommandHandler = new CmdHandler(),
-				CommandParameter = "ToogleSupports"
+				CommandParameter = "ToggleSupports"
 			});
 
 			// Add to the panel source
@@ -400,12 +400,12 @@ namespace SPMTool.UserInterface
 			splitButton.Items.Add(new RibbonButton
 			{
 				Text = "Stringer forces",
-				ToolTip = "Toogle view for Stringer forces",
+				ToolTip = "View stringer forces",
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.StringerForces,
 				CommandHandler = new CmdHandler(),
-				CommandParameter = "ToogleStringerForces"
+				CommandParameter = "ToggleStringerForces"
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -416,7 +416,7 @@ namespace SPMTool.UserInterface
 				ShowImage = true,
 				LargeImage = Icons.PanelShear,
 				CommandHandler = new CmdHandler(),
-				CommandParameter = "TooglePanelForces"
+				CommandParameter = "TogglePanelForces"
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -427,7 +427,7 @@ namespace SPMTool.UserInterface
 				ShowImage = true,
 				LargeImage = Icons.PanelStresses,
 				CommandHandler = new CmdHandler(),
-				CommandParameter = "TooglePanelStresses"
+				CommandParameter = "TogglePanelStresses"
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -438,7 +438,7 @@ namespace SPMTool.UserInterface
 				ShowImage = true,
 				LargeImage = Icons.ConcreteStresses,
 				CommandHandler = new CmdHandler(),
-				CommandParameter = "ToogleConcreteStresses"
+				CommandParameter = "ToggleConcreteStresses"
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -449,7 +449,7 @@ namespace SPMTool.UserInterface
 				ShowImage = true,
 				LargeImage = Icons.Displacements,
 				CommandHandler = new CmdHandler(),
-				CommandParameter = "ToogleDisplacements"
+				CommandParameter = "ToggleDisplacements"
 			});
 
 			// Add to the panel source

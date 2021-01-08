@@ -186,6 +186,12 @@ namespace SPMTool.Database
             DrawDisplacements(analysis.Stringers, units);
             Stringers.DrawForces(analysis.Stringers, analysis.MaxStringerForce, units);
             Panels.DrawStresses(analysis.Panels, units);
+
+            // Erase all the panel cracks in the drawing
+            Layer.Cracks.EraseObjects();
+
+			if (analysis is SecantAnalysis)
+				Panels.DrawCracks(analysis.Panels, units);
         }
 
         /// <summary>
@@ -253,6 +259,15 @@ namespace SPMTool.Database
 		}
 
 		/// <summary>
+		/// Set application parameters for drawing.
+		/// </summary>
+        public static void SetAppParameters()
+        {
+			SetPointSize();
+			SetLineWeightDisplay();
+        }
+
+		/// <summary>
         /// Set size to points in the drawing.
         /// </summary>
         public static void SetPointSize()
@@ -263,13 +278,18 @@ namespace SPMTool.Database
         }
 
         /// <summary>
-        /// Set to OFF the <see cref="DataBase.Database.Fillmode"/> setting.
+        /// Turn off fillmode setting.
         /// </summary>
         public static void SetFillMode() => DataBase.Database.Fillmode = false;
 
 		/// <summary>
-        /// Command names for undo and redo.
-        /// </summary>
+		/// Turn on line weight display.
+		/// </summary>
+		public static void SetLineWeightDisplay() => DataBase.Database.LineWeightDisplay = true;
+
+        /// <summary>
+		/// Command names for undo and redo.
+		/// </summary>
 		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" };
 
         /// <summary>
