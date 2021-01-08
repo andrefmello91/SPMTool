@@ -406,5 +406,11 @@
   <ItemGroup>
     <None Include="Resources\concretestresses_large_light.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\analysissettings.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\analysissettings_light.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

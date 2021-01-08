@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Windows.Media.Imaging;
+using Autodesk.AutoCAD.Internal;
 using SPMTool.Properties;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
@@ -18,7 +19,7 @@ namespace SPMTool.UserInterface
 		    _strBmp, _pnlBmp, _dvStrBmp, _dvPnlBmp, _elmDtBmp, _updtBmp,
 		    _strRefBmp, _pnlRefBmp, _cncrtBmp, _suprtBmp, _fcBmp, _linBmp,
 		    _nlinBmp, _viewNdBmp, _viewStrBmp, _viewPnlBmp, _viewFBmp,
-		    _viewSupBmp, _strFBmp, _pnlShBmp, _pnlStBmp, _concStBmp, _dispBmp, _unitsBmp;
+		    _viewSupBmp, _strFBmp, _pnlShBmp, _pnlStBmp, _concStBmp, _dispBmp, _unitsBmp, _anSetBmp;
 
         /// <summary>
         /// Get AddStringer icon.
@@ -141,23 +142,20 @@ namespace SPMTool.UserInterface
 	    public BitmapImage Units => GetBitmap(_unitsBmp);
 
         /// <summary>
-        /// <see cref="Icons"/> object.
+        /// Get analysis settings icon.
         /// </summary>
-        public Icons()
-        {
-            GetIcons();
-        }
+	    public BitmapImage AnalysisSettings => GetBitmap(_anSetBmp);
 
         /// <summary>
         /// Get application icons based on system theme.
         /// </summary>
-        private void GetIcons()
+        public void GetIcons()
         {
             // Check the current theme
-            var theme = (short)GetSystemVariable("COLORTHEME");
+            var theme = (ColorThemeEnum) (short) GetSystemVariable("COLORTHEME");
 
             // If the theme is dark (0), get the light icons
-            if (theme == 0)
+            if (theme is ColorThemeEnum.Dark)
             {
                 _strBmp = Resources.stringer_large_light;
                 _pnlBmp = Resources.panel_large_light;
@@ -183,6 +181,7 @@ namespace SPMTool.UserInterface
                 _concStBmp = Resources.concretestresses_large_light;
                 _dispBmp = Resources.displacements_large_light;
                 _unitsBmp = Resources.units_light;
+                _anSetBmp = Resources.analysissettings_light;
             }
             else // If the theme is light
             {
@@ -210,6 +209,7 @@ namespace SPMTool.UserInterface
                 _concStBmp = Resources.concretestresses_large;
                 _dispBmp = Resources.displacements_large;
                 _unitsBmp = Resources.units;
+                _anSetBmp = Resources.analysissettings;
             }
         }
 

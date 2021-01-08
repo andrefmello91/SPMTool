@@ -43,7 +43,7 @@ namespace SPMTool.UserInterface
 	        InitializeComponent();
 
             // Read units
-            Settings = settings;
+            Settings = settings ?? AnalysisSettings.Default;
         }
 
         private void IntValidationTextBox(object sender, TextCompositionEventArgs e)

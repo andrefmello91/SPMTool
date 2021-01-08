@@ -6,15 +6,21 @@ using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.UserInterface
 {
+
 	/// <summary>
 	/// Ribbon class.
 	/// </summary>
 	public static class Ribbon
 	{
 		/// <summary>
-        /// Add ribbon buttons to user interface.
-        /// </summary>
-        public static void AddButtons()
+		/// Icons for user interface.
+		/// </summary>
+		private static readonly Icons Icons = new Icons();
+
+		/// <summary>
+		/// Add ribbon buttons to user interface.
+		/// </summary>
+		public static void AddButtons()
         {
             var ribbonControl = ComponentManager.Ribbon;
 
@@ -33,16 +39,16 @@ namespace SPMTool.UserInterface
 
             ribbonControl.Tabs.Add(tab);
 
-			// Get icons
-			var icons = new Icons();
+			// Update Icons
+			Icons.GetIcons();
 
             // Create the Ribbon panels
-            ModelPanel(tab, icons);
-            ConcretePanel(tab, icons);
-            AnalysisPanel(tab, icons);
-            ViewPanel(tab, icons);
-            ResultsPanel(tab, icons);
-            SettingsPanel(tab, icons);
+            ModelPanel(tab);
+            ConcretePanel(tab);
+            AnalysisPanel(tab);
+            ViewPanel(tab);
+            ResultsPanel(tab);
+            SettingsPanel(tab);
 
             // Activate tab
             tab.IsActive = true;
@@ -51,7 +57,7 @@ namespace SPMTool.UserInterface
         /// <summary>
         /// Create Model Panel.
         /// </summary>
-        private static void ModelPanel(RibbonTab tab, Icons icons)
+        private static void ModelPanel(RibbonTab tab)
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Model" };
 			tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
@@ -72,7 +78,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Create a stringer connecting two nodes",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.Stringer,
+				LargeImage = Icons.Stringer,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "AddStringer"
 			});
@@ -83,7 +89,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Create a panel connecting four nodes",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.Panel,
+				LargeImage = Icons.Panel,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "AddPanel"
 			});
@@ -110,7 +116,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Set geometry and reinforcement to a selection of stringers",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.StringerReinforcement,
+				LargeImage = Icons.StringerReinforcement,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "SetStringerReinforcement"
 			});
@@ -121,7 +127,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Set width and reinforcement to a selection of panels",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.PanelReinforcement,
+				LargeImage = Icons.PanelReinforcement,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "SetPanelReinforcement"
 			});
@@ -148,7 +154,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Set constraint condition to a group of nodes",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.AddConstraint,
+				LargeImage = Icons.AddConstraint,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "AddConstraint"
 			});
@@ -159,7 +165,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Add forces to a group of nodes",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.AddForce,
+				LargeImage = Icons.AddForce,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "AddForce"
 			});
@@ -185,7 +191,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Divide a stringer into smaller ones",
 				ShowText = true,
 				ShowImage = true,
-				Image = icons.DivideStringer,
+				Image = Icons.DivideStringer,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "DivideStringer"
 			});
@@ -196,7 +202,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Divide a panel and surrounding stringers",
 				ShowText = true,
 				ShowImage = true,
-				Image = icons.DividePanel,
+				Image = Icons.DividePanel,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "DividePanel"
 			});
@@ -212,7 +218,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "View data of a selected element",
 				ShowText = true,
 				ShowImage = true,
-				Image = icons.ElementData,
+				Image = Icons.ElementData,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ViewElementData"
 			});
@@ -224,7 +230,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Update the number of nodes, stringers and panels in the model",
 				ShowText = true,
 				ShowImage = true,
-				Image = icons.UpdateElements,
+				Image = Icons.UpdateElements,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "UpdateElements"
 			});
@@ -236,7 +242,7 @@ namespace SPMTool.UserInterface
         /// <summary>
         /// Create Concrete Panel.
         /// </summary>
-        private static void ConcretePanel(RibbonTab tab, Icons icons)
+        private static void ConcretePanel(RibbonTab tab)
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Concrete" };
 			tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
@@ -250,7 +256,7 @@ namespace SPMTool.UserInterface
 				Orientation = Orientation.Vertical,
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.Concrete,
+				LargeImage = Icons.Concrete,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "SetConcreteParameters"
 			});
@@ -259,7 +265,7 @@ namespace SPMTool.UserInterface
         /// <summary>
         /// Create Analysis Panel.
         /// </summary>
-        private static void AnalysisPanel(RibbonTab tab, Icons icons)
+        private static void AnalysisPanel(RibbonTab tab)
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Analysis" };
 			tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
@@ -278,7 +284,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Do an elastic analysis of the model",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.LinearAnalysis,
+				LargeImage = Icons.LinearAnalysis,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "DoLinearAnalysis"
 			});
@@ -289,7 +295,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Do a nonlinear analysis of the model",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.NonLinearAnalysis,
+				LargeImage = Icons.NonLinearAnalysis,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "DoNonlinearAnalysis"
 			});
@@ -301,7 +307,7 @@ namespace SPMTool.UserInterface
 		/// <summary>
 		/// Create View Panel.
 		/// </summary>
-		private static void ViewPanel(RibbonTab tab, Icons icons)
+		private static void ViewPanel(RibbonTab tab)
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "View" };
 			tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
@@ -321,7 +327,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Toogle view for nodes",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.ViewNodes,
+				LargeImage = Icons.ViewNodes,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleNodes"
 			});
@@ -332,7 +338,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Toogle view for stringers",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.ViewStringers,
+				LargeImage = Icons.ViewStringers,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleStringers"
 			});
@@ -343,7 +349,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Toogle view for panels",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.ViewPanels,
+				LargeImage = Icons.ViewPanels,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "TooglePanels"
 			});
@@ -354,7 +360,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Toogle view for forces",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.ViewForces,
+				LargeImage = Icons.ViewForces,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleForces"
 			});
@@ -365,7 +371,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Toogle view for supports",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.ViewSupports,
+				LargeImage = Icons.ViewSupports,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleSupports"
 			});
@@ -377,7 +383,7 @@ namespace SPMTool.UserInterface
         /// <summary>
         /// Create Results Panel.
         /// </summary>
-        private static void ResultsPanel(RibbonTab tab, Icons icons)
+        private static void ResultsPanel(RibbonTab tab)
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Results" };
 			tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
@@ -397,7 +403,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "Toogle view for Stringer forces",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.StringerForces,
+				LargeImage = Icons.StringerForces,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleStringerForces"
 			});
@@ -408,7 +414,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "View panel shear stresses",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.PanelShear,
+				LargeImage = Icons.PanelShear,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "TooglePanelForces"
 			});
@@ -419,7 +425,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "View panel average principal stresses",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.PanelStresses,
+				LargeImage = Icons.PanelStresses,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "TooglePanelStresses"
 			});
@@ -430,7 +436,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "View concrete principal stresses",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.ConcreteStresses,
+				LargeImage = Icons.ConcreteStresses,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleConcreteStresses"
 			});
@@ -441,7 +447,7 @@ namespace SPMTool.UserInterface
 				ToolTip = "View magnified displacements",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.Displacements,
+				LargeImage = Icons.Displacements,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "ToogleDisplacements"
 			});
@@ -453,7 +459,7 @@ namespace SPMTool.UserInterface
         /// <summary>
         /// Create Settings Panel.
         /// </summary>
-        private static void SettingsPanel(RibbonTab tab, Icons icons)
+        private static void SettingsPanel(RibbonTab tab)
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Settings" };
 			tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
@@ -466,9 +472,22 @@ namespace SPMTool.UserInterface
 				Orientation = Orientation.Vertical,
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = icons.Units,
+				LargeImage = Icons.Units,
 				CommandHandler = new CmdHandler(),
 				CommandParameter = "SetUnits"
+			});
+
+			pnlSrc.Items.Add(new RibbonButton
+			{
+				Text = "Analysis",
+				ToolTip = "Set analysis parameters",
+				Size = RibbonItemSize.Large,
+				Orientation = Orientation.Vertical,
+				ShowText = true,
+				ShowImage = true,
+				LargeImage = Icons.AnalysisSettings,
+				CommandHandler = new CmdHandler(),
+				CommandParameter = "SetAnalysisSettings"
 			});
 		}
 

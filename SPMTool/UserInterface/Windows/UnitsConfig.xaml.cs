@@ -62,7 +62,7 @@ namespace SPMTool.UserInterface
 	        InitializeComponent();
 
             // Read units
-            Units = units;
+            Units = units ?? Units.Default;
 
 			// Get sources
 			GetSources();

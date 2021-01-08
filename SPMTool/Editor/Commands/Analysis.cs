@@ -51,9 +51,12 @@ namespace SPMTool.Editor.Commands
 			if(!uIndexn.HasValue)
 				return;
 
+			// Get analysis settings
+			var settings = SettingsData.SavedAnalysisSettings;
+
             // Do analysis
             var analysis = new SecantAnalysis(input);
-			analysis.Do(uIndexn.Value);
+			analysis.Do(uIndexn.Value, 1, settings.NumLoadSteps, settings.Tolerance, settings.MaxIterations);
 
             // Show load-displacement diagram
             var units = SettingsData.SavedUnits;
