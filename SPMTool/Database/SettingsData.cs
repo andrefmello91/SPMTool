@@ -1,12 +1,10 @@
 ﻿using System;
-using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions;
 using Extensions.AutoCAD;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using UnitsNet.Units;
-using UnitsNet;
 
 namespace SPMTool.Database
 {
@@ -51,7 +49,7 @@ namespace SPMTool.Database
 		private static AnalysisSettings _settings;
 
 		/// <summary>
-		/// Get <see cref="SPMTool.Units"/> saved in database.
+		/// Get <see cref="Units"/> saved in database.
 		/// </summary>
 		public static Units SavedUnits => _units ?? Read(true);
 
