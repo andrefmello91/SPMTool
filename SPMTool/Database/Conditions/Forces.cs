@@ -20,10 +20,24 @@ namespace SPMTool.Database.Conditions
         /// </summary>
 	    private static List<BlockReference> _forceList;
 
+	    /// <summary>
+	    /// Get the elements of the force block.
+	    /// </summary>
+	    public static readonly Entity[] BlockElements =
+	    {
+		    new Line
+		    {
+			    StartPoint = new Point3d(0, 37.5, 0),
+			    EndPoint   = new Point3d(0, 125, 0)
+		    },
+
+		    new Solid(new Point3d(0, 0, 0), new Point3d(-25, 37.5, 0), new Point3d(25, 37.5, 0))
+	    };
+
 		/// <summary>
-        /// Get the force objects in the drawing.
-        /// </summary>
-	    public static IEnumerable<BlockReference> GetObjects() => Layer.Force.GetDBObjects()?.ToBlocks();
+		/// Get the force objects in the drawing.
+		/// </summary>
+		public static IEnumerable<BlockReference> GetObjects() => Layer.Force.GetDBObjects()?.ToBlocks();
 
 		/// <summary>
         /// Get the force text objects in the drawing.
@@ -123,62 +137,10 @@ namespace SPMTool.Database.Conditions
         /// </summary>
         public static void Update() => _forceList = GetObjects()?.ToList();
 
-		/// <summary>
+        /// <summary>
         /// Create the force block.
         /// </summary>
-        public static void CreateBlock()
-        {
-            using (var trans = DataBase.StartTransaction())
-	        // Open the Block table for read
-            using (var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
-            {
-                // Check if the support blocks already exist in the drawing
-                if (!blkTbl.Has($"{Block.ForceBlock}"))
-                {
-                    // Create the X block
-                    using (var blkTblRec = new BlockTableRecord())
-                    {
-                        blkTblRec.Name = $"{Block.ForceBlock}";
-
-                        // Add the block table record to the block table and to the transaction
-                        blkTbl.UpgradeOpen();
-                        blkTbl.Add(blkTblRec);
-                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-                        // Set the insertion point for the block
-                        var origin = new Point3d(0, 0, 0);
-                        blkTblRec.Origin = origin;
-
-                        // Create a collection
-                        using (var arrow = new DBObjectCollection())
-                        {
-                            // Create the arrow line and solid)
-                            var line = new Line
-                            {
-                                StartPoint = new Point3d(0, 37.5, 0),
-                                EndPoint   = new Point3d(0, 125, 0)
-                            };
-                            // Add to the collection
-                            arrow.Add(line);
-
-                            // Create the solid and add to the collection
-                            var solid = new Solid(origin, new Point3d(-25, 37.5, 0), new Point3d(25, 37.5, 0));
-                            arrow.Add(solid);
-
-                            // Add the lines to the block table record
-                            foreach (Entity ent in arrow)
-                            {
-	                            blkTblRec.AppendEntity(ent);
-                                trans.AddNewlyCreatedDBObject(ent, true);
-                            }
-                        }
-                    }
-                }
-				
-                // Commit and dispose the transaction
-                trans.Commit();
-            }
-        }
+        public static void CreateBlock() => Block.ForceBlock.Create(new Point3d(0, 0, 0), BlockElements);
 
 		/// <summary>
         /// Erase the force blocks and texts in the model.
