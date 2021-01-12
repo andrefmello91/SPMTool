@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
+using Autodesk.AutoCAD.Geometry;
 using Material.Reinforcement;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database;
@@ -108,6 +109,49 @@ namespace SPMTool
                 // Commit and dispose the transaction
                 trans.Commit();
             }
+        }
+
+        /// <summary>
+        /// Create a block given a name, a color and transparency.
+        /// </summary>
+        /// <param name="block">The <see cref="Block"/>.</param>
+        /// <param name="originPoint">The origin <see cref="Point3d"/> of <paramref name="block"/>.</param>
+        /// <param name="blockElements">The <see cref="Entity"/> collection of this <paramref name="block"/></param>
+        public static void Create(this Block block, Point3d originPoint, IEnumerable<Entity> blockElements)
+        {
+	        using (var trans = DataBase.StartTransaction())
+
+		        // Open the Block table for read
+	        using (var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
+	        {
+		        // Check if the support blocks already exist in the drawing
+		        if (blkTbl.Has($"{block}"))
+			        return;
+
+		        // Create the X block
+		        using (var blkTblRec = new BlockTableRecord())
+		        {
+			        blkTblRec.Name = $"{block}";
+
+			        // Add the block table record to the block table and to the transaction
+			        blkTbl.UpgradeOpen();
+			        blkTbl.Add(blkTblRec);
+			        trans.AddNewlyCreatedDBObject(blkTblRec, true);
+
+			        // Set the insertion point for the block
+			        blkTblRec.Origin = originPoint;
+
+			        // Add the lines to the block table record
+			        foreach (var ent in blockElements)
+			        {
+				        blkTblRec.AppendEntity(ent);
+				        trans.AddNewlyCreatedDBObject(ent, true);
+			        }
+		        }
+
+                // Commit and dispose the transaction
+                trans.Commit();
+	        }
         }
 
         /// <summary>
