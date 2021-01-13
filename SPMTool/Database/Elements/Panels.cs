@@ -199,14 +199,12 @@ namespace SPMTool.Database.Elements
 
 				// Define the lines and add to the collection
 				for (int i = 0; i < crkPts.Count - 1; i++)
-				{
 					yield return new Line
 					{
 						StartPoint = crkPts[i],
 						EndPoint   = crkPts[i + 1],
 						LineWeight = LineWeight.LineWeight035
 					};
-				}
 			}
 		}
 

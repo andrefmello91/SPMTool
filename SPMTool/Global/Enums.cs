@@ -73,7 +73,8 @@
 		Shear,
 		CompressiveStress,
 		TensileStress,
-		PanelCrack
+		PanelCrack,
+		StringerCrack
 	}
 
 	/// <summary>

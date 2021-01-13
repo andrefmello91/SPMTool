@@ -26,11 +26,51 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		private static List<StringerGeometry> _geometries;
 
-        /// <summary>
-        /// Add a stringer to drawing.
-        /// </summary>
-        /// <param name="line">The <see cref="Line"/> to be the stringer.</param>
-        public static void Add(Line line)
+		/// <summary>
+		/// Get the elements of the crack block.
+		/// </summary>
+		public static IEnumerable<Entity> CrackBlockElements
+		{
+			get
+			{
+				// Define the points to add the lines
+				var crkPts = CrackPoints();
+				List<Point3d> CrackPoints()
+				{
+					var pts = new List<Point3d>();
+
+					for (int i = 0; i < 2; i++)
+					{
+						// Set the start X coordinate
+						double y = 40 * i;
+
+						pts.Add(new Point3d(0, y, 0));
+						pts.Add(new Point3d( 1.7633, y + 10, 0));
+						pts.Add(new Point3d(-1.7633, y + 30, 0));
+					}
+
+					// Add the end point
+					pts.Add(new Point3d(0, 80, 0));
+
+					return pts;
+				}
+
+				// Define the lines and add to the collection
+				for (int i = 0; i < crkPts.Count - 1; i++)
+					yield return new Line
+					{
+						StartPoint = crkPts[i],
+						EndPoint   = crkPts[i + 1],
+						LineWeight = LineWeight.LineWeight035
+					};
+			}
+		}
+
+		/// <summary>
+		/// Add a stringer to drawing.
+		/// </summary>
+		/// <param name="line">The <see cref="Line"/> to be the stringer.</param>
+		public static void Add(Line line)
 		{
 			// Get the list of stringers if it's not imposed
 			if (_geometries is null)

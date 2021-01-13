@@ -191,6 +191,9 @@ namespace SPMTool
                 case Block.PanelCrack:
 	                return Panels.CrackBlockElements.ToArray();
 
+                case Block.StringerCrack:
+	                return Stringers.CrackBlockElements.ToArray();
+
                 default:
 	                return null;
 	        }
@@ -205,6 +208,9 @@ namespace SPMTool
 	        {
                 case Block.PanelCrack:
 	                return new Point3d(240, 0, 0);
+
+                case Block.StringerCrack:
+	                return new Point3d(0, 40, 0);
 
                 default:
 	                return new Point3d(0, 0, 0);
@@ -224,10 +230,10 @@ namespace SPMTool
 			        new BlockReference(insertionPoint, blkTbl[$"{block}"]);
         }
 
-            /// <summary>
-            /// Toogle view of this <see cref="Layer"/> (on and off).
-            /// </summary>
-            public static void Toggle(this Layer layer)
+        /// <summary>
+        /// Toogle view of this <see cref="Layer"/> (on and off).
+        /// </summary>
+        public static void Toggle(this Layer layer)
         {
             // Get layer name
             var layerName = layer.ToString();
