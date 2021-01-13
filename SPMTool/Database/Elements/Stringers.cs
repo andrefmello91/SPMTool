@@ -614,9 +614,9 @@ namespace SPMTool.Database.Elements
 
 					var points = new[]
 					{
-						new Point3d(stPt.X + 0.1 * l, 0, 0),
-						new Point3d(stPt.X + 0.5 * l, 0, 0),
-						new Point3d(stPt.X + 0.9 * l, 0, 0)
+						new Point3d(stPt.X + 0.05 * l, 0, 0),
+						new Point3d(stPt.X + 0.50 * l, 0, 0),
+						new Point3d(stPt.X + 0.95 * l, 0, 0)
 					};
 
 					for (int i = 0; i < cracks.Length; i++)
