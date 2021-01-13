@@ -19,7 +19,8 @@ namespace SPMTool.UserInterface
 		    _strBmp, _pnlBmp, _dvStrBmp, _dvPnlBmp, _elmDtBmp, _updtBmp,
 		    _strRefBmp, _pnlRefBmp, _cncrtBmp, _suprtBmp, _fcBmp, _linBmp,
 		    _nlinBmp, _viewNdBmp, _viewStrBmp, _viewPnlBmp, _viewFBmp,
-		    _viewSupBmp, _strFBmp, _pnlShBmp, _pnlStBmp, _concStBmp, _dispBmp, _unitsBmp, _anSetBmp;
+		    _viewSupBmp, _strFBmp, _pnlShBmp, _pnlStBmp, _concStBmp, _dispBmp, _crackBmp,
+            _unitsBmp, _anSetBmp;
 
         /// <summary>
         /// Get AddStringer icon.
@@ -137,6 +138,11 @@ namespace SPMTool.UserInterface
 	    public BitmapImage Displacements => GetBitmap(_dispBmp);
 
         /// <summary>
+        /// Get Cracks icon.
+        /// </summary>
+	    public BitmapImage Cracks => GetBitmap(_crackBmp);
+
+        /// <summary>
         /// Get Units icon.
         /// </summary>
 	    public BitmapImage Units => GetBitmap(_unitsBmp);
@@ -180,6 +186,7 @@ namespace SPMTool.UserInterface
                 _pnlStBmp = Resources.panelstresses_large_light;
                 _concStBmp = Resources.concretestresses_large_light;
                 _dispBmp = Resources.displacements_large_light;
+                _crackBmp = Resources.crack_large_light;
                 _unitsBmp = Resources.units_light;
                 _anSetBmp = Resources.analysissettings_light;
             }
@@ -208,6 +215,7 @@ namespace SPMTool.UserInterface
                 _pnlStBmp = Resources.panelstresses_large;
                 _concStBmp = Resources.concretestresses_large;
                 _dispBmp = Resources.displacements_large;
+                _crackBmp = Resources.crack_large;
                 _unitsBmp = Resources.units;
                 _anSetBmp = Resources.analysissettings;
             }

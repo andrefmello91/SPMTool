@@ -452,6 +452,17 @@ namespace SPMTool.UserInterface
 				CommandParameter = "ToggleDisplacements"
 			});
 
+			splitButton.Items.Add(new RibbonButton
+			{
+				Text = "Cracks",
+				ToolTip = "View average crack openings",
+				ShowText = true,
+				ShowImage = true,
+				LargeImage = Icons.Cracks,
+				CommandHandler = new CmdHandler(),
+				CommandParameter = "ToggleCracks"
+			});
+
 			// Add to the panel source
 			pnlSrc.Items.Add(splitButton);
 		}

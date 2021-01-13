@@ -139,6 +139,12 @@
   <data name="concrete_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\concrete_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="crack_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\crack_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="crack_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\crack_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="displacements_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\displacements_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
