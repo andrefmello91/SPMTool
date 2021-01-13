@@ -25,6 +25,114 @@ namespace SPMTool.Database.Conditions
 	    private static List<BlockReference> _supportList;
 
         /// <summary>
+        /// Get the elements of X Block.
+        /// </summary>
+	    public static IEnumerable<Entity> XElements
+	    {
+		    get
+		    {
+                var origin = new Point3d(0, 0, 0);
+
+                // Define the points to add the lines
+                Point3d[] blkPts =
+                {
+	                origin,
+	                new Point3d(-100, 57.5,  0),
+	                origin,
+	                new Point3d(-100, -57.5, 0),
+	                new Point3d(-100,  75,   0),
+	                new Point3d(-100, -75,   0),
+	                new Point3d(-125,  75,   0),
+	                new Point3d(-125, -75,   0)
+                };
+
+                // Define the lines and add to the collection
+                for (int i = 0; i < 4; i++)
+				    yield return new Line
+				    {
+					    StartPoint = blkPts[2 * i],
+					    EndPoint = blkPts[2 * i + 1]
+				    };
+		    }
+        }
+
+        /// <summary>
+        /// Get the elements of Y Block.
+        /// </summary>
+	    public static IEnumerable<Entity> YElements
+	    {
+		    get
+		    {
+                var origin = new Point3d(0, 0, 0);
+
+                // Define the points to add the lines
+                Point3d[] blkPts =
+                {
+	                origin,
+	                new Point3d(-57.5, -100, 0),
+	                origin,
+	                new Point3d( 57.5, -100, 0),
+	                new Point3d(-75,   -100, 0),
+	                new Point3d( 75,   -100, 0),
+	                new Point3d(-75,   -125, 0),
+	                new Point3d( 75,   -125, 0)
+                };
+
+                // Define the lines and add to the collection
+                for (int i = 0; i < 4; i++)
+				    yield return new Line
+				    {
+					    StartPoint = blkPts[2 * i],
+					    EndPoint = blkPts[2 * i + 1]
+				    };
+		    }
+        }
+
+        /// <summary>
+        /// Get the elements of XY Block.
+        /// </summary>
+	    public static IEnumerable<Entity> XYElements
+	    {
+		    get
+		    {
+                var origin = new Point3d(0, 0, 0);
+
+                // Define the points to add the lines
+                Point3d[] blkPts =
+                {
+	                origin,
+	                new Point3d(-57.5, -100, 0),
+	                origin,
+	                new Point3d( 57.5, -100, 0),
+	                new Point3d(-75,   -100, 0),
+	                new Point3d( 75,   -100, 0)
+                };
+
+                // Define the lines and add to the collection
+                for (int i = 0; i < 3; i++)
+                    yield return new Line
+				    {
+					    StartPoint = blkPts[2 * i],
+					    EndPoint   = blkPts[2 * i + 1]
+				    };
+
+                // Create the diagonal lines
+                for (int i = 0; i < 6; i++)
+                {
+	                int xInc = 23 * i; // distance between the lines
+
+	                // Add to the collection
+	                yield return new Line
+	                {
+		                StartPoint = new Point3d(-57.5 + xInc,   -100, 0),
+		                EndPoint   = new Point3d(-70   + xInc, -122.5, 0)
+	                };
+                }
+
+            }
+        }
+
+        /// <summary>
         /// Get the support objects in the drawing.
         /// </summary>
         public static IEnumerable<BlockReference> GetObjects() => Layer.Support.GetDBObjects()?.ToBlocks();
@@ -34,7 +142,6 @@ namespace SPMTool.Database.Conditions
         /// </summary>
         /// <param name="positions">The collection of nodes to add.</param>
         /// <param name="constraint">The <see cref="Constraint"/> type.</param>
-        /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
         public static void AddBlocks(IReadOnlyCollection<Point3d> positions, Constraint constraint)
         {
             if (positions is null || positions.Count == 0)
@@ -117,195 +224,6 @@ namespace SPMTool.Database.Conditions
 
 				default:
 					return null;
-            }
-        }
-
-        /// <summary>
-        /// Create support blocks.
-        /// </summary>
-        public static void CreateBlocks()
-        {
-            // Start a transaction
-            using (var trans = DataBase.StartTransaction())
-            using (var blkTbl = (BlockTable)trans.GetObject(DataBase.BlockTableId, OpenMode.ForRead))
-            {
-                // Check if the support blocks already exist in the drawing
-				CreateBlockX();
-				CreateBlockY();
-				CreateBlockXY();
-
-                // Commit and dispose the transaction
-                trans.Commit();
-
-                void CreateBlockX()
-                {
-                    if (blkTbl.Has($"{Block.SupportX}"))
-                        return;
-
-                    // Create the X block
-                    using (var blkTblRec = new BlockTableRecord())
-                    {
-                        blkTblRec.Name = $"{Block.SupportX}";
-
-                        // Add the block table record to the block table and to the transaction
-                        blkTbl.UpgradeOpen();
-                        blkTbl.Add(blkTblRec);
-                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-                        // Set the insertion point for the block
-                        var origin = new Point3d(0, 0, 0);
-                        blkTblRec.Origin = origin;
-
-                        // Create a object collection and add the lines
-                        using (var lines = new DBObjectCollection())
-                        {
-                            // Define the points to add the lines
-                            Point3d[] blkPts =
-                            {
-                                origin,
-                                new Point3d(-100, 57.5,  0),
-                                origin,
-                                new Point3d(-100, -57.5, 0),
-                                new Point3d(-100,  75,   0),
-                                new Point3d(-100, -75,   0),
-                                new Point3d(-125,  75,   0),
-                                new Point3d(-125, -75,   0)
-                            };
-
-                            // Define the lines and add to the collection
-                            for (int i = 0; i < 4; i++)
-                                lines.Add(new Line
-                                {
-                                    StartPoint = blkPts[2 * i],
-                                    EndPoint = blkPts[2 * i + 1]
-                                });
-
-                            // Add the lines to the block table record
-                            foreach (Entity ent in lines)
-                            {
-                                blkTblRec.AppendEntity(ent);
-                                trans.AddNewlyCreatedDBObject(ent, true);
-                            }
-                        }
-                    }
-                }
-
-                void CreateBlockY()
-                {
-                    if (blkTbl.Has($"{Block.SupportY}"))
-                        return;
-
-                    // Create the Y block
-                    using (var blkTblRec = new BlockTableRecord())
-                    {
-                        blkTblRec.Name = $"{Block.SupportY}";
-
-                        // Set the insertion point for the block
-                        var origin = new Point3d(0, 0, 0);
-                        blkTblRec.Origin = origin;
-
-                        // Add the block table record to the block table and to the transaction
-                        blkTbl.UpgradeOpen();
-                        blkTbl.Add(blkTblRec);
-                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-                        // Create a object collection and add the lines
-                        using (var lines = new DBObjectCollection())
-                        {
-                            // Define the points to add the lines
-                            Point3d[] blkPts =
-                            {
-                                origin,
-                                new Point3d(-57.5, -100, 0),
-                                origin,
-                                new Point3d( 57.5, -100, 0),
-                                new Point3d(-75,   -100, 0),
-                                new Point3d( 75,   -100, 0),
-                                new Point3d(-75,   -125, 0),
-                                new Point3d( 75,   -125, 0)
-                            };
-
-                            // Define the lines and add to the collection
-                            for (int i = 0; i < 4; i++)
-                                lines.Add(new Line()
-                                {
-                                    StartPoint = blkPts[2 * i],
-                                    EndPoint = blkPts[2 * i + 1]
-                                });
-
-                            // Add the lines to the block table record
-                            foreach (Entity ent in lines)
-                            {
-                                blkTblRec.AppendEntity(ent);
-                                trans.AddNewlyCreatedDBObject(ent, true);
-                            }
-                        }
-                    }
-                }
-
-                void CreateBlockXY()
-                {
-                    if (blkTbl.Has($"{Block.SupportXY}"))
-                        return;
-
-                    // Create the XY block
-                    using (var blkTblRec = new BlockTableRecord())
-                    {
-                        blkTblRec.Name = $"{Block.SupportXY}";
-
-                        // Add the block table record to the block table and to the transaction
-                        blkTbl.UpgradeOpen();
-                        blkTbl.Add(blkTblRec);
-                        trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-                        // Set the insertion point for the block
-                        var origin = new Point3d(0, 0, 0);
-                        blkTblRec.Origin = origin;
-
-                        // Create a object collection and add the lines
-                        using (var lines = new DBObjectCollection())
-                        {
-                            // Define the points to add the lines
-                            Point3d[] blkPts =
-                            {
-                                origin,
-                                new Point3d(-57.5, -100, 0),
-                                origin,
-                                new Point3d( 57.5, -100, 0),
-                                new Point3d(-75,   -100, 0),
-                                new Point3d( 75,   -100, 0)
-                            };
-
-                            // Define the lines and add to the collection
-                            for (int i = 0; i < 3; i++)
-                                lines.Add(new Line
-                                {
-                                    StartPoint = blkPts[2 * i],
-                                    EndPoint   = blkPts[2 * i + 1]
-                                });
-
-                            // Create the diagonal lines
-                            for (int i = 0; i < 6; i++)
-                            {
-                                int xInc = 23 * i; // distance between the lines
-
-                                // Add to the collection
-                                lines.Add(new Line
-                                {
-                                    StartPoint = new Point3d(-57.5 + xInc, -100, 0),
-                                    EndPoint   = new Point3d(-70 + xInc, -122.5, 0)
-                                });
-                            }
-
-                            // Add the lines to the block table record
-                            foreach (Entity ent in lines)
-                            {
-                                blkTblRec.AppendEntity(ent);
-                                trans.AddNewlyCreatedDBObject(ent, true);
-                            }
-                        }
-                    }
-                }
             }
         }
 

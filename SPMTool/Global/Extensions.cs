@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
@@ -11,6 +12,8 @@ using Extensions.AutoCAD;
 using Extensions.Number;
 using Material.Reinforcement.Biaxial;
 using Material.Reinforcement.Uniaxial;
+using SPMTool.Database.Conditions;
+using SPMTool.Database.Elements;
 using SPMTool.Enums;
 using SPMTool.Editor;
 using UnitsNet;
@@ -115,9 +118,7 @@ namespace SPMTool
         /// Create a block given a name, a color and transparency.
         /// </summary>
         /// <param name="block">The <see cref="Block"/>.</param>
-        /// <param name="originPoint">The origin <see cref="Point3d"/> of <paramref name="block"/>.</param>
-        /// <param name="blockElements">The <see cref="Entity"/> collection of this <paramref name="block"/></param>
-        public static void Create(this Block block, Point3d originPoint, IEnumerable<Entity> blockElements)
+        public static void Create(this Block block)
         {
 	        using (var trans = DataBase.StartTransaction())
 
@@ -139,10 +140,15 @@ namespace SPMTool
 			        trans.AddNewlyCreatedDBObject(blkTblRec, true);
 
 			        // Set the insertion point for the block
-			        blkTblRec.Origin = originPoint;
+			        blkTblRec.Origin = block.OriginPoint();
 
-			        // Add the lines to the block table record
-			        foreach (var ent in blockElements)
+			        // Get the elements of the block
+			        var blockElements = block.GetElements();
+
+                    if (blockElements is null)
+                        return;
+
+                    foreach (var ent in blockElements)
 			        {
 				        blkTblRec.AppendEntity(ent);
 				        trans.AddNewlyCreatedDBObject(ent, true);
@@ -155,9 +161,73 @@ namespace SPMTool
         }
 
         /// <summary>
-        /// Toogle view of this <see cref="Layer"/> (on and off).
+        /// Get the collection of entities that forms <paramref name="block"/>
         /// </summary>
-        public static void Toggle(this Layer layer)
+        public static Entity[] GetElements(this Block block)
+        {
+	        switch (block)
+	        {
+                case Block.Force:
+	                return Forces.BlockElements;
+
+                case Block.SupportX:
+	                return Supports.XElements.ToArray();
+
+                case Block.SupportY:
+	                return Supports.YElements.ToArray();
+
+                case Block.SupportXY:
+	                return Supports.XYElements.ToArray();
+
+                case Block.Shear:
+	                return Panels.ShearBlockElements.ToArray();
+
+                case Block.CompressiveStress:
+	                return Panels.CompressiveBlockElements.ToArray();
+
+                case Block.TensileStress:
+	                return Panels.TensileBlockElements.ToArray();
+
+                case Block.PanelCrack:
+	                return Panels.CrackBlockElements.ToArray();
+
+                default:
+	                return null;
+	        }
+        }
+
+        /// <summary>
+        /// Get the origin point related to this <paramref name="block"/>.
+        /// </summary>
+        public static Point3d OriginPoint(this Block block)
+        {
+	        switch (block)
+	        {
+                case Block.PanelCrack:
+	                return new Point3d(240, 0, 0);
+
+                default:
+	                return new Point3d(0, 0, 0);
+	        }
+        }
+
+        /// <summary>
+        /// Get the <see cref="BlockReference"/> of this <paramref name="block"/>.
+        /// </summary>
+        /// <param name="insertionPoint">Thw insertion <see cref="Point3d"/> for the <see cref="BlockReference"/>.</param>
+        public static BlockReference GetReference(this Block block, Point3d insertionPoint)
+        {
+	        // Start a transaction
+	        using (var trans = DataBase.StartTransaction())
+	        using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
+		        return
+			        new BlockReference(insertionPoint, blkTbl[$"{block}"]);
+        }
+
+            /// <summary>
+            /// Toogle view of this <see cref="Layer"/> (on and off).
+            /// </summary>
+            public static void Toggle(this Layer layer)
         {
             // Get layer name
             var layerName = layer.ToString();

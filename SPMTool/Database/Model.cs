@@ -170,9 +170,12 @@ namespace SPMTool.Database
         /// </summary>
         public static void CreateBlocks()
         {
-	        Forces.CreateBlock();
-			Supports.CreateBlocks();
-			Panels.CreateBlocks();
+			// Get the block enum as an array
+			var blocks = Enum.GetValues(typeof(Block)).Cast<Block>().ToArray();
+
+			// Create the blocks
+			foreach (var block in blocks)
+				block.Create();
         }
 
 		/// <summary>

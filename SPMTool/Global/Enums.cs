@@ -69,11 +69,11 @@
 		SupportX,
 		SupportY,
 		SupportXY,
-		ForceBlock,
-		ShearBlock,
-		CompressiveStressBlock,
-		TensileStressBlock,
-		CrackBlock
+		Force,
+		Shear,
+		CompressiveStress,
+		TensileStress,
+		PanelCrack
 	}
 
 	/// <summary>

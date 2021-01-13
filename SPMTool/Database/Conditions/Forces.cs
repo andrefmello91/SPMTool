@@ -23,7 +23,7 @@ namespace SPMTool.Database.Conditions
 	    /// <summary>
 	    /// Get the elements of the force block.
 	    /// </summary>
-	    public static readonly Entity[] BlockElements =
+	    public static Entity[] BlockElements => new Entity[]
 	    {
 		    new Line
 		    {
@@ -66,7 +66,7 @@ namespace SPMTool.Database.Conditions
 			using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
 			{
 				// Read the force block
-				var forceBlock = blkTbl[$"{Block.ForceBlock}"];
+				var forceBlock = blkTbl[$"{Block.Force}"];
 
 				foreach (var pos in positions)
 				{
@@ -136,11 +136,6 @@ namespace SPMTool.Database.Conditions
         /// Update force list.
         /// </summary>
         public static void Update() => _forceList = GetObjects()?.ToList();
-
-        /// <summary>
-        /// Create the force block.
-        /// </summary>
-        public static void CreateBlock() => Block.ForceBlock.Create(new Point3d(0, 0, 0), BlockElements);
 
 		/// <summary>
         /// Erase the force blocks and texts in the model.

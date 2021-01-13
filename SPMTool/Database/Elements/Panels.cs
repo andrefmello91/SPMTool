@@ -28,12 +28,194 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		private static List<Vertices> _verticesList;
 
-        /// <summary>
-        /// Add a panel to the drawing.
-        /// </summary>
-        /// <param name="vertices">The collection of <see cref="Point3d"/> vertices.</param>
-        /// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
-        public static void Add(IEnumerable<Point3d> vertices, LengthUnit geometryUnit = LengthUnit.Millimeter)
+		/// <summary>
+		/// Get the elements of the shear block.
+		/// </summary>
+		public static IEnumerable<Entity> ShearBlockElements 
+		{
+			get
+			{
+				// Define the points to add the lines
+				Point3d[] blkPts =
+				{
+					new Point3d(-140, -230, 0),
+					new Point3d(-175, -200, 0),
+					new Point3d( 175, -200, 0),
+					new Point3d(-230, -140, 0),
+					new Point3d(-200, -175, 0),
+					new Point3d(-200,  175, 0),
+					new Point3d( 140,  230, 0),
+					new Point3d( 175,  200, 0),
+					new Point3d(-175,  200, 0),
+					new Point3d( 230,  140, 0),
+					new Point3d( 200,  175, 0),
+					new Point3d( 200, -175, 0),
+				};
+
+				// Define the lines and add to the collection
+				for (int i = 0; i < 4; i++)
+				{
+					yield return new Line
+					{
+						StartPoint = blkPts[3 * i],
+						EndPoint   = blkPts[3 * i + 1]
+					};
+
+					yield return new Line
+					{
+						StartPoint = blkPts[3 * i + 1],
+						EndPoint   = blkPts[3 * i + 2]
+					};
+				}
+			}
+		}
+
+		/// <summary>
+		/// Get the elements of the compressive block.
+		/// </summary>
+		public static IEnumerable<Entity> CompressiveBlockElements 
+		{
+			get
+			{
+				// Get vertices of the solid
+				Point3d[] verts1 =
+				{
+					new Point3d(-50, -50, 0),
+					new Point3d( 50, -50, 0),
+					new Point3d(-50,  50, 0),
+					new Point3d( 50,  50, 0)
+				};
+
+				// Create a solid
+				yield return new Solid(verts1[0], verts1[1], verts1[2], verts1[3]);
+
+				// Create two arrows for compressive stress
+				// Create lines
+				yield return new Line
+				{
+					StartPoint = new Point3d(-175, 0, 0),
+					EndPoint   = new Point3d(-87.5, 0, 0)
+				};
+
+				yield return new Line
+				{
+					StartPoint = new Point3d(87.5, 0, 0),
+					EndPoint   = new Point3d(175, 0, 0)
+				};
+
+				// Get vertices of the solids
+				Point3d[] verts2 =
+				{
+					new Point3d(-87.5, -25, 0),
+					new Point3d(-87.5,  25, 0),
+					new Point3d(  -50,   0, 0)
+				};
+
+				Point3d[] verts3 =
+				{
+					new Point3d(  50,   0, 0),
+					new Point3d(87.5, -25, 0),
+					new Point3d(87.5,  25, 0)
+				};
+
+
+				// Create the arrow solids and add to the collection
+				yield return new Solid(verts2[0], verts2[1], verts2[2]);
+				yield return new Solid(verts3[0], verts3[1], verts3[2]);
+			}
+		}
+		
+		/// <summary>
+		/// Get the elements of the tensile block.
+		/// </summary>
+		public static IEnumerable<Entity> TensileBlockElements 
+		{
+			get
+			{
+				// Create two arrows for tensile stress
+				// Create lines
+				yield return new Line
+				{
+					StartPoint = new Point3d(0, 50, 0),
+					EndPoint = new Point3d(0, 137.5, 0)
+				};
+
+				yield return new Line
+				{
+					StartPoint = new Point3d(0, -50, 0),
+					EndPoint = new Point3d(0, -137.5, 0)
+				};
+
+				// Get vertices of the solids
+				Point3d[] verts2 =
+				{
+					new Point3d(-25, 137.5, 0),
+					new Point3d(  0,   175, 0),
+					new Point3d( 25, 137.5, 0),
+				};
+
+				Point3d[] verts3 =
+				{
+					new Point3d(-25, -137.5, 0),
+					new Point3d(  0,   -175, 0),
+					new Point3d( 25, -137.5, 0),
+				};
+
+
+				// Create the arrow solids and add to the collection
+				yield return new Solid(verts2[0], verts2[1], verts2[2]);
+				yield return new Solid(verts3[0], verts3[1], verts3[2]);
+			}
+		}
+
+		/// <summary>
+		/// Get the elements of the crack block.
+		/// </summary>
+		public static IEnumerable<Entity> CrackBlockElements
+		{
+			get
+			{
+				// Define the points to add the lines
+				var crkPts = CrackPoints();
+				List<Point3d> CrackPoints()
+				{
+					var pts = new List<Point3d>();
+
+					for (int i = 0; i < 6; i++)
+					{
+						// Set the start X coordinate
+						double x = 80 * i;
+
+						pts.Add(new Point3d(x, 0, 0));
+						pts.Add(new Point3d(x + 20, 3.5265, 0));
+						pts.Add(new Point3d(x + 60, -3.5265, 0));
+					}
+
+					// Add the end point
+					pts.Add(new Point3d(480, 0, 0));
+
+					return pts;
+				}
+
+				// Define the lines and add to the collection
+				for (int i = 0; i < crkPts.Count - 1; i++)
+				{
+					yield return new Line
+					{
+						StartPoint = crkPts[i],
+						EndPoint   = crkPts[i + 1],
+						LineWeight = LineWeight.LineWeight035
+					};
+				}
+			}
+		}
+
+		/// <summary>
+		/// Add a panel to the drawing.
+		/// </summary>
+		/// <param name="vertices">The collection of <see cref="Point3d"/> vertices.</param>
+		/// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
+		public static void Add(IEnumerable<Point3d> vertices, LengthUnit geometryUnit = LengthUnit.Millimeter)
 		{
 			if (_verticesList is null)
 				_verticesList = new List<Vertices>(PanelVertices());
@@ -193,351 +375,6 @@ namespace SPMTool.Database.Elements
 
 			return newData;
 		}
-		/// <summary>
-        /// Create panel stresses blocks.
-        /// </summary>
-		public static void CreateBlocks()
-		{
-			CreateShearBlock();
-			CreateStressesBlock();
-            CreateCrackBlock();
-        }
-
-		/// <summary>
-		/// Create the block for panel shear stress.
-		/// </summary>
-		private static void CreateShearBlock()
-		{
-			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
-			{
-				// Open the Block table for read
-				var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
-
-				// Initialize the block Id
-				var shearBlock = ObjectId.Null;
-
-				// Check if the support blocks already exist in the drawing
-				if (blkTbl.Has($"{Block.ShearBlock}"))
-					return;
-
-				// Create the X block
-				using (var blkTblRec = new BlockTableRecord())
-				{
-					blkTblRec.Name = $"{Block.ShearBlock}";
-
-					// Add the block table record to the block table and to the transaction
-					blkTbl.UpgradeOpen();
-					blkTbl.Add(blkTblRec);
-					trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-					// Set the name
-					shearBlock = blkTblRec.Id;
-
-					// Set the insertion point for the block
-					Point3d origin = new Point3d(0, 0, 0);
-					blkTblRec.Origin = origin;
-
-					// Create a object collection and add the lines
-					using (var lines = new DBObjectCollection())
-					{
-						// Define the points to add the lines
-						Point3d[] blkPts =
-						{
-							new Point3d(-140, -230, 0),
-							new Point3d(-175, -200, 0),
-							new Point3d( 175, -200, 0),
-							new Point3d(-230, -140, 0),
-							new Point3d(-200, -175, 0),
-							new Point3d(-200,  175, 0),
-							new Point3d( 140,  230, 0),
-							new Point3d( 175,  200, 0),
-							new Point3d(-175,  200, 0),
-							new Point3d( 230,  140, 0),
-							new Point3d( 200,  175, 0),
-							new Point3d( 200, -175, 0),
-						};
-
-						// Define the lines and add to the collection
-						for (int i = 0; i < 4; i++)
-						{
-							lines.Add(new Line
-							{
-								StartPoint = blkPts[3 * i],
-								EndPoint   = blkPts[3 * i + 1]
-							});
-
-							lines.Add(new Line
-							{
-								StartPoint = blkPts[3 * i + 1],
-								EndPoint   = blkPts[3 * i + 2]
-							});
-						}
-
-						// Add the lines to the block table record
-						foreach (Entity ent in lines)
-						{
-							blkTblRec.AppendEntity(ent);
-							trans.AddNewlyCreatedDBObject(ent, true);
-						}
-					}
-				}
-
-				// Commit and dispose the transaction
-				trans.Commit();
-			}
-		}
-
-		/// <summary>
-		/// Create the block for panel principal stresses.
-		/// </summary>
-		private static void CreateStressesBlock()
-		{
-			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
-			{
-				// Open the Block table for read
-				var blkTbl = trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-				// Initialize the block Ids
-				var compStressBlock = ObjectId.Null;
-				var tensStressBlock = ObjectId.Null;
-
-				// Check if the stress blocks already exist in the drawing
-				if (!blkTbl.Has($"{Block.CompressiveStressBlock}"))
-				{
-					// Create the X block
-					using (var blkTblRec = new BlockTableRecord())
-					{
-						blkTblRec.Name = $"{Block.CompressiveStressBlock}";
-
-						// Add the block table record to the block table and to the transaction
-						blkTbl.UpgradeOpen();
-						blkTbl.Add(blkTblRec);
-						trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-						// Set the name
-						compStressBlock = blkTblRec.Id;
-
-						// Set the insertion point for the block
-						var origin = new Point3d(0, 0, 0);
-						blkTblRec.Origin = origin;
-
-						// Create a object collection and add the lines
-						using (var objCollection = new DBObjectCollection())
-						{
-							// Get vertices of the solid
-							Point3d[] verts1 =
-							{
-								new Point3d(-50, -50, 0),
-								new Point3d( 50, -50, 0),
-								new Point3d(-50,  50, 0),
-								new Point3d( 50,  50, 0)
-							};
-
-							// Create a solid
-							var solid = new Solid(verts1[0], verts1[1], verts1[2], verts1[3]);
-							objCollection.Add(solid);
-
-							// Create two arrows for compressive stress
-							// Create lines
-							objCollection.Add(new Line
-							{
-								StartPoint = new Point3d(-175, 0, 0),
-								EndPoint   = new Point3d(-87.5, 0, 0)
-							});
-
-							objCollection.Add(new Line
-							{
-								StartPoint = new Point3d(87.5, 0, 0),
-								EndPoint   = new Point3d(175, 0, 0)
-							});
-
-							// Get vertices of the solids
-							Point3d[] verts2 =
-							{
-								new Point3d(-87.5, -25, 0),
-								new Point3d(-87.5,  25, 0),
-								new Point3d(  -50,   0, 0)
-							};
-
-							Point3d[] verts3 =
-							{
-								new Point3d(  50,   0, 0),
-								new Point3d(87.5, -25, 0),
-								new Point3d(87.5,  25, 0)
-							};
-
-
-							// Create the arrow solids and add to the collection
-							objCollection.Add(new Solid(verts2[0], verts2[1], verts2[2]));
-							objCollection.Add(new Solid(verts3[0], verts3[1], verts3[2]));
-
-							// Add the objects to the block table record
-							foreach (Entity ent in objCollection)
-							{
-								blkTblRec.AppendEntity(ent);
-								trans.AddNewlyCreatedDBObject(ent, true);
-							}
-						}
-					}
-				}
-
-				// Check if tensile stress block exists
-				if (!blkTbl.Has($"{Block.TensileStressBlock}"))
-				{
-					// Create the X block
-					using (var blkTblRec = new BlockTableRecord())
-					{
-						blkTblRec.Name = $"{Block.TensileStressBlock}";
-
-						// Add the block table record to the block table and to the transaction
-						blkTbl.UpgradeOpen();
-						blkTbl.Add(blkTblRec);
-						trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-						// Set the name
-						tensStressBlock = blkTblRec.Id;
-
-						// Set the insertion point for the block
-						var origin = new Point3d(0, 0, 0);
-						blkTblRec.Origin = origin;
-
-						// Create a object collection and add the lines
-						using (var objCollection = new DBObjectCollection())
-						{
-							// Create two arrows for tensile stress
-							// Create lines
-							objCollection.Add(new Line
-							{
-								StartPoint = new Point3d(0, 50, 0),
-								EndPoint   = new Point3d(0, 137.5, 0)
-							});
-
-							objCollection.Add(new Line
-							{
-								StartPoint = new Point3d(0, -50, 0),
-								EndPoint   = new Point3d(0, -137.5, 0)
-							});
-
-							// Get vertices of the solids
-							Point3d[] verts2 =
-							{
-								new Point3d(-25, 137.5, 0),
-								new Point3d(  0,   175, 0),
-								new Point3d( 25, 137.5, 0),
-							};
-
-							Point3d[] verts3 =
-							{
-								new Point3d(-25, -137.5, 0),
-								new Point3d(  0,   -175, 0),
-								new Point3d( 25, -137.5, 0),
-							};
-
-
-							// Create the arrow solids and add to the collection
-							objCollection.Add(new Solid(verts2[0], verts2[1], verts2[2]));
-							objCollection.Add(new Solid(verts3[0], verts3[1], verts3[2]));
-
-							// Add the objects to the block table record
-							foreach (Entity ent in objCollection)
-							{
-								blkTblRec.AppendEntity(ent);
-								trans.AddNewlyCreatedDBObject(ent, true);
-							}
-						}
-					}
-				}
-
-				// Commit and dispose the transaction
-				trans.Commit();
-			}
-
-		}
-
-		/// <summary>
-		/// Create the block for panel cracks.
-		/// </summary>
-		private static void CreateCrackBlock()
-		{
-			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
-			{
-				var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
-
-				// Initialize the block Id
-				var crackBlock = ObjectId.Null;
-
-				// Check if the support blocks already exist in the drawing
-				if (blkTbl.Has($"{Block.CrackBlock}"))
-					return;
-
-				// Create the X block
-				using (var blkTblRec = new BlockTableRecord())
-				{
-					blkTblRec.Name = $"{Block.CrackBlock}";
-
-					// Add the block table record to the block table and to the transaction
-					blkTbl.UpgradeOpen();
-					blkTbl.Add(blkTblRec);
-					trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-					// Set the name
-					crackBlock = blkTblRec.Id;
-
-					// Set the insertion point for the block
-					blkTblRec.Origin = new Point3d(240, 0, 0);
-
-					// Define the points to add the lines
-					var crkPts = CrackPoints();
-					List<Point3d> CrackPoints()
-					{
-						var pts = new List<Point3d>();
-
-						for (int i = 0; i < 6; i++)
-						{
-							// Set the start X coordinate
-							double x = 80 * i;
-
-							pts.Add(new Point3d(x, 0, 0));
-							pts.Add(new Point3d(x + 20,  3.5265, 0));
-							pts.Add(new Point3d(x + 60, -3.5265, 0));
-						}
-
-						// Add the end point
-						pts.Add(new Point3d(480, 0, 0));
-
-						return pts;
-					}
-
-					// Create a object collection and add the lines
-					using (var lines = new DBObjectCollection())
-					{
-						// Define the lines and add to the collection
-						for (int i = 0; i < crkPts.Count - 1; i++)
-						{
-							lines.Add(new Line
-							{
-								StartPoint = crkPts[i],
-								EndPoint   = crkPts[i + 1],
-								LineWeight = LineWeight.LineWeight035
-							});
-						}
-
-						// Add the lines to the block table record
-						foreach (Entity ent in lines)
-						{
-							blkTblRec.AppendEntity(ent);
-							trans.AddNewlyCreatedDBObject(ent, true);
-						}
-					}
-				}
-
-				// Commit and dispose the transaction
-				trans.Commit();
-			}
-		}
 
 		/// <summary>
 		/// Read the <see cref="Panel"/> objects in the drawing.
@@ -664,9 +501,9 @@ namespace SPMTool.Database.Elements
 	        {
 				// Read the object Ids of the support blocks
 				ObjectId
-			        shearBlock = blkTbl[$"{Block.ShearBlock}"],
-					compStress = blkTbl[$"{Block.CompressiveStressBlock}"],
-					tensStress = blkTbl[$"{Block.TensileStressBlock}"];
+			        shearBlock = blkTbl[$"{Block.Shear}"],
+					compStress = blkTbl[$"{Block.CompressiveStress}"],
+					tensStress = blkTbl[$"{Block.TensileStress}"];
 
 		        foreach (var pnl in panels)
 		        {
@@ -870,7 +707,7 @@ namespace SPMTool.Database.Elements
 	        using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
 	        {
 		        // Read the object Id of the crack block
-		        var crackBlock = blkTbl[$"{Block.CrackBlock}"];
+		        var crackBlock = blkTbl[$"{Block.PanelCrack}"];
 
 		        foreach (var pnl in panels)
 		        {
