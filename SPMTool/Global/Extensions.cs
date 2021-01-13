@@ -489,25 +489,12 @@ namespace SPMTool
         /// <summary>
         /// Get a collection containing all the <see cref="ObjectId"/>'s in this <see cref="Layer"/>.
         /// </summary>
-        public static IEnumerable<ObjectId> GetObjectIds(this Layer layer)
-        {
-	        // Get layer name
-	        var layerName = layer.ToString();
+        public static IEnumerable<ObjectId> GetObjectIds(this Layer layer) => layer.ToString().GetObjectIds();
 
-	        // Build a filter list so that only entities on the specified layer are selected
-	        TypedValue[] tvs =
-	        {
-		        new TypedValue((int) DxfCode.LayerName, layerName)
-	        };
-
-	        var selFt = new SelectionFilter(tvs);
-
-	        // Get the entities on the layername
-	        var selRes = Model.Editor.SelectAll(selFt);
-
-	        return
-		        selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 ? selRes.Value.GetObjectIds() : new ObjectId[0];
-        }
+        /// <summary>
+        /// Get a collection containing all the <see cref="ObjectId"/>'s in those <paramref name="layers"/>.
+        /// </summary>
+        public static IEnumerable<ObjectId> GetObjectIds(this IEnumerable<Layer> layers) => layers?.Select(l => $"{l}").GetObjectIds();
 
         /// <summary>
         /// Get a collection containing all the <see cref="DBObject"/>'s in this <see cref="Layer"/>.
@@ -515,9 +502,18 @@ namespace SPMTool
         public static IEnumerable<DBObject> GetDBObjects(this Layer layer) => layer.GetObjectIds()?.GetDBObjects();
 
         /// <summary>
+        /// Get a collection containing all the <see cref="DBObject"/>'s in those <paramref name="layers"/>.
+        /// </summary>
+        public static IEnumerable<DBObject> GetDBObjects(this IEnumerable<Layer> layers) => layers.GetObjectIds()?.GetDBObjects();
+
+        /// <summary>
         /// Erase all the objects in this <paramref name="layer"/>.
         /// </summary>
-        /// <param name="layer">The <see cref="Layer"/>.</param>
         public static void EraseObjects(this Layer layer) => layer.GetObjectIds()?.Remove();
+
+        /// <summary>
+        /// Erase all the objects in those <paramref name="layers"/>.
+        /// </summary>
+        public static void EraseObjects(this IEnumerable<Layer> layers) => layers.GetObjectIds()?.Remove();
     }
 }

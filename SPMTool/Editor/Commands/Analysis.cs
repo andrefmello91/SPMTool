@@ -30,7 +30,7 @@ namespace SPMTool.Editor.Commands
 			analysis.Do();
 
             // Draw results of analysis
-            Model.DrawResults(analysis, SettingsData.SavedUnits);
+            Model.DrawResults(analysis);
         }
 
         [CommandMethod("DoNonLinearAnalysis")]
@@ -64,7 +64,7 @@ namespace SPMTool.Editor.Commands
             Application.ShowModelessWindow(Application.MainWindow.Handle, new GraphWindow(analysis.MonitoredDisplacements, analysis.MonitoredLoadFactor, units.Displacements));
 
             // Draw results of analysis
-            Model.DrawResults(analysis, units);
+            Model.DrawResults(analysis);
 
 			if (analysis.Stop)
 				Application.ShowAlertDialog(analysis.StopMessage);

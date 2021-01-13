@@ -32,6 +32,11 @@ namespace SPMTool.Database
         public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
 
         /// <summary>
+        /// Collection of result <see cref="Layer"/>'s.
+        /// </summary>
+        public static readonly Layer[] ResultLayers = { Layer.StringerForce, Layer.PanelForce, Layer.CompressivePanelStress, Layer.TensilePanelStress, Layer.ConcreteCompressiveStress, Layer.ConcreteTensileStress, Layer.Displacements, Layer.Cracks};
+
+        /// <summary>
         /// Get the collection of all nodes in the model.
         /// </summary>
         public static DBPoint[] NodeCollection => Nodes.GetAllNodes()?.ToArray();
@@ -181,33 +186,34 @@ namespace SPMTool.Database
         /// Draw results of <paramref name="analysis"/>.
         /// </summary>
         /// <param name="analysis">The <see cref="Analysis"/> done.</param>
-        /// <param name="units">Current <see cref="Units"/>.</param>
-		public static void DrawResults(Analysis analysis, Units units)
+		public static void DrawResults(Analysis analysis)
 		{
+			// Erase result objects
+			ResultLayers.EraseObjects();
+
 			Nodes.SetDisplacements(analysis.Nodes);
-            DrawDisplacements(analysis.Stringers, units);
-            Stringers.DrawForces(analysis.Stringers, analysis.MaxStringerForce, units);
-            Panels.DrawStresses(analysis.Panels, units);
+            DrawDisplacements(analysis.Stringers);
+            Stringers.DrawForces(analysis.Stringers, analysis.MaxStringerForce);
+            Panels.DrawStresses(analysis.Panels);
 
-            // Erase all the panel cracks in the drawing
-            Layer.Cracks.EraseObjects();
+            if (!(analysis is SecantAnalysis))
+	            return;
 
-			if (analysis is SecantAnalysis)
-				Panels.DrawCracks(analysis.Panels, units);
-        }
+            Panels.DrawCracks(analysis.Panels);
+            Stringers.DrawCracks(analysis.Stringers);
+		}
 
         /// <summary>
         /// Draw displacements.
         /// </summary>
         /// <param name="stringers">The collection of <see cref="Stringer"/>'s.</param>
-        /// <param name="units">Current <see cref="Units"/>.</param>
-		private static void DrawDisplacements(IEnumerable<Stringer> stringers, Units units)
-		{
+		private static void DrawDisplacements(IEnumerable<Stringer> stringers)
+        {
+			// Get units
+	        var units = SettingsData.SavedUnits;
+
 			// Turn the layer off
 			Layer.Displacements.Off();
-
-			// Erase all the displaced objects in the drawing
-			Layer.Displacements.EraseObjects();
 
 			// Set a scale factor for displacements
 			double scFctr = units.DisplacementScaleFactor;

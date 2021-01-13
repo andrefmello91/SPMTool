@@ -483,15 +483,10 @@ namespace SPMTool.Database.Elements
         /// Draw panel stresses.
         /// </summary>
         /// <param name="panels">The collection of <see cref="Panel"/>'s.</param>
-        /// <param name="units">Current <see cref="Units"/>.</param>
-        public static void DrawStresses(IEnumerable<Panel> panels, Units units)
+        public static void DrawStresses(IEnumerable<Panel> panels)
         {
-	        // Erase all the panel forces in the drawing
-	        Layer.PanelForce.EraseObjects();
-	        Layer.CompressivePanelStress.EraseObjects();
-	        Layer.TensilePanelStress.EraseObjects();
-			Layer.ConcreteCompressiveStress.EraseObjects();
-			Layer.ConcreteTensileStress.EraseObjects();
+	        // Get units
+	        var units = SettingsData.SavedUnits;
 
 			// Read the object Ids of the support blocks
 			using (var trans = DataBase.StartTransaction())
@@ -697,9 +692,10 @@ namespace SPMTool.Database.Elements
         /// Draw panel cracks.
         /// </summary>
         /// <param name="panels">The collection of <see cref="Panel"/>'s.</param>
-        /// <param name="units">Current <see cref="Units"/>.</param>
-        public static void DrawCracks(IEnumerable<Panel> panels, Units units)
-        {
+        public static void DrawCracks(IEnumerable<Panel> panels)
+		{
+			var units = SettingsData.SavedUnits;
+
 	        // Start a transaction
 	        using (var trans = DataBase.StartTransaction())
 	        using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
@@ -754,12 +750,12 @@ namespace SPMTool.Database.Elements
 				        using (var crkTxt = new DBText())
 				        {
 					        // Set the alignment point
-					        var algnPt = new Point3d(cntrPt.X, cntrPt.Y - 50 * scFctr, 0);
+					        var algnPt = new Point3d(cntrPt.X, cntrPt.Y - 40 * scFctr, 0);
 
 					        // Set the parameters
 					        crkTxt.Layer = $"{Layer.Cracks}";
-					        crkTxt.Height = 30 * scFctr;
-					        crkTxt.TextString = $"{Math.Abs(w.ConvertFromMillimeter(units.CrackOpenings)):0.000000}";
+					        crkTxt.Height = 30 * units.ScaleFactor;
+					        crkTxt.TextString = $"{w.ConvertFromMillimeter(units.CrackOpenings):0.00E+00}";
 					        crkTxt.Position = algnPt;
 					        crkTxt.HorizontalMode = TextHorizontalMode.TextCenter;
 					        crkTxt.AlignmentPoint = algnPt;
