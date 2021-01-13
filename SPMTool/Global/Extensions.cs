@@ -217,47 +217,7 @@ namespace SPMTool
         /// Create a <paramref name="block"/> given its name.
         /// </summary>
         /// <param name="block">The <see cref="Block"/>.</param>
-        public static void Create(this Block block)
-        {
-	        using (var trans = DataBase.StartTransaction())
-
-		        // Open the Block table for read
-	        using (var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
-	        {
-		        // Check if the support blocks already exist in the drawing
-		        if (blkTbl.Has($"{block}"))
-			        return;
-
-		        // Create the X block
-		        using (var blkTblRec = new BlockTableRecord())
-		        {
-			        blkTblRec.Name = $"{block}";
-
-			        // Add the block table record to the block table and to the transaction
-			        blkTbl.UpgradeOpen();
-			        blkTbl.Add(blkTblRec);
-			        trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-			        // Set the insertion point for the block
-			        blkTblRec.Origin = block.OriginPoint();
-
-			        // Get the elements of the block
-			        var blockElements = block.GetElements();
-
-                    if (blockElements is null)
-                        return;
-
-                    foreach (var ent in blockElements)
-			        {
-				        blkTblRec.AppendEntity(ent);
-				        trans.AddNewlyCreatedDBObject(ent, true);
-			        }
-		        }
-
-                // Commit and dispose the transaction
-                trans.Commit();
-	        }
-        }
+        public static void Create(this Block block) => block.GetElements().CreateBlock(block.OriginPoint(), block.ToString());
 
         /// <summary>
         /// Create those <paramref name="blocks"/> given their names.
@@ -265,45 +225,12 @@ namespace SPMTool
         public static void Create(this IEnumerable<Block> blocks)
         {
 	        using (var trans = DataBase.StartTransaction())
-
-		        // Open the Block table for read
-	        using (var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
 	        {
 		        foreach (var block in blocks)
-		        {
-			        // Check if the support blocks already exist in the drawing
-			        if (blkTbl.Has($"{block}"))
-				        continue;
-
-			        // Create the X block
-			        using (var blkTblRec = new BlockTableRecord())
-			        {
-				        blkTblRec.Name = $"{block}";
-
-				        // Add the block table record to the block table and to the transaction
-				        blkTbl.UpgradeOpen();
-				        blkTbl.Add(blkTblRec);
-				        trans.AddNewlyCreatedDBObject(blkTblRec, true);
-
-				        // Set the insertion point for the block
-				        blkTblRec.Origin = block.OriginPoint();
-
-				        // Get the elements of the block
-				        var blockElements = block.GetElements();
-
-				        if (blockElements is null)
-					        return;
-
-				        foreach (var ent in blockElements)
-				        {
-					        blkTblRec.AppendEntity(ent);
-					        trans.AddNewlyCreatedDBObject(ent, true);
-				        }
-			        }
-		        }
+                    block.GetElements().CreateBlock(block.OriginPoint(), block.ToString(), trans);
 
 		        // Commit and dispose the transaction
-                trans.Commit();
+		        trans.Commit();
 	        }
         }
 
@@ -354,7 +281,7 @@ namespace SPMTool
 	        switch (block)
 	        {
                 case Block.PanelCrack:
-	                return new Point3d(240, 0, 0);
+	                return new Point3d(180, 0, 0);
 
                 case Block.StringerCrack:
 	                return new Point3d(0, 40, 0);

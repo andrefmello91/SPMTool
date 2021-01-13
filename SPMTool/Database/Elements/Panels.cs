@@ -184,15 +184,15 @@ namespace SPMTool.Database.Elements
 					for (int i = 0; i < 6; i++)
 					{
 						// Set the start X coordinate
-						double x = 80 * i;
+						double x = 60 * i;
 
 						pts.Add(new Point3d(x, 0, 0));
-						pts.Add(new Point3d(x + 20, 3.5265, 0));
-						pts.Add(new Point3d(x + 60, -3.5265, 0));
+						pts.Add(new Point3d(x + 15, 3.5265, 0));
+						pts.Add(new Point3d(x + 45, -3.5265, 0));
 					}
 
 					// Add the end point
-					pts.Add(new Point3d(480, 0, 0));
+					pts.Add(new Point3d(360, 0, 0));
 
 					return pts;
 				}
