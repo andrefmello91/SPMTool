@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
@@ -99,28 +101,17 @@ namespace SPMTool.Database
         /// </summary>
 		public static void CreateLayers()
 		{
-			// Check if the layers already exists in the drawing. If it doesn't, then it's created:
-			Layer.ExtNode.Create(Color.Red);
-			Layer.IntNode.Create(Color.Blue);
-			Layer.Stringer.Create(Color.Cyan);
-			Layer.Panel.Create(Color.Grey, 80);
-			Layer.Support.Create(Color.Red);
-			Layer.Force.Create(Color.Yellow);
-			Layer.ForceText.Create(Color.Yellow);
-			Layer.PanelForce.Create(Color.Green);
-			Layer.CompressivePanelStress.Create(Color.Blue1, 80);
-			Layer.TensilePanelStress.Create(Color.Red, 80);
-			Layer.ConcreteCompressiveStress.Create(Color.Blue1, 80);
-			Layer.ConcreteTensileStress.Create(Color.Red, 80);
-			Layer.StringerForce.Create(Color.Grey);
-			Layer.Displacements.Create(Color.Yellow1);
-			Layer.Cracks.Create(Color.White);
+			// Get the layer enum as an array
+			var layers = Enum.GetValues(typeof(Layer)).Cast<Layer>().ToArray();
+
+			// Create layers
+			layers.Create();
 		}
 
-        /// <summary>
-        /// Get folder path of current file.
-        /// </summary>
-        public static string GetFilePath() => GetSystemVariable("DWGPREFIX").ToString();
+		/// <summary>
+		/// Get folder path of current file.
+		/// </summary>
+		public static string GetFilePath() => GetSystemVariable("DWGPREFIX").ToString();
 
         /// <summary>
         /// Save <paramref name="data"/> in <see cref="DBDictionary"/>.

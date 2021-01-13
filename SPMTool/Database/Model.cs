@@ -174,8 +174,7 @@ namespace SPMTool.Database
 			var blocks = Enum.GetValues(typeof(Block)).Cast<Block>().ToArray();
 
 			// Create the blocks
-			foreach (var block in blocks)
-				block.Create();
+	        blocks.Create();
         }
 
 		/// <summary>

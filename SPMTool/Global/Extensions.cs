@@ -24,10 +24,18 @@ namespace SPMTool
 {
     public static class Extensions
     {
-		/// <summary>
+        /// <summary>
+        /// Array of transparent layers.
+        /// </summary>
+        private static readonly Layer[] TransparentLayers =
+        {
+	        Layer.Panel , Layer.CompressivePanelStress , Layer.ConcreteCompressiveStress , Layer.TensilePanelStress, Layer.ConcreteTensileStress
+        };
+
+        /// <summary>
         /// Returns the save name for this <see cref="StringerGeometry"/>.
         /// </summary>
-	    public static string SaveName(this StringerGeometry geometry) => $"StrGeoW{geometry.Width:0.00}H{geometry.Height:0.00}";
+        public static string SaveName(this StringerGeometry geometry) => $"StrGeoW{geometry.Width:0.00}H{geometry.Height:0.00}";
 
         /// <summary>
         /// Returns the save name for this <see cref="Steel"/>.
@@ -72,15 +80,12 @@ namespace SPMTool
         public static Layer ReadLayer(this Entity entity) => (Layer)Enum.Parse(typeof(Layer), entity.Layer);
 
         /// <summary>
-        /// Create a layer given a name, a color and transparency.
+        /// Create a <paramref name="layer"/> given its name.
         /// </summary>
-        /// <param name="layer">The <see cref="Layer"/>.</param>
-        /// <param name="color">The <see cref="Color"/></param>
-        /// <param name="transparency">Transparency percent.</param>
-        public static void Create(this Layer layer, Color color, int transparency = 0)
+        public static void Create(this Layer layer)
         {
             // Get layer name
-            var layerName = layer.ToString();
+            var layerName = $"{layer}";
 
             // Start a transaction
             using (var trans = DataBase.StartTransaction())
@@ -93,7 +98,7 @@ namespace SPMTool
                 using (var lyrTblRec = new LayerTableRecord())
                 {
                     // Assign the layer the ACI color and a name
-                    lyrTblRec.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(ColorMethod.ByAci, (short)color);
+                    lyrTblRec.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(ColorMethod.ByAci, (short)layer.GetColor());
 
                     // Upgrade the Layer table for write
                     lyrTbl.UpgradeOpen();
@@ -104,9 +109,7 @@ namespace SPMTool
 
                     // Assign the name and transparency to the layer
                     lyrTblRec.Name = layerName;
-
-                    if (transparency != 0)
-                        lyrTblRec.Transparency = Transparency(transparency);
+                    lyrTblRec.Transparency = layer.GetTransparency();
                 }
 
                 // Commit and dispose the transaction
@@ -115,7 +118,103 @@ namespace SPMTool
         }
 
         /// <summary>
-        /// Create a block given a name, a color and transparency.
+        /// Create those <paramref name="layers"/> given their names.
+        /// </summary>
+        public static void Create(this IEnumerable<Layer> layers)
+        {
+            // Start a transaction
+            using (var trans = DataBase.StartTransaction())
+
+            // Open the Layer table for read
+            using (var lyrTbl = (LayerTable)trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead))
+            {
+	            foreach (var layer in layers)
+	            {
+		            // Get layer name
+		            var layerName = $"{layer}";
+
+                    if (lyrTbl.Has(layerName))
+			            continue;
+
+		            using (var lyrTblRec = new LayerTableRecord())
+		            {
+			            // Assign the layer the ACI color and a name
+			            lyrTblRec.Color =
+				            Autodesk.AutoCAD.Colors.Color.FromColorIndex(ColorMethod.ByAci, (short) layer.GetColor());
+
+			            // Upgrade the Layer table for write
+			            lyrTbl.UpgradeOpen();
+
+			            // Append the new layer to the Layer table and the transaction
+			            lyrTbl.Add(lyrTblRec);
+			            trans.AddNewlyCreatedDBObject(lyrTblRec, true);
+
+			            // Assign the name and transparency to the layer
+			            lyrTblRec.Name = layerName;
+			            lyrTblRec.Transparency = layer.GetTransparency();
+		            }
+	            }
+
+	            // Commit and dispose the transaction
+                trans.Commit();
+            }
+        }
+
+        /// <summary>
+        /// Get the <see cref="Color"/> associated to this <paramref name="layer"/>.
+        /// </summary>
+        /// <param name="layer"></param>
+        /// <returns></returns>
+        public static Color GetColor(this Layer layer)
+        {
+	        switch (layer)
+	        {
+                case Layer.IntNode:
+	                return Color.Blue;
+
+                case Layer.Stringer:
+	                return Color.Cyan;
+
+                case Layer.Panel:
+	                return Color.Grey;
+
+                case Layer.Force:
+	                return Color.Yellow;
+
+                case Layer.ForceText:
+	                return Color.Yellow;
+
+                case Layer.PanelForce:
+	                return Color.Green;
+
+                case Layer.CompressivePanelStress:
+	                return Color.Blue1;
+
+                case Layer.ConcreteCompressiveStress:
+	                return Color.Blue1;
+
+                case Layer.StringerForce:
+	                return Color.Grey;
+
+                case Layer.Displacements:
+	                return Color.Yellow1;
+
+                case Layer.Cracks:
+	                return Color.White;
+
+                // ExtNode, Support, TensileStress:
+                default:
+	                return Color.Red;
+            }
+        }
+
+        /// <summary>
+        /// Get the <see cref="Autodesk.AutoCAD.Colors.Transparency"/> associated to this <paramref name="layer"/>.
+        /// </summary>
+        public static Transparency GetTransparency(this Layer layer) => TransparentLayers.Contains(layer) ? 80.Transparency() : 0.Transparency();
+
+        /// <summary>
+        /// Create a <paramref name="block"/> given its name.
         /// </summary>
         /// <param name="block">The <see cref="Block"/>.</param>
         public static void Create(this Block block)
@@ -156,6 +255,54 @@ namespace SPMTool
 		        }
 
                 // Commit and dispose the transaction
+                trans.Commit();
+	        }
+        }
+
+        /// <summary>
+        /// Create those <paramref name="blocks"/> given their names.
+        /// </summary>
+        public static void Create(this IEnumerable<Block> blocks)
+        {
+	        using (var trans = DataBase.StartTransaction())
+
+		        // Open the Block table for read
+	        using (var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
+	        {
+		        foreach (var block in blocks)
+		        {
+			        // Check if the support blocks already exist in the drawing
+			        if (blkTbl.Has($"{block}"))
+				        continue;
+
+			        // Create the X block
+			        using (var blkTblRec = new BlockTableRecord())
+			        {
+				        blkTblRec.Name = $"{block}";
+
+				        // Add the block table record to the block table and to the transaction
+				        blkTbl.UpgradeOpen();
+				        blkTbl.Add(blkTblRec);
+				        trans.AddNewlyCreatedDBObject(blkTblRec, true);
+
+				        // Set the insertion point for the block
+				        blkTblRec.Origin = block.OriginPoint();
+
+				        // Get the elements of the block
+				        var blockElements = block.GetElements();
+
+				        if (blockElements is null)
+					        return;
+
+				        foreach (var ent in blockElements)
+				        {
+					        blkTblRec.AppendEntity(ent);
+					        trans.AddNewlyCreatedDBObject(ent, true);
+				        }
+			        }
+		        }
+
+		        // Commit and dispose the transaction
                 trans.Commit();
 	        }
         }
