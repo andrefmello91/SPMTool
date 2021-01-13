@@ -9,6 +9,7 @@ using Extensions.Number;
 using Material.Concrete;
 using Material.Reinforcement;
 using Material.Reinforcement.Uniaxial;
+using MathNet.Numerics;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Enums;
@@ -387,11 +388,10 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="stringers">The collection of <see cref="Stringer"/>'s.</param>
         /// <param name="maxForce">The maximum stringer force.</param>
-        /// <param name="units">Current <see cref="Units"/>.</param>
-        public static void DrawForces(IEnumerable<Stringer> stringers, double maxForce, Units units)
+        public static void DrawForces(IEnumerable<Stringer> stringers, double maxForce)
         {
-	        // Erase all the Stringer forces in the drawing
-	        Layer.StringerForce.EraseObjects();
+	        // Get units
+	        var units = SettingsData.SavedUnits;
 
 	        // Get the scale factor
 	        var scFctr = units.ScaleFactor;
@@ -584,6 +584,98 @@ namespace SPMTool.Database.Elements
         }
 
 		/// <summary>
+		/// Draw cracks at the stringers.
+		/// </summary>
+		/// <param name="stringers">The collection of stringers in the model.</param>
+		public static void DrawCracks(IEnumerable<Stringer> stringers)
+		{
+			// Get units
+			var units  = SettingsData.SavedUnits;
+			var scFctr = units.ScaleFactor;
+
+			// Start a transaction
+			using (var trans = DataBase.StartTransaction())
+			using (var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
+			{
+				// Read the object Id of the crack block
+				var crackBlock = blkTbl[$"{Block.StringerCrack}"];
+
+				foreach (var str in stringers)
+				{
+					// Get the average crack opening
+					var cracks = str.CrackOpenings;
+
+					// Get length converted and angle
+					var l = str.Geometry.Length.ConvertFromMillimeter(units.Geometry);
+					var a = str.Geometry.Angle;
+
+					// Get insertion points
+					var stPt = str.Geometry.InitialPoint;
+
+					var points = new[]
+					{
+						new Point3d(stPt.X + 0.1 * l, 0, 0),
+						new Point3d(stPt.X + 0.5 * l, 0, 0),
+						new Point3d(stPt.X + 0.9 * l, 0, 0)
+					};
+
+					for (int i = 0; i < cracks.Length; i++)
+					{
+						if(cracks[i].ApproxZero(1E-6))
+							continue;
+
+						// Add crack blocks
+						AddCrackBlock(cracks[i], points[i]);
+					}
+
+					// Create crack block
+					void AddCrackBlock(double w, Point3d position)
+					{
+						// Insert the block into the current space
+						using (var blkRef = new BlockReference(position, crackBlock))
+						{
+							blkRef.Layer = $"{Layer.Cracks}";
+
+							// Set the scale of the block
+							blkRef.TransformBy(Matrix3d.Scaling(scFctr, position));
+
+							// Rotate
+							if (!a.ApproxZero(1E-3))
+								blkRef.TransformBy(Matrix3d.Rotation(a, DataBase.Ucs.Zaxis, stPt));
+
+							blkRef.Add(null, trans);
+						}
+
+						// Create the texts
+						using (var crkTxt = new DBText())
+						{
+							// Set the alignment point
+							var algnPt = new Point3d(position.X, position.Y - 100 * scFctr, 0);
+
+							// Set the parameters
+							crkTxt.Layer = $"{Layer.Cracks}";
+							crkTxt.Height = 30 * scFctr;
+							crkTxt.TextString = $"{Math.Abs(w.ConvertFromMillimeter(units.CrackOpenings)):0.00E+00}";
+							crkTxt.Position = algnPt;
+							crkTxt.HorizontalMode = TextHorizontalMode.TextCenter;
+							crkTxt.AlignmentPoint = algnPt;
+
+							// Rotate text
+							if (!a.ApproxZero(1E-3))
+								crkTxt.TransformBy(Matrix3d.Rotation(a, DataBase.Ucs.Zaxis, stPt));
+
+							// Add the text to the drawing
+							crkTxt.Add(null, trans);
+						}
+					}
+				}
+
+				// Save the new objects to the database
+				trans.Commit();
+			}
+		}
+
+		/// <summary>
 		/// Event to execute when a stringer is erased.
 		/// </summary>
 		private static void On_StringerErase(object sender, ObjectErasedEventArgs e)
@@ -594,10 +686,7 @@ namespace SPMTool.Database.Elements
 			var geometry = GetGeometry(str, false);
 
 			if (_geometries.Contains(geometry))
-			{
 				_geometries.Remove(geometry);
-				Model.Editor.WriteMessage($"\nRemoved: {geometry}");
-			}
 		}
 	}
 }
