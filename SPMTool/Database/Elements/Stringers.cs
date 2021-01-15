@@ -67,32 +67,6 @@ namespace SPMTool.Database.Elements
 			}
 		}
 
-		/// <summary>
-		/// Add a stringer to drawing.
-		/// </summary>
-		/// <param name="line">The <see cref="Line"/> to be the stringer.</param>
-		public static void Add(Line line)
-		{
-			// Get the list of stringers if it's not imposed
-			if (_geometries is null)
-				_geometries = new List<StringerGeometry>(StringerGeometries());
-
-			// Check if a Stringer already exist on that position. If not, create it
-			var geometry = new StringerGeometry(line.StartPoint, line.EndPoint, 0, 0);
-
-			if (_geometries.Contains(geometry))
-				return;
-
-            // Add to the list
-            _geometries.Add(geometry);
-
-            // Set layer
-            line.Layer = $"{Layer.Stringer}";
-
-            // Add the object
-            line.Add(On_StringerErase);
-        }
-
         /// <summary>
         /// Add a stringer to drawing.
         /// </summary>
@@ -104,10 +78,55 @@ namespace SPMTool.Database.Elements
 				Add(line);
         }
 
-		/// <summary>
-        /// Get the collection of stringers in the drawing.
+        /// <summary>
+        /// Add a stringer to drawing.
         /// </summary>
-        public static IEnumerable<Line> GetObjects() => Layer.Stringer.GetDBObjects().ToLines();
+        /// <param name="line">The <see cref="Line"/> to be the stringer.</param>
+        public static void Add(Line line)
+        {
+	        // Get the list of stringers if it's not imposed
+	        if (_geometries is null)
+		        _geometries = new List<StringerGeometry>(StringerGeometries());
+
+	        // Check if a Stringer already exist on that position. If not, create it
+	        var geometry = new StringerGeometry(line.StartPoint, line.EndPoint, 0, 0);
+
+	        if (_geometries.Contains(geometry))
+		        return;
+
+	        // Add to the list
+	        _geometries.Add(geometry);
+
+	        // Set layer
+	        line.Layer = $"{Layer.Stringer}";
+
+	        // Add the object
+	        line.Add(On_StringerErase);
+        }
+
+        /// <summary>
+        /// Add stringers to drawing.
+        /// </summary>
+        /// <param name="lines">The <see cref="Line"/>'s to be the stringers.</param>
+        public static void Add(IEnumerable<Line> lines)
+        {
+	        // Get the list of stringers if it's not imposed
+	        if (_geometries is null)
+		        _geometries = new List<StringerGeometry>(StringerGeometries());
+
+			// Get the geometries that don't exist in the drawing
+			var newGeos = lines.Select(l => new StringerGeometry(l.StartPoint, l.EndPoint, 0, 0)).Where(g => !_geometries.Contains(g)).Distinct().ToArray();
+			_geometries.AddRange(newGeos);
+
+			// Create and add the stringers
+			var strs = newGeos.Select(g => new Line(g.InitialPoint, g.EndPoint) { Layer = $"{Layer.Stringer}" }).ToArray();
+	        strs.Add(On_StringerErase);
+        }
+
+		/// <summary>
+		/// Get the collection of stringers in the drawing.
+		/// </summary>
+		public static IEnumerable<Line> GetObjects() => Layer.Stringer.GetDBObjects().ToLines();
 
         /// <summary>
         /// Update the Stringer numbers on the XData of each Stringer in the model and return the collection of stringers.
@@ -614,14 +633,14 @@ namespace SPMTool.Database.Elements
 
 					var points = new[]
 					{
-						new Point3d(stPt.X + 0.05 * l, 0, 0),
-						new Point3d(stPt.X + 0.50 * l, 0, 0),
-						new Point3d(stPt.X + 0.95 * l, 0, 0)
+						new Point3d(stPt.X + 0.1 * l, 0, 0),
+						new Point3d(stPt.X + 0.5 * l, 0, 0),
+						new Point3d(stPt.X + 0.9 * l, 0, 0)
 					};
 
 					for (int i = 0; i < cracks.Length; i++)
 					{
-						if(cracks[i].ApproxZero(1E-6))
+						if(cracks[i].ApproxZero(1E-4))
 							continue;
 
 						// Add crack blocks

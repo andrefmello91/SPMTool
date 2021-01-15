@@ -231,14 +231,40 @@ namespace SPMTool.Database.Elements
 			var ordered = vertices.Order().ToArray();
 
             // Create the panel as a solid with 4 segments (4 points)
-            using (var solid = new Solid(ordered[0], ordered[1], ordered[2], ordered[3]) { Layer = $"{Layer.Panel}"})
+            using (var solid = new Solid(ordered[0], ordered[1], ordered[2], ordered[3]) { Layer = $"{Layer.Panel}" })
 	            solid.Add(On_PanelErase);
 		}
 
-        /// <summary>
-        /// Get the collection of panels in the drawing.
-        /// </summary>
-        public static IEnumerable<Solid> GetObjects() => Layer.Panel.GetDBObjects()?.ToSolids();
+		/// <summary>
+		/// Add a panel to the drawing.
+		/// </summary>
+		/// <param name="solid">The <see cref="Solid"/> that represents the panel.</param>
+		/// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
+		public static void Add(Solid solid, LengthUnit geometryUnit = LengthUnit.Millimeter) => Add(solid.GetVertices(), geometryUnit);
+
+		/// <summary>
+		/// Add multiple panels to the drawing.
+		/// </summary>
+		/// <param name="solids">The <see cref="Solid"/>'s that represents the panels.</param>
+		/// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
+		public static void Add(IEnumerable<Solid> solids, LengthUnit geometryUnit = LengthUnit.Millimeter)
+		{
+			if (_verticesList is null)
+				_verticesList = new List<Vertices>(PanelVertices());
+
+			// Get solids' vertices that don't exist in the drawing
+			var vertices = solids.Select(s => new Vertices(s.GetVertices(), geometryUnit)).Where(v => !_verticesList.Contains(v)).Distinct().ToArray();
+			_verticesList.AddRange(vertices);
+
+			// Create and add the panels to drawing
+			var panels = vertices.Select(v => new Solid(v.Vertex1, v.Vertex2, v.Vertex4, v.Vertex3) { Layer = $"{Layer.Panel}" }).ToArray();
+			panels.Add(On_PanelErase);
+		}
+
+		/// <summary>
+		/// Get the collection of panels in the drawing.
+		/// </summary>
+		public static IEnumerable<Solid> GetObjects() => Layer.Panel.GetDBObjects()?.ToSolids();
 
         /// <summary>
         /// Update panel numbers on the XData of each panel in the model and return the collection of panels.

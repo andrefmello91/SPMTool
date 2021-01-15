@@ -25,6 +25,11 @@ namespace SPMTool.Database.Elements
 		private static List<Point3d> _positions;
 
 		/// <summary>
+		/// The equality comparer for <see cref="Point3d"/>.
+		/// </summary>
+		private static readonly Point3dEqualityComparer Comparer = new Point3dEqualityComparer();
+		
+		/// <summary>
 		/// Add nodes in all necessary positions (stringer start, mid and end points).
 		/// </summary>
 		public static void Add()
@@ -61,7 +66,7 @@ namespace SPMTool.Database.Elements
 			var unit = SettingsData.SavedUnits.Geometry;
 
             // Check if a node already exists at the position. If not, its created
-            if (_positions.Exists(p => p.Approx(position, 0.1.ConvertFromMillimeter(unit))))
+            if (_positions.Exists(p => p.Approx(position, 0.01.ConvertFromMillimeter(unit))))
 				return;
 
             // Add to the list
@@ -87,14 +92,33 @@ namespace SPMTool.Database.Elements
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
         public static void Add(IEnumerable<Point3d> positions, NodeType nodeType)
 		{
-			foreach (var position in positions)
-				Add(position, nodeType);
+			if (_positions is null)
+				_positions = new List<Point3d>(NodePositions(NodeType.All));
+
+			// Get tolerance
+			var unit = SettingsData.SavedUnits.Geometry;
+			var tol = 0.01.ConvertFromMillimeter(unit);
+
+			// Get the positions that don't exist in the drawing
+			var newNds = positions.Where(p => !_positions.Any(p2 => Comparer.Equals(p, p2, tol))).Distinct(Comparer).ToArray();
+			_positions.AddRange(newNds);
+
+			// Get the layer
+			var layer = $"{GetLayer(nodeType)}";
+
+			// Create the nodes
+			var nodes = newNds.Select(p => new DBPoint(p) { Layer = layer }).ToArray();
+
+			if (nodeType != NodeType.Displaced)
+				nodes.Add(On_NodeErase);
+			else
+				nodes.Add();
         }
 
-        /// <summary>
-        /// Get the collection of internal nodes in the drawing.
-        /// </summary>
-        public static IEnumerable<DBPoint> GetIntNodes() => Layer.IntNode.GetDBObjects()?.ToPoints();
+		/// <summary>
+		/// Get the collection of internal nodes in the drawing.
+		/// </summary>
+		public static IEnumerable<DBPoint> GetIntNodes() => Layer.IntNode.GetDBObjects()?.ToPoints();
 
         /// <summary>
         /// Get the collection of external nodes in the drawing.
