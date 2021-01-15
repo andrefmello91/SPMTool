@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
 using Extensions.Number;
@@ -28,7 +29,17 @@ namespace SPMTool.Database.Elements
 		/// The equality comparer for <see cref="Point3d"/>.
 		/// </summary>
 		private static readonly Point3dEqualityComparer Comparer = new Point3dEqualityComparer();
-		
+
+		/// <summary>
+		/// Get the geometry unit.
+		/// </summary>
+		private static LengthUnit GeometryUnit => SettingsData.SavedUnits.Geometry;
+
+		/// <summary>
+		/// Get the tolerance for <see cref="Point3d"/> equality comparer.
+		/// </summary>
+		public static double Tolerance => 0.001.ConvertFromMillimeter(GeometryUnit);
+
 		/// <summary>
 		/// Add nodes in all necessary positions (stringer start, mid and end points).
 		/// </summary>
@@ -63,10 +74,8 @@ namespace SPMTool.Database.Elements
 			if (_positions is null)
 				_positions = new List<Point3d>(NodePositions(NodeType.All));
 
-			var unit = SettingsData.SavedUnits.Geometry;
-
             // Check if a node already exists at the position. If not, its created
-            if (_positions.Exists(p => p.Approx(position, 0.01.ConvertFromMillimeter(unit))))
+            if (_positions.Exists(p => p.Approx(position, Tolerance)))
 				return;
 
             // Add to the list
@@ -114,6 +123,76 @@ namespace SPMTool.Database.Elements
 			else
 				nodes.Add();
         }
+
+		/// <summary>
+		/// Remove the node at this <paramref name="position"/>.
+		/// </summary>
+		/// <param name="position">The <see cref="Point3d"/> position.</param>
+        public static void Remove(Point3d position)
+        {
+	        if (_positions is null)
+		        _positions = new List<Point3d>(NodePositions(NodeType.All));
+
+	        if (_positions.Contains(position))
+		        _positions.Remove(position);
+
+			// Remove from drawing
+			GetAllNodes().Where(p => p.Position.Approx(position, Tolerance)).ToArray().Remove();
+        }
+
+		/// <summary>
+		/// Remove the nodes at these <paramref name="positions"/>.
+		/// </summary>
+		/// <param name="positions">The <see cref="Point3d"/> positions.</param>
+        public static void Remove(IEnumerable<Point3d> positions)
+        {
+	        if (_positions is null)
+		        _positions = new List<Point3d>(NodePositions(NodeType.All));
+
+	        foreach (var position in positions)
+		        _positions.RemoveAll(p => p.Approx(position, Tolerance));
+			
+			// Remove from drawing
+			GetAllNodes().Where(p1 => positions.Any(p2 => Comparer.Equals(p1.Position, p2, Tolerance))).ToArray().Remove();
+        }
+
+		/// <summary>
+		/// Return a <see cref="DBPoint"/> in the drawing located at this <paramref name="position"/>.
+		/// </summary>
+		/// <param name="position">The required <see cref="Point3d"/> position.</param>
+		/// <param name="type">The <see cref="NodeType"/> (excluding <see cref="NodeType.Displaced"/>). </param>
+		public static DBPoint GetNodeAtPosition(Point3d position, NodeType type = NodeType.All)
+		{
+			var nodes =
+				(type is NodeType.External
+					? GetExtNodes()
+					: type is NodeType.Internal
+						? GetIntNodes()
+						: GetAllNodes()).ToArray();
+
+			return
+				nodes.Any(p => p.Position.Approx(position, Tolerance))
+					? nodes.First(p => p.Position.Approx(position))
+					: null;
+		}
+
+		/// <summary>
+		/// Return a collection of <see cref="DBPoint"/>'s in the drawing located at this <paramref name="positions"/>.
+		/// </summary>
+		/// <param name="positions">The required <see cref="Point3d"/> positions.</param>
+		/// <param name="type">The <see cref="NodeType"/> (excluding <see cref="NodeType.Displaced"/>). </param>
+		public static IEnumerable<DBPoint> GetNodesAtPositions(IEnumerable<Point3d> positions, NodeType type = NodeType.All)
+		{
+			var nodes =
+				(type is NodeType.External
+					? GetExtNodes()
+					: type is NodeType.Internal
+						? GetIntNodes()
+						: GetAllNodes()).ToArray();
+
+			return
+				nodes.Where(n => positions.Any(p => p.Approx(n.Position, Tolerance)));
+		}
 
 		/// <summary>
 		/// Get the collection of internal nodes in the drawing.
@@ -253,14 +332,11 @@ namespace SPMTool.Database.Elements
         /// <summary>
         /// Get the layer name based on <paramref name="nodeType"/>.
         /// </summary>
-        /// <param name="nodeType">The <see cref="NodeType"/>.</param>
+        /// <param name="nodeType">The <see cref="NodeType"/> (excluding <see cref="NodeType.All"/>).</param>
         private static Layer GetLayer(NodeType nodeType)
         {
 	        switch (nodeType)
 	        {
-		        case NodeType.External:
-			        return Layer.ExtNode;
-
 		        case NodeType.Internal:
 			        return Layer.IntNode;
 
@@ -268,9 +344,9 @@ namespace SPMTool.Database.Elements
 			        return Layer.Displacements;
 
 		        default:
-			        return default;
+			        return Layer.ExtNode;
 	        }
-        }
+		}
 
         /// <summary>
         /// Get the node number at this <paramref name="position"/>.
