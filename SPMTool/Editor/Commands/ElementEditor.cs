@@ -30,9 +30,6 @@ namespace SPMTool.Editor.Commands
 	    [CommandMethod("DivideStringer")]
 	    public static void DivideStringer()
 	    {
-		    // Get units
-		    var units = SettingsData.SavedUnits;
-
 		    // Prompt for select stringers
 		    var strs = UserInput.SelectStringers("Select stringers to divide")?.ToArray();
 

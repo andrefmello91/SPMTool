@@ -124,7 +124,12 @@ namespace SPMTool.Database.Elements
 				yield return new Solid(verts3[0], verts3[1], verts3[2]);
 			}
 		}
-		
+
+		/// <summary>
+		/// Get the geometry unit.
+		/// </summary>
+		private static LengthUnit GeometryUnit => SettingsData.SavedUnits.Geometry;
+
 		/// <summary>
 		/// Get the elements of the tensile block.
 		/// </summary>
@@ -212,54 +217,62 @@ namespace SPMTool.Database.Elements
 		/// Add a panel to the drawing.
 		/// </summary>
 		/// <param name="vertices">The collection of <see cref="Point3d"/> vertices.</param>
-		/// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
-		public static void Add(IEnumerable<Point3d> vertices, LengthUnit geometryUnit = LengthUnit.Millimeter)
+		public static void Add(IEnumerable<Point3d> vertices) => Add(new Vertices(vertices, GeometryUnit));
+
+		/// <summary>
+		/// Add a panel to the drawing.
+		/// </summary>
+		/// <param name="vertices">The panel <see cref="Vertices"/> object.</param>
+		public static void Add(Vertices vertices)
 		{
 			if (_verticesList is null)
 				_verticesList = new List<Vertices>(PanelVertices());
 
-			var verts = new Vertices(vertices, geometryUnit);
-
 			// Check if a panel already exist on that position. If not, create it
-			if (_verticesList.Contains(verts))
+			if (_verticesList.Contains(vertices))
 				return;
 
             // Add to the list
-            _verticesList.Add(verts);
-
-			// Order vertices
-			var ordered = vertices.Order().ToArray();
+            _verticesList.Add(vertices);
 
             // Create the panel as a solid with 4 segments (4 points)
-            using (var solid = new Solid(ordered[0], ordered[1], ordered[2], ordered[3]) { Layer = $"{Layer.Panel}" })
-	            solid.Add(On_PanelErase);
+            var solid = new Solid(vertices.Vertex1, vertices.Vertex2, vertices.Vertex4, vertices.Vertex3)
+            {
+	            Layer = $"{Layer.Panel}"
+            };
+
+			solid.Add(On_PanelErase);
 		}
 
 		/// <summary>
 		/// Add a panel to the drawing.
 		/// </summary>
 		/// <param name="solid">The <see cref="Solid"/> that represents the panel.</param>
-		/// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
-		public static void Add(Solid solid, LengthUnit geometryUnit = LengthUnit.Millimeter) => Add(solid.GetVertices(), geometryUnit);
+		public static void Add(Solid solid) => Add(solid.GetVertices());
 
 		/// <summary>
 		/// Add multiple panels to the drawing.
 		/// </summary>
-		/// <param name="solids">The <see cref="Solid"/>'s that represents the panels.</param>
-		/// <param name="geometryUnit">The <see cref="LengthUnit"/> of geometry.</param>
-		public static void Add(IEnumerable<Solid> solids, LengthUnit geometryUnit = LengthUnit.Millimeter)
+		/// <param name="verticesCollection">The collection of <see cref="Vertices"/>'s that represents the panels.</param>
+		public static void Add(IEnumerable<Vertices> verticesCollection)
 		{
 			if (_verticesList is null)
 				_verticesList = new List<Vertices>(PanelVertices());
 
 			// Get solids' vertices that don't exist in the drawing
-			var vertices = solids.Select(s => new Vertices(s.GetVertices(), geometryUnit)).Where(v => !_verticesList.Contains(v)).Distinct().ToArray();
+			var vertices = verticesCollection.Distinct().Where(v => !_verticesList.Contains(v)).ToArray();
 			_verticesList.AddRange(vertices);
 
 			// Create and add the panels to drawing
 			var panels = vertices.Select(v => new Solid(v.Vertex1, v.Vertex2, v.Vertex4, v.Vertex3) { Layer = $"{Layer.Panel}" }).ToArray();
 			panels.Add(On_PanelErase);
 		}
+
+		/// <summary>
+		/// Add multiple panels to the drawing.
+		/// </summary>
+		/// <param name="solids">The <see cref="Solid"/>'s that represents the panels.</param>
+		public static void Add(IEnumerable<Solid> solids) => Add(solids.Select(s => GetVertices(s)).ToArray());
 
 		/// <summary>
 		/// Get the collection of panels in the drawing.

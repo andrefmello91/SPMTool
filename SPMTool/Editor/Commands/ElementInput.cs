@@ -75,9 +75,6 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod("AddPanel")]
 		public static void AddPanel()
 		{
-			// Read units
-			var units = SettingsData.SavedUnits;
-
 			// Create a loop for creating infinite panels
 			for ( ; ; )
 			{
@@ -90,7 +87,7 @@ namespace SPMTool.Editor.Commands
 				// Check if there are four points
 				if (nds.Length == 4)
 					// Create the panel if it doesn't exist
-					Panels.Add(nds.Select(nd => nd.Position).ToArray(), units.Geometry);
+					Panels.Add(nds.Select(nd => nd.Position).ToArray());
 
 				else
 					ShowAlertDialog("Please select four external nodes.");
