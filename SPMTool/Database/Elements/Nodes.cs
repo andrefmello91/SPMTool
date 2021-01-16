@@ -120,7 +120,7 @@ namespace SPMTool.Database.Elements
 	        var strList = Stringers.Geometries;
 
 	        List<Point3d> toRemove;
-
+			
 			if (strList is null || !strList.Any())
 		        toRemove = Positions;
 
