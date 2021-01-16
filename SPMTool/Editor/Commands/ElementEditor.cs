@@ -45,7 +45,7 @@ namespace SPMTool.Editor.Commands
 		    int num = numn.Value;
 
 		    // Get the list of start and endpoints
-		    var stringerCollection = Stringers.StringerGeometries();
+		    var stringerCollection = Stringers.Geometries;
 
             // Create a list to erase the internal nodes
             var ndsToErase = new List<DBObject>();
@@ -136,10 +136,10 @@ namespace SPMTool.Editor.Commands
 				cln = clnn.Value;
 
 			// Get the list of start and endpoints
-			var geoList = Stringers.StringerGeometries()?.ToList() ?? new List<StringerGeometry>();
+			var geoList = Stringers.Geometries;
 
 			// Get the list of panels
-			var pnlList = Panels.PanelVertices();
+			var pnlList = Panels.VerticesList;
 
 			// Create a list of lines for adding the stringers later
 			var newStrList = new List<Line>();

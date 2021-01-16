@@ -76,24 +76,25 @@ namespace SPMTool.Database
         /// </summary>
         public static DBText[] ForceTextCollection => Forces.GetTexts()?.ToArray();
 
-        /// <summary>
-        /// Update all the elements in the drawing.
-        /// </summary>
-        /// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
-        public static void UpdateElements(bool addNodes = true)
+		/// <summary>
+		/// Update all the elements in the drawing.
+		/// </summary>
+		/// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
+		/// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
+        public static void UpdateElements(bool addNodes = true, bool removeNodes = true)
         {
-	        Nodes.Update(addNodes);
 	        Stringers.Update(false);
 	        Panels.Update(false);
+	        Nodes.Update(addNodes, removeNodes);
         }
 
-        /// <summary>
-        /// Get the <see cref="InputData"/> from objects in drawing.
-        /// </summary>
-        /// <param name="dataOk">Returns true if data is consistent to start analysis.</param>
-        /// <param name="message">Message to show if data is inconsistent.</param>
-        /// <param name="analysisType">The type of analysis to perform.</param>
-        public static InputData GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
+		/// <summary>
+		/// Get the <see cref="InputData"/> from objects in drawing.
+		/// </summary>
+		/// <param name="dataOk">Returns true if data is consistent to start analysis.</param>
+		/// <param name="message">Message to show if data is inconsistent.</param>
+		/// <param name="analysisType">The type of analysis to perform.</param>
+		public static InputData GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
         {
 	        // Get units
 	        var units = SettingsData.SavedUnits;

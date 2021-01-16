@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Windows.Controls;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
@@ -15,6 +16,7 @@ using SPM.Elements.PanelProperties;
 using SPMTool.Enums;
 using UnitsNet;
 using UnitsNet.Units;
+using Panel = SPM.Elements.Panel;
 
 namespace SPMTool.Database.Elements
 {
@@ -26,7 +28,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		/// Auxiliary list of <see cref="Vertices"/>'s.
 		/// </summary>
-		private static List<Vertices> _verticesList;
+		public static List<Vertices> VerticesList = GetPanelVertices();
 
 		/// <summary>
 		/// Get the elements of the shear block.
@@ -225,15 +227,12 @@ namespace SPMTool.Database.Elements
 		/// <param name="vertices">The panel <see cref="Vertices"/> object.</param>
 		public static void Add(Vertices vertices)
 		{
-			if (_verticesList is null)
-				_verticesList = new List<Vertices>(PanelVertices());
-
 			// Check if a panel already exist on that position. If not, create it
-			if (_verticesList.Contains(vertices))
+			if (VerticesList.Contains(vertices))
 				return;
 
             // Add to the list
-            _verticesList.Add(vertices);
+            VerticesList.Add(vertices);
 
             // Create the panel as a solid with 4 segments (4 points)
             var solid = new Solid(vertices.Vertex1, vertices.Vertex2, vertices.Vertex4, vertices.Vertex3)
@@ -256,12 +255,9 @@ namespace SPMTool.Database.Elements
 		/// <param name="verticesCollection">The collection of <see cref="Vertices"/>'s that represents the panels.</param>
 		public static void Add(IEnumerable<Vertices> verticesCollection)
 		{
-			if (_verticesList is null)
-				_verticesList = new List<Vertices>(PanelVertices());
-
 			// Get solids' vertices that don't exist in the drawing
-			var vertices = verticesCollection.Distinct().Where(v => !_verticesList.Contains(v)).ToArray();
-			_verticesList.AddRange(vertices);
+			var vertices = verticesCollection.Distinct().Where(v => !VerticesList.Contains(v)).ToArray();
+			VerticesList.AddRange(vertices);
 
 			// Create and add the panels to drawing
 			var panels = vertices.Select(v => new Solid(v.Vertex1, v.Vertex2, v.Vertex4, v.Vertex3) { Layer = $"{Layer.Panel}" }).ToArray();
@@ -275,11 +271,8 @@ namespace SPMTool.Database.Elements
 		/// <param name="vertices">The <see cref="Vertices"/> of panel to remove.</param>
 		public static void Remove(Vertices vertices)
 		{
-			if (_verticesList is null)
-				_verticesList = new List<Vertices>(PanelVertices());
-
 			// Remove from list
-			_verticesList.RemoveAll(v => v == vertices);
+			VerticesList.RemoveAll(v => v == vertices);
 
 			// Remove the panel
 			GetSolidByVertices(vertices).Remove();
@@ -291,11 +284,8 @@ namespace SPMTool.Database.Elements
 		/// <param name="vertices">The collection of <see cref="Vertices"/> of panels to remove.</param>
 		public static void Remove(IEnumerable<Vertices> vertices)
 		{
-			if (_verticesList is null)
-				_verticesList = new List<Vertices>(PanelVertices());
-
 			// Remove from list
-			_verticesList.RemoveAll(v => vertices.Any(v2 => v == v2));
+			VerticesList.RemoveAll(v => vertices.Any(v2 => v == v2));
 
 			// Remove the panels
 			GetSolidsByVertices(vertices).ToArray().Remove();
@@ -331,9 +321,6 @@ namespace SPMTool.Database.Elements
         /// <param name="updateNodes">Update nodes too?</param>
         public static void Update(bool updateNodes = true)
 		{
-			if (updateNodes)
-				Nodes.Update();
-
 			// Create the panels collection and initialize getting the elements on node layer
 			var pnls = GetObjects()?.Order()?.ToArray();
 
@@ -371,13 +358,17 @@ namespace SPMTool.Database.Elements
             }
 
 			// Update vertices
-			_verticesList = new List<Vertices>(pnls.Select(GetVertices));
+			VerticesList = GetPanelVertices(pnls);
 
             // Move panels to bottom
 			pnls.MoveToBottom();
 
-            // Alert user
-            if (userAlert)
+			// Update nodes
+			if (updateNodes)
+				Nodes.Update(false, false);
+
+			// Alert user
+			if (userAlert)
 	            Application.ShowAlertDialog("Please set panel geometry and reinforcement again.");
 		}
 
@@ -424,15 +415,16 @@ namespace SPMTool.Database.Elements
 			return new WebReinforcement(phiX, sx, steelX, phiY, sy, steelY, width);
 		}
 
-        /// <summary>
-        /// Get the collection of <see cref="Vertices"/> of existing panels.
-        /// </summary>
-        public static IEnumerable<Vertices> PanelVertices() => GetObjects()?.Select(GetVertices);
+		/// <summary>
+		/// Get the collection of <see cref="Vertices"/> of existing panels.
+		/// </summary>
+		/// <param name="panels">The collection of <see cref="Solid"/>'s.</param>
+		public static List<Vertices> GetPanelVertices(IEnumerable<Solid> panels = null) => (panels ?? GetObjects())?.Select(GetVertices).ToList() ?? new List<Vertices>();
 
 		/// <summary>
-        /// Create new XData for panels.
-        /// </summary>
-        /// <returns></returns>
+		/// Create new XData for panels.
+		/// </summary>
+		/// <returns></returns>
 		private static TypedValue[] NewXData()
 		{
 			// Definition for the Extended Data
@@ -460,7 +452,7 @@ namespace SPMTool.Database.Elements
 		}
 
 		/// <summary>
-		/// Read the <see cref="Panel"/> objects in the drawing.
+		/// Read the <see cref="SPM.Elements.Panel"/> objects in the drawing.
 		/// </summary>
 		/// <param name="panelObjects">The collection of panels objects in the drawing.</param>
 		/// <param name="units">Units current in use <see cref="Units"/>.</param>
@@ -865,13 +857,14 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		private static void On_PanelErase(object sender, ObjectErasedEventArgs e)
 		{
-			if (_verticesList is null || !_verticesList.Any() || !(sender is Solid pnl))
+			if (VerticesList is null || !VerticesList.Any() || !(sender is Solid pnl))
 				return;
 
 			var vertices = GetVertices(pnl);
 
-			if (_verticesList.Contains(vertices))
-				_verticesList.Remove(vertices);
+			VerticesList.RemoveAll(v => v == vertices);
+
+			Update(false);
 		}
 
     }

@@ -25,7 +25,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		/// Auxiliary list of <see cref="StringerGeometry"/>'s.
 		/// </summary>
-		private static List<StringerGeometry> _geometries;
+		public static List<StringerGeometry> Geometries = GetGeometries();
 
 		/// <summary>
 		/// Get the geometry unit.
@@ -97,16 +97,12 @@ namespace SPMTool.Database.Elements
 		/// <param name="geometry">The <see cref="StringerGeometry"/> to add to drawing.</param>
 		public static void Add(StringerGeometry geometry)
         {
-	        // Get the list of stringers if it's not imposed
-	        if (_geometries is null)
-		        _geometries = new List<StringerGeometry>(StringerGeometries());
-
 	        // Check if a Stringer already exist on that position. If not, create it
-	        if (_geometries.Contains(geometry))
+	        if (Geometries.Contains(geometry))
 		        return;
 
 	        // Add to the list
-	        _geometries.Add(geometry);
+	        Geometries.Add(geometry);
 
 	        // Set layer
 	        var line = new Line(geometry.InitialPoint, geometry.EndPoint)
@@ -139,13 +135,9 @@ namespace SPMTool.Database.Elements
 		/// <param name="geometries">The <see cref="StringerGeometry"/>'s to add to drawing.</param>
 		public static void Add(IEnumerable<StringerGeometry> geometries)
         {
-	        // Get the list of stringers if it's not imposed
-	        if (_geometries is null)
-		        _geometries = new List<StringerGeometry>(StringerGeometries());
-
 			// Get the geometries that don't exist in the drawing
-			var newGeos = geometries.Distinct().Where(g => !_geometries.Contains(g)).ToArray();
-			_geometries.AddRange(newGeos);
+			var newGeos = geometries.Distinct().Where(g => !Geometries.Contains(g)).ToArray();
+			Geometries.AddRange(newGeos);
 
 			// Create and add the stringers
 			var strs = newGeos.Select(g => new Line(g.InitialPoint, g.EndPoint) { Layer = $"{Layer.Stringer}" }).ToArray();
@@ -158,12 +150,8 @@ namespace SPMTool.Database.Elements
 		/// <param name="geometry">The <see cref="StringerGeometry"/> to remove from drawing.</param>
 		public static void Remove(StringerGeometry geometry)
 		{
-			// Get the list of stringers if it's not imposed
-			if (_geometries is null)
-				_geometries = new List<StringerGeometry>(StringerGeometries());
-
 			// Remove from list
-			_geometries.RemoveAll(g => g == geometry);
+			Geometries.RemoveAll(g => g == geometry);
 
 			// Remove the stringer
 			GetLineByGeometry(geometry).Remove();
@@ -175,12 +163,8 @@ namespace SPMTool.Database.Elements
 		/// <param name="geometries">The <see cref="StringerGeometry"/>'s to remove from drawing.</param>
 		public static void Remove(IEnumerable<StringerGeometry> geometries)
 		{
-			// Get the list of stringers if it's not imposed
-			if (_geometries is null)
-				_geometries = new List<StringerGeometry>(StringerGeometries());
-
 			// Remove from list
-			_geometries.RemoveAll(g => geometries.Any(geo => g == geo));
+			Geometries.RemoveAll(g => geometries.Any(geo => g == geo));
 
 			// Remove the stringer
 			GetLinesByGeometries(geometries).ToArray().Remove();
@@ -209,10 +193,6 @@ namespace SPMTool.Database.Elements
         /// <param name="updateNodes">Update nodes too?</param>
         public static void Update(bool updateNodes = true)
         {
-	        // Get all the nodes in the model
-			if (updateNodes)
-				Nodes.Update();
-
 			// Get the Stringer collection
 			var strs = GetObjects()?.Order()?.ToArray();
 
@@ -260,10 +240,14 @@ namespace SPMTool.Database.Elements
 	        }
 
 			// Save geometries
-			_geometries = strs.Select(str => GetGeometry(str, false)).ToList();
+			Geometries = GetGeometries(strs);
 
-	        // Alert the user
-	        if (userAlert)
+			// Get all the nodes in the model
+			if (updateNodes)
+				Nodes.Update();
+
+			// Alert the user
+			if (userAlert)
 		        Application.ShowAlertDialog("Please set Stringer geometry and reinforcement again.");
         }
 
@@ -311,10 +295,11 @@ namespace SPMTool.Database.Elements
 			return new UniaxialReinforcement(n, d, new Steel(fy, Es));
         }
 
-		/// <summary>
-        /// Get a collection containing all the stringer geometries in the drawing.
+        /// <summary>
+        /// Get and update the stringer geometries in the drawing.
         /// </summary>
-		public static IEnumerable<StringerGeometry> StringerGeometries() => GetObjects()?.Select(str => GetGeometry(str, false));
+        /// <param name="stringers">The collection of <see cref="Line"/>'s.</param>
+        private static List<StringerGeometry> GetGeometries(IEnumerable<Line> stringers = null) => (stringers ?? GetObjects())?.Select(str => GetGeometry(str, false)).ToList() ?? new List<StringerGeometry>();
 
 		/// <summary>
         /// Create new extended data for stringers.
@@ -774,13 +759,16 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		private static void On_StringerErase(object sender, ObjectErasedEventArgs e)
 		{
-			if (_geometries is null || !_geometries.Any() || !(sender is Line str))
+			if (Geometries is null || !Geometries.Any() || !(sender is Line str))
 				return;
 
 			var geometry = GetGeometry(str, false);
 
-			if (_geometries.Contains(geometry))
-				_geometries.Remove(geometry);
+			Geometries.RemoveAll(g => g == geometry);
+
+			// Update and remove unnecessary nodes
+			Update(false);
+			Nodes.Update(false);
 		}
 	}
 }

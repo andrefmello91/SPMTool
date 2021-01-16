@@ -42,31 +42,24 @@ namespace SPMTool.Editor.Commands
 		    // Loop for creating infinite stringers (until user exits the command)
 		    for ( ; ; )
 		    {
-			    // Create a point3d collection and add the Stringer start point
-			    var nds = new List<Point3d> {stPt};
-
 			    // Prompt for the start point of Stringer
 			    var endPtn = UserInput.GetPoint("Enter the end point:", stPt);
 
-			    if (endPtn is null)
+			    if (!endPtn.HasValue)
 				    // Finish command
 				    break;
 
-			    nds.Add(endPtn.Value);
-
-			    // Get the points ordered in ascending Y and ascending X:
-			    var extNds = nds.Order().ToArray();
+			    var endPt = endPtn.Value;
 
 			    // Create the Stringer and add to drawing
-			    Stringers.Add(extNds[0], extNds[1]);
+			    Stringers.Add(stPt, endPt);
 
 			    // Set the start point of the new Stringer
-			    stPt = endPtn.Value;
+			    stPt = endPt;
 		    }
 
 		    // Update the nodes and stringers
-		    Nodes.Update();
-		    Stringers.Update(false);
+		    Stringers.Update();
 
 			// Set old OSMODE
 			SetSystemVariable("OSMODE", osmode);

@@ -21,14 +21,14 @@ namespace SPMTool.Database.Elements
 	public static class Nodes
 	{
 		/// <summary>
-        /// Auxiliary list of nodes' <see cref="Point3d"/> positions.
-        /// </summary>
-		private static List<Point3d> _positions;
+		/// List of nodes' <see cref="Point3d"/> positions.
+		/// </summary>
+		public static List<Point3d> Positions = GetPositions();
 
 		/// <summary>
 		/// The equality comparer for <see cref="Point3d"/>.
 		/// </summary>
-		private static readonly Point3dEqualityComparer Comparer = new Point3dEqualityComparer();
+		private static readonly Point3dEqualityComparer Comparer = new Point3dEqualityComparer { Tolerance = Tolerance };
 
 		/// <summary>
 		/// Get the geometry unit.
@@ -45,19 +45,16 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		public static void Add()
 		{
-			if (_positions is null)
-				_positions = new List<Point3d>(NodePositions(NodeType.All));
-
 			// Get stringers
-			var strList = Model.StringerCollection;
+			var strList = Stringers.Geometries;
 
 			if (strList is null || !strList.Any())
 				return;
 
 			// Get points
-			var intNds = strList.Select(str => str.MidPoint()).ToList();
-			var extNds = strList.Select(str => str.StartPoint).ToList();
-			extNds.AddRange(strList.Select(str => str.EndPoint));
+			var intNds = strList.Select(str => str.CenterPoint).Distinct(Comparer).ToList();
+			var extNds = strList.Select(str => str.InitialPoint).Distinct(Comparer).ToList();
+			extNds.AddRange(strList.Select(str => str.EndPoint).Distinct(Comparer));
 
             // Add nodes
 			Add(intNds, NodeType.Internal);
@@ -71,15 +68,12 @@ namespace SPMTool.Database.Elements
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
 		public static void Add(Point3d position, NodeType nodeType)
 		{
-			if (_positions is null)
-				_positions = new List<Point3d>(NodePositions(NodeType.All));
-
             // Check if a node already exists at the position. If not, its created
-            if (_positions.Exists(p => p.Approx(position, Tolerance)))
+            if (Positions.Exists(p => p.Approx(position, Tolerance)))
 				return;
 
             // Add to the list
-            _positions.Add(position);
+            Positions.Add(position);
 
 			// Create the node and set the layer
 			var dbPoint = new DBPoint(position)
@@ -101,16 +95,9 @@ namespace SPMTool.Database.Elements
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
         public static void Add(IEnumerable<Point3d> positions, NodeType nodeType)
 		{
-			if (_positions is null)
-				_positions = new List<Point3d>(NodePositions(NodeType.All));
-
-			// Get tolerance
-			var unit = SettingsData.SavedUnits.Geometry;
-			var tol = 0.01.ConvertFromMillimeter(unit);
-
 			// Get the positions that don't exist in the drawing
-			var newNds = positions.Where(p => !_positions.Any(p2 => Comparer.Equals(p, p2, tol))).Distinct(Comparer).ToArray();
-			_positions.AddRange(newNds);
+			var newNds = positions.Distinct(Comparer).Where(p => !Positions.Any(p2 => p2.Approx(p, Tolerance))).ToArray();
+			Positions.AddRange(newNds);
 
 			// Get the layer
 			var layer = $"{GetLayer(nodeType)}";
@@ -125,16 +112,41 @@ namespace SPMTool.Database.Elements
         }
 
 		/// <summary>
+		/// Remove unnecessary nodes from the drawing.
+		/// </summary>
+        public static void Remove()
+        {
+	        // Get stringers
+	        var strList = Stringers.Geometries;
+
+	        List<Point3d> toRemove;
+
+			if (strList is null || !strList.Any())
+		        toRemove = Positions;
+
+			else
+			{
+				// Get points
+				var nodes = strList.Select(str => str.CenterPoint).ToList();
+				nodes.AddRange(strList.Select(str => str.InitialPoint));
+				nodes.AddRange(strList.Select(str => str.EndPoint));
+
+				// Get positions not needed
+				toRemove = Positions.Where(p => !nodes.Any(n => n.Approx(p, Tolerance))).ToList();
+			}
+
+			// Add nodes
+			Remove(toRemove);
+        }
+
+		/// <summary>
 		/// Remove the node at this <paramref name="position"/>.
 		/// </summary>
 		/// <param name="position">The <see cref="Point3d"/> position.</param>
-        public static void Remove(Point3d position)
+		public static void Remove(Point3d position)
         {
-	        if (_positions is null)
-		        _positions = new List<Point3d>(NodePositions(NodeType.All));
-
-	        if (_positions.Contains(position))
-		        _positions.Remove(position);
+	        if (Positions.Contains(position))
+		        Positions.Remove(position);
 
 			// Remove from drawing
 			GetNodeAtPosition(position).Remove();
@@ -146,14 +158,14 @@ namespace SPMTool.Database.Elements
 		/// <param name="positions">The <see cref="Point3d"/> positions.</param>
         public static void Remove(IEnumerable<Point3d> positions)
         {
-	        if (_positions is null)
-		        _positions = new List<Point3d>(NodePositions(NodeType.All));
+	        // Get positions to remove
+	        var toRemove = Positions.Distinct(Comparer).Where(p => positions.Any(n => n.Approx(p, Tolerance))).ToList();
 
-	        foreach (var position in positions)
-		        _positions.RemoveAll(p => p.Approx(position, Tolerance));
-			
+			// Update positions
+			Positions = Positions.Where(p => !toRemove.Any(n => n.Approx(p, Tolerance))).ToList();
+
 			// Remove from drawing
-			GetNodesAtPositions(positions).ToArray().Remove();
+			GetNodesAtPositions(toRemove).ToArray().Remove();
         }
 
 		/// <summary>
@@ -211,11 +223,16 @@ namespace SPMTool.Database.Elements
         /// Enumerate all the nodes in the model and return the collection of nodes.
         /// </summary>
         /// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
-        public static void Update(bool addNodes = true)
+        /// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
+        public static void Update(bool addNodes = true, bool removeNodes = true)
 		{
 			// Add nodes to all needed positions
 			if (addNodes)
 				Add();
+
+			// Remove nodes at unnecessary positions
+			if (removeNodes)
+				Remove();
 
 			// Get all the nodes as points
 			var ndObjs = GetAllNodes()?.ToList() ?? new List<DBPoint>();
@@ -247,7 +264,7 @@ namespace SPMTool.Database.Elements
 			}
 
 			// Save positions
-			_positions = ndObjs.Select(nd => nd.Position).ToList();
+			Positions = GetPositions(ndObjs);
 
 			// Set the style for all point objects in the drawing
             Model.SetPointSize();
@@ -322,10 +339,20 @@ namespace SPMTool.Database.Elements
         }
 
         /// <summary>
-        /// Get <see cref="NodeType"/>.
+        /// Get node positions in the drawing.
         /// </summary>
-        /// <param name="nodePoint">The <see cref="Entity"/> object.</param>
-        private static NodeType GetNodeType(Entity nodePoint) => nodePoint.Layer == $"{Layer.ExtNode}" ? NodeType.External : NodeType.Internal;
+        /// <param name="nodes">The collection of <see cref="DBPoint"/>'s.</param>
+        private static List<Point3d> GetPositions(IEnumerable<DBPoint> nodes = null) => (nodes ?? GetAllNodes())?.Select(nd => nd.Position).ToList() ?? new List<Point3d>();
+		//{
+		// _positions = (nodes ?? GetAllNodes())?.Select(nd => nd.Position).ToList() ?? new List<Point3d>();
+		// return _positions;
+		//}
+
+		/// <summary>
+		/// Get <see cref="NodeType"/>.
+		/// </summary>
+		/// <param name="nodePoint">The <see cref="Entity"/> object.</param>
+		private static NodeType GetNodeType(Entity nodePoint) => nodePoint.Layer == $"{Layer.ExtNode}" ? NodeType.External : NodeType.Internal;
 
         /// <summary>
         /// Get the layer name based on <paramref name="nodeType"/>.
@@ -408,11 +435,10 @@ namespace SPMTool.Database.Elements
         /// </summary>
         private static void On_NodeErase(object sender, ObjectErasedEventArgs e)
 		{
-			if (_positions is null || !_positions.Any() || !(sender is DBPoint nd))
+			if (Positions is null || !Positions.Any() || !(sender is DBPoint nd))
 				return;
 
-			if (_positions.Contains(nd.Position))
-				_positions.Remove(nd.Position);
+			Positions.RemoveAll(p => p.Approx(nd.Position, Tolerance));
         }
 	}
 }
