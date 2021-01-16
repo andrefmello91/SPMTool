@@ -137,7 +137,7 @@ namespace SPMTool.Database.Elements
 		        _positions.Remove(position);
 
 			// Remove from drawing
-			GetAllNodes().Where(p => p.Position.Approx(position, Tolerance)).ToArray().Remove();
+			GetNodeAtPosition(position).Remove();
         }
 
 		/// <summary>
@@ -153,7 +153,7 @@ namespace SPMTool.Database.Elements
 		        _positions.RemoveAll(p => p.Approx(position, Tolerance));
 			
 			// Remove from drawing
-			GetAllNodes().Where(p1 => positions.Any(p2 => Comparer.Equals(p1.Position, p2, Tolerance))).ToArray().Remove();
+			GetNodesAtPositions(positions).ToArray().Remove();
         }
 
 		/// <summary>
@@ -171,9 +171,7 @@ namespace SPMTool.Database.Elements
 						: GetAllNodes()).ToArray();
 
 			return
-				nodes.Any(p => p.Position.Approx(position, Tolerance))
-					? nodes.First(p => p.Position.Approx(position))
-					: null;
+				nodes.FirstOrDefault(p => p.Position.Approx( position, Tolerance));
 		}
 
 		/// <summary>

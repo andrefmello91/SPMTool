@@ -268,11 +268,57 @@ namespace SPMTool.Database.Elements
 			panels.Add(On_PanelErase);
 		}
 
+
+		/// <summary>
+		/// Remove a panel from drawing.
+		/// </summary>
+		/// <param name="vertices">The <see cref="Vertices"/> of panel to remove.</param>
+		public static void Remove(Vertices vertices)
+		{
+			if (_verticesList is null)
+				_verticesList = new List<Vertices>(PanelVertices());
+
+			// Remove from list
+			_verticesList.RemoveAll(v => v == vertices);
+
+			// Remove the panel
+			GetSolidByVertices(vertices).Remove();
+		}
+
+		/// <summary>
+		/// Remove a collection of panels from drawing.
+		/// </summary>
+		/// <param name="vertices">The collection of <see cref="Vertices"/> of panels to remove.</param>
+		public static void Remove(IEnumerable<Vertices> vertices)
+		{
+			if (_verticesList is null)
+				_verticesList = new List<Vertices>(PanelVertices());
+
+			// Remove from list
+			_verticesList.RemoveAll(v => vertices.Any(v2 => v == v2));
+
+			// Remove the panels
+			GetSolidsByVertices(vertices).ToArray().Remove();
+		}
+
+
 		/// <summary>
 		/// Add multiple panels to the drawing.
 		/// </summary>
 		/// <param name="solids">The <see cref="Solid"/>'s that represents the panels.</param>
-		public static void Add(IEnumerable<Solid> solids) => Add(solids.Select(s => GetVertices(s)).ToArray());
+		public static void Add(IEnumerable<Solid> solids) => Add(solids.Select(GetVertices).ToArray());
+
+		/// <summary>
+		/// Return a <see cref="Solid"/> in the drawing with the corresponding <paramref name="vertices"/>.
+		/// </summary>
+		/// <param name="vertices">The <see cref="Vertices"/> required.</param>
+		public static Solid GetSolidByVertices(Vertices vertices) => GetObjects().FirstOrDefault(s => vertices == GetVertices(s));
+
+		/// <summary>
+		/// Return a collection of <see cref="Solid"/>'s in the drawing with the corresponding collection of <see cref="Vertices"/>.
+		/// </summary>
+		/// <param name="vertices">The collection of <see cref="Vertices"/> required.</param>
+		public static IEnumerable<Solid> GetSolidsByVertices(IEnumerable<Vertices> vertices) => GetObjects().Where(s => vertices.Any(v => v == GetVertices(s)));
 
 		/// <summary>
 		/// Get the collection of panels in the drawing.

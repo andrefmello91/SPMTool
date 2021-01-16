@@ -206,7 +206,7 @@ namespace SPMTool.Editor.Commands
 							};
 
 							// Create the panel with XData of the original panel
-							Panels.Add(newVerts, units.Geometry);
+							Panels.Add(newVerts);
 
 							// Create tuples to adding the stringers later
 							var strsToAdd = new[]

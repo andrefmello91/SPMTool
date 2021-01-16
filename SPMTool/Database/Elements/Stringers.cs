@@ -165,19 +165,38 @@ namespace SPMTool.Database.Elements
 			// Remove from list
 			_geometries.RemoveAll(g => g == geometry);
 
-			// Add to the list
-			_geometries.Add(geometry);
-
-			// Set layer
-			var line = new Line(geometry.InitialPoint, geometry.EndPoint)
-			{
-				Layer = $"{Layer.Stringer}"
-			};
-
-			// Add the object
-			line.Add(On_StringerErase);
+			// Remove the stringer
+			GetLineByGeometry(geometry).Remove();
 		}
 
+		/// <summary>
+		/// Remove a collection of stringers from drawing.
+		/// </summary>
+		/// <param name="geometries">The <see cref="StringerGeometry"/>'s to remove from drawing.</param>
+		public static void Remove(IEnumerable<StringerGeometry> geometries)
+		{
+			// Get the list of stringers if it's not imposed
+			if (_geometries is null)
+				_geometries = new List<StringerGeometry>(StringerGeometries());
+
+			// Remove from list
+			_geometries.RemoveAll(g => geometries.Any(geo => g == geo));
+
+			// Remove the stringer
+			GetLinesByGeometries(geometries).ToArray().Remove();
+		}
+
+		/// <summary>
+		/// Return a <see cref="Line"/> in the drawing corresponding to this <paramref name="geometry"/>.
+		/// </summary>
+		/// <param name="geometry">The required <see cref="StringerGeometry"/>. </param>
+		public static Line GetLineByGeometry(StringerGeometry geometry) => GetObjects().FirstOrDefault(s => geometry == GetGeometry(s, false));
+
+		/// <summary>
+		/// Return a collection of <see cref="Line"/>'s in the drawing corresponding to these <paramref name="geometries"/>.
+		/// </summary>
+		/// <param name="geometries">The required <see cref="StringerGeometry"/>'s. </param>
+		public static IEnumerable<Line> GetLinesByGeometries(IEnumerable<StringerGeometry> geometries) => GetObjects().Where(s => geometries.Any(g => g == GetGeometry(s, false)));
 
 		/// <summary>
 		/// Get the collection of stringers in the drawing.
