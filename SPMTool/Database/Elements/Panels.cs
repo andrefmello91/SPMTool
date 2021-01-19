@@ -28,7 +28,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		/// Auxiliary list of <see cref="Vertices"/>'s.
 		/// </summary>
-		public static List<Vertices> VerticesList = GetPanelVertices();
+		public static List<Vertices> VerticesList { get; private set; } = GetPanelVertices();
 
 		/// <summary>
 		/// Get the elements of the shear block.

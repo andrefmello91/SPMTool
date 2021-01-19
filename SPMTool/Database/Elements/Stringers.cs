@@ -25,7 +25,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		/// Auxiliary list of <see cref="StringerGeometry"/>'s.
 		/// </summary>
-		public static List<StringerGeometry> Geometries = GetGeometries();
+		public static List<StringerGeometry> Geometries { get; private set; } = GetGeometries();
 
 		/// <summary>
 		/// Get the geometry unit.

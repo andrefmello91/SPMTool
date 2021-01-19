@@ -18,25 +18,15 @@ namespace SPMTool.Database.Materials
         /// </summary>
 	    private const string ConcreteParams = "ConcreteParams";
 
-		/// <summary>
-        /// Auxiliary <see cref="Material.Concrete.Parameters"/> field.
-        /// </summary>
-		private static Parameters _parameters;
-
-		/// <summary>
-        /// Auxiliary <see cref="ConstitutiveModel"/> field.
-        /// </summary>
-		private static ConstitutiveModel? _constitutiveModel;
-
         /// <summary>
-        /// Get <see cref="Material.Concrete.Parameters"/> saved in database.
+        /// Get/set <see cref="Material.Concrete.Parameters"/> saved in database.
         /// </summary>
-        public static Parameters Parameters => _parameters ?? Read();
+        public static Parameters Parameters { get; private set; } = ReadFromDictionary(false);
 
         /// <summary>
         /// Get <see cref="Material.Concrete.ConstitutiveModel"/> saved in database.
         /// </summary>
-        public static ConstitutiveModel ConstitutiveModel => _constitutiveModel ?? ConstitutiveModel.MCFT;
+        public static ConstitutiveModel ConstitutiveModel { get; private set; } = ReadModel();
 
         /// <summary>
         /// Save concrete <see cref="Material.Concrete.Parameters"/> and <see cref="Material.Concrete.ConstitutiveModel"/> in database.
@@ -52,8 +42,8 @@ namespace SPMTool.Database.Materials
 	    public static void Save(Parameters parameters, ConstitutiveModel constitutiveModel)
 	    {
 			// Set to concrete properties
-			_parameters   = parameters;
-			_constitutiveModel = constitutiveModel;
+			Parameters        = parameters;
+			ConstitutiveModel = constitutiveModel;
 
 		    // Definition for the Extended Data
 		    var xdataStr = "Concrete data";
@@ -82,12 +72,6 @@ namespace SPMTool.Database.Materials
 			    DataBase.SaveDictionary(rb, ConcreteParams);
 	    }
 
-        /// <summary>
-        /// Read concrete saved in database.
-        /// </summary>
-        /// <param name="setConcrete">Concrete must be set by user if it's not set yet?</param>
-	    public static Parameters Read(bool setConcrete = true) => _parameters ?? ReadFromDictionary(setConcrete);
-
 	    /// <summary>
 	    /// Read concrete <see cref="Parameters"/> saved in database.
 	    /// </summary>
@@ -100,31 +84,45 @@ namespace SPMTool.Database.Materials
 		    {
 			    case null when setConcrete:
 				    MaterialInput.SetConcreteParameters();
-				    return _parameters;
+				    return Parameters;
+
 			    case null:
 				    return new MC2010Parameters(30, 19);
+
+				default:
+					// Get the parameters from XData
+					var parModel   = (ParameterModel)data[(int)ConcreteIndex.Model].ToInt();
+					var aggType    = (AggregateType)data[(int)ConcreteIndex.AggType].ToInt();
+
+					double
+						fc    = data[(int)ConcreteIndex.fc].ToDouble(),
+						phiAg = data[(int)ConcreteIndex.AggDiam].ToDouble(),
+
+						// Get additional parameters
+						fcr =  data[(int)ConcreteIndex.ft].ToDouble(),
+						Ec  =  data[(int)ConcreteIndex.Ec].ToDouble(),
+						ec  = -data[(int)ConcreteIndex.ec].ToDouble(),
+						ecu = -data[(int)ConcreteIndex.ecu].ToDouble();
+
+					// Get parameters and constitutive
+					Parameters = Parameters.ReadParameters(parModel, fc, phiAg, aggType, fcr, Ec, ec, ecu);
+					ConstitutiveModel = ReadModel(data);
+
+					return Parameters;
 		    }
-
-            // Get the parameters from XData
-            var parModel    = (ParameterModel)data[(int) ConcreteIndex.Model].ToInt();
-		    var constModel  = (ConstitutiveModel)data[(int) ConcreteIndex.Behavior].ToInt();
-		    var aggType     = (AggregateType)data[(int) ConcreteIndex.AggType].ToInt();
-
-		    double
-			    fc      = data[(int)ConcreteIndex.fc].ToDouble(),
-			    phiAg   = data[(int)ConcreteIndex.AggDiam].ToDouble(), 
-                
-			    // Get additional parameters
-			    fcr =  data[(int)ConcreteIndex.ft].ToDouble(),
-			    Ec  =  data[(int)ConcreteIndex.Ec].ToDouble(),
-			    ec  = -data[(int)ConcreteIndex.ec].ToDouble(),
-			    ecu = -data[(int)ConcreteIndex.ecu].ToDouble();
-
-		    // Get parameters and constitutive
-		    _parameters   = Parameters.ReadParameters(parModel, fc, phiAg, aggType, fcr, Ec, ec, ecu);
-		    _constitutiveModel = constModel;
-
-		    return _parameters;
 	    }
-    }
+
+	    /// <summary>
+	    /// Read constitutive model.
+	    /// </summary>
+	    private static ConstitutiveModel ReadModel(TypedValue[] concreteData = null)
+	    {
+		    var data = concreteData ?? DataBase.ReadDictionaryEntry(ConcreteParams);
+
+		    return
+			    data is null
+				    ? ConstitutiveModel.MCFT
+				    : (ConstitutiveModel) data[(int) ConcreteIndex.Behavior].ToInt();
+	    }
+	}
 }

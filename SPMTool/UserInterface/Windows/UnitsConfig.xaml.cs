@@ -53,7 +53,7 @@ namespace SPMTool.UserInterface
 		private bool FactorBoxFilled => FactorBox.Text.ParsedAndNotZero(out _);
 
         public UnitsConfig()
-			: this (Read(false))
+			: this (SavedUnits)
         {
         }
 

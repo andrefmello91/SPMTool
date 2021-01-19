@@ -21,15 +21,15 @@ namespace SPMTool.Database.Elements
 	public static class Nodes
 	{
 		/// <summary>
-		/// List of nodes' <see cref="Point3d"/> positions.
-		/// </summary>
-		public static List<Point3d> Positions = GetPositions();
-
-		/// <summary>
 		/// The equality comparer for <see cref="Point3d"/>.
 		/// </summary>
 		private static readonly Point3dEqualityComparer Comparer = new Point3dEqualityComparer { Tolerance = Tolerance };
 
+		/// <summary>
+		/// List of nodes' <see cref="Point3d"/> positions.
+		/// </summary>
+		public static List<Point3d> Positions { get; private set; } = GetPositions();
+		
 		/// <summary>
 		/// Get the geometry unit.
 		/// </summary>

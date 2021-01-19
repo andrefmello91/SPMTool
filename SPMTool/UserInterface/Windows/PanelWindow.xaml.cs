@@ -330,7 +330,7 @@ namespace SPMTool.UserInterface
 		{
 			SetGeometry = true;
 
-			_savedWidths = SavedPanelWidth?.OrderBy(g => g).ToArray();
+			_savedWidths = PanelWidths?.OrderBy(g => g).ToArray();
 
             if (_savedWidths != null && _savedWidths.Any())
 			{

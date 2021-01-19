@@ -239,7 +239,7 @@ namespace SPMTool.UserInterface
 		{
 			SetGeometry = true;
 
-			_savedGeometries = SavedStringerGeometry?.OrderBy(g => g.Height).ThenBy(g => g.Width).ToArray();
+			_savedGeometries = StringerGeometries?.OrderBy(g => g.Height).ThenBy(g => g.Width).ToArray();
 
             if (_savedGeometries != null && _savedGeometries.Any())
 			{

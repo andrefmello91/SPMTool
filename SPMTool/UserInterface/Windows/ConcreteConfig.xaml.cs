@@ -59,7 +59,7 @@ namespace SPMTool.UserInterface
 		private bool CustomParametersSet => CheckBoxes(new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox });
 
         public ConcreteConfig()
-	        : this (ConcreteData.Read(false), ConcreteData.ConstitutiveModel)
+	        : this (ConcreteData.Parameters, ConcreteData.ConstitutiveModel)
         {
         }
 

@@ -8,7 +8,7 @@ namespace SPMTool
     /// Analysis settings class.
     /// </summary>
 	public class AnalysisSettings : IEquatable<AnalysisSettings>
-    {
+	{
 		/// <summary>
 		/// Get/set the convergence tolerance
 		/// </summary>

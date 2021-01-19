@@ -18,11 +18,11 @@ namespace SPMTool.Database.Conditions
     /// Supports class.
     /// </summary>
     public static class Supports
-    {
-	    /// <summary>
-	    /// Auxiliary list of support blocks.
-	    /// </summary>
-	    private static List<BlockReference> _supportList;
+	{
+		/// <summary>
+		/// Auxiliary list of support blocks.
+		/// </summary>
+		public static List<BlockReference> SupportList { get; private set; } = GetObjects()?.ToList();
 
         /// <summary>
         /// Get the elements of X Block.
@@ -179,7 +179,7 @@ namespace SPMTool.Database.Conditions
         /// <summary>
         /// Update support list.
         /// </summary>
-        public static void Update() => _supportList = GetObjects()?.ToList();
+        public static void Update() => SupportList = GetObjects()?.ToList();
 
         /// <summary>
         /// Erase the supports blocks in the model.
@@ -266,16 +266,15 @@ namespace SPMTool.Database.Conditions
         public static void Set(Node node)
         {
 	        // Get forces at node position
-	        if (_supportList is null)
-		        Update();
+	        Update();
 
-	        var i = _supportList?.FindIndex(s => s.Position == node.Position);
+	        var i = SupportList?.FindIndex(s => s.Position == node.Position);
 
 	        if (i is null || i == -1)
 		        return;
 
 	        // Set to node
-	        node.Constraint = ReadConstraint(_supportList[i.Value]);
+	        node.Constraint = ReadConstraint(SupportList[i.Value]);
         }
 
         /// <summary>

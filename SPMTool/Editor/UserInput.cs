@@ -304,7 +304,7 @@ namespace SPMTool.Editor
 	        var dimAbrev = geometryUnit.Abbrev();
 
 	        // Get saved reinforcement options
-	        var savedGeo = ElementData.SavedStringerGeometry;
+	        var savedGeo = ElementData.StringerGeometries;
 
 	        // Get saved reinforcement options
 	        if (savedGeo != null)
@@ -355,7 +355,7 @@ namespace SPMTool.Editor
         public static double? GetPanelWidth(LengthUnit unit)
         {
 	        // Get saved reinforcement options
-	        var savedGeo = ElementData.SavedPanelWidth;
+	        var savedGeo = ElementData.PanelWidths;
 
 	        // Get unit abreviation
 	        var dimAbrev = unit.Abbrev();

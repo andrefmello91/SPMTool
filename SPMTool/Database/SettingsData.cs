@@ -39,31 +39,21 @@ namespace SPMTool.Database
 		public static readonly string[] StressUnits = { PressureUnit.Pascal.Abbrev(), PressureUnit.Kilopascal.Abbrev(), PressureUnit.Megapascal.Abbrev(), PressureUnit.Gigapascal.Abbrev() };
 
 		/// <summary>
-		/// Auxiliary <see cref="Units"/> field.
-		/// </summary>
-		private static Units _units;
-
-		/// <summary>
-		/// Auxiliary <see cref="AnalysisSettings"/> field.
-		/// </summary>
-		private static AnalysisSettings _settings;
-
-		/// <summary>
 		/// Get <see cref="Units"/> saved in database.
 		/// </summary>
-		public static Units SavedUnits => _units ?? Read(true);
+		public static Units SavedUnits { get; private set; } = ReadFromDatabase(false);
 
 		/// <summary>
 		/// Get <see cref="AnalysisSettings"/> saved in database.
 		/// </summary>
-		public static AnalysisSettings SavedAnalysisSettings => _settings ?? Read();
+		public static AnalysisSettings SavedAnalysisSettings { get; private set; } = ReadFromDatabase();
 
 		/// <summary>
 		/// Save this <paramref name="units"/> in database.
 		/// </summary>
 		public static void Save(Units units)
 		{
-			_units = units;
+			SavedUnits = units;
 
 			// Get the Xdata size
 			int size = Enum.GetNames(typeof(UnitsIndex)).Length;
@@ -91,8 +81,8 @@ namespace SPMTool.Database
 		/// Save this <paramref name="settings"/> in database.
 		/// </summary>
 		public static void Save(AnalysisSettings settings)
-		{
-			_settings = settings;
+		{ 
+			SavedAnalysisSettings = settings;
 
 			// Get the Xdata size
 			int size = Enum.GetNames(typeof(AnalysisIndex)).Length;
@@ -114,12 +104,6 @@ namespace SPMTool.Database
 		/// Read units on dictionary.
 		/// </summary>
 		/// <param name="setUnits">Units must be set by user if it's not set yet?</param>
-		public static Units Read(bool setUnits = true) => _units ?? ReadFromDatabase(setUnits);
-
-		/// <summary>
-		/// Read units on dictionary.
-		/// </summary>
-		/// <param name="setUnits">Units must be set by user if it's not set yet?</param>
 		public static Units ReadFromDatabase(bool setUnits = true)
         {
 	        var data = DataBase.ReadDictionaryEntry(USaveName);
@@ -128,38 +112,34 @@ namespace SPMTool.Database
 	        {
 		        case null when setUnits:
 			        Settings.SetUnits();
-			        data = DataBase.ReadDictionaryEntry(USaveName);
-			        break;
+			        return SavedUnits;
+
 		        case null:
 			        return Units.Default;
+
+		        default:
+					
+			        // Remove later
+			        var crckOp = data.Length < 11
+				        ? Units.Default.CrackOpenings
+				        : (LengthUnit) data[(int) UnitsIndex.CrackOpenings].ToInt();
+
+			        // Get the parameters from XData
+			        return
+				        new Units
+				        {
+					        Geometry              = (LengthUnit) data[(int) UnitsIndex.Geometry].ToInt(),
+					        Reinforcement         = (LengthUnit) data[(int) UnitsIndex.Reinforcement].ToInt(),
+					        Displacements         = (LengthUnit) data[(int) UnitsIndex.Displacements].ToInt(),
+					        AppliedForces         = (ForceUnit) data[(int) UnitsIndex.AppliedForces].ToInt(),
+					        StringerForces        = (ForceUnit) data[(int) UnitsIndex.StringerForces].ToInt(),
+					        PanelStresses         = (PressureUnit) data[(int) UnitsIndex.PanelStresses].ToInt(),
+					        MaterialStrength      = (PressureUnit) data[(int) UnitsIndex.MaterialStrength].ToInt(),
+					        DisplacementMagnifier = data[(int) UnitsIndex.DisplacementFactor].ToInt(),
+					        CrackOpenings         = crckOp
+				        };
 	        }
-
-			// Remove later
-	        var crckOp = data.Length < 11
-		        ? Units.Default.CrackOpenings
-		        : (LengthUnit) data[(int) UnitsIndex.CrackOpenings].ToInt();
-
-			// Get the parameters from XData
-			_units = new Units
-	        {
-		        Geometry              = (LengthUnit)data[(int)UnitsIndex.Geometry].ToInt(),
-		        Reinforcement         = (LengthUnit)data[(int)UnitsIndex.Reinforcement].ToInt(),
-		        Displacements         = (LengthUnit)data[(int)UnitsIndex.Displacements].ToInt(),
-		        AppliedForces         = (ForceUnit)data[(int)UnitsIndex.AppliedForces].ToInt(),
-		        StringerForces        = (ForceUnit)data[(int)UnitsIndex.StringerForces].ToInt(),
-		        PanelStresses         = (PressureUnit)data[(int)UnitsIndex.PanelStresses].ToInt(),
-		        MaterialStrength      = (PressureUnit)data[(int)UnitsIndex.MaterialStrength].ToInt(),
-                DisplacementMagnifier = data[(int)UnitsIndex.DisplacementFactor].ToInt(),
-				CrackOpenings         = crckOp
-            };
-
-	        return _units;
         }
-
-		/// <summary>
-		/// Read saved analysis settings.
-		/// </summary>
-		public static AnalysisSettings Read() => _settings ?? ReadFromDatabase();
 
 		/// <summary>
 		/// Read analysis settings on dictionary.
@@ -172,14 +152,13 @@ namespace SPMTool.Database
 				return AnalysisSettings.Default;
 
 			// Get the parameters from XData
-			_settings = new AnalysisSettings
-			{
-				Tolerance     = data[(int)AnalysisIndex.Tolerance].ToDouble(),
-				NumLoadSteps  = data[(int)AnalysisIndex.NumLoadSteps].ToInt(),
-				MaxIterations = data[(int)AnalysisIndex.MaxIterations].ToInt()
-			};
-
-			return _settings;
+			return
+				new AnalysisSettings
+				{
+					Tolerance     = data[(int)AnalysisIndex.Tolerance].ToDouble(),
+					NumLoadSteps  = data[(int)AnalysisIndex.NumLoadSteps].ToInt(),
+					MaxIterations = data[(int)AnalysisIndex.MaxIterations].ToInt()
+				};
 		}
 	}
 }

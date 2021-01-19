@@ -82,7 +82,7 @@ namespace SPMTool
 			{
 				switch (Reinforcement)
 				{
-                    case LengthUnit.Millimeter:
+                    default:
 	                    return AreaUnit.SquareMillimeter;
 
                     case LengthUnit.Centimeter:
@@ -91,8 +91,6 @@ namespace SPMTool
                     case LengthUnit.Meter:
 	                    return AreaUnit.SquareMeter;
 				}
-
-				return AreaUnit.SquareMillimeter;
 			}
 		}
 

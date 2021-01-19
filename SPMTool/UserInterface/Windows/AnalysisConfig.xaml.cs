@@ -34,7 +34,7 @@ namespace SPMTool.UserInterface
 	    }
 		
         public AnalysisConfig()
-			: this (Read())
+			: this (SavedAnalysisSettings)
         {
         }
 

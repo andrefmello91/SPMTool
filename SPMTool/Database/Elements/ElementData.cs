@@ -13,24 +13,14 @@ namespace SPMTool.Database.Elements
     public static class ElementData
     {
 	    /// <summary>
-	    /// Auxiliary <see cref="StringerGeometry"/> list.
-	    /// </summary>
-	    private static List<StringerGeometry> _stringerGeometries;
-
-	    /// <summary>
-	    /// Auxiliary panel width list.
-	    /// </summary>
-	    private static List<double> _panelWList;
-
-	    /// <summary>
 	    /// Get <see cref="StringerGeometry"/> objects saved in database.
 	    /// </summary>
-	    public static StringerGeometry[] SavedStringerGeometry => (_stringerGeometries ?? ReadStringerGeometries()).ToArray();
+	    public static List<StringerGeometry> StringerGeometries { get ; } = ReadStringerGeometries().ToList();
 
 	    /// <summary>
 	    /// Get panel widths saved in database.
 	    /// </summary>
-	    public static double[] SavedPanelWidth => (_panelWList ?? ReadPanelWidths()).ToArray();
+	    public static List<double> PanelWidths { get; } = ReadPanelWidths().ToList();
 
         /// <summary>
         /// Save stringer geometry configuration on database.
@@ -38,11 +28,8 @@ namespace SPMTool.Database.Elements
         /// <param name="geometry">The <see cref="StringerGeometry"/> object.</param>
         public static void Save(StringerGeometry geometry)
 	    {
-		    if (_stringerGeometries is null)
-			    _stringerGeometries = new List<StringerGeometry>(ReadStringerGeometries());
-
-		    if (!_stringerGeometries.Any(geo => geo.EqualsWidthAndHeight(geometry)))
-			    _stringerGeometries.Add(geometry);
+		    if (!StringerGeometries.Any(geo => geo.EqualsWidthAndHeight(geometry)))
+			    StringerGeometries.Add(geometry);
 
             var saveCode = geometry.SaveName();
 
@@ -65,11 +52,8 @@ namespace SPMTool.Database.Elements
 	    /// <param name="panelWidth">The width of panel, in mm.</param>
 	    public static void Save(double panelWidth)
 	    {
-		    if (_panelWList is null)
-			    _panelWList = new List<double>(ReadPanelWidths());
-
-		    if (!_panelWList.Contains(panelWidth))
-			    _panelWList.Add(panelWidth);
+		    if (!PanelWidths.Contains(panelWidth))
+			    PanelWidths.Add(panelWidth);
 
             // Get the name to save
             var name = panelWidth.SaveName();
@@ -89,36 +73,34 @@ namespace SPMTool.Database.Elements
 	    /// <summary>
 	    /// Read <see cref="StringerGeometry"/> objects saved on database.
 	    /// </summary>
-	    public static IEnumerable<StringerGeometry> ReadStringerGeometries()
+	    private static IEnumerable<StringerGeometry> ReadStringerGeometries()
 	    {
 		    // Get dictionary entries
 		    var entries = DataBase.ReadDictionaryEntries("StrGeo")?.ToArray();
 
-		    _stringerGeometries = entries is null || !entries.Any()
-			    ? new List<StringerGeometry>()
-			    : new List<StringerGeometry>(
-				    from r in entries
-				    let t   = r.AsArray()
-				    let w   = t[2].ToDouble()
-				    let h   = t[3].ToDouble()
-				    select new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h));
-
-		    return _stringerGeometries;
+		    return 
+			    entries is null || !entries.Any()
+				    ? new List<StringerGeometry>()
+				    : new List<StringerGeometry>(
+					    from r in entries
+					    let t   = r.AsArray()
+					    let w   = t[2].ToDouble()
+					    let h   = t[3].ToDouble()
+					    select new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h));
 	    }
 
 	    /// <summary>
 	    /// Read panel widths saved in database.
 	    /// </summary>
-	    public static IEnumerable<double> ReadPanelWidths()
+	    private static IEnumerable<double> ReadPanelWidths()
 	    {
 		    // Get dictionary entries
 		    var entries = DataBase.ReadDictionaryEntries("PnlW")?.ToArray();
 
-		    _panelWList = entries is null || !entries.Any()
-			    ? new List<double>()
-			    : entries.Select(entry => entry.AsArray()[2].ToDouble()).ToList();
-
-		    return _panelWList;
+		    return
+			    entries is null || !entries.Any()
+				    ? new List<double>()
+				    : entries.Select(entry => entry.AsArray()[2].ToDouble()).ToList();
 	    }
     }
 }

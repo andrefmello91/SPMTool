@@ -16,9 +16,14 @@ namespace SPMTool.Database.Conditions
     public static class Forces
     {
 	    /// <summary>
-        /// Auxiliary list of force blocks.
-        /// </summary>
-	    private static List<BlockReference> _forceList;
+	    /// Get/set the list of force blocks.
+	    /// </summary>
+	    public static List<BlockReference> ForceList { get; private set; } = GetObjects().ToList();
+
+		/// <summary>
+		/// Get force blocks' positions.
+		/// </summary>
+	    public static List<Point3d> ForcePositions => ForceList.Select(f => f.Position).ToList();
 
 	    /// <summary>
 	    /// Get the elements of the force block.
@@ -135,7 +140,7 @@ namespace SPMTool.Database.Conditions
         /// <summary>
         /// Update force list.
         /// </summary>
-        public static void Update() => _forceList = GetObjects()?.ToList();
+        public static void Update() => ForceList = GetObjects()?.ToList();
 
 		/// <summary>
         /// Erase the force blocks and texts in the model.
@@ -246,10 +251,9 @@ namespace SPMTool.Database.Conditions
         public static void Set(Node node)
         {
 			// Get forces at node position
-			if (_forceList is null)
-				Update();
+	        Update();
 
-			var fcs = _forceList?.Where(f => f.Position == node.Position).ToArray();
+			var fcs = ForceList?.Where(f => f.Position == node.Position).ToArray();
 
 			if (fcs is null || !fcs.Any())
 				return;

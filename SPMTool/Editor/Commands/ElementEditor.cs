@@ -6,6 +6,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Extensions.AutoCAD;
 using Extensions.Number;
+using MathNet.Numerics;
 using SPM.Elements.PanelProperties;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database;
@@ -44,67 +45,65 @@ namespace SPMTool.Editor.Commands
 
 		    int num = numn.Value;
 
-		    // Get the list of start and endpoints
-		    var stringerCollection = Stringers.Geometries;
+			// Divide the stringers
+			var newStrs = new List<Line>();
 
-            // Create a list to erase the internal nodes
-            var ndsToErase = new List<DBObject>();
+			foreach (var str in strs)
+				newStrs.AddRange(str.Divide(num));
 
-            // Access the internal nodes in the model
-            var intNds = Layer.IntNode.GetDBObjects().ToPoints().ToArray();
+			// Erase the original stringers
+			strs.Remove();
 
-            foreach (var str in strs)
-            {
-	            // Get the coordinates of the initial and end points
-	            Point3d
-		            strSt  = str.StartPoint,
-		            strEnd = str.EndPoint;
+			// Add the stringers
+			Stringers.Add(newStrs);
 
-	            // Calculate the distance of the points in X and Y
-	            double
-		            distX = strEnd.DistanceInX(strSt) / num,
-		            distY = strEnd.DistanceInY(strSt) / num;
+			// Create the nodes and update stringers
+			Stringers.Update();
 
-	            // Initialize the start point
-	            var stPt = strSt;
+			//foreach (var str in strs)
+			//         {
+			//          // Get the coordinates of the initial and end points
+			//          Point3d
+			//           strSt  = str.StartPoint,
+			//           strEnd = str.EndPoint;
 
-	            // Get the midpoint
-	            var midPt = strSt.MidPoint(strEnd);
+			//          // Calculate the distance of the points in X and Y
+			//          double
+			//           distX = strEnd.DistanceInX(strSt) / num,
+			//           distY = strEnd.DistanceInY(strSt) / num;
 
-	            // Read the internal nodes to erase
-	            ndsToErase.AddRange(intNds.Where(nd => nd.Position.Approx(midPt)));
+			//          // Initialize the start point
+			//          var stPt = strSt;
 
-	            // Create the new stringers
-	            for (int i = 1; i <= num; i++)
-	            {
-		            // Get the coordinates of the other points
-		            double
-			            xCrd = str.StartPoint.X + i * distX,
-			            yCrd = str.StartPoint.Y + i * distY;
+			//          // Get the midpoint
+			//          var midPt = strSt.MidPoint(strEnd);
 
-		            var endPt = new Point3d(xCrd, yCrd, 0);
+			//          // Read the internal nodes to erase
+			//          ndsToErase.AddRange(intNds.Where(nd => nd.Position.Approx(midPt)));
 
-		            // Create the Stringer
-		            Stringers.Add(stPt, endPt);
+			//          // Create the new stringers
+			//          for (int i = 1; i <= num; i++)
+			//          {
+			//           // Get the coordinates of the other points
+			//           double
+			//            xCrd = str.StartPoint.X + i * distX,
+			//            yCrd = str.StartPoint.Y + i * distY;
 
-		            // Set the start point of the next Stringer
-		            stPt = endPt;
-	            }
+			//           var endPt = new Point3d(xCrd, yCrd, 0);
 
-	            // Remove from the list
-	            var strList = stringerCollection.ToList();
-	            strList.Remove(new StringerGeometry(strSt, strEnd, 0, 0));
-	            stringerCollection = strList;
-            }
+			//           // Create the Stringer
+			//           Stringers.Add(stPt, endPt);
 
-            // Erase original stringers and internal nodes
-		    strs.Remove();
-			ndsToErase.Remove();
+			//           // Set the start point of the next Stringer
+			//           stPt = endPt;
+			//          }
 
-		    // Create the nodes and update stringers
-		    Nodes.Update();
-		    Stringers.Update(false);
-	    }
+			//          // Remove from the list
+			//          var strList = stringerCollection.ToList();
+			//          strList.Remove(new StringerGeometry(strSt, strEnd, 0, 0));
+			//          stringerCollection = strList;
+			//         }
+		}
 
 		[CommandMethod("DividePanel")]
 		public static void DividePanel()
