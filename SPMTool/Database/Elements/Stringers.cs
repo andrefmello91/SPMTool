@@ -147,6 +147,22 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		/// Remove a stringer from drawing.
 		/// </summary>
+		/// <param name="stringer">The <see cref="Line"/> to remove from drawing.</param>
+		public static void Remove(Line stringer)
+		{
+			if (stringer is null)
+				return;
+
+			// Remove from list
+			Geometries.RemoveAll(g => g == GetGeometry(stringer, false));
+
+			// Remove the stringer
+			stringer.Remove();
+		}
+
+		/// <summary>
+		/// Remove a stringer from drawing.
+		/// </summary>
 		/// <param name="geometry">The <see cref="StringerGeometry"/> to remove from drawing.</param>
 		public static void Remove(StringerGeometry geometry)
 		{
@@ -160,11 +176,31 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		/// Remove a collection of stringers from drawing.
 		/// </summary>
+		/// <param name="stringers">The collection of <see cref="Line"/>'s to remove from drawing.</param>
+		public static void Remove(IEnumerable<Line> stringers)
+		{
+			if (stringers is null || !stringers.Any())
+				return;
+
+			// Remove from list
+			var geos = stringers.Select(s => GetGeometry(s, false)).ToArray();
+			Geometries.RemoveAll(geos.Contains);
+
+			// Remove the stringer
+			stringers.Remove();
+		}
+
+		/// <summary>
+		/// Remove a collection of stringers from drawing.
+		/// </summary>
 		/// <param name="geometries">The <see cref="StringerGeometry"/>'s to remove from drawing.</param>
 		public static void Remove(IEnumerable<StringerGeometry> geometries)
 		{
+			if(geometries is null || !geometries.Any())
+				return;
+
 			// Remove from list
-			Geometries.RemoveAll(g => geometries.Any(geo => g == geo));
+			Geometries.RemoveAll(geometries.Contains);
 
 			// Remove the stringer
 			GetLinesByGeometries(geometries).ToArray().Remove();
@@ -762,9 +798,7 @@ namespace SPMTool.Database.Elements
 			if (Geometries is null || !Geometries.Any() || !(sender is Line str))
 				return;
 
-			var geometry = GetGeometry(str, false);
-
-			Geometries.RemoveAll(g => g == geometry);
+			Geometries.RemoveAll(g => g == GetGeometry(str, false));
 
 			// Update and remove unnecessary nodes
 			Update(false);

@@ -52,7 +52,7 @@ namespace SPMTool.Editor.Commands
 				newStrs.AddRange(str.Divide(num));
 
 			// Erase the original stringers
-			strs.Remove();
+			Stringers.Remove(strs);
 
 			// Add the stringers
 			Stringers.Add(newStrs);

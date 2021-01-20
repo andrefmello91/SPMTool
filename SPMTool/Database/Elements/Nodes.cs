@@ -26,6 +26,15 @@ namespace SPMTool.Database.Elements
 		private static readonly Point3dEqualityComparer Comparer = new Point3dEqualityComparer { Tolerance = Tolerance };
 
 		/// <summary>
+		/// The equality comparer for nodes.
+		/// </summary>
+		private static readonly NodeComparer IntNodeComparer = new NodeComparer
+		{
+			Type      = NodeType.Internal,
+			Tolerance = Tolerance
+		};
+
+		/// <summary>
 		/// List of nodes' <see cref="Point3d"/> positions.
 		/// </summary>
 		public static List<Point3d> Positions { get; private set; } = GetPositions();
@@ -440,5 +449,26 @@ namespace SPMTool.Database.Elements
 
 			Positions.RemoveAll(p => p.Approx(nd.Position, Tolerance));
         }
+
+		/// <summary>
+		/// Node comparer class.
+		/// </summary>
+		private class NodeComparer : IEqualityComparer<Point3d>
+		{
+			public NodeType Type { get; set; } = NodeType.External;
+			public double Tolerance { get; set; } = 1E-3;
+
+			/// <summary>
+			/// Verify if two nodes are equal.
+			/// </summary>
+			public bool Equals(Point3d node, Point3d otherNode) => node.Approx(otherNode, Tolerance);
+
+			/// <summary>
+			/// Verify if two nodes are equal.
+			/// </summary>
+			public bool Equals(Point3d node, Point3d otherNode, NodeType otherNodeType) => Type == otherNodeType && node.Approx(otherNode, Tolerance);
+
+			public int GetHashCode(Point3d obj) => obj.GetHashCode();
+		}
 	}
 }
