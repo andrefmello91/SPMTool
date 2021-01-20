@@ -18,6 +18,15 @@ namespace SPMTool.UserInterface
 		private static readonly Icons Icons = new Icons();
 
 		/// <summary>
+		/// Create the application <see cref="RibbonTab"/>.
+		/// </summary>
+		private static readonly RibbonTab Tab = new RibbonTab
+		{
+			Title = DataBase.AppName,
+			Id    = DataBase.AppName
+		};
+
+		/// <summary>
 		/// Add ribbon buttons to user interface.
 		/// </summary>
 		public static void AddButtons()
@@ -30,37 +39,33 @@ namespace SPMTool.UserInterface
             if (tab != null)
                 ribbonControl.Tabs.Remove(tab);
 
-            // Create the Ribbon Tab
-            tab = new RibbonTab
-            {
-                Title = DataBase.AppName,
-                Id = DataBase.AppName
-            };
+			// Clear elements
+			Tab.Panels.Clear();
 
-            ribbonControl.Tabs.Add(tab);
+            ribbonControl.Tabs.Add(Tab);
 
 			// Update Icons
 			Icons.GetIcons();
 
             // Create the Ribbon panels
-            ModelPanel(tab);
-            ConcretePanel(tab);
-            AnalysisPanel(tab);
-            ViewPanel(tab);
-            ResultsPanel(tab);
-            SettingsPanel(tab);
+            ModelPanel();
+            ConcretePanel();
+            AnalysisPanel();
+            ViewPanel();
+            ResultsPanel();
+            SettingsPanel();
 
             // Activate tab
-            tab.IsActive = true;
+            Tab.IsActive = true;
         }
 
         /// <summary>
         /// Create Model Panel.
         /// </summary>
-        private static void ModelPanel(RibbonTab tab)
+        private static void ModelPanel()
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Model" };
-			tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
+			Tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
 
 			// Create a split button for geometry creation
 			var splitButton1 = new RibbonSplitButton
@@ -242,10 +247,10 @@ namespace SPMTool.UserInterface
         /// <summary>
         /// Create Concrete Panel.
         /// </summary>
-        private static void ConcretePanel(RibbonTab tab)
+        private static void ConcretePanel()
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Concrete" };
-			tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
+			Tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
 
 			// Material parameters button
 			pnlSrc.Items.Add(new RibbonButton
@@ -265,10 +270,10 @@ namespace SPMTool.UserInterface
         /// <summary>
         /// Create Analysis Panel.
         /// </summary>
-        private static void AnalysisPanel(RibbonTab tab)
+        private static void AnalysisPanel()
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Analysis" };
-			tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
+			Tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
 
 			var splitButton = new RibbonSplitButton
 			{
@@ -307,10 +312,10 @@ namespace SPMTool.UserInterface
 		/// <summary>
 		/// Create View Panel.
 		/// </summary>
-		private static void ViewPanel(RibbonTab tab)
+		private static void ViewPanel()
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "View" };
-			tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
+			Tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
 
 			// Create a split button
 			var splitButton = new RibbonSplitButton
@@ -383,10 +388,10 @@ namespace SPMTool.UserInterface
         /// <summary>
         /// Create Results Panel.
         /// </summary>
-        private static void ResultsPanel(RibbonTab tab)
+        private static void ResultsPanel()
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Results" };
-			tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
+			Tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
 
 			// Create a split button
 			var splitButton = new RibbonSplitButton
@@ -470,10 +475,10 @@ namespace SPMTool.UserInterface
         /// <summary>
         /// Create Settings Panel.
         /// </summary>
-        private static void SettingsPanel(RibbonTab tab)
+        private static void SettingsPanel()
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Settings" };
-			tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
+			Tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
 
 			pnlSrc.Items.Add(new RibbonButton
 			{
