@@ -30,7 +30,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		/// Get the node list;
 		/// </summary>
-		public static EList<Node> NodeList { get; } = GetInitialList();
+		public static EList<Node> NodeList { get; private set; } = GetNodeList();
 
 		/// <summary>
 		/// List of nodes' <see cref="Point3d"/> positions.
@@ -58,17 +58,63 @@ namespace SPMTool.Database.Elements
 			if (strList is null || !strList.Any())
 				return;
 
-			// Get points
-			var intNds = strList.Select(str => str.CenterPoint).Distinct(Comparer).ToList();
-			var extNds = strList.Select(str => str.InitialPoint).Distinct(Comparer).ToList();
-			extNds.AddRange(strList.Select(str => str.EndPoint).Distinct(Comparer));
+			var units = SettingsData.SavedUnits;
 
-            // Add nodes
-			Add(intNds, NodeType.Internal);
-			Add(extNds, NodeType.External);
+			// Add internal nodes
+			AddToList(strList.Select(str => new Node(str.CenterPoint, NodeType.Internal, units.Geometry, units.Displacements)));
+
+			// Add external nodes
+			AddToList(strList.Select(str => new Node(str.InitialPoint, NodeType.External, units.Geometry, units.Displacements)));
+			AddToList(strList.Select(str => new Node(str.EndPoint, NodeType.External, units.Geometry, units.Displacements)));
+
+			// Get points
+			//var intNds = strList.Select(str => str.CenterPoint).Distinct(Comparer).ToList();
+			//var extNds = strList.Select(str => str.InitialPoint).Distinct(Comparer).ToList();
+			//extNds.AddRange(strList.Select(str => str.EndPoint).Distinct(Comparer));
+
+   //         // Add nodes
+			//Add(intNds, NodeType.Internal);
+			//Add(extNds, NodeType.External);
 		}
 
-        /// <summary>
+		/// <summary>
+		/// Add a <see cref="Node"/> if it doesn't exist in <see cref="NodeList"/>.
+		/// </summary>
+		public static void AddToList(Node node)
+		{
+			if (NodeList.Contains(node))
+				return;
+
+			NodeList.Add(node);
+		}
+
+		/// <summary>
+		/// Add a collection of <see cref="Node"/>'s if they don't exist in <see cref="NodeList"/>.
+		/// </summary>
+		public static void AddToList(IEnumerable<Node> nodes)
+		{
+			var newNodes = nodes.Where(n => !NodeList.Contains(n)).ToList();
+
+			NodeList.AddRange(newNodes.Distinct());
+		}
+
+		/// <summary>
+		/// Remove a <see cref="Node"/> if it exists in <see cref="NodeList"/>.
+		/// </summary>
+		public static void RemoveFromList(Node node)
+		{
+			if (!NodeList.Contains(node))
+				return;
+
+			NodeList.Remove(node);
+		}
+
+		/// <summary>
+		/// Remove a collection of <see cref="Node"/>'s if they exist in <see cref="NodeList"/>.
+		/// </summary>
+		public static void RemoveFromList(IEnumerable<Node> nodes) => NodeList.RemoveAll(nodes.Contains);
+
+		/// <summary>
         /// Add a node to drawing in this <paramref name="position"/>.
         /// </summary>
         /// <param name="position">The <see cref="Point3d"/> position.</param>
@@ -90,9 +136,9 @@ namespace SPMTool.Database.Elements
 			
 			// Add the new object
 			if (nodeType != NodeType.Displaced)
-				dbPoint.Add(On_NodeErase);
+				dbPoint.AddToDrawing(On_NodeErase);
 			else
-				dbPoint.Add();
+				dbPoint.AddToDrawing();
 		}
 
         /// <summary>
@@ -113,9 +159,9 @@ namespace SPMTool.Database.Elements
 			var nodes = newNds.Select(p => new DBPoint(p) { Layer = layer }).ToArray();
 
 			if (nodeType != NodeType.Displaced)
-				nodes.Add(On_NodeErase);
+				nodes.AddToDrawing(On_NodeErase);
 			else
-				nodes.Add();
+				nodes.AddToDrawing();
         }
 
 		/// <summary>
@@ -130,10 +176,40 @@ namespace SPMTool.Database.Elements
 		        Layer = $"{GetLayer(node.Type)}"
 	        };
 
-			dbPoint.Add();
+			dbPoint.AddToDrawing();
 
 			node.ObjectId = dbPoint.ObjectId;
         }
+
+		/// <summary>
+		/// Add a collection of <see cref="Node"/>'s to drawing and set their <see cref="ObjectId"/>.
+		/// </summary>
+		/// <param name="nodes">The node to add.</param>
+		private static void AddToDrawing(IEnumerable<Node> nodes)
+		{
+			if (nodes is null || !nodes.Any())
+				return;
+
+			var points = new List<Entity>();
+
+			foreach (var node in nodes)
+			{
+				if (node is null)
+					continue;
+
+				// Create the node and set the layer
+				var dbPoint = new DBPoint(node.Position)
+				{
+					Layer = $"{GetLayer(node.Type)}"
+				};
+
+				node.ObjectId = dbPoint.ObjectId;
+
+				points.Add(dbPoint);
+			}
+
+			points.AddToDrawing();
+		}
 
 		/// <summary>
 		/// Remove unnecessary nodes from the drawing.
@@ -143,24 +219,21 @@ namespace SPMTool.Database.Elements
 	        // Get stringers
 	        var strList = Stringers.Geometries;
 
-	        List<Point3d> toRemove;
-			
 			if (strList is null || !strList.Any())
-		        toRemove = Positions;
+		        NodeList.Clear();
 
 			else
 			{
-				// Get points
-				var nodes = strList.Select(str => str.CenterPoint).ToList();
-				nodes.AddRange(strList.Select(str => str.InitialPoint));
-				nodes.AddRange(strList.Select(str => str.EndPoint));
+				// Get the stringer points
+				var points = strList.Select(str => str.CenterPoint).ToList();
+				points.AddRange(strList.Select(str => str.InitialPoint));
+				points.AddRange(strList.Select(str => str.EndPoint));
 
 				// Get positions not needed
-				toRemove = Positions.Where(p => !nodes.Any(n => n.Approx(p, Tolerance))).ToList();
-			}
+				var toRemove = NodeList.Where(n => !points.Contains(n.Position)).ToList();
 
-			// Add nodes
-			Remove(toRemove);
+				RemoveFromList(toRemove);
+			}
         }
 
 		/// <summary>
@@ -173,7 +246,7 @@ namespace SPMTool.Database.Elements
 		        Positions.Remove(position);
 
 			// Remove from drawing
-			GetNodeAtPosition(position).Remove();
+			GetNodeAtPosition(position).RemoveFromDrawing();
         }
 
 		/// <summary>
@@ -189,7 +262,7 @@ namespace SPMTool.Database.Elements
 			Positions = Positions.Where(p => !toRemove.Any(n => n.Approx(p, Tolerance))).ToList();
 
 			// Remove from drawing
-			GetNodesAtPositions(toRemove).ToArray().Remove();
+			GetNodesAtPositions(toRemove).ToArray().RemoveFromDrawing();
         }
 
 		/// <summary>
@@ -332,7 +405,7 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="nodeObjects">The <see cref="ObjectIdCollection"/> containing the nodes of drawing.</param>
         /// <param name="units">Current <see cref="Units"/>.</param>
-        public static IEnumerable<Node> Read(IEnumerable<DBPoint> nodeObjects, Units units) => nodeObjects?.Select(nd => Read(nd, units)).OrderBy(node => node.Number);
+        public static IEnumerable<Node> Read(IEnumerable<DBPoint> nodeObjects, Units units) => nodeObjects?.Select(nd => Read(nd, units)).Order();
 
         /// <summary>
         /// Read a <see cref="Node"/> in the drawing.
@@ -363,17 +436,44 @@ namespace SPMTool.Database.Elements
         }
 
 		/// <summary>
-		/// Get the initial node list.
+		/// Update <see cref="NodeList"/>.
 		/// </summary>
-        private static EList<Node> GetInitialList()
+        public static void UpdateList() => NodeList = GetNodeList();
+
+		/// <summary>
+		/// Get the node list.
+		/// </summary>
+        private static EList<Node> GetNodeList()
         {
 	        var nodes = Read(GetAllNodes()?.ToArray(), SettingsData.SavedUnits)?.ToList() ?? new List<Node>();
-	        var list = new EList<Node>(nodes);
-	        list.ItemAdded   += On_NodeAdded;
-	        list.ItemRemoved += On_NodeRemoved;
+	        var list = new EList<Node>(nodes.Order());
+
+			// Set numbers
+			SetNumbers(list);
+
+			// Add events
+	        list.ItemAdded    += On_NodeAdded;
+	        list.ItemRemoved  += On_NodeRemoved;
+	        list.RangeAdded   += On_NodesAdded;
+	        list.RangeRemoved += On_NodesRemoved;
 
 	        return list;
         }
+
+		/// <summary>
+		/// Set numbers to a collection of <see cref="Node"/>'s.
+		/// </summary>
+		/// <param name="nodes"></param>
+		private static void SetNumbers(IEnumerable<Node> nodes)
+		{
+			if (nodes is null || !nodes.Any())
+				return;
+
+			var count = nodes.Count();
+
+			for (int i = 0; i < count; i++)
+				nodes.ElementAt(i).Number = i + 1;
+		}
 
         /// <summary>
         /// Get node positions in the drawing.
@@ -484,18 +584,30 @@ namespace SPMTool.Database.Elements
 			if (node is null)
 				return;
 
-			Add(node.Position, node.Type);
+			AddToDrawing(node);
 		}
 
 		/// <summary>
-		/// Event to execute when a node is removed.
+		/// Event to execute when a range of nodes is added.
 		/// </summary>
-		private static void On_NodeRemoved(object sender, ItemEventArgs<Node> e)
+		private static void On_NodesAdded(object sender, RangeEventArgs<Node> e)
 		{
-			var node = e.Item;
+			var nodes = e.ItemCollection;
 
-			// Remove from drawing
-			node?.ObjectId.Remove();
+			if (nodes is null)
+				return;
+
+			AddToDrawing(nodes);
 		}
+
+		/// <summary>
+		/// Event to execute when a <see cref="Node"/> is removed.
+		/// </summary>
+		public static void On_NodeRemoved(object sender, ItemEventArgs<Node> e) => Model.RemoveFromDrawing(e.Item);
+
+		/// <summary>
+		/// Event to execute when a range of <see cref="Node"/>'s is removed.
+		/// </summary>
+		public static void On_NodesRemoved(object sender, RangeEventArgs<Node> e) => Model.RemoveFromDrawing(e.ItemCollection);
 	}
 }

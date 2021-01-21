@@ -240,7 +240,7 @@ namespace SPMTool.Database.Elements
 	            Layer = $"{Layer.Panel}"
             };
 
-			solid.Add(On_PanelErase);
+			solid.AddToDrawing(On_PanelErase);
 		}
 
 		/// <summary>
@@ -261,7 +261,7 @@ namespace SPMTool.Database.Elements
 
 			// Create and add the panels to drawing
 			var panels = vertices.Select(v => new Solid(v.Vertex1, v.Vertex2, v.Vertex4, v.Vertex3) { Layer = $"{Layer.Panel}" }).ToArray();
-			panels.Add(On_PanelErase);
+			panels.AddToDrawing(On_PanelErase);
 		}
 
 
@@ -275,7 +275,7 @@ namespace SPMTool.Database.Elements
 			VerticesList.RemoveAll(v => v == vertices);
 
 			// Remove the panel
-			GetSolidByVertices(vertices).Remove();
+			GetSolidByVertices(vertices).RemoveFromDrawing();
 		}
 
 		/// <summary>
@@ -288,7 +288,7 @@ namespace SPMTool.Database.Elements
 			VerticesList.RemoveAll(v => vertices.Any(v2 => v == v2));
 
 			// Remove the panels
-			GetSolidsByVertices(vertices).ToArray().Remove();
+			GetSolidsByVertices(vertices).ToArray().RemoveFromDrawing();
 		}
 
 
@@ -623,7 +623,7 @@ namespace SPMTool.Database.Elements
 						        blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, DataBase.Ucs.Yaxis, cntrPt));
 					        }
 
-					        blkRef.Add(null, trans);
+					        blkRef.AddToDrawing(null, trans);
 				        }
 
 				        // Create the texts
@@ -641,7 +641,7 @@ namespace SPMTool.Database.Elements
 					        tauTxt.AlignmentPoint = algnPt;
 
 					        // Add the text to the drawing
-					        tauTxt.Add(null, trans);
+					        tauTxt.AddToDrawing(null, trans);
 				        }
 			        }
 
@@ -667,7 +667,7 @@ namespace SPMTool.Database.Elements
 							        cntrPt));
 					        }
 
-					        blkRef.Add(null, trans);
+					        blkRef.AddToDrawing(null, trans);
 				        }
 
 				        // Create the text
@@ -694,7 +694,7 @@ namespace SPMTool.Database.Elements
 					        sigTxt.AlignmentPoint = algnPt;
 
 					        // Add the text to the drawing
-					        sigTxt.Add(null, trans);
+					        sigTxt.AddToDrawing(null, trans);
 				        }
 			        }
 
@@ -720,7 +720,7 @@ namespace SPMTool.Database.Elements
 							        cntrPt));
 					        }
 
-					        blkRef.Add(null, trans);
+					        blkRef.AddToDrawing(null, trans);
 				        }
 
 				        // Create the text
@@ -747,7 +747,7 @@ namespace SPMTool.Database.Elements
 					        sigTxt.AlignmentPoint = algnPt;
 
 					        // Add the text to the drawing
-					        sigTxt.Add(null, trans);
+					        sigTxt.AddToDrawing(null, trans);
 				        }
 			        }
 		        }
@@ -820,7 +820,7 @@ namespace SPMTool.Database.Elements
 							if (!crkAngle.ApproxZero(1E-3))
 								blkRef.TransformBy(Matrix3d.Rotation(crkAngle, DataBase.Ucs.Zaxis, cntrPt));
 
-					        blkRef.Add(null, trans);
+					        blkRef.AddToDrawing(null, trans);
 				        }
 
 				        // Create the texts
@@ -842,7 +842,7 @@ namespace SPMTool.Database.Elements
 								crkTxt.TransformBy(Matrix3d.Rotation(crkAngle, DataBase.Ucs.Zaxis, cntrPt));
 
 							// Add the text to the drawing
-							crkTxt.Add(null, trans);
+							crkTxt.AddToDrawing(null, trans);
 				        }
 			        }
 		        }
