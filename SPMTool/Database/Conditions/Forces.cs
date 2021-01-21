@@ -103,7 +103,7 @@ namespace SPMTool.Database.Conditions
 						{
 							// Append the block to drawing
 							blkRef.Layer = $"{Layer.Force}";
-							blkRef.Add(On_ForceErase, trans);
+							blkRef.AddToDrawing(On_ForceErase, trans);
 
 							// Rotate and scale the block
 							if (!rotAng.ApproxZero())
@@ -122,7 +122,7 @@ namespace SPMTool.Database.Conditions
 							};
 
 							// Append the text to drawing
-							text.Add(On_ForceTextErase, trans);
+							text.AddToDrawing(On_ForceTextErase, trans);
 
 							// Add the node position to the text XData
 							text.SetXData(ForceTextXData(blkRef.Handle));
@@ -177,7 +177,7 @@ namespace SPMTool.Database.Conditions
             }
 
 			// Erase objects
-			toErase.Remove();
+			toErase.RemoveFromDrawing();
         }
 
         /// <summary>
@@ -298,7 +298,7 @@ namespace SPMTool.Database.Conditions
 			text.UnregisterErasedEvent(On_ForceTextErase);
 
 			// Erase it
-	        text.Remove();
+	        text.RemoveFromDrawing();
 
 			// Update forces
 	        Update();
@@ -315,7 +315,7 @@ namespace SPMTool.Database.Conditions
             block.UnregisterErasedEvent(On_ForceErase);
 
             // Erase it
-            block.Remove();
+            block.RemoveFromDrawing();
 
 			// Update forces
 			Update();

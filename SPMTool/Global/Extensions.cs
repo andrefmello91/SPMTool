@@ -436,11 +436,11 @@ namespace SPMTool
         /// <summary>
         /// Erase all the objects in this <paramref name="layer"/>.
         /// </summary>
-        public static void EraseObjects(this Layer layer) => layer.GetObjectIds()?.Remove();
+        public static void EraseObjects(this Layer layer) => layer.GetObjectIds()?.RemoveFromDrawing();
 
         /// <summary>
         /// Erase all the objects in those <paramref name="layers"/>.
         /// </summary>
-        public static void EraseObjects(this IEnumerable<Layer> layers) => layers.GetObjectIds()?.Remove();
+        public static void EraseObjects(this IEnumerable<Layer> layers) => layers.GetObjectIds()?.RemoveFromDrawing();
     }
 }

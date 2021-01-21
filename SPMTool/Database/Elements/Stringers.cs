@@ -111,7 +111,7 @@ namespace SPMTool.Database.Elements
 	        };
 
 	        // Add the object
-	        line.Add(On_StringerErase);
+	        line.AddToDrawing(On_StringerErase);
         }
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace SPMTool.Database.Elements
 
 			// Create and add the stringers
 			var strs = newGeos.Select(g => new Line(g.InitialPoint, g.EndPoint) { Layer = $"{Layer.Stringer}" }).ToArray();
-	        strs.Add(On_StringerErase);
+	        strs.AddToDrawing(On_StringerErase);
         }
 
 		/// <summary>
@@ -157,7 +157,7 @@ namespace SPMTool.Database.Elements
 			Geometries.RemoveAll(g => g == GetGeometry(stringer, false));
 
 			// Remove the stringer
-			stringer.Remove();
+			stringer.RemoveFromDrawing();
 		}
 
 		/// <summary>
@@ -170,7 +170,7 @@ namespace SPMTool.Database.Elements
 			Geometries.RemoveAll(g => g == geometry);
 
 			// Remove the stringer
-			GetLineByGeometry(geometry).Remove();
+			GetLineByGeometry(geometry).RemoveFromDrawing();
 		}
 
 		/// <summary>
@@ -187,7 +187,7 @@ namespace SPMTool.Database.Elements
 			Geometries.RemoveAll(geos.Contains);
 
 			// Remove the stringer
-			stringers.Remove();
+			stringers.RemoveFromDrawing();
 		}
 
 		/// <summary>
@@ -203,7 +203,7 @@ namespace SPMTool.Database.Elements
 			Geometries.RemoveAll(geometries.Contains);
 
 			// Remove the stringer
-			GetLinesByGeometries(geometries).ToArray().Remove();
+			GetLinesByGeometries(geometries).ToArray().RemoveFromDrawing();
 		}
 
 		/// <summary>
@@ -568,7 +568,7 @@ namespace SPMTool.Database.Elements
 				        dgrm.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
 
 				        // Add the diagram to the drawing
-				        dgrm.Add();
+				        dgrm.AddToDrawing();
 			        }
 		        }
 
@@ -607,7 +607,7 @@ namespace SPMTool.Database.Elements
                         dgrm1.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
 
                         // Add the diagram to the drawing
-                        dgrm1.Add();
+                        dgrm1.AddToDrawing();
                     }
 
                     using (var dgrm3 = new Solid(vrts3[0], vrts3[1], vrts3[2]))
@@ -623,7 +623,7 @@ namespace SPMTool.Database.Elements
                         dgrm3.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
 
                         // Add the diagram to the drawing
-                        dgrm3.Add();
+                        dgrm3.AddToDrawing();
                     }
 
                 }
@@ -656,7 +656,7 @@ namespace SPMTool.Database.Elements
                             txt1.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
 
                             // Add the text to the drawing
-                            txt1.Add();
+                            txt1.AddToDrawing();
                         }
 
                     if (!N3.ApproxZero(0.01))
@@ -689,7 +689,7 @@ namespace SPMTool.Database.Elements
                             txt3.TransformBy(Matrix3d.Rotation(ang, Database.DataBase.Ucs.Zaxis, stPt));
 
                             // Add the text to the drawing
-                            txt3.Add();
+                            txt3.AddToDrawing();
                         }
                 }
 	        }
@@ -758,7 +758,7 @@ namespace SPMTool.Database.Elements
 							if (!a.ApproxZero(1E-3))
 								blkRef.TransformBy(Matrix3d.Rotation(a, DataBase.Ucs.Zaxis, stPt));
 
-							blkRef.Add(null, trans);
+							blkRef.AddToDrawing(null, trans);
 						}
 
 						// Create the texts
@@ -780,7 +780,7 @@ namespace SPMTool.Database.Elements
 								crkTxt.TransformBy(Matrix3d.Rotation(a, DataBase.Ucs.Zaxis, stPt));
 
 							// Add the text to the drawing
-							crkTxt.Add(null, trans);
+							crkTxt.AddToDrawing(null, trans);
 						}
 					}
 				}

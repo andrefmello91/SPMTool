@@ -244,7 +244,7 @@ namespace SPMTool.Editor.Commands
 			}
 
 			// Erase objects
-			toErase.Remove();
+			toErase.RemoveFromDrawing();
 
 			// Create the stringers
 			foreach (var str in newStrList)

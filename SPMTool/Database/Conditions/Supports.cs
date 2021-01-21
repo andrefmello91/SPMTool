@@ -162,7 +162,7 @@ namespace SPMTool.Database.Conditions
 	                using (var blkRef = new BlockReference(pos, supBlock))
 	                {
 		                blkRef.Layer = $"{Layer.Support}";
-		                blkRef.Add(null, trans);
+		                blkRef.AddToDrawing(null, trans);
 
 		                // Set scale to the block
 		                if (units.Geometry != LengthUnit.Millimeter)
@@ -202,7 +202,7 @@ namespace SPMTool.Database.Conditions
             foreach (var position in positions)
 				toErase.AddRange(sups.Where(sup => sup.Position.Approx(position)));
 
-			toErase.Remove();
+			toErase.RemoveFromDrawing();
         }
 
         /// <summary>

@@ -4,6 +4,7 @@ using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using Extensions;
 using Extensions.AutoCAD;
 using SPM.Analysis;
 using SPM.Elements;
@@ -249,7 +250,7 @@ namespace SPMTool.Database
 					newStr.Layer = $"{Layer.Displacements}";
 
 					// Add the line to the drawing
-					newStr.Add();
+					newStr.AddToDrawing();
 				}
 
 				// Add the position of the nodes to the list
@@ -301,13 +302,35 @@ namespace SPMTool.Database
 		/// </summary>
 		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" };
 
-        /// <summary>
-        /// Event to run after undo or redo commands.
-        /// </summary>
-        public static void On_UndoOrRedo(object sender, CommandEventArgs e)
+		/// <summary>
+		/// Remove a <see cref="SPMElement"/> from drawing.
+		/// </summary>
+		/// <param name="element">The <see cref="SPMElement"/> to remove.</param>
+		public static void RemoveFromDrawing(SPMElement element) => element?.ObjectId.RemoveFromDrawing();
+
+		/// <summary>
+		/// Remove a collection of <see cref="SPMElement"/>'s from drawing.
+		/// </summary>
+		/// <param name="elements">The <see cref="SPMElement"/>'s to remove.</param>
+		public static void RemoveFromDrawing(IEnumerable<SPMElement> elements) => elements?.Select(e => e.ObjectId).ToArray().RemoveFromDrawing();
+
+		/// <summary>
+		/// Event to run after undo or redo commands.
+		/// </summary>
+		public static void On_UndoOrRedo(object sender, CommandEventArgs e)
 		{
 			if (CmdNames.Any(cmd => cmd.Contains(e.GlobalCommandName.ToUpper())))
 		        UpdateElements(false);
         }
+
+		/// <summary>
+		/// Event to execute when a <see cref="SPMElement"/> is removed.
+		/// </summary>
+		public static void On_ElementRemoved(object sender, ItemEventArgs<SPMElement> e) => RemoveFromDrawing(e.Item);
+
+		/// <summary>
+		/// Event to execute when a range of <see cref="SPMElement"/>'s is removed.
+		/// </summary>
+		public static void On_ElementsRemoved(object sender, RangeEventArgs<SPMElement> e) => RemoveFromDrawing(e.ItemCollection);
     }
 }
