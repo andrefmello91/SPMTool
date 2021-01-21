@@ -4,6 +4,8 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.MacroRecorder;
+using Extensions;
 using Extensions.AutoCAD;
 using Extensions.Number;
 using OnPlaneComponents;
@@ -24,6 +26,11 @@ namespace SPMTool.Database.Elements
 		/// The equality comparer for <see cref="Point3d"/>.
 		/// </summary>
 		private static readonly Point3dEqualityComparer Comparer = new Point3dEqualityComparer { Tolerance = Tolerance };
+
+		/// <summary>
+		/// Get the node list;
+		/// </summary>
+		public static EList<Node> NodeList { get; } = GetInitialList();
 
 		/// <summary>
 		/// List of nodes' <see cref="Point3d"/> positions.
@@ -112,9 +119,26 @@ namespace SPMTool.Database.Elements
         }
 
 		/// <summary>
+		/// Add a <see cref="Node"/> to drawing and set it's <see cref="ObjectId"/>.
+		/// </summary>
+		/// <param name="node">The node to add.</param>
+        private static void AddToDrawing(Node node)
+        {
+	        // Create the node and set the layer
+	        var dbPoint = new DBPoint(node.Position)
+	        {
+		        Layer = $"{GetLayer(node.Type)}"
+	        };
+
+			dbPoint.Add();
+
+			node.ObjectId = dbPoint.ObjectId;
+        }
+
+		/// <summary>
 		/// Remove unnecessary nodes from the drawing.
 		/// </summary>
-        public static void Remove()
+		public static void Remove()
         {
 	        // Get stringers
 	        var strList = Stringers.Geometries;
@@ -338,15 +362,24 @@ namespace SPMTool.Database.Elements
 			return node;
         }
 
+		/// <summary>
+		/// Get the initial node list.
+		/// </summary>
+        private static EList<Node> GetInitialList()
+        {
+	        var nodes = Read(GetAllNodes()?.ToArray(), SettingsData.SavedUnits)?.ToList() ?? new List<Node>();
+	        var list = new EList<Node>(nodes);
+	        list.ItemAdded   += On_NodeAdded;
+	        list.ItemRemoved += On_NodeRemoved;
+
+	        return list;
+        }
+
         /// <summary>
         /// Get node positions in the drawing.
         /// </summary>
         /// <param name="nodes">The collection of <see cref="DBPoint"/>'s.</param>
         private static List<Point3d> GetPositions(IEnumerable<DBPoint> nodes = null) => (nodes ?? GetAllNodes())?.Select(nd => nd.Position).ToList() ?? new List<Point3d>();
-		//{
-		// _positions = (nodes ?? GetAllNodes())?.Select(nd => nd.Position).ToList() ?? new List<Point3d>();
-		// return _positions;
-		//}
 
 		/// <summary>
 		/// Get <see cref="NodeType"/>.
@@ -440,5 +473,29 @@ namespace SPMTool.Database.Elements
 
 			Positions.RemoveAll(p => p.Approx(nd.Position, Tolerance));
         }
+
+		/// <summary>
+		/// Event to execute when a node is added.
+		/// </summary>
+		private static void On_NodeAdded(object sender, ItemEventArgs<Node> e)
+		{
+			var node = e.Item;
+
+			if (node is null)
+				return;
+
+			Add(node.Position, node.Type);
+		}
+
+		/// <summary>
+		/// Event to execute when a node is removed.
+		/// </summary>
+		private static void On_NodeRemoved(object sender, ItemEventArgs<Node> e)
+		{
+			var node = e.Item;
+
+			// Remove from drawing
+			node?.ObjectId.Remove();
+		}
 	}
 }
