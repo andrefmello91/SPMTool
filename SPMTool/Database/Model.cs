@@ -193,7 +193,7 @@ namespace SPMTool.Database
 			// Erase result objects
 			ResultLayers.EraseObjects();
 
-			Nodes.SetDisplacements(analysis.Nodes);
+			//Nodes.SetDisplacements(analysis.Nodes);
             DrawDisplacements(analysis.Stringers);
             Stringers.DrawForces(analysis.Stringers, analysis.MaxStringerForce);
             Panels.DrawStresses(analysis.Panels);
