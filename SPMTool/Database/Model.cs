@@ -118,7 +118,7 @@ namespace SPMTool.Database
 	        }
 
 	        // Get nodes
-	        var nodes = Nodes.Read(ndObjs, units).ToArray();
+	        var nodes = Nodes.ReadFromDrawing(ndObjs, units).ToArray();
 
 	        // Set supports and forces
 	        //Forces.Set(ForceCollection, nodes);
@@ -152,10 +152,10 @@ namespace SPMTool.Database
 	        var units        = SettingsData.SavedUnits;
 
 	        if (layer is Layer.IntNode || layer is Layer.ExtNode)
-		        return Nodes.Read((DBPoint) entity, units);
+		        return Nodes.GetFromList(entity.ObjectId);
 
 	        // Read nodes
-	        var nodes = Nodes.Read(NodeCollection, units).ToArray();
+	        var nodes = Nodes.ReadFromDrawing(NodeCollection, units).ToArray();
 
 	        if (layer is Layer.Stringer)
 		        return Stringers.Read((Line) entity, units, parameters, constitutive, nodes);
