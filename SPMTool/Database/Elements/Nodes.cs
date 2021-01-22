@@ -35,7 +35,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		/// List of nodes' <see cref="Point3d"/> positions.
 		/// </summary>
-		public static List<Point3d> Positions { get; private set; } = GetPositions();
+		public static List<Point3d> Positions => NodeList.Select(n => n.Position).ToList();
 		
 		/// <summary>
 		/// Get the geometry unit.
@@ -58,14 +58,13 @@ namespace SPMTool.Database.Elements
 			if (strList is null || !strList.Any())
 				return;
 
-			var units = SettingsData.SavedUnits;
-
 			// Add internal nodes
-			AddToList(strList.Select(str => new Node(str.CenterPoint, NodeType.Internal, units.Geometry, units.Displacements)));
+			Add(strList.Select(str => str.CenterPoint).ToArray(), NodeType.Internal);
 
 			// Add external nodes
-			AddToList(strList.Select(str => new Node(str.InitialPoint, NodeType.External, units.Geometry, units.Displacements)));
-			AddToList(strList.Select(str => new Node(str.EndPoint, NodeType.External, units.Geometry, units.Displacements)));
+			var extNds = strList.Select(str => str.InitialPoint).ToList();
+			extNds.AddRange(strList.Select(str => str.EndPoint));
+			Add(extNds, NodeType.External);
 
 			// Get points
 			//var intNds = strList.Select(str => str.CenterPoint).Distinct(Comparer).ToList();
@@ -122,23 +121,12 @@ namespace SPMTool.Database.Elements
 		public static void Add(Point3d position, NodeType nodeType)
 		{
             // Check if a node already exists at the position. If not, its created
-            if (Positions.Exists(p => p.Approx(position, Tolerance)))
+            if (NodeList.Any(n => position.Approx(n.Position, Tolerance)))
 				return;
 
             // Add to the list
-            Positions.Add(position);
-
-			// Create the node and set the layer
-			var dbPoint = new DBPoint(position)
-			{
-				Layer = $"{GetLayer(nodeType)}"
-			};
-			
-			// Add the new object
-			if (nodeType != NodeType.Displaced)
-				dbPoint.AddToDrawing(On_NodeErase);
-			else
-				dbPoint.AddToDrawing();
+            var units = SettingsData.SavedUnits;
+            AddToList(new Node(position, nodeType, units.Geometry, units.Displacements));
 		}
 
         /// <summary>
@@ -149,19 +137,10 @@ namespace SPMTool.Database.Elements
         public static void Add(IEnumerable<Point3d> positions, NodeType nodeType)
 		{
 			// Get the positions that don't exist in the drawing
-			var newNds = positions.Distinct(Comparer).Where(p => !Positions.Any(p2 => p2.Approx(p, Tolerance))).ToArray();
-			Positions.AddRange(newNds);
-
-			// Get the layer
-			var layer = $"{GetLayer(nodeType)}";
-
-			// Create the nodes
-			var nodes = newNds.Select(p => new DBPoint(p) { Layer = layer }).ToArray();
-
-			if (nodeType != NodeType.Displaced)
-				nodes.AddToDrawing(On_NodeErase);
-			else
-				nodes.AddToDrawing();
+			var newPts = positions.Distinct(Comparer).Where(p => !NodeList.Any(n => n.Position.Approx(p, Tolerance))).ToArray();
+			var units = SettingsData.SavedUnits;
+			var newNds = newPts.Select(p => new Node(p, nodeType, units.Geometry, units.Displacements)).ToArray();
+			AddToList(newNds);
         }
 
 		/// <summary>
@@ -208,7 +187,12 @@ namespace SPMTool.Database.Elements
 				points.Add(dbPoint);
 			}
 
-			points.AddToDrawing();
+			// Add objects to drawing
+			var objIds = points.AddToDrawing().ToArray();
+
+			// Set object ids
+			for (int i = 0; i < nodes.Count(); i++)
+				nodes.ElementAt(i).ObjectId = objIds[i];
 		}
 
 		/// <summary>
@@ -236,34 +220,6 @@ namespace SPMTool.Database.Elements
 			}
         }
 
-		/// <summary>
-		/// Remove the node at this <paramref name="position"/>.
-		/// </summary>
-		/// <param name="position">The <see cref="Point3d"/> position.</param>
-		public static void Remove(Point3d position)
-        {
-	        if (Positions.Contains(position))
-		        Positions.Remove(position);
-
-			// Remove from drawing
-			GetNodeAtPosition(position).RemoveFromDrawing();
-        }
-
-		/// <summary>
-		/// Remove the nodes at these <paramref name="positions"/>.
-		/// </summary>
-		/// <param name="positions">The <see cref="Point3d"/> positions.</param>
-        public static void Remove(IEnumerable<Point3d> positions)
-        {
-	        // Get positions to remove
-	        var toRemove = Positions.Distinct(Comparer).Where(p => positions.Any(n => n.Approx(p, Tolerance))).ToList();
-
-			// Update positions
-			Positions = Positions.Where(p => !toRemove.Any(n => n.Approx(p, Tolerance))).ToList();
-
-			// Remove from drawing
-			GetNodesAtPositions(toRemove).ToArray().RemoveFromDrawing();
-        }
 
 		/// <summary>
 		/// Return a <see cref="DBPoint"/> in the drawing located at this <paramref name="position"/>.
@@ -331,37 +287,40 @@ namespace SPMTool.Database.Elements
 			if (removeNodes)
 				Remove();
 
-			// Get all the nodes as points
-			var ndObjs = GetAllNodes()?.ToList() ?? new List<DBPoint>();
+			// Update node list
+			UpdateList();
+
+			//// Get all the nodes as points
+			//var ndObjs = GetAllNodes()?.ToList() ?? new List<DBPoint>();
 			
-			// Access the nodes on the document
-			if (ndObjs.Any())
-			{
-				// Get the Xdata size
-				int size = Enum.GetNames(typeof(NodeIndex)).Length;
+			//// Access the nodes on the document
+			//if (ndObjs.Any())
+			//{
+			//	// Get the Xdata size
+			//	int size = Enum.GetNames(typeof(NodeIndex)).Length;
 
-                // Order nodes
-                ndObjs = ndObjs.OrderBy(nd => nd.Position.Y).ThenBy(nd => nd.Position.X).ToList();
+   //             // Order nodes
+   //             ndObjs = ndObjs.OrderBy(nd => nd.Position.Y).ThenBy(nd => nd.Position.X).ToList();
 
-				for (var i = 0; i < ndObjs.Count; i++)
-				{
-					// Get the node number
-					double ndNum = i + 1;
+			//	for (var i = 0; i < ndObjs.Count; i++)
+			//	{
+			//		// Get the node number
+			//		double ndNum = i + 1;
 
-					// Initialize the array of typed values for XData
-					var data = ndObjs[i].XData?.AsArray();
-					data = data?.Length == size ? data : NewXData();
+			//		// Initialize the array of typed values for XData
+			//		var data = ndObjs[i].XData?.AsArray();
+			//		data = data?.Length == size ? data : NewXData();
 
-					// Set the updated number
-					data[(int) NodeIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
+			//		// Set the updated number
+			//		data[(int) NodeIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, ndNum);
 
-                    // Add the new XData
-                    ndObjs[i].SetXData(data);
-				}
-			}
+   //                 // Add the new XData
+   //                 ndObjs[i].SetXData(data);
+			//	}
+			//}
 
 			// Save positions
-			Positions = GetPositions(ndObjs);
+			//Positions = GetPositions(ndObjs);
 
 			// Set the style for all point objects in the drawing
             Model.SetPointSize();
@@ -405,14 +364,14 @@ namespace SPMTool.Database.Elements
         /// </summary>
         /// <param name="nodeObjects">The <see cref="ObjectIdCollection"/> containing the nodes of drawing.</param>
         /// <param name="units">Current <see cref="Units"/>.</param>
-        public static IEnumerable<Node> Read(IEnumerable<DBPoint> nodeObjects, Units units) => nodeObjects?.Select(nd => Read(nd, units)).Order();
+        public static IEnumerable<Node> ReadFromDrawing(IEnumerable<DBPoint> nodeObjects, Units units) => nodeObjects?.Select(nd => ReadFromDrawing(nd, units)).Order();
 
         /// <summary>
         /// Read a <see cref="Node"/> in the drawing.
         /// </summary>
         /// <param name="nodeObject">The <see cref="DBPoint"/> object of the node.</param>
         /// <param name="units">Current <see cref="Units"/>.</param>
-        public static Node Read(DBPoint nodeObject, Units units)
+        public static Node ReadFromDrawing(DBPoint nodeObject, Units units)
         {
 	        // Read the XData and get the necessary data
 	        var data = nodeObject.ReadXData();
@@ -436,29 +395,59 @@ namespace SPMTool.Database.Elements
         }
 
 		/// <summary>
-		/// Update <see cref="NodeList"/>.
+		/// Get a node from the list with corresponding <see cref="ObjectId"/>.
 		/// </summary>
-        public static void UpdateList() => NodeList = GetNodeList();
+        public static Node GetFromList(ObjectId objectId) => NodeList.Find(n => n.ObjectId == objectId);
+
+        /// <summary>
+        /// Update <see cref="NodeList"/>.
+        /// </summary>
+        /// <param name="readFromDwg">Read nodes from drawing?</param>
+        public static void UpdateList(bool readFromDwg = false) => NodeList = readFromDwg ? GetNodeList() : EnumerateList(NodeList);
+
+        /// <summary>
+		/// Enumerate a list of <see cref="Node"/>'s.
+		/// </summary>
+		private static EList<Node> EnumerateList(IEnumerable<Node> nodes)
+		{
+			var ordered = new EList<Node>(nodes.Order());
+
+			// Set numbers
+			SetNumbers(ordered);
+
+			// Add events
+			SetEvents(ordered);
+
+			return ordered;
+		}
 
 		/// <summary>
-		/// Get the node list.
+		/// Get the node list from elements in drawing.
 		/// </summary>
         private static EList<Node> GetNodeList()
         {
-	        var nodes = Read(GetAllNodes()?.ToArray(), SettingsData.SavedUnits)?.ToList() ?? new List<Node>();
+	        var nodes = ReadFromDrawing(GetAllNodes()?.ToArray(), SettingsData.SavedUnits)?.ToList() ?? new List<Node>();
 	        var list = new EList<Node>(nodes.Order());
 
 			// Set numbers
 			SetNumbers(list);
 
 			// Add events
-	        list.ItemAdded    += On_NodeAdded;
-	        list.ItemRemoved  += On_NodeRemoved;
-	        list.RangeAdded   += On_NodesAdded;
-	        list.RangeRemoved += On_NodesRemoved;
+			SetEvents(list);
 
 	        return list;
         }
+
+		/// <summary>
+		/// Set events on <paramref name="list"/>.
+		/// </summary>
+		private static void SetEvents(EList<Node> list)
+		{
+			list.ItemAdded    += On_NodeAdded;
+			list.ItemRemoved  += On_NodeRemoved;
+			list.RangeAdded   += On_NodesAdded;
+			list.RangeRemoved += On_NodesRemoved;
+		}
 
 		/// <summary>
 		/// Set numbers to a collection of <see cref="Node"/>'s.
