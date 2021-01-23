@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
@@ -14,13 +15,13 @@ namespace SPMTool.Database.Elements
 	/// <summary>
     /// Node object class.
     /// </summary>
-    public class NodeObject : ISPMObject, IEquatable<NodeObject>
+    public class NodeObject : ISPMObject, IEquatable<NodeObject>, IComparable<NodeObject>
     {
 	    /// <inheritdoc/>
-	    public ObjectId ObjectId { get; set; }
+	    public ObjectId ObjectId { get; set; } = ObjectId.Null;
 
-        /// <inheritdoc/>
-        public int Number { get; set; }
+	    /// <inheritdoc/>
+	    public int Number { get; set; } = 0;
 
         /// <summary>
         /// Get the node type.
@@ -35,12 +36,10 @@ namespace SPMTool.Database.Elements
         /// <summary>
         /// Create the node object.
         /// </summary>
-        /// <param name="objectId">The <see cref="ObjectId"/>.</param>
         /// <param name="position">The <see cref="Point3d"/> position.</param>
         /// <param name="type">The <see cref="NodeType"/>.</param>
-        public NodeObject(ObjectId objectId, Point3d position, NodeType type)
+        public NodeObject(Point3d position, NodeType type)
         {
-	        ObjectId = objectId;
 	        Position = position;
 	        Type     = type;
         }
@@ -66,6 +65,9 @@ namespace SPMTool.Database.Elements
             var node = new Node(ObjectId, Number, Position, GetNodeType(point), units.Geometry, units.Displacements);
             
 	        // Set displacement
+	        if (data is null)
+		        return node;
+
 	        var ux = Length.FromMillimeters(data[(int)NodeIndex.Ux].ToDouble()).ToUnit(units.Displacements);
 	        var uy = Length.FromMillimeters(data[(int)NodeIndex.Uy].ToDouble()).ToUnit(units.Displacements);
 	        node.Displacement = new Displacement(ux, uy);
@@ -74,10 +76,16 @@ namespace SPMTool.Database.Elements
         }
 
         /// <inheritdoc/>
-        public bool Equals(NodeObject other) => !(other is null) && Type == other.Type && Position.Approx(other.Position, Nodes.Tolerance);
+        public bool Equals(NodeObject other) => !(other is null) && Position.Approx(other.Position, Nodes.Tolerance);
+
+        public int CompareTo(NodeObject other) => Comparer.Compare(Position, other.Position);
 
         /// <inheritdoc/>
         public override bool Equals(object other) => other is NodeObject node && Equals(node);
+
+        public override int GetHashCode() => Position.GetHashCode();
+
+        public override string ToString() => AsNode().ToString();
 
         /// <summary>
         /// Returns true if objects are equal.
