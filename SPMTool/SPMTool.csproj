@@ -124,6 +124,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Database\DataBase.cs" />
+    <Compile Include="Database\Elements\Objects\ISPMObject.cs" />
+    <Compile Include="Database\Elements\Objects\NodeObject.cs" />
     <Compile Include="Database\SettingsData.cs" />
     <Compile Include="Editor\Commands\ConditionsInput.cs" />
     <Compile Include="Editor\Commands\ElementEditor.cs" />
@@ -418,5 +420,6 @@
   <ItemGroup>
     <None Include="Resources\crack_large_light.png" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
