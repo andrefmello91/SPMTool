@@ -4,6 +4,7 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using Extensions;
 using Extensions.AutoCAD;
 using Extensions.Number;
 using OnPlaneComponents;
@@ -35,9 +36,19 @@ namespace SPMTool.Database.Elements
 		};
 
 		/// <summary>
+		/// List of internal nodes' <see cref="Point3d"/> positions.
+		/// </summary>
+		public static EList<Point3d> IntNodesPositions { get; private set; } = GetInitialList(NodeType.Internal);
+
+		/// <summary>
+		/// List of external nodes' <see cref="Point3d"/> positions.
+		/// </summary>
+		public static EList<Point3d> ExtNodesPositions { get; private set; } = GetInitialList(NodeType.External);
+
+		/// <summary>
 		/// List of nodes' <see cref="Point3d"/> positions.
 		/// </summary>
-		public static List<Point3d> Positions { get; private set; } = GetPositions();
+		public static List<Point3d> Positions => IntNodesPositions.Concat(ExtNodesPositions).Order().ToList();
 		
 		/// <summary>
 		/// Get the geometry unit.
@@ -77,24 +88,20 @@ namespace SPMTool.Database.Elements
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
 		public static void Add(Point3d position, NodeType nodeType)
 		{
-            // Check if a node already exists at the position. If not, its created
-            if (Positions.Exists(p => p.Approx(position, Tolerance)))
-				return;
-
-            // Add to the list
-            Positions.Add(position);
-
-			// Create the node and set the layer
-			var dbPoint = new DBPoint(position)
+			switch (nodeType)
 			{
-				Layer = $"{GetLayer(nodeType)}"
-			};
-			
-			// Add the new object
-			if (nodeType != NodeType.Displaced)
-				dbPoint.Add(On_NodeErase);
-			else
-				dbPoint.Add();
+				// Check if a node already exists at the position. If not, its created
+				case NodeType.Internal when IntNodesPositions.All(p => !p.Approx(position, Tolerance)):
+					IntNodesPositions.Add(position);
+					break;
+
+				case NodeType.External when ExtNodesPositions.All(p => !p.Approx(position, Tolerance)):
+					ExtNodesPositions.Add(position);
+					break;
+
+				default:
+					return;
+			}
 		}
 
         /// <summary>
@@ -104,20 +111,22 @@ namespace SPMTool.Database.Elements
         /// <param name="nodeType">The <see cref="NodeType"/>.</param>
         public static void Add(IEnumerable<Point3d> positions, NodeType nodeType)
 		{
-			// Get the positions that don't exist in the drawing
-			var newNds = positions.Distinct(Comparer).Where(p => !Positions.Any(p2 => p2.Approx(p, Tolerance))).ToArray();
-			Positions.AddRange(newNds);
+			switch (nodeType)
+			{
+				case NodeType.Internal:
+					var intNds = positions.Distinct(Comparer).Where(p => !IntNodesPositions.Any(p2 => p2.Approx(p, Tolerance))).ToArray();
+					IntNodesPositions.AddRange(intNds);
+					break;
 
-			// Get the layer
-			var layer = $"{GetLayer(nodeType)}";
+				case NodeType.External:
+					var extNds = positions.Distinct(Comparer).Where(p => !ExtNodesPositions.Any(p2 => p2.Approx(p, Tolerance))).ToArray();
+					ExtNodesPositions.AddRange(extNds);
+					break;
 
-			// Create the nodes
-			var nodes = newNds.Select(p => new DBPoint(p) { Layer = layer }).ToArray();
-
-			if (nodeType != NodeType.Displaced)
-				nodes.Add(On_NodeErase);
-			else
-				nodes.Add();
+				case NodeType.Displaced:
+					AddToDrawing(positions, nodeType);
+					break;
+			}
         }
 
 		/// <summary>
@@ -158,7 +167,7 @@ namespace SPMTool.Database.Elements
 		        Positions.Remove(position);
 
 			// Remove from drawing
-			GetNodeAtPosition(position).Remove();
+			GetNodeAtPosition(position).RemoveFromDrawing();
         }
 
 		/// <summary>
@@ -174,8 +183,42 @@ namespace SPMTool.Database.Elements
 			Positions = Positions.Where(p => !toRemove.Any(n => n.Approx(p, Tolerance))).ToList();
 
 			// Remove from drawing
-			GetNodesAtPositions(toRemove).ToArray().Remove();
+			GetNodesAtPositions(toRemove).ToArray().RemoveFromDrawing();
         }
+
+		private static void AddToDrawing(Point3d position, NodeType nodeType)
+		{
+			// Create the node and set the layer
+			var dbPoint = new DBPoint(position)
+			{
+				Layer = $"{GetLayer(nodeType)}"
+			};
+
+			// Add the new object
+			if (nodeType != NodeType.Displaced)
+				dbPoint.AddToDrawing(On_NodeErase);
+			else
+				dbPoint.AddToDrawing();
+		}
+
+		/// <summary>
+		/// Add nodes to drawing in these <paramref name="positions"/>.
+		/// </summary>
+		/// <param name="positions">The collection of <see cref="Point3d"/> positions.</param>
+		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
+		private static void AddToDrawing(IEnumerable<Point3d> positions, NodeType nodeType)
+		{
+			// Get the layer
+			var layer = $"{GetLayer(nodeType)}";
+
+			// Create the nodes
+			var nodes = positions.Select(p => new DBPoint(p) { Layer = layer }).ToArray();
+
+			if (nodeType != NodeType.Displaced)
+				nodes.AddToDrawing(On_NodeErase);
+			else
+				nodes.AddToDrawing();
+		}
 
 		/// <summary>
 		/// Return a <see cref="DBPoint"/> in the drawing located at this <paramref name="position"/>.
@@ -312,6 +355,40 @@ namespace SPMTool.Database.Elements
 			return ndObjs?.Select(nd => nd.Position).Order() ?? new List<Point3d>();
 		}
 
+		/// <summary>
+		/// Get the initial list of nodes.
+		/// </summary>
+		/// <param name="type">The <see cref="NodeType"/>.</param>
+		private static EList<Point3d> GetInitialList(NodeType type)
+        {
+			var list = new EList<Point3d>(NodePositions(type));
+
+			AddEvents(list, type);
+
+			return list;
+        }
+
+		/// <summary>
+		/// Add events to a list based on <paramref name="type"/>.
+		/// </summary>
+		/// <param name="nodePositions">The collection of positions.</param>
+		/// <param name="type">The <see cref="NodeType"/>.</param>
+        private static void AddEvents(EList<Point3d> nodePositions, NodeType type)
+        {
+	        switch (type)
+	        {
+				case NodeType.Internal:
+					nodePositions.ItemAdded  += On_IntNodeAdd;
+					nodePositions.RangeAdded += On_IntNodesAdd;
+					break;
+
+				case NodeType.External:
+					nodePositions.ItemAdded  += On_ExtNodeAdd;
+					nodePositions.RangeAdded += On_ExtNodesAdd;
+					break;
+	        }
+		}
+
         /// <summary>
         /// Read <see cref="Node"/> objects from an <see cref="ObjectIdCollection"/>.
         /// </summary>
@@ -361,7 +438,7 @@ namespace SPMTool.Database.Elements
 		/// Get <see cref="NodeType"/>.
 		/// </summary>
 		/// <param name="nodePoint">The <see cref="Entity"/> object.</param>
-		private static NodeType GetNodeType(Entity nodePoint) => nodePoint.Layer == $"{Layer.ExtNode}" ? NodeType.External : NodeType.Internal;
+		public static NodeType GetNodeType(Entity nodePoint) => nodePoint.Layer == $"{Layer.ExtNode}" ? NodeType.External : NodeType.Internal;
 
         /// <summary>
         /// Get the layer name based on <paramref name="nodeType"/>.
@@ -449,6 +526,26 @@ namespace SPMTool.Database.Elements
 
 			Positions.RemoveAll(p => p.Approx(nd.Position, Tolerance));
         }
+
+		/// <summary>
+		/// Execute when a internal node is added to <see cref="IntNodesPositions"/>.
+		/// </summary>
+		private static void On_IntNodeAdd(object sender, ItemEventArgs<Point3d> e) => AddToDrawing(e.Item, NodeType.Internal);
+
+		/// <summary>
+		/// Execute when internal nodes are added to <see cref="IntNodesPositions"/>.
+		/// </summary>
+		private static void On_IntNodesAdd(object sender, RangeEventArgs<Point3d> e) => AddToDrawing(e.ItemCollection, NodeType.Internal);
+
+		/// <summary>
+		/// Execute when a internal node is added to <see cref="IntNodesPositions"/>.
+		/// </summary>
+		private static void On_ExtNodeAdd(object sender, ItemEventArgs<Point3d> e) => AddToDrawing(e.Item, NodeType.External);
+
+		/// <summary>
+		/// Execute when internal nodes are added to <see cref="IntNodesPositions"/>.
+		/// </summary>
+		private static void On_ExtNodesAdd(object sender, RangeEventArgs<Point3d> e) => AddToDrawing(e.ItemCollection, NodeType.External);
 
 		/// <summary>
 		/// Node comparer class.
