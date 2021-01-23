@@ -23,7 +23,7 @@ namespace SPMTool.Database.Elements
 	public static class Nodes
 	{
 		/// <summary>
-		/// The equatlity comparer for <see cref="Point3d"/>.
+		/// The equality comparer for <see cref="Point3d"/>.
 		/// </summary>
 		public static readonly Point3dComparer Comparer = new Point3dComparer { Tolerance = Tolerance };
 
