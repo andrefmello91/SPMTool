@@ -116,10 +116,15 @@ namespace SPMTool
         public double DisplacementScaleFactor => DisplacementMagnifier > 0 ? DisplacementMagnifier * ScaleFactor : 200 * ScaleFactor;
 
         /// <summary>
-        /// Default units object.
-        /// <para>Default units: mm, kN, MPa.</para>
+        /// Get the tolerance for geometry comparisons.
         /// </summary>
-        public static readonly Units Default = new Units
+        public double Tolerance => 0.001.ConvertFromMillimeter(Geometry);
+
+		/// <summary>
+		/// Default units object.
+		/// <para>Default units: mm, kN, MPa.</para>
+		/// </summary>
+		public static readonly Units Default = new Units
 		{
 			Geometry              = LengthUnit.Millimeter,
 			Reinforcement         = LengthUnit.Millimeter,

@@ -628,7 +628,7 @@ namespace SPMTool.Editor
 		        return null;
 
 	        // Get the node global indexes
-	        var node  = Nodes.ReadFromDrawing((DBPoint) nd, Units.Default);
+	        var node  = Nodes.ReadFromDrawing((DBPoint) nd).AsNode();
 	        var index = node.DoFIndex;
 
 	        return
