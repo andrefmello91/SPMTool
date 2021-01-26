@@ -38,9 +38,14 @@ namespace SPMTool.Database
         public static readonly Layer[] ResultLayers = { Layer.StringerForce, Layer.PanelForce, Layer.CompressivePanelStress, Layer.TensilePanelStress, Layer.ConcreteCompressiveStress, Layer.ConcreteTensileStress, Layer.Displacements, Layer.Cracks};
 
         /// <summary>
-        /// Get the collection of all nodes in the model.
+        /// Get the nodes in the model.
         /// </summary>
-        public static DBPoint[] NodeCollection => Nodes.GetAllNodes()?.ToArray();
+        public static Nodes Nodes = Nodes.ReadFromDrawing();
+
+		/// <summary>
+		/// Get the collection of all nodes in the model.
+		/// </summary>
+		public static DBPoint[] NodeCollection => Nodes.GetAllNodes()?.ToArray();
 
 	    /// <summary>
 	    /// Get the collection of external nodes in the model.
