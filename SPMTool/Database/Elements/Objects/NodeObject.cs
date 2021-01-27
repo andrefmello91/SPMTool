@@ -104,9 +104,7 @@ namespace SPMTool.Database.Elements
 	        // Create the node and set the layer
 	        var dbPoint = CreateDBPoint();
 
-	        dbPoint.AddToDrawing();
-
-	        ObjectId = dbPoint.ObjectId;
+	        ObjectId = dbPoint.AddToDrawing();
         }
 
         /// <summary>
@@ -152,7 +150,8 @@ namespace SPMTool.Database.Elements
         /// <summary>
         /// Create node XData.
         /// </summary>
-        private static TypedValue[] NewXData()
+        /// <param name="set">Set this data to this object?</param>
+        private TypedValue[] NewXData(bool set = true)
         {
 	        // Definition for the Extended Data
 	        string xdataStr = "Node Data";
@@ -169,7 +168,10 @@ namespace SPMTool.Database.Elements
 	        data[(int)NodeIndex.Ux]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
 	        data[(int)NodeIndex.Uy]       = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
 
-	        return data;
+	        if (set)
+		        ObjectId.SetXData(data);
+
+            return data;
         }
 
         /// <inheritdoc/>

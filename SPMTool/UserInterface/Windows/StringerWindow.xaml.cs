@@ -260,7 +260,7 @@ namespace SPMTool.UserInterface
 	            return;
 
 			// Only 1 stringer, get it's geometry
-			OutputGeometry = GetGeometry(_stringers[0]);
+			OutputGeometry = StringerObject.GetGeometry(_stringers[0]);
 		}
 
         /// <summary>
@@ -304,7 +304,7 @@ namespace SPMTool.UserInterface
 			
             if (_stringers.Length == 1)
             {
-	            var reinforcement = GetReinforcement(_stringers[0]);
+	            var reinforcement = StringerObject.GetReinforcement(_stringers[0]);
 
 	            ReinforcementChecked = !(reinforcement is null);
 
@@ -366,7 +366,7 @@ namespace SPMTool.UserInterface
 
 			// Set to stringers
 			foreach (var str in _stringers)
-				SetGeometry(str, geometry);
+				StringerObject.SetGeometry(str, geometry);
 		}
 
 		/// <summary>
@@ -381,7 +381,7 @@ namespace SPMTool.UserInterface
 
 			// Set to stringers
             foreach (var str in _stringers)
-				SetReinforcement(str, reinforcement);
+				StringerObject.SetReinforcement(str, reinforcement);
 		}
 
         private void ButtonOK_OnClick(object sender, RoutedEventArgs e)

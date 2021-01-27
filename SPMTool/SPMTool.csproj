@@ -125,6 +125,7 @@
   <ItemGroup>
     <Compile Include="Database\DataBase.cs" />
     <Compile Include="Database\Elements\Objects\ISPMObject.cs" />
+    <Compile Include="Database\Elements\Objects\StringerObject.cs" />
     <Compile Include="Database\Elements\Objects\NodeObject.cs" />
     <Compile Include="Database\SettingsData.cs" />
     <Compile Include="Editor\Commands\ConditionsInput.cs" />

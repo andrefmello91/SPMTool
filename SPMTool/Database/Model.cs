@@ -163,7 +163,7 @@ namespace SPMTool.Database
 	        var nodes = Nodes.ReadFromDrawing(NodeCollection).Select(n => n.AsNode()).ToArray();
 
 	        if (layer is Layer.Stringer)
-		        return Stringers.Read((Line) entity, units, parameters, constitutive, nodes);
+		        return StringerObject.Read((Line) entity, units, parameters, constitutive, nodes);
 
 	        if (layer is Layer.Panel)
 		        return Panels.Read((Solid) entity, units, parameters, constitutive, nodes);
