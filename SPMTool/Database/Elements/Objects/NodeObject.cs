@@ -16,7 +16,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
     /// Node object class.
     /// </summary>
-    public class NodeObject : ISPMObject, IEquatable<NodeObject>, IComparable<NodeObject>
+    public class NodeObject : ISPMObject<Node, DBPoint>, IEquatable<NodeObject>, IComparable<NodeObject>
 	{
         // Auxiliary fields
         private Displacement _displacement = Displacement.Zero;
@@ -74,15 +74,11 @@ namespace SPMTool.Database.Elements
 	        Layer = $"{GetLayer(Type)}"
         };
 
-        /// <summary>
-        /// Get the <see cref="DBPoint"/> in drawing assigned to this object's <see cref="ObjectId"/>.
-        /// </summary>
-        public DBPoint GetDBPoint() => (DBPoint) ObjectId.ToEntity();
+        /// <inheritdoc/>
+        public DBPoint GetEntity() => (DBPoint) ObjectId.ToEntity();
 
-        /// <summary>
-        /// Get this object as a <see cref="Node"/>.
-        /// </summary>
-        public Node AsNode()
+        /// <inheritdoc/>
+        public Node GetElement()
         {
 	        // Get units
 	        var units = SettingsData.SavedUnits;
@@ -184,7 +180,9 @@ namespace SPMTool.Database.Elements
 
         public override int GetHashCode() => Position.GetHashCode();
 
-        public override string ToString() => AsNode().ToString();
+        public bool Equals(ISPMObject<Node, DBPoint> other) => Equals((NodeObject) other);
+
+        public override string ToString() => GetElement().ToString();
 
         /// <summary>
         /// Returns true if objects are equal.

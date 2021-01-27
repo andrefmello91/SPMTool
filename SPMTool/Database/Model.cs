@@ -123,7 +123,7 @@ namespace SPMTool.Database
 	        }
 
 	        // Get nodes
-	        var nodes = Nodes.ReadFromDrawing(ndObjs).Select(n => n.AsNode()).ToArray();
+	        var nodes = Nodes.ReadFromDrawing(ndObjs).Select(n => n.GetElement()).ToArray();
 
 	        // Set supports and forces
 	        //Forces.Set(ForceCollection, nodes);
@@ -140,10 +140,10 @@ namespace SPMTool.Database
         }
 
         /// <summary>
-        /// Return an <see cref="SPMElement"/> from <paramref name="entity"/>.
+        /// Return an <see cref="ISPMElement"/> from <paramref name="entity"/>.
         /// </summary>
         /// <param name="entity">The <see cref="Entity"/> of SPM object.</param>
-        public static SPMElement GetElement(Entity entity)
+        public static ISPMElement GetElement(Entity entity)
         {
 	        // Get element layer
 	        var layer = (Layer) Enum.Parse(typeof(Layer), entity.Layer);
@@ -157,13 +157,13 @@ namespace SPMTool.Database
 	        var units        = SettingsData.SavedUnits;
 
 	        if (layer is Layer.IntNode || layer is Layer.ExtNode)
-		        return Nodes.GetFromList(entity.ObjectId).AsNode();
+		        return Nodes.GetFromList(entity.ObjectId).GetElement();
 
 	        // Read nodes
-	        var nodes = Nodes.ReadFromDrawing(NodeCollection).Select(n => n.AsNode()).ToArray();
+	        var nodes = Nodes.ReadFromDrawing(NodeCollection).Select(n => n.GetElement()).ToArray();
 
 	        if (layer is Layer.Stringer)
-		        return StringerObject.Read((Line) entity, units, parameters, constitutive, nodes);
+		        return StringerObject.ReadFromDrawing((Line) entity).GetElement(nodes);
 
 	        if (layer is Layer.Panel)
 		        return Panels.Read((Solid) entity, units, parameters, constitutive, nodes);
@@ -172,10 +172,10 @@ namespace SPMTool.Database
         }
 
         /// <summary>
-        /// Return an <see cref="SPMElement"/> from <paramref name="objectId"/>.
+        /// Return an <see cref="ISPMElement"/> from <paramref name="objectId"/>.
         /// </summary>
         /// <param name="objectId">The <see cref="ObjectId"/> of SPM object.</param>
-        public static SPMElement GetElement(ObjectId objectId) => GetElement(objectId.ToEntity());
+        public static ISPMElement GetElement(ObjectId objectId) => GetElement(objectId.ToEntity());
 
 		/// <summary>
         /// Create blocks for use in SPMTool.
@@ -308,16 +308,16 @@ namespace SPMTool.Database
 		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" };
 
 		/// <summary>
-		/// Remove a <see cref="ISPMObject"/> from drawing.
+		/// Remove a <see cref="ISPMObject{T,T}"/> from drawing.
 		/// </summary>
-		/// <param name="element">The <see cref="ISPMObject"/> to remove.</param>
-		public static void RemoveFromDrawing(ISPMObject element) => element?.ObjectId.RemoveFromDrawing();
+		/// <param name="element">The <see cref="ISPMObject{T,T}"/> to remove.</param>
+		public static void RemoveFromDrawing(ISPMObject<ISPMElement, Entity> element) => element?.ObjectId.RemoveFromDrawing();
 
 		/// <summary>
-		/// Remove a collection of <see cref="ISPMObject"/>'s from drawing.
+		/// Remove a collection of<see cref="ISPMObject{T,T}"/>'s from drawing.
 		/// </summary>
-		/// <param name="elements">The <see cref="ISPMObject"/>'s to remove.</param>
-		public static void RemoveFromDrawing(IEnumerable<ISPMObject> elements) => elements?.Select(e => e.ObjectId).ToArray().RemoveFromDrawing();
+		/// <param name="elements">The <see cref="ISPMObject{T,T}"/>'s to remove.</param>
+		public static void RemoveFromDrawing(IEnumerable<ISPMObject<ISPMElement, Entity>> elements) => elements?.Select(e => e.ObjectId).ToArray().RemoveFromDrawing();
 
 		/// <summary>
 		/// Event to run after undo or redo commands.
@@ -331,18 +331,18 @@ namespace SPMTool.Database
 		/// <summary>
 		/// Event to execute when a <see cref="ISPMObject"/> is removed.
 		/// </summary>
-		public static void On_ElementRemoved(object sender, ItemEventArgs<ISPMObject> e) => RemoveFromDrawing(e.Item);
+		public static void On_ElementRemoved(object sender, ItemEventArgs<ISPMObject<ISPMElement, Entity>> e) => RemoveFromDrawing(e.Item);
 
 		/// <summary>
-		/// Event to execute when a range of <see cref="SPMElement"/>'s is removed.
+		/// Event to execute when a range of <see cref="ISPMElement"/>'s is removed.
 		/// </summary>
-		public static void On_ElementsRemoved(object sender, RangeEventArgs<ISPMObject> e) => RemoveFromDrawing(e.ItemCollection);
+		public static void On_ElementsRemoved(object sender, RangeEventArgs<ISPMObject<ISPMElement, Entity>> e) => RemoveFromDrawing(e.ItemCollection);
 
 		/// <summary>
 		/// Set numbers to a collection of <see cref="ISPMObject"/>'s.
 		/// </summary>
 		/// <param name="objects"></param>
-		public static void SetNumbers(IEnumerable<ISPMObject> objects)
+		public static void SetNumbers(IEnumerable<ISPMObject<ISPMElement, Entity>> objects)
 		{
 			if (objects is null || !objects.Any())
 				return;

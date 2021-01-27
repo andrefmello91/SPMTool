@@ -22,7 +22,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
     /// Node object class.
     /// </summary>
-    public class StringerObject : ISPMObject, IEquatable<StringerObject>, IComparable<StringerObject>
+    public class StringerObject : ISPMObject<Stringer, Line>, IEquatable<StringerObject>, IComparable<StringerObject>
 	{
 	    /// <inheritdoc/>
 	    public ObjectId ObjectId { get; set; } = ObjectId.Null;
@@ -70,12 +70,14 @@ namespace SPMTool.Database.Elements
         /// <summary>
         /// Get the <see cref="Line"/> in drawing assigned to this object's <see cref="ObjectId"/>.
         /// </summary>
-        public Line GetLine() => (Line) ObjectId.ToEntity();
+        public Line GetEntity() => (Line) ObjectId.ToEntity();
+
+        public Stringer GetElement() => throw new NotImplementedException();
 
         /// <summary>
         /// Get this object as a <see cref="Node"/>.
         /// </summary>
-        public Stringer AsStringer(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
+        public Stringer GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
         {
 	        // Get units
 	        var units = SettingsData.SavedUnits;
@@ -102,19 +104,16 @@ namespace SPMTool.Database.Elements
         /// Read a <see cref="StringerObject"/> in the drawing.
         /// </summary>
         /// <param name="stringerObjectId">The <see cref="ObjectId"/> of the node.</param>
-        public static StringerObject ReadFromDrawing(ObjectId stringerObjectId)
-        {
-	        var line = (Line) stringerObjectId.ToEntity();
-
-	        return 
-				new StringerObject(new StringerGeometry()) { ObjectId = line.ObjectId };
-		}
+        public static StringerObject ReadFromDrawing(ObjectId stringerObjectId) => ReadFromDrawing((Line) stringerObjectId.ToEntity());
 
         /// <summary>
-        /// Read a <see cref="NodeObject"/> in the drawing.
+        /// Read a <see cref="StringerObject"/> in the drawing.
         /// </summary>
-        /// <param name="nodePoint">The <see cref="DBPoint"/> object of the node.</param>
-        public static NodeObject ReadFromDrawing(DBPoint nodePoint) => new NodeObject(nodePoint.Position, GetNodeType(nodePoint)) { ObjectId = nodePoint.ObjectId };
+        /// <param name="line">The <see cref="Line"/> object of the stringer.</param>
+        public static StringerObject ReadFromDrawing(Line line) => new StringerObject(line.StartPoint, line.EndPoint)
+        {
+	        ObjectId = line.ObjectId
+        };
 
         /// <summary>
         /// Set displacement to this object XData.
@@ -281,7 +280,7 @@ namespace SPMTool.Database.Elements
 
         public override int GetHashCode() => Geometry.GetHashCode();
 
-        public override string ToString() => AsStringer().ToString();
+        public override string ToString() => GetElement().ToString();
 
         /// <summary>
         /// Returns true if objects are equal.

@@ -1,11 +1,16 @@
-﻿using Autodesk.AutoCAD.DatabaseServices;
+﻿using System;
+using Autodesk.AutoCAD.DatabaseServices;
+using SPM.Elements;
 
 namespace SPMTool.Database.Elements
 {
 	/// <summary>
 	/// Interface for SPM objects
 	/// </summary>
-	public interface ISPMObject
+	public interface ISPMObject<out T1, out T2>
+		where T1 : ISPMElement
+		where T2 : Entity
+
 	{
 		/// <summary>
 		/// Get/set the <see cref="ObjectId"/>
@@ -16,5 +21,15 @@ namespace SPMTool.Database.Elements
 		/// Get/set the object number.
 		/// </summary>
 		int Number { get; set; }
+
+		/// <summary>
+		/// Get the <see cref="ISPMElement"/> associated to this object.
+		/// </summary>
+		T1 GetElement();
+
+		/// <summary>
+		/// Get the <see cref="Entity"/> associated to this object.
+		/// </summary>
+		T2 GetEntity();
 	}
 }
