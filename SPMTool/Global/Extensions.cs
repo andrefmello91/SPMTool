@@ -20,9 +20,9 @@ using UnitsNet;
 using UnitsNet.Units;
 using Color = SPMTool.Enums.Color;
 
-namespace SPMTool
+namespace SPMTool.Extensions
 {
-    public static class Extensions
+    public static partial class Extensions
     {
         /// <summary>
         /// Array of transparent layers.

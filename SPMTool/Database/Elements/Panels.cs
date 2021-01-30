@@ -14,6 +14,7 @@ using MathNet.Numerics;
 using SPM.Elements;
 using SPM.Elements.PanelProperties;
 using SPMTool.Enums;
+using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
 using Panel = SPM.Elements.Panel;

@@ -19,6 +19,7 @@ using SPM.Elements.StringerProperties;
 using SPMTool.Database;
 using SPMTool.Database.Elements;
 using SPMTool.Enums;
+using SPMTool.Extensions;
 using UnitsNet;
 using MessageBox = System.Windows.MessageBox;
 using Stringer = SPM.Elements.Stringer;

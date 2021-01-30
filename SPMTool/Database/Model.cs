@@ -12,6 +12,7 @@ using SPMTool.Database.Conditions;
 using SPMTool.Database.Elements;
 using SPMTool.Database.Materials;
 using SPMTool.Enums;
+using SPMTool.Extensions;
 using Analysis = SPM.Analysis.Analysis;
 using Nodes = SPMTool.Database.Elements.Nodes;
 

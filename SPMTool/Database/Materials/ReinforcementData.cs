@@ -5,6 +5,7 @@ using Extensions.AutoCAD;
 using Material.Reinforcement;
 using Material.Reinforcement.Biaxial;
 using Material.Reinforcement.Uniaxial;
+using SPMTool.Extensions;
 
 namespace SPMTool.Database.Materials
 {

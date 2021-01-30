@@ -7,6 +7,7 @@ using SPMTool.Database;
 using SPMTool.Database.Conditions;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
+using SPMTool.Extensions;
 using SPMTool.UserInterface;
 
 [assembly:CommandClass(typeof(View))]

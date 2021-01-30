@@ -12,6 +12,7 @@ using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database.Materials;
 using SPMTool.Enums;
+using SPMTool.Extensions;
 using UnitsNet;
 using static SPMTool.Database.Elements.Nodes;
 using Force = OnPlaneComponents.Force;

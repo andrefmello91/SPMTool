@@ -10,6 +10,7 @@ using SPM.Elements;
 using UnitsNet.Units;
 using OnPlaneComponents;
 using SPMTool.Enums;
+using SPMTool.Extensions;
 
 namespace SPMTool.Database.Conditions
 {

@@ -139,6 +139,7 @@
     <Compile Include="Database\Elements\ElementData.cs" />
     <Compile Include="Database\Materials\ReinforcementData.cs" />
     <Compile Include="Database\Materials\ConcreteData.cs" />
+    <Compile Include="Global\AutoCADExtensions.cs" />
     <Compile Include="Global\Enums.cs" />
     <Compile Include="Database\Conditions\Supports.cs" />
     <Compile Include="Global\Extensions.cs" />
@@ -365,9 +366,9 @@
       <Project>{5e103ad6-45a8-4b2d-816c-5ccec09380e6}</Project>
       <Name>Material</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\On-Plane-Components\OnPlaneComponents\OnPlaneComponents.csproj">
-      <Project>{5ea278f4-5f43-4cd7-9627-9f46411a871e}</Project>
-      <Name>OnPlaneComponents</Name>
+    <ProjectReference Include="..\..\On-Plane-Components\On-Plane-Components.csproj">
+      <Project>{d5ae8638-d46d-4a28-b242-66b76c9f0bed}</Project>
+      <Name>On-Plane-Components</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Reinforced-Concrete-Membrane\Membrane\RCMembrane.csproj">
       <Project>{f26ddecb-e2e4-49f1-add7-99bf554eecea}</Project>

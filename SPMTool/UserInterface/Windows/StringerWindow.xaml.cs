@@ -20,6 +20,7 @@ using SPMTool.Database;
 using SPMTool.Database.Elements;
 using SPMTool.Database.Materials;
 using SPMTool.Enums;
+using SPMTool.Extensions;
 using MessageBox = System.Windows.MessageBox;
 using static SPMTool.Database.Elements.Stringers;
 using static SPMTool.Database.Elements.ElementData;

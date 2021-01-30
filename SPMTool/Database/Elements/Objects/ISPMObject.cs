@@ -10,7 +10,6 @@ namespace SPMTool.Database.Elements
 	public interface ISPMObject<out T1, out T2>
 		where T1 : ISPMElement
 		where T2 : Entity
-
 	{
 		/// <summary>
 		/// Get/set the <see cref="ObjectId"/>

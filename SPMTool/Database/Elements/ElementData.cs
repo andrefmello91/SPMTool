@@ -4,6 +4,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
 using SPM.Elements.StringerProperties;
+using SPMTool.Extensions;
 
 namespace SPMTool.Database.Elements
 {

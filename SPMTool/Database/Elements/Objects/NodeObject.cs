@@ -6,6 +6,7 @@ using Extensions.AutoCAD;
 using OnPlaneComponents;
 using SPM.Elements;
 using SPMTool.Enums;
+using SPMTool.Extensions;
 using UnitsNet;
 using static SPMTool.Database.Elements.Nodes;
 using Force = OnPlaneComponents.Force;

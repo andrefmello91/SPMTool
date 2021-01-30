@@ -13,6 +13,7 @@ using MathNet.Numerics;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Enums;
+using SPMTool.Extensions;
 using UnitsNet.Units;
 
 namespace SPMTool.Database.Elements

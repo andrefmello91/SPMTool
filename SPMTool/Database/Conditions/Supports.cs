@@ -10,6 +10,7 @@ using SPMTool.Database;
 using SPMTool.Editor;
 using SPMTool.Enums;
 using SPMTool.Database.Conditions;
+using SPMTool.Extensions;
 using UnitsNet.Units;
 
 namespace SPMTool.Database.Conditions
