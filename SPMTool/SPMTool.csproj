@@ -142,7 +142,7 @@
     <Compile Include="Global\AutoCADExtensions.cs" />
     <Compile Include="Global\Enums.cs" />
     <Compile Include="Database\Conditions\Supports.cs" />
-    <Compile Include="Global\Extensions.cs" />
+    <Compile Include="Global\SPMToolExtensions.cs" />
     <Compile Include="Global\AnalysisSettings.cs" />
     <Compile Include="Global\Units.cs" />
     <Compile Include="Database\Conditions\Forces.cs" />
