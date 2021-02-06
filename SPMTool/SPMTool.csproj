@@ -358,28 +358,24 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Extensions\Extensions\Extensions.csproj">
-      <Project>{70944e9c-5603-4721-870f-1d24db5cdb3c}</Project>
+    <ProjectReference Include="..\..\Extensions\Extensions.csproj">
+      <Project>{4966dcf0-0552-4d71-aae3-541608d03890}</Project>
       <Name>Extensions</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Material\Material\Material.csproj">
-      <Project>{5e103ad6-45a8-4b2d-816c-5ccec09380e6}</Project>
+    <ProjectReference Include="..\..\Material\Material.csproj">
+      <Project>{b152b5ee-7943-4cf4-81ed-5875a654c21c}</Project>
       <Name>Material</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\On-Plane-Components\On-Plane-Components.csproj">
       <Project>{d5ae8638-d46d-4a28-b242-66b76c9f0bed}</Project>
       <Name>On-Plane-Components</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Reinforced-Concrete-Membrane\Membrane\RCMembrane.csproj">
-      <Project>{f26ddecb-e2e4-49f1-add7-99bf554eecea}</Project>
-      <Name>RCMembrane</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SPMAnalysis\SPMAnalysis\SPMAnalysis.csproj">
-      <Project>{eb46a104-4b8c-4857-b56f-c496b03b71c9}</Project>
+    <ProjectReference Include="..\..\SPMAnalysis\SPMAnalysis.csproj">
+      <Project>{aab60f45-59ef-4e4f-8460-bb5f99c3ed2a}</Project>
       <Name>SPMAnalysis</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\SPMElements\SPMElements\SPMElements.csproj">
-      <Project>{8bcb760a-598d-4468-9009-5c4d799562af}</Project>
+    <ProjectReference Include="..\..\SPMElements\SPMElements.csproj">
+      <Project>{4bd474df-c087-4749-b7a1-4f6485dc58ef}</Project>
       <Name>SPMElements</Name>
     </ProjectReference>
   </ItemGroup>

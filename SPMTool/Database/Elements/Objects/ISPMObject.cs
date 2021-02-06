@@ -8,7 +8,7 @@ namespace SPMTool.Database.Elements
 	/// Interface for SPM objects
 	/// </summary>
 	public interface ISPMObject<out T1, out T2>
-		where T1 : ISPMElement
+		where T1 : INumberedElement, IFiniteElement
 		where T2 : Entity
 	{
 		/// <summary>
@@ -22,7 +22,7 @@ namespace SPMTool.Database.Elements
 		int Number { get; set; }
 
 		/// <summary>
-		/// Get the <see cref="ISPMElement"/> associated to this object.
+		/// Get the element associated to this object.
 		/// </summary>
 		T1 GetElement();
 
