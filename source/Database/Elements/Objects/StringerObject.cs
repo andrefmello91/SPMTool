@@ -14,6 +14,7 @@ using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
 using Force = OnPlaneComponents.Force;
+using static SPMTool.Database.SettingsData;
 
 #nullable enable
 
@@ -27,8 +28,12 @@ namespace SPMTool.Database.Elements
 	{
 		#region Fields
 
-		// Auxiliary geometry
-		private StringerGeometry _geometry;
+		private UniaxialReinforcement? _reinforcement;
+
+		/// <summary>
+		///     The geometry of this object.
+		/// </summary>
+		public StringerGeometry Geometry;
 
 		#endregion
 
@@ -41,20 +46,21 @@ namespace SPMTool.Database.Elements
 		public int Number { get; set; } = 0;
 
 		/// <summary>
-		///     Get the geometry.
+		///		Get/set the width of <see cref="Geometry"/>.
 		/// </summary>
-		public StringerGeometry Geometry
+		public Length Width
 		{
-			get => _geometry;
+			get => Geometry.Width;
+			set => SetGeometry(value, null);
+		}
 
-			// Change only width and height
-			set
-			{
-				_geometry.Width  = value.Width;
-				_geometry.Height = value.Height;
-
-				SetGeometry(_geometry);
-			}
+		/// <summary>
+		///		Get/set the height of <see cref="Geometry"/>.
+		/// </summary>
+		public Length Height
+		{
+			get => Geometry.Height;
+			set => SetGeometry(null, value);
 		}
 
 		/// <summary>
@@ -62,7 +68,7 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		public UniaxialReinforcement? Reinforcement
 		{
-			get => GetReinforcement();
+			get => _reinforcement ?? GetReinforcement();
 			set => SetReinforcement(value);
 		}
 
@@ -82,13 +88,13 @@ namespace SPMTool.Database.Elements
 		/// <inheritdoc cref="StringerObject(StringerGeometry)" />
 		/// <param name="initialPoint">The initial <see cref="Point" />.</param>
 		/// <param name="endPoint">The end <see cref="Point" />.</param>
-		public StringerObject(Point initialPoint, Point endPoint) => _geometry = GetGeometry(initialPoint, endPoint);
+		public StringerObject(Point initialPoint, Point endPoint) => Geometry = GetGeometry(initialPoint, endPoint);
 
 		/// <summary>
-		///     Create the node object.
+		///     Create the stringer object.
 		/// </summary>
 		/// <param name="geometry">The <see cref="StringerGeometry" />.</param>
-		public StringerObject(StringerGeometry geometry) => _geometry = geometry;
+		public StringerObject(StringerGeometry geometry) => Geometry = geometry;
 
 		#endregion
 
@@ -97,14 +103,14 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Read a <see cref="StringerObject" /> in the drawing.
 		/// </summary>
-		/// <param name="stringerObjectId">The <see cref="ObjectId" /> of the node.</param>
+		/// <param name="stringerObjectId">The <see cref="ObjectId" /> of the stringer.</param>
 		public static StringerObject ReadFromDrawing(ObjectId stringerObjectId) => ReadFromDrawing((Line) stringerObjectId.ToEntity());
 
 		/// <summary>
 		///     Read a <see cref="StringerObject" /> in the drawing.
 		/// </summary>
 		/// <param name="line">The <see cref="Line" /> object of the stringer.</param>
-		public static StringerObject ReadFromDrawing(Line line) => new StringerObject(line.StartPoint, line.EndPoint)
+		public static StringerObject ReadFromDrawing(Line line) => new StringerObject(line.StartPoint, line.EndPoint, SavedUnits.Geometry)
 		{
 			ObjectId = line.ObjectId
 		};
@@ -191,22 +197,38 @@ namespace SPMTool.Database.Elements
 				Es = Pressure.FromMegapascals(data[(int) StringerIndex.SteelEs].ToDouble());
 
 			// Set reinforcement
-			return
-				new UniaxialReinforcement(numOfBars, phi, new Steel(fy, Es), Geometry.Area);
+			_reinforcement = new UniaxialReinforcement(numOfBars, phi, new Steel(fy, Es), Geometry.Area);
+
+			return _reinforcement;
 		}
 
 		/// <summary>
-		///     Set <paramref name="geometry" /> to XData.
+		///     Set <paramref name="width" /> and <paramref name="height"/> to <see cref="Geometry"/> and XData.
 		/// </summary>
-		/// <param name="geometry">The <see cref="StringerGeometry" /> to set.</param>
-		private void SetGeometry(StringerGeometry geometry)
+		/// <param name="width">The width to set. Leave null to leave unchanged.</param>
+		/// <param name="height">The height to set. Leave null to leave unchanged.</param>
+		private void SetGeometry(Length? width, Length? height)
 		{
+			if (!width.HasValue && !height.HasValue)
+				return;
+
 			// Access the XData as an array
 			var data = ReadXData();
 
-			// Set the new geometry and reinforcement (line 7 to 9 of the array)
-			data[(int) StringerIndex.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.Width.Millimeters);
-			data[(int) StringerIndex.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.Height.Millimeters);
+			// Set the new geometry
+			if (width.HasValue)
+			{
+				Geometry.Width = width.Value;
+				data[(int) StringerIndex.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, width.Value.Millimeters);
+			}
+
+			if (height.HasValue)
+			{
+				Geometry.Height = height.Value;
+				data[(int)StringerIndex.Height] = new TypedValue((int)DxfCode.ExtendedDataReal, height.Value.Millimeters);
+			}
+			
+			ObjectId.SetXData(data);
 		}
 
 		/// <summary>
@@ -216,6 +238,8 @@ namespace SPMTool.Database.Elements
 		/// <inheritdoc cref="GetReinforcement" />
 		private void SetReinforcement(UniaxialReinforcement? reinforcement)
 		{
+			_reinforcement = reinforcement;
+
 			// Access the XData as an array
 			var data = ReadXData();
 
@@ -225,6 +249,8 @@ namespace SPMTool.Database.Elements
 
 			data[(int) StringerIndex.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.Steel?.YieldStress.Megapascals   ?? 0);
 			data[(int) StringerIndex.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.Steel?.ElasticModule.Megapascals ?? 0);
+
+			ObjectId.SetXData(data);
 		}
 
 		/// <summary>

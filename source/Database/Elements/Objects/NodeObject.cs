@@ -8,6 +8,7 @@ using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Database.Elements.Nodes;
+using static SPMTool.Database.SettingsData;
 using Force = OnPlaneComponents.Force;
 
 #nullable enable
@@ -20,6 +21,8 @@ namespace SPMTool.Database.Elements
 	/// </summary>
 	public class NodeObject : ISPMObject<Node, DBPoint>, IEquatable<NodeObject>, IComparable<NodeObject>
 	{
+		private Displacement? _displacement;
+
 		#region Properties
 
 		/// <inheritdoc />
@@ -33,12 +36,12 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		public Displacement Displacement
 		{
-			get => GetDisplacement();
+			get => _displacement ?? GetDisplacement();
 			set => SetDisplacement(value);
 		}
 
 		/// <summary>
-		///		Get/set the <see cref="OnPlaneComponents.Force"/> in this object.
+		///     Get/set the <see cref="OnPlaneComponents.Force" /> in this object.
 		/// </summary>
 		public Force Force { get; set; } = Force.Zero;
 
@@ -80,6 +83,21 @@ namespace SPMTool.Database.Elements
 		#region  Methods
 
 		/// <summary>
+		///     Read a <see cref="NodeObject" /> in the drawing.
+		/// </summary>
+		/// <param name="nodeObjectId">The <see cref="ObjectId" /> of the node.</param>
+		public static NodeObject ReadFromDrawing(ObjectId nodeObjectId) => ReadFromDrawing((DBPoint) nodeObjectId.ToEntity());
+
+		/// <summary>
+		///     Read a <see cref="NodeObject" /> in the drawing.
+		/// </summary>
+		/// <param name="dbPoint">The <see cref="DBPoint" /> object of the node.</param>
+		public static NodeObject ReadFromDrawing(DBPoint dbPoint) => new NodeObject(dbPoint.Position, GetNodeType(dbPoint), SavedUnits.Geometry)
+		{
+			ObjectId     = dbPoint.ObjectId
+		};
+
+		/// <summary>
 		///     Create node XData.
 		/// </summary>
 		public static TypedValue[] NewXData()
@@ -115,17 +133,19 @@ namespace SPMTool.Database.Elements
 		///     Get this object as a <see cref="Node" />.
 		/// </summary>
 		public Node GetElement() =>
-			new Node(Position, Type, SettingsData.SavedUnits.Displacements)
+			new Node(Position, Type, SavedUnits.Displacements)
 			{
-				Displacement = GetDisplacement()
+				Displacement = Displacement
 			};
 
 		/// <summary>
 		///     Set <see cref="OnPlaneComponents.Displacement" /> to this object XData.
 		/// </summary>
 		/// <param name="displacement">The <see cref="OnPlaneComponents.Displacement" /> to set.</param>
-		public void SetDisplacement(Displacement displacement)
+		private void SetDisplacement(Displacement displacement)
 		{
+			_displacement = displacement;
+
 			// Get extended data
 			var data = ReadXData();
 
@@ -140,18 +160,25 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Get <see cref="OnPlaneComponents.Displacement" /> saved in XData.
 		/// </summary>
-		private Displacement GetDisplacement(TypedValue[]? data = null)
+		private Displacement GetDisplacement()
 		{
-			data ??= ReadXData();
+			var data = ReadXData();
 
-			// Get units
-			var units = SettingsData.SavedUnits;
+			if (data is null)
+				_displacement = Displacement.Zero;
 
-			var ux = Length.FromMillimeters(data[(int) NodeIndex.Ux].ToDouble()).ToUnit(units.Displacements);
-			var uy = Length.FromMillimeters(data[(int) NodeIndex.Uy].ToDouble()).ToUnit(units.Displacements);
+			else
+			{
+				// Get units
+				var units = SavedUnits;
 
-			return
-				new Displacement(ux, uy);
+				var ux = Length.FromMillimeters(data[(int) NodeIndex.Ux].ToDouble()).ToUnit(units.Displacements);
+				var uy = Length.FromMillimeters(data[(int) NodeIndex.Uy].ToDouble()).ToUnit(units.Displacements);
+
+				_displacement = new Displacement(ux, uy);
+			}
+
+			return _displacement!.Value;
 		}
 
 		/// <summary>

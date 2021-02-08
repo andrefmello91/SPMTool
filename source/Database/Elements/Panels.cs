@@ -373,50 +373,7 @@ namespace SPMTool.Database.Elements
 	            Application.ShowAlertDialog("Please set panel geometry and reinforcement again.");
 		}
 
-		/// <summary>
-        /// Get <see cref="Vertices"/> of a <see cref="Solid"/>.
-        /// </summary>
-        /// <param name="panel">The quadrilateral <see cref="Solid"/> object.</param>
-        public static Vertices GetVertices(Solid panel) => new Vertices(panel.GetVertices(), SettingsData.SavedUnits.Geometry);
-
-		/// <summary>
-        /// Get the width of a panel.
-        /// </summary>
-        /// <param name="panel">The quadrilateral <see cref="Solid"/> object.</param>
-        public static double GetWidth(Solid panel) => panel.ReadXData()[(int) PanelIndex.Width].ToDouble();
-
-		/// <summary>
-		/// Get the <see cref="WebReinforcement"/> of a panel.
-		/// </summary>
-		/// <param name="panel">The quadrilateral <see cref="Solid"/> object.</param>
-		public static WebReinforcement GetReinforcement(Solid panel)
-		{
-			var data = panel.ReadXData();
-
-			// Get reinforcement
-			double
-				width = data[(int)PanelIndex.Width].ToDouble(),
-				phiX  = data[(int)PanelIndex.XDiam].ToDouble(),
-				phiY  = data[(int)PanelIndex.YDiam].ToDouble(),
-				sx    = data[(int)PanelIndex.Sx].ToDouble(),
-				sy    = data[(int)PanelIndex.Sy].ToDouble();
-
-			// Get steel data
-			double
-				fyx = data[(int)PanelIndex.fyx].ToDouble(),
-				Esx = data[(int)PanelIndex.Esx].ToDouble(),
-				fyy = data[(int)PanelIndex.fyy].ToDouble(),
-				Esy = data[(int)PanelIndex.Esy].ToDouble();
-
-			Steel
-				steelX = new Steel(fyx, Esx),
-				steelY = new Steel(fyy, Esy);
-
-			// Get reinforcement
-			return new WebReinforcement(phiX, sx, steelX, phiY, sy, steelY, width);
-		}
-
-		/// <summary>
+        /// <summary>
 		/// Get the collection of <see cref="Vertices"/> of existing panels.
 		/// </summary>
 		/// <param name="panels">The collection of <see cref="Solid"/>'s.</param>
@@ -505,57 +462,6 @@ namespace SPMTool.Database.Elements
 
 			return Panel.Read(analysisType, panelObject.ObjectId, number, nodes, panelObject.GetVertices(), width.ConvertFromMillimeter(units.Geometry), concreteParameters, model, reinforcement, units.Geometry);
 		}
-
-		/// <summary>
-		/// Set <paramref name="width"/> to a <paramref name="panel"/>
-		/// </summary>
-		/// <param name="panel">The panel <see cref="Solid"/> object.</param>
-		/// <param name="width">The width, in mm.</param>
-		public static void SetWidth(Solid panel, double width)
-		{
-			// Access the XData as an array
-			var data = panel.ReadXData();
-
-			// Set the new geometry and reinforcement (line 7 to 9 of the array)
-			data[(int)PanelIndex.Width] = new TypedValue((int)DxfCode.ExtendedDataReal, width);
-
-			// Add the new XData
-			panel.SetXData(data);
-		}
-
-        /// <summary>
-        /// Set reinforcement to a <paramref name="panel"/>
-        /// </summary>
-        /// <param name="panel">The panel <see cref="Solid"/> object.</param>
-        /// <param name="directionX">The <see cref="WebReinforcementDirection"/> for horizontal direction.</param>
-        /// <param name="directionY">The <see cref="WebReinforcementDirection"/> for vertical direction.</param>
-        public static void SetReinforcement(Solid panel, WebReinforcementDirection directionX, WebReinforcementDirection directionY)
-		{
-			// Access the XData as an array
-			var data = panel.ReadXData();
-
-			// Set X direction
-			data[(int)PanelIndex.XDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, directionX?.BarDiameter ?? 0);
-			data[(int)PanelIndex.Sx]    = new TypedValue((int)DxfCode.ExtendedDataReal, directionX?.BarSpacing  ?? 0);
-			data[(int)PanelIndex.fyx]   = new TypedValue((int)DxfCode.ExtendedDataReal, directionX?.Steel?.YieldStress   ?? 0);
-			data[(int)PanelIndex.Esx]   = new TypedValue((int)DxfCode.ExtendedDataReal, directionX?.Steel?.ElasticModule ?? 0);
-
-			// Set Y direction
-			data[(int)PanelIndex.YDiam] = new TypedValue((int)DxfCode.ExtendedDataReal, directionY?.BarDiameter ?? 0);
-			data[(int)PanelIndex.Sy]    = new TypedValue((int)DxfCode.ExtendedDataReal, directionY?.BarSpacing  ?? 0);
-			data[(int)PanelIndex.fyy]   = new TypedValue((int)DxfCode.ExtendedDataReal, directionY?.Steel?.YieldStress   ?? 0);
-			data[(int)PanelIndex.Esy]   = new TypedValue((int)DxfCode.ExtendedDataReal, directionY?.Steel?.ElasticModule ?? 0);
-
-			// Add the new XData
-			panel.SetXData(data);
-		}
-
-        /// <summary>
-        /// Set reinforcement to a <paramref name="panel"/>
-        /// </summary>
-        /// <param name="panel">The panel <see cref="Solid"/> object.</param>
-        /// <param name="reinforcement">The <see cref="WebReinforcement"/>.</param>
-        public static void SetReinforcement(Solid panel, WebReinforcement reinforcement) => SetReinforcement(panel, reinforcement?.DirectionX, reinforcement?.DirectionY);
 
 		/// <summary>
         /// Draw panel stresses.
