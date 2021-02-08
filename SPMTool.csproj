@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net48</TargetFrameworks>
-    <Langversion>9.0</Langversion>
+    <TargetFrameworks>net5.0-windows;netcoreapp3.1;net48</TargetFrameworks>
+	  <LangVersion>9.0</LangVersion>
+	  <Nullable>enable</Nullable>
     <Usewpf>true</Usewpf>
     <Version>0.1</Version>
   </PropertyGroup>
@@ -11,6 +12,14 @@
     <PackageReference Include="LiveCharts.Core" Version="0.9.8" />
     <PackageReference Include="LiveCharts.Wpf.Core" Version="0.9.8" />
     <PackageReference Include="UnitsNet" Version="4.83.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Extensions\Extensions.csproj" />
+    <ProjectReference Include="..\Material\Material.csproj" />
+    <ProjectReference Include="..\On-Plane-Components\On-Plane-Components.csproj" />
+    <ProjectReference Include="..\SPMAnalysis\SPMAnalysis.csproj" />
+    <ProjectReference Include="..\SPMElements\SPMElements.csproj" />
   </ItemGroup>
 
   <ItemGroup>
