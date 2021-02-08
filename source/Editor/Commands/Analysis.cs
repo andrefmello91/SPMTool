@@ -1,13 +1,14 @@
 ﻿using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.ApplicationServices.Core;
 using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.UserInterface;
 using SPMTool.Database;
-using Analysis = SPMTool.Editor.Commands.Analysis;
+using Analysis = SPM.Analysis.Analysis;
 
 
-[assembly: CommandClass(typeof(Analysis))]
+[assembly: CommandClass(typeof(SPMTool.Editor.Commands.Analysis))]
 
 namespace SPMTool.Editor.Commands
 {
@@ -26,7 +27,7 @@ namespace SPMTool.Editor.Commands
             }
 
             // Do a linear analysis
-            var analysis = new LinearAnalysis(input);
+            var analysis = new SPM.Analysis.Analysis(input);
 			analysis.Do();
 
             // Draw results of analysis

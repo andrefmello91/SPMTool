@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Extensions.AutoCAD;
-using Extensions.Number;
-using Material.Concrete;
+using Extensions;
 using Material.Reinforcement;
 using Material.Reinforcement.Uniaxial;
 using OnPlaneComponents;
@@ -14,283 +12,252 @@ using SPMTool.Database.Materials;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
-using static SPMTool.Database.Elements.Nodes;
+using UnitsNet.Units;
 using Force = OnPlaneComponents.Force;
+
+#nullable enable
 
 // ReSharper disable once CheckNamespace
 namespace SPMTool.Database.Elements
 {
 	/// <summary>
-    /// Node object class.
-    /// </summary>
-    public class StringerObject : ISPMObject<Stringer, Line>, IEquatable<StringerObject>, IComparable<StringerObject>
+	///     Node object class.
+	/// </summary>
+	public class StringerObject : ISPMObject<Stringer, Line>, IEquatable<StringerObject>, IComparable<StringerObject>
 	{
-	    /// <inheritdoc/>
-	    public ObjectId ObjectId { get; set; } = ObjectId.Null;
+		#region Fields
 
-	    /// <inheritdoc/>
-	    public int Number { get; set; } = 0;
+		// Auxiliary geometry
+		private StringerGeometry _geometry;
 
-        /// <summary>
-        /// Get the geometry.
-        /// </summary>
-        public StringerGeometry Geometry { get; }
-        
-        /// <summary>
-        /// Get/set the <see cref="OnPlaneComponents.Force"/> in this object.
-        /// </summary>
-        public Force Force { get; set; } = Force.Zero;
+		#endregion
 
-        /// <summary>
-        /// Create the node object.
-        /// </summary>
-        /// <param name="initialPoint">The initial <see cref="Point3d"/>.</param>
-        /// <param name="endPoint">The end <see cref="Point3d"/>.</param>
-        public StringerObject(Point3d initialPoint, Point3d endPoint)
-        {
-	        Geometry = GetGeometry(initialPoint, endPoint);
-        }
+		#region Properties
 
-        /// <summary>
-        /// Create the node object.
-        /// </summary>
-        /// <param name="geometry">The <see cref="StringerGeometry"/>.</param>
-        public StringerObject(StringerGeometry geometry)
-        {
-	        Geometry = geometry;
-        }
+		/// <inheritdoc />
+		public ObjectId ObjectId { get; set; } = ObjectId.Null;
 
-        /// <summary>
-        /// Create a <see cref="Line"/> based on <see cref="Geometry"/>.
-        /// </summary>
-        public Line CreateLine() => new Line(Geometry.InitialPoint, Geometry.EndPoint)
-        {
-	        Layer = $"{Layer.Stringer}"
-        };
+		/// <inheritdoc />
+		public int Number { get; set; } = 0;
 
-        /// <summary>
-        /// Get the <see cref="Line"/> in drawing assigned to this object's <see cref="ObjectId"/>.
-        /// </summary>
-        public Line GetEntity() => (Line) ObjectId.ToEntity();
+		/// <summary>
+		///     Get the geometry.
+		/// </summary>
+		public StringerGeometry Geometry
+		{
+			get => _geometry;
 
-        public Stringer GetElement() => throw new NotImplementedException();
+			// Change only width and height
+			set
+			{
+				_geometry.Width  = value.Width;
+				_geometry.Height = value.Height;
 
-        /// <summary>
-        /// Get this object as a <see cref="Node"/>.
-        /// </summary>
-        public Stringer GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
-        {
-	        // Get units
-	        var units = SettingsData.SavedUnits;
+				SetGeometry(_geometry);
+			}
+		}
 
-	        // Get reinforcement
-	        var reinforcement = GetReinforcement();
+		/// <summary>
+		///     Get the <see cref="UniaxialReinforcement" /> of this stringer.
+		/// </summary>
+		public UniaxialReinforcement? Reinforcement
+		{
+			get => GetReinforcement();
+			set => SetReinforcement(value);
+		}
 
-	        return
-		        Stringer.Read(analysisType, ObjectId, Number, nodes, Geometry.InitialPoint, Geometry.EndPoint, Geometry.Width, Geometry.Height, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, reinforcement, units.Geometry);
-        }
+		#endregion
 
-        /// <summary>
-        /// Add a this <see cref="StringerObject"/> to drawing and set it's <see cref="ObjectId"/>.
-        /// </summary>
-        public void AddToDrawing()
-        {
-	        // Create the node and set the layer
-	        var line = CreateLine();
+		#region Constructors
 
-	        ObjectId = line.AddToDrawing();
-        }
+		/// <inheritdoc cref="StringerObject(StringerGeometry)" />
+		/// <param name="initialPoint">The initial <see cref="Point3d" />.</param>
+		/// <param name="endPoint">The end <see cref="Point3d" />.</param>
+		/// <param name="unit">The <see cref="LengthUnit" /> of points' coordinates.</param>
+		public StringerObject(Point3d initialPoint, Point3d endPoint, LengthUnit unit = LengthUnit.Millimeter)
+			: this(initialPoint.ToPoint(unit), endPoint.ToPoint(unit))
+		{
+		}
 
-        /// <summary>
-        /// Read a <see cref="StringerObject"/> in the drawing.
-        /// </summary>
-        /// <param name="stringerObjectId">The <see cref="ObjectId"/> of the node.</param>
-        public static StringerObject ReadFromDrawing(ObjectId stringerObjectId) => ReadFromDrawing((Line) stringerObjectId.ToEntity());
+		/// <inheritdoc cref="StringerObject(StringerGeometry)" />
+		/// <param name="initialPoint">The initial <see cref="Point" />.</param>
+		/// <param name="endPoint">The end <see cref="Point" />.</param>
+		public StringerObject(Point initialPoint, Point endPoint) => _geometry = GetGeometry(initialPoint, endPoint);
 
-        /// <summary>
-        /// Read a <see cref="StringerObject"/> in the drawing.
-        /// </summary>
-        /// <param name="line">The <see cref="Line"/> object of the stringer.</param>
-        public static StringerObject ReadFromDrawing(Line line) => new StringerObject(line.StartPoint, line.EndPoint)
-        {
-	        ObjectId = line.ObjectId
-        };
+		/// <summary>
+		///     Create the node object.
+		/// </summary>
+		/// <param name="geometry">The <see cref="StringerGeometry" />.</param>
+		public StringerObject(StringerGeometry geometry) => _geometry = geometry;
 
-        /// <summary>
-        /// Set displacement to this object XData.
-        /// </summary>
-        /// <param name="displacement">The displacement to set.</param>
-        private void SetXData(Displacement displacement)
-        {
-	        // Get extended data
-	        var data = ReadXData();
+		#endregion
 
-	        // Save the displacements on the XData
-	        data[(int)NodeIndex.Ux] = new TypedValue((int)DxfCode.ExtendedDataReal, displacement.ComponentX);
-	        data[(int)NodeIndex.Uy] = new TypedValue((int)DxfCode.ExtendedDataReal, displacement.ComponentY);
+		#region  Methods
 
-	        // Save new XData
-	        ObjectId.SetXData(data);
-        }
+		/// <summary>
+		///     Read a <see cref="StringerObject" /> in the drawing.
+		/// </summary>
+		/// <param name="stringerObjectId">The <see cref="ObjectId" /> of the node.</param>
+		public static StringerObject ReadFromDrawing(ObjectId stringerObjectId) => ReadFromDrawing((Line) stringerObjectId.ToEntity());
 
-        /// <summary>
-        /// Get the <see cref="StringerGeometry"/> from this <see cref="Line"/>.
-        /// </summary>
-        /// <param name="initialPoint">The initial <see cref="Point3d"/>.</param>
-        /// <param name="endPoint">The end <see cref="Point3d"/>.</param>
-        /// <param name="readData"><inheritdoc cref="GetReinforcement"/></param>
-        private StringerGeometry GetGeometry(Point3d initialPoint, Point3d endPoint, TypedValue[] readData = null)
-        {
-	        var unit = SettingsData.SavedUnits.Geometry;
+		/// <summary>
+		///     Read a <see cref="StringerObject" /> in the drawing.
+		/// </summary>
+		/// <param name="line">The <see cref="Line" /> object of the stringer.</param>
+		public static StringerObject ReadFromDrawing(Line line) => new StringerObject(line.StartPoint, line.EndPoint)
+		{
+			ObjectId = line.ObjectId
+		};
 
-	        // Access the XData as an array
-	        var data = readData ?? ReadXData();
+		/// <summary>
+		///     Create new extended data for stringers.
+		/// </summary>
+		public static TypedValue[] NewXData()
+		{
+			// Definition for the Extended Data
+			string xdataStr = "Stringer Data";
 
-	        double
-		        w = data[(int)StringerIndex.Width].ToDouble().ConvertFromMillimeter(unit),
-		        h = data[(int)StringerIndex.Height].ToDouble().ConvertFromMillimeter(unit);
+			// Get the Xdata size
+			var size = Enum.GetNames(typeof(StringerIndex)).Length;
 
-	        return new StringerGeometry(initialPoint, endPoint, w, h, unit);
-        }
+			var newData = new TypedValue[size];
 
-        /// <summary>
-        /// Get this stringer <see cref="UniaxialReinforcement"/>.
-        /// </summary>
-        /// <param name="readData">The data that was previously read.</param>
-        private UniaxialReinforcement GetReinforcement(TypedValue[] readData = null)
-        {
-	        // Access the XData as an array
-	        var data = readData ?? ReadXData();
+			// Set the initial parameters
+			newData[(int) StringerIndex.AppName]   = new TypedValue((int) DxfCode.ExtendedDataRegAppName, DataBase.AppName);
+			newData[(int) StringerIndex.XDataStr]  = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
+			newData[(int) StringerIndex.Width]     = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
+			newData[(int) StringerIndex.Height]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
+			newData[(int) StringerIndex.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, 0);
+			newData[(int) StringerIndex.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+			newData[(int) StringerIndex.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+			newData[(int) StringerIndex.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
 
-            // Get reinforcement
-            int numOfBars = data[(int)StringerIndex.NumOfBars].ToInt();
-            double phi    = data[(int)StringerIndex.BarDiam].ToDouble();
+			return newData;
+		}
 
-            if (numOfBars == 0 || phi.ApproxZero())
-                return null;
+		public Line CreateEntity() => new Line(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
+		{
+			Layer = $"{Layer.Stringer}"
+		};
 
-            // Get steel data
-            double
-                fy = data[(int)StringerIndex.Steelfy].ToDouble(),
-                Es = data[(int)StringerIndex.SteelEs].ToDouble();
+		public Line GetEntity() => (Line) ObjectId.ToEntity();
 
-            // Set reinforcement
-            return new UniaxialReinforcement(numOfBars, phi, new Steel(fy, Es), Geometry.Area);
-        }
+		public Stringer GetElement() => throw new NotImplementedException();
 
-        /// <summary>
-        /// Set <paramref name="geometry"/> to XData.
-        /// </summary>
-        /// <param name="geometry">The <see cref="StringerGeometry"/> to set.</param>
-        /// <param name="readData"><inheritdoc cref="GetReinforcement"/></param>
-        public void SetGeometry(StringerGeometry geometry, TypedValue[] readData = null)
-        {
-            // Access the XData as an array
-            var data = readData ?? ReadXData();
+		/// <inheritdoc cref="GetElement()" />
+		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
+		/// <param name="analysisType">The <see cref="AnalysisType" />.</param>
+		public Stringer GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
+			Stringer.Read(analysisType, Number, nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, GetReinforcement());
 
-            // Set the new geometry and reinforcement (line 7 to 9 of the array)
-            data[(int)StringerIndex.Width]  = new TypedValue((int)DxfCode.ExtendedDataReal, geometry.Width);
-            data[(int)StringerIndex.Height] = new TypedValue((int)DxfCode.ExtendedDataReal, geometry.Height);
+		public void AddToDrawing() => ObjectId = GetEntity().AddToDrawing();
 
-            // Add the new XData
-            if (readData is null)
-				ObjectId.SetXData(data);
-        }
+		/// <summary>
+		///     Get the <see cref="StringerGeometry" /> from this <see cref="Line" />.
+		/// </summary>
+		/// <param name="initialPoint">The initial <see cref="Point3d" />.</param>
+		/// <param name="endPoint">The end <see cref="Point3d" />.</param>
+		private StringerGeometry GetGeometry(Point initialPoint, Point endPoint)
+		{
+			// Access the XData as an array
+			var data = ReadXData();
 
-        /// <summary>
-        /// Set <paramref name="reinforcement"/> to XData.
-        /// </summary>
-        /// <param name="reinforcement">The <see cref="UniaxialReinforcement"/> to set.</param>
-        /// <param name="readData"><inheritdoc cref="GetReinforcement"/></param>
-        public void SetReinforcement(UniaxialReinforcement reinforcement, TypedValue[] readData = null)
-        {
-            // Access the XData as an array
-            var data = readData ?? ReadXData();
+			Length
+				w = Length.FromMillimeters(data[(int) StringerIndex.Width].ToDouble()),
+				h = Length.FromMillimeters(data[(int) StringerIndex.Height].ToDouble());
 
-            // Set values
-            data[(int)StringerIndex.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataInteger32, reinforcement?.NumberOfBars ?? 0);
-            data[(int)StringerIndex.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.BarDiameter ?? 0);
+			return
+				new StringerGeometry(initialPoint, endPoint, w, h);
+		}
 
-            data[(int)StringerIndex.Steelfy]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.Steel?.YieldStress ?? 0);
-            data[(int)StringerIndex.SteelEs]   = new TypedValue((int)DxfCode.ExtendedDataReal,      reinforcement?.Steel?.ElasticModule ?? 0);
+		/// <summary>
+		///     Get this stringer <see cref="UniaxialReinforcement" />.
+		/// </summary>
+		private UniaxialReinforcement? GetReinforcement()
+		{
+			// Access the XData as an array
+			var data = ReadXData();
 
-            // Add the new XData
-            if (readData is null)
-				ObjectId.SetXData(data);
-        }
+			// Get reinforcement
+			var numOfBars = data[(int) StringerIndex.NumOfBars].ToInt();
+			var phi       = Length.FromMillimeters(data[(int) StringerIndex.BarDiam].ToDouble());
 
-        /// <summary>
-        /// Save extended data to the stringer related to this <paramref name="objectId"/>.
-        /// </summary>
-        /// <param name="geometry">The <see cref="StringerGeometry"/>.</param>
-        /// <param name="reinforcement">The <see cref="UniaxialReinforcement"/>.</param>
-        public void SetXData(StringerGeometry geometry, UniaxialReinforcement reinforcement)
-        {
-	        // Access the XData as an array
-	        var data = ReadXData();
+			if (numOfBars == 0 || phi.ApproxZero(Point.Tolerance))
+				return null;
 
-	        SetGeometry(geometry, data);
+			// Get steel data
+			Pressure
+				fy = Pressure.FromMegapascals(data[(int) StringerIndex.Steelfy].ToDouble()),
+				Es = Pressure.FromMegapascals(data[(int) StringerIndex.SteelEs].ToDouble());
 
-	        SetReinforcement(reinforcement, data);
+			// Set reinforcement
+			return
+				new UniaxialReinforcement(numOfBars, phi, new Steel(fy, Es), Geometry.Area);
+		}
 
-	        ObjectId.SetXData(data);
-        }
+		/// <summary>
+		///     Set <paramref name="geometry" /> to XData.
+		/// </summary>
+		/// <param name="geometry">The <see cref="StringerGeometry" /> to set.</param>
+		private void SetGeometry(StringerGeometry geometry)
+		{
+			// Access the XData as an array
+			var data = ReadXData();
 
-        /// <summary>
-        /// Read the XData associated to this object.
-        /// </summary>
-        private TypedValue[] ReadXData() => ObjectId.ReadXData() ?? NewXData();
+			// Set the new geometry and reinforcement (line 7 to 9 of the array)
+			data[(int) StringerIndex.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.Width.Millimeters);
+			data[(int) StringerIndex.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, geometry.Height.Millimeters);
+		}
 
-        /// <summary>
-        /// Create new extended data for stringers.
-        /// </summary>
-        /// <param name="set">Set this data to this object?</param>
-        private TypedValue[] NewXData(bool set = true)
-        {
-	        // Definition for the Extended Data
-	        string xdataStr = "Stringer Data";
+		/// <summary>
+		///     Set <paramref name="reinforcement" /> to XData.
+		/// </summary>
+		/// <param name="reinforcement">The <see cref="UniaxialReinforcement" /> to set.</param>
+		/// <inheritdoc cref="GetReinforcement" />
+		private void SetReinforcement(UniaxialReinforcement? reinforcement)
+		{
+			// Access the XData as an array
+			var data = ReadXData();
 
-	        // Get the Xdata size
-	        int size = Enum.GetNames(typeof(StringerIndex)).Length;
+			// Set values
+			data[(int) StringerIndex.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, reinforcement?.NumberOfBars                     ?? 0);
+			data[(int) StringerIndex.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.BarDiameter.Millimeters          ?? 0);
 
-	        var newData = new TypedValue[size];
+			data[(int) StringerIndex.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.Steel?.YieldStress.Megapascals   ?? 0);
+			data[(int) StringerIndex.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.Steel?.ElasticModule.Megapascals ?? 0);
+		}
 
-	        // Set the initial parameters
-	        newData[(int)StringerIndex.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName);
-	        newData[(int)StringerIndex.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-	        newData[(int)StringerIndex.Width]     = new TypedValue((int)DxfCode.ExtendedDataReal, 100);
-	        newData[(int)StringerIndex.Height]    = new TypedValue((int)DxfCode.ExtendedDataReal, 100);
-	        newData[(int)StringerIndex.NumOfBars] = new TypedValue((int)DxfCode.ExtendedDataInteger32, 0);
-	        newData[(int)StringerIndex.BarDiam]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-	        newData[(int)StringerIndex.Steelfy]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-	        newData[(int)StringerIndex.SteelEs]   = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
+		/// <summary>
+		///     Read the XData associated to this object.
+		/// </summary>
+		private TypedValue[] ReadXData() => ObjectId.ReadXData() ?? NewXData();
 
-            if (set)
-                ObjectId.SetXData(newData);
+		public int CompareTo(StringerObject? other) => other is null ? 1 : Geometry.CompareTo(other.Geometry);
 
-	        return newData;
-        }
+		/// <inheritdoc />
+		public bool Equals(StringerObject? other) => !(other is null) && Geometry == other.Geometry;
 
-        /// <inheritdoc/>
-        public bool Equals(StringerObject other) => !(other is null) && Geometry == other.Geometry;
+		/// <inheritdoc />
+		public override bool Equals(object? other) => other is StringerObject str && Equals(str);
 
-        public int CompareTo(StringerObject other) => Comparer.Compare(Geometry.CenterPoint, other.Geometry.CenterPoint);
+		public override int GetHashCode() => Geometry.GetHashCode();
 
-        /// <inheritdoc/>
-        public override bool Equals(object other) => other is StringerObject str && Equals(str);
+		public override string ToString() => GetElement().ToString();
 
-        public override int GetHashCode() => Geometry.GetHashCode();
+		#endregion
 
-        public override string ToString() => GetElement().ToString();
+		#region Operators
 
-        /// <summary>
-        /// Returns true if objects are equal.
-        /// </summary>
-        public static bool operator == (StringerObject left, StringerObject right) => !(left is null) && left.Equals(right);
+		/// <summary>
+		///     Returns true if objects are equal.
+		/// </summary>
+		public static bool operator == (StringerObject left, StringerObject right) => !(left is null) && left.Equals(right);
 
-        /// <summary>
-        /// Returns true if objects are different.
-        /// </summary>
-        public static bool operator != (StringerObject left, StringerObject right) => !(left is null) && !left.Equals(right);
+		/// <summary>
+		///     Returns true if objects are different.
+		/// </summary>
+		public static bool operator != (StringerObject left, StringerObject right) => !(left is null) && !left.Equals(right);
+
+		#endregion
 	}
 }

@@ -399,20 +399,13 @@ namespace SPMTool.Database.Elements
 		/// Get the layer name based on <paramref name="nodeType"/>.
 		/// </summary>
 		/// <param name="nodeType">The <see cref="NodeType"/> (excluding <see cref="NodeType.All"/>).</param>
-		private static Layer GetLayer(NodeType nodeType)
-		{
-			switch (nodeType)
+		public static Layer GetLayer(NodeType nodeType) =>
+			nodeType switch
 			{
-				case NodeType.Internal:
-					return Layer.IntNode;
-
-				case NodeType.Displaced:
-					return Layer.Displacements;
-
-				default:
-					return Layer.ExtNode;
-			}
-		}
+				NodeType.Internal => Layer.IntNode,
+				NodeType.Displaced => Layer.Displacements,
+				_ => Layer.ExtNode
+			};
 
 		/// <summary>
 		/// Get the node number at this <paramref name="position"/>.
@@ -420,29 +413,6 @@ namespace SPMTool.Database.Elements
 		/// <param name="position">The <see cref="Point3d"/> position.</param>
 		/// <param name="nodeObjects">The collection of node <see cref="DBObject"/>'s</param>
 		public static int? GetNumber(Point3d position, IEnumerable<DBPoint> nodeObjects = null) => (nodeObjects ?? GetAllNodes())?.First(nd => nd.Position.Approx(position))?.ReadXData()?[(int)NodeIndex.Number].ToInt();
-
-		/// <summary>
-		/// Create node XData.
-		/// </summary>
-		private static TypedValue[] NewXData()
-		{
-			// Definition for the Extended Data
-			string xdataStr = "Node Data";
-
-			// Get the Xdata size
-			int size = Enum.GetNames(typeof(NodeIndex)).Length;
-
-			// Initialize the array of typed values for XData
-			var data = new TypedValue[size];
-
-			// Set the initial parameters
-			data[(int)NodeIndex.AppName] = new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName);
-			data[(int)NodeIndex.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-			data[(int)NodeIndex.Ux] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-			data[(int)NodeIndex.Uy] = new TypedValue((int)DxfCode.ExtendedDataReal, 0);
-
-			return data;
-		}
 
 		/// <summary>
 		/// Set displacements to the collection of <see cref="Node"/>'s.

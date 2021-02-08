@@ -8,7 +8,7 @@ namespace SPMTool.Database.Elements
 	/// Interface for SPM objects
 	/// </summary>
 	public interface ISPMObject<out T1, out T2>
-		where T1 : INumberedElement, IFiniteElement
+		where T1 : INumberedElement
 		where T2 : Entity
 	{
 		/// <summary>
@@ -27,8 +27,18 @@ namespace SPMTool.Database.Elements
 		T1 GetElement();
 
 		/// <summary>
-		/// Get the <see cref="Entity"/> associated to this object.
+		/// Create an <see cref="Entity"/> based in this object's properties.
+		/// </summary>
+		T2 CreateEntity();
+
+		/// <summary>
+		/// Get the <see cref="Entity"/> in drawing associated to this object.
 		/// </summary>
 		T2 GetEntity();
+
+		/// <summary>
+		/// Add a this object to drawing and set it's <see cref="ObjectId"/>.
+		/// </summary>
+		void AddToDrawing();
 	}
 }
