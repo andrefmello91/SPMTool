@@ -41,46 +41,25 @@ namespace SPMTool.Database.Elements
 			// Add external nodes
 			var extNds = strList.Select(str => str.InitialPoint).ToList();
 			extNds.AddRange(strList.Select(str => str.EndPoint));
-			Add(extNds, NodeType.External);
+			AddRange(extNds, NodeType.External);
 
 			// Add internal nodes
-			Add(strList.Select(str => str.CenterPoint).ToArray(), NodeType.Internal);
+			AddRange(strList.Select(str => str.CenterPoint).ToArray(), NodeType.Internal);
 		}
 
 		/// <summary>
-		/// Add a node to drawing in this <paramref name="position"/>.
+		/// Add a node in this <paramref name="position"/>.
 		/// </summary>
 		/// <param name="position">The <see cref="Point"/> position.</param>
 		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
 		public void Add(Point position, NodeType nodeType) => Add(new NodeObject(position, nodeType));
 
 		/// <summary>
-		/// Add nodes to drawing in these <paramref name="positions"/>.
+		/// Add nodes in these <paramref name="positions"/>.
 		/// </summary>
 		/// <param name="positions">The collection of <see cref="Point"/> positions.</param>
 		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
-		public void Add(IEnumerable<Point> positions, NodeType nodeType) => Add(positions.Distinct().Select(p => new NodeObject(p, nodeType)));
-
-		/// <summary>
-		/// Add a collection of <see cref="NodeObject"/>'s if they don't exist in this collection.
-		/// </summary>
-		public void Add(IEnumerable<NodeObject> nodes)
-		{
-			var newNodes = this.Any() ? nodes.Distinct().Where(n => !Contains(n)).ToList() : nodes.ToList();
-
-			AddRangeAndSort(newNodes);
-		}
-
-		/// <summary>
-		/// Add a <see cref="NodeObject"/> if it doesn't exist in this collection.
-		/// </summary>
-		public new void Add(NodeObject nodeObject)
-		{
-			if (Contains(nodeObject))
-				return;
-
-			AddAndSort(nodeObject);
-		}
+		public void AddRange(IEnumerable<Point> positions, NodeType nodeType) => AddRange(positions.Distinct().Select(p => new NodeObject(p, nodeType)));
 
 		/// <summary>
 		/// Remove unnecessary nodes from the drawing.
@@ -105,27 +84,11 @@ namespace SPMTool.Database.Elements
 				toRemove.AddRange(this.Where(n => n.Type is NodeType.External && !extPts.Contains(n.Position)));
 
                 // Get duplicated positions
-                toRemove.AddRange(this.GroupBy(x => x).Where(g => g.Count() > 1).Select(y => y.Key));
+                //toRemove.AddRange(this.GroupBy(x => x).Where(g => g.Count() > 1).Select(y => y.Key));
 
-                Remove(toRemove);
+                RemoveRange(toRemove);
 			}
 		}
-
-		/// <summary>
-		/// Remove a <see cref="NodeObject"/> if it exists in this collection.
-		/// </summary>
-		public new void Remove(NodeObject node)
-		{
-			if (!Contains(node))
-				return;
-
-			RemoveAndSort(node);
-		}
-
-		/// <summary>
-		/// Remove a collection of <see cref="NodeObject"/>'s if they exist in this collection.
-		/// </summary>
-		public void Remove(IEnumerable<NodeObject> nodes) => RemoveAllAndSort(nodes.Contains);
 
 		/// <summary>
 		/// Add a <see cref="NodeObject"/> to drawing and set it's <see cref="ObjectId"/>.
@@ -153,49 +116,26 @@ namespace SPMTool.Database.Elements
 			if (nodes is null || !nodes.Any())
 				return;
 
-			var points = new List<Entity>();
+			var notNullNodes = nodes.Where(n => !(n is null)).ToList();
 
-			foreach (var node in nodes)
-			{
-				if (node is null)
-					continue;
-
-				// Create the node and set the layer
-				var dbPoint = new DBPoint(node.Position.ToPoint3d())
-				{
-					Layer = $"{GetLayer(node.Type)}"
-				};
-
-				node.ObjectId = dbPoint.ObjectId;
-
-				points.Add(dbPoint);
-			}
+			var points = notNullNodes.Select(n => n.GetEntity()).ToList();
 
 			// Add objects to drawing
-			var objIds = points.AddToDrawing().ToArray();
+			var objIds = points.AddToDrawing().ToList();
 
 			// Set object ids
-			for (int i = 0; i < nodes.Count(); i++)
-				nodes.ElementAt(i).ObjectId = objIds[i];
+			for (int i = 0; i < notNullNodes.Count; i++)
+				notNullNodes[i].ObjectId = objIds[i];
 		}
 
 		/// <summary>
-		/// Return a <see cref="DBPoint"/> in the drawing located at this <paramref name="position"/>.
+		/// Return a <see cref="NodeObject"/> in the drawing located at this <paramref name="position"/>.
 		/// </summary>
-		/// <param name="position">The required <see cref="Point3d"/> position.</param>
-		/// <param name="type">The <see cref="NodeType"/> (excluding <see cref="NodeType.Displaced"/>). </param>
-		public static DBPoint GetNodeAtPosition(Point3d position, NodeType type = NodeType.All)
-		{
-			var nodes =
-				(type is NodeType.External
-					? GetExtNodes()
-					: type is NodeType.Internal
-						? GetIntNodes()
-						: GetAllNodes()).ToArray();
-
-			return
-				nodes.FirstOrDefault(p => p.Position.Approx(position, Tolerance));
-		}
+		/// <param name="position">The required <see cref="Point"/> position.</param>
+		public NodeObject? GetNodeAtPosition(Point position) =>
+			this.All(n => n.Position != position)
+				? null
+				: Find(n => n.Position == position);
 
 		/// <summary>
 		/// Return a collection of <see cref="DBPoint"/>'s in the drawing located at this <paramref name="positions"/>.
