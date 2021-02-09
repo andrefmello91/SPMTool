@@ -4,48 +4,33 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.MacroRecorder;
 using Extensions;
 using Extensions.AutoCAD;
-using Extensions.Number;
 using OnPlaneComponents;
 using SPM.Elements;
 using SPMTool.Database.Conditions;
 using SPMTool.Enums;
+using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
+using static SPMTool.Database.SettingsData;
 
 namespace SPMTool.Database.Elements
 {
 	/// <summary>
-	/// Node class.
+	/// Nodes class.
 	/// </summary>
-	public static class Nodes
+	public class Nodes : EList<NodeObject>
 	{
 		/// <summary>
-		/// The equality comparer for <see cref="Point3d"/>.
+		/// List of nodes' <see cref="Point"/> positions.
 		/// </summary>
-		public static readonly Point3dComparer Comparer = new Point3dComparer { Tolerance = Tolerance };
-
-		/// <summary>
-		/// Get the node list;
-		/// </summary>
-		public static EList<NodeObject> NodeList { get; private set; } = GetNodeList();
-
-		/// <summary>
-		/// List of nodes' <see cref="Point3d"/> positions.
-		/// </summary>
-		public static List<Point3d> Positions => NodeList.Select(n => n.Position).ToList();
-
-		/// <summary>
-		/// Get the tolerance for <see cref="Point3d"/> equality comparer.
-		/// </summary>
-		public static double Tolerance => SettingsData.SavedUnits.Tolerance;
+		public List<Point> Positions => this.Select(n => n.Position).ToList();
 
 		/// <summary>
 		/// Add nodes in all necessary positions (stringer start, mid and end points).
 		/// </summary>
-		public static void Add()
+		public void Add()
 		{
 			// Get stringers
 			var strList = Stringers.Geometries;
@@ -65,49 +50,48 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		/// Add a node to drawing in this <paramref name="position"/>.
 		/// </summary>
-		/// <param name="position">The <see cref="Point3d"/> position.</param>
+		/// <param name="position">The <see cref="Point"/> position.</param>
 		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
-		public static void Add(Point3d position, NodeType nodeType) => Add(new NodeObject(position, nodeType));
+		public void Add(Point position, NodeType nodeType) => Add(new NodeObject(position, nodeType));
 
 		/// <summary>
 		/// Add nodes to drawing in these <paramref name="positions"/>.
 		/// </summary>
-		/// <param name="positions">The collection of <see cref="Point3d"/> positions.</param>
+		/// <param name="positions">The collection of <see cref="Point"/> positions.</param>
 		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
-		public static void Add(IEnumerable<Point3d> positions, NodeType nodeType) => Add(positions.Distinct(Comparer).Select(p => new NodeObject(p, nodeType)));
+		public void Add(IEnumerable<Point> positions, NodeType nodeType) => Add(positions.Distinct().Select(p => new NodeObject(p, nodeType)));
 
 		/// <summary>
-		/// Add a <see cref="NodeObject"/> if it doesn't exist in <see cref="NodeList"/>.
+		/// Add a collection of <see cref="NodeObject"/>'s if they don't exist in this collection.
 		/// </summary>
-		public static void Add(NodeObject node)
+		public void Add(IEnumerable<NodeObject> nodes)
 		{
-			if (NodeList.Contains(node))
+			var newNodes = this.Any() ? nodes.Distinct().Where(n => !Contains(n)).ToList() : nodes.ToList();
+
+			AddRangeAndSort(newNodes);
+		}
+
+		/// <summary>
+		/// Add a <see cref="NodeObject"/> if it doesn't exist in this collection.
+		/// </summary>
+		public new void Add(NodeObject nodeObject)
+		{
+			if (Contains(nodeObject))
 				return;
 
-			NodeList.AddAndSort(node);
+			AddAndSort(nodeObject);
 		}
-
-		/// <summary>
-		/// Add a collection of <see cref="NodeObject"/>'s if they don't exist in <see cref="NodeList"/>.
-		/// </summary>
-		public static void Add(IEnumerable<NodeObject> nodes)
-		{
-			var newNodes = NodeList.Any() ? nodes.Distinct().Where(n => !NodeList.Contains(n)).ToList() : nodes.ToList();
-
-			NodeList.AddRangeAndSort(newNodes);
-		}
-
 
 		/// <summary>
 		/// Remove unnecessary nodes from the drawing.
 		/// </summary>
-		public static void Remove()
+		public void Remove()
 		{
 			// Get stringers
 			var strList = Stringers.Geometries;
 
 			if (strList is null || !strList.Any())
-				NodeList.Clear();
+				Clear();
 
 			else
 			{
@@ -117,40 +101,40 @@ namespace SPMTool.Database.Elements
 				extPts.AddRange(strList.Select(str => str.EndPoint));
 
 				// Get positions not needed
-				var toRemove = NodeList.Where(n => n.Type is NodeType.Internal && !intPts.Contains(n.Position, Comparer)).ToList();
-				toRemove.AddRange(NodeList.Where(n => n.Type is NodeType.External && !extPts.Contains(n.Position, Comparer)));
+				var toRemove = this.Where(n => n.Type is NodeType.Internal && !intPts.Contains(n.Position)).ToList();
+				toRemove.AddRange(this.Where(n => n.Type is NodeType.External && !extPts.Contains(n.Position)));
 
                 // Get duplicated positions
-                toRemove.AddRange(NodeList.GroupBy(x => x).Where(g => g.Count() > 1).Select(y => y.Key));
+                toRemove.AddRange(this.GroupBy(x => x).Where(g => g.Count() > 1).Select(y => y.Key));
 
                 Remove(toRemove);
 			}
 		}
 
 		/// <summary>
-		/// Remove a <see cref="NodeObject"/> if it exists in <see cref="NodeList"/>.
+		/// Remove a <see cref="NodeObject"/> if it exists in this collection.
 		/// </summary>
-		public static void Remove(NodeObject node)
+		public new void Remove(NodeObject node)
 		{
-			if (!NodeList.Contains(node))
+			if (!Contains(node))
 				return;
 
-			NodeList.RemoveAndSort(node);
+			RemoveAndSort(node);
 		}
 
 		/// <summary>
-		/// Remove a collection of <see cref="NodeObject"/>'s if they exist in <see cref="NodeList"/>.
+		/// Remove a collection of <see cref="NodeObject"/>'s if they exist in this collection.
 		/// </summary>
-		public static void Remove(IEnumerable<NodeObject> nodes) => NodeList.RemoveAllAndSort(nodes.Contains);
+		public void Remove(IEnumerable<NodeObject> nodes) => RemoveAllAndSort(nodes.Contains);
 
 		/// <summary>
 		/// Add a <see cref="NodeObject"/> to drawing and set it's <see cref="ObjectId"/>.
 		/// </summary>
 		/// <param name="node">The node to add.</param>
-		private static void AddToDrawing(NodeObject node)
+		public static void AddToDrawing(NodeObject node)
 		{
 			// Create the node and set the layer
-			var dbPoint = new DBPoint(node.Position)
+			var dbPoint = new DBPoint(node.Position.ToPoint3d())
 			{
 				Layer = $"{GetLayer(node.Type)}"
 			};
@@ -164,7 +148,7 @@ namespace SPMTool.Database.Elements
 		/// Add a collection of <see cref="NodeObject"/>'s to drawing and set their <see cref="ObjectId"/>.
 		/// </summary>
 		/// <param name="nodes">The node to add.</param>
-		private static void AddToDrawing(IEnumerable<NodeObject> nodes)
+		public static void AddToDrawing(IEnumerable<NodeObject> nodes)
 		{
 			if (nodes is null || !nodes.Any())
 				return;
@@ -177,7 +161,7 @@ namespace SPMTool.Database.Elements
 					continue;
 
 				// Create the node and set the layer
-				var dbPoint = new DBPoint(node.Position)
+				var dbPoint = new DBPoint(node.Position.ToPoint3d())
 				{
 					Layer = $"{GetLayer(node.Type)}"
 				};

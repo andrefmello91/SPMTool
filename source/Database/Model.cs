@@ -4,221 +4,237 @@ using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Extensions;
-using Extensions.AutoCAD;
 using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.Database.Conditions;
 using SPMTool.Database.Elements;
 using SPMTool.Database.Materials;
 using SPMTool.Enums;
-using Analysis = SPM.Analysis.Analysis;
-using Nodes = SPMTool.Database.Elements.Nodes;
 
 namespace SPMTool.Database
 {
-    /// <summary>
-    /// Model class
-    /// </summary>
-    public static class Model
-    {
-	    /// <summary>
-	    /// Get application <see cref="Autodesk.AutoCAD.EditorInput.Editor"/>.
-	    /// </summary>
-	    public static Autodesk.AutoCAD.EditorInput.Editor Editor => DataBase.Document.Editor;
-
-        /// <summary>
-        /// Collection of element <see cref="Layer"/>'s.
-        /// </summary>
-        public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
-
-        /// <summary>
-        /// Collection of result <see cref="Layer"/>'s.
-        /// </summary>
-        public static readonly Layer[] ResultLayers = { Layer.StringerForce, Layer.PanelForce, Layer.CompressivePanelStress, Layer.TensilePanelStress, Layer.ConcreteCompressiveStress, Layer.ConcreteTensileStress, Layer.Displacements, Layer.Cracks};
-
-        /// <summary>
-        /// Get the collection of all nodes in the model.
-        /// </summary>
-        public static DBPoint[] NodeCollection => Nodes.GetAllNodes()?.ToArray();
-
-	    /// <summary>
-	    /// Get the collection of external nodes in the model.
-	    /// </summary>
-	    public static DBPoint[] ExtNodeCollection => Nodes.GetExtNodes()?.ToArray();
-
-	    /// <summary>
-	    /// Get the collection of internal nodes in the model.
-	    /// </summary>
-	    public static DBPoint[] IntNodeCollection => Nodes.GetIntNodes()?.ToArray();
-
-	    /// <summary>
-	    /// Get the collection of stringers in the model.
-	    /// </summary>
-	    public static Line[] StringerCollection => Stringers.GetObjects()?.ToArray();
-
-	    /// <summary>
-	    /// Get the collection of panels in the model.
-	    /// </summary>
-	    public static Solid[] PanelCollection => Panels.GetObjects()?.ToArray();
-
-	    /// <summary>
-	    /// Get the collection of forces in the model.
-	    /// </summary>
-	    public static BlockReference[] ForceCollection => Forces.GetObjects()?.ToArray();
-
-	    /// <summary>
-	    /// Get the collection of supports in the model.
-	    /// </summary>
-	    public static BlockReference[] SupportCollection => Supports.GetObjects()?.ToArray();
-
-        /// <summary>
-        /// Get the collection of force texts in the model.
-        /// </summary>
-        public static DBText[] ForceTextCollection => Forces.GetTexts()?.ToArray();
+	/// <summary>
+	///     Model class
+	/// </summary>
+	public static class Model
+	{
+		#region Fields
 
 		/// <summary>
-		/// Update all the elements in the drawing.
+		///     Collection of element <see cref="Layer" />'s.
+		/// </summary>
+		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
+
+		/// <summary>
+		///     Collection of result <see cref="Layer" />'s.
+		/// </summary>
+		public static readonly Layer[] ResultLayers = { Layer.StringerForce, Layer.PanelForce, Layer.CompressivePanelStress, Layer.TensilePanelStress, Layer.ConcreteCompressiveStress, Layer.ConcreteTensileStress, Layer.Displacements, Layer.Cracks};
+
+		/// <summary>
+		///     Command names for undo and redo.
+		/// </summary>
+		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" };
+
+		#endregion
+
+		#region Properties
+
+		/// <summary>
+		///     Get application <see cref="Autodesk.AutoCAD.EditorInput.Editor" />.
+		/// </summary>
+		public static Autodesk.AutoCAD.EditorInput.Editor Editor => DataBase.Document.Editor;
+
+		/// <summary>
+		///     Get the collection of external nodes in the model.
+		/// </summary>
+		public static DBPoint[] ExtNodeCollection => Nodes.GetExtNodes()?.ToArray();
+
+		/// <summary>
+		///     Get the collection of forces in the model.
+		/// </summary>
+		public static BlockReference[] ForceCollection => Forces.GetObjects()?.ToArray();
+
+		/// <summary>
+		///     Get the collection of force texts in the model.
+		/// </summary>
+		public static DBText[] ForceTextCollection => Forces.GetTexts()?.ToArray();
+
+		/// <summary>
+		///     Get the collection of internal nodes in the model.
+		/// </summary>
+		public static DBPoint[] IntNodeCollection => Nodes.GetIntNodes()?.ToArray();
+
+		/// <summary>
+		///     Get the collection of all nodes in the model.
+		/// </summary>
+		public static DBPoint[] NodeCollection => Nodes.GetAllNodes()?.ToArray();
+
+		/// <summary>
+		///     Get the collection of panels in the model.
+		/// </summary>
+		public static Solid[] PanelCollection => Panels.GetObjects()?.ToArray();
+
+		/// <summary>
+		///     Get the collection of stringers in the model.
+		/// </summary>
+		public static Line[] StringerCollection => Stringers.GetObjects()?.ToArray();
+
+		/// <summary>
+		///     Get the collection of supports in the model.
+		/// </summary>
+		public static BlockReference[] SupportCollection => Supports.GetObjects()?.ToArray();
+
+		/// <summary>
+		///		Get the <see cref="NodeObject"/>'s in the model.
+		/// </summary>
+		public static Nodes Nodes;
+
+		#endregion
+
+		#region  Methods
+
+		/// <summary>
+		///     Update all the elements in the drawing.
 		/// </summary>
 		/// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
 		/// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
-        public static void UpdateElements(bool addNodes = true, bool removeNodes = true)
-        {
-	        Stringers.Update(false);
-	        Panels.Update(false);
-	        Nodes.Update(addNodes, removeNodes);
-        }
+		public static void UpdateElements(bool addNodes = true, bool removeNodes = true)
+		{
+			Stringers.Update(false);
+			Panels.Update(false);
+			Nodes.Update(addNodes, removeNodes);
+		}
 
 		/// <summary>
-		/// Get the <see cref="InputData"/> from objects in drawing.
+		///     Get the <see cref="InputData" /> from objects in drawing.
 		/// </summary>
 		/// <param name="dataOk">Returns true if data is consistent to start analysis.</param>
 		/// <param name="message">Message to show if data is inconsistent.</param>
 		/// <param name="analysisType">The type of analysis to perform.</param>
 		public static InputData GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
-        {
-	        // Get units
-	        var units = SettingsData.SavedUnits;
+		{
+			// Get units
+			var units = SettingsData.SavedUnits;
 
-	        // Get concrete
-	        var parameters   = ConcreteData.Parameters;
-	        var constitutive = ConcreteData.ConstitutiveModel;
+			// Get concrete
+			var parameters   = ConcreteData.Parameters;
+			var constitutive = ConcreteData.ConstitutiveModel;
 
-	        // Read elements
-	        var ndObjs  = NodeCollection;
-	        var strObjs = StringerCollection;
-	        var pnlObjs = PanelCollection;
+			// Read elements
+			var ndObjs  = NodeCollection;
+			var strObjs = StringerCollection;
+			var pnlObjs = PanelCollection;
 
-	        // Verify if there is stringers and nodes at least
-	        if (ndObjs.Length == 0 || strObjs.Length == 0)
-	        {
-		        dataOk = false;
-		        message = "Please input model geometry";
-		        return null;
-	        }
+			// Verify if there is stringers and nodes at least
+			if (ndObjs.Length == 0 || strObjs.Length == 0)
+			{
+				dataOk = false;
+				message = "Please input model geometry";
+				return null;
+			}
 
-	        // Get nodes
-	        var nodes = Nodes.ReadFromDrawing(ndObjs).Select(n => n.AsNode()).ToArray();
+			// Get nodes
+			var nodes = Nodes.ReadFromDrawing(ndObjs).Select(n => n.AsNode()).ToArray();
 
-	        // Set supports and forces
-	        //Forces.Set(ForceCollection, nodes);
-	        //Supports.Set(SupportCollection, nodes);
+			// Set supports and forces
+			//Forces.Set(ForceCollection, nodes);
+			//Supports.Set(SupportCollection, nodes);
 
-	        // Get stringers and panels
-	        var stringers = Stringers.Read(strObjs, units, parameters, constitutive, nodes, analysisType).ToArray();
-	        var panels    = Panels.Read(pnlObjs, units, parameters, constitutive, nodes, analysisType).ToArray();
+			// Get stringers and panels
+			var stringers = Stringers.Read(strObjs, units, parameters, constitutive, nodes, analysisType).ToArray();
+			var panels    = Panels.Read(pnlObjs, units, parameters, constitutive, nodes, analysisType).ToArray();
 
-	        // Generate input
-	        dataOk = true;
-	        message = null;
-	        return new InputData(nodes, stringers, panels, analysisType);
-        }
-
-        /// <summary>
-        /// Return an <see cref="SPMElement"/> from <paramref name="entity"/>.
-        /// </summary>
-        /// <param name="entity">The <see cref="Entity"/> of SPM object.</param>
-        public static SPMElement GetElement(Entity entity)
-        {
-	        // Get element layer
-	        var layer = (Layer) Enum.Parse(typeof(Layer), entity.Layer);
-
-	        if (!ElementLayers.Contains(layer))
-		        return null;
-
-            // Get concrete and units
-            var parameters   = ConcreteData.Parameters;
-            var constitutive = ConcreteData.ConstitutiveModel;
-	        var units        = SettingsData.SavedUnits;
-
-	        if (layer is Layer.IntNode || layer is Layer.ExtNode)
-		        return Nodes.GetFromList(entity.ObjectId).AsNode();
-
-	        // Read nodes
-	        var nodes = Nodes.ReadFromDrawing(NodeCollection).Select(n => n.AsNode()).ToArray();
-
-	        if (layer is Layer.Stringer)
-		        return Stringers.Read((Line) entity, units, parameters, constitutive, nodes);
-
-	        if (layer is Layer.Panel)
-		        return Panels.Read((Solid) entity, units, parameters, constitutive, nodes);
-
-	        return null;
-        }
-
-        /// <summary>
-        /// Return an <see cref="SPMElement"/> from <paramref name="objectId"/>.
-        /// </summary>
-        /// <param name="objectId">The <see cref="ObjectId"/> of SPM object.</param>
-        public static SPMElement GetElement(ObjectId objectId) => GetElement(objectId.ToEntity());
+			// Generate input
+			dataOk = true;
+			message = null;
+			return new InputData(nodes, stringers, panels, analysisType);
+		}
 
 		/// <summary>
-        /// Create blocks for use in SPMTool.
-        /// </summary>
-        public static void CreateBlocks()
-        {
+		///     Return an <see cref="SPMElement" /> from <paramref name="entity" />.
+		/// </summary>
+		/// <param name="entity">The <see cref="Entity" /> of SPM object.</param>
+		public static SPMElement GetElement(Entity entity)
+		{
+			// Get element layer
+			var layer = (Layer) Enum.Parse(typeof(Layer), entity.Layer);
+
+			if (!ElementLayers.Contains(layer))
+				return null;
+
+			// Get concrete and units
+			var parameters   = ConcreteData.Parameters;
+			var constitutive = ConcreteData.ConstitutiveModel;
+			var units        = SettingsData.SavedUnits;
+
+			if (layer is Layer.IntNode || layer is Layer.ExtNode)
+				return Nodes.GetFromList(entity.ObjectId).AsNode();
+
+			// Read nodes
+			var nodes = Nodes.ReadFromDrawing(NodeCollection).Select(n => n.AsNode()).ToArray();
+
+			if (layer is Layer.Stringer)
+				return Stringers.Read((Line) entity, units, parameters, constitutive, nodes);
+
+			if (layer is Layer.Panel)
+				return Panels.Read((Solid) entity, units, parameters, constitutive, nodes);
+
+			return null;
+		}
+
+		/// <summary>
+		///     Return an <see cref="SPMElement" /> from <paramref name="objectId" />.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId" /> of SPM object.</param>
+		public static SPMElement GetElement(ObjectId objectId) => GetElement(objectId.ToEntity());
+
+		/// <summary>
+		///     Create blocks for use in SPMTool.
+		/// </summary>
+		public static void CreateBlocks()
+		{
 			// Get the block enum as an array
 			var blocks = Enum.GetValues(typeof(Block)).Cast<Block>().ToArray();
 
 			// Create the blocks
-	        blocks.Create();
-        }
+			blocks.Create();
+		}
 
 		/// <summary>
-        /// Draw results of <paramref name="analysis"/>.
-        /// </summary>
-        /// <param name="analysis">The <see cref="Analysis"/> done.</param>
+		///     Draw results of <paramref name="analysis" />.
+		/// </summary>
+		/// <param name="analysis">The <see cref="Analysis" /> done.</param>
 		public static void DrawResults(Analysis analysis)
 		{
 			// Erase result objects
 			ResultLayers.EraseObjects();
 
 			//Nodes.SetDisplacements(analysis.Nodes);
-            DrawDisplacements(analysis.Stringers);
-            Stringers.DrawForces(analysis.Stringers, analysis.MaxStringerForce);
-            Panels.DrawStresses(analysis.Panels);
+			DrawDisplacements(analysis.Stringers);
+			Stringers.DrawForces(analysis.Stringers, analysis.MaxStringerForce);
+			Panels.DrawStresses(analysis.Panels);
 
-            if (!(analysis is SecantAnalysis))
-	            return;
+			if (!(analysis is SecantAnalysis))
+				return;
 
-            Panels.DrawCracks(analysis.Panels);
-            Stringers.DrawCracks(analysis.Stringers);
+			Panels.DrawCracks(analysis.Panels);
+			Stringers.DrawCracks(analysis.Stringers);
 		}
 
-        /// <summary>
-        /// Draw displacements.
-        /// </summary>
-        /// <param name="stringers">The collection of <see cref="Stringer"/>'s.</param>
+		/// <summary>
+		///     Draw displacements.
+		/// </summary>
+		/// <param name="stringers">The collection of <see cref="Stringer" />'s.</param>
 		private static void DrawDisplacements(IEnumerable<Stringer> stringers)
-        {
+		{
 			// Get units
-	        var units = SettingsData.SavedUnits;
+			var units = SettingsData.SavedUnits;
 
 			// Turn the layer off
 			Layer.Displacements.Off();
 
 			// Set a scale factor for displacements
-			double scFctr = units.DisplacementScaleFactor;
+			var scFctr = units.DisplacementScaleFactor;
 
 			// Create lists of points for adding the nodes later
 			var dispNds = new List<Point3d>();
@@ -269,72 +285,67 @@ namespace SPMTool.Database
 		}
 
 		/// <summary>
-		/// Set application parameters for drawing.
+		///     Set application parameters for drawing.
 		/// </summary>
-        public static void SetAppParameters()
-        {
+		public static void SetAppParameters()
+		{
 			SetPointSize();
 			SetLineWeightDisplay();
-        }
+		}
 
 		/// <summary>
-        /// Set size to points in the drawing.
-        /// </summary>
-        public static void SetPointSize()
-        {
-	        // Set the style for all point objects in the drawing
-	        DataBase.Database.Pdmode = 32;
-	        DataBase.Database.Pdsize = 40 * SettingsData.SavedUnits.ScaleFactor;
-        }
-
-        /// <summary>
-        /// Turn off fillmode setting.
-        /// </summary>
-        public static void SetFillMode() => DataBase.Database.Fillmode = false;
+		///     Set size to points in the drawing.
+		/// </summary>
+		public static void SetPointSize()
+		{
+			// Set the style for all point objects in the drawing
+			DataBase.Database.Pdmode = 32;
+			DataBase.Database.Pdsize = 40 * SettingsData.SavedUnits.ScaleFactor;
+		}
 
 		/// <summary>
-		/// Turn on line weight display.
+		///     Turn off fillmode setting.
+		/// </summary>
+		public static void SetFillMode() => DataBase.Database.Fillmode = false;
+
+		/// <summary>
+		///     Turn on line weight display.
 		/// </summary>
 		public static void SetLineWeightDisplay() => DataBase.Database.LineWeightDisplay = true;
 
-        /// <summary>
-		/// Command names for undo and redo.
-		/// </summary>
-		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" };
-
 		/// <summary>
-		/// Remove a <see cref="ISPMObject"/> from drawing.
+		///     Remove a <see cref="ISPMObject" /> from drawing.
 		/// </summary>
-		/// <param name="element">The <see cref="ISPMObject"/> to remove.</param>
+		/// <param name="element">The <see cref="ISPMObject" /> to remove.</param>
 		public static void RemoveFromDrawing(ISPMObject element) => element?.ObjectId.RemoveFromDrawing();
 
 		/// <summary>
-		/// Remove a collection of <see cref="ISPMObject"/>'s from drawing.
+		///     Remove a collection of <see cref="ISPMObject" />'s from drawing.
 		/// </summary>
-		/// <param name="elements">The <see cref="ISPMObject"/>'s to remove.</param>
+		/// <param name="elements">The <see cref="ISPMObject" />'s to remove.</param>
 		public static void RemoveFromDrawing(IEnumerable<ISPMObject> elements) => elements?.Select(e => e.ObjectId).ToArray().RemoveFromDrawing();
 
 		/// <summary>
-		/// Event to run after undo or redo commands.
+		///     Event to run after undo or redo commands.
 		/// </summary>
 		public static void On_UndoOrRedo(object sender, CommandEventArgs e)
 		{
 			if (CmdNames.Any(cmd => cmd.Contains(e.GlobalCommandName.ToUpper())))
-		        UpdateElements(false);
-        }
+				UpdateElements(false);
+		}
 
 		/// <summary>
-		/// Event to execute when a <see cref="ISPMObject"/> is removed.
+		///     Event to execute when a <see cref="ISPMObject" /> is removed.
 		/// </summary>
 		public static void On_ElementRemoved(object sender, ItemEventArgs<ISPMObject> e) => RemoveFromDrawing(e.Item);
 
 		/// <summary>
-		/// Event to execute when a range of <see cref="SPMElement"/>'s is removed.
+		///     Event to execute when a range of <see cref="SPMElement" />'s is removed.
 		/// </summary>
 		public static void On_ElementsRemoved(object sender, RangeEventArgs<ISPMObject> e) => RemoveFromDrawing(e.ItemCollection);
 
 		/// <summary>
-		/// Set numbers to a collection of <see cref="ISPMObject"/>'s.
+		///     Set numbers to a collection of <see cref="ISPMObject" />'s.
 		/// </summary>
 		/// <param name="objects"></param>
 		public static void SetNumbers(IEnumerable<ISPMObject> objects)
@@ -344,8 +355,10 @@ namespace SPMTool.Database
 
 			var count = objects.Count();
 
-			for (int i = 0; i < count; i++)
+			for (var i = 0; i < count; i++)
 				objects.ElementAt(i).Number = i + 1;
 		}
-    }
+
+		#endregion
+	}
 }

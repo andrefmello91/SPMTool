@@ -21,7 +21,11 @@ namespace SPMTool.Database.Elements
 	/// </summary>
 	public class NodeObject : ISPMObject<Node, DBPoint>, IEquatable<NodeObject>, IComparable<NodeObject>
 	{
+		#region Fields
+
 		private Displacement? _displacement;
+
+		#endregion
 
 		#region Properties
 
@@ -165,7 +169,9 @@ namespace SPMTool.Database.Elements
 			var data = ReadXData();
 
 			if (data is null)
+			{
 				_displacement = Displacement.Zero;
+			}
 
 			else
 			{

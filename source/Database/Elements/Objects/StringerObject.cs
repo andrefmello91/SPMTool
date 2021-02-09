@@ -13,7 +13,6 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
-using Force = OnPlaneComponents.Force;
 using static SPMTool.Database.SettingsData;
 
 #nullable enable
@@ -22,7 +21,7 @@ using static SPMTool.Database.SettingsData;
 namespace SPMTool.Database.Elements
 {
 	/// <summary>
-	///     Node object class.
+	///     Stringer object class.
 	/// </summary>
 	public class StringerObject : ISPMObject<Stringer, Line>, IEquatable<StringerObject>, IComparable<StringerObject>
 	{
@@ -46,16 +45,7 @@ namespace SPMTool.Database.Elements
 		public int Number { get; set; } = 0;
 
 		/// <summary>
-		///		Get/set the width of <see cref="Geometry"/>.
-		/// </summary>
-		public Length Width
-		{
-			get => Geometry.Width;
-			set => SetGeometry(value, null);
-		}
-
-		/// <summary>
-		///		Get/set the height of <see cref="Geometry"/>.
+		///     Get/set the height of <see cref="Geometry" />.
 		/// </summary>
 		public Length Height
 		{
@@ -70,6 +60,15 @@ namespace SPMTool.Database.Elements
 		{
 			get => _reinforcement ?? GetReinforcement();
 			set => SetReinforcement(value);
+		}
+
+		/// <summary>
+		///     Get/set the width of <see cref="Geometry" />.
+		/// </summary>
+		public Length Width
+		{
+			get => Geometry.Width;
+			set => SetGeometry(value, null);
 		}
 
 		#endregion
@@ -203,7 +202,7 @@ namespace SPMTool.Database.Elements
 		}
 
 		/// <summary>
-		///     Set <paramref name="width" /> and <paramref name="height"/> to <see cref="Geometry"/> and XData.
+		///     Set <paramref name="width" /> and <paramref name="height" /> to <see cref="Geometry" /> and XData.
 		/// </summary>
 		/// <param name="width">The width to set. Leave null to leave unchanged.</param>
 		/// <param name="height">The height to set. Leave null to leave unchanged.</param>
@@ -225,9 +224,9 @@ namespace SPMTool.Database.Elements
 			if (height.HasValue)
 			{
 				Geometry.Height = height.Value;
-				data[(int)StringerIndex.Height] = new TypedValue((int)DxfCode.ExtendedDataReal, height.Value.Millimeters);
+				data[(int) StringerIndex.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, height.Value.Millimeters);
 			}
-			
+
 			ObjectId.SetXData(data);
 		}
 
