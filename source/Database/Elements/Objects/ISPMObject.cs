@@ -7,6 +7,8 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	/// Interface for SPM objects
 	/// </summary>
+	/// <typeparam name="T1">Any type that implements <see cref="INumberedElement"/>.</typeparam>
+	/// <typeparam name="T2">Any type based on <see cref="Entity"/>.</typeparam>
 	public interface ISPMObject<out T1, out T2>
 		where T1 : INumberedElement
 		where T2 : Entity

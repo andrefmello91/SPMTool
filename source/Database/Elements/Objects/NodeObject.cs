@@ -87,18 +87,18 @@ namespace SPMTool.Database.Elements
 		#region  Methods
 
 		/// <summary>
-		///     Read a <see cref="NodeObject" /> in the drawing.
+		///     Read a <see cref="NodeObject" /> from an <see cref="ObjectId"/>.
 		/// </summary>
 		/// <param name="nodeObjectId">The <see cref="ObjectId" /> of the node.</param>
-		public static NodeObject ReadFromDrawing(ObjectId nodeObjectId) => ReadFromDrawing((DBPoint) nodeObjectId.ToEntity());
+		public static NodeObject ReadFromObjectId(ObjectId nodeObjectId) => ReadFromPoint((DBPoint) nodeObjectId.ToEntity());
 
 		/// <summary>
-		///     Read a <see cref="NodeObject" /> in the drawing.
+		///     Read a <see cref="NodeObject" /> from a <see cref="DBPoint"/>.
 		/// </summary>
 		/// <param name="dbPoint">The <see cref="DBPoint" /> object of the node.</param>
-		public static NodeObject ReadFromDrawing(DBPoint dbPoint) => new NodeObject(dbPoint.Position, GetNodeType(dbPoint), SavedUnits.Geometry)
+		public static NodeObject ReadFromPoint(DBPoint dbPoint) => new NodeObject(dbPoint.Position, GetNodeType(dbPoint), SavedUnits.Geometry)
 		{
-			ObjectId     = dbPoint.ObjectId
+			ObjectId = dbPoint.ObjectId
 		};
 
 		/// <summary>

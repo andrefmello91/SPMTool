@@ -11,16 +11,21 @@ using SPM.Elements;
 using SPMTool.Database.Conditions;
 using SPMTool.Enums;
 using SPMTool.Extensions;
+using SPMTool.Database.Elements;
 using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Database.SettingsData;
+using static SPMTool.Database.Model;
+using static SPMTool.Database.Elements.SPMObjects<SPMTool.Database.Elements.NodeObject>;
+
+#nullable enable
 
 namespace SPMTool.Database.Elements
 {
 	/// <summary>
 	/// Nodes class.
 	/// </summary>
-	public class Nodes : EList<NodeObject>
+	public class Nodes : SPMObjects<NodeObject>
 	{
 		/// <summary>
 		/// List of nodes' <see cref="Point"/> positions.
@@ -54,12 +59,41 @@ namespace SPMTool.Database.Elements
 		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
 		public void Add(Point position, NodeType nodeType) => Add(new NodeObject(position, nodeType));
 
+		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)"/>
+		/// <remarks>
+		///		If node type is <see cref="NodeType.Displaced"/>, the node is only added to drawing.
+		/// </remarks>
+		public new void Add(NodeObject item, bool raiseEvents = true, bool sort = true)
+		{
+			if (item.Type is NodeType.Displaced)
+			{
+				// Just add to drawing
+				item.AddToDrawing();
+				return;
+			}
+
+			base.Add(item, raiseEvents, sort);
+		}
+
 		/// <summary>
 		/// Add nodes in these <paramref name="positions"/>.
 		/// </summary>
 		/// <param name="positions">The collection of <see cref="Point"/> positions.</param>
 		/// <param name="nodeType">The <see cref="NodeType"/>.</param>
 		public void AddRange(IEnumerable<Point> positions, NodeType nodeType) => AddRange(positions.Distinct().Select(p => new NodeObject(p, nodeType)));
+
+		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)"/>
+		/// <inheritdoc cref="Add(NodeObject, bool, bool)"/>
+		public new void AddRange(IEnumerable<NodeObject> collection, bool raiseEvents = true, bool sort = true)
+		{
+			// Get displaced nodes
+			var dispNodes = collection.Where(n => n.Type is NodeType.Displaced).ToList();
+
+			if (dispNodes.Any())
+				AddToDrawing(dispNodes);
+
+			base.AddRange(collection.Where(n => n.Type != NodeType.Displaced), raiseEvents, sort);
+		}
 
 		/// <summary>
 		/// Remove unnecessary nodes from the drawing.
@@ -91,45 +125,7 @@ namespace SPMTool.Database.Elements
 		}
 
 		/// <summary>
-		/// Add a <see cref="NodeObject"/> to drawing and set it's <see cref="ObjectId"/>.
-		/// </summary>
-		/// <param name="node">The node to add.</param>
-		public static void AddToDrawing(NodeObject node)
-		{
-			// Create the node and set the layer
-			var dbPoint = new DBPoint(node.Position.ToPoint3d())
-			{
-				Layer = $"{GetLayer(node.Type)}"
-			};
-
-			dbPoint.AddToDrawing();
-
-			node.ObjectId = dbPoint.ObjectId;
-		}
-
-		/// <summary>
-		/// Add a collection of <see cref="NodeObject"/>'s to drawing and set their <see cref="ObjectId"/>.
-		/// </summary>
-		/// <param name="nodes">The node to add.</param>
-		public static void AddToDrawing(IEnumerable<NodeObject> nodes)
-		{
-			if (nodes is null || !nodes.Any())
-				return;
-
-			var notNullNodes = nodes.Where(n => !(n is null)).ToList();
-
-			var points = notNullNodes.Select(n => n.GetEntity()).ToList();
-
-			// Add objects to drawing
-			var objIds = points.AddToDrawing().ToList();
-
-			// Set object ids
-			for (int i = 0; i < notNullNodes.Count; i++)
-				notNullNodes[i].ObjectId = objIds[i];
-		}
-
-		/// <summary>
-		/// Return a <see cref="NodeObject"/> in the drawing located at this <paramref name="position"/>.
+		/// Return a <see cref="NodeObject"/> located at this <paramref name="position"/>.
 		/// </summary>
 		/// <param name="position">The required <see cref="Point"/> position.</param>
 		public NodeObject? GetNodeAtPosition(Point position) =>
@@ -138,44 +134,33 @@ namespace SPMTool.Database.Elements
 				: Find(n => n.Position == position);
 
 		/// <summary>
-		/// Return a collection of <see cref="DBPoint"/>'s in the drawing located at this <paramref name="positions"/>.
+		/// Return a collection of <see cref="NodeObject"/>'s located at these <paramref name="positions"/>.
 		/// </summary>
 		/// <param name="positions">The required <see cref="Point3d"/> positions.</param>
-		/// <param name="type">The <see cref="NodeType"/> (excluding <see cref="NodeType.Displaced"/>). </param>
-		public static IEnumerable<DBPoint> GetNodesAtPositions(IEnumerable<Point3d> positions, NodeType type = NodeType.All)
-		{
-			var nodes =
-				(type is NodeType.External
-					? GetExtNodes()
-					: type is NodeType.Internal
-						? GetIntNodes()
-						: GetAllNodes()).ToArray();
-
-			return
-				nodes.Where(n => positions.Any(p => p.Approx(n.Position, Tolerance)));
-		}
+		public List<NodeObject> GetNodesAtPositions(IEnumerable<Point> positions) =>
+			this.Where(n => positions.Contains(n.Position)).ToList();
 
 		/// <summary>
 		/// Get the collection of internal nodes in the drawing.
 		/// </summary>
-		public static IEnumerable<DBPoint> GetIntNodes() => Layer.IntNode.GetDBObjects()?.ToPoints();
+		public static IEnumerable<DBPoint>? GetIntNodes() => Layer.IntNode.GetDBObjects()?.ToPoints();
 
 		/// <summary>
 		/// Get the collection of external nodes in the drawing.
 		/// </summary>
-		public static IEnumerable<DBPoint> GetExtNodes() => Layer.ExtNode.GetDBObjects()?.ToPoints();
+		public static IEnumerable<DBPoint>? GetExtNodes() => Layer.ExtNode.GetDBObjects()?.ToPoints();
 
 		/// <summary>
 		/// Get the collection of internal and external nodes in the drawing.
 		/// </summary>
-		public static IEnumerable<DBPoint> GetAllNodes() => GetIntNodes()?.Concat(GetExtNodes());
+		public static IEnumerable<DBPoint>? GetAllNodes() => GetIntNodes()?.Concat(GetExtNodes());
 
 		/// <summary>
-		/// Enumerate all the nodes in the model and return the collection of nodes.
+		/// Update all the nodes in this collection.
 		/// </summary>
 		/// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
 		/// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
-		public static void Update(bool addNodes = true, bool removeNodes = true)
+		public void Update(bool addNodes = true, bool removeNodes = true)
 		{
 			// Add nodes to all needed positions
 			if (addNodes)
@@ -221,103 +206,50 @@ namespace SPMTool.Database.Elements
 			//Positions = GetPositions(ndObjs);
 
 			// Set the style for all point objects in the drawing
-			Model.SetPointSize();
+			SetPointSize();
 		}
 
-		/// <summary>
-		/// Get the list of node positions ordered.
-		/// </summary>
-		/// <param name="nodeType"></param>
-		/// <returns></returns>
-		public static IEnumerable<Point3d> NodePositions(NodeType nodeType)
+		private Nodes()
 		{
-			// Initialize an object collection
-			List<DBPoint> ndObjs;
+		}
 
-			// Select the node type
-			switch (nodeType)
-			{
-				case NodeType.All:
-					ndObjs = GetAllNodes()?.ToList();
-					break;
-
-				case NodeType.Internal:
-					ndObjs = GetIntNodes()?.ToList();
-					break;
-
-				case NodeType.External:
-					ndObjs = GetExtNodes()?.ToList();
-					break;
-
-				default:
-					ndObjs = new List<DBPoint>();
-					break;
-			}
-
-			return ndObjs?.Select(nd => nd.Position).Order() ?? new List<Point3d>();
+		private Nodes(IEnumerable<NodeObject> nodeObjects)
+			: base(nodeObjects)
+		{
 		}
 
 		/// <summary>
-		/// Read <see cref="NodeObject"/>'s from a collection.
+		/// Read all <see cref="NodeObject"/>'s from drawing.
 		/// </summary>
-		/// <param name="nodePoints">The collection containing the nodes of drawing.</param>
-		public static IEnumerable<NodeObject> ReadFromDrawing(IEnumerable<DBPoint> nodePoints) => nodePoints?.Select(ReadFromDrawing);
+		public static Nodes ReadFromDrawing() => ReadFromPoints(GetAllNodes());
 
 		/// <summary>
-		/// Read a <see cref="NodeObject"/> in the drawing.
+		/// Read <see cref="NodeObject"/>'s from a collection of <see cref="DBPoint"/>'s.
 		/// </summary>
-		/// <param name="nodePoint">The <see cref="DBPoint"/> object of the node.</param>
-		public static NodeObject ReadFromDrawing(DBPoint nodePoint) => new NodeObject(nodePoint.Position, GetNodeType(nodePoint)) { ObjectId = nodePoint.ObjectId };
+		/// <param name="nodePoints">The collection containing the <see cref="DBPoint"/>'s of drawing.</param>
+		public static Nodes ReadFromPoints(IEnumerable<DBPoint>? nodePoints) =>
+			nodePoints is null || !nodePoints.Any()
+				? new Nodes()
+				: new Nodes(nodePoints.Select(NodeObject.ReadFromPoint));
 
 		/// <summary>
 		/// Get a node from the list with corresponding <see cref="ObjectId"/>.
 		/// </summary>
-		public static NodeObject GetFromList(ObjectId objectId) => NodeList.Find(n => n.ObjectId == objectId);
-
-		/// <summary>
-		/// Update <see cref="NodeList"/> by reading objects in the drawing.
-		/// </summary>
-		public static void UpdateList() => NodeList = GetNodeList();
-
-		/// <summary>
-		/// Get the node list from elements in drawing.
-		/// </summary>
-		private static EList<NodeObject> GetNodeList()
-		{
-			var list  = new EList<NodeObject>(ReadFromDrawing(GetAllNodes()?.ToArray())?.ToList() ?? new List<NodeObject>());
-
-			// Add events
-			SetEvents(list);
-
-			// Sort list
-			list.Sort();
-
-			return list;
-		}
-
-		/// <summary>
-		/// Set events on <paramref name="list"/>.
-		/// </summary>
-		private static void SetEvents(EList<NodeObject> list)
-		{
-			list.ItemAdded    += On_NodeAdded;
-			list.ItemRemoved  += On_NodeRemoved;
-			list.RangeAdded   += On_NodesAdded;
-			list.RangeRemoved += On_NodesRemoved;
-			list.ListSorted   += On_ListSort;
-		}
-
-		/// <summary>
-		/// Get node positions in the drawing.
-		/// </summary>
-		/// <param name="nodes">The collection of <see cref="DBPoint"/>'s.</param>
-		private static List<Point3d> GetPositions(IEnumerable<DBPoint> nodes = null) => (nodes ?? GetAllNodes())?.Select(nd => nd.Position).ToList() ?? new List<Point3d>();
+		public NodeObject? GetByObjectId(ObjectId objectId) =>
+			this.Any(n => n.ObjectId == objectId)
+				? Find(n => n.ObjectId == objectId)
+				: null;
 
 		/// <summary>
 		/// Get <see cref="NodeType"/>.
 		/// </summary>
 		/// <param name="nodePoint">The <see cref="Entity"/> object.</param>
-		public static NodeType GetNodeType(Entity nodePoint) => nodePoint.Layer == $"{Layer.ExtNode}" ? NodeType.External : NodeType.Internal;
+		public static NodeType GetNodeType(Entity nodePoint) =>
+			nodePoint.Layer == $"{Layer.ExtNode}"
+				? NodeType.External
+				: nodePoint.Layer == $"{Layer.IntNode}"
+					? NodeType.Internal
+					: NodeType.Displaced;
 
 		/// <summary>
 		/// Get the layer name based on <paramref name="nodeType"/>.
@@ -326,101 +258,20 @@ namespace SPMTool.Database.Elements
 		public static Layer GetLayer(NodeType nodeType) =>
 			nodeType switch
 			{
-				NodeType.Internal => Layer.IntNode,
+				NodeType.Internal  => Layer.IntNode,
 				NodeType.Displaced => Layer.Displacements,
-				_ => Layer.ExtNode
+				_                  => Layer.ExtNode
 			};
-
-		/// <summary>
-		/// Get the node number at this <paramref name="position"/>.
-		/// </summary>
-		/// <param name="position">The <see cref="Point3d"/> position.</param>
-		/// <param name="nodeObjects">The collection of node <see cref="DBObject"/>'s</param>
-		public static int? GetNumber(Point3d position, IEnumerable<DBPoint> nodeObjects = null) => (nodeObjects ?? GetAllNodes())?.First(nd => nd.Position.Approx(position))?.ReadXData()?[(int)NodeIndex.Number].ToInt();
-
-		/// <summary>
-		/// Set displacements to the collection of <see cref="Node"/>'s.
-		/// </summary>
-		/// <param name="nodes">The collection of <see cref="Node"/>'s.</param>
-		public static void SetDisplacements(IEnumerable<Node> nodes)
-		{
-			foreach (var nd in nodes)
-				SetDisplacements(nd);
-		}
-
-		/// <summary>
-		/// Set displacements to a <see cref="Node"/>.
-		/// </summary>
-		/// <param name="node">The <see cref="Node"/>.</param>
-		public static void SetDisplacements(Node node)
-		{
-			// Get extended data
-			var data = node.ObjectId.ReadXData();
-
-			// Save the displacements on the XData
-			data[(int)NodeIndex.Ux] = new TypedValue((int)DxfCode.ExtendedDataReal, node.Displacement.ComponentX);
-			data[(int)NodeIndex.Uy] = new TypedValue((int)DxfCode.ExtendedDataReal, node.Displacement.ComponentY);
-
-			// Save new XData
-			node.ObjectId.SetXData(data);
-		}
 
 		/// <summary>
 		/// Event to execute when a node is erased.
 		/// </summary>
-		private static void On_NodeErase(object sender, ObjectErasedEventArgs e)
+		public static void On_NodeErase(object sender, ObjectErasedEventArgs e)
 		{
-			if (Positions is null || !Positions.Any() || !(sender is DBPoint nd))
+			if (!Model.Nodes.Any() || !(sender is DBPoint nd))
 				return;
 
-			Positions.RemoveAll(p => p.Approx(nd.Position, Tolerance));
-		}
-
-		/// <summary>
-		/// Event to execute when a node is added.
-		/// </summary>
-		private static void On_NodeAdded(object sender, ItemEventArgs<NodeObject> e)
-		{
-			var node = e.Item;
-
-			if (node is null)
-				return;
-
-			AddToDrawing(node);
-		}
-
-		/// <summary>
-		/// Event to execute when a range of nodes is added.
-		/// </summary>
-		private static void On_NodesAdded(object sender, RangeEventArgs<NodeObject> e)
-		{
-			var nodes = e.ItemCollection;
-
-			if (nodes is null)
-				return;
-
-			AddToDrawing(nodes);
-		}
-
-		/// <summary>
-		/// Event to execute when a <see cref="NodeObject"/> is removed.
-		/// </summary>
-		public static void On_NodeRemoved(object sender, ItemEventArgs<NodeObject> e) => Model.RemoveFromDrawing(e.Item);
-
-		/// <summary>
-		/// Event to execute when a range of <see cref="NodeObject"/>'s is removed.
-		/// </summary>
-		public static void On_NodesRemoved(object sender, RangeEventArgs<NodeObject> e) => Model.RemoveFromDrawing(e.ItemCollection);
-
-		/// <summary>
-		/// Event to execute when an <see cref="ISPMObject"/> list is sorted.
-		/// </summary>
-		public static void On_ListSort(object sender, EventArgs e)
-		{
-			if (!(sender is EList<NodeObject> list))
-				return;
-
-			Model.SetNumbers(list);
+			Model.Nodes.RemoveAll(n => n.Position == nd.Position.ToPoint(SavedUnits.Geometry), false);
 		}
 	}
 }
