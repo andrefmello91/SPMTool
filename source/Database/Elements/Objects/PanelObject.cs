@@ -23,7 +23,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Panel object class.
 	/// </summary>
-	public class PanelObject : ISPMObject<Panel, Solid>, IEquatable<PanelObject>, IComparable<PanelObject>
+	public class PanelObject : ISPMObject<PanelObject, Panel, Solid>
 	{
 		#region Fields
 

@@ -23,7 +23,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Stringer object class.
 	/// </summary>
-	public class StringerObject : ISPMObject<Stringer, Line>, IEquatable<StringerObject>, IComparable<StringerObject>
+	public class StringerObject : ISPMObject<StringerObject, Stringer, Line>
 	{
 		#region Fields
 

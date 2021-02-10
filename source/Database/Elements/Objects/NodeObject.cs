@@ -19,7 +19,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Node object class.
 	/// </summary>
-	public class NodeObject : ISPMObject<Node, DBPoint>, IEquatable<NodeObject>, IComparable<NodeObject>
+	public class NodeObject : ISPMObject<NodeObject, Node, DBPoint>
 	{
 		#region Fields
 
