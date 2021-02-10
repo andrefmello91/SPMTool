@@ -4,24 +4,27 @@ using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Extensions.AutoCAD;
-using Extensions.Number;
+using Extensions;
 using Material.Concrete;
 using Material.Reinforcement;
 using Material.Reinforcement.Uniaxial;
 using MathNet.Numerics;
+using OnPlaneComponents;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet.Units;
+using static SPMTool.Database.SettingsData;
+
+#nullable enable
 
 namespace SPMTool.Database.Elements
 {
 	/// <summary>
     /// Stringers class.
 	/// </summary>
-	public static class Stringers
+	public class Stringers : SPMObjects<StringerObject>
 	{
 		/// <summary>
 		/// Auxiliary list of <see cref="StringerGeometry"/>'s.
@@ -73,139 +76,35 @@ namespace SPMTool.Database.Elements
 			}
 		}
 
-        /// <summary>
-        /// Add a stringer to drawing.
-        /// </summary>
-        /// <param name="startPoint">The start <see cref="Point3d"/>.</param>
-        /// <param name="endPoint">The end <see cref="Point3d"/>.</param>
-        public static void Add(Point3d startPoint, Point3d endPoint)
+		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)"/>
+        /// <param name="startPoint">The start <see cref="Point"/>.</param>
+		/// <param name="endPoint">The end <see cref="Point"/>.</param>
+		public bool Add(Point startPoint, Point endPoint, bool raiseEvents = true, bool sort = true)
         {
 	        // Order points
-	        var pts = new[] { startPoint, endPoint }.Order().ToArray();
+	        var pts = new[] { startPoint, endPoint }.ToList();
+			pts.Sort();
 
-	        Add(new StringerGeometry(pts[0], pts[1], 0, 0));
+	        return
+		        Add(new StringerObject(pts[0], pts[1]), raiseEvents, sort);
         }
 
-        /// <summary>
-        /// Add a stringer to drawing.
-        /// </summary>
-        /// <param name="line">The <see cref="Line"/> to be the stringer.</param>
-        public static void Add(Line line) => Add(line.StartPoint, line.EndPoint);
+		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)"/>
+		/// <param name="geometry">The <see cref="StringerGeometry"/> to add.</param>
+		public bool Add(StringerGeometry geometry, bool raiseEvents = true, bool sort = true) => Add(new StringerObject(geometry), raiseEvents, sort);
 
-		/// <summary>
-		/// Add a stringer to drawing.
-		/// </summary>
-		/// <param name="geometry">The <see cref="StringerGeometry"/> to add to drawing.</param>
-		public static void Add(StringerGeometry geometry)
-        {
-	        // Check if a Stringer already exist on that position. If not, create it
-	        if (Geometries.Contains(geometry))
-		        return;
 
-	        // Add to the list
-	        Geometries.Add(geometry);
+		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)"/>
+		/// <param name="geometries">The <see cref="StringerGeometry"/>'s to add.</param>
+		public int AddRange(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true) => AddRange(geometries?.Select(g => new StringerObject(g)), raiseEvents, sort);
 
-	        // Set layer
-	        var line = new Line(geometry.InitialPoint, geometry.EndPoint)
-	        {
-		        Layer = $"{Layer.Stringer}"
-	        };
+		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)"/>
+		/// <param name="geometry">The <see cref="StringerGeometry"/> to remove from this list.</param>
+		public bool Remove(StringerGeometry geometry, bool raiseEvents = true, bool sort = true) => Remove(new StringerObject(geometry), raiseEvents, sort);
 
-	        // Add the object
-	        line.AddToDrawing(On_StringerErase);
-        }
-
-        /// <summary>
-        /// Add stringers to drawing.
-        /// </summary>
-        /// <param name="lines">The <see cref="Line"/>'s to be the stringers.</param>
-        public static void Add(IEnumerable<Line> lines)
-        {
-			// Get the geometries
-			var geos =
-				(from Line line in lines 
-					let pts = new [] { line.StartPoint, line.EndPoint }.Order().ToArray() 
-					select new StringerGeometry(pts[0], pts[1], 0, 0, GeometryUnit)).ToArray();
-
-			Add(geos);
-        }
-
-		/// <summary>
-		/// Add stringers to drawing.
-		/// </summary>
-		/// <param name="geometries">The <see cref="StringerGeometry"/>'s to add to drawing.</param>
-		public static void Add(IEnumerable<StringerGeometry> geometries)
-        {
-			// Get the geometries that don't exist in the drawing
-			var newGeos = geometries.Distinct().Where(g => !Geometries.Contains(g)).ToArray();
-			Geometries.AddRange(newGeos);
-
-			// Create and add the stringers
-			var strs = newGeos.Select(g => new Line(g.InitialPoint, g.EndPoint) { Layer = $"{Layer.Stringer}" }).ToArray();
-	        strs.AddToDrawing(On_StringerErase);
-        }
-
-		/// <summary>
-		/// Remove a stringer from drawing.
-		/// </summary>
-		/// <param name="stringer">The <see cref="Line"/> to remove from drawing.</param>
-		public static void Remove(Line stringer)
-		{
-			if (stringer is null)
-				return;
-
-			// Remove from list
-			Geometries.RemoveAll(g => g == StringerObject.GetGeometry(stringer, false));
-
-			// Remove the stringer
-			stringer.RemoveFromDrawing();
-		}
-
-		/// <summary>
-		/// Remove a stringer from drawing.
-		/// </summary>
-		/// <param name="geometry">The <see cref="StringerGeometry"/> to remove from drawing.</param>
-		public static void Remove(StringerGeometry geometry)
-		{
-			// Remove from list
-			Geometries.RemoveAll(g => g == geometry);
-
-			// Remove the stringer
-			GetLineByGeometry(geometry).RemoveFromDrawing();
-		}
-
-		/// <summary>
-		/// Remove a collection of stringers from drawing.
-		/// </summary>
-		/// <param name="stringers">The collection of <see cref="Line"/>'s to remove from drawing.</param>
-		public static void Remove(IEnumerable<Line> stringers)
-		{
-			if (stringers is null || !stringers.Any())
-				return;
-
-			// Remove from list
-			var geos = stringers.Select(s => StringerObject.GetGeometry(s, false)).ToArray();
-			Geometries.RemoveAll(geos.Contains);
-
-			// Remove the stringer
-			stringers.RemoveFromDrawing();
-		}
-
-		/// <summary>
-		/// Remove a collection of stringers from drawing.
-		/// </summary>
+		/// <inheritdoc cref="EList{T}.RemoveRange(IEnumerable{T}, bool, bool)"/>
 		/// <param name="geometries">The <see cref="StringerGeometry"/>'s to remove from drawing.</param>
-		public static void Remove(IEnumerable<StringerGeometry> geometries)
-		{
-			if(geometries is null || !geometries.Any())
-				return;
-
-			// Remove from list
-			Geometries.RemoveAll(geometries.Contains);
-
-			// Remove the stringer
-			GetLinesByGeometries(geometries).ToArray().RemoveFromDrawing();
-		}
+		public int RemoveRange(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true) => RemoveRange(geometries.Select(g => new StringerObject(g)), raiseEvents, sort);
 
 		/// <summary>
 		/// Return a <see cref="Line"/> in the drawing corresponding to this <paramref name="geometry"/>.

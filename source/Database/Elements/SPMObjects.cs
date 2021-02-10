@@ -13,38 +13,21 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     SPMObjects base class.
 	/// </summary>
-	/// <typeparam name="T">Any type that implements <see cref="ISPMObject{T1,T2}" />.</typeparam>
+	/// <typeparam name="T">Any type that implements <see cref="ISPMObject{T1,T2,T3}" />.</typeparam>
 	public abstract class SPMObjects<T> : EList<T>
-		where T : ISPMObject<INumberedElement, Entity>
+		where T : ISPMObject<T, INumberedElement, Entity>
 	{
 		#region Constructors
 
-		protected SPMObjects()
-		{
-			SetEvents();
-		}
+		protected SPMObjects() => SetEvents();
 
 		protected SPMObjects(IEnumerable<T> collection)
-			: base(collection)
-		{
+			: base(collection) =>
 			SetEvents();
-		}
 
 		#endregion
 
 		#region  Methods
-
-		/// <summary>
-		///     Set events on this collection.
-		/// </summary>
-		protected void SetEvents()
-		{
-			ItemAdded    += On_ObjectAdded;
-			ItemRemoved  += On_ObjectRemoved;
-			RangeAdded   += On_ObjectsAdded;
-			RangeRemoved += On_ObjectsRemoved;
-			ListSorted   += On_ListSort;
-		}
 
 		/// <summary>
 		///     Event to execute when an object is added to a list.
@@ -117,6 +100,18 @@ namespace SPMTool.Database.Elements
 			// Set object ids
 			for (var i = 0; i < notNullObjects.Count; i++)
 				notNullObjects[i].ObjectId = objIds[i];
+		}
+
+		/// <summary>
+		///     Set events on this collection.
+		/// </summary>
+		protected void SetEvents()
+		{
+			ItemAdded    += On_ObjectAdded;
+			ItemRemoved  += On_ObjectRemoved;
+			RangeAdded   += On_ObjectsAdded;
+			RangeRemoved += On_ObjectsRemoved;
+			ListSorted   += On_ListSort;
 		}
 
 		#endregion

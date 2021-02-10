@@ -158,7 +158,7 @@ namespace SPMTool.Database.Elements
 		public void AddToDrawing() => ObjectId = GetEntity().AddToDrawing();
 
 		/// <summary>
-		///     Get the <see cref="StringerGeometry" /> from this <see cref="Line" />.
+		///     Get the <see cref="StringerGeometry" /> from XData.
 		/// </summary>
 		/// <param name="initialPoint">The initial <see cref="Point3d" />.</param>
 		/// <param name="endPoint">The end <see cref="Point3d" />.</param>
