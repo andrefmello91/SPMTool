@@ -144,17 +144,17 @@ namespace SPMTool.Extensions
 		///     Read a <see cref="Entity" /> in the drawing from this <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static Entity ToEntity(this ObjectId objectId, Transaction ongoingTransaction = null) => (Entity) objectId.ToDBObject(ongoingTransaction);
+		public static Entity GetEntity(this ObjectId objectId, Transaction ongoingTransaction = null) => (Entity) objectId.ToDBObject(ongoingTransaction);
 
 		/// <summary>
 		///     Get the <see cref="ObjectId" /> related to this <paramref name="handle" />.
 		/// </summary>
-		public static ObjectId ToObjectId(this Handle handle) => DataBase.Database.TryGetObjectId(handle, out var obj) ? obj : ObjectId.Null;
+		public static ObjectId GetObjectId(this Handle handle) => DataBase.Database.TryGetObjectId(handle, out var obj) ? obj : ObjectId.Null;
 
 		/// <summary>
 		///     Get the <see cref="Entity" /> related to this <paramref name="handle" />.
 		/// </summary>
-		public static Entity ToEntity(this Handle handle) => handle.ToObjectId().ToEntity();
+		public static Entity GetEntity(this Handle handle) => handle.GetObjectId().GetEntity();
 
 		/// <summary>
 		///     Return a <see cref="DBObjectCollection" /> from an <see cref="ObjectIdCollection" />.
