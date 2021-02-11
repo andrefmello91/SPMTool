@@ -185,13 +185,13 @@ namespace SPMTool.Database.Conditions
         /// Get the <see cref="Entity"/> associated to this <paramref name="forceBlock"/>.
         /// </summary>
         /// <param name="forceBlock">The force block.</param>
-        private static ObjectId AssociatedText(Entity forceBlock) => new Handle(Convert.ToInt64(forceBlock.ReadXData()[(int) ForceIndex.TextHandle].Value.ToString(), 16)).ToObjectId();
+        private static ObjectId AssociatedText(Entity forceBlock) => new Handle(Convert.ToInt64(forceBlock.ReadXData()[(int) ForceIndex.TextHandle].Value.ToString(), 16)).GetObjectId();
 
         /// <summary>
         /// Get the <see cref="Entity"/> associated to this <paramref name="forceText"/>.
         /// </summary>
         /// <param name="forceText">The force block.</param>
-        private static ObjectId AssociatedBlock(Entity forceText) => new Handle(Convert.ToInt64(forceText.ReadXData()[(int) ForceTextIndex.BlockHandle].Value.ToString(), 16)).ToObjectId();
+        private static ObjectId AssociatedBlock(Entity forceText) => new Handle(Convert.ToInt64(forceText.ReadXData()[(int) ForceTextIndex.BlockHandle].Value.ToString(), 16)).GetObjectId();
 		
         /// <summary>
 		/// Create XData for forces

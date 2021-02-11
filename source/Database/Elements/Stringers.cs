@@ -4,13 +4,14 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
-using Material.Concrete;
 using OnPlaneComponents;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using static SPMTool.Database.SettingsData;
+using static SPMTool.Units;
+using Force = UnitsNet.Force;
 
 #nullable enable
 
@@ -19,7 +20,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Stringers class.
 	/// </summary>
-	public class Stringers : SPMObjects<StringerObject, StringerGeometry>
+	public class Stringers : SPMObjects<StringerObject, StringerGeometry, Stringer>
 	{
 		#region Properties
 
@@ -73,104 +74,46 @@ namespace SPMTool.Database.Elements
 
 		#endregion
 
+		#region Constructors
+
+		private Stringers()
+		{
+		}
+
+		private Stringers(IEnumerable<StringerObject> stringerObjects)
+			: base(stringerObjects)
+		{
+		}
+
+		#endregion
+
 		#region  Methods
 
 		/// <summary>
 		///     Get the collection of stringers in the drawing.
 		/// </summary>
-		public static IEnumerable<Line> GetObjects() => Layer.Stringer.GetDBObjects().ToLines();
+		public static IEnumerable<Line>? GetObjects() => Layer.Stringer.GetDBObjects()?.ToLines();
 
 		/// <summary>
-		///     Update the Stringer numbers on the XData of each Stringer in the model and return the collection of stringers.
+		///     Read all the <see cref="StringerObject" />'s in the drawing.
 		/// </summary>
-		/// <param name="updateNodes">Update nodes too?</param>
-		public static void Update(bool updateNodes = true)
-		{
-			// Get the Stringer collection
-			var strs = GetObjects()?.Order()?.ToArray();
-
-			if (strs is null || !strs.Any())
-				return;
-
-			// Bool to alert the user
-			var userAlert = false;
-
-			// Access the stringers on the document
-			for (var i = 0; i < strs.Length; i++)
-			{
-				// Initialize the array of typed values for XData
-				TypedValue[] data;
-
-				// Get the Xdata size
-				var size = Enum.GetNames(typeof(StringerIndex)).Length;
-
-				// If XData does not exist, create it
-				if (strs[i].XData is null)
-				{
-					data = StringerObject.NewXData();
-				}
-
-				else // Xdata exists
-				{
-					// Get the result buffer as an array
-					data = strs[i].ReadXData();
-
-					// Verify the size of XData
-					if (data.Length != size)
-					{
-						data = StringerObject.NewXData();
-
-						// Alert the user
-						userAlert = true;
-					}
-				}
-
-				// Get the Stringer number
-				var strNum = i + 1;
-
-				// Set the updated number and nodes in ascending number and length (line 2 to 6)
-				data[(int) StringerIndex.Number] = new TypedValue((int) DxfCode.ExtendedDataReal, strNum);
-
-				// Add the new XData
-				strs[i].SetXData(data);
-			}
-
-			// Save geometries
-			Geometries = GetGeometries(strs);
-
-			// Get all the nodes in the model
-			if (updateNodes)
-				Nodes.Update();
-
-			// Alert the user
-			if (userAlert)
-				Application.ShowAlertDialog("Please set Stringer geometry and reinforcement again.");
-		}
+		public static Stringers ReadFromDrawing() => ReadFromLines(GetObjects());
 
 		/// <summary>
-		///     Get and update the stringer geometries in the drawing.
+		///     Read <see cref="StringerObject" />'s from a collection of <see cref="Line" />'s.
 		/// </summary>
-		/// <param name="stringers">The collection of <see cref="Line" />'s.</param>
-		private static List<StringerGeometry> GetGeometries(IEnumerable<Line> stringers = null) => (stringers ?? GetObjects())?.Select(str => StringerObject.GetGeometry(str, false)).ToList() ?? new List<StringerGeometry>();
-
-		/// <summary>
-		///     Read <see cref="Stringer" /> elements in drawing.
-		/// </summary>
-		/// <param name="lines">The collection of the stringer <see cref="Line" />'s from AutoCAD drawing.</param>
-		/// <param name="nodes">The collection containing all <see cref="Node" />'s of SPM model.</param>
-		/// <param name="units">Units current in use <see cref="Units" />.</param>
-		/// <param name="concreteParameters">The concrete parameters <see cref="Parameters" />.</param>
-		/// <param name="model">The concrete <see cref="ConstitutiveModel" />.</param>
-		/// <param name="analysisType">Type of analysis to perform (<see cref="AnalysisType" />).</param>
-		public static IEnumerable<Stringer> Read(IEnumerable<Line> lines, Units units, Parameters concreteParameters, ConstitutiveModel model, IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
-			lines?.Select(line => StringerObject.Read(line, units, concreteParameters, model, nodes, analysisType)).OrderBy(str => str.Number);
+		/// <param name="stringerLines">The collection containing the <see cref="Line" />'s of drawing.</param>
+		public static Stringers ReadFromLines(IEnumerable<Line>? stringerLines) =>
+			stringerLines is null || !stringerLines.Any()
+				? new Stringers()
+				: new Stringers(stringerLines.Select(StringerObject.ReadFromLine));
 
 		/// <summary>
 		///     Draw stringer forces.
 		/// </summary>
 		/// <param name="stringers">The collection of <see cref="Stringer" />'s.</param>
 		/// <param name="maxForce">The maximum stringer force.</param>
-		public static void DrawForces(IEnumerable<Stringer> stringers, double maxForce)
+		public static void DrawForces(IEnumerable<Stringer> stringers, Force maxForce)
 		{
 			// Get units
 			var units = SavedUnits;
@@ -186,11 +129,11 @@ namespace SPMTool.Database.Elements
 
 				// Get the parameters of the Stringer
 				double
-					l   = stringer.Geometry.Length.ConvertFromMillimeter(units.Geometry),
+					l   = stringer.Geometry.Length.ToUnit(units.Geometry).Value,
 					ang = stringer.Geometry.Angle;
 
 				// Get the start point
-				var stPt = stringer.Geometry.InitialPoint;
+				var stPt = stringer.Geometry.InitialPoint.ToPoint3d();
 
 				// Get normal forces
 				var (N1, N3) = stringer.NormalForces;
@@ -229,7 +172,7 @@ namespace SPMTool.Database.Elements
 						dgrm.Transparency = 80.Transparency();
 
 						// Set the color (blue to compression and red to tension)
-						dgrm.ColorIndex = Math.Max(N1, N3) > 0 ? (short) Color.Blue1 : (short) Color.Red;
+						dgrm.ColorIndex = Math.Max(N1.Value, N3.Value) > 0 ? (short) Color.Blue1 : (short) Color.Red;
 
 						// Rotate the diagram
 						dgrm.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
@@ -268,7 +211,7 @@ namespace SPMTool.Database.Elements
 						dgrm1.Transparency = 80.Transparency();
 
 						// Set the color (blue to compression and red to tension)
-						dgrm1.ColorIndex = N1 > 0 ? (short) Color.Blue1 : (short) Color.Red;
+						dgrm1.ColorIndex = N1.Value > 0 ? (short) Color.Blue1 : (short) Color.Red;
 
 						// Rotate the diagram
 						dgrm1.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
@@ -284,7 +227,7 @@ namespace SPMTool.Database.Elements
 						dgrm3.Transparency = 80.Transparency();
 
 						// Set the color (blue to compression and red to tension)
-						dgrm3.ColorIndex = N3 > 0 ? (short) Color.Blue1 : (short) Color.Red;
+						dgrm3.ColorIndex = N3.Value > 0 ? (short) Color.Blue1 : (short) Color.Red;
 
 						// Rotate the diagram
 						dgrm3.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
@@ -296,67 +239,64 @@ namespace SPMTool.Database.Elements
 
 				void AddTexts()
 				{
-					if (!N1.ApproxZero(0.01))
-						using (var txt1 = new DBText())
+					if (!N1.ApproxZero(ForceTolerance))
+					{
+						// Set the parameters
+						// Set the color (blue to compression and red to tension) and position
+						using var txt1 = new DBText
 						{
-							// Set the parameters
-							txt1.Layer = $"{Layer.StringerForce}";
-							txt1.Height = 30 * scFctr;
+							Layer = $"{Layer.StringerForce}",
 
-							// Write force in unit
-							txt1.TextString = $"{N1.ConvertFromNewton(units.StringerForces).Abs():0.00}";
+							Height = 30 * scFctr,
 
-							// Set the color (blue to compression and red to tension) and position
-							if (N1 > 0)
-							{
-								txt1.ColorIndex = (short) Color.Blue1;
-								txt1.Position = new Point3d(stPt.X + 10 * scFctr, stPt.Y + h1 + 20 * scFctr, 0);
-							}
-							else
-							{
-								txt1.ColorIndex = (short) Color.Red;
-								txt1.Position = new Point3d(stPt.X + 10 * scFctr, stPt.Y + h1 - 50 * scFctr, 0);
-							}
+							TextString = $"{N1.ToUnit(units.StringerForces).Value.Abs():0.00}",
 
-							// Rotate the text
-							txt1.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
+							ColorIndex = N1.Value > 0
+								? (short) Color.Blue1
+								: (short) Color.Red,
 
-							// Add the text to the drawing
-							txt1.AddToDrawing();
-						}
+							Position = N1.Value > 0
+								? new Point3d(stPt.X + 10 * scFctr, stPt.Y + h1 + 20 * scFctr, 0)
+								: new Point3d(stPt.X + 10 * scFctr, stPt.Y + h1 - 50 * scFctr, 0)
+						};
 
-					if (!N3.ApproxZero(0.01))
-						using (var txt3 = new DBText())
-						{
-							// Set the parameters
-							txt3.Layer = $"{Layer.StringerForce}";
-							txt3.Height = 30 * scFctr;
+						// Rotate the text
+						txt1.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
 
-							// Write force in unit
-							txt3.TextString = $"{N3.ConvertFromNewton(units.StringerForces).Abs():0.00}";
+						// Add the text to the drawing
+						txt1.AddToDrawing();
+					}
 
-							// Set the color (blue to compression and red to tension) and position
-							if (N3 > 0)
-							{
-								txt3.ColorIndex = (short) Color.Blue1;
-								txt3.Position = new Point3d(stPt.X + l - 10 * scFctr, stPt.Y + h3 + 20 * scFctr, 0);
-							}
-							else
-							{
-								txt3.ColorIndex = (short) Color.Red;
-								txt3.Position = new Point3d(stPt.X + l - 10 * scFctr, stPt.Y + h3 - 50 * scFctr, 0);
-							}
+					if (N3.ApproxZero(ForceTolerance))
+						return;
 
-							// Adjust the alignment
-							txt3.HorizontalMode = TextHorizontalMode.TextRight;
-							txt3.AlignmentPoint = txt3.Position;
+					using var txt3 = new DBText
+					{
+						Layer = $"{Layer.StringerForce}",
 
-							// Rotate the text
-							txt3.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
+						Height = 30 * scFctr,
 
-							// Add the text to the drawing
-							txt3.AddToDrawing();
-						}
+						TextString = $"{N3.ToUnit(units.StringerForces).Value.Abs():0.00}",
+
+						ColorIndex = N3.Value > 0
+							? (short) Color.Blue1
+							: (short) Color.Red,
+
+						Position = N3.Value > 0
+							? new Point3d(stPt.X + l - 10 * scFctr, stPt.Y + h3 + 20 * scFctr, 0)
+							: new Point3d(stPt.X + l - 10 * scFctr, stPt.Y + h3 - 50 * scFctr, 0),
+
+						HorizontalMode = TextHorizontalMode.TextRight
+					};
+
+					// Adjust the alignment
+					txt3.AlignmentPoint = txt3.Position;
+
+					// Rotate the text
+					txt3.TransformBy(Matrix3d.Rotation(ang, DataBase.Ucs.Zaxis, stPt));
+
+					// Add the text to the drawing
+					txt3.AddToDrawing();
 				}
 			}
 
@@ -387,11 +327,11 @@ namespace SPMTool.Database.Elements
 					var cracks = str.CrackOpenings;
 
 					// Get length converted and angle
-					var l = str.Geometry.Length.ConvertFromMillimeter(units.Geometry);
+					var l = str.Geometry.Length.ToUnit(units.Geometry).Value;
 					var a = str.Geometry.Angle;
 
 					// Get insertion points
-					var stPt = str.Geometry.InitialPoint;
+					var stPt = str.Geometry.InitialPoint.ToPoint3d();
 
 					var points = new[]
 					{
@@ -402,11 +342,11 @@ namespace SPMTool.Database.Elements
 
 					for (var i = 0; i < cracks.Length; i++)
 					{
-						if (cracks[i].ApproxZero(1E-4))
+						if (cracks[i].ApproxZero(LengthTolerance))
 							continue;
 
 						// Add crack blocks
-						AddCrackBlock(cracks[i], points[i]);
+						AddCrackBlock(cracks[i].ToUnit(SavedUnits.CrackOpenings).Value, points[i]);
 					}
 
 					// Create crack block
@@ -436,7 +376,7 @@ namespace SPMTool.Database.Elements
 							// Set the parameters
 							crkTxt.Layer = $"{Layer.Cracks}";
 							crkTxt.Height = 30 * scFctr;
-							crkTxt.TextString = $"{Math.Abs(w.ConvertFromMillimeter(units.CrackOpenings)):0.00E+00}";
+							crkTxt.TextString = $"{w.Abs():0.00E+00}";
 							crkTxt.Position = algnPt;
 							crkTxt.HorizontalMode = TextHorizontalMode.TextCenter;
 							crkTxt.AlignmentPoint = algnPt;
@@ -457,10 +397,14 @@ namespace SPMTool.Database.Elements
 		}
 
 		/// <summary>
-		///     Return a collection of <see cref="StringerObject" />'s corresponding to these <paramref name="geometries" />.
+		///     Update all the stringers in this collection of stringers.
 		/// </summary>
-		/// <param name="geometries">The required <see cref="StringerGeometry" />'s. </param>
-		public IEnumerable<StringerObject> GetByGeometries(IEnumerable<StringerGeometry> geometries) => this.Where(n => geometries.Contains(n.Geometry)).OrderBy(s => s.Number);
+		public void Update()
+		{
+			Clear(false);
+
+			AddRange(ReadFromDrawing());
+		}
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		/// <param name="startPoint">The start <see cref="Point" />.</param>
@@ -479,7 +423,6 @@ namespace SPMTool.Database.Elements
 		/// <param name="geometry">The <see cref="StringerGeometry" /> to add.</param>
 		public bool Add(StringerGeometry geometry, bool raiseEvents = true, bool sort = true) => Add(new StringerObject(geometry), raiseEvents, sort);
 
-
 		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
 		/// <param name="geometries">The <see cref="StringerGeometry" />'s to add.</param>
 		public int AddRange(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true) => AddRange(geometries?.Select(g => new StringerObject(g)), raiseEvents, sort);
@@ -495,16 +438,19 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Event to execute when a stringer is erased.
 		/// </summary>
-		private static void On_StringerErase(object sender, ObjectErasedEventArgs e)
+		public static void On_StringerErase(object sender, ObjectErasedEventArgs e)
 		{
-			if (Geometries is null || !Geometries.Any() || !(sender is Line str))
+			if (Model.Stringers is null || !Model.Stringers.Any() || !(sender is Line str))
 				return;
 
-			Geometries.RemoveAll(g => g == StringerObject.GetGeometry(str, false));
+			// Get the geometry
+			var geometry = new StringerGeometry(str.StartPoint.ToPoint(SavedUnits.Geometry), str.EndPoint.ToPoint(SavedUnits.Geometry), 0, 0);
 
-			// Update and remove unnecessary nodes
-			Update(false);
-			Nodes.Update(false);
+			// Remove the stringer and update nodes from list
+			if (!Model.Stringers.Remove(geometry, false))
+				return;
+
+			Model.Nodes.Update();
 		}
 
 		#endregion

@@ -13,6 +13,7 @@ namespace SPMTool.Database.Elements
 	/// <typeparam name="T4">Any type based on <see cref="Entity"/>.</typeparam>
 	public interface ISPMObject<T1, out T2, out T3, out T4> : IEquatable<T1>, IComparable<T1>
 		where T1 : ISPMObject<T1, T2, T3, T4>?
+		where T2 : notnull
 		where T3 : INumberedElement
 		where T4 : Entity
 	{

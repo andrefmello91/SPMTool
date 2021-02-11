@@ -124,13 +124,13 @@ namespace SPMTool.Database.Elements
 		///     Read a <see cref="PanelObject" /> in the drawing.
 		/// </summary>
 		/// <param name="panelObjectId">The <see cref="ObjectId" /> of the node.</param>
-		public static PanelObject ReadFromDrawing(ObjectId panelObjectId) => ReadFromDrawing((Solid) panelObjectId.ToEntity());
+		public static PanelObject ReadFromObjectId(ObjectId panelObjectId) => ReadFromSolid((Solid) panelObjectId.GetEntity());
 
 		/// <summary>
 		///     Read a <see cref="PanelObject" /> in the drawing.
 		/// </summary>
 		/// <param name="solid">The <see cref="Solid" /> object of the stringer.</param>
-		public static PanelObject ReadFromDrawing(Solid solid) => new PanelObject(solid.GetVertices().ToArray(), SavedUnits.Geometry)
+		public static PanelObject ReadFromSolid(Solid solid) => new PanelObject(solid.GetVertices().ToArray(), SavedUnits.Geometry)
 		{
 			ObjectId = solid.ObjectId
 		};
@@ -169,7 +169,7 @@ namespace SPMTool.Database.Elements
 			Layer = $"{Layer.Panel}"
 		};
 
-		public Solid GetEntity() => (Solid) ObjectId.ToEntity();
+		public Solid GetEntity() => (Solid) ObjectId.GetEntity();
 
 		public Panel GetElement() => throw new NotImplementedException();
 

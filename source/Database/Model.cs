@@ -44,6 +44,11 @@ namespace SPMTool.Database
 		/// </summary>
 		public static Nodes Nodes = Nodes.ReadFromDrawing();
 
+		/// <summary>
+		///     Get the <see cref="StringerObject" />'s in the model.
+		/// </summary>
+		public static Stringers Stringers = Stringers.ReadFromDrawing();
+
 		#endregion
 
 		#region Properties
@@ -190,7 +195,7 @@ namespace SPMTool.Database
 		///     Return an <see cref="SPMElement" /> from <paramref name="objectId" />.
 		/// </summary>
 		/// <param name="objectId">The <see cref="ObjectId" /> of SPM object.</param>
-		public static SPMElement GetElement(ObjectId objectId) => GetElement(objectId.ToEntity());
+		public static SPMElement GetElement(ObjectId objectId) => GetElement(objectId.GetEntity());
 
 		/// <summary>
 		///     Create blocks for use in SPMTool.

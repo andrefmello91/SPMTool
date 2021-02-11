@@ -17,7 +17,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Nodes class.
 	/// </summary>
-	public class Nodes : SPMObjects<NodeObject, Point>
+	public class Nodes : SPMObjects<NodeObject, Point, Node>
 	{
 		#region Properties
 
@@ -105,7 +105,7 @@ namespace SPMTool.Database.Elements
 		public void Add()
 		{
 			// Get stringers
-			var strList = Stringers.Geometries;
+			var strList = Model.Stringers.Geometries;
 
 			if (strList is null || !strList.Any())
 				return;
@@ -168,7 +168,7 @@ namespace SPMTool.Database.Elements
 		public int Remove()
 		{
 			// Get stringers
-			var strList = Stringers.Geometries;
+			var strList = Model.Stringers.Geometries;
 
 			if (strList is null || !strList.Any())
 			{

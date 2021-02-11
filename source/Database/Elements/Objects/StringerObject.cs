@@ -105,13 +105,13 @@ namespace SPMTool.Database.Elements
 		///     Read a <see cref="StringerObject" /> in the drawing.
 		/// </summary>
 		/// <param name="stringerObjectId">The <see cref="ObjectId" /> of the stringer.</param>
-		public static StringerObject ReadFromDrawing(ObjectId stringerObjectId) => ReadFromDrawing((Line) stringerObjectId.ToEntity());
+		public static StringerObject ReadFromObjectId(ObjectId stringerObjectId) => ReadFromLine((Line) stringerObjectId.GetEntity());
 
 		/// <summary>
 		///     Read a <see cref="StringerObject" /> in the drawing.
 		/// </summary>
 		/// <param name="line">The <see cref="Line" /> object of the stringer.</param>
-		public static StringerObject ReadFromDrawing(Line line) => new StringerObject(line.StartPoint, line.EndPoint, SavedUnits.Geometry)
+		public static StringerObject ReadFromLine(Line line) => new StringerObject(line.StartPoint, line.EndPoint, SavedUnits.Geometry)
 		{
 			ObjectId = line.ObjectId
 		};
@@ -147,7 +147,7 @@ namespace SPMTool.Database.Elements
 			Layer = $"{Layer.Stringer}"
 		};
 
-		public Line GetEntity() => (Line) ObjectId.ToEntity();
+		public Line GetEntity() => (Line) ObjectId.GetEntity();
 
 		public Stringer GetElement() => throw new NotImplementedException();
 

@@ -92,7 +92,7 @@ namespace SPMTool.Database.Elements
 		///     Read a <see cref="NodeObject" /> from an <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="nodeObjectId">The <see cref="ObjectId" /> of the node.</param>
-		public static NodeObject ReadFromObjectId(ObjectId nodeObjectId) => ReadFromPoint((DBPoint) nodeObjectId.ToEntity());
+		public static NodeObject ReadFromObjectId(ObjectId nodeObjectId) => ReadFromPoint((DBPoint) nodeObjectId.GetEntity());
 
 		/// <summary>
 		///     Read a <see cref="NodeObject" /> from a <see cref="DBPoint" />.
@@ -131,7 +131,7 @@ namespace SPMTool.Database.Elements
 			Layer = $"{GetLayer(Type)}"
 		};
 
-		public DBPoint GetEntity() => (DBPoint) ObjectId.ToEntity();
+		public DBPoint GetEntity() => (DBPoint) ObjectId.GetEntity();
 
 		public void AddToDrawing() => ObjectId = GetEntity().AddToDrawing();
 
