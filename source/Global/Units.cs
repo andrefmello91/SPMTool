@@ -1,5 +1,6 @@
 ﻿using System;
 using Extensions;
+using UnitsNet;
 using UnitsNet.Units;
 
 namespace SPMTool
@@ -27,6 +28,26 @@ namespace SPMTool
 			MaterialStrength      = PressureUnit.Megapascal,
 			DisplacementMagnifier = 200
 		};
+
+		/// <summary>
+		///     Default tolerance for <see cref="Length" /> comparisons.
+		/// </summary>
+		public static readonly Length LengthTolerance = Length.FromMillimeters(1E-3);
+
+		/// <summary>
+		///     Default tolerance for <see cref="Force" /> comparisons.
+		/// </summary>
+		public static readonly Force ForceTolerance = Force.FromNewtons(1E-3);
+
+		/// <summary>
+		///     Default tolerance for <see cref="Pressure" /> comparisons.
+		/// </summary>
+		public static readonly Pressure StressTolerance = Pressure.FromPascals(1E-3);
+
+		/// <summary>
+		///     Default tolerance for <see cref="Area" /> comparisons.
+		/// </summary>
+		public static readonly Area AreaTolerance = Area.FromSquareMillimeters(1E-3);
 
 		#endregion
 
