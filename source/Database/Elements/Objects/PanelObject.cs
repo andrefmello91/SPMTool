@@ -23,7 +23,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Panel object class.
 	/// </summary>
-	public class PanelObject : ISPMObject<PanelObject, Panel, Solid>
+	public class PanelObject : ISPMObject<PanelObject, PanelGeometry, Panel, Solid>
 	{
 		#region Fields
 
@@ -45,6 +45,8 @@ namespace SPMTool.Database.Elements
 
 		/// <inheritdoc />
 		public int Number { get; set; } = 0;
+
+		public PanelGeometry Property => Geometry;
 
 		/// <summary>
 		///     Get/set the horizontal <see cref="WebReinforcementDirection" />.

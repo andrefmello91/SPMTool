@@ -19,7 +19,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Node object class.
 	/// </summary>
-	public class NodeObject : ISPMObject<NodeObject, Node, DBPoint>
+	public class NodeObject : ISPMObject<NodeObject, Point, Node, DBPoint>
 	{
 		#region Fields
 
@@ -34,6 +34,8 @@ namespace SPMTool.Database.Elements
 
 		/// <inheritdoc />
 		public int Number { get; set; } = 0;
+
+		public Point Property => Position;
 
 		/// <summary>
 		///     Get the <see cref="OnPlaneComponents.Displacement" /> of this node object.
@@ -87,13 +89,13 @@ namespace SPMTool.Database.Elements
 		#region  Methods
 
 		/// <summary>
-		///     Read a <see cref="NodeObject" /> from an <see cref="ObjectId"/>.
+		///     Read a <see cref="NodeObject" /> from an <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="nodeObjectId">The <see cref="ObjectId" /> of the node.</param>
 		public static NodeObject ReadFromObjectId(ObjectId nodeObjectId) => ReadFromPoint((DBPoint) nodeObjectId.ToEntity());
 
 		/// <summary>
-		///     Read a <see cref="NodeObject" /> from a <see cref="DBPoint"/>.
+		///     Read a <see cref="NodeObject" /> from a <see cref="DBPoint" />.
 		/// </summary>
 		/// <param name="dbPoint">The <see cref="DBPoint" /> object of the node.</param>
 		public static NodeObject ReadFromPoint(DBPoint dbPoint) => new NodeObject(dbPoint.Position, GetNodeType(dbPoint), SavedUnits.Geometry)

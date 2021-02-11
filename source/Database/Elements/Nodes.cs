@@ -17,7 +17,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Nodes class.
 	/// </summary>
-	public class Nodes : SPMObjects<NodeObject>
+	public class Nodes : SPMObjects<NodeObject, Point>
 	{
 		#region Properties
 
@@ -25,6 +25,8 @@ namespace SPMTool.Database.Elements
 		///     Get a list of nodes' <see cref="Point" /> positions.
 		/// </summary>
 		public List<Point> Positions => this.Select(n => n.Position).ToList();
+
+		public override List<Point> Properties => Positions;
 
 		#endregion
 
@@ -96,17 +98,6 @@ namespace SPMTool.Database.Elements
 				NodeType.External  => Layer.ExtNode,
 				_                  => Layer.Displacements
 			};
-
-		/// <summary>
-		///     Event to execute when a node is erased.
-		/// </summary>
-		public static void On_NodeErase(object sender, ObjectErasedEventArgs e)
-		{
-			if (!Model.Nodes.Any() || !(sender is DBPoint nd))
-				return;
-
-			Model.Nodes.RemoveAll(n => n.Position == nd.Position.ToPoint(SavedUnits.Geometry), false);
-		}
 
 		/// <summary>
 		///     Add nodes in all necessary positions (stringer start, mid and end points).
@@ -240,6 +231,17 @@ namespace SPMTool.Database.Elements
 		///     Get a node from the list with corresponding <see cref="ObjectId" />.
 		/// </summary>
 		public NodeObject? GetByObjectId(ObjectId objectId) => Find(n => n.ObjectId == objectId);
+
+		/// <summary>
+		///     Event to execute when a node is erased.
+		/// </summary>
+		public static void On_NodeErase(object sender, ObjectErasedEventArgs e)
+		{
+			if (!Model.Nodes.Any() || !(sender is DBPoint nd))
+				return;
+
+			Model.Nodes.RemoveAll(n => n.Position == nd.Position.ToPoint(SavedUnits.Geometry), false);
+		}
 
 		#endregion
 	}

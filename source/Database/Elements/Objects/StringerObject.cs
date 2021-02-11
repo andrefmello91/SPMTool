@@ -23,7 +23,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Stringer object class.
 	/// </summary>
-	public class StringerObject : ISPMObject<StringerObject, Stringer, Line>
+	public class StringerObject : ISPMObject<StringerObject, StringerGeometry, Stringer, Line>
 	{
 		#region Fields
 
@@ -43,6 +43,8 @@ namespace SPMTool.Database.Elements
 
 		/// <inheritdoc />
 		public int Number { get; set; } = 0;
+
+		public StringerGeometry Property => Geometry;
 
 		/// <summary>
 		///     Get/set the height of <see cref="Geometry" />.
