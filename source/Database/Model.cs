@@ -49,6 +49,11 @@ namespace SPMTool.Database
 		/// </summary>
 		public static Stringers Stringers = Stringers.ReadFromDrawing();
 
+		/// <summary>
+		///     Get the <see cref="PanelObject" />'s in the model.
+		/// </summary>
+		public static Panels Panels;
+
 		#endregion
 
 		#region Properties

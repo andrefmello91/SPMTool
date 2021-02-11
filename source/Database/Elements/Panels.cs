@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Windows.Controls;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Extensions.AutoCAD;
-using Extensions.Number;
+using Extensions;
 using Material.Concrete;
 using Material.Reinforcement;
 using Material.Reinforcement.Biaxial;
 using MathNet.Numerics;
+using OnPlaneComponents;
 using SPM.Elements;
 using SPM.Elements.PanelProperties;
 using SPMTool.Enums;
@@ -18,18 +16,19 @@ using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
 using Panel = SPM.Elements.Panel;
+using static SPMTool.Database.SettingsData;
 
 namespace SPMTool.Database.Elements
 {
 	/// <summary>
     /// Panels class.
     /// </summary>
-	public static class Panels
+	public class Panels : SPMObjects<PanelObject, PanelGeometry, Panel>
 	{
 		/// <summary>
-		/// Auxiliary list of <see cref="Vertices"/>'s.
+		///		Get the list of <see cref="PanelGeometry"/>'s from this collection.
 		/// </summary>
-		public static List<Vertices> VerticesList { get; private set; } = GetPanelVertices();
+		public List<PanelGeometry> Geometries => Properties;
 
 		/// <summary>
 		/// Get the elements of the shear block.
@@ -129,11 +128,6 @@ namespace SPMTool.Database.Elements
 		}
 
 		/// <summary>
-		/// Get the geometry unit.
-		/// </summary>
-		private static LengthUnit GeometryUnit => SettingsData.SavedUnits.Geometry;
-
-		/// <summary>
 		/// Get the elements of the tensile block.
 		/// </summary>
 		public static IEnumerable<Entity> TensileBlockElements 
@@ -216,45 +210,17 @@ namespace SPMTool.Database.Elements
 			}
 		}
 
-		/// <summary>
-		/// Add a panel to the drawing.
-		/// </summary>
-		/// <param name="vertices">The collection of <see cref="Point3d"/> vertices.</param>
-		public static void Add(IEnumerable<Point3d> vertices) => Add(new Vertices(vertices, GeometryUnit));
+		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)"/>
+		/// <param name="vertices">The collection of four <see cref="Point"/> vertices, in any order.</param>
+		public bool Add(IEnumerable<Point>? vertices, bool raiseEvents = true, bool sort = true) => !(vertices is null) && Add(new PanelObject(vertices), raiseEvents, sort);
 
-		/// <summary>
-		/// Add a panel to the drawing.
-		/// </summary>
+		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)"/>
 		/// <param name="vertices">The panel <see cref="Vertices"/> object.</param>
-		public static void Add(Vertices vertices)
-		{
-			// Check if a panel already exist on that position. If not, create it
-			if (VerticesList.Contains(vertices))
-				return;
+		public bool Add(Vertices vertices, bool raiseEvents = true, bool sort = true) => Add(new PanelObject(vertices), raiseEvents, sort);
 
-            // Add to the list
-            VerticesList.Add(vertices);
-
-            // Create the panel as a solid with 4 segments (4 points)
-            var solid = new Solid(vertices.Vertex1, vertices.Vertex2, vertices.Vertex4, vertices.Vertex3)
-            {
-	            Layer = $"{Layer.Panel}"
-            };
-
-			solid.AddToDrawing(On_PanelErase);
-		}
-
-		/// <summary>
-		/// Add a panel to the drawing.
-		/// </summary>
-		/// <param name="solid">The <see cref="Solid"/> that represents the panel.</param>
-		public static void Add(Solid solid) => Add(solid.GetVertices());
-
-		/// <summary>
-		/// Add multiple panels to the drawing.
-		/// </summary>
+		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)"/>
 		/// <param name="verticesCollection">The collection of <see cref="Vertices"/>'s that represents the panels.</param>
-		public static void Add(IEnumerable<Vertices> verticesCollection)
+		public int AddRange(IEnumerable<Vertices> verticesCollection)
 		{
 			// Get solids' vertices that don't exist in the drawing
 			var vertices = verticesCollection.Distinct().Where(v => !VerticesList.Contains(v)).ToArray();
@@ -762,9 +728,9 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		/// Event to execute when a panel is erased.
 		/// </summary>
-		private static void On_PanelErase(object sender, ObjectErasedEventArgs e)
+		public static void On_PanelErase(object sender, ObjectErasedEventArgs e)
 		{
-			if (VerticesList is null || !VerticesList.Any() || !(sender is Solid pnl))
+			if (!Model.Panels.Any() || !(e.DBObject is Solid pnl) || pnl.Layer != $"{Layer.Panel}")
 				return;
 
 			var vertices = GetVertices(pnl);

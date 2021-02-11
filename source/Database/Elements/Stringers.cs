@@ -25,52 +25,9 @@ namespace SPMTool.Database.Elements
 		#region Properties
 
 		/// <summary>
-		///     Get the elements of the crack block.
+		///     Get the list of <see cref="StringerGeometry" />'s from objects in this collection.
 		/// </summary>
-		public static IEnumerable<Entity> CrackBlockElements
-		{
-			get
-			{
-				// Define the points to add the lines
-				var crkPts = CrackPoints();
-
-				List<Point3d> CrackPoints()
-				{
-					var pts = new List<Point3d>();
-
-					for (var i = 0; i < 2; i++)
-					{
-						// Set the start X coordinate
-						double y = 40 * i;
-
-						pts.Add(new Point3d(0, y, 0));
-						pts.Add(new Point3d( 1.7633, y + 10, 0));
-						pts.Add(new Point3d(-1.7633, y + 30, 0));
-					}
-
-					// Add the end point
-					pts.Add(new Point3d(0, 80, 0));
-
-					return pts;
-				}
-
-				// Define the lines and add to the collection
-				for (var i = 0; i < crkPts.Count - 1; i++)
-					yield return new Line
-					{
-						StartPoint = crkPts[i],
-						EndPoint   = crkPts[i + 1],
-						LineWeight = LineWeight.LineWeight035
-					};
-			}
-		}
-
-		/// <summary>
-		///     Get the list of <see cref="StringerGeometry" />'s.
-		/// </summary>
-		public List<StringerGeometry> Geometries => this.Select(n => n.Geometry).ToList();
-
-		public override List<StringerGeometry> Properties => Geometries;
+		public List<StringerGeometry> Geometries => Properties;
 
 		#endregion
 
@@ -88,6 +45,44 @@ namespace SPMTool.Database.Elements
 		#endregion
 
 		#region  Methods
+
+		/// <summary>
+		///     Get the elements of the crack block.
+		/// </summary>
+		public static IEnumerable<Entity> CrackBlockElements()
+		{
+			// Define the points to add the lines
+			var crkPts = CrackPoints();
+
+			List<Point3d> CrackPoints()
+			{
+				var pts = new List<Point3d>();
+
+				for (var i = 0; i < 2; i++)
+				{
+					// Set the start X coordinate
+					double y = 40 * i;
+
+					pts.Add(new Point3d(0, y, 0));
+					pts.Add(new Point3d( 1.7633, y + 10, 0));
+					pts.Add(new Point3d(-1.7633, y + 30, 0));
+				}
+
+				// Add the end point
+				pts.Add(new Point3d(0, 80, 0));
+
+				return pts;
+			}
+
+			// Define the lines and add to the collection
+			for (var i = 0; i < crkPts.Count - 1; i++)
+				yield return new Line
+				{
+					StartPoint = crkPts[i],
+					EndPoint   = crkPts[i + 1],
+					LineWeight = LineWeight.LineWeight035
+				};
+		}
 
 		/// <summary>
 		///     Get the collection of stringers in the drawing.
@@ -440,7 +435,7 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		public static void On_StringerErase(object sender, ObjectErasedEventArgs e)
 		{
-			if (Model.Stringers is null || !Model.Stringers.Any() || !(sender is Line str))
+			if (!Model.Stringers.Any() || !(e.DBObject is Line str) || str.Layer != $"{Layer.Stringer}")
 				return;
 
 			// Get the geometry

@@ -15,20 +15,21 @@ namespace SPMTool.Database.Elements
 	/// </summary>
 	/// <typeparam name="T1">Any type that implements <see cref="ISPMObject{T1,T2,T3,T4}" />.</typeparam>
 	/// <typeparam name="T2">The type that represents the main property of the object.</typeparam>
+	/// <typeparam name="T3">Any type that implements <see cref="INumberedElement" />.</typeparam>
 	public abstract class SPMObjects<T1, T2, T3> : EList<T1>
 		where T1 : ISPMObject<T1, T2, T3, Entity>?
 		where T2 : notnull
 		where T3 : INumberedElement
 	{
 		/// <summary>
-		///		Get the list of the main properties of this collection.
+		///		Get the list of the main properties from objects in this collection.
 		/// </summary>
-		public abstract List<T2> Properties { get; }
+		public List<T2> Properties => this.Select(t => t.Property).ToList();
 
 		/// <summary>
-		///		Get the SPM elements from this collection.
+		///		Get the the list of SPM elements from objects in this collection.
 		/// </summary>
-		public List<T3> GetElements => this.Select(t => t.GetElement()).ToList();
+		public List<T3> Elements => this.Select(t => t.GetElement()).ToList();
 
 		#region Constructors
 
@@ -91,7 +92,15 @@ namespace SPMTool.Database.Elements
 			var count = objects.Count();
 
 			for (var i = 0; i < count; i++)
-				objects.ElementAt(i).Number = i + 1;
+			{
+				var obj = objects.ElementAt(i);
+
+				if (obj is null)
+					continue;
+
+				// Set number
+				obj.Number = i + 1;
+			}
 		}
 
 		/// <summary>
@@ -108,7 +117,7 @@ namespace SPMTool.Database.Elements
 			var entities = notNullObjects.Select(n => n.GetEntity()).ToList();
 
 			// Add objects to drawing
-			var objIds = entities.AddToDrawing().ToList();
+			var objIds = entities.AddToDrawing(On_ObjectErase).ToList();
 
 			// Set object ids
 			for (var i = 0; i < notNullObjects.Count; i++)
@@ -122,7 +131,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Set events on this collection.
 		/// </summary>
-		protected void SetEvents()
+		private void SetEvents()
 		{
 			ItemAdded    += On_ObjectAdded;
 			ItemRemoved  += On_ObjectRemoved;
@@ -130,6 +139,31 @@ namespace SPMTool.Database.Elements
 			RangeRemoved += On_ObjectsRemoved;
 			ListSorted   += On_ListSort;
 		}
+
+		/// <summary>
+		///     Event to execute when an object is erased.
+		/// </summary>
+		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
+		{
+			switch (e.DBObject)
+			{
+				case DBPoint _ :
+					Nodes.On_NodeErase(sender, e);
+					break;
+
+				case Line _ :
+					Stringers.On_StringerErase(sender, e);
+					break;
+
+				case Solid _:
+					Panels.On_PanelErase(sender, e);
+					break;
+
+				default:
+					return;
+			}
+		}
+
 
 		#endregion
 	}

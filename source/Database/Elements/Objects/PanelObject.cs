@@ -179,7 +179,7 @@ namespace SPMTool.Database.Elements
 		public Panel GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
 			Panel.Read(analysisType, Number, nodes, Geometry, Parameters, ConstitutiveModel, Reinforcement);
 
-		public void AddToDrawing() => ObjectId = GetEntity().AddToDrawing();
+		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing();
 
 		/// <summary>
 		///     Set <paramref name="width" /> to this object.

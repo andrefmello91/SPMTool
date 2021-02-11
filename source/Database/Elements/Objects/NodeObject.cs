@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using OnPlaneComponents;
@@ -7,8 +8,10 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
+
 using static SPMTool.Database.Elements.Nodes;
 using static SPMTool.Database.SettingsData;
+
 using Force = OnPlaneComponents.Force;
 
 #nullable enable
@@ -133,7 +136,7 @@ namespace SPMTool.Database.Elements
 
 		public DBPoint GetEntity() => (DBPoint) ObjectId.GetEntity();
 
-		public void AddToDrawing() => ObjectId = GetEntity().AddToDrawing();
+		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing(On_NodeErase);
 
 		/// <summary>
 		///     Get this object as a <see cref="Node" />.

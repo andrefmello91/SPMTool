@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
@@ -13,7 +14,9 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
+
 using static SPMTool.Database.SettingsData;
+using static SPMTool.Database.Elements.Stringers;
 
 #nullable enable
 
@@ -157,7 +160,7 @@ namespace SPMTool.Database.Elements
 		public Stringer GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
 			Stringer.Read(analysisType, Number, nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, GetReinforcement());
 
-		public void AddToDrawing() => ObjectId = GetEntity().AddToDrawing();
+		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing(On_StringerErase);
 
 		/// <summary>
 		///     Get the <see cref="StringerGeometry" /> from XData.

@@ -24,9 +24,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Get a list of nodes' <see cref="Point" /> positions.
 		/// </summary>
-		public List<Point> Positions => this.Select(n => n.Position).ToList();
-
-		public override List<Point> Properties => Positions;
+		public List<Point> Positions => Properties;
 
 		#endregion
 
@@ -237,10 +235,12 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		public static void On_NodeErase(object sender, ObjectErasedEventArgs e)
 		{
-			if (!Model.Nodes.Any() || !(sender is DBPoint nd))
+			if (!Model.Nodes.Any() || !(e.DBObject is DBPoint nd) || nd.Layer != $"{Layer.ExtNode}" || nd.Layer != $"{Layer.IntNode}")
 				return;
 
-			Model.Nodes.RemoveAll(n => n.Position == nd.Position.ToPoint(SavedUnits.Geometry), false);
+			var position = nd.Position.ToPoint(SavedUnits.Geometry);
+
+			Model.Nodes.RemoveAll(n => n.Position == position, false);
 		}
 
 		#endregion
