@@ -1,4 +1,6 @@
-﻿using Autodesk.AutoCAD.Geometry;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Autodesk.AutoCAD.Geometry;
 using OnPlaneComponents;
 using UnitsNet.Units;
 
@@ -18,5 +20,18 @@ namespace SPMTool.Extensions
         /// </summary>
         /// <param name="point">The <see cref="Point"/> to convert.</param>
         public static Point3d ToPoint3d(this Point point) => new Point3d(point.X.Value, point.Y.Value, 0);
+
+        /// <summary>
+        /// Convert a collection of <see cref="Point3d"/>'s to a collection of <see cref="Point"/>'s.
+        /// </summary>
+        /// <param name="point3ds">The collection of <see cref="Point3d"/>'s to convert.</param>
+        /// <inheritdoc cref="ToPoint"/>
+        public static IEnumerable<Point>? ToPoints(this IEnumerable<Point3d>? point3ds, LengthUnit unit = LengthUnit.Millimeter) => point3ds?.Select(p => p.ToPoint(unit));
+
+        /// <summary>
+        /// Convert a collection of <see cref="Point"/>'s to a collection of <see cref="Point3d"/>'s.
+        /// </summary>
+        /// <param name="points">The collection of <see cref="Point"/>'s to convert.</param>
+        public static IEnumerable<Point3d>? ToPoint3ds(this IEnumerable<Point>? points) => points?.Select(p => p.ToPoint3d());
     }
 }

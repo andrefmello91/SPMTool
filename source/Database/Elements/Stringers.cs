@@ -22,15 +22,6 @@ namespace SPMTool.Database.Elements
 	/// </summary>
 	public class Stringers : SPMObjects<StringerObject, StringerGeometry, Stringer>
 	{
-		#region Properties
-
-		/// <summary>
-		///     Get the list of <see cref="StringerGeometry" />'s from objects in this collection.
-		/// </summary>
-		public List<StringerGeometry> Geometries => Properties;
-
-		#endregion
-
 		#region Constructors
 
 		private Stringers()
@@ -52,30 +43,26 @@ namespace SPMTool.Database.Elements
 		public static IEnumerable<Entity> CrackBlockElements()
 		{
 			// Define the points to add the lines
-			var crkPts = CrackPoints();
+			var crkPts = CrackPoints().ToArray();
 
-			List<Point3d> CrackPoints()
+			IEnumerable<Point3d> CrackPoints()
 			{
-				var pts = new List<Point3d>();
-
 				for (var i = 0; i < 2; i++)
 				{
 					// Set the start X coordinate
 					double y = 40 * i;
 
-					pts.Add(new Point3d(0, y, 0));
-					pts.Add(new Point3d( 1.7633, y + 10, 0));
-					pts.Add(new Point3d(-1.7633, y + 30, 0));
+					yield return new Point3d(0, y, 0);
+					yield return new Point3d( 1.7633, y + 10, 0);
+					yield return new Point3d(-1.7633, y + 30, 0);
 				}
 
 				// Add the end point
-				pts.Add(new Point3d(0, 80, 0));
-
-				return pts;
+				yield return new Point3d(0, 80, 0);
 			}
 
 			// Define the lines and add to the collection
-			for (var i = 0; i < crkPts.Count - 1; i++)
+			for (var i = 0; i < crkPts.Length - 1; i++)
 				yield return new Line
 				{
 					StartPoint = crkPts[i],
@@ -99,7 +86,7 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		/// <param name="stringerLines">The collection containing the <see cref="Line" />'s of drawing.</param>
 		public static Stringers ReadFromLines(IEnumerable<Line>? stringerLines) =>
-			stringerLines is null || !stringerLines.Any()
+			stringerLines.IsNullOrEmpty()
 				? new Stringers()
 				: new Stringers(stringerLines.Select(StringerObject.ReadFromLine));
 
@@ -392,13 +379,18 @@ namespace SPMTool.Database.Elements
 		}
 
 		/// <summary>
-		///     Update all the stringers in this collection of stringers.
+		///     Get the list of <see cref="StringerGeometry" />'s from objects in this collection.
+		/// </summary>
+		public List<StringerGeometry> GetGeometries() => GetProperties();
+
+		/// <summary>
+		///     Update all the stringers in this collection from drawing.
 		/// </summary>
 		public void Update()
 		{
 			Clear(false);
 
-			AddRange(ReadFromDrawing());
+			AddRange(ReadFromDrawing(), false);
 		}
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />

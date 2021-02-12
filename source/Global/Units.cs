@@ -35,6 +35,11 @@ namespace SPMTool
 		public static readonly Length LengthTolerance = Length.FromMillimeters(1E-3);
 
 		/// <summary>
+		///     Default tolerance for crack openings comparisons.
+		/// </summary>
+		public static readonly Length CrackTolerance = Length.FromMillimeters(1E-9);
+
+		/// <summary>
 		///     Default tolerance for <see cref="Force" /> comparisons.
 		/// </summary>
 		public static readonly Force ForceTolerance = Force.FromNewtons(1E-3);

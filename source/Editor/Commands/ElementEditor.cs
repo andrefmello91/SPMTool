@@ -5,7 +5,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Extensions.AutoCAD;
-using Extensions.Number;
+using Extensions;
 using MathNet.Numerics;
 using SPM.Elements.PanelProperties;
 using SPM.Elements.StringerProperties;
@@ -135,7 +135,7 @@ namespace SPMTool.Editor.Commands
 				cln = clnn.Value;
 
 			// Get the list of start and endpoints
-			var geoList = Stringers.Geometries;
+			var geoList = Stringers.GetGeometries;
 
 			// Get the list of panels
 			var pnlList = Panels.VerticesList;

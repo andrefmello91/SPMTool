@@ -21,16 +21,6 @@ namespace SPMTool.Database.Elements
 		where T2 : notnull
 		where T3 : INumberedElement
 	{
-		/// <summary>
-		///		Get the list of the main properties from objects in this collection.
-		/// </summary>
-		public List<T2> Properties => this.Select(t => t.Property).ToList();
-
-		/// <summary>
-		///		Get the the list of SPM elements from objects in this collection.
-		/// </summary>
-		public List<T3> Elements => this.Select(t => t.GetElement()).ToList();
-
 		#region Constructors
 
 		protected SPMObjects() => SetEvents();
@@ -42,31 +32,6 @@ namespace SPMTool.Database.Elements
 		#endregion
 
 		#region  Methods
-
-		/// <summary>
-		///     Event to execute when an object is added to a list.
-		/// </summary>
-		public static void On_ObjectAdded(object? sender, ItemEventArgs<T1>? e) => e?.Item?.AddToDrawing();
-
-		/// <summary>
-		///     Event to execute when a range of objects is added to a list.
-		/// </summary>
-		public static void On_ObjectsAdded(object? sender, RangeEventArgs<T1>? e) => AddToDrawing(e?.ItemCollection);
-
-		/// <summary>
-		///     Event to execute when an object is removed from a list.
-		/// </summary>
-		public static void On_ObjectRemoved(object? sender, ItemEventArgs<T1>? e) => RemoveFromDrawing(e.Item);
-
-		/// <summary>
-		///     Event to execute when a range of objects is removed from a list.
-		/// </summary>
-		public static void On_ObjectsRemoved(object? sender, RangeEventArgs<T1>? e) => RemoveFromDrawing(e?.ItemCollection);
-
-		/// <summary>
-		///     Event to execute when a list is sorted.
-		/// </summary>
-		public static void On_ListSort(object? sender, EventArgs? e) => SetNumbers((IEnumerable<T1>?) sender);
 
 		/// <summary>
 		///     Remove an object from drawing.
@@ -124,6 +89,16 @@ namespace SPMTool.Database.Elements
 				notNullObjects[i].ObjectId = objIds[i];
 		}
 
+		/// <summary>
+		///     Get the list of the main properties from objects in this collection.
+		/// </summary>
+		public List<T2> GetProperties() => this.Select(t => t.Property).ToList();
+
+		/// <summary>
+		///     Get the the list of SPM elements from objects in this collection.
+		/// </summary>
+		public List<T3> GetElements() => this.Select(t => t.GetElement()).ToList();
+
 		public T1 GetByProperty(T2 property) => Find(t => t.Property.Equals(property));
 
 		public IEnumerable<T1>? GetByProperties(IEnumerable<T2>? properties) => this.Where(t => properties.Contains(t.Property));
@@ -139,6 +114,31 @@ namespace SPMTool.Database.Elements
 			RangeRemoved += On_ObjectsRemoved;
 			ListSorted   += On_ListSort;
 		}
+
+		/// <summary>
+		///     Event to execute when an object is added to a list.
+		/// </summary>
+		public static void On_ObjectAdded(object? sender, ItemEventArgs<T1>? e) => e?.Item?.AddToDrawing();
+
+		/// <summary>
+		///     Event to execute when a range of objects is added to a list.
+		/// </summary>
+		public static void On_ObjectsAdded(object? sender, RangeEventArgs<T1>? e) => AddToDrawing(e?.ItemCollection);
+
+		/// <summary>
+		///     Event to execute when an object is removed from a list.
+		/// </summary>
+		public static void On_ObjectRemoved(object? sender, ItemEventArgs<T1>? e) => RemoveFromDrawing(e.Item);
+
+		/// <summary>
+		///     Event to execute when a range of objects is removed from a list.
+		/// </summary>
+		public static void On_ObjectsRemoved(object? sender, RangeEventArgs<T1>? e) => RemoveFromDrawing(e?.ItemCollection);
+
+		/// <summary>
+		///     Event to execute when a list is sorted.
+		/// </summary>
+		public static void On_ListSort(object? sender, EventArgs? e) => SetNumbers((IEnumerable<T1>?) sender);
 
 		/// <summary>
 		///     Event to execute when an object is erased.
@@ -163,7 +163,6 @@ namespace SPMTool.Database.Elements
 					return;
 			}
 		}
-
 
 		#endregion
 	}

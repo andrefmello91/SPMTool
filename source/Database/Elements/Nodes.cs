@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.Geometry;
 using Extensions;
 using OnPlaneComponents;
 using SPM.Elements;
+using SPM.Elements.StringerProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using static SPMTool.Database.SettingsData;
@@ -19,15 +20,6 @@ namespace SPMTool.Database.Elements
 	/// </summary>
 	public class Nodes : SPMObjects<NodeObject, Point, Node>
 	{
-		#region Properties
-
-		/// <summary>
-		///     Get a list of nodes' <see cref="Point" /> positions.
-		/// </summary>
-		public List<Point> Positions => Properties;
-
-		#endregion
-
 		#region Constructors
 
 		private Nodes()
@@ -70,7 +62,7 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		/// <param name="nodePoints">The collection containing the <see cref="DBPoint" />'s of drawing.</param>
 		public static Nodes ReadFromPoints(IEnumerable<DBPoint>? nodePoints) =>
-			nodePoints is null || !nodePoints.Any()
+			nodePoints.IsNullOrEmpty()
 				? new Nodes()
 				: new Nodes(nodePoints.Select(NodeObject.ReadFromPoint));
 
@@ -98,113 +90,120 @@ namespace SPMTool.Database.Elements
 			};
 
 		/// <summary>
-		///     Add nodes in all necessary positions (stringer start, mid and end points).
+		///     Get a list of nodes' <see cref="Point" /> positions.
 		/// </summary>
-		public void Add()
-		{
-			// Get stringers
-			var strList = Model.Stringers.Geometries;
-
-			if (strList is null || !strList.Any())
-				return;
-
-			// Add external nodes
-			var extNds = strList.Select(str => str.InitialPoint).ToList();
-			extNds.AddRange(strList.Select(str => str.EndPoint));
-			AddRange(extNds, NodeType.External);
-
-			// Add internal nodes
-			AddRange(strList.Select(str => str.CenterPoint).ToArray(), NodeType.Internal);
-		}
+		public List<Point> GetPositions() => GetProperties();
 
 		/// <summary>
-		///     Add a node in this <paramref name="position" />.
+		///     Add nodes in all necessary positions, based on a collection of <seealso cref="StringerGeometry" />'s.
 		/// </summary>
+		/// <remarks>
+		///     Nodes are added at each <see cref="StringerGeometry.InitialPoint" /> , <see cref="StringerGeometry.CenterPoint" />
+		///     and <see cref="StringerGeometry.EndPoint" />.
+		/// </remarks>
+		/// <param name="geometries">The collection of <see cref="StringerGeometry" />'s for adding nodes.</param>
+		/// <inheritdoc cref="AddRange(IEnumerable{NodeObject}, bool, bool)" />
+		public int AddNecessary(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true)
+		{
+			if (geometries.IsNullOrEmpty())
+				return 0;
+
+			var geoList = geometries.ToList();
+
+			// Create a list
+			var extNds = new EList<Point>();
+
+			// Add external nodes
+			extNds.AddRange(geoList.Select(str => str.InitialPoint));
+			extNds.AddRange(geoList.Select(str => str.EndPoint));
+			var c = AddRange(extNds, NodeType.External, raiseEvents, sort);
+
+			// Add internal nodes
+			return
+				c + AddRange(geoList.Select(str => str.CenterPoint).ToArray(), NodeType.Internal, raiseEvents, sort);
+		}
+
+		/// <inheritdoc cref="Add(NodeObject, bool, bool)" />
 		/// <param name="position">The <see cref="Point" /> position.</param>
 		/// <param name="nodeType">The <see cref="NodeType" />.</param>
-		public void Add(Point position, NodeType nodeType) => Add(new NodeObject(position, nodeType));
+		public bool Add(Point position, NodeType nodeType, bool raiseEvents = true, bool sort = true) => Add(new NodeObject(position, nodeType), raiseEvents, sort);
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		/// <remarks>
-		///     If node type is <see cref="NodeType.Displaced" />, the node is only added to drawing.
+		///     If node type is <see cref="NodeType.Displaced" />, the node is only added to drawing and false is returned.
 		/// </remarks>
-		public new void Add(NodeObject item, bool raiseEvents = true, bool sort = true)
+		public new bool Add(NodeObject item, bool raiseEvents = true, bool sort = true)
 		{
-			if (item.Type is NodeType.Displaced)
-			{
-				// Just add to drawing
-				item.AddToDrawing();
-				return;
-			}
+			if (item.Type != NodeType.Displaced)
+				return
+					base.Add(item, raiseEvents, sort);
 
-			base.Add(item, raiseEvents, sort);
+			// Just add to drawing
+			item.AddToDrawing();
+			return false;
 		}
 
-		/// <summary>
-		///     Add nodes in these <paramref name="positions" />.
-		/// </summary>
+		/// <inheritdoc cref="AddRange(IEnumerable{NodeObject}, bool, bool)" />
 		/// <param name="positions">The collection of <see cref="Point" /> positions.</param>
 		/// <param name="nodeType">The <see cref="NodeType" />.</param>
-		public void AddRange(IEnumerable<Point> positions, NodeType nodeType) => AddRange(positions.Distinct().Select(p => new NodeObject(p, nodeType)));
+		public int AddRange(IEnumerable<Point>? positions, NodeType nodeType, bool raiseEvents = true, bool sort = true) =>
+			AddRange(positions?.Distinct()?.Select(p => new NodeObject(p, nodeType))?.ToList(), raiseEvents, sort);
 
 		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
 		/// <inheritdoc cref="Add(NodeObject, bool, bool)" />
-		public new void AddRange(IEnumerable<NodeObject> collection, bool raiseEvents = true, bool sort = true)
+		public new int AddRange(IEnumerable<NodeObject>? collection, bool raiseEvents = true, bool sort = true)
 		{
+			if (collection.IsNullOrEmpty())
+				return 0;
+
 			// Get displaced nodes
 			var dispNodes = collection.Where(n => n.Type is NodeType.Displaced).ToList();
 
 			if (dispNodes.Any())
 				AddToDrawing(dispNodes);
 
-			base.AddRange(collection.Where(n => n.Type != NodeType.Displaced), raiseEvents, sort);
+			return
+				base.AddRange(collection.Where(n => n.Type != NodeType.Displaced), raiseEvents, sort);
 		}
 
+		public int RemoveRange(IEnumerable<Point>? positions, bool raiseEvents = true, bool sort = true) =>
+			positions.IsNullOrEmpty()
+				? 0
+				: RemoveAll(n => positions.Contains(n.Position), raiseEvents, sort);
+
 		/// <summary>
-		///     Remove unnecessary nodes from the drawing.
+		///     Remove unnecessary nodes from this collection based on a collection of <see cref="StringerGeometry" />'s.
 		/// </summary>
-		public int Remove()
+		/// <remarks>
+		///     Nodes are removed at positions that doesn't match any <see cref="StringerGeometry.InitialPoint" />,
+		///     <see cref="StringerGeometry.CenterPoint" /> and <see cref="StringerGeometry.EndPoint" /> in
+		///     <paramref name="geometries" />.
+		/// </remarks>
+		/// <param name="geometries">The collection of <see cref="StringerGeometry" />'s for removing nodes.</param>
+		/// <inheritdoc cref="EList{T}.RemoveRange(IEnumerable{T}, bool, bool)" />
+		public int RemoveUnnecessary(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true)
 		{
-			// Get stringers
-			var strList = Model.Stringers.Geometries;
-
-			if (strList is null || !strList.Any())
+			if (geometries.IsNullOrEmpty())
 			{
-				var count = Count;
+				// There is no stringers, remove all nodes.
+				var c = Count;
 
-				Clear();
+				Clear(raiseEvents);
 
-				return count;
+				return c;
 			}
 
+			// Get stringers
+			var geoList = geometries.ToList();
+
 			// Get the stringer points
-			var intPts = strList.Select(str => str.CenterPoint).ToList();
-			var extPts = strList.Select(str => str.InitialPoint).ToList();
-			extPts.AddRange(strList.Select(str => str.EndPoint));
-
-			// Get positions not needed
-			var toRemove = this.Where(n => n.Type is NodeType.Internal && !intPts.Contains(n.Position)).ToList();
-			toRemove.AddRange(this.Where(n => n.Type is NodeType.External && !extPts.Contains(n.Position)));
-
-			// Get duplicated positions
-			//toRemove.AddRange(this.GroupBy(x => x).Where(g => g.Count() > 1).Select(y => y.Key));
+			var toRemove = geoList.Select(str => str.CenterPoint).ToEList();
+			toRemove!.AddRange(geoList.Select(str => str.InitialPoint));
+			toRemove!.AddRange(geoList.Select(str => str.EndPoint));
 
 			return
-				RemoveRange(toRemove);
+				RemoveAll(n => toRemove.Contains(n.Position), raiseEvents, sort);
 		}
-
-		/// <summary>
-		///     Return a <see cref="NodeObject" /> located at this <paramref name="position" />.
-		/// </summary>
-		/// <param name="position">The required <see cref="Point" /> position.</param>
-		public NodeObject? GetByPosition(Point position) => Find(n => n.Position == position);
-
-		/// <summary>
-		///     Return a collection of <see cref="NodeObject" />'s located at these <paramref name="positions" />.
-		/// </summary>
-		/// <param name="positions">The required <see cref="Point3d" /> positions.</param>
-		public List<NodeObject>? GetByPositions(IEnumerable<Point> positions) =>
-			this.Where(n => positions.Contains(n.Position))?.ToList();
 
 		/// <summary>
 		///     Update all the nodes in this collection.
@@ -213,13 +212,15 @@ namespace SPMTool.Database.Elements
 		/// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
 		public void Update(bool addNodes = true, bool removeNodes = true)
 		{
+			var geometries = Model.Stringers.GetGeometries();
+
 			// Add nodes to all needed positions
 			if (addNodes)
-				Add();
+				AddNecessary(geometries, true, false);
 
 			// Remove nodes at unnecessary positions
 			if (removeNodes)
-				Remove();
+				RemoveUnnecessary(geometries);
 
 			// Set the style for all point objects in the drawing
 			SetPointSize();
