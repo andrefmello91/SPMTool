@@ -19,7 +19,7 @@ namespace SPMTool.Database.Elements
 	/// <typeparam name="T3">Any type that implements <see cref="INumberedElement" />.</typeparam>
 	public abstract class SPMObjects<T1, T2, T3> : EList<T1>
 		where T1 : ISPMObject<T1, T2, T3, Entity>
-		where T2 : IComparable<T2>
+		where T2 : IComparable<T2>, IEquatable<T2>
 		where T3 : INumberedElement
 	{
 		#region Constructors

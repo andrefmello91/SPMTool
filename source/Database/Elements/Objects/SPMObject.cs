@@ -14,7 +14,7 @@ namespace SPMTool.Database.Elements
 	/// <typeparam name="T4">Any type based on <see cref="Entity" />.</typeparam>
 	public interface ISPMObject<T1, out T2, out T3, out T4> : IEquatable<T1>, IComparable<T1>
 		where T1 : ISPMObject<T1, T2, T3, T4>?
-		where T2 : IComparable<T2>
+		where T2 : IComparable<T2>, IEquatable<T2>
 		where T3 : INumberedElement
 		where T4 : Entity
 	{
@@ -71,7 +71,7 @@ namespace SPMTool.Database.Elements
 	/// <typeparam name="T4">Any type based on <see cref="Entity" />.</typeparam>
 	public abstract class SPMObject<T1, T2, T3, T4> : ISPMObject<T1, T2, T3, T4>
 		where T1 : ISPMObject<T1, T2, T3, T4>
-		where T2 : IComparable<T2>
+		where T2 : IComparable<T2>, IEquatable<T2>
 		where T3 : INumberedElement
 		where T4 : Entity
 	{
