@@ -25,6 +25,7 @@ namespace SPMTool.Database.Elements
 		#region Constructors
 
 		private Stringers()
+			: base()
 		{
 		}
 
@@ -421,24 +422,6 @@ namespace SPMTool.Database.Elements
 		/// <inheritdoc cref="EList{T}.RemoveRange(IEnumerable{T}, bool, bool)" />
 		/// <param name="geometries">The <see cref="StringerGeometry" />'s to remove from drawing.</param>
 		public int RemoveRange(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true) => RemoveRange(geometries.Select(g => new StringerObject(g)), raiseEvents, sort);
-
-		/// <summary>
-		///     Event to execute when a stringer is erased.
-		/// </summary>
-		public static void On_StringerErase(object sender, ObjectErasedEventArgs e)
-		{
-			if (!Model.Stringers.Any() || !(e.DBObject is Line str) || str.Layer != $"{Layer.Stringer}")
-				return;
-
-			// Get the geometry
-			var geometry = new StringerGeometry(str.StartPoint.ToPoint(SavedUnits.Geometry), str.EndPoint.ToPoint(SavedUnits.Geometry), 0, 0);
-
-			// Remove the stringer and update nodes from list
-			if (!Model.Stringers.Remove(geometry, false))
-				return;
-
-			Model.Nodes.Update();
-		}
 
 		#endregion
 	}

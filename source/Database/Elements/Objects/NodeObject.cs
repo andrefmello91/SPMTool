@@ -22,7 +22,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Node object class.
 	/// </summary>
-	public class NodeObject : ISPMObject<NodeObject, Point, Node, DBPoint>
+	public class NodeObject : SPMObject<NodeObject, Point, Node, DBPoint>
 	{
 		#region Fields
 
@@ -31,14 +31,6 @@ namespace SPMTool.Database.Elements
 		#endregion
 
 		#region Properties
-
-		/// <inheritdoc />
-		public ObjectId ObjectId { get; set; } = ObjectId.Null;
-
-		/// <inheritdoc />
-		public int Number { get; set; } = 0;
-
-		public Point Property => Position;
 
 		/// <summary>
 		///     Get the <see cref="OnPlaneComponents.Displacement" /> of this node object.
@@ -57,7 +49,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Get the position.
 		/// </summary>
-		public Point Position { get; }
+		public Point Position => PropertyField;
 
 		/// <summary>
 		///     Get the node type.
@@ -74,10 +66,7 @@ namespace SPMTool.Database.Elements
 		/// <param name="position">The <see cref="Point" /> position.</param>
 		/// <param name="type">The <see cref="NodeType" />.</param>
 		public NodeObject(Point position, NodeType type)
-		{
-			Position = position;
-			Type     = type;
-		}
+			: base(position) => Type = type;
 
 		/// <param name="position">The <see cref="Point3d" /> position.</param>
 		/// <param name="unit">The <see cref="LengthUnit" /> of <paramref name="position" /> coordinates</param>
@@ -129,19 +118,15 @@ namespace SPMTool.Database.Elements
 			return data;
 		}
 
-		public DBPoint CreateEntity() => new DBPoint(Position.ToPoint3d())
+		public override DBPoint CreateEntity() => new DBPoint(Position.ToPoint3d())
 		{
 			Layer = $"{GetLayer(Type)}"
 		};
 
-		public DBPoint GetEntity() => (DBPoint) ObjectId.GetEntity();
-
-		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing(On_NodeErase);
-
 		/// <summary>
 		///     Get this object as a <see cref="Node" />.
 		/// </summary>
-		public Node GetElement() =>
+		public override Node GetElement() =>
 			new Node(Position, Type, SavedUnits.Displacements)
 			{
 				Displacement = Displacement
@@ -196,18 +181,6 @@ namespace SPMTool.Database.Elements
 		///     Read the XData associated to this object.
 		/// </summary>
 		private TypedValue[] ReadXData() => ObjectId.ReadXData() ?? NewXData();
-
-		public int CompareTo(NodeObject? other) => other is null ? 1 : Position.CompareTo(other.Position);
-
-		/// <inheritdoc />
-		public bool Equals(NodeObject? other) => !(other is null) && Position == other.Position;
-
-		/// <inheritdoc />
-		public override bool Equals(object? other) => other is NodeObject node && Equals(node);
-
-		public override int GetHashCode() => Position.GetHashCode();
-
-		public override string ToString() => GetElement().ToString();
 
 		#endregion
 

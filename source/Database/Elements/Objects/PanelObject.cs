@@ -23,7 +23,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Panel object class.
 	/// </summary>
-	public class PanelObject : ISPMObject<PanelObject, PanelGeometry, Panel, Solid>
+	public class PanelObject : SPMObject<PanelObject, PanelGeometry, Panel, Solid>
 	{
 		#region Fields
 
@@ -31,22 +31,9 @@ namespace SPMTool.Database.Elements
 
 		private WebReinforcementDirection? _x, _y;
 
-		/// <summary>
-		///     The geometry of this object.
-		/// </summary>
-		public PanelGeometry Geometry;
-
 		#endregion
 
 		#region Properties
-
-		/// <inheritdoc />
-		public ObjectId ObjectId { get; set; } = ObjectId.Null;
-
-		/// <inheritdoc />
-		public int Number { get; set; } = 0;
-
-		public PanelGeometry Property => Geometry;
 
 		/// <summary>
 		///     Get/set the horizontal <see cref="WebReinforcementDirection" />.
@@ -65,6 +52,11 @@ namespace SPMTool.Database.Elements
 			get => _y ?? GetReinforcement().DirectionY;
 			set => SetReinforcement(value, Direction.Y);
 		}
+
+		/// <summary>
+		///     Get the geometry of this object.
+		/// </summary>
+		public PanelGeometry Geometry => PropertyField;
 
 		/// <summary>
 		///     Get/set the <see cref="WebReinforcement" />.
@@ -114,7 +106,10 @@ namespace SPMTool.Database.Elements
 		///     Create the panel object.
 		/// </summary>
 		/// <param name="vertices">The panel <see cref="Vertices" />.</param>
-		public PanelObject(Vertices vertices) => Geometry = new PanelGeometry(vertices, 100);
+		public PanelObject(Vertices vertices)
+			: base(new PanelGeometry(vertices, 100))
+		{
+		}
 
 		#endregion
 
@@ -164,22 +159,18 @@ namespace SPMTool.Database.Elements
 			return newData;
 		}
 
-		public Solid CreateEntity() => new Solid(Vertices.Vertex1.ToPoint3d(), Vertices.Vertex2.ToPoint3d(), Vertices.Vertex4.ToPoint3d(), Vertices.Vertex3.ToPoint3d())
+		public override Solid CreateEntity() => new Solid(Vertices.Vertex1.ToPoint3d(), Vertices.Vertex2.ToPoint3d(), Vertices.Vertex4.ToPoint3d(), Vertices.Vertex3.ToPoint3d())
 		{
 			Layer = $"{Layer.Panel}"
 		};
 
-		public Solid GetEntity() => (Solid) ObjectId.GetEntity();
-
-		public Panel GetElement() => throw new NotImplementedException();
+		public override Panel GetElement() => throw new NotImplementedException();
 
 		/// <inheritdoc cref="GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
 		/// <param name="analysisType">The <see cref="AnalysisType" />.</param>
 		public Panel GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
 			Panel.Read(analysisType, Number, nodes, Geometry, Parameters, ConstitutiveModel, Reinforcement);
-
-		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing();
 
 		/// <summary>
 		///     Set <paramref name="width" /> to this object.
@@ -188,7 +179,7 @@ namespace SPMTool.Database.Elements
 		public void SetWidth(Length width)
 		{
 			_width = width;
-			Geometry.Width = width;
+			PropertyField.Width = width;
 
 			// Access the XData as an array
 			var data = ReadXData();
@@ -212,7 +203,7 @@ namespace SPMTool.Database.Elements
 		{
 			_width = Length.FromMillimeters(ReadXData()[(int) PanelIndex.Width].ToDouble());
 
-			Geometry.Width = _width.Value;
+			PropertyField.Width = _width.Value;
 
 			return _width.Value;
 		}
@@ -280,18 +271,6 @@ namespace SPMTool.Database.Elements
 			SetReinforcement(reinforcement?.DirectionX, Direction.X);
 			SetReinforcement(reinforcement?.DirectionY, Direction.Y);
 		}
-
-		public int CompareTo(PanelObject? other) => other is null ? 1 : Geometry.CompareTo(other.Geometry);
-
-		/// <inheritdoc />
-		public bool Equals(PanelObject? other) => !(other is null) && Geometry == other.Geometry;
-
-		/// <inheritdoc />
-		public override bool Equals(object? other) => other is PanelObject str && Equals(str);
-
-		public override int GetHashCode() => Geometry.GetHashCode();
-
-		public override string ToString() => GetElement().ToString();
 
 		#endregion
 

@@ -23,6 +23,7 @@ namespace SPMTool.Database.Elements
 		#region Constructors
 
 		private Nodes()
+			: base()
 		{
 		}
 
@@ -230,19 +231,6 @@ namespace SPMTool.Database.Elements
 		///     Get a node from the list with corresponding <see cref="ObjectId" />.
 		/// </summary>
 		public NodeObject? GetByObjectId(ObjectId objectId) => Find(n => n.ObjectId == objectId);
-
-		/// <summary>
-		///     Event to execute when a node is erased.
-		/// </summary>
-		public static void On_NodeErase(object sender, ObjectErasedEventArgs e)
-		{
-			if (!Model.Nodes.Any() || !(e.DBObject is DBPoint nd) || nd.Layer != $"{Layer.ExtNode}" || nd.Layer != $"{Layer.IntNode}")
-				return;
-
-			var position = nd.Position.ToPoint(SavedUnits.Geometry);
-
-			Model.Nodes.RemoveAll(n => n.Position == position, false);
-		}
 
 		#endregion
 	}

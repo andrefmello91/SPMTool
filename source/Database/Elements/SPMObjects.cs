@@ -4,6 +4,7 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions;
 using SPM.Elements;
+using SPMTool.Enums;
 using SPMTool.Extensions;
 
 #nullable enable
@@ -17,8 +18,8 @@ namespace SPMTool.Database.Elements
 	/// <typeparam name="T2">The type that represents the main property of the object.</typeparam>
 	/// <typeparam name="T3">Any type that implements <see cref="INumberedElement" />.</typeparam>
 	public abstract class SPMObjects<T1, T2, T3> : EList<T1>
-		where T1 : ISPMObject<T1, T2, T3, Entity>?
-		where T2 : notnull
+		where T1 : ISPMObject<T1, T2, T3, Entity>
+		where T2 : IComparable<T2>
 		where T3 : INumberedElement
 	{
 		#region Constructors
@@ -82,7 +83,7 @@ namespace SPMTool.Database.Elements
 			var entities = notNullObjects.Select(n => n.GetEntity()).ToList();
 
 			// Add objects to drawing
-			var objIds = entities.AddToDrawing(On_ObjectErase).ToList();
+			var objIds = entities.AddToDrawing(Model.On_ObjectErase).ToList();
 
 			// Set object ids
 			for (var i = 0; i < notNullObjects.Count; i++)
@@ -139,30 +140,6 @@ namespace SPMTool.Database.Elements
 		///     Event to execute when a list is sorted.
 		/// </summary>
 		public static void On_ListSort(object? sender, EventArgs? e) => SetNumbers((IEnumerable<T1>?) sender);
-
-		/// <summary>
-		///     Event to execute when an object is erased.
-		/// </summary>
-		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
-		{
-			switch (e.DBObject)
-			{
-				case DBPoint _ :
-					Nodes.On_NodeErase(sender, e);
-					break;
-
-				case Line _ :
-					Stringers.On_StringerErase(sender, e);
-					break;
-
-				case Solid _:
-					Panels.On_PanelErase(sender, e);
-					break;
-
-				default:
-					return;
-			}
-		}
 
 		#endregion
 	}

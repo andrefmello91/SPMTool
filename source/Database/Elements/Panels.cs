@@ -25,7 +25,8 @@ namespace SPMTool.Database.Elements
 		#region Constructors
 
 		private Panels()
-		{
+			: base()
+        {
 		}
 
 		private Panels(IEnumerable<PanelObject> panelObjects)
@@ -569,19 +570,6 @@ namespace SPMTool.Database.Elements
 		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
 		/// <param name="verticesCollection">The collection of <see cref="Vertices" />'s that represents the panels.</param>
 		public int AddRange(IEnumerable<Vertices>? verticesCollection, bool raiseEvents = true, bool sort = true) => AddRange(verticesCollection?.Select(v => new PanelObject(v)), raiseEvents, sort);
-
-		/// <summary>
-		///     Event to execute when a panel is erased.
-		/// </summary>
-		public static void On_PanelErase(object sender, ObjectErasedEventArgs e)
-		{
-			if (!Model.Panels.Any() || !(e.DBObject is Solid pnl) || pnl.Layer != $"{Layer.Panel}" || pnl.GetVertices().Count() != 4)
-				return;
-
-			var vertices = new Vertices(pnl.GetVertices().ToPoints(SavedUnits.Geometry));
-
-			Model.Panels.Remove(vertices, false);
-		}
 
 		#endregion
 	}

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
@@ -14,9 +13,7 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
-
 using static SPMTool.Database.SettingsData;
-using static SPMTool.Database.Elements.Stringers;
 
 #nullable enable
 
@@ -26,28 +23,20 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Stringer object class.
 	/// </summary>
-	public class StringerObject : ISPMObject<StringerObject, StringerGeometry, Stringer, Line>
+	public class StringerObject : SPMObject<StringerObject, StringerGeometry, Stringer, Line>
 	{
 		#region Fields
 
 		private UniaxialReinforcement? _reinforcement;
 
-		/// <summary>
-		///     The geometry of this object.
-		/// </summary>
-		public StringerGeometry Geometry;
-
 		#endregion
 
 		#region Properties
 
-		/// <inheritdoc />
-		public ObjectId ObjectId { get; set; } = ObjectId.Null;
-
-		/// <inheritdoc />
-		public int Number { get; set; } = 0;
-
-		public StringerGeometry Property => Geometry;
+		/// <summary>
+		///     Get the geometry of this object.
+		/// </summary>
+		public StringerGeometry Geometry => PropertyField;
 
 		/// <summary>
 		///     Get/set the height of <see cref="Geometry" />.
@@ -92,13 +81,19 @@ namespace SPMTool.Database.Elements
 		/// <inheritdoc cref="StringerObject(StringerGeometry)" />
 		/// <param name="initialPoint">The initial <see cref="Point" />.</param>
 		/// <param name="endPoint">The end <see cref="Point" />.</param>
-		public StringerObject(Point initialPoint, Point endPoint) => Geometry = GetGeometry(initialPoint, endPoint);
+		public StringerObject(Point initialPoint, Point endPoint)
+			: this (new StringerGeometry(initialPoint, endPoint, 0, 0))
+		{
+		}
 
 		/// <summary>
 		///     Create the stringer object.
 		/// </summary>
 		/// <param name="geometry">The <see cref="StringerGeometry" />.</param>
-		public StringerObject(StringerGeometry geometry) => Geometry = geometry;
+		public StringerObject(StringerGeometry geometry)
+			: base(geometry)
+		{
+		}
 
 		#endregion
 
@@ -145,22 +140,18 @@ namespace SPMTool.Database.Elements
 			return newData;
 		}
 
-		public Line CreateEntity() => new Line(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
+		public override Line CreateEntity() => new Line(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
 		{
 			Layer = $"{Layer.Stringer}"
 		};
 
-		public Line GetEntity() => (Line) ObjectId.GetEntity();
-
-		public Stringer GetElement() => throw new NotImplementedException();
+		public override Stringer GetElement() => throw new NotImplementedException();
 
 		/// <inheritdoc cref="GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
 		/// <param name="analysisType">The <see cref="AnalysisType" />.</param>
 		public Stringer GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
 			Stringer.Read(analysisType, Number, nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, GetReinforcement());
-
-		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing(On_StringerErase);
 
 		/// <summary>
 		///     Get the <see cref="StringerGeometry" /> from XData.
@@ -222,13 +213,13 @@ namespace SPMTool.Database.Elements
 			// Set the new geometry
 			if (width.HasValue)
 			{
-				Geometry.Width = width.Value;
+				PropertyField.Width = width.Value;
 				data[(int) StringerIndex.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, width.Value.Millimeters);
 			}
 
 			if (height.HasValue)
 			{
-				Geometry.Height = height.Value;
+				PropertyField.Height = height.Value;
 				data[(int) StringerIndex.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, height.Value.Millimeters);
 			}
 
@@ -261,18 +252,6 @@ namespace SPMTool.Database.Elements
 		///     Read the XData associated to this object.
 		/// </summary>
 		private TypedValue[] ReadXData() => ObjectId.ReadXData() ?? NewXData();
-
-		public int CompareTo(StringerObject? other) => other is null ? 1 : Geometry.CompareTo(other.Geometry);
-
-		/// <inheritdoc />
-		public bool Equals(StringerObject? other) => !(other is null) && Geometry == other.Geometry;
-
-		/// <inheritdoc />
-		public override bool Equals(object? other) => other is StringerObject str && Equals(str);
-
-		public override int GetHashCode() => Geometry.GetHashCode();
-
-		public override string ToString() => GetElement().ToString();
 
 		#endregion
 

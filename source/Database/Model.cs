@@ -340,5 +340,34 @@ namespace SPMTool.Database
 
 
 		#endregion
+
+		/// <summary>
+		///     Event to execute when an object is erased.
+		/// </summary>
+		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
+		{
+			var layer = ((Entity) e.DBObject).ReadLayer();
+
+			var id = e.DBObject.ObjectId;
+
+			switch (layer)
+			{
+				case Layer.ExtNode:
+				case Layer.IntNode:
+					Model.Nodes.RemoveAll(n => n.ObjectId == id, false);
+					break;
+
+				case Layer.Stringer :
+					Model.Stringers.RemoveAll(s => s.ObjectId == id, false);
+					break;
+
+				case Layer.Panel:
+					Model.Panels.RemoveAll(p => p.ObjectId == id, false);
+					break;
+
+				default:
+					return;
+			}
+		}
 	}
 }
