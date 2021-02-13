@@ -55,8 +55,8 @@ namespace SPMTool.Database.Conditions
         /// Add the force blocks to the model.
         /// </summary>
         /// <param name="positions">The collection of nodes to add</param>
-        /// <param name="force"></param>
-        public static void AddBlocks(IReadOnlyCollection<Point3d> positions, Force force)
+        /// <param name="planeForce"></param>
+        public static void AddBlocks(IReadOnlyCollection<Point3d> positions, PlaneForce planeForce)
 		{
 			if (positions is null || positions.Count == 0)
 				return;
@@ -83,12 +83,12 @@ namespace SPMTool.Database.Conditions
 
 					// Insert the block into the current space
 					// For forces in x
-					if (!force.IsComponentXZero)
-						AddForceBlock(force.ComponentX, Direction.X);
+					if (!planeForce.IsComponentXZero)
+						AddForceBlock(planeForce.ComponentX, Direction.X);
 					
 					// For forces in y
-					if (!force.IsComponentYZero)
-						AddForceBlock(force.ComponentY, Direction.Y);
+					if (!planeForce.IsComponentYZero)
+						AddForceBlock(planeForce.ComponentY, Direction.Y);
 					
 					void AddForceBlock(double forceValue, Direction direction)
 					{
@@ -130,7 +130,7 @@ namespace SPMTool.Database.Conditions
 							text.SetXData(ForceTextXData(blkRef.Handle));
 
                             // Set XData to force block
-                            blkRef.SetXData(ForceXData(forceValue.Convert(force.Unit), direction, text.Handle));
+                            blkRef.SetXData(ForceXData(forceValue.Convert(planeForce.Unit), direction, text.Handle));
 						}
 					}
                 }
@@ -193,32 +193,6 @@ namespace SPMTool.Database.Conditions
         /// </summary>
         /// <param name="forceText">The force block.</param>
         private static ObjectId AssociatedBlock(Entity forceText) => new Handle(Convert.ToInt64(forceText.ReadXData()[(int) ForceTextIndex.BlockHandle].Value.ToString(), 16)).GetObjectId();
-		
-        /// <summary>
-		/// Create XData for forces
-		/// </summary>
-		/// <param name="forceValue">The force value, in N.</param>
-		/// <param name="forceDirection">The force direction.</param>
-		/// <param name="textHandle">The <see cref="Handle"/> of the text object.</param>
-		private static TypedValue[] ForceXData(double forceValue, Direction forceDirection, Handle textHandle)
-        {
-            // Definition for the Extended Data
-            var xdataStr = "Force Data";
-
-            // Get the Xdata size
-            var size  = Enum.GetNames(typeof(ForceIndex)).Length;
-            var data = new TypedValue[size];
-
-            // Set values
-            data[(int)ForceIndex.AppName]    = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
-            data[(int)ForceIndex.XDataStr]   = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-            data[(int)ForceIndex.Value]      = new TypedValue((int)DxfCode.ExtendedDataReal,        forceValue);
-            data[(int)ForceIndex.Direction]  = new TypedValue((int)DxfCode.ExtendedDataInteger32,  (int)forceDirection);
-            data[(int)ForceIndex.TextHandle] = new TypedValue((int)DxfCode.ExtendedDataHandle,      textHandle);
-
-            // Add XData to force block
-            return data;
-        }
 
         // Create XData for force text
         private static TypedValue[] ForceTextXData(Handle blockHandle)
@@ -262,31 +236,7 @@ namespace SPMTool.Database.Conditions
 
 			// Set to node
 			foreach (var fc in fcs)
-				node.Force += ReadForce(fc);
-        }
-
-        /// <summary>
-        /// Read a <see cref="Force"/> from an object in the drawing.
-        /// </summary>
-        /// <param name="objectId">The <see cref="ObjectId"/> of force object in the drawing.</param>
-        public static Force ReadForce(ObjectId objectId) => ReadForce((BlockReference) objectId.ToDBObject());
-
-        /// <summary>
-        /// Read a <see cref="Force"/> from an object in the drawing.
-        /// </summary>
-        /// <param name="forceBlock">The <see cref="BlockReference"/> of force object in the drawing.</param>
-        public static Force ReadForce(BlockReference forceBlock)
-        {
-	        // Read the XData and get the necessary data
-	        var data = forceBlock.ReadXData();
-
-	        // Get value and direction
-	        var force     = UnitsNet.Force.FromNewtons(data[(int)ForceIndex.Value].ToDouble()).ToUnit(Settings.Units.AppliedForces);
-	        var direction = (Direction)data[(int)ForceIndex.Direction].ToInt();
-
-	        // Get force
-	        return
-		        direction == Direction.X ? Force.InX(force) : Force.InY(force);
+				node.PlaneForce += ReadForce(fc);
         }
 
         /// <summary>
