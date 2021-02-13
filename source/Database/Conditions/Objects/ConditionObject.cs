@@ -47,20 +47,27 @@ namespace SPMTool.Database.Conditions
 
 	    public Point Position { get; }
 
-	    public T2 Value { get; }
+	    public virtual T2 Value { get; }
 
+        /// <summary>
+        ///     Condition base constructor.
+        /// </summary>
+        /// <param name="position">The position.</param>
+        /// <param name="value">The value.</param>
 	    protected ConditionObject(Point position, T2 value)
 	    {
 		    Position = position;
 		    Value    = value;
 	    }
 
-	    public virtual ObjectId ObjectId { get; set; }
+	    public virtual ObjectId ObjectId { get; set; } = ObjectId.Null;
 
 	    public abstract T3? CreateEntity();
 
-	    public T3? GetEntity() => (T3) ObjectId.GetEntity();
+	    public virtual T3? GetEntity() => (T3) ObjectId.GetEntity();
 
-	    public void AddToDrawing() => ObjectId = CreateEntity()?.AddToDrawing(Model.On_ObjectErase) ?? ObjectId.Null;
+	    public virtual void AddToDrawing() => ObjectId = CreateEntity()?.AddToDrawing(Model.On_ObjectErase) ?? ObjectId.Null;
+
+	    public override string ToString() => Value.ToString();
     }
 }

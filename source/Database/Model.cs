@@ -4,7 +4,6 @@ using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Extensions;
 using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.Database.Conditions;
@@ -12,7 +11,6 @@ using SPMTool.Database.Elements;
 using SPMTool.Database.Materials;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-
 using static SPMTool.Database.DataBase;
 
 #nullable enable
@@ -22,7 +20,7 @@ namespace SPMTool.Database
 	/// <summary>
 	///     Model class
 	/// </summary>
-	public static class Model
+	public static partial class Model
 	{
 		#region Fields
 
