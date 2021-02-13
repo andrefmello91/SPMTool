@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using SPMTool.ApplicationSettings;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
@@ -21,6 +23,11 @@ namespace SPMTool.Database
 		///     Get the application name.
 		/// </summary>
 		public const string AppName = "SPMTool";
+
+		/// <summary>
+		///		Application settings.
+		/// </summary>
+		public static readonly Settings Settings = new Settings();
 
 		#endregion
 
@@ -86,25 +93,21 @@ namespace SPMTool.Database
 		public static void RegisterApp()
 		{
 			// Start a transaction
-			using (var trans = StartTransaction())
-			{
-				// Open the Registered Applications table for read
-				var regAppTbl = (RegAppTable) trans.GetObject(Database.RegAppTableId, OpenMode.ForRead);
+			using var trans = StartTransaction();
 
-				if (regAppTbl.Has(AppName))
-					return;
+			// Open the Registered Applications table for read
+			using var regAppTbl = (RegAppTable) trans.GetObject(Database.RegAppTableId, OpenMode.ForRead);
 
-				using (var regAppTblRec = new RegAppTableRecord())
-				{
-					regAppTblRec.Name = AppName;
-					regAppTbl.UpgradeOpen();
-					regAppTbl.Add(regAppTblRec);
-					trans.AddNewlyCreatedDBObject(regAppTblRec, true);
-				}
+			if (regAppTbl.Has(AppName))
+				return;
 
-				// Commit and dispose the transaction
-				trans.Commit();
-			}
+			using var regAppTblRec = new RegAppTableRecord { Name = AppName };
+			regAppTbl.UpgradeOpen();
+			regAppTbl.Add(regAppTblRec);
+			trans.AddNewlyCreatedDBObject(regAppTblRec, true);
+
+			// Commit and dispose the transaction
+			trans.Commit();
 		}
 
 		/// <summary>
@@ -122,7 +125,7 @@ namespace SPMTool.Database
 		/// <summary>
 		///     Get folder path of current file.
 		/// </summary>
-		public static string GetFilePath() => GetSystemVariable("DWGPREFIX").ToString();
+		public static string GetFilePath() => GetSystemVariable("DWGPREFIX").ToString()!;
 
 		/// <summary>
 		///     Save <paramref name="data" /> in <see cref="DBDictionary" />.
@@ -133,28 +136,26 @@ namespace SPMTool.Database
 		public static void SaveDictionary(ResultBuffer data, string name, bool overwrite = true)
 		{
 			// Start a transaction
-			using (var trans = StartTransaction())
+			using var trans = StartTransaction();
 
-				// Get the NOD in the database
-			using (var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForWrite))
+			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForWrite);
+
+			// Verify if object exists and must be overwrote
+			if (!overwrite && nod.Contains(name))
+				return;
+
+			// Create and add data to an Xrecord
+			var xRec = new Xrecord
 			{
-				// Verify if object exists and must be overwrote
-				if (!overwrite && nod.Contains(name))
-					return;
+				Data = data
+			};
 
-				// Create and add data to an Xrecord
-				var xRec = new Xrecord
-				{
-					Data = data
-				};
+			// Create the entry in the NOD and add to the transaction
+			nod.SetAt(name, xRec);
+			trans.AddNewlyCreatedDBObject(xRec, true);
 
-				// Create the entry in the NOD and add to the transaction
-				nod.SetAt(name, xRec);
-				trans.AddNewlyCreatedDBObject(xRec, true);
-
-				// Save the new object to the database
-				trans.Commit();
-			}
+			// Save the new object to the database
+			trans.Commit();
 		}
 
 		/// <summary>
@@ -162,39 +163,37 @@ namespace SPMTool.Database
 		/// </summary>
 		/// <param name="name">The name of entry.</param>
 		/// <param name="fullName">Return only data corresponding to full name?</param>
-		public static TypedValue[] ReadDictionaryEntry(string name, bool fullName = true)
+		public static TypedValue[]? ReadDictionaryEntry(string name, bool fullName = true)
 		{
 			// Start a transaction
-			using (var trans = StartTransaction())
+			using var trans = StartTransaction();
 
-				// Get the NOD in the database
-			using (var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForRead))
+			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForRead);
+
+			// Check if it exists as full name
+			if (fullName && nod.Contains(name))
+				// Read the concrete Xrecord
 			{
-				// Check if it exists as full name
-				if (fullName && nod.Contains(name))
-					// Read the concrete Xrecord
-					using (var xrec = (Xrecord) trans.GetObject(nod.GetAt(name), OpenMode.ForRead))
-					{
-						return
-							xrec.Data.AsArray();
-					}
-
-				// Check if name contains
-				foreach (var entry in nod)
-				{
-					if (!entry.Key.Contains(name))
-						continue;
-
-					// Read data
-					var refXrec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
-
-					return
-						refXrec.Data.AsArray();
-				}
-
-				// Not set
-				return null;
+				using var xrec = (Xrecord) trans.GetObject(nod.GetAt(name), OpenMode.ForRead);
+				return
+					xrec.Data.AsArray();
 			}
+
+			// Check if name contains
+			foreach (var entry in nod)
+			{
+				if (!entry.Key.Contains(name))
+					continue;
+
+				// Read data
+				var refXrec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+
+				return
+					refXrec.Data.AsArray();
+			}
+
+			// Not set
+			return null;
 		}
 
 		/// <summary>
@@ -204,27 +203,25 @@ namespace SPMTool.Database
 		public static IEnumerable<ResultBuffer> ReadDictionaryEntries(string name)
 		{
 			// Start a transaction
-			using (var trans = StartTransaction())
+			using var trans = StartTransaction();
 
-				// Get the NOD in the database
-			using (var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForRead))
+			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForRead);
+
+			var resList = new List<ResultBuffer>();
+
+			// Check if name contains
+			foreach (var entry in nod)
 			{
-				var resList = new List<ResultBuffer>();
+				if (!entry.Key.Contains(name))
+					continue;
 
-				// Check if name contains
-				foreach (var entry in nod)
-				{
-					if (!entry.Key.Contains(name))
-						continue;
+				var xRec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
 
-					var xRec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
-
-					// Add data
-					resList.Add(xRec.Data);
-				}
-
-				return resList;
+				// Add data
+				resList.Add(xRec.Data);
 			}
+
+			return resList;
 		}
 
 		#endregion

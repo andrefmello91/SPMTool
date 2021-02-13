@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
@@ -10,7 +11,8 @@ using SPM.Elements;
 using SPM.Elements.PanelProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-using static SPMTool.Database.SettingsData;
+
+using static SPMTool.Database.DataBase;
 using static SPMTool.Units;
 
 #nullable enable
@@ -215,12 +217,14 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Read all the <see cref="PanelObject" />'s in the drawing.
 		/// </summary>
+		[return: NotNull]
 		public static Panels ReadFromDrawing() => ReadFromSolids(GetObjects());
 
 		/// <summary>
 		///     Read <see cref="PanelObject" />'s from a collection of <see cref="Solid" />'s.
 		/// </summary>
 		/// <param name="panelSolids">The collection containing the <see cref="Solid" />'s of drawing.</param>
+		[return: NotNull]
 		public static Panels ReadFromSolids(IEnumerable<Solid>? panelSolids) =>
 			panelSolids.IsNullOrEmpty()
 				? new Panels()
@@ -233,7 +237,7 @@ namespace SPMTool.Database.Elements
 		public static void DrawStresses(IEnumerable<Panel> panels)
 		{
 			// Get units
-			var units = SavedUnits;
+			var units = Settings.Units;
 
 			// Get tolerances
 			var sTol = StressTolerance;
@@ -442,7 +446,7 @@ namespace SPMTool.Database.Elements
 		/// <param name="panels">The collection of <see cref="Panel" />'s.</param>
 		public static void DrawCracks(IEnumerable<Panel> panels)
 		{
-			var units = SavedUnits;
+			var units = Settings.Units;
 
 			// Start a transaction
 			using (var trans = DataBase.StartTransaction())

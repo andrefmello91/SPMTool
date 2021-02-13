@@ -22,7 +22,7 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Node object class.
 	/// </summary>
-	public class NodeObject : SPMObject<NodeObject, Point, Node, DBPoint>
+	public class ForceObject : SPMObject<ForceObject, Point, Force, BlockReference>
 	{
 		#region Fields
 

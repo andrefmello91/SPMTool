@@ -3,9 +3,11 @@ using System.Windows;
 using System.Windows.Input;
 using Extensions;
 using Extensions.Number;
+using SPMTool.ApplicationSettings;
+using SPMTool.Database;
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Database.SettingsData;
+using static SPMTool.ApplicationSettings.Settings;
 using MessageBox = System.Windows.MessageBox;
 
 namespace SPMTool.UserInterface
@@ -53,7 +55,7 @@ namespace SPMTool.UserInterface
 		private bool FactorBoxFilled => FactorBox.Text.ParsedAndNotZero(out _);
 
         public UnitsConfig()
-			: this (SavedUnits)
+			: this (Settings.Units)
         {
         }
 

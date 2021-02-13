@@ -4,11 +4,12 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
-using Extensions.Number;
+using Extensions;
 using MathNet.Numerics;
 using SPM.Elements;
 using UnitsNet.Units;
 using OnPlaneComponents;
+using SPMTool.ApplicationSettings;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
@@ -61,7 +62,7 @@ namespace SPMTool.Database.Conditions
 				return;
             
 			// Get units
-			var units = SettingsData.SavedUnits;
+			var units = Settings.Units;
 
 			// Get scale factor
 			var scFctr = units.ScaleFactor;
@@ -280,7 +281,7 @@ namespace SPMTool.Database.Conditions
 	        var data = forceBlock.ReadXData();
 
 	        // Get value and direction
-	        var force     = UnitsNet.Force.FromNewtons(data[(int)ForceIndex.Value].ToDouble()).ToUnit(SettingsData.SavedUnits.AppliedForces);
+	        var force     = UnitsNet.Force.FromNewtons(data[(int)ForceIndex.Value].ToDouble()).ToUnit(Settings.Units.AppliedForces);
 	        var direction = (Direction)data[(int)ForceIndex.Direction].ToInt();
 
 	        // Get force

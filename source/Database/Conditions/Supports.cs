@@ -6,6 +6,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Extensions.AutoCAD;
 using SPM.Elements;
+using SPMTool.ApplicationSettings;
 using SPMTool.Database;
 using SPMTool.Editor;
 using SPMTool.Enums;
@@ -149,7 +150,7 @@ namespace SPMTool.Database.Conditions
                 return;
 
 			// Get units
-			var units = SettingsData.SavedUnits;
+			var units = Settings.Units;
 
             // Start a transaction
             using (var trans = DataBase.StartTransaction())

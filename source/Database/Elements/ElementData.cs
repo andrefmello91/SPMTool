@@ -3,6 +3,7 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions.AutoCAD;
+using OnPlaneComponents;
 using SPM.Elements.StringerProperties;
 using SPMTool.Extensions;
 
@@ -35,16 +36,16 @@ namespace SPMTool.Database.Elements
             var saveCode = geometry.SaveName();
 
 		    // Save the variables on the Xrecord
-		    using (var rb = new ResultBuffer())
+		    using var rb = new ResultBuffer
 		    {
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName));   // 0
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, saveCode));           // 1
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32,   geometry.Width));     // 2
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataReal,        geometry.Height));    // 3
+			    new TypedValue((int) DxfCode.ExtendedDataRegAppName,  DataBase.AppName), // 0
+			    new TypedValue((int) DxfCode.ExtendedDataAsciiString, saveCode),         // 1
+			    new TypedValue((int) DxfCode.ExtendedDataInteger32,   geometry.Width),   // 2
+			    new TypedValue((int) DxfCode.ExtendedDataReal,        geometry.Height)   // 3
+		    };
 
-			    // Save on NOD if it doesn't exist
-			    DataBase.SaveDictionary(rb, saveCode, false);
-		    }
+		    // Save on NOD if it doesn't exist
+		    DataBase.SaveDictionary(rb, saveCode, false);
 	    }
 
 	    /// <summary>
@@ -60,15 +61,15 @@ namespace SPMTool.Database.Elements
             var name = panelWidth.SaveName();
 
 		    // Save the variables on the Xrecord
-		    using (var rb = new ResultBuffer())
+		    using var rb = new ResultBuffer
 		    {
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName));  // 0
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataAsciiString, name));             // 1
-			    rb.Add(new TypedValue((int)DxfCode.ExtendedDataInteger32, panelWidth));         // 2
+			    new TypedValue((int) DxfCode.ExtendedDataRegAppName,  DataBase.AppName), // 0
+			    new TypedValue((int) DxfCode.ExtendedDataAsciiString, name),             // 1
+			    new TypedValue((int) DxfCode.ExtendedDataInteger32,   panelWidth)        // 2
+		    };
 
-			    // Create the entry in the NOD if it doesn't exist
-			    DataBase.SaveDictionary(rb, name, false);
-		    }
+		    // Create the entry in the NOD if it doesn't exist
+		    DataBase.SaveDictionary(rb, name, false);
 	    }
 
 	    /// <summary>
@@ -87,7 +88,7 @@ namespace SPMTool.Database.Elements
 					    let t   = r.AsArray()
 					    let w   = t[2].ToDouble()
 					    let h   = t[3].ToDouble()
-					    select new StringerGeometry(Point3d.Origin, Point3d.Origin, w, h));
+					    select new StringerGeometry(Point.Origin, Point.Origin, w, h));
 	    }
 
 	    /// <summary>

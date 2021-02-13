@@ -9,8 +9,10 @@ using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-using static SPMTool.Database.SettingsData;
+
+using static SPMTool.Database.DataBase;
 using static SPMTool.Units;
+
 using Force = UnitsNet.Force;
 
 #nullable enable
@@ -99,7 +101,7 @@ namespace SPMTool.Database.Elements
 		public static void DrawForces(IEnumerable<Stringer> stringers, Force maxForce)
 		{
 			// Get units
-			var units = SavedUnits;
+			var units = Settings.Units;
 
 			// Get the scale factor
 			var scFctr = units.ScaleFactor;
@@ -294,7 +296,7 @@ namespace SPMTool.Database.Elements
 		public static void DrawCracks(IEnumerable<Stringer> stringers)
 		{
 			// Get units
-			var units  = SavedUnits;
+			var units  = Settings.Units;
 			var scFctr = units.ScaleFactor;
 
 			// Start a transaction
@@ -329,7 +331,7 @@ namespace SPMTool.Database.Elements
 							continue;
 
 						// Add crack blocks
-						AddCrackBlock(cracks[i].ToUnit(SavedUnits.CrackOpenings).Value, points[i]);
+						AddCrackBlock(cracks[i].ToUnit(Settings.Units.CrackOpenings).Value, points[i]);
 					}
 
 					// Create crack block

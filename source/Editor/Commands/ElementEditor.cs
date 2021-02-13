@@ -109,7 +109,7 @@ namespace SPMTool.Editor.Commands
 		public static void DividePanel()
 		{
 			// Get units
-			var units = SettingsData.SavedUnits;
+			var units = ApplicationSettings.Settings.Units;
 
 			// Prompt for select panels
 			var pnls = UserInput.SelectPanels("Select panels to divide")?.ToArray();

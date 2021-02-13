@@ -8,7 +8,7 @@ using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-using static SPMTool.Database.SettingsData;
+
 using static SPMTool.Database.Model;
 
 #nullable enable

@@ -12,6 +12,7 @@ using Extensions.Interface;
 using Extensions.Number;
 using Material;
 using Material.Concrete;
+using SPMTool.ApplicationSettings;
 using Parameters = Material.Concrete.Parameters;
 using SPMTool.Database;
 using SPMTool.Database.Materials;
@@ -71,7 +72,7 @@ namespace SPMTool.UserInterface
 		public ConcreteConfig(Parameters parameters, ConstitutiveModel constitutiveModel)
 		{
 			// Read units
-			_units = SettingsData.SavedUnits;
+			_units = Settings.Units;
 
 			// Get settings
 			_parameters = parameters;

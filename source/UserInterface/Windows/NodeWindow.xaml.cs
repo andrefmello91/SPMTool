@@ -2,6 +2,7 @@
 using System.Windows;
 using OnPlaneComponents;
 using SPM.Elements;
+using SPMTool.ApplicationSettings;
 using SPMTool.Database;
 using UnitsNet;
 using Force = OnPlaneComponents.Force;
@@ -25,7 +26,7 @@ namespace SPMTool.UserInterface
 			_node = node;
 
 			// Read units
-			_units = SettingsData.SavedUnits;
+			_units = Settings.Units;
 
 			// Get forces and displacements
 			_force = node.Force.Copy();

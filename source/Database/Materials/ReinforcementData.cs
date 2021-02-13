@@ -7,6 +7,8 @@ using Material.Reinforcement.Biaxial;
 using Material.Reinforcement.Uniaxial;
 using SPMTool.Extensions;
 
+using static SPMTool.Units;
+
 namespace SPMTool.Database.Materials
 {
     /// <summary>
@@ -81,7 +83,7 @@ namespace SPMTool.Database.Materials
 		    if (reinforcement is null)
 			    return;
 
-		    if (!SavedStringerReinforcement.Any(r => r.EqualsNumberAndDiameter(reinforcement)))
+		    if (!SavedStringerReinforcement.Any(r => r.EqualsNumberAndDiameter(reinforcement, LengthTolerance)))
 			    SavedStringerReinforcement.Add(reinforcement);
 
             // Get the name to save

@@ -13,7 +13,8 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Database.SettingsData;
+
+using static SPMTool.Database.DataBase;
 
 #nullable enable
 
@@ -109,7 +110,7 @@ namespace SPMTool.Database.Elements
 		///     Read a <see cref="StringerObject" /> in the drawing.
 		/// </summary>
 		/// <param name="line">The <see cref="Line" /> object of the stringer.</param>
-		public static StringerObject ReadFromLine(Line line) => new StringerObject(line.StartPoint, line.EndPoint, SavedUnits.Geometry)
+		public static StringerObject ReadFromLine(Line line) => new StringerObject(line.StartPoint, line.EndPoint, Settings.Units.Geometry)
 		{
 			ObjectId = line.ObjectId
 		};

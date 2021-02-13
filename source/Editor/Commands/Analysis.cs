@@ -53,14 +53,14 @@ namespace SPMTool.Editor.Commands
 				return;
 
 			// Get analysis settings
-			var settings = SettingsData.SavedAnalysisSettings;
+			var settings = ApplicationSettings.Settings.Analysis;
 
             // Do analysis
             var analysis = new SecantAnalysis(input);
 			analysis.Do(uIndexn.Value, 1, settings.NumLoadSteps, settings.Tolerance, settings.MaxIterations);
 
             // Show load-displacement diagram
-            var units = SettingsData.SavedUnits;
+            var units = ApplicationSettings.Settings.Units;
 
             Application.ShowModelessWindow(Application.MainWindow.Handle, new GraphWindow(analysis.MonitoredDisplacements, analysis.MonitoredLoadFactor, units.Displacements));
 

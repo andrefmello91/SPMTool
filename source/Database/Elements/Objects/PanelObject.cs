@@ -12,8 +12,10 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Database.SettingsData;
+
 using static SPMTool.Database.Materials.ConcreteData;
+using static SPMTool.Database.DataBase;
+
 
 #nullable enable
 
@@ -125,7 +127,7 @@ namespace SPMTool.Database.Elements
 		///     Read a <see cref="PanelObject" /> in the drawing.
 		/// </summary>
 		/// <param name="solid">The <see cref="Solid" /> object of the stringer.</param>
-		public static PanelObject ReadFromSolid(Solid solid) => new PanelObject(solid.GetVertices().ToArray(), SavedUnits.Geometry)
+		public static PanelObject ReadFromSolid(Solid solid) => new PanelObject(solid.GetVertices().ToArray(), Settings.Units.Geometry)
 		{
 			ObjectId = solid.ObjectId
 		};

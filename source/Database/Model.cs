@@ -13,6 +13,8 @@ using SPMTool.Database.Materials;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
+using static SPMTool.Database.DataBase;
+
 #nullable enable
 
 namespace SPMTool.Database
@@ -42,17 +44,17 @@ namespace SPMTool.Database
 		/// <summary>
 		///     Get the <see cref="NodeObject" />'s in the model.
 		/// </summary>
-		public static Nodes Nodes = Nodes.ReadFromDrawing();
+		public static readonly Nodes Nodes = Nodes.ReadFromDrawing();
 
 		/// <summary>
 		///     Get the <see cref="StringerObject" />'s in the model.
 		/// </summary>
-		public static Stringers Stringers = Stringers.ReadFromDrawing();
+		public static readonly Stringers Stringers = Stringers.ReadFromDrawing();
 
 		/// <summary>
 		///     Get the <see cref="PanelObject" />'s in the model.
 		/// </summary>
-		public static Panels Panels;
+		public static readonly Panels Panels = Panels.ReadFromDrawing();
 
 		#endregion
 
@@ -66,42 +68,42 @@ namespace SPMTool.Database
 		/// <summary>
 		///     Get the collection of external nodes in the model.
 		/// </summary>
-		public static DBPoint[] ExtNodeCollection => Nodes.GetExtNodes()?.ToArray();
+		public static DBPoint[]? ExtNodeCollection => Nodes.GetDBPoints(NodeType.External)?.ToArray();
 
 		/// <summary>
 		///     Get the collection of forces in the model.
 		/// </summary>
-		public static BlockReference[] ForceCollection => Forces.GetObjects()?.ToArray();
+		public static BlockReference[]? ForceCollection => Forces.GetObjects()?.ToArray();
 
 		/// <summary>
 		///     Get the collection of force texts in the model.
 		/// </summary>
-		public static DBText[] ForceTextCollection => Forces.GetTexts()?.ToArray();
+		public static DBText[]? ForceTextCollection => Forces.GetTexts()?.ToArray();
 
 		/// <summary>
 		///     Get the collection of internal nodes in the model.
 		/// </summary>
-		public static DBPoint[] IntNodeCollection => Nodes.GetIntNodes()?.ToArray();
+		public static DBPoint[]? IntNodeCollection => Nodes.GetDBPoints(NodeType.Internal)?.ToArray();
 
 		/// <summary>
 		///     Get the collection of all nodes in the model.
 		/// </summary>
-		public static DBPoint[] NodeCollection => Nodes.GetAllNodes()?.ToArray();
+		public static DBPoint[]? NodeCollection => Nodes.GetDBPoints()?.ToArray();
 
 		/// <summary>
 		///     Get the collection of panels in the model.
 		/// </summary>
-		public static Solid[] PanelCollection => Panels.GetObjects()?.ToArray();
+		public static Solid[]? PanelCollection => Panels.GetObjects()?.ToArray();
 
 		/// <summary>
 		///     Get the collection of stringers in the model.
 		/// </summary>
-		public static Line[] StringerCollection => Stringers.GetObjects()?.ToArray();
+		public static Line[]? StringerCollection => Stringers.GetObjects()?.ToArray();
 
 		/// <summary>
 		///     Get the collection of supports in the model.
 		/// </summary>
-		public static BlockReference[] SupportCollection => Supports.GetObjects()?.ToArray();
+		public static BlockReference[]? SupportCollection => Supports.GetObjects()?.ToArray();
 
 		#endregion
 
@@ -114,8 +116,8 @@ namespace SPMTool.Database
 		/// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
 		public static void UpdateElements(bool addNodes = true, bool removeNodes = true)
 		{
-			Stringers.Update(false);
-			Panels.Update(false);
+			Stringers.Update();
+			Panels.Update();
 			Nodes.Update(addNodes, removeNodes);
 		}
 
@@ -128,7 +130,7 @@ namespace SPMTool.Database
 		public static InputData GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
 		{
 			// Get units
-			var units = SettingsData.SavedUnits;
+			var units = Settings.Units;
 
 			// Get concrete
 			var parameters   = ConcreteData.Parameters;
@@ -179,7 +181,7 @@ namespace SPMTool.Database
 			// Get concrete and units
 			var parameters   = ConcreteData.Parameters;
 			var constitutive = ConcreteData.ConstitutiveModel;
-			var units        = SettingsData.SavedUnits;
+			var units        = Settings.Units;
 
 			if (layer is Layer.IntNode || layer is Layer.ExtNode)
 				return Nodes.GetByObjectId(entity.ObjectId).AsNode();
@@ -242,7 +244,7 @@ namespace SPMTool.Database
 		private static void DrawDisplacements(IEnumerable<Stringer> stringers)
 		{
 			// Get units
-			var units = SettingsData.SavedUnits;
+			var units = Settings.Units;
 
 			// Turn the layer off
 			Layer.Displacements.Off();
@@ -314,7 +316,7 @@ namespace SPMTool.Database
 		{
 			// Set the style for all point objects in the drawing
 			DataBase.Database.Pdmode = 32;
-			DataBase.Database.Pdsize = 40 * SettingsData.SavedUnits.ScaleFactor;
+			DataBase.Database.Pdsize = 40 * Settings.Units.ScaleFactor;
 		}
 
 		/// <summary>
