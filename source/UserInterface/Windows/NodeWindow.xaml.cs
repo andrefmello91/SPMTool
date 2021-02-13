@@ -5,7 +5,6 @@ using SPM.Elements;
 using SPMTool.ApplicationSettings;
 using SPMTool.Database;
 using UnitsNet;
-using Force = OnPlaneComponents.Force;
 
 namespace SPMTool.UserInterface
 {
@@ -17,8 +16,8 @@ namespace SPMTool.UserInterface
 		// Properties
 		private Units        _units;
 		private Node         _node;
-		private Force        _force;
-		private Displacement _displacement;
+		private PlaneForce        _planeForce;
+		private PlaneDisplacement _displacement;
 
 
 		public NodeWindow(Node node)
@@ -29,8 +28,8 @@ namespace SPMTool.UserInterface
 			_units = Settings.Units;
 
 			// Get forces and displacements
-			_force = node.Force.Copy();
-			_force.ChangeUnit(_units.AppliedForces);
+			_planeForce = node.PlaneForce.Copy();
+			_planeForce.ChangeUnit(_units.AppliedForces);
 
 			_displacement = node.Displacement.Copy();
 			_displacement.ChangeUnit(_units.Displacements);

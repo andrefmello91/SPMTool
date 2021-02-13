@@ -10,6 +10,7 @@ using Extensions.Number;
 using Material.Reinforcement;
 using Material.Reinforcement.Biaxial;
 using Material.Reinforcement.Uniaxial;
+using OnPlaneComponents;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Database;
@@ -18,7 +19,6 @@ using SPMTool.Database.Materials;
 using SPMTool.Enums;
 using UnitsNet.Units;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
-using Force = OnPlaneComponents.Force;
 
 namespace SPMTool.Editor
 {
@@ -399,7 +399,7 @@ namespace SPMTool.Editor
         /// Get the force values from user.
         /// </summary>
         /// <param name="forceUnit">The current <see cref="ForceUnit"/>.</param>
-        public static Force? GetForceValue(ForceUnit forceUnit)
+        public static PlaneForce? GetForceValue(ForceUnit forceUnit)
         {
 	        var fAbrev = forceUnit.Abbrev();
 
@@ -415,7 +415,7 @@ namespace SPMTool.Editor
 	        if (!yFn.HasValue)
 		        return null;
 
-	        return new Force(xFn.Value, yFn.Value, forceUnit);
+	        return new PlaneForce(xFn.Value, yFn.Value, forceUnit);
         }
 
         /// <summary>

@@ -6,8 +6,7 @@
 	public enum Direction
 	{
 		X,
-		Y,
-		XY
+		Y
 	}
 
 	/// <summary>

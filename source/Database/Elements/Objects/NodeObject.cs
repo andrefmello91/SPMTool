@@ -12,8 +12,6 @@ using UnitsNet.Units;
 using static SPMTool.Database.Elements.Nodes;
 using static SPMTool.Database.DataBase;
 
-using Force = OnPlaneComponents.Force;
-
 #nullable enable
 
 // ReSharper disable once CheckNamespace
@@ -26,25 +24,25 @@ namespace SPMTool.Database.Elements
 	{
 		#region Fields
 
-		private Displacement? _displacement;
+		private PlaneDisplacement? _displacement;
 
 		#endregion
 
 		#region Properties
 
 		/// <summary>
-		///     Get the <see cref="OnPlaneComponents.Displacement" /> of this node object.
+		///     Get the <see cref="PlaneDisplacement" /> of this node object.
 		/// </summary>
-		public Displacement Displacement
+		public PlaneDisplacement Displacement
 		{
 			get => _displacement ?? GetDisplacement();
 			set => SetDisplacement(value);
 		}
 
 		/// <summary>
-		///     Get/set the <see cref="OnPlaneComponents.Force" /> in this object.
+		///     Get/set the <see cref="PlaneForce" /> in this object.
 		/// </summary>
-		public Force Force { get; set; } = Force.Zero;
+		public PlaneForce PlaneForce { get; set; } = PlaneForce.Zero;
 
 		/// <summary>
 		///     Get/set the <see cref="OnPlaneComponents.Constraint" /> in this object.
@@ -135,15 +133,15 @@ namespace SPMTool.Database.Elements
 			new Node(Position, Type, Settings.Units.Displacements)
 			{
 				Displacement = Displacement,
-				Force        = Force,
+				PlaneForce        = PlaneForce,
 				Constraint   = Constraint
 			};
 
 		/// <summary>
-		///     Set <see cref="OnPlaneComponents.Displacement" /> to this object XData.
+		///     Set <see cref="PlaneDisplacement" /> to this object XData.
 		/// </summary>
-		/// <param name="displacement">The <see cref="OnPlaneComponents.Displacement" /> to set.</param>
-		private void SetDisplacement(Displacement displacement)
+		/// <param name="displacement">The <see cref="PlaneDisplacement" /> to set.</param>
+		private void SetDisplacement(PlaneDisplacement displacement)
 		{
 			_displacement = displacement;
 
@@ -159,15 +157,15 @@ namespace SPMTool.Database.Elements
 		}
 
 		/// <summary>
-		///     Get <see cref="OnPlaneComponents.Displacement" /> saved in XData.
+		///     Get <see cref="PlaneDisplacement" /> saved in XData.
 		/// </summary>
-		private Displacement GetDisplacement()
+		private PlaneDisplacement GetDisplacement()
 		{
 			var data = ReadXData();
 
 			if (data is null)
 			{
-				_displacement = Displacement.Zero;
+				_displacement = PlaneDisplacement.Zero;
 			}
 
 			else
@@ -178,7 +176,7 @@ namespace SPMTool.Database.Elements
 				var ux = Length.FromMillimeters(data[(int) NodeIndex.Ux].ToDouble()).ToUnit(units.Displacements);
 				var uy = Length.FromMillimeters(data[(int) NodeIndex.Uy].ToDouble()).ToUnit(units.Displacements);
 
-				_displacement = new Displacement(ux, uy);
+				_displacement = new PlaneDisplacement(ux, uy);
 			}
 
 			return _displacement!.Value;

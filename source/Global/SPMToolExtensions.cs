@@ -4,6 +4,7 @@ using System.Linq;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using Extensions;
 using Material.Reinforcement;
 using Material.Reinforcement.Biaxial;
 using Material.Reinforcement.Uniaxial;
@@ -12,7 +13,10 @@ using SPMTool.Database;
 using SPMTool.Database.Conditions;
 using SPMTool.Database.Elements;
 using SPMTool.Enums;
+using UnitsNet.Units;
 using Color = SPMTool.Enums.Color;
+
+using static SPMTool.Database.DataBase;
 
 namespace SPMTool.Extensions
 {
@@ -219,7 +223,7 @@ namespace SPMTool.Extensions
 		///     Create a <paramref name="block" /> given its name.
 		/// </summary>
 		/// <param name="block">The <see cref="Block" />.</param>
-		public static void Create(this Block block) => block.GetElements().CreateBlock(block.OriginPoint(), block.ToString());
+		public static void Create(this Block block) => block.GetElements()?.CreateBlock(block.OriginPoint(), block.ToString());
 
 		/// <summary>
 		///     Create those <paramref name="blocks" /> given their names.
@@ -239,40 +243,21 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Get the collection of entities that forms <paramref name="block" />
 		/// </summary>
-		public static Entity[] GetElements(this Block block)
+		public static Entity[]? GetElements(this Block block)
 		{
-			switch (block)
+			return block switch
 			{
-				case Block.Force:
-					return Forces.BlockElements;
-
-				case Block.SupportX:
-					return Supports.XElements.ToArray();
-
-				case Block.SupportY:
-					return Supports.YElements.ToArray();
-
-				case Block.SupportXY:
-					return Supports.XYElements.ToArray();
-
-				case Block.Shear:
-					return Panels.ShearBlockElements.ToArray();
-
-				case Block.CompressiveStress:
-					return Panels.CompressiveBlockElements.ToArray();
-
-				case Block.TensileStress:
-					return Panels.TensileBlockElements.ToArray();
-
-				case Block.PanelCrack:
-					return Panels.CrackBlockElements.ToArray();
-
-				case Block.StringerCrack:
-					return Stringers.CrackBlockElements.ToArray();
-
-				default:
-					return null;
-			}
+				Block.Force             => Forces.BlockElements,
+				Block.SupportX          => Supports.XElements.ToArray(),
+				Block.SupportY          => Supports.YElements.ToArray(),
+				Block.SupportXY         => Supports.XYElements.ToArray(),
+				Block.Shear             => Panels.ShearBlockElements().ToArray(),
+				Block.CompressiveStress => Panels.CompressiveBlockElements().ToArray(),
+				Block.TensileStress     => Panels.TensileBlockElements().ToArray(),
+				Block.PanelCrack        => Panels.CrackBlockElements().ToArray(),
+				Block.StringerCrack     => Stringers.CrackBlockElements().ToArray(),
+				_                       => null
+			};
 		}
 
 		/// <summary>
@@ -280,32 +265,43 @@ namespace SPMTool.Extensions
 		/// </summary>
 		public static Point3d OriginPoint(this Block block)
 		{
-			switch (block)
+			return block switch
 			{
-				case Block.PanelCrack:
-					return new Point3d(180, 0, 0);
-
-				case Block.StringerCrack:
-					return new Point3d(0, 40, 0);
-
-				default:
-					return new Point3d(0, 0, 0);
-			}
+				Block.PanelCrack    => new Point3d(180, 0, 0),
+				Block.StringerCrack => new Point3d(0, 40, 0),
+				_                   => new Point3d(0, 0, 0)
+			};
 		}
 
 		/// <summary>
 		///     Get the <see cref="BlockReference" /> of this <paramref name="block" />.
 		/// </summary>
 		/// <param name="insertionPoint">Thw insertion <see cref="Point3d" /> for the <see cref="BlockReference" />.</param>
-		public static BlockReference GetReference(this Block block, Point3d insertionPoint)
+		/// <param name="layer">The <see cref="Layer"/> to set to <see cref="BlockReference"/>.</param>
+		/// <param name="rotationAngle">The rotation angle for block transformation (positive for counterclockwise).</param>
+		public static BlockReference? GetReference(this Block block, Point3d insertionPoint, Layer layer, double rotationAngle = 0)
 		{
 			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
-			using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
+			using var trans = StartTransaction();
+			using var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
+			var id = blkTbl[$"{block}"];
+
+			if (!id.IsValid)
+				return null;
+
+			var blockRef = new BlockReference(insertionPoint, id)
 			{
-				return
-					new BlockReference(insertionPoint, blkTbl[$"{block}"]);
-			}
+				Layer = $"{layer}"
+			};
+
+			// Rotate and scale the block
+			if (!rotationAngle.ApproxZero(1E-3))
+				blockRef.TransformBy(Matrix3d.Rotation(rotationAngle, DataBase.Ucs.Zaxis, insertionPoint));
+
+			if (Settings.Units.Geometry != LengthUnit.Millimeter)
+				blockRef.TransformBy(Matrix3d.Scaling(Settings.Units.ScaleFactor, insertionPoint));
+
+			return blockRef;
 		}
 
 		/// <summary>

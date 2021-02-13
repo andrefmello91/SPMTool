@@ -14,11 +14,11 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     SPMObjects base class.
 	/// </summary>
-	/// <typeparam name="T1">Any type that implements <see cref="ISPMObject{T1,T2,T3,T4}" />.</typeparam>
+	/// <typeparam name="T1">Any type that implements <see cref="ISPMObject{T1,T2,T3}" />.</typeparam>
 	/// <typeparam name="T2">The type that represents the main property of the object.</typeparam>
 	/// <typeparam name="T3">Any type that implements <see cref="INumberedElement" />.</typeparam>
 	public abstract class SPMObjects<T1, T2, T3> : EList<T1>
-		where T1 : ISPMObject<T1, T2, T3, Entity>
+		where T1 : ISPMObject<T1, T2, T3>, IEntityCreator<Entity>
 		where T2 : IComparable<T2>, IEquatable<T2>
 		where T3 : INumberedElement
 	{
