@@ -13,7 +13,7 @@ namespace SPMTool.Database.Elements
 	/// <typeparam name="T2">The type that represents the main property of the object.</typeparam>
 	/// <typeparam name="T3">Any type that implements <see cref="INumberedElement" />.</typeparam>
 	/// <typeparam name="T4">Any type based on <see cref="Entity" />.</typeparam>
-	public interface ISPMObject<T1, out T2, out T3, out T4> : IEquatable<T1>, IComparable<T1>
+	public interface ISPMObject<T1, out T2, out T3, out T4> : IEquatable<T1>, IComparable<T1>, IEntityCreator<T4>
 		where T1 : ISPMObject<T1, T2, T3, T4>?
 		where T2 : IComparable<T2>, IEquatable<T2>
 		where T3 : INumberedElement
@@ -25,11 +25,6 @@ namespace SPMTool.Database.Elements
 		///     Get/set the object number.
 		/// </summary>
 		int Number { get; set; }
-
-		/// <summary>
-		///     Get/set the <see cref="ObjectId" />
-		/// </summary>
-		ObjectId ObjectId { get; set; }
 
 		/// <summary>
 		///     Get the main property of this object.
@@ -44,21 +39,6 @@ namespace SPMTool.Database.Elements
 		///     Get the element associated to this object.
 		/// </summary>
 		T3 GetElement();
-
-		/// <summary>
-		///     Create an <see cref="Entity" /> based in this object's properties.
-		/// </summary>
-		T4 CreateEntity();
-
-		/// <summary>
-		///     Get the <see cref="Entity" /> in drawing associated to this object.
-		/// </summary>
-		T4 GetEntity();
-
-		/// <summary>
-		///     Add a this object to drawing and set it's <see cref="ObjectId" />.
-		/// </summary>
-		void AddToDrawing();
 
 		#endregion
 	}

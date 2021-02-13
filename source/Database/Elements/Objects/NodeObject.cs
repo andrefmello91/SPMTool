@@ -47,6 +47,11 @@ namespace SPMTool.Database.Elements
 		public Force Force { get; set; } = Force.Zero;
 
 		/// <summary>
+		///     Get/set the <see cref="OnPlaneComponents.Constraint" /> in this object.
+		/// </summary>
+		public Constraint Constraint { get; set; } = Constraint.Free;
+
+		/// <summary>
 		///     Get the position.
 		/// </summary>
 		public Point Position => PropertyField;
@@ -129,7 +134,9 @@ namespace SPMTool.Database.Elements
 		public override Node GetElement() =>
 			new Node(Position, Type, Settings.Units.Displacements)
 			{
-				Displacement = Displacement
+				Displacement = Displacement,
+				Force        = Force,
+				Constraint   = Constraint
 			};
 
 		/// <summary>
