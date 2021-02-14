@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Extensions.AutoCAD;
+using OnPlaneComponents;
 using SPM.Elements;
 using SPMTool.ApplicationSettings;
 using SPMTool.Database;
@@ -171,7 +172,7 @@ namespace SPMTool.Database.Conditions
 			                blkRef.TransformBy(Matrix3d.Scaling(units.ScaleFactor, pos));
 
 		                // Set XData
-		                blkRef.SetXData(SupportXData(constraint));
+		                blkRef.SetXData(ConstraintObject.CreateXData(constraint));
 	                }
 
                 trans.Commit();
@@ -227,28 +228,6 @@ namespace SPMTool.Database.Conditions
 				default:
 					return null;
             }
-        }
-
-        /// <summary>
-        /// Create XData for supports.
-        /// </summary>
-        /// <param name="constraint">The <see cref="Constraint"/> type.</param>
-        private static TypedValue[] SupportXData(Constraint constraint)
-        {
-            // Definition for the Extended Data
-            string xdataStr = "SupportDirection Data";
-
-            // Get the Xdata size
-            int size = Enum.GetNames(typeof(SupportIndex)).Length;
-            var data = new TypedValue[size];
-
-            // Set values
-            data[(int)SupportIndex.AppName]   = new TypedValue((int)DxfCode.ExtendedDataRegAppName, DataBase.AppName);
-            data[(int)SupportIndex.XDataStr]  = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-            data[(int)SupportIndex.Direction] = new TypedValue((int)DxfCode.ExtendedDataInteger32, (int)constraint);
-
-            // Add XData to force block
-            return data;
         }
 
         /// <summary>

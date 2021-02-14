@@ -2,6 +2,7 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using OnPlaneComponents;
 using SPM.Elements;
+using SPMTool.Enums;
 using SPMTool.Extensions;
 
 namespace SPMTool.Database.Elements
@@ -54,6 +55,8 @@ namespace SPMTool.Database.Elements
 		where T3 : INumberedElement
 		where T4 : Entity
 	{
+		private ObjectId _id = ObjectId.Null;
+
 		#region Fields
 
 		/// <summary>
@@ -65,15 +68,31 @@ namespace SPMTool.Database.Elements
 
 		#region Properties
 
+		public abstract Layer Layer { get; }
+
 		public int Number { get; set; } = 0;
 
-		public ObjectId ObjectId { get; set; } = ObjectId.Null;
+		public ObjectId ObjectId
+		{
+			get => _id;
+			set
+			{
+				_id = value;
 
+				// Set the extended data
+				_id.SetXData(ObjectXData());
+			}
+		}
+		
 		public T2 Property => PropertyField;
 
 		#endregion
 
 		#region Constructors
+
+		protected SPMObject()
+		{
+		}
 
 		protected SPMObject(T2 property) => PropertyField = property;
 
@@ -90,6 +109,11 @@ namespace SPMTool.Database.Elements
 		public void AddToDrawing() => ObjectId = CreateEntity()?.AddToDrawing(Model.On_ObjectErase) ?? ObjectId.Null;
 
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+
+		/// <summary>
+		///		Create the extended data for this object.
+		/// </summary>
+		protected abstract TypedValue[] ObjectXData();
 
 		public int CompareTo(T1 other) => other is null
 			? 1

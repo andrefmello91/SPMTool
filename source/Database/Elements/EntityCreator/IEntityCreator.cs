@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Autodesk.AutoCAD.DatabaseServices;
+using SPMTool.Enums;
 using SPMTool.Extensions;
 
 namespace SPMTool.Database.Elements
@@ -15,6 +16,11 @@ namespace SPMTool.Database.Elements
 	public interface IEntityCreator<out T>
 		where T : Entity
 	{
+		/// <summary>
+		///		Get the <see cref="Enums.Layer"/> of this object.
+		/// </summary>
+		Layer Layer { get; }
+
 		/// <summary>
 		///     Get/set the <see cref="ObjectId" />
 		/// </summary>

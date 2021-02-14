@@ -7,6 +7,7 @@ using SPMTool.Database.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
+
 using static SPMTool.Database.DataBase;
 using static SPMTool.Units;
 
@@ -15,7 +16,10 @@ using static SPMTool.Units;
 // ReSharper disable once CheckNamespace
 namespace SPMTool.Database.Conditions
 {
-	public class ForceObject : ConditionObject<ForceObject, PlaneForce, BlockReference>
+	/// <summary>
+	///		Force object class.
+	/// </summary>
+	public class ForceObject : ConditionObject<ForceObject, PlaneForce>
 	{
 		#region Fields
 
@@ -33,7 +37,11 @@ namespace SPMTool.Database.Conditions
 
 		#region Properties
 
+		public override Block Block => Block.Force;
+
 		public override PlaneForce Value => new PlaneForce(_x?.Value ?? Force.Zero, _y?.Value ?? Force.Zero);
+
+		public override Layer Layer => Layer.Force;
 
 		/// <summary>
 		///		Get the <see cref="ObjectId"/>'s associated to this object.
@@ -45,6 +53,8 @@ namespace SPMTool.Database.Conditions
 			_x?.TextObjectId ?? ObjectId.Null,
 			_y?.TextObjectId ?? ObjectId.Null
 		};
+
+		protected override double RotationAngle { get; }
 
 		#endregion
 
@@ -70,10 +80,6 @@ namespace SPMTool.Database.Conditions
 
 		#region  Methods
 
-		public override BlockReference? CreateEntity() => null;
-
-		public override BlockReference? GetEntity() => null;
-
 		public override void AddToDrawing()
 		{
 			_x?.AddToDrawing();
@@ -95,11 +101,9 @@ namespace SPMTool.Database.Conditions
 		/// <summary>
 		///     Force direction class.
 		/// </summary>
-		private class ForceDirection : ConditionObject<ForceDirection, Force, BlockReference>
+		private class ForceDirection : ConditionObject<ForceDirection, Force>
 		{
 			#region Fields
-
-			private ObjectId _id = ObjectId.Null;
 
 			private readonly TextCreator _text;
 
@@ -112,17 +116,9 @@ namespace SPMTool.Database.Conditions
 			/// </summary>
 			public Direction Direction { get; }
 
-			public override ObjectId ObjectId
-			{
-				get => _id;
-				set
-				{
-					_id = value;
+			public override Block Block => Block.Force;
 
-					// Set the extended data
-					_id.SetXData(NewXData(Value, Direction));
-				}
-			}
+			public override Layer Layer => Layer.Force;
 
 			/// <summary>
 			///		Get the <see cref="ObjectId"/> of the text associated to this object.
@@ -132,7 +128,7 @@ namespace SPMTool.Database.Conditions
 			/// <summary>
 			///     Get the rotation angle of the <see cref="BlockReference" />.
 			/// </summary>
-			private double RotationAngle =>
+			protected override double RotationAngle =>
 				Direction switch
 				{
 					Direction.Y when Value <= Force.Zero => 0,
@@ -144,7 +140,7 @@ namespace SPMTool.Database.Conditions
 			/// <summary>
 			///		Get the insertion point of the associated text.
 			/// </summary>
-			private Point InsertionPoint
+			private Point TextInsertionPoint
 			{
 				get
 				{
@@ -176,7 +172,7 @@ namespace SPMTool.Database.Conditions
 				: base(position, force)
 			{
 				Direction = direction;
-				_text     = new TextCreator(InsertionPoint, Layer.ForceText, $"{force.ToUnit(Settings.Units.AppliedForces).Value:0.00}");
+				_text     = new TextCreator(TextInsertionPoint, Layer.ForceText, $"{force.ToUnit(Settings.Units.AppliedForces).Value:0.00}");
 			}
 
 			#endregion
@@ -214,7 +210,7 @@ namespace SPMTool.Database.Conditions
 			/// </summary>
 			/// <param name="force">The force value.</param>
 			/// <param name="forceDirection">The force direction.</param>
-			public static TypedValue[] NewXData(Force force, Direction forceDirection)
+			public static TypedValue[] CreateXData(Force force, Direction forceDirection)
 			{
 				// Definition for the Extended Data
 				var xdataStr = "Force Data";
@@ -233,15 +229,13 @@ namespace SPMTool.Database.Conditions
 				return data;
 			}
 
-			public override BlockReference? CreateEntity() => Value.ApproxZero(ForceTolerance)
-				? null
-				: Block.Force.GetReference(Position.ToPoint3d(), Layer.Force, RotationAngle);
-
 			public override void AddToDrawing()
 			{
 				base.AddToDrawing();
 				_text.AddToDrawing();
 			}
+
+			protected override TypedValue[] ConditionXData() => CreateXData(Value, Direction);
 
 			#endregion
 

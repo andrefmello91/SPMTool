@@ -61,5 +61,7 @@ namespace SPMTool.Database
 		public DBText? GetEntity() => (DBText) ObjectId.GetEntity();
 
 		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing();
+
+		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 	}
 }

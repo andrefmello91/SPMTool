@@ -12,7 +12,6 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
-
 using static SPMTool.Database.Materials.ConcreteData;
 using static SPMTool.Database.DataBase;
 
@@ -59,6 +58,8 @@ namespace SPMTool.Database.Elements
 		///     Get the geometry of this object.
 		/// </summary>
 		public PanelGeometry Geometry => PropertyField;
+
+		public override Layer Layer => Layer.Panel;
 
 		/// <summary>
 		///     Get/set the <see cref="WebReinforcement" />.
@@ -146,7 +147,7 @@ namespace SPMTool.Database.Elements
 			var newData = new TypedValue[size];
 
 			// Set the initial parameters
-			newData[(int) PanelIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, DataBase.AppName);
+			newData[(int) PanelIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, AppName);
 			newData[(int) PanelIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
 			newData[(int) PanelIndex.Width]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
 			newData[(int) PanelIndex.XDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
@@ -163,7 +164,7 @@ namespace SPMTool.Database.Elements
 
 		public override Solid CreateEntity() => new Solid(Vertices.Vertex1.ToPoint3d(), Vertices.Vertex2.ToPoint3d(), Vertices.Vertex4.ToPoint3d(), Vertices.Vertex3.ToPoint3d())
 		{
-			Layer = $"{Layer.Panel}"
+			Layer = $"{Layer}"
 		};
 
 		public override Panel GetElement() => throw new NotImplementedException();

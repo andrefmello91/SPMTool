@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using OnPlaneComponents;
@@ -8,7 +7,6 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
-
 using static SPMTool.Database.Elements.Nodes;
 using static SPMTool.Database.DataBase;
 
@@ -31,6 +29,11 @@ namespace SPMTool.Database.Elements
 		#region Properties
 
 		/// <summary>
+		///     Get/set the <see cref="OnPlaneComponents.Constraint" /> in this object.
+		/// </summary>
+		public Constraint Constraint { get; set; } = Constraint.Free;
+
+		/// <summary>
 		///     Get the <see cref="PlaneDisplacement" /> of this node object.
 		/// </summary>
 		public PlaneDisplacement Displacement
@@ -39,15 +42,12 @@ namespace SPMTool.Database.Elements
 			set => SetDisplacement(value);
 		}
 
+		public override Layer Layer => GetLayer(Type);
+
 		/// <summary>
 		///     Get/set the <see cref="PlaneForce" /> in this object.
 		/// </summary>
 		public PlaneForce PlaneForce { get; set; } = PlaneForce.Zero;
-
-		/// <summary>
-		///     Get/set the <see cref="OnPlaneComponents.Constraint" /> in this object.
-		/// </summary>
-		public Constraint Constraint { get; set; } = Constraint.Free;
 
 		/// <summary>
 		///     Get the position.
@@ -101,7 +101,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Create node XData.
 		/// </summary>
-		public static TypedValue[] NewXData()
+		public static TypedValue[] CreateXData(PlaneDisplacement displacement)
 		{
 			// Definition for the Extended Data
 			string xdataStr = "Node Data";
@@ -113,17 +113,17 @@ namespace SPMTool.Database.Elements
 			var data = new TypedValue[size];
 
 			// Set the initial parameters
-			data[(int) NodeIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, DataBase.AppName);
+			data[(int) NodeIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, AppName);
 			data[(int) NodeIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-			data[(int) NodeIndex.Ux]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-			data[(int) NodeIndex.Uy]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+			data[(int) NodeIndex.Ux]       = new TypedValue((int) DxfCode.ExtendedDataReal, displacement.X.Millimeters);
+			data[(int) NodeIndex.Uy]       = new TypedValue((int) DxfCode.ExtendedDataReal, displacement.Y.Millimeters);
 
 			return data;
 		}
 
 		public override DBPoint CreateEntity() => new DBPoint(Position.ToPoint3d())
 		{
-			Layer = $"{GetLayer(Type)}"
+			Layer = $"{Layer}"
 		};
 
 		/// <summary>
@@ -133,9 +133,11 @@ namespace SPMTool.Database.Elements
 			new Node(Position, Type, Settings.Units.Displacements)
 			{
 				Displacement = Displacement,
-				PlaneForce        = PlaneForce,
+				PlaneForce   = PlaneForce,
 				Constraint   = Constraint
 			};
+
+		protected override TypedValue[] ObjectXData() => CreateXData(Displacement);
 
 		/// <summary>
 		///     Set <see cref="PlaneDisplacement" /> to this object XData.
@@ -148,9 +150,15 @@ namespace SPMTool.Database.Elements
 			// Get extended data
 			var data = ReadXData();
 
-			// Save the displacements on the XData
-			data[(int) NodeIndex.Ux] = new TypedValue((int) DxfCode.ExtendedDataReal, displacement.X.Millimeters);
-			data[(int) NodeIndex.Uy] = new TypedValue((int) DxfCode.ExtendedDataReal, displacement.Y.Millimeters);
+			if (data is null)
+				data = CreateXData(displacement);
+
+			else
+			{
+				// Save the displacements on the XData
+				data[(int) NodeIndex.Ux] = new TypedValue((int) DxfCode.ExtendedDataReal, displacement.X.Millimeters);
+				data[(int) NodeIndex.Uy] = new TypedValue((int) DxfCode.ExtendedDataReal, displacement.Y.Millimeters);
+			}
 
 			// Save new XData
 			ObjectId.SetXData(data);
@@ -185,7 +193,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Read the XData associated to this object.
 		/// </summary>
-		private TypedValue[] ReadXData() => ObjectId.ReadXData() ?? NewXData();
+		private TypedValue[]? ReadXData() => ObjectId.ReadXData();
 
 		#endregion
 

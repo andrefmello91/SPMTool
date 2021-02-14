@@ -30,7 +30,7 @@ namespace SPMTool.Database.Elements
         /// <param name="geometry">The <see cref="StringerGeometry"/> object.</param>
         public static void Save(StringerGeometry geometry)
 	    {
-		    if (!StringerGeometries.Any(geo => geo.EqualsWidthAndHeight(geometry)))
+		    if (!StringerGeometries.Any(geo => geo.EqualsCrossSection(geometry)))
 			    StringerGeometries.Add(geometry);
 
             var saveCode = geometry.SaveName();
