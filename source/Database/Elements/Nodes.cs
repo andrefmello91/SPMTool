@@ -161,7 +161,7 @@ namespace SPMTool.Database.Elements
 			var dispNodes = collection.Where(n => n.Type is NodeType.Displaced).ToList();
 
 			if (dispNodes.Any())
-				AddToDrawing(dispNodes);
+				dispNodes.AddToDrawing();
 
 			return
 				base.AddRange(collection.Where(n => n.Type != NodeType.Displaced), raiseEvents, sort);

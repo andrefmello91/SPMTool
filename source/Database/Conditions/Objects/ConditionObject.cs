@@ -68,6 +68,8 @@ namespace SPMTool.Database.Conditions
 
 	    public virtual void AddToDrawing() => ObjectId = CreateEntity()?.AddToDrawing(Model.On_ObjectErase) ?? ObjectId.Null;
 
+	    public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+
 	    public override string ToString() => Value.ToString();
     }
 }

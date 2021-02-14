@@ -89,6 +89,8 @@ namespace SPMTool.Database.Elements
 
 		public void AddToDrawing() => ObjectId = CreateEntity()?.AddToDrawing(Model.On_ObjectErase) ?? ObjectId.Null;
 
+		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+
 		public int CompareTo(T1 other) => other is null
 			? 1
 			: Property.CompareTo(other.Property);

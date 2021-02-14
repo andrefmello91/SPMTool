@@ -7,10 +7,13 @@ namespace SPMTool.Database.Conditions
 {
     public class ConstraintObject : ConditionObject<ConstraintObject, Constraint, BlockReference>
     {
+		/// <summary>
+		///		Get the rotation angle of the block.
+		/// </summary>
 	    private double RotationAngle =>
 		    Value.Direction switch
 		    {
-				ConstraintDirection.Y => Constants.PiOver2,
+				ConstraintDirection.X => Constants.PiOver2,
 				_                     => 0
 		    };
 
