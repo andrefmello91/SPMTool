@@ -86,6 +86,18 @@ namespace SPMTool.Database.Conditions
 			_y?.AddToDrawing();
 		}
 
+		public override void RemoveFromDrawing() => ObjectIds.RemoveFromDrawing();
+
+		protected override TypedValue[] ObjectXData() => ForceDirection.CreateXData(Force.Zero, Direction.X);
+
+		public override void GetProperties()
+		{
+			_x?.GetProperties();
+			_y?.GetProperties();
+		}
+
+		protected override TypedValue[] ConditionXData() => throw new NotImplementedException();
+
 		#endregion
 
 		/// <summary>
@@ -114,7 +126,7 @@ namespace SPMTool.Database.Conditions
 			/// <summary>
 			///     The force <seealso cref="Enums.Direction"/>.
 			/// </summary>
-			public Direction Direction { get; }
+			public Direction Direction { get; set; }
 
 			public override Block Block => Block.Force;
 
@@ -150,9 +162,9 @@ namespace SPMTool.Database.Conditions
 					return Direction switch
 					{
 						Direction.X when Value > Force.Zero => new Point(x - Length.FromMillimeters(200), y + Length.FromMillimeters(25)),
-						Direction.X when Value < Force.Zero => new Point(x + Length.FromMillimeters(75), y + Length.FromMillimeters(25)),
-						Direction.Y when Value > Force.Zero => new Point(x + Length.FromMillimeters(25), y - Length.FromMillimeters(125)),
-						Direction.Y when Value < Force.Zero => new Point(x + Length.FromMillimeters(25), y + Length.FromMillimeters(100)),
+						Direction.X when Value < Force.Zero => new Point(x + Length.FromMillimeters(75),  y + Length.FromMillimeters(25)),
+						Direction.Y when Value > Force.Zero => new Point(x + Length.FromMillimeters(25),  y - Length.FromMillimeters(125)),
+						Direction.Y when Value < Force.Zero => new Point(x + Length.FromMillimeters(25),  y + Length.FromMillimeters(100)),
 						_ => Position
 					};
 				}
@@ -183,27 +195,33 @@ namespace SPMTool.Database.Conditions
 			///     Read a <see cref="ForceDirection" /> from an <see cref="ObjectId" />.
 			/// </summary>
 			/// <param name="forceObjectId">The <see cref="ObjectId" /> of the force.</param>
-			public static ForceDirection ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference) forceObjectId.GetEntity());
+			public static ForceDirection? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference) forceObjectId.GetEntity());
 
 			/// <summary>
 			///     Read a <see cref="ForceDirection" /> from a <see cref="BlockReference" />.
 			/// </summary>
 			/// <param name="reference">The <see cref="BlockReference" /> object of the force.</param>
-			public static ForceDirection ReadFromBlock(BlockReference reference)
-			{
-				// Read the XData and get the necessary data
-				var data = reference.ReadXData();
-
-				// Get value and direction
-				var force     = Force.FromNewtons(data[(int) ForceIndex.Value].ToDouble()).ToUnit(Settings.Units.AppliedForces);
-				var direction = (Direction) data[(int) ForceIndex.Direction].ToInt();
-
-				return
-					new ForceDirection(reference.Position.ToPoint(Settings.Units.Geometry), force, direction)
+			public static ForceDirection? ReadFromBlock(BlockReference? reference) =>
+				reference is null
+					? null
+					: new ForceDirection(reference.Position.ToPoint(Settings.Units.Geometry), Force.Zero, Direction.X)
 					{
 						ObjectId = reference.ObjectId
 					};
-			}
+
+			/// <summary>
+			///		Get <see cref="Force"/> value from extended data.
+			/// </summary>
+			/// <param name="data">The extended data of this object. Leave null to read.</param>
+			private Force GetForce(TypedValue[]? data = null) =>
+				Force.FromNewtons((data ?? ReadXData())?[(int)ForceIndex.Value].ToDouble() ?? 0).ToUnit(Settings.Units.AppliedForces);
+
+			/// <summary>
+			///		Get the force <see cref="Enums.Direction"/> from extended data.
+			/// </summary>
+			/// <inheritdoc cref="GetForce"/>
+			private Direction GetDirection(TypedValue[]? data = null) =>
+				(Direction) ((data ?? ReadXData())?[(int) ForceIndex.Direction].ToInt() ?? 0);
 
 			/// <summary>
 			///     Create XData for forces
@@ -234,6 +252,19 @@ namespace SPMTool.Database.Conditions
 				base.AddToDrawing();
 				_text.AddToDrawing();
 			}
+
+			protected override TypedValue[] ObjectXData() => CreateXData(Value, Direction);
+
+			public override void GetProperties()
+			{
+				var data = ReadXData();
+
+				Value = GetForce(data);
+
+				Direction = GetDirection(data);
+			}
+
+			public override void RemoveFromDrawing() => new[]{ObjectId, TextObjectId}.RemoveFromDrawing();
 
 			protected override TypedValue[] ConditionXData() => CreateXData(Value, Direction);
 

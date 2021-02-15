@@ -40,7 +40,7 @@ namespace SPMTool.Database.Conditions
 	///     Condition object base class.
 	/// </summary>
 	/// <inheritdoc cref="IConditionObject{T1,T2}" />
-	public abstract class ConditionObject<T1, T2> : IConditionObject<T1, T2>, IEntityCreator<BlockReference>
+	public abstract class ConditionObject<T1, T2> : XDataCreator, IConditionObject<T1, T2>, IEntityCreator<BlockReference>
 		where T1 : IConditionObject<T1, T2>
 		where T2 : IEquatable<T2>
 	{
@@ -52,21 +52,9 @@ namespace SPMTool.Database.Conditions
 
 		public Point Position { get; }
 
-		public virtual T2 Value { get; }
+		public virtual T2 Value { get; protected set; }
 
 		public abstract Layer Layer { get; }
-
-		public ObjectId ObjectId
-		{
-			get => _id;
-			set
-			{
-				_id = value;
-
-				// Set the extended data
-				_id.SetXData(ConditionXData());
-			}
-		}
 
 		/// <summary>
 		///		Get the rotation angle for block insertion.
@@ -98,7 +86,7 @@ namespace SPMTool.Database.Conditions
 
 		public virtual void AddToDrawing() => ObjectId = CreateEntity()?.AddToDrawing(Model.On_ObjectErase) ?? ObjectId.Null;
 
-		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+		public virtual void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
 		/// <summary>
 		///		Create the extended data for this object.

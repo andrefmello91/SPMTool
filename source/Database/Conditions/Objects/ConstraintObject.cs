@@ -60,23 +60,30 @@ namespace SPMTool.Database.Conditions
 		///     Read a <see cref="ConstraintObject" /> from a <see cref="BlockReference" />.
 		/// </summary>
 		/// <param name="reference">The <see cref="BlockReference" /> object of the force.</param>
-		public static ConstraintObject? ReadFromBlock(BlockReference? reference)
-		{
-			if (reference is null)
-				return null;
-
-			// Read the XData and get the necessary data
-			var data = reference.ReadXData();
-
-			// Get value and direction
-			var direction  = (ConstraintDirection) data[(int) ForceIndex.Direction].ToInt();
-			var constraint = Constraint.FromDirection(direction);
-
-			return
-				new ConstraintObject(reference.Position.ToPoint(Settings.Units.Geometry), constraint)
+		public static ConstraintObject? ReadFromBlock(BlockReference? reference) =>
+			reference is null
+				? null
+				: new ConstraintObject(reference.Position.ToPoint(Settings.Units.Geometry), Constraint.Free)
 				{
 					ObjectId = reference.ObjectId
 				};
+
+		/// <summary>
+		///		Get the <see cref="Constraint"/> in XData.
+		/// </summary>
+		private Constraint GetConstraint()
+		{
+			// Read the XData and get the necessary data
+			var data = ReadXData();
+
+			if (data is null)
+				return Constraint.Free;
+
+			// Get value and direction
+			var direction = (ConstraintDirection)data[(int)ForceIndex.Direction].ToInt();
+
+			return
+				Constraint.FromDirection(direction);
 		}
 
 		/// <summary>
@@ -100,6 +107,10 @@ namespace SPMTool.Database.Conditions
 			// Add XData to force block
 			return data;
 		}
+
+		protected override TypedValue[] ObjectXData() => CreateXData(Value.Direction);
+
+		public override void GetProperties() => Value = GetConstraint();
 
 		protected override TypedValue[] ConditionXData() => CreateXData(Value.Direction);
 
