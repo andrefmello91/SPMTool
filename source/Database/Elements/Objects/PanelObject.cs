@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Material.Reinforcement;
 using Material.Reinforcement.Biaxial;
+using MathNet.Numerics;
 using OnPlaneComponents;
 using SPM.Elements;
 using SPM.Elements.PanelProperties;
@@ -28,8 +29,6 @@ namespace SPMTool.Database.Elements
 	{
 		#region Fields
 
-		private Length? _width;
-
 		private WebReinforcementDirection? _x, _y;
 
 		#endregion
@@ -41,7 +40,7 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		public WebReinforcementDirection? DirectionX
 		{
-			get => _x ?? GetReinforcement().DirectionX;
+			get => _x;
 			set => SetReinforcement(value, Direction.X);
 		}
 
@@ -50,7 +49,7 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		public WebReinforcementDirection? DirectionY
 		{
-			get => _y ?? GetReinforcement().DirectionY;
+			get => _y;
 			set => SetReinforcement(value, Direction.Y);
 		}
 
@@ -62,15 +61,12 @@ namespace SPMTool.Database.Elements
 		public override Layer Layer => Layer.Panel;
 
 		/// <summary>
-		///     Get/set the <see cref="WebReinforcement" />.
+		///     Get the <see cref="WebReinforcement" />.
 		/// </summary>
-		public WebReinforcement? Reinforcement
-		{
-			get => DirectionX is null && DirectionY is null
+		public WebReinforcement? Reinforcement =>
+			DirectionX is null && DirectionY is null
 				? null
 				: new WebReinforcement(DirectionX, DirectionY, Width);
-			set => SetReinforcement(value);
-		}
 
 		/// <summary>
 		///     Get panel's <see cref="SPM.Elements.PanelProperties.Vertices" />
@@ -82,7 +78,7 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		public Length Width
 		{
-			get => _width ?? GetWidth();
+			get => Geometry.Width;
 			set => SetWidth(value);
 		}
 
@@ -133,10 +129,16 @@ namespace SPMTool.Database.Elements
 			ObjectId = solid.ObjectId
 		};
 
-		/// <summary>
-		///     Create new XData for panels.
-		/// </summary>
-		public static TypedValue[] NewXData()
+		///  <summary>
+		///      Create new XData for panels.
+		///  </summary>
+		///  <remarks>
+		/// 		Leave null values for default values.
+		///  </remarks>
+		///  <param name="width">The width.</param>
+		///  <param name="x">The <see cref="WebReinforcementDirection"/> for X direction.</param>
+		///  <param name="y">The <see cref="WebReinforcementDirection"/> for Y direction.</param>
+		public static TypedValue[] CreateXData(Length? width = null, WebReinforcementDirection? x = null, WebReinforcementDirection? y = null)
 		{
 			// Definition for the Extended Data
 			string xdataStr = "Panel Data";
@@ -147,17 +149,17 @@ namespace SPMTool.Database.Elements
 			var newData = new TypedValue[size];
 
 			// Set the initial parameters
-			newData[(int) PanelIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, AppName);
+			newData[(int) PanelIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  AppName);
 			newData[(int) PanelIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-			newData[(int) PanelIndex.Width]    = new TypedValue((int) DxfCode.ExtendedDataReal, 100);
-			newData[(int) PanelIndex.XDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-			newData[(int) PanelIndex.Sx]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-			newData[(int) PanelIndex.fyx]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-			newData[(int) PanelIndex.Esx]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-			newData[(int) PanelIndex.YDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-			newData[(int) PanelIndex.Sy]       = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-			newData[(int) PanelIndex.fyy]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
-			newData[(int) PanelIndex.Esy]      = new TypedValue((int) DxfCode.ExtendedDataReal, 0);
+			newData[(int) PanelIndex.Width]    = new TypedValue((int) DxfCode.ExtendedDataReal,        width?.Millimeters                  ?? 100);
+			newData[(int) PanelIndex.XDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal,        x?.BarDiameter.Millimeters          ?? 0);
+			newData[(int) PanelIndex.Sx]       = new TypedValue((int) DxfCode.ExtendedDataReal,        x?.BarSpacing.Millimeters           ?? 0);
+			newData[(int) PanelIndex.fyx]      = new TypedValue((int) DxfCode.ExtendedDataReal,        x?.Steel?.YieldStress.Megapascals   ?? 0);
+			newData[(int) PanelIndex.Esx]      = new TypedValue((int) DxfCode.ExtendedDataReal,        x?.Steel?.ElasticModule.Megapascals ?? 0);
+			newData[(int) PanelIndex.YDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal,        y?.BarDiameter.Millimeters          ?? 0);
+			newData[(int) PanelIndex.Sy]       = new TypedValue((int) DxfCode.ExtendedDataReal,        y?.BarSpacing.Millimeters           ?? 0);
+			newData[(int) PanelIndex.fyy]      = new TypedValue((int) DxfCode.ExtendedDataReal,        y?.Steel?.YieldStress.Megapascals   ?? 0);
+			newData[(int) PanelIndex.Esy]      = new TypedValue((int) DxfCode.ExtendedDataReal,        y?.Steel?.ElasticModule.Megapascals ?? 0);
 
 			return newData;
 		}
@@ -166,6 +168,19 @@ namespace SPMTool.Database.Elements
 		{
 			Layer = $"{Layer}"
 		};
+
+		protected override TypedValue[] ObjectXData() => CreateXData(Width, DirectionX, DirectionY);
+
+		protected override void GetProperties()
+		{
+			var data = ReadXData();
+
+			PropertyField.Width = GetWidth(data);
+
+			_x = GetReinforcement(Direction.X, data);
+
+			_y = GetReinforcement(Direction.Y, data);
+		}
 
 		public override Panel GetElement() => throw new NotImplementedException();
 
@@ -179,66 +194,73 @@ namespace SPMTool.Database.Elements
 		///     Set <paramref name="width" /> to this object.
 		/// </summary>
 		/// <param name="width">The width.</param>
-		public void SetWidth(Length width)
+		/// <inheritdoc cref="GetWidth"/>
+		public void SetWidth(Length width, TypedValue[]? data = null)
 		{
-			_width = width;
 			PropertyField.Width = width;
 
 			// Access the XData as an array
-			var data = ReadXData();
+			data ??= ReadXData();
 
-			// Set the new geometry and reinforcement (line 7 to 9 of the array)
-			data[(int) PanelIndex.Width] = new TypedValue((int) DxfCode.ExtendedDataReal, width.Millimeters);
+			if (data is null)
+				data = CreateXData(width);
+
+			else
+				data[(int) PanelIndex.Width] = new TypedValue((int) DxfCode.ExtendedDataReal, width.Millimeters);
 
 			// Add the new XData
 			ObjectId.SetXData(data);
 		}
 
 		/// <summary>
-		///     Read the XData associated to this object.
-		/// </summary>
-		private TypedValue[] ReadXData() => ObjectId.ReadXData() ?? NewXData();
-
-		/// <summary>
 		///     Get the width of a panel.
 		/// </summary>
-		private Length GetWidth()
+		/// <param name="data">The extended data. Leave null to read from <see cref="ObjectId" />.</param>
+		private Length GetWidth(TypedValue[]? data = null)
 		{
-			_width = Length.FromMillimeters(ReadXData()[(int) PanelIndex.Width].ToDouble());
+			data ??= ReadXData();
 
-			PropertyField.Width = _width.Value;
-
-			return _width.Value;
+			return data is null	
+				? Length.FromMillimeters(100).ToUnit(Settings.Units.Geometry)
+				: Length.FromMillimeters(data[(int) PanelIndex.Width].ToDouble()).ToUnit(Settings.Units.Geometry);
 		}
 
 		/// <summary>
 		///     Get the <see cref="WebReinforcement" /> of a panel.
 		/// </summary>
-		private WebReinforcement GetReinforcement()
+		/// <inheritdoc cref="GetWidth"/>
+		private WebReinforcementDirection? GetReinforcement(Direction dir, TypedValue[]? data = null)
 		{
-			var data = ReadXData();
+			data ??= ReadXData();
+
+			if (data is null)
+				return null;
+
+			var units = Settings.Units;
+
+			// Get indexes
+			int
+				d = dir is Direction.X ? (int)PanelIndex.XDiam : (int)PanelIndex.YDiam,
+				s = dir is Direction.X ? (int)PanelIndex.Sx    : (int)PanelIndex.Sy,
+				f = dir is Direction.X ? (int)PanelIndex.fyx   : (int)PanelIndex.fyy,
+				e = dir is Direction.X ? (int)PanelIndex.Esx   : (int)PanelIndex.Esy;
+
+			// Angle
+			var angle = dir is Direction.X ? 0 : Constants.PiOver2;
 
 			// Get reinforcement
-			double
-				width = data[(int) PanelIndex.Width].ToDouble(),
-				phiX  = data[(int) PanelIndex.XDiam].ToDouble(),
-				phiY  = data[(int) PanelIndex.YDiam].ToDouble(),
-				sx    = data[(int) PanelIndex.Sx].ToDouble(),
-				sy    = data[(int) PanelIndex.Sy].ToDouble();
+			Length
+				phi  = Length.FromMillimeters(data[d].ToDouble()).ToUnit(units.Reinforcement),
+				sp   = Length.FromMillimeters(data[s].ToDouble()).ToUnit(units.Geometry);
 
 			// Get steel data
-			double
-				fyx = data[(int) PanelIndex.fyx].ToDouble(),
-				Esx = data[(int) PanelIndex.Esx].ToDouble(),
-				fyy = data[(int) PanelIndex.fyy].ToDouble(),
-				Esy = data[(int) PanelIndex.Esy].ToDouble();
-
-			_x = phiX > 0 && sx > 0 ? new WebReinforcementDirection(phiX, sx, new Steel(fyx, Esx), width, 0) : null;
-			_y = phiY > 0 && sy > 0 ? new WebReinforcementDirection(phiY, sy, new Steel(fyy, Esy), width, 0) : null;
+			Pressure
+				fy = Pressure.FromMegapascals(data[f].ToDouble()).ToUnit(units.MaterialStrength),
+				Es = Pressure.FromMegapascals(data[e].ToDouble()).ToUnit(units.MaterialStrength);
 
 			// Get reinforcement
 			return
-				new WebReinforcement(_x, _y, width);
+				new WebReinforcementDirection(phi, sp, new Steel(fy, Es), Width, angle);
 		}
 
 		/// <summary>
@@ -246,33 +268,33 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		/// <param name="direction">The <see cref="WebReinforcementDirection" /> for horizontal direction.</param>
 		/// <param name="dir">The <see cref="Direction" /> to set (X or Y).</param>
-		private void SetReinforcement(WebReinforcementDirection? direction, Direction dir)
+		/// <inheritdoc cref="GetWidth"/>
+		private void SetReinforcement(WebReinforcementDirection? direction, Direction dir, TypedValue[]? data = null)
 		{
-			// Access the XData as an array
-			var data = ReadXData();
+			data ??= ReadXData();
 
-			// Get indexes
-			int
-				phi = dir is Direction.X ? (int) PanelIndex.XDiam : (int) PanelIndex.YDiam,
-				s   = dir is Direction.X ? (int) PanelIndex.Sx    : (int) PanelIndex.Sy,
-				fy  = dir is Direction.X ? (int) PanelIndex.fyx   : (int) PanelIndex.fyy,
-				es  = dir is Direction.X ? (int) PanelIndex.Esx   : (int) PanelIndex.Esy;
+			if (data is null)
+				data = dir is Direction.X
+					? CreateXData(null, direction)
+					: CreateXData(null, null, direction);
 
-			data[phi] = new TypedValue((int) DxfCode.ExtendedDataReal, direction?.BarDiameter.Millimeters          ?? 0);
-			data[s]   = new TypedValue((int) DxfCode.ExtendedDataReal, direction?.BarSpacing.Millimeters           ?? 0);
-			data[fy]  = new TypedValue((int) DxfCode.ExtendedDataReal, direction?.Steel?.YieldStress.Megapascals   ?? 0);
-			data[es]  = new TypedValue((int) DxfCode.ExtendedDataReal, direction?.Steel?.ElasticModule.Megapascals ?? 0);
+			else
+			{
+				// Get indexes
+				int
+					phi = dir is Direction.X ? (int) PanelIndex.XDiam : (int) PanelIndex.YDiam,
+					s   = dir is Direction.X ? (int) PanelIndex.Sx    : (int) PanelIndex.Sy,
+					fy  = dir is Direction.X ? (int) PanelIndex.fyx   : (int) PanelIndex.fyy,
+					es  = dir is Direction.X ? (int) PanelIndex.Esx   : (int) PanelIndex.Esy;
+
+				data[phi] = new TypedValue((int) DxfCode.ExtendedDataReal, direction?.BarDiameter.Millimeters          ?? 0);
+				data[s]   = new TypedValue((int) DxfCode.ExtendedDataReal, direction?.BarSpacing.Millimeters           ?? 0);
+				data[fy]  = new TypedValue((int) DxfCode.ExtendedDataReal, direction?.Steel?.YieldStress.Megapascals   ?? 0);
+				data[es]  = new TypedValue((int) DxfCode.ExtendedDataReal, direction?.Steel?.ElasticModule.Megapascals ?? 0);
+			}
 
 			// Add the new XData
 			ObjectId.SetXData(data);
-		}
-
-		/// <inheritdoc cref="SetReinforcement(WebReinforcementDirection,Direction)" />
-		/// <param name="reinforcement">The <see cref="WebReinforcement" />.</param>
-		private void SetReinforcement(WebReinforcement? reinforcement)
-		{
-			SetReinforcement(reinforcement?.DirectionX, Direction.X);
-			SetReinforcement(reinforcement?.DirectionY, Direction.Y);
 		}
 
 		#endregion

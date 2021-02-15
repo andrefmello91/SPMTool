@@ -34,11 +34,6 @@ namespace SPMTool.Database.Elements
 		#region Properties
 
 		/// <summary>
-		///     Get the geometry of this object.
-		/// </summary>
-		public StringerGeometry Geometry => PropertyField;
-
-		/// <summary>
 		///     Get/set the height of <see cref="Geometry" />.
 		/// </summary>
 		public CrossSection CrossSection
@@ -47,6 +42,11 @@ namespace SPMTool.Database.Elements
 			set => SetCrossSection(value);
 		}
 
+		/// <summary>
+		///     Get the geometry of this object.
+		/// </summary>
+		public StringerGeometry Geometry => PropertyField;
+
 		public override Layer Layer => Layer.Stringer;
 
 		/// <summary>
@@ -54,7 +54,7 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		public UniaxialReinforcement? Reinforcement
 		{
-			get => _reinforcement ?? GetReinforcement();
+			get => _reinforcement;
 			set => SetReinforcement(value);
 		}
 
@@ -75,8 +75,8 @@ namespace SPMTool.Database.Elements
 		/// <param name="initialPoint">The initial <see cref="Point" />.</param>
 		/// <param name="endPoint">The end <see cref="Point" />.</param>
 		public StringerObject(Point initialPoint, Point endPoint)
+			: this (new StringerGeometry(initialPoint, endPoint, 100, 100))
 		{
-			PropertyField = GetGeometry(initialPoint, endPoint);
 		}
 
 		/// <summary>
@@ -110,6 +110,11 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Create new extended data for stringers.
 		/// </summary>
+		/// <remarks>
+		///		Leave values null to set default values.
+		/// </remarks>
+		/// <param name="crossSection">The <seealso cref="SPM.Elements.StringerProperties.CrossSection"/>.</param>
+		/// <param name="reinforcement">The <seealso cref="UniaxialReinforcement"/>.</param>
 		public static TypedValue[] CreateXData(CrossSection? crossSection = null, UniaxialReinforcement? reinforcement = null)
 		{
 			// Definition for the Extended Data
@@ -140,76 +145,97 @@ namespace SPMTool.Database.Elements
 			Layer = $"{Layer}"
 		};
 
-		protected override TypedValue[] ObjectXData() => CreateXData(CrossSection, Reinforcement);
-
 		public override Stringer GetElement() => throw new NotImplementedException();
 
 		/// <inheritdoc cref="GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
 		/// <param name="analysisType">The <see cref="AnalysisType" />.</param>
 		public Stringer GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
-			Stringer.Read(analysisType, Number, nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, GetReinforcement());
+			Stringer.Read(analysisType, Number, nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement);
 
-		/// <summary>
-		///     Get the <see cref="StringerGeometry" /> from XData.
-		/// </summary>
-		/// <param name="initialPoint">The initial <see cref="Point3d" />.</param>
-		/// <param name="endPoint">The end <see cref="Point3d" />.</param>
-		private StringerGeometry GetGeometry(Point initialPoint, Point endPoint)
+		protected override TypedValue[] ObjectXData() => CreateXData(CrossSection, Reinforcement);
+
+		protected override void GetProperties()
 		{
-			// Access the XData as an array
 			var data = ReadXData();
 
+			PropertyField.CrossSection = GetCrossSection(data);
+
+			_reinforcement = GetReinforcement(data);
+		}
+
+		/// <summary>
+		///     Get the <see cref="CrossSection" /> from XData.
+		/// </summary>
+		/// <param name="data">The extended data. Leave null to read from <see cref="ObjectId" />.</param>
+		private CrossSection GetCrossSection(TypedValue[]? data = null)
+		{
+			// Access the XData as an array
+			data ??= ReadXData();
+
+			if (data is null)
+				return new CrossSection(100, 100);
+
 			Length
-				w = Length.FromMillimeters(data?[(int) StringerIndex.Width].ToDouble()  ?? 0),
-				h = Length.FromMillimeters(data?[(int) StringerIndex.Height].ToDouble() ?? 0);
+				w = Length.FromMillimeters(data?[(int) StringerIndex.Width].ToDouble()  ?? 0).ToUnit(Settings.Units.Geometry),
+				h = Length.FromMillimeters(data?[(int) StringerIndex.Height].ToDouble() ?? 0).ToUnit(Settings.Units.Geometry);
 
 			return
-				new StringerGeometry(initialPoint, endPoint, w, h);
+				new CrossSection(w, h);
 		}
 
 		/// <summary>
 		///     Get this stringer <see cref="UniaxialReinforcement" />.
 		/// </summary>
-		private UniaxialReinforcement? GetReinforcement()
+		/// <inheritdoc cref="GetCrossSection" />
+		private UniaxialReinforcement? GetReinforcement(TypedValue[]? data = null)
 		{
 			// Access the XData as an array
-			var data = ReadXData();
+			data ??= ReadXData();
+
+			if (data is null)
+				return null;
 
 			// Get reinforcement
 			var numOfBars = data[(int) StringerIndex.NumOfBars].ToInt();
-			var phi       = Length.FromMillimeters(data[(int) StringerIndex.BarDiam].ToDouble());
+			var phi       = Length.FromMillimeters(data[(int) StringerIndex.BarDiam].ToDouble()).ToUnit(Settings.Units.Reinforcement);
 
 			if (numOfBars == 0 || phi.ApproxZero(Point.Tolerance))
 				return null;
 
 			// Get steel data
 			Pressure
-				fy = Pressure.FromMegapascals(data[(int) StringerIndex.Steelfy].ToDouble()),
-				Es = Pressure.FromMegapascals(data[(int) StringerIndex.SteelEs].ToDouble());
+				fy = Pressure.FromMegapascals(data[(int) StringerIndex.Steelfy].ToDouble()).ToUnit(Settings.Units.MaterialStrength),
+				Es = Pressure.FromMegapascals(data[(int) StringerIndex.SteelEs].ToDouble()).ToUnit(Settings.Units.MaterialStrength);
 
 			// Set reinforcement
-			_reinforcement = new UniaxialReinforcement(numOfBars, phi, new Steel(fy, Es), CrossSection.Area);
-
-			return _reinforcement;
+			return
+				new UniaxialReinforcement(numOfBars, phi, new Steel(fy, Es), CrossSection.Area);
 		}
 
 		/// <summary>
-		///     Set the <seealso cref="CrossSection"/> to <see cref="Geometry" /> and XData.
+		///     Set the <seealso cref="CrossSection" /> to <see cref="Geometry" /> and XData.
 		/// </summary>
-		/// <param name="crossSection">The <seealso cref="CrossSection"/> to set. Leave null to leave unchanged.</param>
-		private void SetCrossSection(CrossSection? crossSection)
+		/// <param name="crossSection">The <seealso cref="CrossSection" /> to set. Leave null to leave unchanged.</param>
+		/// <inheritdoc cref="GetCrossSection" />
+		private void SetCrossSection(CrossSection crossSection, TypedValue[]? data = null)
 		{
-			if (!crossSection.HasValue)
-				return;
+			PropertyField.CrossSection = crossSection;
 
 			// Access the XData as an array
-			var data = ReadXData();
+			data ??= ReadXData();
 
-			// Set the new geometry
-			PropertyField.CrossSection = crossSection.Value;
-			data[(int) StringerIndex.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, crossSection.Value.Width.Millimeters);
-			data[(int) StringerIndex.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, crossSection.Value.Height.Millimeters);
+			if (data is null)
+			{
+				data = CreateXData(crossSection);
+			}
+
+			else
+			{
+				// Set the new geometry
+				data[(int) StringerIndex.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, crossSection.Width.Millimeters);
+				data[(int) StringerIndex.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, crossSection.Height.Millimeters);
+			}
 
 			ObjectId.SetXData(data);
 		}
@@ -219,27 +245,32 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		/// <param name="reinforcement">The <see cref="UniaxialReinforcement" /> to set.</param>
 		/// <inheritdoc cref="GetReinforcement" />
-		private void SetReinforcement(UniaxialReinforcement? reinforcement)
+		private void SetReinforcement(UniaxialReinforcement? reinforcement, TypedValue[]? data = null)
 		{
 			_reinforcement = reinforcement;
 
+			_reinforcement?.ChangeUnit(Settings.Units.Geometry);
+
 			// Access the XData as an array
-			var data = ReadXData();
+			data ??= ReadXData();
 
-			// Set values
-			data[(int) StringerIndex.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, reinforcement?.NumberOfBars                     ?? 0);
-			data[(int) StringerIndex.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.BarDiameter.Millimeters          ?? 0);
+			if (data is null)
+			{
+				data = CreateXData(null, reinforcement);
+			}
 
-			data[(int) StringerIndex.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.Steel?.YieldStress.Megapascals   ?? 0);
-			data[(int) StringerIndex.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.Steel?.ElasticModule.Megapascals ?? 0);
+			else
+			{
+				// Set values
+				data[(int) StringerIndex.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, reinforcement?.NumberOfBars                     ?? 0);
+				data[(int) StringerIndex.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.BarDiameter.Millimeters          ?? 0);
+
+				data[(int) StringerIndex.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.Steel?.YieldStress.Megapascals   ?? 0);
+				data[(int) StringerIndex.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.Steel?.ElasticModule.Megapascals ?? 0);
+			}
 
 			ObjectId.SetXData(data);
 		}
-
-		/// <summary>
-		///     Read the XData associated to this object.
-		/// </summary>
-		private TypedValue[]? ReadXData() => ObjectId.ReadXData();
 
 		#endregion
 

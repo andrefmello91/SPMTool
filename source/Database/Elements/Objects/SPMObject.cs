@@ -75,13 +75,7 @@ namespace SPMTool.Database.Elements
 		public ObjectId ObjectId
 		{
 			get => _id;
-			set
-			{
-				_id = value;
-
-				// Set the extended data
-				_id.SetXData(ObjectXData());
-			}
+			set => AttachObject(value);
 		}
 		
 		public T2 Property => PropertyField;
@@ -106,7 +100,7 @@ namespace SPMTool.Database.Elements
 
 		public T4 GetEntity() => (T4) ObjectId.GetEntity();
 
-		public void AddToDrawing() => ObjectId = CreateEntity()?.AddToDrawing(Model.On_ObjectErase) ?? ObjectId.Null;
+		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing(Model.On_ObjectErase);
 
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
@@ -114,6 +108,39 @@ namespace SPMTool.Database.Elements
 		///		Create the extended data for this object.
 		/// </summary>
 		protected abstract TypedValue[] ObjectXData();
+
+		/// <summary>
+		///     Read the XData associated to this object.
+		/// </summary>
+		protected TypedValue[]? ReadXData() => ObjectId.ReadXData();
+
+		/// <summary>
+		///		Get properties from the extended data for this object.
+		/// </summary>
+		protected abstract void GetProperties();
+
+		/// <summary>
+		///		Attach an <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId"/> to this object.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId"/>.</param>
+		private void AttachObject(ObjectId objectId)
+		{
+			if (objectId.IsNull)
+				return;
+
+			// Id changed
+			if (!_id.IsNull)
+				objectId.SetXData(ObjectXData());
+
+			// First set, read data
+			else
+				GetProperties();
+
+			_id = objectId;
+
+			// Set the extended data
+			_id.SetXData(ObjectXData());
+		}
 
 		public int CompareTo(T1 other) => other is null
 			? 1

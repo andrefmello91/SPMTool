@@ -101,7 +101,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Create node XData.
 		/// </summary>
-		public static TypedValue[] CreateXData(PlaneDisplacement displacement)
+		public static TypedValue[] CreateXData(PlaneDisplacement? displacement = null)
 		{
 			// Definition for the Extended Data
 			string xdataStr = "Node Data";
@@ -113,10 +113,10 @@ namespace SPMTool.Database.Elements
 			var data = new TypedValue[size];
 
 			// Set the initial parameters
-			data[(int) NodeIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, AppName);
+			data[(int) NodeIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  AppName);
 			data[(int) NodeIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-			data[(int) NodeIndex.Ux]       = new TypedValue((int) DxfCode.ExtendedDataReal, displacement.X.Millimeters);
-			data[(int) NodeIndex.Uy]       = new TypedValue((int) DxfCode.ExtendedDataReal, displacement.Y.Millimeters);
+			data[(int) NodeIndex.Ux]       = new TypedValue((int) DxfCode.ExtendedDataReal,        displacement?.X.Millimeters ?? 0);
+			data[(int) NodeIndex.Uy]       = new TypedValue((int) DxfCode.ExtendedDataReal,        displacement?.Y.Millimeters ?? 0);
 
 			return data;
 		}
@@ -138,6 +138,8 @@ namespace SPMTool.Database.Elements
 			};
 
 		protected override TypedValue[] ObjectXData() => CreateXData(Displacement);
+
+		protected override void GetProperties() => _displacement = GetDisplacement();
 
 		/// <summary>
 		///     Set <see cref="PlaneDisplacement" /> to this object XData.
@@ -167,33 +169,22 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Get <see cref="PlaneDisplacement" /> saved in XData.
 		/// </summary>
-		private PlaneDisplacement GetDisplacement()
+		private PlaneDisplacement GetDisplacement(TypedValue[]? data = null)
 		{
-			var data = ReadXData();
+			data ??= ReadXData();
 
 			if (data is null)
-			{
-				_displacement = PlaneDisplacement.Zero;
-			}
+				return PlaneDisplacement.Zero;
 
-			else
-			{
-				// Get units
-				var units = Settings.Units;
+			// Get units
+			var units = Settings.Units;
 
-				var ux = Length.FromMillimeters(data[(int) NodeIndex.Ux].ToDouble()).ToUnit(units.Displacements);
-				var uy = Length.FromMillimeters(data[(int) NodeIndex.Uy].ToDouble()).ToUnit(units.Displacements);
+			var ux = Length.FromMillimeters(data[(int) NodeIndex.Ux].ToDouble()).ToUnit(units.Displacements);
+			var uy = Length.FromMillimeters(data[(int) NodeIndex.Uy].ToDouble()).ToUnit(units.Displacements);
 
-				_displacement = new PlaneDisplacement(ux, uy);
-			}
-
-			return _displacement!.Value;
+			return
+				new PlaneDisplacement(ux, uy);
 		}
-
-		/// <summary>
-		///     Read the XData associated to this object.
-		/// </summary>
-		private TypedValue[]? ReadXData() => ObjectId.ReadXData();
 
 		#endregion
 
