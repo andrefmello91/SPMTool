@@ -59,7 +59,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Event to execute when a range of objects is removed from a list.
 		/// </summary>
-		public static void On_ObjectsRemoved(object? sender, RangeEventArgs<T>? e) => e?.ItemCollection?.AddToDrawing();
+		public static void On_ObjectsRemoved(object? sender, RangeEventArgs<T>? e) => e?.ItemCollection?.RemoveFromDrawing();
 
 		#endregion
 	}
