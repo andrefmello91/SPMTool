@@ -23,7 +23,7 @@ using SPMTool.Database.Materials;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using MessageBox = System.Windows.MessageBox;
-using static SPMTool.Database.Elements.Stringers;
+using static SPMTool.Database.Elements.StringerList;
 using static SPMTool.Database.Elements.ElementData;
 using static SPMTool.Database.Materials.ReinforcementData;
 using Window = System.Windows.Window;

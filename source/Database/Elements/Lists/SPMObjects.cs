@@ -17,16 +17,16 @@ namespace SPMTool.Database.Elements
 	/// <typeparam name="T1">Any type that implements <see cref="ISPMObject{T1,T2,T3}" />.</typeparam>
 	/// <typeparam name="T2">The type that represents the main property of the object.</typeparam>
 	/// <typeparam name="T3">Any type that implements <see cref="INumberedElement" />.</typeparam>
-	public abstract class SPMObjects<T1, T2, T3> : EntityCreatorList<T1>
+	public abstract class SPMObjectList<T1, T2, T3> : EntityCreatorList<T1>
 		where T1 : ISPMObject<T1, T2, T3>, IEntityCreator<Entity>
 		where T2 : IComparable<T2>, IEquatable<T2>
 		where T3 : INumberedElement
 	{
 		#region Constructors
 
-		protected SPMObjects() => SetEvents();
+		protected SPMObjectList() => SetEvents();
 
-		protected SPMObjects(IEnumerable<T1> collection)
+		protected SPMObjectList(IEnumerable<T1> collection)
 			: base(collection) =>
 			SetEvents();
 

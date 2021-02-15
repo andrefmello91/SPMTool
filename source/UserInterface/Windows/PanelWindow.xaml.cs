@@ -24,7 +24,7 @@ using SPMTool.Extensions;
 using UnitsNet;
 using MessageBox = System.Windows.MessageBox;
 using Stringer = SPM.Elements.Stringer;
-using static SPMTool.Database.Elements.Panels;
+using static SPMTool.Database.Elements.PanelList;
 using static SPMTool.Database.Elements.ElementData;
 using static SPMTool.Database.Materials.ReinforcementData;
 using Window = System.Windows.Window;

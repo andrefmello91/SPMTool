@@ -251,11 +251,11 @@ namespace SPMTool.Extensions
 				Block.SupportX          => Supports.XElements.ToArray(),
 				Block.SupportY          => Supports.YElements.ToArray(),
 				Block.SupportXY         => Supports.XYElements.ToArray(),
-				Block.Shear             => Panels.ShearBlockElements().ToArray(),
-				Block.CompressiveStress => Panels.CompressiveBlockElements().ToArray(),
-				Block.TensileStress     => Panels.TensileBlockElements().ToArray(),
-				Block.PanelCrack        => Panels.CrackBlockElements().ToArray(),
-				Block.StringerCrack     => Stringers.CrackBlockElements().ToArray(),
+				Block.Shear             => PanelList.ShearBlockElements().ToArray(),
+				Block.CompressiveStress => PanelList.CompressiveBlockElements().ToArray(),
+				Block.TensileStress     => PanelList.TensileBlockElements().ToArray(),
+				Block.PanelCrack        => PanelList.CrackBlockElements().ToArray(),
+				Block.StringerCrack     => StringerList.CrackBlockElements().ToArray(),
 				_                       => null
 			};
 		}

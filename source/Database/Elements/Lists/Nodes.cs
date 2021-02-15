@@ -18,16 +18,16 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Nodes class.
 	/// </summary>
-	public class Nodes : SPMObjects<NodeObject, Point, Node>
+	public class NodeList : SPMObjectList<NodeObject, Point, Node>
 	{
 		#region Constructors
 
-		private Nodes()
+		private NodeList()
 			: base()
 		{
 		}
 
-		private Nodes(IEnumerable<NodeObject> nodeObjects)
+		private NodeList(IEnumerable<NodeObject> nodeObjects)
 			: base(nodeObjects)
 		{
 		}
@@ -56,16 +56,16 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Read all <see cref="NodeObject" />'s from drawing.
 		/// </summary>
-		public static Nodes ReadFromDrawing() => ReadFromPoints(GetDBPoints());
+		public static NodeList ReadFromDrawing() => ReadFromPoints(GetDBPoints());
 
 		/// <summary>
 		///     Read <see cref="NodeObject" />'s from a collection of <see cref="DBPoint" />'s.
 		/// </summary>
 		/// <param name="nodePoints">The collection containing the <see cref="DBPoint" />'s of drawing.</param>
-		public static Nodes ReadFromPoints(IEnumerable<DBPoint>? nodePoints) =>
+		public static NodeList ReadFromPoints(IEnumerable<DBPoint>? nodePoints) =>
 			nodePoints.IsNullOrEmpty()
-				? new Nodes()
-				: new Nodes(nodePoints.Select(NodeObject.ReadFromPoint));
+				? new NodeList()
+				: new NodeList(nodePoints.Select(NodeObject.ReadFromPoint));
 
 		/// <summary>
 		///     Get <see cref="NodeType" />.

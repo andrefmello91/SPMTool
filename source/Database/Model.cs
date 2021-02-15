@@ -42,17 +42,17 @@ namespace SPMTool.Database
 		/// <summary>
 		///     Get the <see cref="NodeObject" />'s in the model.
 		/// </summary>
-		public static readonly Nodes Nodes = Nodes.ReadFromDrawing();
+		public static readonly NodeList Nodes = NodeList.ReadFromDrawing();
 
 		/// <summary>
 		///     Get the <see cref="StringerObject" />'s in the model.
 		/// </summary>
-		public static readonly Stringers Stringers = Stringers.ReadFromDrawing();
+		public static readonly StringerList Stringers = StringerList.ReadFromDrawing();
 
 		/// <summary>
 		///     Get the <see cref="PanelObject" />'s in the model.
 		/// </summary>
-		public static readonly Panels Panels = Panels.ReadFromDrawing();
+		public static readonly PanelList Panels = PanelList.ReadFromDrawing();
 
 		#endregion
 
@@ -66,7 +66,7 @@ namespace SPMTool.Database
 		/// <summary>
 		///     Get the collection of external nodes in the model.
 		/// </summary>
-		public static DBPoint[]? ExtNodeCollection => Nodes.GetDBPoints(NodeType.External)?.ToArray();
+		public static DBPoint[]? ExtNodeCollection => NodeList.GetDBPoints(NodeType.External)?.ToArray();
 
 		/// <summary>
 		///     Get the collection of forces in the model.
@@ -81,22 +81,22 @@ namespace SPMTool.Database
 		/// <summary>
 		///     Get the collection of internal nodes in the model.
 		/// </summary>
-		public static DBPoint[]? IntNodeCollection => Nodes.GetDBPoints(NodeType.Internal)?.ToArray();
+		public static DBPoint[]? IntNodeCollection => NodeList.GetDBPoints(NodeType.Internal)?.ToArray();
 
 		/// <summary>
 		///     Get the collection of all nodes in the model.
 		/// </summary>
-		public static DBPoint[]? NodeCollection => Nodes.GetDBPoints()?.ToArray();
+		public static DBPoint[]? NodeCollection => NodeList.GetDBPoints()?.ToArray();
 
 		/// <summary>
 		///     Get the collection of panels in the model.
 		/// </summary>
-		public static Solid[]? PanelCollection => Panels.GetObjects()?.ToArray();
+		public static Solid[]? PanelCollection => PanelList.GetObjects()?.ToArray();
 
 		/// <summary>
 		///     Get the collection of stringers in the model.
 		/// </summary>
-		public static Line[]? StringerCollection => Stringers.GetObjects()?.ToArray();
+		public static Line[]? StringerCollection => StringerList.GetObjects()?.ToArray();
 
 		/// <summary>
 		///     Get the collection of supports in the model.
@@ -148,7 +148,7 @@ namespace SPMTool.Database
 			}
 
 			// Get nodes
-			var nodes = Nodes.ReadFromPoints(ndObjs).Select(n => n.AsNode()).ToArray();
+			var nodes = NodeList.ReadFromPoints(ndObjs).Select(n => n.AsNode()).ToArray();
 
 			// Set supports and forces
 			//Forces.Set(ForceCollection, nodes);
@@ -185,7 +185,7 @@ namespace SPMTool.Database
 				return Nodes.GetByObjectId(entity.ObjectId).AsNode();
 
 			// Read nodes
-			var nodes = Nodes.ReadFromPoints(NodeCollection).Select(n => n.AsNode()).ToArray();
+			var nodes = NodeList.ReadFromPoints(NodeCollection).Select(n => n.AsNode()).ToArray();
 
 			if (layer is Layer.Stringer)
 				return Stringers.Read((Line) entity, units, parameters, constitutive, nodes);
@@ -225,14 +225,14 @@ namespace SPMTool.Database
 
 			//Nodes.SetDisplacements(analysis.Nodes);
 			DrawDisplacements(analysis.Stringers);
-			Stringers.DrawForces(analysis.Stringers, analysis.MaxStringerForce);
-			Panels.DrawStresses(analysis.Panels);
+			StringerList.DrawForces(analysis.Stringers, analysis.MaxStringerForce);
+			PanelList.DrawStresses(analysis.Panels);
 
 			if (!(analysis is SecantAnalysis))
 				return;
 
-			Panels.DrawCracks(analysis.Panels);
-			Stringers.DrawCracks(analysis.Stringers);
+			PanelList.DrawCracks(analysis.Panels);
+			StringerList.DrawCracks(analysis.Stringers);
 		}
 
 		/// <summary>

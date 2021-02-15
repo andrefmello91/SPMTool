@@ -22,16 +22,16 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Panels class.
 	/// </summary>
-	public class Panels : SPMObjects<PanelObject, PanelGeometry, Panel>
+	public class PanelList : SPMObjectList<PanelObject, PanelGeometry, Panel>
 	{
 		#region Constructors
 
-		private Panels()
+		private PanelList()
 			: base()
         {
 		}
 
-		private Panels(IEnumerable<PanelObject> panelObjects)
+		private PanelList(IEnumerable<PanelObject> panelObjects)
 			: base(panelObjects)
 		{
 		}
@@ -218,17 +218,17 @@ namespace SPMTool.Database.Elements
 		///     Read all the <see cref="PanelObject" />'s in the drawing.
 		/// </summary>
 		[return: NotNull]
-		public static Panels ReadFromDrawing() => ReadFromSolids(GetObjects());
+		public static PanelList ReadFromDrawing() => ReadFromSolids(GetObjects());
 
 		/// <summary>
 		///     Read <see cref="PanelObject" />'s from a collection of <see cref="Solid" />'s.
 		/// </summary>
 		/// <param name="panelSolids">The collection containing the <see cref="Solid" />'s of drawing.</param>
 		[return: NotNull]
-		public static Panels ReadFromSolids(IEnumerable<Solid>? panelSolids) =>
+		public static PanelList ReadFromSolids(IEnumerable<Solid>? panelSolids) =>
 			panelSolids.IsNullOrEmpty()
-				? new Panels()
-				: new Panels(panelSolids.Select(PanelObject.ReadFromSolid));
+				? new PanelList()
+				: new PanelList(panelSolids.Select(PanelObject.ReadFromSolid));
 
 		/// <summary>
 		///     Draw panel stresses.

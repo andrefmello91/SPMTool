@@ -22,16 +22,16 @@ namespace SPMTool.Database.Elements
 	/// <summary>
 	///     Stringers class.
 	/// </summary>
-	public class Stringers : SPMObjects<StringerObject, StringerGeometry, Stringer>
+	public class StringerList : SPMObjectList<StringerObject, StringerGeometry, Stringer>
 	{
 		#region Constructors
 
-		private Stringers()
+		private StringerList()
 			: base()
 		{
 		}
 
-		private Stringers(IEnumerable<StringerObject> stringerObjects)
+		private StringerList(IEnumerable<StringerObject> stringerObjects)
 			: base(stringerObjects)
 		{
 		}
@@ -82,16 +82,16 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Read all the <see cref="StringerObject" />'s in the drawing.
 		/// </summary>
-		public static Stringers ReadFromDrawing() => ReadFromLines(GetObjects());
+		public static StringerList ReadFromDrawing() => ReadFromLines(GetObjects());
 
 		/// <summary>
 		///     Read <see cref="StringerObject" />'s from a collection of <see cref="Line" />'s.
 		/// </summary>
 		/// <param name="stringerLines">The collection containing the <see cref="Line" />'s of drawing.</param>
-		public static Stringers ReadFromLines(IEnumerable<Line>? stringerLines) =>
+		public static StringerList ReadFromLines(IEnumerable<Line>? stringerLines) =>
 			stringerLines.IsNullOrEmpty()
-				? new Stringers()
-				: new Stringers(stringerLines.Select(StringerObject.ReadFromLine));
+				? new StringerList()
+				: new StringerList(stringerLines.Select(StringerObject.ReadFromLine));
 
 		/// <summary>
 		///     Draw stringer forces.

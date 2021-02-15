@@ -52,14 +52,14 @@ namespace SPMTool.Editor.Commands
 			    var endPt = endPtn.Value;
 
 			    // Create the Stringer and add to drawing
-			    Stringers.Add(stPt, endPt);
+			    StringerList.Add(stPt, endPt);
 
 			    // Set the start point of the new Stringer
 			    stPt = endPt;
 		    }
 
 		    // Update the nodes and stringers
-		    Stringers.Update();
+		    StringerList.Update();
 
 			// Set old OSMODE
 			SetSystemVariable("OSMODE", osmode);
@@ -80,14 +80,14 @@ namespace SPMTool.Editor.Commands
 				// Check if there are four points
 				if (nds.Length == 4)
 					// Create the panel if it doesn't exist
-					Panels.Add(nds.Select(nd => nd.Position).ToArray());
+					PanelList.Add(nds.Select(nd => nd.Position).ToArray());
 
 				else
 					ShowAlertDialog("Please select four external nodes.");
 			}
 
 			// Update panels
-			Panels.Update(false);
+			PanelList.Update(false);
 		}
     }
 }

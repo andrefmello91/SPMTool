@@ -52,13 +52,13 @@ namespace SPMTool.Editor.Commands
 				newStrs.AddRange(str.Divide(num));
 
 			// Erase the original stringers
-			Stringers.Remove(strs);
+			StringerList.Remove(strs);
 
 			// Add the stringers
-			Stringers.Add(newStrs);
+			StringerList.Add(newStrs);
 
 			// Create the nodes and update stringers
-			Stringers.Update();
+			StringerList.Update();
 
 			//foreach (var str in strs)
 			//         {
@@ -135,10 +135,10 @@ namespace SPMTool.Editor.Commands
 				cln = clnn.Value;
 
 			// Get the list of start and endpoints
-			var geoList = Stringers.GetGeometries;
+			var geoList = StringerList.GetGeometries;
 
 			// Get the list of panels
-			var pnlList = Panels.VerticesList;
+			var pnlList = PanelList.VerticesList;
 
 			// Create a list of lines for adding the stringers later
 			var newStrList = new List<Line>();
@@ -205,7 +205,7 @@ namespace SPMTool.Editor.Commands
 							};
 
 							// Create the panel with XData of the original panel
-							Panels.Add(newVerts);
+							PanelList.Add(newVerts);
 
 							// Create tuples to adding the stringers later
 							var strsToAdd = new[]
@@ -248,12 +248,12 @@ namespace SPMTool.Editor.Commands
 
 			// Create the stringers
 			foreach (var str in newStrList)
-				Stringers.Add(str);
+				StringerList.Add(str);
 
 			// Create the nodes and update elements
-			Nodes.Update();
-			Stringers.Update(false);
-			Panels.Update(false);
+			NodeList.Update();
+			StringerList.Update(false);
+			PanelList.Update(false);
 
 			// Show an alert for editing stringers
 			Application.ShowAlertDialog("Alert: stringers and panels' parameters must be set again.");

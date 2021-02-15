@@ -7,7 +7,7 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Database.Elements.Nodes;
+using static SPMTool.Database.Elements.NodeList;
 using static SPMTool.Database.DataBase;
 
 #nullable enable
