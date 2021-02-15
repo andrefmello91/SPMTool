@@ -155,7 +155,7 @@ namespace SPMTool.Database.Elements
 
 		protected override TypedValue[] ObjectXData() => CreateXData(CrossSection, Reinforcement);
 
-		protected override void GetProperties()
+		public override void GetProperties()
 		{
 			var data = ReadXData();
 

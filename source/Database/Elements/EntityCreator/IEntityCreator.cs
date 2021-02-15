@@ -21,9 +21,7 @@ namespace SPMTool.Database.Elements
 		/// </summary>
 		Layer Layer { get; }
 
-		/// <summary>
-		///     Get/set the <see cref="ObjectId" />
-		/// </summary>
+		/// <inheritdoc cref="XDataCreator.ObjectId"/>
 		ObjectId ObjectId { get; set; }
 
 		/// <summary>

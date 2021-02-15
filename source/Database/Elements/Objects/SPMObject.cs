@@ -49,7 +49,7 @@ namespace SPMTool.Database.Elements
 	/// <typeparam name="T2">The type that represents the main property of the object.</typeparam>
 	/// <typeparam name="T3">Any type that implements <see cref="INumberedElement" />.</typeparam>
 	/// <typeparam name="T4">Any type based on <see cref="Entity" />.</typeparam>
-	public abstract class SPMObject<T1, T2, T3, T4> : ISPMObject<T1, T2, T3>, IEntityCreator<T4>
+	public abstract class SPMObject<T1, T2, T3, T4> : XDataCreator, ISPMObject<T1, T2, T3>, IEntityCreator<T4>
 		where T1 : ISPMObject<T1, T2, T3>
 		where T2 : IComparable<T2>, IEquatable<T2>
 		where T3 : INumberedElement
@@ -72,12 +72,7 @@ namespace SPMTool.Database.Elements
 
 		public int Number { get; set; } = 0;
 
-		public ObjectId ObjectId
-		{
-			get => _id;
-			set => AttachObject(value);
-		}
-		
+	
 		public T2 Property => PropertyField;
 
 		#endregion
@@ -103,44 +98,6 @@ namespace SPMTool.Database.Elements
 		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing(Model.On_ObjectErase);
 
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
-
-		/// <summary>
-		///		Create the extended data for this object.
-		/// </summary>
-		protected abstract TypedValue[] ObjectXData();
-
-		/// <summary>
-		///     Read the XData associated to this object.
-		/// </summary>
-		protected TypedValue[]? ReadXData() => ObjectId.ReadXData();
-
-		/// <summary>
-		///		Get properties from the extended data for this object.
-		/// </summary>
-		protected abstract void GetProperties();
-
-		/// <summary>
-		///		Attach an <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId"/> to this object.
-		/// </summary>
-		/// <param name="objectId">The <see cref="ObjectId"/>.</param>
-		private void AttachObject(ObjectId objectId)
-		{
-			if (objectId.IsNull)
-				return;
-
-			// Id changed
-			if (!_id.IsNull)
-				objectId.SetXData(ObjectXData());
-
-			// First set, read data
-			else
-				GetProperties();
-
-			_id = objectId;
-
-			// Set the extended data
-			_id.SetXData(ObjectXData());
-		}
 
 		public int CompareTo(T1 other) => other is null
 			? 1

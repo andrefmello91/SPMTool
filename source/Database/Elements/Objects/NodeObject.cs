@@ -139,7 +139,7 @@ namespace SPMTool.Database.Elements
 
 		protected override TypedValue[] ObjectXData() => CreateXData(Displacement);
 
-		protected override void GetProperties() => _displacement = GetDisplacement();
+		public override void GetProperties() => _displacement = GetDisplacement();
 
 		/// <summary>
 		///     Set <see cref="PlaneDisplacement" /> to this object XData.

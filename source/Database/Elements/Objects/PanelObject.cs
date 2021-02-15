@@ -171,7 +171,7 @@ namespace SPMTool.Database.Elements
 
 		protected override TypedValue[] ObjectXData() => CreateXData(Width, DirectionX, DirectionY);
 
-		protected override void GetProperties()
+		public override void GetProperties()
 		{
 			var data = ReadXData();
 
