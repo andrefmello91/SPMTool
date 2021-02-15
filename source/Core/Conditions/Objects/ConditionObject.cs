@@ -14,7 +14,7 @@ namespace SPMTool.Core.Conditions
 	/// <typeparam name="T2">The type that represents the value of this object.</typeparam>
 	public interface IConditionObject<T1, out T2> : IEquatable<T1>, IComparable<T1>
 		where T1 : IConditionObject<T1, T2>
-		where T2 : notnull
+		where T2 : IEquatable<T2>
 	{
 		#region Properties
 
@@ -66,8 +66,13 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Condition base constructor.
 		/// </summary>
+		protected ConditionObject()
+		{
+		}
+
 		/// <param name="position">The position.</param>
 		/// <param name="value">The value.</param>
+		/// <inheritdoc cref="ConditionObject()"/>
 		protected ConditionObject(Point position, T2 value)
 		{
 			Position = position;
@@ -86,7 +91,7 @@ namespace SPMTool.Core.Conditions
 
 		public virtual void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
-		public bool Equals(T1 other) => !(other is null) && Position == other.Position && Value.Equals(other.Value);
+		public bool Equals(T1 other) => !(other is null) && Position == other.Position;
 
 		public int CompareTo(T1 other) => other is null
 			? 1

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions;
@@ -40,6 +41,13 @@ namespace SPMTool.Core.Elements
 			RangeAdded   += On_ObjectsAdded;
 			RangeRemoved += On_ObjectsRemoved;
 		}
+
+		/// <summary>
+		///		Get an object in this collection that matches <paramref name="objectId"/>.
+		/// </summary>
+		/// <param name="objectId">The required <seealso cref="ObjectId"/>.</param>
+		[return:MaybeNull]
+		public T GetByObjectId(ObjectId objectId) => Find(e => e.ObjectId == objectId);
 
 		/// <summary>
 		///     Event to execute when an object is added to a list.
