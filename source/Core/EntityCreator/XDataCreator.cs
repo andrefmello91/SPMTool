@@ -1,14 +1,20 @@
 ﻿using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Extensions;
 
-namespace SPMTool.Core.Elements
+namespace SPMTool.Core
 {
 	/// <summary>
-	///		Base class for extended data creating.
+	///     Base class for extended data creating.
 	/// </summary>
 	public abstract class XDataCreator
 	{
+		#region Fields
+
 		private ObjectId _id = ObjectId.Null;
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		///     Get/set the <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> of this object.
@@ -19,25 +25,19 @@ namespace SPMTool.Core.Elements
 			set => AttachObject(value);
 		}
 
-		/// <summary>
-		///		Create the extended data for this object.
-		/// </summary>
-		protected abstract TypedValue[] CreateXData();
+		#endregion
+
+		#region  Methods
 
 		/// <summary>
-		///     Read the XData associated to this object.
-		/// </summary>
-		protected virtual TypedValue[]? ReadXData() => ObjectId.ReadXData();
-
-		/// <summary>
-		///		Get properties from the extended data for this object.
+		///     Get properties from the extended data for this object.
 		/// </summary>
 		public abstract void GetProperties();
 
 		/// <summary>
-		///		Attach an <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId"/> to this object.
+		///     Attach an <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> to this object.
 		/// </summary>
-		/// <param name="objectId">The <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId"/> to attach.</param>
+		/// <param name="objectId">The <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> to attach.</param>
 		public void AttachObject(ObjectId objectId)
 		{
 			if (objectId.IsNull)
@@ -56,5 +56,17 @@ namespace SPMTool.Core.Elements
 			// Set the extended data
 			_id.SetXData(CreateXData());
 		}
+
+		/// <summary>
+		///     Create the extended data for this object.
+		/// </summary>
+		protected abstract TypedValue[] CreateXData();
+
+		/// <summary>
+		///     Read the XData associated to this object.
+		/// </summary>
+		protected virtual TypedValue[]? ReadXData() => ObjectId.ReadXData();
+
+		#endregion
 	}
 }

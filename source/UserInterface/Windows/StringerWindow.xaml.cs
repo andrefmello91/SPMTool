@@ -16,7 +16,7 @@ using Material.Reinforcement;
 using Material.Reinforcement.Uniaxial;
 using MathNet.Numerics;
 using SPM.Elements.StringerProperties;
-using SPMTool.ApplicationSettings;
+using SPMTool.Application;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Core.Materials;
@@ -28,7 +28,7 @@ using static SPMTool.Core.Elements.ElementData;
 using static SPMTool.Core.Materials.ReinforcementData;
 using Window = System.Windows.Window;
 
-namespace SPMTool.UserInterface
+namespace SPMTool.Application.UserInterface
 {
     /// <summary>
     /// Lógica interna para StringerGeometryWindow.xaml
@@ -225,7 +225,7 @@ namespace SPMTool.UserInterface
 			InitializeComponent();
 
             // Get stringer image
-            CrossSection.Source = Icons.GetBitmap(Properties.Resources.stringer_cross_section);
+            SPM.Elements.StringerProperties.CrossSection.Source = Icons.GetBitmap(Properties.Resources.stringer_cross_section);
 
             GetInitialGeometry();
 

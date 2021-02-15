@@ -1,7 +1,7 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Editor.Commands;
-using SPMTool.UserInterface;
+using SPMTool.Application.UserInterface;
 
 [assembly: CommandClass(typeof(Settings))]
 

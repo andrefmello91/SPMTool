@@ -12,7 +12,7 @@ using Extensions.Interface;
 using Extensions.Number;
 using Material;
 using Material.Concrete;
-using SPMTool.ApplicationSettings;
+using SPMTool.Application;
 using Parameters = Material.Concrete.Parameters;
 using SPMTool.Core;
 using SPMTool.Core.Materials;
@@ -20,7 +20,7 @@ using ComboBox = System.Windows.Controls.ComboBox;
 using MessageBox = System.Windows.MessageBox;
 using TextBox = System.Windows.Controls.TextBox;
 
-namespace SPMTool.UserInterface
+namespace SPMTool.Application.UserInterface
 {
     /// <summary>
     /// Lógica interna para ConcreteConfig.xaml

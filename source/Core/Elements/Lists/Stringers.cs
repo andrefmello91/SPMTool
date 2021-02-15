@@ -9,7 +9,7 @@ using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-
+using UnitsNet;
 using static SPMTool.Core.DataBase;
 using static SPMTool.Units;
 
@@ -385,6 +385,16 @@ namespace SPMTool.Core.Elements
 		///     Get the list of <see cref="StringerGeometry" />'s from objects in this collection.
 		/// </summary>
 		public List<StringerGeometry> GetGeometries() => GetProperties();
+
+		/// <summary>
+		///     Get the list of distinct <see cref="CrossSection" />'s from objects in this collection.
+		/// </summary>
+		public List<CrossSection> GetCrossSections() => GetGeometries().Select(g => g.CrossSection).Distinct().ToList();
+
+		/// <summary>
+		///     Get the list of distinct widths from this collection.
+		/// </summary>
+		public List<Length> GetWidths() => GetCrossSections().Select(c => c.Width).Distinct().ToList();
 
 		/// <summary>
 		///     Update all the stringers in this collection from drawing.

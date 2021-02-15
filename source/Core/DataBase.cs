@@ -5,7 +5,7 @@ using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using SPMTool.ApplicationSettings;
+using SPMTool.Application;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;

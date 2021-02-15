@@ -2,15 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.Customization;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPM.Analysis;
 using SPM.Elements;
+using SPM.Elements.StringerProperties;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Core.Materials;
 using SPMTool.Enums;
 using SPMTool.Extensions;
+using UnitsNet;
 using static SPMTool.Core.DataBase;
 
 #nullable enable
@@ -20,7 +23,7 @@ namespace SPMTool.Core
 	/// <summary>
 	///     Model class
 	/// </summary>
-	public static partial class Model
+	public static class Model
 	{
 		#region Fields
 
@@ -40,19 +43,29 @@ namespace SPMTool.Core
 		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" };
 
 		/// <summary>
-		///     Get the <see cref="NodeObject" />'s in the model.
+		///     The collection of <see cref="NodeObject" />'s in the model.
 		/// </summary>
 		public static readonly NodeList Nodes = NodeList.ReadFromDrawing();
 
 		/// <summary>
-		///     Get the <see cref="StringerObject" />'s in the model.
+		///     The collection of <see cref="StringerObject" />'s in the model.
 		/// </summary>
 		public static readonly StringerList Stringers = StringerList.ReadFromDrawing();
 
 		/// <summary>
-		///     Get the <see cref="PanelObject" />'s in the model.
+		///     The collection of <see cref="PanelObject" />'s in the model.
 		/// </summary>
 		public static readonly PanelList Panels = PanelList.ReadFromDrawing();
+
+		/// <summary>
+		///     The collection of <see cref="ForceObject" />'s in the model.
+		/// </summary>
+		public static readonly ForceList Forces = ForceList.ReadFromDrawing();
+
+		/// <summary>
+		///     The collection of <see cref="ConstraintObject" />'s in the model.
+		/// </summary>
+		public static readonly ConstraintList Constraints = ConstraintList.ReadFromDrawing();
 
 		#endregion
 
@@ -64,44 +77,14 @@ namespace SPMTool.Core
 		public static Autodesk.AutoCAD.EditorInput.Editor Editor => DataBase.Document.Editor;
 
 		/// <summary>
-		///     Get the collection of external nodes in the model.
+		///     Get the list of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
 		/// </summary>
-		public static DBPoint[]? ExtNodeCollection => NodeList.GetDBPoints(NodeType.External)?.ToArray();
+		public static List<CrossSection> StringerCrossSections => Stringers.GetCrossSections();
 
 		/// <summary>
-		///     Get the collection of forces in the model.
+		///     Get the list of distinct widths from objects in the model..
 		/// </summary>
-		public static BlockReference[]? ForceCollection => ForceList.GetObjects()?.ToArray();
-
-		/// <summary>
-		///     Get the collection of force texts in the model.
-		/// </summary>
-		public static DBText[]? ForceTextCollection => ForceList.GetTexts()?.ToArray();
-
-		/// <summary>
-		///     Get the collection of internal nodes in the model.
-		/// </summary>
-		public static DBPoint[]? IntNodeCollection => NodeList.GetDBPoints(NodeType.Internal)?.ToArray();
-
-		/// <summary>
-		///     Get the collection of all nodes in the model.
-		/// </summary>
-		public static DBPoint[]? NodeCollection => NodeList.GetDBPoints()?.ToArray();
-
-		/// <summary>
-		///     Get the collection of panels in the model.
-		/// </summary>
-		public static Solid[]? PanelCollection => PanelList.GetObjects()?.ToArray();
-
-		/// <summary>
-		///     Get the collection of stringers in the model.
-		/// </summary>
-		public static Line[]? StringerCollection => StringerList.GetObjects()?.ToArray();
-
-		/// <summary>
-		///     Get the collection of supports in the model.
-		/// </summary>
-		public static BlockReference[]? SupportCollection => Supports.GetObjects()?.ToArray();
+		public static List<Length> ElementWidths => Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToList();
 
 		#endregion
 
@@ -354,15 +337,28 @@ namespace SPMTool.Core
 			{
 				case Layer.ExtNode:
 				case Layer.IntNode:
-					Model.Nodes.RemoveAll(n => n.ObjectId == id, false);
+					Nodes.RemoveAll(n => n.ObjectId == id, false);
 					break;
 
 				case Layer.Stringer :
-					Model.Stringers.RemoveAll(s => s.ObjectId == id, false);
+					Stringers.RemoveAll(s => s.ObjectId == id, false);
 					break;
 
 				case Layer.Panel:
-					Model.Panels.RemoveAll(p => p.ObjectId == id, false);
+					Panels.RemoveAll(p => p.ObjectId == id, false);
+					break;
+
+				case Layer.Force:
+					// Get the force
+					var force = Forces.Find(f => f.ObjectId == id);
+
+					if (force is null)
+						return;
+
+					// Erase text
+					force.Text.RemoveFromDrawing();
+
+					Forces.Remove(force, false);
 					break;
 
 				default:

@@ -3,14 +3,14 @@ using System.Windows;
 using System.Windows.Input;
 using Extensions;
 using Extensions.Number;
-using SPMTool.ApplicationSettings;
+using SPMTool.Application;
 using SPMTool.Core;
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.ApplicationSettings.Settings;
+using static SPMTool.Application.Settings;
 using MessageBox = System.Windows.MessageBox;
 
-namespace SPMTool.UserInterface
+namespace SPMTool.Application.UserInterface
 {
 	/// <summary>
 	/// Lógica interna para UnitsConfig.xaml

@@ -1,6 +1,5 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
-using OnPlaneComponents;
 using SPM.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;

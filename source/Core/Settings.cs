@@ -7,7 +7,7 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet.Units;
 
-namespace SPMTool.ApplicationSettings
+namespace SPMTool.Application
 {
 	/// <summary>
 	///     Application settings class.

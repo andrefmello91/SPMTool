@@ -4,13 +4,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions;
-using SPM.Elements;
-using SPMTool.Enums;
-using SPMTool.Extensions;
-
 #nullable enable
 
-namespace SPMTool.Core.Elements
+namespace SPMTool.Core
 {
 	/// <summary>
 	///     Entity list base class.

@@ -5,8 +5,6 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using Extensions;
-using Extensions.LinearAlgebra;
-using Extensions.Number;
 using LiveCharts;
 using LiveCharts.Defaults;
 using LiveCharts.Wpf;
@@ -17,7 +15,7 @@ using SPMTool.Core;
 using UnitsNet;
 using UnitsNet.Units;
 
-namespace SPMTool.UserInterface
+namespace SPMTool.Application.UserInterface
 {
     /// <summary>
     /// Lógica interna para GraphWindow.xaml
@@ -88,7 +86,7 @@ namespace SPMTool.UserInterface
 			SetMapper();
 
 			// Set initial point
-			CartesianChart.Series = LoadDisplacement;
+			LiveCharts.Wpf.CartesianChart.Series = LoadDisplacement;
             DataContext = this;
         }
 

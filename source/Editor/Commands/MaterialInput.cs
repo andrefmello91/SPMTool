@@ -1,6 +1,6 @@
 ﻿using Autodesk.AutoCAD.Runtime;
 using SPMTool.Editor.Commands;
-using SPMTool.UserInterface;
+using SPMTool.Application.UserInterface;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 [assembly:CommandClass(typeof(MaterialInput))]

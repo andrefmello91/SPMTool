@@ -3,7 +3,7 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.ApplicationServices.Core;
 using SPM.Analysis;
 using SPM.Elements;
-using SPMTool.UserInterface;
+using SPMTool.Application.UserInterface;
 using SPMTool.Core;
 using Analysis = SPM.Analysis.Analysis;
 
@@ -53,14 +53,14 @@ namespace SPMTool.Editor.Commands
 				return;
 
 			// Get analysis settings
-			var settings = ApplicationSettings.Settings.Analysis;
+			var settings = Application.Settings.Analysis;
 
             // Do analysis
             var analysis = new SecantAnalysis(input);
 			analysis.Do(uIndexn.Value, 1, settings.NumLoadSteps, settings.Tolerance, settings.MaxIterations);
 
             // Show load-displacement diagram
-            var units = ApplicationSettings.Settings.Units;
+            var units = Application.Settings.Units;
 
             Application.ShowModelessWindow(Application.MainWindow.Handle, new GraphWindow(analysis.MonitoredDisplacements, analysis.MonitoredLoadFactor, units.Displacements));
 

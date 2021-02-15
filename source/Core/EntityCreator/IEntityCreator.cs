@@ -1,28 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
-namespace SPMTool.Core.Elements
+namespace SPMTool.Core
 {
 	/// <summary>
-	///		Interface for getting and creating entities in drawing.
+	///     Interface for getting and creating entities in drawing.
 	/// </summary>
-	/// <typeparam name="T">Any type based on <see cref="Entity"/>.</typeparam>
+	/// <typeparam name="T">Any type based on <see cref="Entity" />.</typeparam>
 	public interface IEntityCreator<out T>
 		where T : Entity
 	{
+		#region Properties
+
 		/// <summary>
-		///		Get the <see cref="Enums.Layer"/> of this object.
+		///     Get the <see cref="Enums.Layer" /> of this object.
 		/// </summary>
 		Layer Layer { get; }
 
-		/// <inheritdoc cref="XDataCreator.ObjectId"/>
+		/// <inheritdoc cref="XDataCreator.ObjectId" />
 		ObjectId ObjectId { get; set; }
+
+		#endregion
+
+		#region  Methods
 
 		/// <summary>
 		///     Create an <see cref="Entity" /> based in this object's properties.
@@ -43,26 +46,30 @@ namespace SPMTool.Core.Elements
 		///     Remove this object from drawing.
 		/// </summary>
 		void RemoveFromDrawing();
+
+		#endregion
 	}
 
 	/// <summary>
-	///		Extensions for <see cref="IEntityCreator{T}"/>.
+	///     Extensions for <see cref="IEntityCreator{T}" />.
 	/// </summary>
 	public static class EntityCreatorExtensions
 	{
+		#region  Methods
+
 		/// <summary>
 		///     Remove an object from drawing.
 		/// </summary>
 		/// <param name="element">The object to remove.</param>
-		public static void RemoveFromDrawing<T>(this T element) 
+		public static void RemoveFromDrawing<T>(this T element)
 			where T : IEntityCreator<Entity> => element?.ObjectId.RemoveFromDrawing();
 
 		/// <summary>
 		///     Remove a collection of objects from drawing.
 		/// </summary>
 		/// <param name="elements">The objects to remove.</param>
-		public static void RemoveFromDrawing<T>(this IEnumerable<T>? elements) 
-			where T: IEntityCreator<Entity> => elements?.Select(e => e.ObjectId)?.ToArray()?.RemoveFromDrawing();
+		public static void RemoveFromDrawing<T>(this IEnumerable<T>? elements)
+			where T : IEntityCreator<Entity> => elements?.Select(e => e.ObjectId)?.ToArray()?.RemoveFromDrawing();
 
 		/// <summary>
 		///     Add a collection of objects to drawing and set their <see cref="ObjectId" />.
@@ -86,5 +93,6 @@ namespace SPMTool.Core.Elements
 				notNullObjects[i].ObjectId = objIds[i];
 		}
 
+		#endregion
 	}
 }

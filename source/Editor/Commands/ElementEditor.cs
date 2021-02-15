@@ -13,7 +13,7 @@ using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
-using SPMTool.UserInterface;
+using SPMTool.Application.UserInterface;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 [assembly: CommandClass(typeof(ElementEditor))]
@@ -109,7 +109,7 @@ namespace SPMTool.Editor.Commands
 		public static void DividePanel()
 		{
 			// Get units
-			var units = ApplicationSettings.Settings.Units;
+			var units = Application.Settings.Units;
 
 			// Prompt for select panels
 			var pnls = UserInput.SelectPanels("Select panels to divide")?.ToArray();

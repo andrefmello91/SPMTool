@@ -8,7 +8,7 @@ using SPMTool.Core.Conditions;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-using SPMTool.UserInterface;
+using SPMTool.Application.UserInterface;
 
 [assembly:CommandClass(typeof(View))]
 
@@ -41,7 +41,7 @@ namespace SPMTool.Editor.Commands
 
 			    else if (ent.Layer == $"{Layer.Support}")
 			    {
-				    message = $"Constraint in {Supports.ReadConstraint((BlockReference) ent)}";
+				    message = $"Constraint in {ConstraintList.ReadConstraint((BlockReference) ent)}";
 			    }
 
 			    else

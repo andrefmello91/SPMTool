@@ -248,9 +248,9 @@ namespace SPMTool.Extensions
 			return block switch
 			{
 				Block.Force             => ForceList.BlockElements,
-				Block.SupportX          => Supports.XElements.ToArray(),
-				Block.SupportY          => Supports.YElements.ToArray(),
-				Block.SupportXY         => Supports.XYElements.ToArray(),
+				Block.SupportX          => ConstraintList.XElements.ToArray(),
+				Block.SupportY          => ConstraintList.YElements.ToArray(),
+				Block.SupportXY         => ConstraintList.XYElements.ToArray(),
 				Block.Shear             => PanelList.ShearBlockElements().ToArray(),
 				Block.CompressiveStress => PanelList.CompressiveBlockElements().ToArray(),
 				Block.TensileStress     => PanelList.TensileBlockElements().ToArray(),

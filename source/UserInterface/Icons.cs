@@ -7,7 +7,7 @@ using Autodesk.AutoCAD.Internal;
 using SPMTool.Properties;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
-namespace SPMTool.UserInterface
+namespace SPMTool.Application.UserInterface
 {
 	/// <summary>
 	/// User interface icons class.

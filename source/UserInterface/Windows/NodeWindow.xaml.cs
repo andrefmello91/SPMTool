@@ -2,11 +2,11 @@
 using System.Windows;
 using OnPlaneComponents;
 using SPM.Elements;
-using SPMTool.ApplicationSettings;
+using SPMTool.Application;
 using SPMTool.Core;
 using UnitsNet;
 
-namespace SPMTool.UserInterface
+namespace SPMTool.Application.UserInterface
 {
     /// <summary>
     /// Lógica interna para NodeWindow.xaml

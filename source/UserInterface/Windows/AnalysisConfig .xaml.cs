@@ -3,10 +3,10 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 using Extensions.Number;
-using static SPMTool.ApplicationSettings.Settings;
+using static SPMTool.Application.Settings;
 using MessageBox = System.Windows.MessageBox;
 
-namespace SPMTool.UserInterface
+namespace SPMTool.Application.UserInterface
 {
 	/// <summary>
 	/// Lógica interna para AnalysisConfig.xaml

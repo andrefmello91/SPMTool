@@ -11,7 +11,7 @@ using SPM.Elements;
 using SPM.Elements.PanelProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-
+using UnitsNet;
 using static SPMTool.Core.DataBase;
 using static SPMTool.Units;
 
@@ -562,6 +562,16 @@ namespace SPMTool.Core.Elements
 		///     Get the list of <see cref="PanelGeometry" />'s from this collection.
 		/// </summary>
 		public List<PanelGeometry> GetGeometries() => GetProperties();
+
+		/// <summary>
+		///     Get the list of <see cref="Vertices" />'s from this collection.
+		/// </summary>
+		public List<Vertices> GetVertices() => GetGeometries().Select(g => g.Vertices).ToList();
+
+		/// <summary>
+		///     Get the list of distinct widths from this collection.
+		/// </summary>
+		public List<Length> GetWidths() => GetGeometries().Select(g => g.Width).Distinct().ToList();
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		/// <param name="vertices">The collection of four <see cref="Point" /> vertices, in any order.</param>

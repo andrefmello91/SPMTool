@@ -2,7 +2,7 @@
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Core;
-using SPMTool.UserInterface;
+using SPMTool.Application.UserInterface;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool

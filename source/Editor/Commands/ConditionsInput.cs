@@ -22,7 +22,7 @@ namespace SPMTool.Editor.Commands
 	    public static void AddForce()
 	    {
 		    // Read units
-		    var units = ApplicationSettings.Settings.Units;
+		    var units = Application.Settings.Units;
 
 		    // Request objects to be selected in the drawing area
 		    var nds = UserInput.SelectNodes("Select nodes to add load:");
@@ -76,14 +76,14 @@ namespace SPMTool.Editor.Commands
 			var positions = nds.Select(nd => nd.Position).ToArray();
 
 			// Erase blocks
-			Supports.EraseBlocks(positions);
+			ConstraintList.EraseBlocks(positions);
 
 			// If the node is not Free, add the support blocks
 			if (support != Constraint.Free)
-				Supports.AddBlocks(positions, support);
+				ConstraintList.AddBlocks(positions, support);
 
 			// Update
-			Supports.Update();
+			ConstraintList.Update();
 		}
     }
 }

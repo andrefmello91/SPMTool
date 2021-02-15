@@ -4,7 +4,7 @@ using Autodesk.Windows;
 using SPMTool.Core;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
-namespace SPMTool.UserInterface
+namespace SPMTool.Application.UserInterface
 {
 
 	/// <summary>
