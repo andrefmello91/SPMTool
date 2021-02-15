@@ -56,6 +56,12 @@ namespace SPMTool.Core.Conditions
 		public override int AddRange(IEnumerable<Point> positions, Constraint value, bool raiseEvents = true, bool sort = true) =>
 			AddRange(positions.Select(p => new ConstraintObject(p, value)), raiseEvents, sort);
 
+		/// <summary>
+		///		Get the <see cref="Constraint"/> at <paramref name="position"/>.
+		/// </summary>
+		/// <param name="position">The required position.</param>
+		public Constraint GetConstraintByPosition(Point position) => Find(c => c.Position == position)?.Value ?? Constraint.Free;
+
 		#endregion
 
 		//     /// <summary>

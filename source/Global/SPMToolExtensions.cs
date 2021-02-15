@@ -10,8 +10,6 @@ using Material.Reinforcement.Biaxial;
 using Material.Reinforcement.Uniaxial;
 using SPM.Elements.StringerProperties;
 using SPMTool.Core;
-using SPMTool.Core.Conditions;
-using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using UnitsNet.Units;
 using Color = SPMTool.Enums.Color;

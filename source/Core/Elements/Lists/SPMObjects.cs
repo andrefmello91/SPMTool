@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions;
@@ -65,6 +66,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the the list of SPM elements from objects in this collection.
 		/// </summary>
+		[return:NotNull]
 		public List<T3> GetElements() => this.Select(t => t.GetElement()).ToList();
 
 		public T1 GetByProperty(T2 property) => Find(t => t.Property.Equals(property));

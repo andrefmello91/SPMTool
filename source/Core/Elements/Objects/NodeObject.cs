@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using OnPlaneComponents;
@@ -22,7 +23,7 @@ namespace SPMTool.Core.Elements
 	{
 		#region Fields
 
-		private PlaneDisplacement? _displacement;
+		private PlaneDisplacement _displacement;
 
 		#endregion
 
@@ -31,14 +32,14 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="OnPlaneComponents.Constraint" /> in this object.
 		/// </summary>
-		public Constraint Constraint { get; set; } = Constraint.Free;
+		public Constraint Constraint => Model.Constraints.GetConstraintByPosition(Position);
 
 		/// <summary>
 		///     Get the <see cref="PlaneDisplacement" /> of this node object.
 		/// </summary>
 		public PlaneDisplacement Displacement
 		{
-			get => _displacement ?? GetDisplacement();
+			get => _displacement;
 			set => SetDisplacement(value);
 		}
 
@@ -47,7 +48,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="PlaneForce" /> in this object.
 		/// </summary>
-		public PlaneForce PlaneForce { get; set; } = PlaneForce.Zero;
+		public PlaneForce PlaneForce => Model.Forces.GetForceAtPosition(Position);
 
 		/// <summary>
 		///     Get the position.

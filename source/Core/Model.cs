@@ -33,11 +33,6 @@ namespace SPMTool.Core
 		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
 
 		/// <summary>
-		///     Collection of result <see cref="Layer" />'s.
-		/// </summary>
-		public static readonly Layer[] ResultLayers = { Layer.StringerForce, Layer.PanelForce, Layer.CompressivePanelStress, Layer.TensilePanelStress, Layer.ConcreteCompressiveStress, Layer.ConcreteTensileStress, Layer.Displacements, Layer.Cracks};
-
-		/// <summary>
 		///     Command names for undo and redo.
 		/// </summary>
 		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" };
@@ -108,7 +103,7 @@ namespace SPMTool.Core
 		/// <param name="dataOk">Returns true if data is consistent to start analysis.</param>
 		/// <param name="message">Message to show if data is inconsistent.</param>
 		/// <param name="analysisType">The type of analysis to perform.</param>
-		public static InputData GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
+		public static InputData? GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
 		{
 			// Get units
 			var units = Settings.Units;
@@ -118,33 +113,24 @@ namespace SPMTool.Core
 			var constitutive = ConcreteData.ConstitutiveModel;
 
 			// Read elements
-			var ndObjs  = NodeCollection;
-			var strObjs = StringerCollection;
-			var pnlObjs = PanelCollection;
+			var nodes     = Nodes.GetElements();
+			var stringers = Stringers.GetElements(nodes, analysisType);
+			var panels    = Panels.GetElements(nodes, analysisType);
 
 			// Verify if there is stringers and nodes at least
-			if (ndObjs.Length == 0 || strObjs.Length == 0)
+			if (nodes.Count == 0 || stringers.Count == 0)
 			{
 				dataOk = false;
 				message = "Please input model geometry";
 				return null;
 			}
 
-			// Get nodes
-			var nodes = NodeList.ReadFromPoints(ndObjs).Select(n => n.AsNode()).ToArray();
-
-			// Set supports and forces
-			//Forces.Set(ForceCollection, nodes);
-			//Supports.Set(SupportCollection, nodes);
-
-			// Get stringers and panels
-			var stringers = Stringers.Read(strObjs, units, parameters, constitutive, nodes, analysisType).ToArray();
-			var panels    = Panels.Read(pnlObjs, units, parameters, constitutive, nodes, analysisType).ToArray();
-
 			// Generate input
 			dataOk = true;
 			message = null;
-			return new InputData(nodes, stringers, panels, analysisType);
+
+			return
+				new InputData(nodes, stringers, panels, analysisType);
 		}
 
 		/// <summary>
@@ -184,90 +170,6 @@ namespace SPMTool.Core
 		/// </summary>
 		/// <param name="objectId">The <see cref="ObjectId" /> of SPM object.</param>
 		public static SPMElement GetElement(ObjectId objectId) => GetElement(objectId.GetEntity());
-
-		/// <summary>
-		///     Draw results of <paramref name="analysis" />.
-		/// </summary>
-		/// <param name="analysis">The <see cref="Analysis" /> done.</param>
-		public static void DrawResults(Analysis analysis)
-		{
-			// Erase result objects
-			ResultLayers.EraseObjects();
-
-			//Nodes.SetDisplacements(analysis.Nodes);
-			DrawDisplacements(analysis.Stringers);
-			StringerList.DrawForces(analysis.Stringers, analysis.MaxStringerForce);
-			PanelList.DrawStresses(analysis.Panels);
-
-			if (!(analysis is SecantAnalysis))
-				return;
-
-			PanelList.DrawCracks(analysis.Panels);
-			StringerList.DrawCracks(analysis.Stringers);
-		}
-
-		/// <summary>
-		///     Draw displacements.
-		/// </summary>
-		/// <param name="stringers">The collection of <see cref="Stringer" />'s.</param>
-		private static void DrawDisplacements(IEnumerable<Stringer> stringers)
-		{
-			// Get units
-			var units = Settings.Units;
-
-			// Turn the layer off
-			Layer.Displacements.Off();
-
-			// Set a scale factor for displacements
-			var scFctr = units.DisplacementScaleFactor;
-
-			// Create lists of points for adding the nodes later
-			var dispNds = new List<Point3d>();
-
-			foreach (var str in stringers)
-			{
-				// Get displacements of the initial and end nodes
-				var d1 = str.Grip1.Displacement.Copy();
-				var d3 = str.Grip3.Displacement.Copy();
-				d1.ChangeUnit(units.Displacements);
-				d3.ChangeUnit(units.Displacements);
-
-				double
-					ux1 = d1.ComponentX * scFctr,
-					uy1 = d1.ComponentY * scFctr,
-					ux3 = d3.ComponentX * scFctr,
-					uy3 = d3.ComponentY * scFctr;
-
-				// Calculate the displaced nodes
-				Point3d
-					stPt = new Point3d(str.Geometry.InitialPoint.X + ux1, str.Geometry.InitialPoint.Y + uy1, 0),
-					enPt = new Point3d(str.Geometry.EndPoint.X + ux3, str.Geometry.EndPoint.Y + uy3, 0),
-					midPt = stPt.MidPoint(enPt);
-
-				// Draw the displaced Stringer
-				using (var newStr = new Line(stPt, enPt))
-				{
-					// Set the layer to Stringer
-					newStr.Layer = $"{Layer.Displacements}";
-
-					// Add the line to the drawing
-					newStr.AddToDrawing();
-				}
-
-				// Add the position of the nodes to the list
-				if (!dispNds.Contains(stPt))
-					dispNds.Add(stPt);
-
-				if (!dispNds.Contains(enPt))
-					dispNds.Add(enPt);
-
-				if (!dispNds.Contains(midPt))
-					dispNds.Add(midPt);
-			}
-
-			// Add the nodes
-			Nodes.Add(dispNds, NodeType.Displaced);
-		}
 
 		/// <summary>
 		///     Set application parameters for drawing.
