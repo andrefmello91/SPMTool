@@ -108,11 +108,9 @@ namespace SPMTool.Database.Conditions
 			return data;
 		}
 
-		protected override TypedValue[] ObjectXData() => CreateXData(Value.Direction);
+		protected override TypedValue[] CreateXData() => CreateXData(Value.Direction);
 
 		public override void GetProperties() => Value = GetConstraint();
-
-		protected override TypedValue[] ConditionXData() => CreateXData(Value.Direction);
 
 		#endregion
 

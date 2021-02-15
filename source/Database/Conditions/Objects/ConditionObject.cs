@@ -44,8 +44,6 @@ namespace SPMTool.Database.Conditions
 		where T1 : IConditionObject<T1, T2>
 		where T2 : IEquatable<T2>
 	{
-		private ObjectId _id = ObjectId.Null;
-
 		#region Properties
 
 		public abstract Block Block { get; }
@@ -87,11 +85,6 @@ namespace SPMTool.Database.Conditions
 		public virtual void AddToDrawing() => ObjectId = CreateEntity()?.AddToDrawing(Model.On_ObjectErase) ?? ObjectId.Null;
 
 		public virtual void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
-
-		/// <summary>
-		///		Create the extended data for this object.
-		/// </summary>
-		protected abstract TypedValue[] ConditionXData();
 
 		public bool Equals(T1 other) => !(other is null) && Position == other.Position && Value.Equals(other.Value);
 

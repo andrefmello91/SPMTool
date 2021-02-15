@@ -88,15 +88,13 @@ namespace SPMTool.Database.Conditions
 
 		public override void RemoveFromDrawing() => ObjectIds.RemoveFromDrawing();
 
-		protected override TypedValue[] ObjectXData() => ForceDirection.CreateXData(Force.Zero, Direction.X);
+		protected override TypedValue[] CreateXData() => ForceDirection.CreateXData(Force.Zero, Direction.X);
 
 		public override void GetProperties()
 		{
 			_x?.GetProperties();
 			_y?.GetProperties();
 		}
-
-		protected override TypedValue[] ConditionXData() => throw new NotImplementedException();
 
 		#endregion
 
@@ -253,7 +251,7 @@ namespace SPMTool.Database.Conditions
 				_text.AddToDrawing();
 			}
 
-			protected override TypedValue[] ObjectXData() => CreateXData(Value, Direction);
+			protected override TypedValue[] CreateXData() => CreateXData(Value, Direction);
 
 			public override void GetProperties()
 			{
@@ -265,8 +263,6 @@ namespace SPMTool.Database.Conditions
 			}
 
 			public override void RemoveFromDrawing() => new[]{ObjectId, TextObjectId}.RemoveFromDrawing();
-
-			protected override TypedValue[] ConditionXData() => CreateXData(Value, Direction);
 
 			#endregion
 

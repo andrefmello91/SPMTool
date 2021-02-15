@@ -115,7 +115,7 @@ namespace SPMTool.Database.Elements
 		/// </remarks>
 		/// <param name="crossSection">The <seealso cref="SPM.Elements.StringerProperties.CrossSection"/>.</param>
 		/// <param name="reinforcement">The <seealso cref="UniaxialReinforcement"/>.</param>
-		public static TypedValue[] CreateXData(CrossSection? crossSection = null, UniaxialReinforcement? reinforcement = null)
+		public static TypedValue[] StringerXData(CrossSection? crossSection = null, UniaxialReinforcement? reinforcement = null)
 		{
 			// Definition for the Extended Data
 			string xdataStr = "Stringer Data";
@@ -153,7 +153,7 @@ namespace SPMTool.Database.Elements
 		public Stringer GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
 			Stringer.Read(analysisType, Number, nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement);
 
-		protected override TypedValue[] ObjectXData() => CreateXData(CrossSection, Reinforcement);
+		protected override TypedValue[] CreateXData() => StringerXData(CrossSection, Reinforcement);
 
 		public override void GetProperties()
 		{
@@ -227,7 +227,7 @@ namespace SPMTool.Database.Elements
 
 			if (data is null)
 			{
-				data = CreateXData(crossSection);
+				data = StringerXData(crossSection);
 			}
 
 			else
@@ -256,7 +256,7 @@ namespace SPMTool.Database.Elements
 
 			if (data is null)
 			{
-				data = CreateXData(null, reinforcement);
+				data = StringerXData(null, reinforcement);
 			}
 
 			else

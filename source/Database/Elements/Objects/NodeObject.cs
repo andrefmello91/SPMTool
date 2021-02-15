@@ -101,7 +101,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///     Create node XData.
 		/// </summary>
-		public static TypedValue[] CreateXData(PlaneDisplacement? displacement = null)
+		public static TypedValue[] NodeXData(PlaneDisplacement? displacement = null)
 		{
 			// Definition for the Extended Data
 			string xdataStr = "Node Data";
@@ -137,7 +137,7 @@ namespace SPMTool.Database.Elements
 				Constraint   = Constraint
 			};
 
-		protected override TypedValue[] ObjectXData() => CreateXData(Displacement);
+		protected override TypedValue[] CreateXData() => NodeXData(Displacement);
 
 		public override void GetProperties() => _displacement = GetDisplacement();
 
@@ -153,7 +153,7 @@ namespace SPMTool.Database.Elements
 			var data = ReadXData();
 
 			if (data is null)
-				data = CreateXData(displacement);
+				data = NodeXData(displacement);
 
 			else
 			{

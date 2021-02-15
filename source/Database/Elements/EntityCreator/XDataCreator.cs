@@ -22,7 +22,7 @@ namespace SPMTool.Database.Elements
 		/// <summary>
 		///		Create the extended data for this object.
 		/// </summary>
-		protected abstract TypedValue[] ObjectXData();
+		protected abstract TypedValue[] CreateXData();
 
 		/// <summary>
 		///     Read the XData associated to this object.
@@ -45,7 +45,7 @@ namespace SPMTool.Database.Elements
 
 			// Id changed
 			if (!_id.IsNull)
-				objectId.SetXData(ObjectXData());
+				objectId.SetXData(CreateXData());
 
 			// First set, read data
 			else
@@ -54,7 +54,7 @@ namespace SPMTool.Database.Elements
 			_id = objectId;
 
 			// Set the extended data
-			_id.SetXData(ObjectXData());
+			_id.SetXData(CreateXData());
 		}
 	}
 }

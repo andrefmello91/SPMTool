@@ -138,7 +138,7 @@ namespace SPMTool.Database.Elements
 		///  <param name="width">The width.</param>
 		///  <param name="x">The <see cref="WebReinforcementDirection"/> for X direction.</param>
 		///  <param name="y">The <see cref="WebReinforcementDirection"/> for Y direction.</param>
-		public static TypedValue[] CreateXData(Length? width = null, WebReinforcementDirection? x = null, WebReinforcementDirection? y = null)
+		public static TypedValue[] PanelXData(Length? width = null, WebReinforcementDirection? x = null, WebReinforcementDirection? y = null)
 		{
 			// Definition for the Extended Data
 			string xdataStr = "Panel Data";
@@ -169,7 +169,7 @@ namespace SPMTool.Database.Elements
 			Layer = $"{Layer}"
 		};
 
-		protected override TypedValue[] ObjectXData() => CreateXData(Width, DirectionX, DirectionY);
+		protected override TypedValue[] CreateXData() => PanelXData(Width, DirectionX, DirectionY);
 
 		public override void GetProperties()
 		{
@@ -203,7 +203,7 @@ namespace SPMTool.Database.Elements
 			data ??= ReadXData();
 
 			if (data is null)
-				data = CreateXData(width);
+				data = PanelXData(width);
 
 			else
 				data[(int) PanelIndex.Width] = new TypedValue((int) DxfCode.ExtendedDataReal, width.Millimeters);
@@ -275,8 +275,8 @@ namespace SPMTool.Database.Elements
 
 			if (data is null)
 				data = dir is Direction.X
-					? CreateXData(null, direction)
-					: CreateXData(null, null, direction);
+					? PanelXData(null, direction)
+					: PanelXData(null, null, direction);
 
 			else
 			{
