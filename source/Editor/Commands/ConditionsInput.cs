@@ -2,8 +2,8 @@
 using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using SPM.Elements;
-using SPMTool.Database;
-using SPMTool.Database.Conditions;
+using SPMTool.Core;
+using SPMTool.Core.Conditions;
 using SPMTool.Editor.Commands;
 
 [assembly: CommandClass(typeof(ConditionsInput))]
@@ -40,13 +40,13 @@ namespace SPMTool.Editor.Commands
 		    var positions = nds.Select(nd => nd.Position).ToArray();
 			
 		    // Erase blocks
-		    Forces.EraseBlocks(positions);
+		    ForceList.EraseBlocks(positions);
 
 		    // Add force blocks
-		    Forces.AddBlocks(positions, force.Value);
+		    ForceList.AddBlocks(positions, force.Value);
 
 			// Update
-			Forces.Update();
+			ForceList.Update();
 	    }
 
 		/// <summary>

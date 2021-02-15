@@ -17,15 +17,15 @@ using Material.Reinforcement.Uniaxial;
 using MathNet.Numerics;
 using SPM.Elements.StringerProperties;
 using SPMTool.ApplicationSettings;
-using SPMTool.Database;
-using SPMTool.Database.Elements;
-using SPMTool.Database.Materials;
+using SPMTool.Core;
+using SPMTool.Core.Elements;
+using SPMTool.Core.Materials;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using MessageBox = System.Windows.MessageBox;
-using static SPMTool.Database.Elements.StringerList;
-using static SPMTool.Database.Elements.ElementData;
-using static SPMTool.Database.Materials.ReinforcementData;
+using static SPMTool.Core.Elements.StringerList;
+using static SPMTool.Core.Elements.ElementData;
+using static SPMTool.Core.Materials.ReinforcementData;
 using Window = System.Windows.Window;
 
 namespace SPMTool.UserInterface

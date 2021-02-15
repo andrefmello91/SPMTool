@@ -17,16 +17,16 @@ using Material.Reinforcement.Biaxial;
 using MathNet.Numerics;
 using SPM.Elements.StringerProperties;
 using SPMTool.ApplicationSettings;
-using SPMTool.Database;
-using SPMTool.Database.Elements;
+using SPMTool.Core;
+using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 using MessageBox = System.Windows.MessageBox;
 using Stringer = SPM.Elements.Stringer;
-using static SPMTool.Database.Elements.PanelList;
-using static SPMTool.Database.Elements.ElementData;
-using static SPMTool.Database.Materials.ReinforcementData;
+using static SPMTool.Core.Elements.PanelList;
+using static SPMTool.Core.Elements.ElementData;
+using static SPMTool.Core.Materials.ReinforcementData;
 using Window = System.Windows.Window;
 
 namespace SPMTool.UserInterface

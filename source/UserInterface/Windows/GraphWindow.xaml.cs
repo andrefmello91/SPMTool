@@ -12,8 +12,8 @@ using LiveCharts.Defaults;
 using LiveCharts.Wpf;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.Data.Text;
-using SPMTool.Database.Conditions;
-using SPMTool.Database;
+using SPMTool.Core.Conditions;
+using SPMTool.Core;
 using UnitsNet;
 using UnitsNet.Units;
 

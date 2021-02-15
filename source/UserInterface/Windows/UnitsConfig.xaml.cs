@@ -4,7 +4,7 @@ using System.Windows.Input;
 using Extensions;
 using Extensions.Number;
 using SPMTool.ApplicationSettings;
-using SPMTool.Database;
+using SPMTool.Core;
 using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.ApplicationSettings.Settings;

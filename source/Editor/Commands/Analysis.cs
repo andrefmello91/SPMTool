@@ -4,7 +4,7 @@ using Autodesk.AutoCAD.ApplicationServices.Core;
 using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.UserInterface;
-using SPMTool.Database;
+using SPMTool.Core;
 using Analysis = SPM.Analysis.Analysis;
 
 

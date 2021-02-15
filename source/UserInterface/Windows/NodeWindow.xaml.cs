@@ -3,7 +3,7 @@ using System.Windows;
 using OnPlaneComponents;
 using SPM.Elements;
 using SPMTool.ApplicationSettings;
-using SPMTool.Database;
+using SPMTool.Core;
 using UnitsNet;
 
 namespace SPMTool.UserInterface

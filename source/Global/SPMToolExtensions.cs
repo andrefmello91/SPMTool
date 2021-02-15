@@ -9,14 +9,14 @@ using Material.Reinforcement;
 using Material.Reinforcement.Biaxial;
 using Material.Reinforcement.Uniaxial;
 using SPM.Elements.StringerProperties;
-using SPMTool.Database;
-using SPMTool.Database.Conditions;
-using SPMTool.Database.Elements;
+using SPMTool.Core;
+using SPMTool.Core.Conditions;
+using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using UnitsNet.Units;
 using Color = SPMTool.Enums.Color;
 
-using static SPMTool.Database.DataBase;
+using static SPMTool.Core.DataBase;
 
 namespace SPMTool.Extensions
 {
@@ -247,7 +247,7 @@ namespace SPMTool.Extensions
 		{
 			return block switch
 			{
-				Block.Force             => Forces.BlockElements,
+				Block.Force             => ForceList.BlockElements,
 				Block.SupportX          => Supports.XElements.ToArray(),
 				Block.SupportY          => Supports.YElements.ToArray(),
 				Block.SupportXY         => Supports.XYElements.ToArray(),

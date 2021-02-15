@@ -4,8 +4,8 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Extensions.AutoCAD;
-using SPMTool.Database;
-using SPMTool.Database.Elements;
+using SPMTool.Core;
+using SPMTool.Core.Elements;
 using SPMTool.Editor.Commands;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 

@@ -3,8 +3,8 @@ using Autodesk.AutoCAD.ApplicationServices.Core;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Runtime;
 using SPM.Elements;
-using SPMTool.Database;
-using SPMTool.Database.Conditions;
+using SPMTool.Core;
+using SPMTool.Core.Conditions;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using SPMTool.Extensions;
@@ -37,7 +37,7 @@ namespace SPMTool.Editor.Commands
 			    string message;
 
 			    if (ent.Layer == $"{Layer.Force}")
-				    message = Forces.ReadForce((BlockReference) ent).ToString();
+				    message = ForceList.ReadForce((BlockReference) ent).ToString();
 
 			    else if (ent.Layer == $"{Layer.Support}")
 			    {

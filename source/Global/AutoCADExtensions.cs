@@ -6,9 +6,9 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
 using MathNet.Numerics;
-using SPMTool.Database;
+using SPMTool.Core;
 using UnitsNet.Units;
-using static SPMTool.Database.DataBase;
+using static SPMTool.Core.DataBase;
 
 namespace SPMTool.Extensions
 {

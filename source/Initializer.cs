@@ -1,7 +1,7 @@
 ﻿using System;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Runtime;
-using SPMTool.Database;
+using SPMTool.Core;
 using SPMTool.UserInterface;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 

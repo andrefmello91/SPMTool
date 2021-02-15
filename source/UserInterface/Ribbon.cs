@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Controls;
 using Autodesk.Windows;
-using SPMTool.Database;
+using SPMTool.Core;
 using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.UserInterface
