@@ -39,7 +39,7 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Returns the save name for this <see cref="StringerGeometry" />.
 		/// </summary>
-		public static string SaveName(this StringerGeometry geometry) => $"StrGeoW{geometry.Width:0.00}H{geometry.Height:0.00}";
+		public static string SaveName(this StringerGeometry geometry) => $"StrGeoW{geometry.CrossSection.Width:0.00}H{geometry.CrossSection.Height:0.00}";
 
 		/// <summary>
 		///     Returns the save name for this <see cref="Steel" />.
@@ -247,15 +247,15 @@ namespace SPMTool.Extensions
 		{
 			return block switch
 			{
-				Block.Force             => ForceList.BlockElements,
-				Block.SupportX          => ConstraintList.XElements.ToArray(),
-				Block.SupportY          => ConstraintList.YElements.ToArray(),
-				Block.SupportXY         => ConstraintList.XYElements.ToArray(),
-				Block.Shear             => PanelList.ShearBlockElements().ToArray(),
-				Block.CompressiveStress => PanelList.CompressiveBlockElements().ToArray(),
-				Block.TensileStress     => PanelList.TensileBlockElements().ToArray(),
-				Block.PanelCrack        => PanelList.CrackBlockElements().ToArray(),
-				Block.StringerCrack     => StringerList.CrackBlockElements().ToArray(),
+				Block.Force             => Blocks.ForceBlockElements().ToArray(),
+				Block.SupportX          => Blocks.SupportXElements().ToArray(),
+				Block.SupportY          => Blocks.SupportYElements().ToArray(),
+				Block.SupportXY         => Blocks.SupportXYElements().ToArray(),
+				Block.Shear             => Blocks.PanelShearBlockElements().ToArray(),
+				Block.CompressiveStress => Blocks.PanelCompressiveBlockElements().ToArray(),
+				Block.TensileStress     => Blocks.PanelTensileBlockElements().ToArray(),
+				Block.PanelCrack        => Blocks.PanelCrackBlockElements().ToArray(),
+				Block.StringerCrack     => Blocks.StringerCrackBlockElements().ToArray(),
 				_                       => null
 			};
 		}

@@ -41,40 +41,6 @@ namespace SPMTool.Core.Elements
 		#region  Methods
 
 		/// <summary>
-		///     Get the elements of the crack block.
-		/// </summary>
-		public static IEnumerable<Entity> CrackBlockElements()
-		{
-			// Define the points to add the lines
-			var crkPts = CrackPoints().ToArray();
-
-			IEnumerable<Point3d> CrackPoints()
-			{
-				for (var i = 0; i < 2; i++)
-				{
-					// Set the start X coordinate
-					double y = 40 * i;
-
-					yield return new Point3d(0, y, 0);
-					yield return new Point3d( 1.7633, y + 10, 0);
-					yield return new Point3d(-1.7633, y + 30, 0);
-				}
-
-				// Add the end point
-				yield return new Point3d(0, 80, 0);
-			}
-
-			// Define the lines and add to the collection
-			for (var i = 0; i < crkPts.Length - 1; i++)
-				yield return new Line
-				{
-					StartPoint = crkPts[i],
-					EndPoint   = crkPts[i + 1],
-					LineWeight = LineWeight.LineWeight035
-				};
-		}
-
-		/// <summary>
 		///     Get the collection of stringers in the drawing.
 		/// </summary>
 		public static IEnumerable<Line>? GetObjects() => Layer.Stringer.GetDBObjects()?.ToLines();

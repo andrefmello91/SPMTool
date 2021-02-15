@@ -29,20 +29,6 @@ namespace SPMTool.Core.Conditions
         #region  Methods
 
         /// <summary>
-        ///     Get the elements of the force block.
-        /// </summary>
-        public static Entity[] BlockElements() => new Entity[]
-		{
-			new Line
-			{
-				StartPoint = new Point3d(0, 37.5, 0),
-				EndPoint   = new Point3d(0, 125, 0)
-			},
-
-			new Solid(new Point3d(0, 0, 0), new Point3d(-25, 37.5, 0), new Point3d(25, 37.5, 0))
-		};
-
-        /// <summary>
         ///     Read all <see cref="ForceObject" />'s from drawing.
         /// </summary>
         /// <param name="updateTexts">

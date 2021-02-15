@@ -186,18 +186,6 @@ namespace SPMTool.Core
 		public static SPMElement GetElement(ObjectId objectId) => GetElement(objectId.GetEntity());
 
 		/// <summary>
-		///     Create blocks for use in SPMTool.
-		/// </summary>
-		public static void CreateBlocks()
-		{
-			// Get the block enum as an array
-			var blocks = Enum.GetValues(typeof(Block)).Cast<Block>().ToArray();
-
-			// Create the blocks
-			blocks.Create();
-		}
-
-		/// <summary>
 		///     Draw results of <paramref name="analysis" />.
 		/// </summary>
 		/// <param name="analysis">The <see cref="Analysis" /> done.</param>
@@ -338,15 +326,15 @@ namespace SPMTool.Core
 				case Layer.ExtNode:
 				case Layer.IntNode:
 					Nodes.RemoveAll(n => n.ObjectId == id, false);
-					break;
+					return;
 
 				case Layer.Stringer :
 					Stringers.RemoveAll(s => s.ObjectId == id, false);
-					break;
+					return;
 
 				case Layer.Panel:
 					Panels.RemoveAll(p => p.ObjectId == id, false);
-					break;
+					return;
 
 				case Layer.Force:
 					// Get the force
@@ -359,7 +347,11 @@ namespace SPMTool.Core
 					force.Text.RemoveFromDrawing();
 
 					Forces.Remove(force, false);
-					break;
+					return;
+
+				case Layer.Support:
+					Constraints.RemoveAll(c => c.ObjectId == id, false);
+					return;
 
 				default:
 					return;
