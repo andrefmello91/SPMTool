@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.Customization;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using SPM.Analysis;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
@@ -72,14 +69,14 @@ namespace SPMTool.Core
 		public static Autodesk.AutoCAD.EditorInput.Editor Editor => DataBase.Document.Editor;
 
 		/// <summary>
-		///     Get the list of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
-		/// </summary>
-		public static List<CrossSection> StringerCrossSections => Stringers.GetCrossSections();
-
-		/// <summary>
 		///     Get the list of distinct widths from objects in the model..
 		/// </summary>
 		public static List<Length> ElementWidths => Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToList();
+
+		/// <summary>
+		///     Get the list of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
+		/// </summary>
+		public static List<CrossSection> StringerCrossSections => Stringers.GetCrossSections();
 
 		#endregion
 
@@ -134,44 +131,6 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Return an <see cref="SPMElement" /> from <paramref name="entity" />.
-		/// </summary>
-		/// <param name="entity">The <see cref="Entity" /> of SPM object.</param>
-		public static SPMElement GetElement(Entity entity)
-		{
-			// Get element layer
-			var layer = (Layer) Enum.Parse(typeof(Layer), entity.Layer);
-
-			if (!ElementLayers.Contains(layer))
-				return null;
-
-			// Get concrete and units
-			var parameters   = ConcreteData.Parameters;
-			var constitutive = ConcreteData.ConstitutiveModel;
-			var units        = Settings.Units;
-
-			if (layer is Layer.IntNode || layer is Layer.ExtNode)
-				return Nodes.GetByObjectId(entity.ObjectId).AsNode();
-
-			// Read nodes
-			var nodes = NodeList.ReadFromPoints(NodeCollection).Select(n => n.AsNode()).ToArray();
-
-			if (layer is Layer.Stringer)
-				return Stringers.Read((Line) entity, units, parameters, constitutive, nodes);
-
-			if (layer is Layer.Panel)
-				return Panels.Read((Solid) entity, units, parameters, constitutive, nodes);
-
-			return null;
-		}
-
-		/// <summary>
-		///     Return an <see cref="SPMElement" /> from <paramref name="objectId" />.
-		/// </summary>
-		/// <param name="objectId">The <see cref="ObjectId" /> of SPM object.</param>
-		public static SPMElement GetElement(ObjectId objectId) => GetElement(objectId.GetEntity());
-
-		/// <summary>
 		///     Set application parameters for drawing.
 		/// </summary>
 		public static void SetAppParameters()
@@ -200,7 +159,6 @@ namespace SPMTool.Core
 		/// </summary>
 		public static void SetLineWeightDisplay() => DataBase.Database.LineWeightDisplay = true;
 
-
 		/// <summary>
 		///     Event to run after undo or redo commands.
 		/// </summary>
@@ -209,10 +167,6 @@ namespace SPMTool.Core
 			if (CmdNames.Any(cmd => cmd.Contains(e.GlobalCommandName.ToUpper())))
 				UpdateElements(false);
 		}
-
-
-
-		#endregion
 
 		/// <summary>
 		///     Event to execute when an object is erased.
@@ -259,5 +213,45 @@ namespace SPMTool.Core
 					return;
 			}
 		}
+
+		#endregion
+
+		///// <summary>
+		/////     Return an <see cref="SPMElement" /> from <paramref name="entity" />.
+		///// </summary>
+		///// <param name="entity">The <see cref="Entity" /> of SPM object.</param>
+		//public static SPMElement GetElement(Entity entity)
+		//{
+		//	// Get element layer
+		//	var layer = (Layer)Enum.Parse(typeof(Layer), entity.Layer);
+
+		//	if (!ElementLayers.Contains(layer))
+		//		return null;
+
+		//	// Get concrete and units
+		//	var parameters = ConcreteData.Parameters;
+		//	var constitutive = ConcreteData.ConstitutiveModel;
+		//	var units = Settings.Units;
+
+		//	if (layer is Layer.IntNode || layer is Layer.ExtNode)
+		//		return Nodes.GetByObjectId(entity.ObjectId).AsNode();
+
+		//	// Read nodes
+		//	var nodes = NodeList.ReadFromPoints(NodeCollection).Select(n => n.AsNode()).ToArray();
+
+		//	if (layer is Layer.Stringer)
+		//		return Stringers.Read((Line)entity, units, parameters, constitutive, nodes);
+
+		//	if (layer is Layer.Panel)
+		//		return Panels.Read((Solid)entity, units, parameters, constitutive, nodes);
+
+		//	return null;
+		//}
+
+		///// <summary>
+		/////     Return an <see cref="SPMElement" /> from <paramref name="objectId" />.
+		///// </summary>
+		///// <param name="objectId">The <see cref="ObjectId" /> of SPM object.</param>
+		//public static SPMElement GetElement(ObjectId objectId) => GetElement(objectId.GetEntity());
 	}
 }
