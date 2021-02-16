@@ -13,7 +13,7 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     Supports class.
 	/// </summary>
-	public class ConstraintList : ConditionList<ConstraintObject, Constraint>
+	public class ConstraintList : ConditionList<ConstraintObject, Constraint, ConstraintDirection>
 	{
 		#region Constructors
 
@@ -53,8 +53,8 @@ namespace SPMTool.Core.Conditions
 		public override bool Add(Point position, Constraint value, bool raiseEvents = true, bool sort = true) =>
 			Add(new ConstraintObject(position, value), raiseEvents, sort);
 
-		public override int AddRange(IEnumerable<Point> positions, Constraint value, bool raiseEvents = true, bool sort = true) =>
-			AddRange(positions.Select(p => new ConstraintObject(p, value)), raiseEvents, sort);
+		public override int AddRange(IEnumerable<Point>? positions, Constraint value, bool raiseEvents = true, bool sort = true) =>
+			AddRange(positions?.Select(p => new ConstraintObject(p, value)), raiseEvents, sort);
 
 		/// <summary>
 		///		Get the <see cref="Constraint"/> at <paramref name="position"/>.

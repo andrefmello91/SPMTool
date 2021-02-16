@@ -14,15 +14,20 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     Force list class.
 	/// </summary>
-	public class ForceList : ConditionList<ForceObject, Force>
+	public class ForceList : ConditionList<ForceObject, Force, Direction>
 	{
 		#region Constructors
 
         // Allow duplicates for setting two forces at the same point.
-		private ForceList() => AllowDuplicates = true;
+        private ForceList()
+	        : base()
+        {
+        }
 
-		private ForceList(IEnumerable<ForceObject> collection)
-			: base(collection) => AllowDuplicates = true;
+        private ForceList(IEnumerable<ForceObject> collection)
+	        : base(collection)
+        {
+        }
 
         #endregion
 
@@ -91,17 +96,17 @@ namespace SPMTool.Core.Conditions
 		public override bool Add(Point position, Force value, bool raiseEvents = true, bool sort = true) => Add(position, value, Direction.X, raiseEvents, sort);
 
 		/// <param name="direction">The force <see cref="Direction" />.</param>
-		/// <inheritdoc cref="ConditionList{T1,T2}.Add(Point, T2, bool, bool)" />
+		/// <inheritdoc cref="ConditionList{T1,T2,T3}.Add(Point, T2, bool, bool)" />
 		public bool Add(Point position, Force value, Direction direction, bool raiseEvents = true, bool sort = true) => Add(new ForceObject(position, value, direction));
 
 		/// <remarks>
 		///     This method will add forces in <see cref="Direction.X" />.
 		/// </remarks>
 		/// <inheritdoc cref="AddRange(IEnumerable{Point}, Force, Direction, bool, bool)" />
-		public override int AddRange(IEnumerable<Point> positions, Force value, bool raiseEvents = true, bool sort = true) => AddRange(positions, value, Direction.X, raiseEvents, sort);
+		public override int AddRange(IEnumerable<Point>? positions, Force value, bool raiseEvents = true, bool sort = true) => AddRange(positions, value, Direction.X, raiseEvents, sort);
 
 		/// <param name="direction">The force <see cref="Direction" />.</param>
-		/// <inheritdoc cref="ConditionList{T1,T2}.AddRange(IEnumerable{Point}, T2, bool, bool)" />
+		/// <inheritdoc cref="ConditionList{T1,T2,T3}.AddRange(IEnumerable{Point}, T2, bool, bool)" />
 		public int AddRange(IEnumerable<Point> positions, Force value, Direction direction, bool raiseEvents = true, bool sort = true) => AddRange(positions.Select(p => new ForceObject(p, value, direction)), raiseEvents, sort);
 
         #endregion

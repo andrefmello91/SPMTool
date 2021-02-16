@@ -11,7 +11,7 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     Constraint object class.
 	/// </summary>
-	public class ConstraintObject : ConditionObject<ConstraintObject, Constraint>
+	public class ConstraintObject : ConditionObject<ConstraintObject, Constraint, ConstraintDirection>
 	{
 		#region Properties
 
@@ -22,13 +22,15 @@ namespace SPMTool.Core.Conditions
 				_                        => Block.SupportY
 			};
 
+		public override ConstraintDirection Direction => Value.Direction;
+
 		public override Layer Layer => Layer.Support;
 
 		/// <summary>
 		///     Get the rotation angle of the block.
 		/// </summary>
 		protected override double RotationAngle =>
-			Value.Direction switch
+			Direction switch
 			{
 				ConstraintDirection.X => Constants.PiOver2,
 				_                     => 0
@@ -42,7 +44,8 @@ namespace SPMTool.Core.Conditions
 		///     Constraint object constructor.
 		/// </summary>
 		/// <inheritdoc />
-		public ConstraintObject(Point position, Constraint value) : base(position, value)
+		public ConstraintObject(Point position, Constraint value)
+			: base(position, value, value.Direction)
 		{
 		}
 
@@ -111,6 +114,8 @@ namespace SPMTool.Core.Conditions
 		protected override TypedValue[] CreateXData() => CreateXData(Value.Direction);
 
 		public override void GetProperties() => Value = GetConstraint();
+
+		public override bool Equals(ConstraintObject other) => base.Equals(other) && Direction == other.Direction;
 
 		#endregion
 

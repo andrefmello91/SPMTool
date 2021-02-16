@@ -5,7 +5,6 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions;
 using OnPlaneComponents;
-using SPMTool.Core.Elements;
 
 namespace SPMTool.Core.Conditions
 {
@@ -13,13 +12,15 @@ namespace SPMTool.Core.Conditions
 	///     Condition list base class.
 	/// </summary>
 	/// <typeparam name="T1">
-	///     Any type that implements <see cref="IConditionObject{T1,T2}" /> and
+	///     Any type that implements <see cref="IConditionObject{T1,T2, T3}" /> and
 	///     <seealso cref="IEntityCreator{T}" />.
 	/// </typeparam>
 	/// <typeparam name="T2">The type that represents the value of the objects in this list.</typeparam>
-	public abstract class ConditionList<T1, T2> : EntityCreatorList<T1>
-		where T1 : ConditionObject<T1, T2>, IEntityCreator<BlockReference>
+	/// <typeparam name="T3">The enum that represents the direction of objects in this list.</typeparam>
+	public abstract class ConditionList<T1, T2, T3> : EntityCreatorList<T1>
+		where T1 : ConditionObject<T1, T2, T3>, IEntityCreator<BlockReference>
 		where T2 : IEquatable<T2>
+		where T3 : Enum
 	{
 		#region Properties
 
@@ -55,13 +56,15 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Change a condition at the same position of <paramref name="condition" />.
 		/// </summary>
-		/// <param name="condition">The <seealso cref="ConditionObject{T1,T2}" /> at the position to change.</param>
+		/// <remarks>
+		///		If an item at <paramref name="condition"/>'s position is not at this list, <paramref name="condition"/> is just added.
+		/// </remarks>
+		/// <param name="condition">The <seealso cref="ConditionObject{T1,T2,T3}" /> at the position to change.</param>
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
-		/// >
-		public bool ChangeCondition([NotNull] T1 condition, bool raiseEvents = true, bool sort = true)
+		public bool ChangeCondition(T1 condition, bool raiseEvents = true, bool sort = true)
 		{
 			// Remove first
-			Remove(condition, raiseEvents, false);
+			Remove(condition.Position, raiseEvents, false);
 
 			return
 				Add(condition, raiseEvents, sort);
@@ -70,39 +73,71 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Change conditions at the same positions of each object in <paramref name="conditions" />.
 		/// </summary>
+		/// <remarks>
+		///		If an item at each condition's position is not at this list, condition is just added.
+		/// </remarks>
 		/// <returns>
 		///     The number of items changed in this collection.
 		/// </returns>
-		/// <param name="conditions">The collection of <seealso cref="ConditionObject{T1,T2}" />'s at the positions to change.</param>
+		/// <param name="conditions">The collection of <seealso cref="ConditionObject{T1,T2,T3}" />'s at the positions to change.</param>
 		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
-		/// >
 		public int ChangeConditions(IEnumerable<T1>? conditions, bool raiseEvents = true, bool sort = true)
 		{
 			if (conditions is null)
 				return 0;
 
 			// Remove first
-			RemoveRange(conditions, raiseEvents, false);
+			RemoveRange(conditions.Select(c => c.Position), raiseEvents, false);
 
 			return
 				AddRange(conditions, raiseEvents, sort);
 		}
 
+		/// <summary>
+		///     Change a condition value at this <paramref name="position"/>.
+		/// </summary>
+		/// <param name="position">The the position to change.</param>
+		/// <param name="value">The value of the new condition.</param>
+		/// <inheritdoc cref="ChangeCondition(T1,bool,bool)" />
+		public bool ChangeCondition(Point position, T2 value, bool raiseEvents = true, bool sort = true)
+		{
+			// Remove first
+			Remove(position, raiseEvents, false);
+
+			return
+				Add(position, value, raiseEvents, sort);
+		}
+
+		/// <summary>
+		///     Change conditions' values at the these <paramref name="positions" />.
+		/// </summary>
+		/// <param name="positions">The collection of positions to change.</param>
+		/// <param name="value">The new value to set at each position.</param>
+		/// <inheritdoc cref="ChangeConditions(IEnumerable{T1},bool,bool)" />
+		public int ChangeConditions(IEnumerable<Point> positions, T2 value, bool raiseEvents = true, bool sort = true)
+		{
+			if (positions is null)
+				return 0;
+
+			// Remove first
+			RemoveRange(positions, raiseEvents, false);
+
+			return
+				AddRange(positions, value, raiseEvents, sort);
+		}
+
 		/// <param name="position">The position to add <paramref name="value" />.</param>
 		/// <param name="value">The value.</param>
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
-		/// >
 		public abstract bool Add(Point position, T2 value, bool raiseEvents = true, bool sort = true);
 
 		/// <param name="positions">The positions to add <paramref name="value" />.</param>
 		/// <param name="value">The value.</param>
 		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
-		/// >
-		public abstract int AddRange(IEnumerable<Point> positions, T2 value, bool raiseEvents = true, bool sort = true);
+		public abstract int AddRange(IEnumerable<Point>? positions, T2 value, bool raiseEvents = true, bool sort = true);
 
 		/// <param name="position">The position of the object to remove.</param>
 		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)" />
-		/// >
 		public bool Remove(Point position, bool raiseEvents = true, bool sort = true)
 		{
 			var condition = Find(c => c.Position == position);
@@ -113,7 +148,6 @@ namespace SPMTool.Core.Conditions
 
 		/// <param name="positions">The position of objects to remove.</param>
 		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)" />
-		/// >
 		public int RemoveRange(IEnumerable<Point> positions, bool raiseEvents = true, bool sort = true) => RemoveAll(c => positions.Contains(c.Position), raiseEvents, sort);
 
 		#endregion

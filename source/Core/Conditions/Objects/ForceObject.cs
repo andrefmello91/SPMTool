@@ -120,16 +120,11 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     Force direction class.
 	/// </summary>
-	public class ForceObject : ConditionObject<ForceObject, Force>
+	public class ForceObject : ConditionObject<ForceObject, Force, Direction>
 	{
 		#region Properties
 
 		public override Block Block => Block.Force;
-
-		/// <summary>
-		///     The force <seealso cref="Enums.Direction" />.
-		/// </summary>
-		public Direction Direction { get; set; }
 
 		public override Layer Layer => Layer.Force;
 
@@ -182,9 +177,8 @@ namespace SPMTool.Core.Conditions
 		/// <param name="force">The <see cref="Force" /> applied in <paramref name="position" />.</param>
 		/// <param name="direction">The <seealso cref="Enums.Direction" /> of <paramref name="force" /></param>
 		public ForceObject(Point position, Force force, Direction direction)
-			: base(position, force)
+			: base(position, force, direction)
 		{
-			Direction = direction;
 			Text      = GetText();
 		}
 
@@ -211,7 +205,7 @@ namespace SPMTool.Core.Conditions
 				};
 
 		/// <summary>
-		///     Get the <see cref="Enums.Direction" /> from a <seealso cref="BlockReference" />'s rotation angle.
+		///     Get the <see cref="Direction" /> from a <seealso cref="BlockReference" />'s rotation angle.
 		/// </summary>
 		/// <param name="reference">The <see cref="BlockReference" /> object.</param>
 		public static Direction GetDirectionFromAngle(BlockReference? reference) =>
@@ -292,6 +286,8 @@ namespace SPMTool.Core.Conditions
 			(Direction) ((data ?? ReadXData())?[(int) ForceIndex.Direction].ToInt() ?? 0);
 
 		protected override TypedValue[] CreateXData() => CreateXData(Value, Direction);
+
+		public override bool Equals(ForceObject other) => base.Equals(other) && Direction == other.Direction;
 
 		#endregion
 
