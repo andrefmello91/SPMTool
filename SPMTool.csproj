@@ -18,6 +18,7 @@
     <ProjectReference Include="..\Extensions\Extensions.csproj" />
     <ProjectReference Include="..\Material\Material.csproj" />
     <ProjectReference Include="..\On-Plane-Components\On-Plane-Components.csproj" />
+    <ProjectReference Include="..\Reinforced-Concrete-Membrane\RCMembrane.csproj" />
     <ProjectReference Include="..\SPMAnalysis\SPMAnalysis.csproj" />
     <ProjectReference Include="..\SPMElements\SPMElements.csproj" />
   </ItemGroup>

@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SPMAnalysis", "..\SPMAnalys
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SPMElements", "..\SPMElements\SPMElements.csproj", "{6488DBF5-46B7-4B8F-9EAD-CA35BED9A10C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RCMembrane", "..\Reinforced-Concrete-Membrane\RCMembrane.csproj", "{2D2494FA-5C47-49D2-842C-7727159DEA7E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{6488DBF5-46B7-4B8F-9EAD-CA35BED9A10C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6488DBF5-46B7-4B8F-9EAD-CA35BED9A10C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6488DBF5-46B7-4B8F-9EAD-CA35BED9A10C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D2494FA-5C47-49D2-842C-7727159DEA7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D2494FA-5C47-49D2-842C-7727159DEA7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D2494FA-5C47-49D2-842C-7727159DEA7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D2494FA-5C47-49D2-842C-7727159DEA7E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
