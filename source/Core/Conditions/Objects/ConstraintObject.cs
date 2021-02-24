@@ -115,8 +115,6 @@ namespace SPMTool.Core.Conditions
 
 		public override void GetProperties() => Value = GetConstraint();
 
-		public override bool Equals(ConstraintObject other) => base.Equals(other) && Direction == other.Direction;
-
 		#endregion
 
 		#region Operators

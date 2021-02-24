@@ -97,7 +97,7 @@ namespace SPMTool.Core.Conditions
 
 		/// <param name="direction">The force <see cref="Direction" />.</param>
 		/// <inheritdoc cref="ConditionList{T1,T2,T3}.Add(Point, T2, bool, bool)" />
-		public bool Add(Point position, Force value, Direction direction, bool raiseEvents = true, bool sort = true) => Add(new ForceObject(position, value, direction));
+		public bool Add(Point position, Force value, Direction direction, bool raiseEvents = true, bool sort = true) => Add(new ForceObject(position, value, direction), raiseEvents, sort);
 
 		/// <remarks>
 		///     This method will add forces in <see cref="Direction.X" />.
