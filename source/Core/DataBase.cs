@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Application;
+using SPMTool.Core.Materials;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
@@ -27,6 +28,11 @@ namespace SPMTool.Core
 		///		Application settings.
 		/// </summary>
 		public static readonly Settings Settings = new Settings();
+
+		/// <summary>
+		///		Concrete parameters and constitutive model.
+		/// </summary>
+		public static readonly ConcreteData ConcreteData = new ConcreteData();
 
 		#endregion
 

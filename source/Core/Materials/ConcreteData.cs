@@ -13,9 +13,9 @@ using static Material.Concrete.Parameters;
 namespace SPMTool.Core.Materials
 {
     /// <summary>
-    /// Concrete database class.
+    ///		Concrete database class.
     /// </summary>
-    public static class ConcreteData
+    public class ConcreteData
     {
 		/// <summary>
         /// Save string.
@@ -25,25 +25,25 @@ namespace SPMTool.Core.Materials
         /// <summary>
         /// Get/set <see cref="Material.Concrete.Parameters"/> saved in database.
         /// </summary>
-        public static IParameters Parameters { get; private set; } = ReadFromDictionary(false);
+        public IParameters Parameters { get; private set; } = ReadFromDictionary();
 
         /// <summary>
         /// Get <see cref="Material.Concrete.ConstitutiveModel"/> saved in database.
         /// </summary>
-        public static ConstitutiveModel ConstitutiveModel { get; private set; } = ReadModel();
+        public ConstitutiveModel ConstitutiveModel { get; private set; } = ReadModel();
 
         /// <summary>
         /// Save concrete <see cref="Material.Concrete.Parameters"/> and <see cref="Material.Concrete.ConstitutiveModel"/> in database.
         /// </summary>
         /// <param name="concrete">The <see cref="ConcreteData"/> object.</param>
-        public static void Save(Concrete concrete) => Save(concrete.Parameters, ConstitutiveModel);
+        public void Save(Concrete concrete) => Save(concrete.Parameters, ConstitutiveModel);
 
 	    /// <summary>
 	    /// Save concrete <see cref="Material.Concrete.Parameters"/> and <see cref="Material.Concrete.ConstitutiveModel"/> in database.
 	    /// </summary>
 	    /// <param name="parameters">Concrete <see cref="Material.Concrete.Parameters"/>.</param>
 	    /// <param name="constitutiveModel">Concrete <see cref="Material.Concrete.ConstitutiveModel"/>.</param>
-	    public static void Save(IParameters parameters, ConstitutiveModel constitutiveModel)
+	    public void Save(IParameters parameters, ConstitutiveModel constitutiveModel)
 	    {
 			// Set to concrete properties
 			Parameters        = parameters;
@@ -80,16 +80,12 @@ namespace SPMTool.Core.Materials
 	    /// Read concrete <see cref="Parameters"/> saved in database.
 	    /// </summary>
 	    /// <param name="setConcrete">Concrete must be set by user if it's not set yet?</param>
-	    private static IParameters ReadFromDictionary(bool setConcrete = true)
+	    public static IParameters ReadFromDictionary()
 	    {
 		    var data = DataBase.ReadDictionaryEntry(ConcreteParams);
 
 		    switch (data)
 		    {
-			    case null when setConcrete:
-				    MaterialInput.SetConcreteParameters();
-				    return Parameters;
-
 			    case null:
 				    return C30(Length.FromMillimeters(19));
 
@@ -109,22 +105,19 @@ namespace SPMTool.Core.Materials
 						ecu = -data[(int)ConcreteIndex.ecu].ToDouble();
 
 					// Get parameters and constitutive
-					Parameters = parModel switch
-					{
-						ParameterModel.Custom => new CustomParameters(fc, fcr, Ec, phiAg, ec, ecu),
-						_                     => new Parameters(fc, phiAg, parModel, aggType)
-					};
-
-					ConstitutiveModel = ReadModel(data);
-
-					return Parameters;
+					return
+						parModel switch
+						{
+							ParameterModel.Custom => new CustomParameters(fc, fcr, Ec, phiAg, ec, ecu),
+							_                     => new Parameters(fc, phiAg, parModel, aggType)
+						};
 		    }
 	    }
 
 	    /// <summary>
 	    /// Read constitutive model.
 	    /// </summary>
-	    private static ConstitutiveModel ReadModel(TypedValue[] concreteData = null)
+	    private static ConstitutiveModel ReadModel(TypedValue[]? concreteData = null)
 	    {
 		    var data = concreteData ?? DataBase.ReadDictionaryEntry(ConcreteParams);
 

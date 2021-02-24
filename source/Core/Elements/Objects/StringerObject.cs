@@ -8,7 +8,6 @@ using Material.Reinforcement.Uniaxial;
 using OnPlaneComponents;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
-using SPMTool.Core.Materials;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;

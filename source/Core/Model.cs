@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -7,7 +8,6 @@ using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
-using SPMTool.Core.Materials;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -69,7 +69,7 @@ namespace SPMTool.Core
 		public static Autodesk.AutoCAD.EditorInput.Editor Editor => DataBase.Document.Editor;
 
 		/// <summary>
-		///     Get the list of distinct widths from objects in the model..
+		///     Get the list of distinct widths from objects in the model.
 		/// </summary>
 		public static List<Length> ElementWidths => Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToList();
 
@@ -102,13 +102,6 @@ namespace SPMTool.Core
 		/// <param name="analysisType">The type of analysis to perform.</param>
 		public static InputData? GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
 		{
-			// Get units
-			var units = Settings.Units;
-
-			// Get concrete
-			var parameters   = ConcreteData.Parameters;
-			var constitutive = ConcreteData.ConstitutiveModel;
-
 			// Read elements
 			var nodes     = Nodes.GetElements();
 			var stringers = Stringers.GetElements(nodes, analysisType);
@@ -123,8 +116,8 @@ namespace SPMTool.Core
 			}
 
 			// Generate input
-			dataOk = true;
-			message = null;
+			dataOk  = true;
+			message = string.Empty;
 
 			return
 				new InputData(nodes, stringers, panels, analysisType);

@@ -13,7 +13,6 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Core.Materials.ConcreteData;
 using static SPMTool.Core.DataBase;
 
 
@@ -188,7 +187,7 @@ namespace SPMTool.Core.Elements
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
 		/// <param name="analysisType">The <see cref="AnalysisType" />.</param>
 		public Panel GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
-			Panel.Read(analysisType, Number, nodes, Geometry, Parameters, ConstitutiveModel, Reinforcement);
+			Panel.Read(analysisType, Number, nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement);
 
 		/// <summary>
 		///     Set <paramref name="width" /> to this object.
