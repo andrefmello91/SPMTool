@@ -1,5 +1,22 @@
-﻿namespace SPMTool.Enums
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Serialization;
+using Autodesk.AutoCAD.DatabaseServices;
+using SPMTool.Core;
+
+namespace SPMTool.Enums
 {
+	public class LayerAttribute : XmlEnumAttribute
+	{
+		public Layer Layer { get; set; }
+	}
+
+	public class BlockAttribute : Attribute
+	{
+		public Block Block { get; set; }
+	}
+
 	/// <summary>
 	/// Directions.
 	/// </summary>

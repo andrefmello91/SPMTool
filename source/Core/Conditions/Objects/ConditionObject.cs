@@ -10,13 +10,11 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     ICondition interface.
 	/// </summary>
-	/// <typeparam name="T1">Any type that implements <see cref="IConditionObject{T1,T2,T3}" />.</typeparam>
+	/// <typeparam name="T1">Any type that implements <see cref="IConditionObject{T1,T2}" />.</typeparam>
 	/// <typeparam name="T2">The type that represents the value of this object.</typeparam>
-	/// <typeparam name="T3">The enum that represents the direction of this object.</typeparam>
-	public interface IConditionObject<T1, out T2, out T3> : IEquatable<T1>, IComparable<T1>
-		where T1 : IConditionObject<T1, T2, T3>
+	public interface IConditionObject<T1, out T2> : IEquatable<T1>, IComparable<T1>
+		where T1 : IConditionObject<T1, T2>
 		where T2 : IEquatable<T2>
-		where T3 : Enum
 	{
 		#region Properties
 
@@ -38,7 +36,7 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///		Get the direction of this condition.
 		/// </summary>
-		T3 Direction { get; }
+		ComponentDirection Direction { get; }
 
 		#endregion
 	}
@@ -46,11 +44,10 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     Condition object base class.
 	/// </summary>
-	/// <inheritdoc cref="IConditionObject{T1,T2,T3}" />
-	public abstract class ConditionObject<T1, T2, T3> : XDataCreator, IConditionObject<T1, T2, T3>, IEntityCreator<BlockReference>
-		where T1 : IConditionObject<T1, T2, T3>
+	/// <inheritdoc cref="IConditionObject{T1,T2}" />
+	public abstract class ConditionObject<T1, T2> : XDataCreator, IConditionObject<T1, T2>, IEntityCreator<BlockReference>
+		where T1 : IConditionObject<T1, T2>
 		where T2 : IEquatable<T2>
-		where T3 : Enum
 	{
 		#region Properties
 
@@ -60,7 +57,7 @@ namespace SPMTool.Core.Conditions
 
 		public virtual T2 Value { get; protected set; }
 
-		public virtual T3 Direction { get; protected set; }
+		public virtual ComponentDirection Direction { get; protected set; }
 
 		public abstract Layer Layer { get; }
 
@@ -84,7 +81,7 @@ namespace SPMTool.Core.Conditions
 		/// <param name="value">The value.</param>
 		/// <param name="direction">The direction.</param>
 		/// <inheritdoc cref="ConditionObject()"/>
-		protected ConditionObject(Point position, T2 value, T3 direction)
+		protected ConditionObject(Point position, T2 value, ComponentDirection direction)
 		{
 			Position  = position;
 			Value     = value;

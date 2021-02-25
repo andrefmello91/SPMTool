@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
@@ -228,14 +229,13 @@ namespace SPMTool.Extensions
 		/// </summary>
 		public static void Create(this IEnumerable<Block> blocks)
 		{
-			using (var trans = DataBase.StartTransaction())
-			{
-				foreach (var block in blocks)
-					block.GetElements().CreateBlock(block.OriginPoint(), block.ToString(), trans);
+			using var trans = StartTransaction();
 
-				// Commit and dispose the transaction
-				trans.Commit();
-			}
+			foreach (var block in blocks)
+				block.GetElements().CreateBlock(block.OriginPoint(), block.ToString(), trans);
+
+			// Commit and dispose the transaction
+			trans.Commit();
 		}
 
 		/// <summary>
@@ -243,6 +243,8 @@ namespace SPMTool.Extensions
 		/// </summary>
 		public static Entity[]? GetElements(this Block block)
 		{
+			//var method = typeof(Blocks).GetMethods().First(m => ((BlockAttribute) m.GetCustomAttribute(typeof(BlockAttribute), false)).Block == block);
+
 			return block switch
 			{
 				Block.Force             => Blocks.ForceBlockElements().ToArray(),

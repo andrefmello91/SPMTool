@@ -12,15 +12,13 @@ namespace SPMTool.Core.Conditions
 	///     Condition list base class.
 	/// </summary>
 	/// <typeparam name="T1">
-	///     Any type that implements <see cref="IConditionObject{T1,T2, T3}" /> and
+	///     Any type that implements <see cref="IConditionObject{T1,T2}" /> and
 	///     <seealso cref="IEntityCreator{T}" />.
 	/// </typeparam>
 	/// <typeparam name="T2">The type that represents the value of the objects in this list.</typeparam>
-	/// <typeparam name="T3">The enum that represents the direction of objects in this list.</typeparam>
-	public abstract class ConditionList<T1, T2, T3> : EntityCreatorList<T1>
-		where T1 : ConditionObject<T1, T2, T3>, IEntityCreator<BlockReference>
-		where T2 : IEquatable<T2>
-		where T3 : Enum
+	public abstract class ConditionList<T1, T2> : EntityCreatorList<T1>
+		where T1 : ConditionObject<T1, T2>, IEntityCreator<BlockReference>
+		where T2 : IPlaneComponent<T2, object>
 	{
 		#region Properties
 

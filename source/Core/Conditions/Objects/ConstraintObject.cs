@@ -11,18 +11,18 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     Constraint object class.
 	/// </summary>
-	public class ConstraintObject : ConditionObject<ConstraintObject, Constraint, ConstraintDirection>
+	public class ConstraintObject : ConditionObject<ConstraintObject, Constraint>
 	{
 		#region Properties
 
 		public override Block Block =>
 			Value.Direction switch
 			{
-				ConstraintDirection.Both => Block.SupportXY,
+				ComponentDirection.Both  => Block.SupportXY,
 				_                        => Block.SupportY
 			};
 
-		public override ConstraintDirection Direction => Value.Direction;
+		public override ComponentDirection Direction => Value.Direction;
 
 		public override Layer Layer => Layer.Support;
 
@@ -32,7 +32,7 @@ namespace SPMTool.Core.Conditions
 		protected override double RotationAngle =>
 			Direction switch
 			{
-				ConstraintDirection.X => Constants.PiOver2,
+				ComponentDirection.X => Constants.PiOver2,
 				_                     => 0
 			};
 
@@ -83,7 +83,7 @@ namespace SPMTool.Core.Conditions
 				return Constraint.Free;
 
 			// Get value and direction
-			var direction = (ConstraintDirection)data[(int)ForceIndex.Direction].ToInt();
+			var direction = (ComponentDirection)data[(int)ForceIndex.Direction].ToInt();
 
 			return
 				Constraint.FromDirection(direction);
@@ -93,7 +93,7 @@ namespace SPMTool.Core.Conditions
 		///     Create XData for supports.
 		/// </summary>
 		/// <param name="direction">The <see cref="Constraint" /> type.</param>
-		public static TypedValue[] CreateXData(ConstraintDirection direction)
+		public static TypedValue[] CreateXData(ComponentDirection direction)
 		{
 			// Definition for the Extended Data
 			string xdataStr = "SupportDirection Data";

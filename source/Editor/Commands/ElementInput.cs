@@ -1,13 +1,14 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.Geometry;
+﻿using System.Linq;
 using Autodesk.AutoCAD.Runtime;
-using Extensions.AutoCAD;
+using SPM.Elements;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Editor.Commands;
+using SPMTool.Extensions;
+
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
+using static SPMTool.Core.DataBase;
+using static SPMTool.Core.Model;
 
 
 [assembly: CommandClass(typeof(ElementInput))]
@@ -20,7 +21,7 @@ namespace SPMTool.Editor.Commands
     public static class ElementInput
     {
 		/// <summary>
-        /// Add a stringer to drawing.
+        ///		Add a stringer to to stringer list and drawing.
         /// </summary>
 	    [CommandMethod("AddStringer")]
 	    public static void AddStringer()
@@ -52,42 +53,41 @@ namespace SPMTool.Editor.Commands
 			    var endPt = endPtn.Value;
 
 			    // Create the Stringer and add to drawing
-			    StringerList.Add(stPt, endPt);
+			    Stringers.Add(stPt, endPt);
 
 			    // Set the start point of the new Stringer
 			    stPt = endPt;
 		    }
 
-		    // Update the nodes and stringers
-		    StringerList.Update();
-
 			// Set old OSMODE
 			SetSystemVariable("OSMODE", osmode);
 	    }
 
+		/// <summary>
+		///		Add a panel to panel list and drawing.
+		/// </summary>
 		[CommandMethod("AddPanel")]
 		public static void AddPanel()
 		{
+			var unit = DataBase.Settings.Units.Geometry;
+
 			// Create a loop for creating infinite panels
 			for ( ; ; )
 			{
 				// Prompt for user select 4 vertices of the panel
-				var nds = UserInput.SelectNodes("Select four nodes to be the vertices of the panel")?.ToArray();
+				var nds = UserInput.SelectNodes("Select four nodes to be the vertices of the panel", NodeType.External)?.ToArray();
 
 				if (nds is null)
-					break;
+					return;
 
 				// Check if there are four points
 				if (nds.Length == 4)
 					// Create the panel if it doesn't exist
-					PanelList.Add(nds.Select(nd => nd.Position).ToArray());
+					Panels.Add(nds.Select(nd => nd.Position.ToPoint(unit)).ToArray());
 
 				else
 					ShowAlertDialog("Please select four external nodes.");
 			}
-
-			// Update panels
-			PanelList.Update(false);
 		}
     }
 }

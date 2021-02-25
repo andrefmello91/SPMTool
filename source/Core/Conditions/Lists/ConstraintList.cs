@@ -13,7 +13,7 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     Supports class.
 	/// </summary>
-	public class ConstraintList : ConditionList<ConstraintObject, Constraint, ConstraintDirection>
+	public class ConstraintList : ConditionList<ConstraintObject, Constraint, ComponentDirection>
 	{
 		#region Constructors
 
@@ -48,7 +48,7 @@ namespace SPMTool.Core.Conditions
 		public static ConstraintList ReadFromBlocks(IEnumerable<BlockReference>? blocks) =>
 			blocks.IsNullOrEmpty()
 				? new ConstraintList()
-				: new ConstraintList(blocks.Where(b => !(b is null)).Select(ConstraintObject.ReadFromBlock)!);
+				: new ConstraintList(blocks.Where(b => !(b is null) && b.Layer == $"{Layer.Support}").Select(ConstraintObject.ReadFromBlock)!);
 
 		public override bool Add(Point position, Constraint value, bool raiseEvents = true, bool sort = true) =>
 			Add(new ConstraintObject(position, value), raiseEvents, sort);

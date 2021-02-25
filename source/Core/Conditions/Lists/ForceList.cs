@@ -65,7 +65,8 @@ namespace SPMTool.Core.Conditions
 		public static ForceList ReadFromBlocks(IEnumerable<BlockReference>? blocks) =>
 			blocks.IsNullOrEmpty()
 				? new ForceList()
-				: new ForceList(blocks.Where(b => !(b is null)).Select(ForceObject.ReadFromBlock)!);
+				: new ForceList(blocks.Where(b => !(b is null) && b.Layer == $"{Layer.Force}").Select(ForceObject.ReadFromBlock)!);
+
 
 		/// <summary>
 		///     Get the force objects in the drawing.
@@ -98,6 +99,18 @@ namespace SPMTool.Core.Conditions
 		/// <param name="direction">The force <see cref="Direction" />.</param>
 		/// <inheritdoc cref="ConditionList{T1,T2,T3}.Add(Point, T2, bool, bool)" />
 		public bool Add(Point position, Force value, Direction direction, bool raiseEvents = true, bool sort = true) => Add(new ForceObject(position, value, direction), raiseEvents, sort);
+
+        /// <param name="value">The <see cref="PlaneForce" />.</param>
+        /// <inheritdoc cref="ConditionList{T1,T2,T3}.Add(Point, T2, bool, bool)" />
+        public bool Add(Point position, PlaneForce value, bool raiseEvents = true, bool sort = true)
+		{
+			var xAdded = Add(position, value.X, Direction.X, raiseEvents, false);
+
+			var yAdded = Add(position, value.Y, Direction.Y, raiseEvents, sort);
+
+			return
+				xAdded || yAdded;
+		}
 
 		/// <remarks>
 		///     This method will add forces in <see cref="Direction.X" />.

@@ -18,6 +18,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of the crack block.
 		/// </summary>
+		[Block(Block = Block.StringerCrack)]
 		public static IEnumerable<Entity> StringerCrackBlockElements()
 		{
 			// Define the points to add the lines
@@ -52,6 +53,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of the compressive block.
 		/// </summary>
+		[Block(Block = Block.CompressiveStress)]
 		public static IEnumerable<Entity> PanelCompressiveBlockElements()
 		{
 			// Get vertices of the solid
@@ -104,6 +106,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of the crack block.
 		/// </summary>
+		[Block(Block = Block.PanelCrack)]
 		public static IEnumerable<Entity> PanelCrackBlockElements()
 		{
 			// Define the points to add the lines
@@ -142,6 +145,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of the shear block.
 		/// </summary>
+		[Block(Block = Block.Shear)]
 		public static IEnumerable<Entity> PanelShearBlockElements()
 		{
 			// Define the points to add the lines
@@ -181,6 +185,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of the tensile block.
 		/// </summary>
+		[Block(Block = Block.TensileStress)]
 		public static IEnumerable<Entity> PanelTensileBlockElements()
 		{
 			// Create two arrows for tensile stress
@@ -221,6 +226,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of the force block.
 		/// </summary>
+		[Block(Block = Block.Force)]
 		public static IEnumerable<Entity> ForceBlockElements()
 		{
 			yield return
@@ -237,6 +243,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of X Block.
 		/// </summary>
+		[Block(Block = Block.SupportX)]
 		public static IEnumerable<Entity> SupportXElements()
 		{
 			var origin = new Point3d(0, 0, 0);
@@ -295,6 +302,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of XY Block.
 		/// </summary>
+		[Block(Block = Block.SupportXY)]
 		public static IEnumerable<Entity> SupportXYElements()
 		{
 			var origin = new Point3d(0, 0, 0);
@@ -332,8 +340,6 @@ namespace SPMTool.Core
 			}
 		}
 
-		#endregion
-
 		/// <summary>
 		///     Create blocks for use in SPMTool.
 		/// </summary>
@@ -345,5 +351,7 @@ namespace SPMTool.Core
 			// Create the blocks
 			blocks.Create();
 		}
+
+		#endregion
 	}
 }

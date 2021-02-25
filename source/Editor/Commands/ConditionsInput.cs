@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Linq;
 using Autodesk.AutoCAD.Runtime;
-using SPM.Elements;
 using SPMTool.Core;
 using SPMTool.Core.Conditions;
 using SPMTool.Editor.Commands;
+
+using static SPMTool.Core.DataBase;
+using static SPMTool.Core.Model;
 
 [assembly: CommandClass(typeof(ConditionsInput))]
 
@@ -22,7 +24,7 @@ namespace SPMTool.Editor.Commands
 	    public static void AddForce()
 	    {
 		    // Read units
-		    var units = Application.Settings.Units;
+		    var units = DataBase.Settings.Units;
 
 		    // Request objects to be selected in the drawing area
 		    var nds = UserInput.SelectNodes("Select nodes to add load:");

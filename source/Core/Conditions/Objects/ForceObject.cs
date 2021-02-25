@@ -13,114 +13,115 @@ using static SPMTool.Core.DataBase;
 // ReSharper disable once CheckNamespace
 namespace SPMTool.Core.Conditions
 {
-	///// <summary>
-	/////		Force object class.
-	///// </summary>
-	//public class ForceObject : ConditionObject<ForceObject, PlaneForce>
-	//{
-	//	//#region Fields
+    /// <summary>
+    ///		Force object class.
+    /// </summary>
+    public class PlaneForceObject : ConditionObject<PlaneForceObject, PlaneForce>
+    {
+		#region Fields
 
-	//	///// <summary>
-	//	/////     The horizontal <see cref="ForceDirection" />.
-	//	///// </summary>
-	//	//private readonly ForceDirection? _x;
+		/// <summary>
+		///     The horizontal <see cref="ForceObject" />.
+		/// </summary>
+		private readonly ForceObject? _x;
 
-	//	///// <summary>
-	//	/////     The vertical <see cref="ForceDirection" />.
-	//	///// </summary>
-	//	//private readonly ForceDirection? _y;
+		/// <summary>
+		///     The vertical <see cref="ForceObject" />.
+		/// </summary>
+		private readonly ForceObject? _y;
 
-	//	//#endregion
+        #endregion
 
-	//	//#region Properties
+        #region Properties
 
-	//	//public override Block Block => Block.Force;
+        public override Block Block => Block.Force;
 
-	//	//public override PlaneForce Value => new PlaneForce(_x?.Value ?? Force.Zero, _y?.Value ?? Force.Zero);
+        public override PlaneForce Value => new PlaneForce(_x?.Value ?? Force.Zero, _y?.Value ?? Force.Zero);
 
-	//	//public override Layer Layer => Layer.Force;
+        public override Layer Layer => Layer.Force;
 
-	//	///// <summary>
-	//	/////		Get the <see cref="ObjectId"/>'s associated to this object.
-	//	///// </summary>
-	//	//public ObjectId[] ObjectIds => new []
-	//	//{
-	//	//	_x?.ObjectId     ?? ObjectId.Null,
-	//	//	_y?.ObjectId     ?? ObjectId.Null,
-	//	//	_x?.TextObjectId ?? ObjectId.Null,
-	//	//	_y?.TextObjectId ?? ObjectId.Null
-	//	//};
+        /// <summary>
+        ///		Get the <see cref="ObjectId"/>'s associated to this object.
+        /// </summary>
+        public ObjectId[] ObjectIds => new[]
+        {
+            _x?.ObjectId      ?? ObjectId.Null,
+            _y?.ObjectId      ?? ObjectId.Null,
+            _x?.Text.ObjectId ?? ObjectId.Null,
+            _y?.Text.ObjectId ?? ObjectId.Null
+        };
 
-	//	//protected override double RotationAngle { get; }
+        protected override double RotationAngle { get; } = 0;
 
-	//	//#endregion
+        #endregion
 
-	//	//#region Constructors
+        #region Constructors
 
-	//	///// <summary>
-	//	/////     Force object constructor.
-	//	///// </summary>
-	//	///// <inheritdoc />
-	//	//public ForceObject(Point position, PlaneForce value)
-	//	//	: base(position, value)
-	//	//{
-	//	//	_x = value.IsXZero
-	//	//		? null
-	//	//		: new ForceDirection(position, value.X, Direction.X);
+        /// <summary>
+        ///     Plane Force object constructor.
+        /// </summary>
+        /// <inheritdoc />
+        public PlaneForceObject(Point position, PlaneForce value, ComponentDirection direction)
+            : base(position, value, direction)
+        {
+            _x = value.IsXZero
+                ? null
+                : new ForceObject(position, value.X, ComponentDirection.X);
 
-	//	//	_y = value.IsYZero
-	//	//		? null
-	//	//		: new ForceDirection(position, value.Y, Direction.Y);
-	//	//}
+            _y = value.IsYZero
+                ? null
+                : new ForceObject(position, value.Y, ComponentDirection.Y);
+        }
 
-	//	//private ForceObject(ForceDirection? x, ForceDirection? y)
-	//	//{
-	//	//	_x = x;
-	//	//	_y = y;
-	//	//}
+        /// <inheritdoc cref="PlaneForceObject(Point, PlaneForce, PlaneForceDirection)" />
+        /// <remarks>
+        ///		<see cref="ForceObject"/>'s must be at the same position.
+        /// </remarks>
+        /// <param name="x">The <see cref="ForceObject"/> for X direction.</param>
+        /// <param name="y">The <see cref="ForceObject"/> for Y direction.</param>
+        public PlaneForceObject(ForceObject? x, ForceObject? y)
+        {
+            _x = x;
+            _y = y;
+        }
 
-	//	//#endregion
+        #endregion
 
-	//	//#region  Methods
+        #region  Methods
 
-	//	//public static ForceObject? ReadFromBlocks(IEnumerable<BlockReference>? blocks)
-	//	//{
+        public override void AddToDrawing()
+        {
+            _x?.AddToDrawing();
+            _y?.AddToDrawing();
+        }
 
-	//	//}
+        public override void RemoveFromDrawing() => ObjectIds.RemoveFromDrawing();
 
-	//	//public override void AddToDrawing()
-	//	//{
-	//	//	_x?.AddToDrawing();
-	//	//	_y?.AddToDrawing();
-	//	//}
+        protected override TypedValue[] CreateXData() => ForceObject.CreateXData(Force.Zero, ComponentDirection.X);
 
-	//	//public override void RemoveFromDrawing() => ObjectIds.RemoveFromDrawing();
+        public override void GetProperties()
+        {
+            _x?.GetProperties();
+            _y?.GetProperties();
+        }
 
-	//	//protected override TypedValue[] CreateXData() => ForceDirection.CreateXData(Force.Zero, Direction.X);
+        #endregion
 
-	//	//public override void GetProperties()
-	//	//{
-	//	//	_x?.GetProperties();
-	//	//	_y?.GetProperties();
-	//	//}
+        /// <summary>
+        ///     Returns true if objects are equal.
+        /// </summary>
+        public static bool operator == (PlaneForceObject left, PlaneForceObject right) => !(left is null) && left.Equals(right);
 
-	//	//#endregion
+        /// <summary>
+        ///     Returns true if objects are different.
+        /// </summary>
+        public static bool operator != (PlaneForceObject left, PlaneForceObject right) => !(left is null) && !left.Equals(right);
+    }
 
-	//	///// <summary>
-	//	/////     Returns true if objects are equal.
-	//	///// </summary>
-	//	//public static bool operator ==(ForceObject left, ForceObject right) => !(left is null) && left.Equals(right);
-
-	//	///// <summary>
-	//	/////     Returns true if objects are different.
-	//	///// </summary>
-	//	//public static bool operator !=(ForceObject left, ForceObject right) => !(left is null) && !left.Equals(right);
-	//}
-
-	/// <summary>
-	///     Force direction class.
-	/// </summary>
-	public class ForceObject : ConditionObject<ForceObject, Force, Direction>
+    /// <summary>
+    ///     Force direction class.
+    /// </summary>
+    public class ForceObject : ConditionObject<ForceObject, Force>
 	{
 		#region Properties
 
@@ -134,10 +135,10 @@ namespace SPMTool.Core.Conditions
 		protected override double RotationAngle =>
 			Direction switch
 			{
-				Direction.Y when Value <= Force.Zero => 0,
-				Direction.Y when Value >  Force.Zero => Constants.Pi,
-				Direction.X when Value <= Force.Zero => Constants.PiOver2,
-				_                                    => Constants.Pi3Over2
+				ComponentDirection.Y when Value <= Force.Zero => 0,
+				ComponentDirection.Y when Value >  Force.Zero => Constants.Pi,
+				ComponentDirection.X when Value <= Force.Zero => Constants.PiOver2,
+				_                                             => Constants.Pi3Over2
 			};
 
 		/// <summary>
@@ -157,10 +158,10 @@ namespace SPMTool.Core.Conditions
 
 				return Direction switch
 				{
-					Direction.X when Value > Force.Zero => new Point(x - Length.FromMillimeters(200), y + Length.FromMillimeters(25)),
-					Direction.X when Value < Force.Zero => new Point(x + Length.FromMillimeters(75),  y + Length.FromMillimeters(25)),
-					Direction.Y when Value > Force.Zero => new Point(x + Length.FromMillimeters(25),  y - Length.FromMillimeters(125)),
-					Direction.Y when Value < Force.Zero => new Point(x + Length.FromMillimeters(25),  y + Length.FromMillimeters(100)),
+					ComponentDirection.X when Value > Force.Zero => new Point(x - Length.FromMillimeters(200), y + Length.FromMillimeters(25)),
+					ComponentDirection.X when Value < Force.Zero => new Point(x + Length.FromMillimeters(75),  y + Length.FromMillimeters(25)),
+					ComponentDirection.Y when Value > Force.Zero => new Point(x + Length.FromMillimeters(25),  y - Length.FromMillimeters(125)),
+					ComponentDirection.Y when Value < Force.Zero => new Point(x + Length.FromMillimeters(25),  y + Length.FromMillimeters(100)),
 					_ => Position
 				};
 			}
@@ -175,8 +176,8 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		/// <param name="position">The <see cref="Point" /> position.</param>
 		/// <param name="force">The <see cref="Force" /> applied in <paramref name="position" />.</param>
-		/// <param name="direction">The <seealso cref="Enums.Direction" /> of <paramref name="force" /></param>
-		public ForceObject(Point position, Force force, Direction direction)
+		/// <param name="direction">The <seealso cref="ComponentDirection" /> of <paramref name="force"/>. Only <seealso cref="ComponentDirection.X"/> of <seealso cref="ComponentDirection.Y"/></param>
+		public ForceObject(Point position, Force force, ComponentDirection direction)
 			: base(position, force, direction)
 		{
 			Text      = GetText();
@@ -208,11 +209,11 @@ namespace SPMTool.Core.Conditions
 		///     Get the <see cref="Direction" /> from a <seealso cref="BlockReference" />'s rotation angle.
 		/// </summary>
 		/// <param name="reference">The <see cref="BlockReference" /> object.</param>
-		public static Direction GetDirectionFromAngle(BlockReference? reference) =>
+		public static ComponentDirection GetDirectionFromAngle(BlockReference? reference) =>
 			reference?.Rotation switch
 			{
-				{ } x when x.ApproxZero(1E-3) || x.Approx(Constants.Pi, 1E-3) => Direction.X,
-				_                                                             => Direction.Y
+				{ } x when x.ApproxZero(1E-3) || x.Approx(Constants.Pi, 1E-3) => ComponentDirection.X,
+				_                                                             => ComponentDirection.Y
 			};
 
 		/// <summary>
@@ -220,7 +221,7 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		/// <param name="force">The force value.</param>
 		/// <param name="forceDirection">The force direction.</param>
-		public static TypedValue[] CreateXData(Force force, Direction forceDirection)
+		public static TypedValue[] CreateXData(Force force, ComponentDirection forceDirection)
 		{
 			// Definition for the Extended Data
 			var xdataStr = "Force Data";
@@ -242,7 +243,7 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get this object as a <see cref="PlaneForce" />.
 		/// </summary>
-		public PlaneForce AsPlaneForce() => Direction is Direction.X
+		public PlaneForce AsPlaneForce() => Direction is ComponentDirection.X
 			? PlaneForce.InX(Value)
 			: PlaneForce.InY(Value);
 
@@ -279,11 +280,11 @@ namespace SPMTool.Core.Conditions
 			Force.FromNewtons((data ?? ReadXData())?[(int) ForceIndex.Value].ToDouble() ?? 0).ToUnit(Settings.Units.AppliedForces);
 
 		/// <summary>
-		///     Get the force <see cref="Enums.Direction" /> from extended data.
+		///     Get the force <see cref="ComponentDirection" /> from extended data.
 		/// </summary>
 		/// <inheritdoc cref="GetForce" />
-		private Direction GetDirection(TypedValue[]? data = null) =>
-			(Direction) ((data ?? ReadXData())?[(int) ForceIndex.Direction].ToInt() ?? 0);
+		private ComponentDirection GetDirection(TypedValue[]? data = null) =>
+			(ComponentDirection) ((data ?? ReadXData())?[(int) ForceIndex.Direction].ToInt() ?? 0);
 
 		protected override TypedValue[] CreateXData() => CreateXData(Value, Direction);
 
