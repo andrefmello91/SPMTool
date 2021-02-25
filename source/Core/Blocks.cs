@@ -18,8 +18,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of the crack block.
 		/// </summary>
-		[Block(Block = Block.StringerCrack)]
-		public static IEnumerable<Entity> StringerCrackBlockElements()
+		public static IEnumerable<Entity> StringerCrack()
 		{
 			// Define the points to add the lines
 			var crkPts = CrackPoints().ToArray();
@@ -53,8 +52,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of the compressive block.
 		/// </summary>
-		[Block(Block = Block.CompressiveStress)]
-		public static IEnumerable<Entity> PanelCompressiveBlockElements()
+		public static IEnumerable<Entity> CompressiveStress()
 		{
 			// Get vertices of the solid
 			Point3d[] verts1 =
@@ -106,8 +104,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of the crack block.
 		/// </summary>
-		[Block(Block = Block.PanelCrack)]
-		public static IEnumerable<Entity> PanelCrackBlockElements()
+		public static IEnumerable<Entity> PanelCrack()
 		{
 			// Define the points to add the lines
 			var crkPts = CrackPoints();
@@ -145,8 +142,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of the shear block.
 		/// </summary>
-		[Block(Block = Block.Shear)]
-		public static IEnumerable<Entity> PanelShearBlockElements()
+		public static IEnumerable<Entity> Shear()
 		{
 			// Define the points to add the lines
 			Point3d[] blkPts =
@@ -185,8 +181,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of the tensile block.
 		/// </summary>
-		[Block(Block = Block.TensileStress)]
-		public static IEnumerable<Entity> PanelTensileBlockElements()
+		public static IEnumerable<Entity> TensileStress()
 		{
 			// Create two arrows for tensile stress
 			// Create lines
@@ -226,8 +221,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of the force block.
 		/// </summary>
-		[Block(Block = Block.Force)]
-		public static IEnumerable<Entity> ForceBlockElements()
+		public static IEnumerable<Entity> Force()
 		{
 			yield return
 				new Line
@@ -243,8 +237,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of X Block.
 		/// </summary>
-		[Block(Block = Block.SupportX)]
-		public static IEnumerable<Entity> SupportXElements()
+		public static IEnumerable<Entity> SupportX()
 		{
 			var origin = new Point3d(0, 0, 0);
 
@@ -273,7 +266,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of Y Block.
 		/// </summary>
-		public static IEnumerable<Entity> SupportYElements()
+		public static IEnumerable<Entity> SupportY()
 		{
 			var origin = new Point3d(0, 0, 0);
 
@@ -302,8 +295,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the elements of XY Block.
 		/// </summary>
-		[Block(Block = Block.SupportXY)]
-		public static IEnumerable<Entity> SupportXYElements()
+		public static IEnumerable<Entity> SupportXY()
 		{
 			var origin = new Point3d(0, 0, 0);
 

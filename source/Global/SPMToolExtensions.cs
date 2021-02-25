@@ -10,11 +10,10 @@ using Material.Reinforcement;
 using Material.Reinforcement.Biaxial;
 using Material.Reinforcement.Uniaxial;
 using SPM.Elements.StringerProperties;
+using SPMTool.Attributes;
 using SPMTool.Core;
 using SPMTool.Enums;
 using UnitsNet.Units;
-using Color = SPMTool.Enums.Color;
-
 using static SPMTool.Core.DataBase;
 
 namespace SPMTool.Extensions
@@ -67,14 +66,12 @@ namespace SPMTool.Extensions
 		public static Layer ReadLayer(this ObjectId objectId)
 		{
 			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
+			using var trans = StartTransaction();
 
-				// Get the entity
-			using (var entity = (Entity) trans.GetObject(objectId, OpenMode.ForRead))
-			{
-				return
-					(Layer) Enum.Parse(typeof(Layer), entity.Layer);
-			}
+			using var entity = (Entity) trans.GetObject(objectId, OpenMode.ForRead);
+
+			return
+				(Layer) Enum.Parse(typeof(Layer), entity.Layer);
 		}
 
 		/// <summary>
@@ -93,33 +90,33 @@ namespace SPMTool.Extensions
 			var layerName = $"{layer}";
 
 			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
-				// Open the Layer table for read
-			using (var lyrTbl = (LayerTable) trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead))
+			using var trans = StartTransaction();
+
+			using var lyrTbl = (LayerTable) trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead);
+
+			if (lyrTbl.Has(layerName))
+				return;
+
+			// Get layer attributes
+			var attribute = layer.GetAttribute<LayerAttribute>()!;
+
+			using var lyrTblRec = new LayerTableRecord
 			{
-				if (lyrTbl.Has(layerName))
-					return;
+				Name = layerName,
+				Color = attribute.Color,
+				Transparency = attribute.Transparency
+			};
 
-				using (var lyrTblRec = new LayerTableRecord())
-				{
-					// Assign the layer the ACI color and a name
-					lyrTblRec.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(ColorMethod.ByAci, (short) layer.GetColor());
 
-					// Upgrade the Layer table for write
-					lyrTbl.UpgradeOpen();
+			// Upgrade the Layer table for write
+			lyrTbl.UpgradeOpen();
 
-					// Append the new layer to the Layer table and the transaction
-					lyrTbl.Add(lyrTblRec);
-					trans.AddNewlyCreatedDBObject(lyrTblRec, true);
+			// Append the new layer to the Layer table and the transaction
+			lyrTbl.Add(lyrTblRec);
+			trans.AddNewlyCreatedDBObject(lyrTblRec, true);
 
-					// Assign the name and transparency to the layer
-					lyrTblRec.Name = layerName;
-					lyrTblRec.Transparency = layer.GetTransparency();
-				}
-
-				// Commit and dispose the transaction
-				trans.Commit();
-			}
+			// Commit and dispose the transaction
+			trans.Commit();
 		}
 
 		/// <summary>
@@ -128,95 +125,39 @@ namespace SPMTool.Extensions
 		public static void Create(this IEnumerable<Layer> layers)
 		{
 			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
+			using var trans = StartTransaction();
 
-				// Open the Layer table for read
-			using (var lyrTbl = (LayerTable) trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead))
+			using var lyrTbl = (LayerTable) trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead);
+
+			foreach (var layer in layers)
 			{
-				foreach (var layer in layers)
+				// Get layer name
+				var layerName = $"{layer}";
+
+				if (lyrTbl.Has(layerName))
+					continue;
+
+				// Get layer attributes
+				var attribute = layer.GetAttribute<LayerAttribute>()!;
+
+				using var lyrTblRec = new LayerTableRecord
 				{
-					// Get layer name
-					var layerName = $"{layer}";
+					Name         = layerName,
+					Color        = attribute.Color,
+					Transparency = attribute.Transparency
+				};
 
-					if (lyrTbl.Has(layerName))
-						continue;
+				// Upgrade the Layer table for write
+				lyrTbl.UpgradeOpen();
 
-					using (var lyrTblRec = new LayerTableRecord())
-					{
-						// Assign the layer the ACI color and a name
-						lyrTblRec.Color =
-							Autodesk.AutoCAD.Colors.Color.FromColorIndex(ColorMethod.ByAci, (short) layer.GetColor());
-
-						// Upgrade the Layer table for write
-						lyrTbl.UpgradeOpen();
-
-						// Append the new layer to the Layer table and the transaction
-						lyrTbl.Add(lyrTblRec);
-						trans.AddNewlyCreatedDBObject(lyrTblRec, true);
-
-						// Assign the name and transparency to the layer
-						lyrTblRec.Name = layerName;
-						lyrTblRec.Transparency = layer.GetTransparency();
-					}
-				}
-
-				// Commit and dispose the transaction
-				trans.Commit();
+				// Append the new layer to the Layer table and the transaction
+				lyrTbl.Add(lyrTblRec);
+				trans.AddNewlyCreatedDBObject(lyrTblRec, true);
 			}
+
+			// Commit and dispose the transaction
+			trans.Commit();
 		}
-
-		/// <summary>
-		///     Get the <see cref="Enums.Color" /> associated to this <paramref name="layer" />.
-		/// </summary>
-		/// <param name="layer"></param>
-		/// <returns></returns>
-		public static Color GetColor(this Layer layer)
-		{
-			switch (layer)
-			{
-				case Layer.IntNode:
-					return Color.Blue;
-
-				case Layer.Stringer:
-					return Color.Cyan;
-
-				case Layer.Panel:
-					return Color.Grey;
-
-				case Layer.Force:
-					return Color.Yellow;
-
-				case Layer.ForceText:
-					return Color.Yellow;
-
-				case Layer.PanelForce:
-					return Color.Green;
-
-				case Layer.CompressivePanelStress:
-					return Color.Blue1;
-
-				case Layer.ConcreteCompressiveStress:
-					return Color.Blue1;
-
-				case Layer.StringerForce:
-					return Color.Grey;
-
-				case Layer.Displacements:
-					return Color.Yellow1;
-
-				case Layer.Cracks:
-					return Color.White;
-
-				// ExtNode, Support, TensileStress:
-				default:
-					return Color.Red;
-			}
-		}
-
-		/// <summary>
-		///     Get the <see cref="Autodesk.AutoCAD.Colors.Transparency" /> associated to this <paramref name="layer" />.
-		/// </summary>
-		public static Transparency GetTransparency(this Layer layer) => TransparentLayers.Contains(layer) ? 80.Transparency() : 0.Transparency();
 
 		/// <summary>
 		///     Create a <paramref name="block" /> given its name.
@@ -232,7 +173,7 @@ namespace SPMTool.Extensions
 			using var trans = StartTransaction();
 
 			foreach (var block in blocks)
-				block.GetElements().CreateBlock(block.OriginPoint(), block.ToString(), trans);
+				block.GetElements()?.CreateBlock(block.OriginPoint(), block.ToString(), trans);
 
 			// Commit and dispose the transaction
 			trans.Commit();
@@ -243,21 +184,25 @@ namespace SPMTool.Extensions
 		/// </summary>
 		public static Entity[]? GetElements(this Block block)
 		{
-			//var method = typeof(Blocks).GetMethods().First(m => ((BlockAttribute) m.GetCustomAttribute(typeof(BlockAttribute), false)).Block == block);
+			var method = block.GetAttribute<BlockAttribute>()?.Method;
 
-			return block switch
-			{
-				Block.Force             => Blocks.ForceBlockElements().ToArray(),
-				Block.SupportX          => Blocks.SupportXElements().ToArray(),
-				Block.SupportY          => Blocks.SupportYElements().ToArray(),
-				Block.SupportXY         => Blocks.SupportXYElements().ToArray(),
-				Block.Shear             => Blocks.PanelShearBlockElements().ToArray(),
-				Block.CompressiveStress => Blocks.PanelCompressiveBlockElements().ToArray(),
-				Block.TensileStress     => Blocks.PanelTensileBlockElements().ToArray(),
-				Block.PanelCrack        => Blocks.PanelCrackBlockElements().ToArray(),
-				Block.StringerCrack     => Blocks.StringerCrackBlockElements().ToArray(),
-				_                       => null
-			};
+			return
+				method is null
+					? null
+					: ((IEnumerable<Entity>) method.Invoke(null, null)!).ToArray();
+
+			//return block switch
+			//{
+			//	Block.Force             => Blocks.Force().ToArray(),
+			//	Block.SupportY          => Blocks.SupportY().ToArray(),
+			//	Block.SupportXY         => Blocks.SupportXY().ToArray(),
+			//	Block.Shear             => Blocks.Shear().ToArray(),
+			//	Block.CompressiveStress => Blocks.CompressiveStress().ToArray(),
+			//	Block.TensileStress     => Blocks.TensileStress().ToArray(),
+			//	Block.PanelCrack        => Blocks.PanelCrack().ToArray(),
+			//	Block.StringerCrack     => Blocks.StringerCrack().ToArray(),
+			//	_                       => null
+			//};
 		}
 
 		/// <summary>
@@ -277,9 +222,9 @@ namespace SPMTool.Extensions
 		///     Get the <see cref="BlockReference" /> of this <paramref name="block" />.
 		/// </summary>
 		/// <param name="insertionPoint">Thw insertion <see cref="Point3d" /> for the <see cref="BlockReference" />.</param>
-		/// <param name="layer">The <see cref="Layer"/> to set to <see cref="BlockReference"/>.</param>
+		/// <param name="layer">The <see cref="Layer"/> to set to <see cref="BlockReference"/>. Leave null to set default layer from block attribute.</param>
 		/// <param name="rotationAngle">The rotation angle for block transformation (positive for counterclockwise).</param>
-		public static BlockReference? GetReference(this Block block, Point3d insertionPoint, Layer layer, double rotationAngle = 0)
+		public static BlockReference? GetReference(this Block block, Point3d insertionPoint, Layer? layer = null, double rotationAngle = 0)
 		{
 			// Start a transaction
 			using var trans = StartTransaction();
@@ -291,7 +236,7 @@ namespace SPMTool.Extensions
 
 			var blockRef = new BlockReference(insertionPoint, id)
 			{
-				Layer = $"{layer}"
+				Layer = $"{layer ?? block.GetAttribute<BlockAttribute>()!.Layer}"
 			};
 
 			// Rotate and scale the block

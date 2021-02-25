@@ -134,7 +134,7 @@ namespace SPMTool.Core
 						using (var blkRef = new BlockReference(cntrPt, compStress))
 						{
 							blkRef.Layer = $"{layer}";
-							blkRef.ColorIndex = (int) Color.Blue1;
+							blkRef.ColorIndex = (int) ColorCode.Blue1;
 
 							// Set the scale of the block
 							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
@@ -393,7 +393,7 @@ namespace SPMTool.Core
 						dgrm.Transparency = 80.Transparency();
 
 						// Set the color (blue to compression and red to tension)
-						dgrm.ColorIndex = Math.Max(N1.Value, N3.Value) > 0 ? (short) Color.Blue1 : (short) Color.Red;
+						dgrm.ColorIndex = Math.Max(N1.Value, N3.Value) > 0 ? (short) ColorCode.Blue1 : (short) ColorCode.Red;
 
 						// Rotate the diagram
 						dgrm.TransformBy(Matrix3d.Rotation(ang, Ucs.Zaxis, stPt));
@@ -432,7 +432,7 @@ namespace SPMTool.Core
 						dgrm1.Transparency = 80.Transparency();
 
 						// Set the color (blue to compression and red to tension)
-						dgrm1.ColorIndex = N1.Value > 0 ? (short) Color.Blue1 : (short) Color.Red;
+						dgrm1.ColorIndex = N1.Value > 0 ? (short) ColorCode.Blue1 : (short) ColorCode.Red;
 
 						// Rotate the diagram
 						dgrm1.TransformBy(Matrix3d.Rotation(ang, Ucs.Zaxis, stPt));
@@ -448,7 +448,7 @@ namespace SPMTool.Core
 						dgrm3.Transparency = 80.Transparency();
 
 						// Set the color (blue to compression and red to tension)
-						dgrm3.ColorIndex = N3.Value > 0 ? (short) Color.Blue1 : (short) Color.Red;
+						dgrm3.ColorIndex = N3.Value > 0 ? (short) ColorCode.Blue1 : (short) ColorCode.Red;
 
 						// Rotate the diagram
 						dgrm3.TransformBy(Matrix3d.Rotation(ang, Ucs.Zaxis, stPt));
@@ -473,8 +473,8 @@ namespace SPMTool.Core
 							TextString = $"{N1.ToUnit(units.StringerForces).Value.Abs():0.00}",
 
 							ColorIndex = N1.Value > 0
-								? (short) Color.Blue1
-								: (short) Color.Red,
+								? (short) ColorCode.Blue1
+								: (short) ColorCode.Red,
 
 							Position = N1.Value > 0
 								? new Point3d(stPt.X + 10 * scFctr, stPt.Y + h1 + 20 * scFctr, 0)
@@ -500,8 +500,8 @@ namespace SPMTool.Core
 						TextString = $"{N3.ToUnit(units.StringerForces).Value.Abs():0.00}",
 
 						ColorIndex = N3.Value > 0
-							? (short) Color.Blue1
-							: (short) Color.Red,
+							? (short) ColorCode.Blue1
+							: (short) ColorCode.Red,
 
 						Position = N3.Value > 0
 							? new Point3d(stPt.X + l - 10 * scFctr, stPt.Y + h3 + 20 * scFctr, 0)

@@ -1,22 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Xml.Serialization;
-using Autodesk.AutoCAD.DatabaseServices;
-using SPMTool.Core;
+﻿using System.DirectoryServices;
+using System.Linq.Expressions;
+using Autodesk.AutoCAD.Geometry;
+using SPMTool.Attributes;
 
 namespace SPMTool.Enums
 {
-	public class LayerAttribute : XmlEnumAttribute
-	{
-		public Layer Layer { get; set; }
-	}
-
-	public class BlockAttribute : Attribute
-	{
-		public Block Block { get; set; }
-	}
-
 	/// <summary>
 	/// Directions.
 	/// </summary>
@@ -42,7 +30,7 @@ namespace SPMTool.Enums
     /// <summary>
     /// Color codes.
     /// </summary>
-    public enum Color : short
+    public enum ColorCode : short
 	{
 		White   = 0,
 		Red     = 1,
@@ -60,20 +48,49 @@ namespace SPMTool.Enums
     /// </summary>
 	public enum Layer
 	{
+		[Layer(ColorCode.Red)]
 		ExtNode,
+
+		[Layer(ColorCode.Blue)]
 		IntNode,
+
+		[Layer(ColorCode.Cyan)]
 		Stringer,
+
+		[Layer(ColorCode.Grey, 80)]
 		Panel,
+
+		[Layer(ColorCode.Red)]
 		Support,
+
+		[Layer(ColorCode.Yellow)]
 		Force,
+
+		[Layer(ColorCode.Yellow)]
 		ForceText,
+
+		[Layer(ColorCode.Grey, 80)]
 		StringerForce,
+
+		[Layer(ColorCode.Green)]
 		PanelForce,
+
+		[Layer(ColorCode.Blue1, 80)]
 		CompressivePanelStress,
+
+		[Layer(ColorCode.Red, 80)]
 		TensilePanelStress,
+
+		[Layer(ColorCode.Blue1, 80)]
 		ConcreteCompressiveStress,
+
+		[Layer(ColorCode.Red, 80)]
 		ConcreteTensileStress,
+
+		[Layer(ColorCode.Yellow1)]
 		Displacements,
+
+		[Layer(ColorCode.White)]
 		Cracks
 	}
 
@@ -82,14 +99,28 @@ namespace SPMTool.Enums
     /// </summary>
 	public enum Block
 	{
-		SupportX,
+		[Block(SupportY, Layer.Support)]
 		SupportY,
+
+		[Block(SupportXY, Layer.Support)]
 		SupportXY,
+
+		[Block(Force, Layer.Force)]
 		Force,
+
+		[Block(Shear, Layer.PanelForce)]
 		Shear,
+
+		[Block(CompressiveStress, Layer.CompressivePanelStress)]
 		CompressiveStress,
+
+		[Block(TensileStress, Layer.TensilePanelStress)]
 		TensileStress,
+
+		[Block(PanelCrack, Layer.Cracks)]
 		PanelCrack,
+
+		[Block(StringerCrack, Layer.Cracks)]
 		StringerCrack
 	}
 
