@@ -13,7 +13,7 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     Supports class.
 	/// </summary>
-	public class ConstraintList : ConditionList<ConstraintObject, Constraint, ComponentDirection>
+	public class ConstraintList : ConditionList<ConstraintObject, Constraint>
 	{
 		#region Constructors
 

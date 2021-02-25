@@ -32,7 +32,7 @@ namespace SPMTool.Core.Conditions
 		protected override double RotationAngle =>
 			Direction switch
 			{
-				ComponentDirection.X => Constants.PiOver2,
+				ComponentDirection.X  => Constants.PiOver2,
 				_                     => 0
 			};
 

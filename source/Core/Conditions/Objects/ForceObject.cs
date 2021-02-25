@@ -180,7 +180,7 @@ namespace SPMTool.Core.Conditions
 		public ForceObject(Point position, Force force, ComponentDirection direction)
 			: base(position, force, direction)
 		{
-			Text      = GetText();
+			Text = GetText();
 		}
 
 		#endregion

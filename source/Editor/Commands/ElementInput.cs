@@ -61,6 +61,9 @@ namespace SPMTool.Editor.Commands
 
 			// Set old OSMODE
 			SetSystemVariable("OSMODE", osmode);
+
+			// Add necessary nodes
+			Nodes.AddNecessary(Stringers.GetGeometries());
 	    }
 
 		/// <summary>

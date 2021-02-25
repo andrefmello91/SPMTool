@@ -18,7 +18,7 @@ namespace SPMTool.Core.Conditions
 	/// <typeparam name="T2">The type that represents the value of the objects in this list.</typeparam>
 	public abstract class ConditionList<T1, T2> : EntityCreatorList<T1>
 		where T1 : ConditionObject<T1, T2>, IEntityCreator<BlockReference>
-		where T2 : IPlaneComponent<T2, object>
+		where T2 : IEquatable<T2>
 	{
 		#region Properties
 
@@ -57,7 +57,7 @@ namespace SPMTool.Core.Conditions
 		/// <remarks>
 		///		If an item at <paramref name="condition"/>'s position is not at this list, <paramref name="condition"/> is just added.
 		/// </remarks>
-		/// <param name="condition">The <seealso cref="ConditionObject{T1,T2,T3}" /> at the position to change.</param>
+		/// <param name="condition">The <seealso cref="ConditionObject{T1,T2}" /> at the position to change.</param>
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		public bool ChangeCondition(T1 condition, bool raiseEvents = true, bool sort = true)
 		{
@@ -77,7 +77,7 @@ namespace SPMTool.Core.Conditions
 		/// <returns>
 		///     The number of items changed in this collection.
 		/// </returns>
-		/// <param name="conditions">The collection of <seealso cref="ConditionObject{T1,T2,T3}" />'s at the positions to change.</param>
+		/// <param name="conditions">The collection of <seealso cref="ConditionObject{T1,T2}" />'s at the positions to change.</param>
 		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
 		public int ChangeConditions(IEnumerable<T1>? conditions, bool raiseEvents = true, bool sort = true)
 		{
