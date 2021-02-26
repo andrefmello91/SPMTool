@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
+using SPMTool.Core.Conditions;
+using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
@@ -92,6 +94,27 @@ namespace SPMTool.Core
 			for (var i = 0; i < notNullObjects.Count; i++)
 				notNullObjects[i].ObjectId = objIds[i];
 		}
+
+		/// <summary>
+		///     Get a <see cref="IEntityCreator{T}" /> from this <paramref name="objectId"/>.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId" />.</param>
+		public static IEntityCreator<Entity>? GetSPMObject(this ObjectId objectId) => objectId.GetEntity()?.GetSPMObject();
+
+		/// <summary>
+		///     Get a <see cref="IEntityCreator{T}" /> from this <paramref name="entity"/>.
+		/// </summary>
+		/// <param name="entity">The <see cref="Entity"/>.</param>
+		public static IEntityCreator<Entity>? GetSPMObject(this Entity? entity) =>
+			entity switch
+			{
+				DBPoint        p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => NodeObject.ReadFromPoint(p),
+				Line           l when l.Layer == $"{Layer.Stringer}"                                 => StringerObject.ReadFromLine(l),
+				Solid          s when s.Layer == $"{Layer.Panel}"                                    => PanelObject.ReadFromSolid(s),
+				BlockReference b when b.Layer == $"{Layer.Force}"                                    => ForceObject.ReadFromBlock(b),
+				BlockReference b when b.Layer == $"{Layer.Support}"                                  => ConstraintObject.ReadFromBlock(b),
+				_                                                                                    => null
+			};
 
 		#endregion
 	}
