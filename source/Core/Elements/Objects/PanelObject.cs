@@ -128,15 +128,15 @@ namespace SPMTool.Core.Elements
 			ObjectId = solid.ObjectId
 		};
 
-		///  <summary>
-		///      Create new XData for panels.
-		///  </summary>
-		///  <remarks>
-		/// 		Leave null values for default values.
-		///  </remarks>
-		///  <param name="width">The width.</param>
-		///  <param name="x">The <see cref="WebReinforcementDirection"/> for X direction.</param>
-		///  <param name="y">The <see cref="WebReinforcementDirection"/> for Y direction.</param>
+		/// <summary>
+		///     Create new XData for panels.
+		/// </summary>
+		/// <remarks>
+		///     Leave null values for default values.
+		/// </remarks>
+		/// <param name="width">The width.</param>
+		/// <param name="x">The <see cref="WebReinforcementDirection" /> for X direction.</param>
+		/// <param name="y">The <see cref="WebReinforcementDirection" /> for Y direction.</param>
 		public static TypedValue[] PanelXData(Length? width = null, WebReinforcementDirection? x = null, WebReinforcementDirection? y = null)
 		{
 			// Definition for the Extended Data
@@ -168,8 +168,6 @@ namespace SPMTool.Core.Elements
 			Layer = $"{Layer}"
 		};
 
-		protected override TypedValue[] CreateXData() => PanelXData(Width, DirectionX, DirectionY);
-
 		public override void GetProperties()
 		{
 			var data = ReadXData();
@@ -183,6 +181,29 @@ namespace SPMTool.Core.Elements
 
 		public override Panel GetElement() => throw new NotImplementedException();
 
+		/// <summary>
+		///     Divide this <see cref="PanelObject" /> into new ones.
+		/// </summary>
+		/// <inheritdoc cref="Vertices.Divide(int, int)" />
+		public IEnumerable<PanelObject> Divide(int rows, int columns)
+		{
+			if (!Vertices.IsRectangular)
+			{
+				yield return this;
+				yield break;
+			}
+
+			var verts = Vertices.Divide(rows, columns).ToArray();
+
+			foreach (var vert in verts)
+				yield return new PanelObject(vert)
+				{
+					Width = Width,
+					_x = _x?.Clone(),
+					_y = _y?.Clone()
+				};
+		}
+
 		/// <inheritdoc cref="GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
 		/// <param name="analysisType">The <see cref="AnalysisType" />.</param>
@@ -193,7 +214,7 @@ namespace SPMTool.Core.Elements
 		///     Set <paramref name="width" /> to this object.
 		/// </summary>
 		/// <param name="width">The width.</param>
-		/// <inheritdoc cref="GetWidth"/>
+		/// <inheritdoc cref="GetWidth" />
 		public void SetWidth(Length width, TypedValue[]? data = null)
 		{
 			PropertyField.Width = width;
@@ -211,6 +232,8 @@ namespace SPMTool.Core.Elements
 			ObjectId.SetXData(data);
 		}
 
+		protected override TypedValue[] CreateXData() => PanelXData(Width, DirectionX, DirectionY);
+
 		/// <summary>
 		///     Get the width of a panel.
 		/// </summary>
@@ -219,7 +242,7 @@ namespace SPMTool.Core.Elements
 		{
 			data ??= ReadXData();
 
-			return data is null	
+			return data is null
 				? Length.FromMillimeters(100).ToUnit(Settings.Units.Geometry)
 				: Length.FromMillimeters(data[(int) PanelIndex.Width].ToDouble()).ToUnit(Settings.Units.Geometry);
 		}
@@ -227,7 +250,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the <see cref="WebReinforcement" /> of a panel.
 		/// </summary>
-		/// <inheritdoc cref="GetWidth"/>
+		/// <inheritdoc cref="GetWidth" />
 		private WebReinforcementDirection? GetReinforcement(Direction dir, TypedValue[]? data = null)
 		{
 			data ??= ReadXData();
@@ -239,10 +262,10 @@ namespace SPMTool.Core.Elements
 
 			// Get indexes
 			int
-				d = dir is Direction.X ? (int)PanelIndex.XDiam : (int)PanelIndex.YDiam,
-				s = dir is Direction.X ? (int)PanelIndex.Sx    : (int)PanelIndex.Sy,
-				f = dir is Direction.X ? (int)PanelIndex.fyx   : (int)PanelIndex.fyy,
-				e = dir is Direction.X ? (int)PanelIndex.Esx   : (int)PanelIndex.Esy;
+				d = dir is Direction.X ? (int) PanelIndex.XDiam : (int) PanelIndex.YDiam,
+				s = dir is Direction.X ? (int) PanelIndex.Sx    : (int) PanelIndex.Sy,
+				f = dir is Direction.X ? (int) PanelIndex.fyx   : (int) PanelIndex.fyy,
+				e = dir is Direction.X ? (int) PanelIndex.Esx   : (int) PanelIndex.Esy;
 
 			// Angle
 			var angle = dir is Direction.X ? 0 : Constants.PiOver2;
@@ -267,15 +290,17 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		/// <param name="direction">The <see cref="WebReinforcementDirection" /> for horizontal direction.</param>
 		/// <param name="dir">The <see cref="Direction" /> to set (X or Y).</param>
-		/// <inheritdoc cref="GetWidth"/>
+		/// <inheritdoc cref="GetWidth" />
 		private void SetReinforcement(WebReinforcementDirection? direction, Direction dir, TypedValue[]? data = null)
 		{
 			data ??= ReadXData();
 
 			if (data is null)
+			{
 				data = dir is Direction.X
 					? PanelXData(null, direction)
 					: PanelXData(null, null, direction);
+			}
 
 			else
 			{

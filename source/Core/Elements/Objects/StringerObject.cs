@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
@@ -110,10 +111,10 @@ namespace SPMTool.Core.Elements
 		///     Create new extended data for stringers.
 		/// </summary>
 		/// <remarks>
-		///		Leave values null to set default values.
+		///     Leave values null to set default values.
 		/// </remarks>
-		/// <param name="crossSection">The <seealso cref="SPM.Elements.StringerProperties.CrossSection"/>.</param>
-		/// <param name="reinforcement">The <seealso cref="UniaxialReinforcement"/>.</param>
+		/// <param name="crossSection">The <seealso cref="SPM.Elements.StringerProperties.CrossSection" />.</param>
+		/// <param name="reinforcement">The <seealso cref="UniaxialReinforcement" />.</param>
 		public static TypedValue[] StringerXData(CrossSection? crossSection = null, UniaxialReinforcement? reinforcement = null)
 		{
 			// Definition for the Extended Data
@@ -139,6 +140,22 @@ namespace SPMTool.Core.Elements
 			return newData;
 		}
 
+		/// <summary>
+		///     Divide this <see cref="StringerObject" /> in a <paramref name="number" /> of new ones.
+		/// </summary>
+		/// <param name="number">The number of new <see cref="StringerObject" />'s.</param>
+		public IEnumerable<StringerObject> Divide(int number)
+		{
+			var geometries = Geometry.Divide(number).ToArray();
+
+			foreach (var geometry in geometries)
+				yield return new StringerObject(geometry)
+				{
+					CrossSection   = CrossSection,
+					_reinforcement = Reinforcement?.Clone()
+				};
+		}
+
 		public override Line CreateEntity() => new Line(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
 		{
 			Layer = $"{Layer}"
@@ -152,8 +169,6 @@ namespace SPMTool.Core.Elements
 		public Stringer GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
 			Stringer.Read(analysisType, Number, nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement);
 
-		protected override TypedValue[] CreateXData() => StringerXData(CrossSection, Reinforcement);
-
 		public override void GetProperties()
 		{
 			var data = ReadXData();
@@ -162,6 +177,8 @@ namespace SPMTool.Core.Elements
 
 			_reinforcement = GetReinforcement(data);
 		}
+
+		protected override TypedValue[] CreateXData() => StringerXData(CrossSection, Reinforcement);
 
 		/// <summary>
 		///     Get the <see cref="CrossSection" /> from XData.
