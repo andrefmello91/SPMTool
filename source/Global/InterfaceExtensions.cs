@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Windows;
 
 namespace Extensions.Interface
@@ -15,18 +11,34 @@ namespace Extensions.Interface
 	    /// <summary>
 	    /// Disable this <paramref name="element"/>.
 	    /// </summary>
-	    public static void Disable(this UIElement element) => element.IsEnabled = false;
+	    public static void Disable(this UIElement? element)
+	    {
+            if (element is null)
+                return;
 
-        /// <summary>
+		    element.IsEnabled = false;
+	    }
+
+	    /// <summary>
         /// Enable this <paramref name="element"/>.
         /// </summary>
-        public static void Enable(this UIElement element) => element.IsEnabled = true;
+        public static void Enable(this UIElement? element)
+	    {
+		    if (element is null)
+			    return;
+
+		    element.IsEnabled = true;
+	    }
+
 
         /// <summary>
         /// Disable these <paramref name="elements"/>.
         /// </summary>
-        public static void Disable(this IEnumerable<UIElement> elements)
+        public static void Disable(this IEnumerable<UIElement>? elements)
         {
+            if (elements.IsNullOrEmpty())
+                return;
+
 			foreach(var element in elements)
 				element.Disable();
         }
@@ -34,9 +46,12 @@ namespace Extensions.Interface
         /// <summary>
         /// Enable these <paramref name="elements"/>.
         /// </summary>
-        public static void Enable(this IEnumerable<UIElement> elements)
+        public static void Enable(this IEnumerable<UIElement>? elements)
         {
-			foreach(var element in elements)
+	        if (elements.IsNullOrEmpty())
+		        return;
+
+            foreach (var element in elements)
 				element.Enable();
         }
     }
