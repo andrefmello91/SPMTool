@@ -7,6 +7,7 @@ using Autodesk.AutoCAD.Geometry;
 using Extensions;
 using OnPlaneComponents;
 using SPM.Elements;
+using SPM.Elements.PanelProperties;
 using SPM.Elements.StringerProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
@@ -120,6 +121,24 @@ namespace SPMTool.Core.Elements
 		/// <inheritdoc cref="StringerObject.GetElement(IEnumerable{Node}, AnalysisType)" />
 		[return:NotNull]
 		public List<Stringer> GetElements(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) => this.Select(s => s.GetElement(nodes, analysisType)).ToList();
+
+		/// <summary>
+		///		Get a <see cref="StringerObject"/> from this collection that matches <paramref name="panelEdge"/>.
+		/// </summary>
+		/// <param name="panelEdge">A panel's <see cref="Edge"/>.</param>
+		public StringerObject? GetFromPanelEdge(Edge panelEdge) => Find(s => s.Geometry.CenterPoint == panelEdge.CenterPoint);
+
+		/// <summary>
+		///		Get a collection of <see cref="StringerObject"/>'s from this collection that matches a <paramref name="panelGeometry"/>.
+		/// </summary>
+		/// <param name="panelGeometry">A <see cref="PanelGeometry"/>.</param>
+		public IEnumerable<StringerObject?> GetFromPanelGeometry(PanelGeometry panelGeometry) => panelGeometry.Edges.Select(GetFromPanelEdge);
+
+		/// <summary>
+		///		Get a collection of <see cref="StringerObject"/>'s from this collection that matches any of <paramref name="panelGeometry"/>.
+		/// </summary>
+		/// <param name="panelGeometries">A collection of <see cref="PanelGeometry"/>'s.</param>
+		public IEnumerable<StringerObject?> GetFromPanelGeometries(IEnumerable<PanelGeometry> panelGeometries) => panelGeometries.SelectMany(GetFromPanelGeometry);
 
 		#endregion
 	}
