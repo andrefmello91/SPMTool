@@ -1,9 +1,10 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Resources;
 using System.Windows.Media.Imaging;
 using Autodesk.AutoCAD.Internal;
+using SPMTool.Enums;
 using SPMTool.Properties;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
@@ -157,69 +158,43 @@ namespace SPMTool.Application.UserInterface
         /// </summary>
         public void GetIcons()
         {
-            // Check the current theme
-            var theme = (ColorThemeEnum) (short) GetSystemVariable("COLORTHEME");
+	        // Check the current theme
+	        var theme = (ColorTheme) (short) GetSystemVariable("COLORTHEME");
 
-            // If the theme is dark (0), get the light icons
-            if (theme is ColorThemeEnum.Dark)
-            {
-                _strBmp = Resources.stringer_large_light;
-                _pnlBmp = Resources.panel_large_light;
-                _dvStrBmp = Resources.divstr_small_light;
-                _dvPnlBmp = Resources.divpnl_small_light;
-                _updtBmp = Resources.update_small_light;
-                _elmDtBmp = Resources.elementdata_small_light;
-                _strRefBmp = Resources.stringerreinforcement_large_light;
-                _pnlRefBmp = Resources.panelreinforcement_large_light;
-                _cncrtBmp = Resources.concrete_large_light;
-                _suprtBmp = Resources.support_large_light;
-                _fcBmp = Resources.force_large_light;
-                _linBmp = Resources.linear_large_light;
-                _nlinBmp = Resources.nonlinear_large_light;
-                _viewNdBmp = Resources.viewnode_large_light;
-                _viewStrBmp = Resources.viewstringer_large_light;
-                _viewPnlBmp = Resources.viewpanel_large_light;
-                _viewFBmp = Resources.viewforce_large_light;
-                _viewSupBmp = Resources.viewsupport_large_light;
-                _strFBmp = Resources.stringerforces_large_light;
-                _pnlShBmp = Resources.panelforces_large_light;
-                _pnlStBmp = Resources.panelstresses_large_light;
-                _concStBmp = Resources.concretestresses_large_light;
-                _dispBmp = Resources.displacements_large_light;
-                _crackBmp = Resources.crack_large_light;
-                _unitsBmp = Resources.units_light;
-                _anSetBmp = Resources.analysissettings_light;
-            }
-            else // If the theme is light
-            {
-                _strBmp = Resources.stringer_large;
-                _pnlBmp = Resources.panel_large;
-                _dvStrBmp = Resources.divstr_small;
-                _dvPnlBmp = Resources.divpnl_small;
-                _updtBmp = Resources.update_small;
-                _elmDtBmp = Resources.elementdata_small;
-                _strRefBmp = Resources.stringerreinforcement_large;
-                _pnlRefBmp = Resources.panelreinforcement_large;
-                _cncrtBmp = Resources.concrete_large;
-                _suprtBmp = Resources.support_large;
-                _fcBmp = Resources.force_large;
-                _linBmp = Resources.linear_large;
-                _nlinBmp = Resources.nonlinear_large;
-                _viewNdBmp = Resources.viewnode_large;
-                _viewStrBmp = Resources.viewstringer_large;
-                _viewPnlBmp = Resources.viewpanel_large;
-                _viewFBmp = Resources.viewforce_large;
-                _viewSupBmp = Resources.viewsupport_large;
-                _strFBmp = Resources.stringerforces_large;
-                _pnlShBmp = Resources.panelforces_large;
-                _pnlStBmp = Resources.panelstresses_large;
-                _concStBmp = Resources.concretestresses_large;
-                _dispBmp = Resources.displacements_large;
-                _crackBmp = Resources.crack_large;
-                _unitsBmp = Resources.units;
-                _anSetBmp = Resources.analysissettings;
-            }
+	        _strBmp = GetFromResource("stringer_large", theme)!;
+	        _pnlBmp = GetFromResource("panel_large", theme)!;
+	        _dvStrBmp = GetFromResource("divstr_small", theme)!;
+	        _dvPnlBmp = GetFromResource("divpnl_small", theme)!;
+	        _updtBmp = GetFromResource("update_small", theme)!;
+	        _elmDtBmp = GetFromResource("elementdata_small", theme)!;
+	        _strRefBmp = GetFromResource("stringerreinforcement_large", theme)!;
+	        _pnlRefBmp = GetFromResource("panelreinforcement_large", theme)!;
+	        _cncrtBmp = GetFromResource("concrete_large", theme)!;
+	        _suprtBmp = GetFromResource("support_large", theme)!;
+	        _fcBmp = GetFromResource("force_large", theme)!;
+	        _linBmp = GetFromResource("linear_large", theme)!;
+	        _nlinBmp = GetFromResource("nonlinear_large", theme)!;
+	        _viewNdBmp = GetFromResource("viewnode_large", theme)!;
+	        _viewStrBmp = GetFromResource("viewstringer_large", theme)!;
+	        _viewPnlBmp = GetFromResource("viewpanel_large", theme)!;
+	        _viewFBmp = GetFromResource("viewforce_large", theme)!;
+	        _viewSupBmp = GetFromResource("viewsupport_large", theme)!;
+	        _strFBmp = GetFromResource("stringerforces_large", theme)!;
+	        _pnlShBmp = GetFromResource("panelforces_large", theme)!;
+	        _pnlStBmp = GetFromResource("panelstresses_large", theme)!;
+	        _concStBmp = GetFromResource("concretestresses_large", theme)!;
+	        _dispBmp = GetFromResource("displacements_large", theme)!;
+	        _crackBmp = GetFromResource("crack_large", theme)!;
+	        _unitsBmp = GetFromResource("units", theme)!;
+	        _anSetBmp = GetFromResource("analysissettings", theme)!;
         }
+
+        /// <summary>
+        ///     Get a <see cref="Bitmap"/> icon from resources.
+        /// </summary>
+        /// <param name="name">The icon name.</param>
+        /// <param name="colorTheme">The application <see cref="ColorTheme"/>.</param>
+        public static Bitmap? GetFromResource(string name, ColorTheme colorTheme) => (Bitmap?) Resources.ResourceManager.GetObject((colorTheme is ColorTheme.Light ? name : $"{name}_light"));
 
         /// <summary>
         /// Get a bitmap from <paramref name="image"/>.

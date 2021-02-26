@@ -2,7 +2,8 @@
 using System.Windows.Controls;
 using Autodesk.Windows;
 using SPMTool.Core;
-using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
+
+using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Application.UserInterface
 {
@@ -541,7 +542,7 @@ namespace SPMTool.Application.UserInterface
             /// </summary>
 			private string CommandEscape()
 			{
-				var cmds = (string)Application.GetSystemVariable("CMDNAMES");
+				var cmds = (string) GetSystemVariable("CMDNAMES");
 
 				if (cmds.Length == 0)
 					return string.Empty;

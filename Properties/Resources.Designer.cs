@@ -61,22 +61,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] analysissettings {
+        internal static System.Drawing.Bitmap analysissettings {
             get {
                 object obj = ResourceManager.GetObject("analysissettings", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] analysissettings_light {
+        internal static System.Drawing.Bitmap analysissettings_light {
             get {
                 object obj = ResourceManager.GetObject("analysissettings_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -101,32 +101,32 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] concrete_constitutive {
+        internal static System.Drawing.Bitmap concrete_constitutive {
             get {
                 object obj = ResourceManager.GetObject("concrete_constitutive", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] concrete_large {
+        internal static System.Drawing.Bitmap concrete_large {
             get {
                 object obj = ResourceManager.GetObject("concrete_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] concrete_large_light {
+        internal static System.Drawing.Bitmap concrete_large_light {
             get {
                 object obj = ResourceManager.GetObject("concrete_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -141,22 +141,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] concretestresses_large {
+        internal static System.Drawing.Bitmap concretestresses_large {
             get {
                 object obj = ResourceManager.GetObject("concretestresses_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] concretestresses_large_light {
+        internal static System.Drawing.Bitmap concretestresses_large_light {
             get {
                 object obj = ResourceManager.GetObject("concretestresses_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -171,22 +171,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] crack_large {
+        internal static System.Drawing.Bitmap crack_large {
             get {
                 object obj = ResourceManager.GetObject("crack_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] crack_large_light {
+        internal static System.Drawing.Bitmap crack_large_light {
             get {
                 object obj = ResourceManager.GetObject("crack_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -201,22 +201,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] displacements_large {
+        internal static System.Drawing.Bitmap displacements_large {
             get {
                 object obj = ResourceManager.GetObject("displacements_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] displacements_large_light {
+        internal static System.Drawing.Bitmap displacements_large_light {
             get {
                 object obj = ResourceManager.GetObject("displacements_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -231,22 +231,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] divpnl_small {
+        internal static System.Drawing.Bitmap divpnl_small {
             get {
                 object obj = ResourceManager.GetObject("divpnl_small", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] divpnl_small_light {
+        internal static System.Drawing.Bitmap divpnl_small_light {
             get {
                 object obj = ResourceManager.GetObject("divpnl_small_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -261,22 +261,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] divstr_small {
+        internal static System.Drawing.Bitmap divstr_small {
             get {
                 object obj = ResourceManager.GetObject("divstr_small", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] divstr_small_light {
+        internal static System.Drawing.Bitmap divstr_small_light {
             get {
                 object obj = ResourceManager.GetObject("divstr_small_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -291,22 +291,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] elementdata_small {
+        internal static System.Drawing.Bitmap elementdata_small {
             get {
                 object obj = ResourceManager.GetObject("elementdata_small", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] elementdata_small_light {
+        internal static System.Drawing.Bitmap elementdata_small_light {
             get {
                 object obj = ResourceManager.GetObject("elementdata_small_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -321,22 +321,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] force_large {
+        internal static System.Drawing.Bitmap force_large {
             get {
                 object obj = ResourceManager.GetObject("force_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] force_large_light {
+        internal static System.Drawing.Bitmap force_large_light {
             get {
                 object obj = ResourceManager.GetObject("force_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -351,22 +351,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] linear_large {
+        internal static System.Drawing.Bitmap linear_large {
             get {
                 object obj = ResourceManager.GetObject("linear_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] linear_large_light {
+        internal static System.Drawing.Bitmap linear_large_light {
             get {
                 object obj = ResourceManager.GetObject("linear_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -381,22 +381,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] nonlinear_large {
+        internal static System.Drawing.Bitmap nonlinear_large {
             get {
                 object obj = ResourceManager.GetObject("nonlinear_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] nonlinear_large_light {
+        internal static System.Drawing.Bitmap nonlinear_large_light {
             get {
                 object obj = ResourceManager.GetObject("nonlinear_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -411,12 +411,12 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] panel_geometry {
+        internal static System.Drawing.Bitmap panel_geometry {
             get {
                 object obj = ResourceManager.GetObject("panel_geometry", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -431,22 +431,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] panel_large {
+        internal static System.Drawing.Bitmap panel_large {
             get {
                 object obj = ResourceManager.GetObject("panel_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] panel_large_light {
+        internal static System.Drawing.Bitmap panel_large_light {
             get {
                 object obj = ResourceManager.GetObject("panel_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -461,22 +461,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] panelforces_large {
+        internal static System.Drawing.Bitmap panelforces_large {
             get {
                 object obj = ResourceManager.GetObject("panelforces_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] panelforces_large_light {
+        internal static System.Drawing.Bitmap panelforces_large_light {
             get {
                 object obj = ResourceManager.GetObject("panelforces_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -491,22 +491,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] panelreinforcement_large {
+        internal static System.Drawing.Bitmap panelreinforcement_large {
             get {
                 object obj = ResourceManager.GetObject("panelreinforcement_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] panelreinforcement_large_light {
+        internal static System.Drawing.Bitmap panelreinforcement_large_light {
             get {
                 object obj = ResourceManager.GetObject("panelreinforcement_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -521,22 +521,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] panelstresses_large {
+        internal static System.Drawing.Bitmap panelstresses_large {
             get {
                 object obj = ResourceManager.GetObject("panelstresses_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] panelstresses_large_light {
+        internal static System.Drawing.Bitmap panelstresses_large_light {
             get {
                 object obj = ResourceManager.GetObject("panelstresses_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -551,22 +551,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] set_small {
+        internal static System.Drawing.Bitmap set_small {
             get {
                 object obj = ResourceManager.GetObject("set_small", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] set_small_light {
+        internal static System.Drawing.Bitmap set_small_light {
             get {
                 object obj = ResourceManager.GetObject("set_small_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -581,22 +581,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] steel_large {
+        internal static System.Drawing.Bitmap steel_large {
             get {
                 object obj = ResourceManager.GetObject("steel_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] steel_large_light {
+        internal static System.Drawing.Bitmap steel_large_light {
             get {
                 object obj = ResourceManager.GetObject("steel_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -611,12 +611,12 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] stringer_cross_section {
+        internal static System.Drawing.Bitmap stringer_cross_section {
             get {
                 object obj = ResourceManager.GetObject("stringer_cross_section", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -631,42 +631,42 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] stringer_large {
+        internal static System.Drawing.Bitmap stringer_large {
             get {
                 object obj = ResourceManager.GetObject("stringer_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] stringer_large_light {
+        internal static System.Drawing.Bitmap stringer_large_light {
             get {
                 object obj = ResourceManager.GetObject("stringer_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] stringerforces_large {
+        internal static System.Drawing.Bitmap stringerforces_large {
             get {
                 object obj = ResourceManager.GetObject("stringerforces_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] stringerforces_large_light {
+        internal static System.Drawing.Bitmap stringerforces_large_light {
             get {
                 object obj = ResourceManager.GetObject("stringerforces_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -681,22 +681,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] stringerreinforcement_large {
+        internal static System.Drawing.Bitmap stringerreinforcement_large {
             get {
                 object obj = ResourceManager.GetObject("stringerreinforcement_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] stringerreinforcement_large_light {
+        internal static System.Drawing.Bitmap stringerreinforcement_large_light {
             get {
                 object obj = ResourceManager.GetObject("stringerreinforcement_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -711,42 +711,42 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] support_large {
+        internal static System.Drawing.Bitmap support_large {
             get {
                 object obj = ResourceManager.GetObject("support_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] support_large_light {
+        internal static System.Drawing.Bitmap support_large_light {
             get {
                 object obj = ResourceManager.GetObject("support_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] units {
+        internal static System.Drawing.Bitmap units {
             get {
                 object obj = ResourceManager.GetObject("units", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] units_light {
+        internal static System.Drawing.Bitmap units_light {
             get {
                 object obj = ResourceManager.GetObject("units_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -771,22 +771,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] update_small {
+        internal static System.Drawing.Bitmap update_small {
             get {
                 object obj = ResourceManager.GetObject("update_small", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] update_small_light {
+        internal static System.Drawing.Bitmap update_small_light {
             get {
                 object obj = ResourceManager.GetObject("update_small_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -801,22 +801,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] viewforce_large {
+        internal static System.Drawing.Bitmap viewforce_large {
             get {
                 object obj = ResourceManager.GetObject("viewforce_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] viewforce_large_light {
+        internal static System.Drawing.Bitmap viewforce_large_light {
             get {
                 object obj = ResourceManager.GetObject("viewforce_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -831,22 +831,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] viewnode_large {
+        internal static System.Drawing.Bitmap viewnode_large {
             get {
                 object obj = ResourceManager.GetObject("viewnode_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] viewnode_large_light {
+        internal static System.Drawing.Bitmap viewnode_large_light {
             get {
                 object obj = ResourceManager.GetObject("viewnode_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -861,22 +861,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] viewpanel_large {
+        internal static System.Drawing.Bitmap viewpanel_large {
             get {
                 object obj = ResourceManager.GetObject("viewpanel_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] viewpanel_large_light {
+        internal static System.Drawing.Bitmap viewpanel_large_light {
             get {
                 object obj = ResourceManager.GetObject("viewpanel_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -891,22 +891,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] viewstringer_large {
+        internal static System.Drawing.Bitmap viewstringer_large {
             get {
                 object obj = ResourceManager.GetObject("viewstringer_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] viewstringer_large_light {
+        internal static System.Drawing.Bitmap viewstringer_large_light {
             get {
                 object obj = ResourceManager.GetObject("viewstringer_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -921,22 +921,22 @@ namespace SPMTool.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] viewsupport_large {
+        internal static System.Drawing.Bitmap viewsupport_large {
             get {
                 object obj = ResourceManager.GetObject("viewsupport_large", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Byte[].
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static byte[] viewsupport_large_light {
+        internal static System.Drawing.Bitmap viewsupport_large_light {
             get {
                 object obj = ResourceManager.GetObject("viewsupport_large_light", resourceCulture);
-                return ((byte[])(obj));
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
     }

@@ -11,6 +11,7 @@
   <ItemGroup>
     <PackageReference Include="LiveCharts.Core" Version="0.9.8" />
     <PackageReference Include="LiveCharts.Wpf.Core" Version="0.9.8" />
+    <PackageReference Include="System.Drawing.Common" Version="5.0.1" />
     <PackageReference Include="UnitsNet" Version="4.83.0" />
   </ItemGroup>
 

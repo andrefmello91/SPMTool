@@ -27,6 +27,15 @@ namespace SPMTool.Enums
 		Times   = '\u00D7'
 	}
 
+	/// <summary>
+	///		Color theme enumeration.
+	/// </summary>
+	public enum ColorTheme : short
+	{
+		Dark,
+		Light
+	}
+
     /// <summary>
     /// Color codes.
     /// </summary>
