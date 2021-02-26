@@ -213,7 +213,7 @@ namespace SPMTool.Core.Elements
 		/// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
 		public void Update(bool addNodes = true, bool removeNodes = true)
 		{
-			var geometries = Model.Stringers.GetGeometries();
+			var geometries = Stringers.GetGeometries();
 
 			// Add nodes to all needed positions
 			if (addNodes)
