@@ -83,10 +83,10 @@ namespace SPMTool.Core
 
 			var notNullObjects = objects.Where(n => !(n is null)).ToList();
 
-			var entities = notNullObjects.Select(n => n.CreateEntity()).ToList();
+			var entities = notNullObjects.Select(n => n.CreateEntity()!).ToList();
 
 			// Add objects to drawing
-			var objIds = entities!.AddToDrawing(Model.On_ObjectErase).ToList();
+			var objIds = entities.AddToDrawing(Model.On_ObjectErase)!.ToList();
 
 			// Set object ids
 			for (var i = 0; i < notNullObjects.Count; i++)
