@@ -123,7 +123,7 @@ namespace SPMTool.Extensions
 		///     Read a <see cref="DBObject" /> in the drawing from this <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static DBObject ToDBObject(this ObjectId objectId, Transaction ongoingTransaction = null)
+		public static DBObject ToDBObject(this ObjectId objectId, Transaction? ongoingTransaction = null)
 		{
 			if (!objectId.IsValid || objectId.IsNull || objectId.IsErased)
 				return null;
@@ -144,7 +144,7 @@ namespace SPMTool.Extensions
 		///     Read a <see cref="Entity" /> in the drawing from this <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static Entity GetEntity(this ObjectId objectId, Transaction ongoingTransaction = null) => (Entity) objectId.ToDBObject(ongoingTransaction);
+		public static Entity GetEntity(this ObjectId objectId, Transaction? ongoingTransaction = null) => (Entity) objectId.ToDBObject(ongoingTransaction);
 
 		/// <summary>
 		///     Get the <see cref="ObjectId" /> related to this <paramref name="handle" />.
@@ -161,7 +161,7 @@ namespace SPMTool.Extensions
 		/// </summary>
 		/// <param name="collection"></param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static DBObjectCollection ToDBObjectCollection(this ObjectIdCollection collection, Transaction ongoingTransaction = null)
+		public static DBObjectCollection ToDBObjectCollection(this ObjectIdCollection collection, Transaction? ongoingTransaction = null)
 		{
 			if (collection is null)
 				return null;
@@ -201,13 +201,13 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Get the collection of <see cref="ObjectId" />'s of <paramref name="objects" />.
 		/// </summary>
-		public static IEnumerable<ObjectId> GetObjectIds(this IEnumerable<DBObject> objects) => objects?.Select(obj => obj.ObjectId);
+		public static IEnumerable<ObjectId> GetObjectIds(this IEnumerable<DBObject>? objects) => objects?.Select(obj => obj.ObjectId);
 
 		/// <summary>
 		///     Get the collection of <see cref="DBObject" />'s of <paramref name="objectIds" />.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static IEnumerable<DBObject> GetDBObjects(this IEnumerable<ObjectId> objectIds, Transaction ongoingTransaction = null)
+		public static IEnumerable<DBObject> GetDBObjects(this IEnumerable<ObjectId>? objectIds, Transaction? ongoingTransaction = null)
 		{
 			if (objectIds is null)
 				return null;
@@ -226,27 +226,27 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Get this collection as <see cref="DBPoint" />'s.
 		/// </summary>
-		public static IEnumerable<DBPoint> ToPoints(this IEnumerable<DBObject> objects) => objects?.Cast<DBPoint>();
+		public static IEnumerable<DBPoint> ToPoints(this IEnumerable<DBObject>? objects) => objects?.Cast<DBPoint>();
 
 		/// <summary>
 		///     Get this collection as <see cref="Line" />'s.
 		/// </summary>
-		public static IEnumerable<Line> ToLines(this IEnumerable<DBObject> objects) => objects?.Cast<Line>();
+		public static IEnumerable<Line> ToLines(this IEnumerable<DBObject>? objects) => objects?.Cast<Line>();
 
 		/// <summary>
 		///     Get this collection as <see cref="Solid" />'s.
 		/// </summary>
-		public static IEnumerable<Solid> ToSolids(this IEnumerable<DBObject> objects) => objects?.Cast<Solid>();
+		public static IEnumerable<Solid> ToSolids(this IEnumerable<DBObject>? objects) => objects?.Cast<Solid>();
 
 		/// <summary>
 		///     Get this collection as <see cref="BlockReference" />'s.
 		/// </summary>
-		public static IEnumerable<BlockReference> ToBlocks(this IEnumerable<DBObject> objects) => objects?.Cast<BlockReference>();
+		public static IEnumerable<BlockReference> ToBlocks(this IEnumerable<DBObject>? objects) => objects?.Cast<BlockReference>();
 
 		/// <summary>
 		///     Get this collection as <see cref="DBText" />'s.
 		/// </summary>
-		public static IEnumerable<DBText> ToTexts(this IEnumerable<DBObject> objects) => objects?.Cast<DBText>();
+		public static IEnumerable<DBText> ToTexts(this IEnumerable<DBObject>? objects) => objects?.Cast<DBText>();
 
 		/// <summary>
 		///     Get the <see cref="Point3d" /> vertices of this <paramref name="solid" />.
@@ -283,20 +283,20 @@ namespace SPMTool.Extensions
 		///     Read this <see cref="DBObject" />'s XData as an <see cref="Array" /> of <see cref="TypedValue" />.
 		/// </summary>
 		/// <param name="appName">The application name.</param>
-		public static TypedValue[] ReadXData(this DBObject dbObject, string appName) => dbObject?.GetXDataForApplication(appName)?.AsArray();
+		public static TypedValue[]? ReadXData(this DBObject dbObject, string appName) => dbObject.GetXDataForApplication(appName)?.AsArray();
 
 		/// <summary>
 		///     Read this <see cref="Entity" />'s XData as an <see cref="Array" /> of <see cref="TypedValue" />.
 		/// </summary>
 		/// <param name="appName">The application name.</param>
-		public static TypedValue[] ReadXData(this Entity entity, string appName) => entity?.GetXDataForApplication(appName)?.AsArray();
+		public static TypedValue[]? ReadXData(this Entity entity, string appName) => entity.GetXDataForApplication(appName)?.AsArray();
 
 		/// <summary>
 		///     Read this <see cref="ObjectId" />'s XData as an <see cref="Array" /> of <see cref="TypedValue" />.
 		/// </summary>
 		/// <param name="appName">The application name.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static TypedValue[] ReadXData(this ObjectId objectId, string appName, Transaction ongoingTransaction = null)
+		public static TypedValue[]? ReadXData(this ObjectId objectId, string appName, Transaction? ongoingTransaction = null)
 		{
 			if (!objectId.IsValid || objectId.IsNull || objectId.IsErased)
 				return null;
@@ -319,7 +319,7 @@ namespace SPMTool.Extensions
 		/// <param name="objectId">The <see cref="ObjectId" />.</param>
 		/// <param name="data">The <see cref="ResultBuffer" /> containing the extended data.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void SetXData(this ObjectId objectId, ResultBuffer data, Transaction ongoingTransaction = null)
+		public static void SetXData(this ObjectId objectId, ResultBuffer? data, Transaction? ongoingTransaction = null)
 		{
 			if (!objectId.IsValid || objectId.IsNull || objectId.IsErased)
 				return;
@@ -346,13 +346,8 @@ namespace SPMTool.Extensions
 		/// <param name="objectId">The <see cref="ObjectId" />.</param>
 		/// <param name="data">The collection of <see cref="TypedValue" /> containing the extended data.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void SetXData(this ObjectId objectId, IEnumerable<TypedValue> data, Transaction ongoingTransaction = null)
-		{
-			using (var rb = new ResultBuffer(data.ToArray()))
-			{
-				objectId.SetXData(rb, ongoingTransaction);
-			}
-		}
+		public static void SetXData(this ObjectId objectId, IEnumerable<TypedValue>? data, Transaction? ongoingTransaction = null) => 
+			objectId.SetXData(new ResultBuffer(data?.ToArray()), ongoingTransaction);
 
 		/// <summary>
 		///     Set extended data to this <paramref name="dbObject" />.
@@ -360,7 +355,7 @@ namespace SPMTool.Extensions
 		/// <param name="dbObject">The <see cref="DBObject" />.</param>
 		/// <param name="data">The <see cref="ResultBuffer" /> containing the extended data.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void SetXData(this DBObject dbObject, ResultBuffer data, Transaction ongoingTransaction = null) => dbObject.ObjectId.SetXData(data, ongoingTransaction);
+		public static void SetXData(this DBObject dbObject, ResultBuffer? data, Transaction? ongoingTransaction = null) => dbObject.ObjectId.SetXData(data, ongoingTransaction);
 
 		/// <summary>
 		///     Set extended data to this <paramref name="dbObject" />.
@@ -368,7 +363,7 @@ namespace SPMTool.Extensions
 		/// <param name="dbObject">The <see cref="DBObject" />.</param>
 		/// <param name="data">The collection of <see cref="TypedValue" /> containing the extended data.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void SetXData(this DBObject dbObject, IEnumerable<TypedValue> data, Transaction ongoingTransaction = null) => dbObject.ObjectId.SetXData(data, ongoingTransaction);
+		public static void SetXData(this DBObject dbObject, IEnumerable<TypedValue>? data, Transaction? ongoingTransaction = null) => dbObject.ObjectId.SetXData(data, ongoingTransaction);
 
 		/// <summary>
 		///     Set extended data to this <paramref name="entity" />.
@@ -376,7 +371,7 @@ namespace SPMTool.Extensions
 		/// <param name="entity">The <see cref="Entity" />.</param>
 		/// <param name="data">The <see cref="ResultBuffer" /> containing the extended data.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void SetXData(this Entity entity, ResultBuffer data, Transaction ongoingTransaction = null) => entity.ObjectId.SetXData(data, ongoingTransaction);
+		public static void SetXData(this Entity entity, ResultBuffer? data, Transaction? ongoingTransaction = null) => entity.ObjectId.SetXData(data, ongoingTransaction);
 
 		/// <summary>
 		///     Set extended data to this <paramref name="entity" />.
@@ -384,22 +379,22 @@ namespace SPMTool.Extensions
 		/// <param name="entity">The <see cref="Entity" />.</param>
 		/// <param name="data">The collection of <see cref="TypedValue" /> containing the extended data.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void SetXData(this Entity entity, IEnumerable<TypedValue> data, Transaction ongoingTransaction = null) => entity.ObjectId.SetXData(data, ongoingTransaction);
+		public static void SetXData(this Entity entity, IEnumerable<TypedValue>? data, Transaction? ongoingTransaction = null) => entity.ObjectId.SetXData(data, ongoingTransaction);
 
 		/// <summary>
 		///     Clean extended data attached to this <paramref name="objectId" />.
 		/// </summary>
-		public static void CleanXData(this ObjectId objectId) => objectId.SetXData((ResultBuffer) null);
+		public static void CleanXData(this ObjectId objectId) => objectId.SetXData((ResultBuffer?) null);
 
 		/// <summary>
 		///     Clean extended data attached to this <paramref name="dbObject" />.
 		/// </summary>
-		public static void CleanXData(this DBObject dbObject) => dbObject.SetXData((ResultBuffer) null);
+		public static void CleanXData(this DBObject dbObject) => dbObject.SetXData((ResultBuffer?) null);
 
 		/// <summary>
 		///     Clean extended data attached to this <paramref name="entity" />.
 		/// </summary>
-		public static void CleanXData(this Entity entity) => entity.SetXData((ResultBuffer) null);
+		public static void CleanXData(this Entity entity) => entity.SetXData((ResultBuffer?) null);
 
 		/// <summary>
 		///     Add this <paramref name="dbObject" /> to the drawing and return it's <see cref="ObjectId" />.
@@ -407,7 +402,7 @@ namespace SPMTool.Extensions
 		/// <param name="dbObject">The <see cref="DBObject" />.</param>
 		/// <param name="erasedEvent">The event to call if <paramref name="dbObject" /> is erased.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static ObjectId AddToDrawing(this DBObject dbObject, ObjectErasedEventHandler erasedEvent = null, Transaction ongoingTransaction = null) => ((Entity) dbObject).AddToDrawing(erasedEvent, ongoingTransaction);
+		public static ObjectId AddToDrawing(this DBObject dbObject, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null) => ((Entity) dbObject).AddToDrawing(erasedEvent, ongoingTransaction);
 
 		/// <summary>
 		///     Add this <paramref name="entity" /> to the drawing and return it's <see cref="ObjectId" />.
@@ -415,7 +410,7 @@ namespace SPMTool.Extensions
 		/// <param name="entity">The <see cref="Entity" />.</param>
 		/// <param name="erasedEvent">The event to call if <paramref name="entity" /> is erased.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static ObjectId AddToDrawing(this Entity entity, ObjectErasedEventHandler erasedEvent = null, Transaction ongoingTransaction = null)
+		public static ObjectId AddToDrawing(this Entity entity, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
 		{
 			if (entity is null)
 				return ObjectId.Null;
@@ -452,7 +447,7 @@ namespace SPMTool.Extensions
 		/// </summary>
 		/// <param name="erasedEvent">The event to call if <paramref name="objects" /> are erased.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static IEnumerable<ObjectId> AddToDrawing(this IEnumerable<DBObject> objects, ObjectErasedEventHandler erasedEvent = null, Transaction ongoingTransaction = null) => objects?.Cast<Entity>().AddToDrawing(erasedEvent, ongoingTransaction);
+		public static IEnumerable<ObjectId>? AddToDrawing(this IEnumerable<DBObject>? objects, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null) => objects?.Cast<Entity>()?.AddToDrawing(erasedEvent, ongoingTransaction);
 
 		/// <summary>
 		///     Add the <paramref name="entities" /> in this collection to the drawing and return the collection of
@@ -460,7 +455,7 @@ namespace SPMTool.Extensions
 		/// </summary>
 		/// <param name="erasedEvent">The event to call if <paramref name="entities" /> are erased.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static IEnumerable<ObjectId> AddToDrawing(this IEnumerable<Entity> entities, ObjectErasedEventHandler erasedEvent = null, Transaction ongoingTransaction = null)
+		public static IEnumerable<ObjectId>? AddToDrawing(this IEnumerable<Entity>? entities, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
 		{
 			if (entities is null || !entities.Any())
 				return null;
@@ -504,7 +499,7 @@ namespace SPMTool.Extensions
 		/// </summary>
 		/// <param name="handler"> The <see cref="ObjectErasedEventHandler" /> to add.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RegisterErasedEvent(this ObjectId objectId, ObjectErasedEventHandler handler, Transaction ongoingTransaction = null)
+		public static void RegisterErasedEvent(this ObjectId objectId, ObjectErasedEventHandler handler, Transaction? ongoingTransaction = null)
 		{
 			if (handler is null || !objectId.IsValid || objectId.IsNull || objectId.IsErased)
 				return;
@@ -530,7 +525,7 @@ namespace SPMTool.Extensions
 		/// </summary>
 		/// <param name="handler"> The <see cref="ObjectErasedEventHandler" /> to add.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RegisterErasedEvent(this IEnumerable<ObjectId> objectIds, ObjectErasedEventHandler handler, Transaction ongoingTransaction = null)
+		public static void RegisterErasedEvent(this IEnumerable<ObjectId>? objectIds, ObjectErasedEventHandler handler, Transaction? ongoingTransaction = null)
 		{
 			if (handler is null || objectIds is null || !objectIds.Any())
 				return;
@@ -554,7 +549,7 @@ namespace SPMTool.Extensions
 		/// </summary>
 		/// <param name="handler"> The <see cref="ObjectErasedEventHandler" /> to remove.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void UnregisterErasedEvent(this ObjectId objectId, ObjectErasedEventHandler handler, Transaction ongoingTransaction = null)
+		public static void UnregisterErasedEvent(this ObjectId objectId, ObjectErasedEventHandler handler, Transaction? ongoingTransaction = null)
 		{
 			if (handler is null || !objectId.IsValid || objectId.IsNull || objectId.IsErased)
 				return;
@@ -580,7 +575,7 @@ namespace SPMTool.Extensions
 		/// </summary>
 		/// <param name="handler"> The <see cref="ObjectErasedEventHandler" /> to add.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void UnregisterErasedEvent(this IEnumerable<ObjectId> objectIds, ObjectErasedEventHandler handler, Transaction ongoingTransaction = null)
+		public static void UnregisterErasedEvent(this IEnumerable<ObjectId>? objectIds, ObjectErasedEventHandler handler, Transaction? ongoingTransaction = null)
 		{
 			if (handler is null || objectIds is null || !objectIds.Any())
 				return;
@@ -603,7 +598,7 @@ namespace SPMTool.Extensions
 		///     Remove this object from drawing.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this ObjectId obj, Transaction ongoingTransaction = null)
+		public static void RemoveFromDrawing(this ObjectId obj, Transaction? ongoingTransaction = null)
 		{
 			if (!obj.IsValid || obj.IsNull || obj.IsErased)
 				return;
@@ -628,20 +623,20 @@ namespace SPMTool.Extensions
 		///     Remove this object from drawing.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this DBObject obj, Transaction ongoingTransaction = null) => obj?.ObjectId.RemoveFromDrawing(ongoingTransaction);
+		public static void RemoveFromDrawing(this DBObject? obj, Transaction? ongoingTransaction = null) => obj?.ObjectId.RemoveFromDrawing(ongoingTransaction);
 
 		/// <summary>
 		///     Remove this <paramref name="entity" /> from drawing.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this Entity entity, Transaction ongoingTransaction = null) => entity?.ObjectId.RemoveFromDrawing(ongoingTransaction);
+		public static void RemoveFromDrawing(this Entity? entity, Transaction? ongoingTransaction = null) => entity?.ObjectId.RemoveFromDrawing(ongoingTransaction);
 
 		/// <summary>
 		///     Remove all the objects in this collection from drawing.
 		/// </summary>
 		/// <param name="objects">The collection containing the <see cref="ObjectId" />'s to erase.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this IEnumerable<ObjectId> objects, Transaction ongoingTransaction = null)
+		public static void RemoveFromDrawing(this IEnumerable<ObjectId>? objects, Transaction? ongoingTransaction = null)
 		{
 			if (objects is null || !objects.Any())
 				return;
@@ -665,39 +660,39 @@ namespace SPMTool.Extensions
 		/// </summary>
 		/// <param name="objects">The collection containing the <see cref="DBObject" />'s to erase.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this IEnumerable<DBObject> objects, Transaction ongoingTransaction = null) => objects?.GetObjectIds()?.RemoveFromDrawing(ongoingTransaction);
+		public static void RemoveFromDrawing(this IEnumerable<DBObject>? objects, Transaction? ongoingTransaction = null) => objects?.GetObjectIds()?.RemoveFromDrawing(ongoingTransaction);
 
 		/// <summary>
 		///     Remove all the objects in this collection from drawing.
 		/// </summary>
 		/// <param name="objects">The <see cref="ObjectIdCollection" /> containing the objects to erase.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this ObjectIdCollection objects, Transaction ongoingTransaction = null) => objects?.Cast<ObjectId>().RemoveFromDrawing(ongoingTransaction);
+		public static void RemoveFromDrawing(this ObjectIdCollection? objects, Transaction? ongoingTransaction = null) => objects?.Cast<ObjectId>().RemoveFromDrawing(ongoingTransaction);
 
 		/// <summary>
 		///     Erase all the objects in this <see cref="DBObjectCollection" />.
 		/// </summary>
 		/// <param name="objects">The <see cref="DBObjectCollection" /> containing the objects to erase.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this DBObjectCollection objects, Transaction ongoingTransaction = null) => objects?.ToObjectIdCollection()?.RemoveFromDrawing(ongoingTransaction);
+		public static void RemoveFromDrawing(this DBObjectCollection? objects, Transaction? ongoingTransaction = null) => objects?.ToObjectIdCollection()?.RemoveFromDrawing(ongoingTransaction);
 
 		/// <summary>
 		///     Erase all the objects in this <paramref name="layerName" />.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this string layerName, Transaction ongoingTransaction = null) => layerName.GetObjectIds()?.RemoveFromDrawing(ongoingTransaction);
+		public static void RemoveFromDrawing(this string layerName, Transaction? ongoingTransaction = null) => layerName.GetObjectIds()?.RemoveFromDrawing(ongoingTransaction);
 
 		/// <summary>
 		///     Erase all the objects in these <paramref name="layerNames" />.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this IEnumerable<string> layerNames, Transaction ongoingTransaction = null) => layerNames.GetObjectIds()?.RemoveFromDrawing(ongoingTransaction);
+		public static void RemoveFromDrawing(this IEnumerable<string> layerNames, Transaction? ongoingTransaction = null) => layerNames.GetObjectIds()?.RemoveFromDrawing(ongoingTransaction);
 
 		/// <summary>
 		///     Move the objects in this collection to drawing bottom.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void MoveToBottom(this IEnumerable<ObjectId> objectIds, Transaction ongoingTransaction = null)
+		public static void MoveToBottom(this IEnumerable<ObjectId>? objectIds, Transaction? ongoingTransaction = null)
 		{
 			if (objectIds is null || !objectIds.Any())
 				return;
@@ -728,13 +723,13 @@ namespace SPMTool.Extensions
 		///     Move the objects in this collection to drawing bottom.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void MoveToBottom(this IEnumerable<DBObject> objects, Transaction ongoingTransaction = null) => objects?.GetObjectIds()?.MoveToBottom(ongoingTransaction);
+		public static void MoveToBottom(this IEnumerable<DBObject>? objects, Transaction? ongoingTransaction = null) => objects?.GetObjectIds()?.MoveToBottom(ongoingTransaction);
 
 		/// <summary>
 		///     Move the objects in this collection to drawing top.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void MoveToTop(this IEnumerable<ObjectId> objectIds, Transaction ongoingTransaction = null)
+		public static void MoveToTop(this IEnumerable<ObjectId>? objectIds, Transaction? ongoingTransaction = null)
 		{
 			if (objectIds is null || !objectIds.Any())
 				return;
@@ -765,7 +760,7 @@ namespace SPMTool.Extensions
 		///     Move the objects in this collection to drawing top.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void MoveToTop(this IEnumerable<DBObject> objects, Transaction ongoingTransaction = null) => objects?.GetObjectIds()?.MoveToTop(ongoingTransaction);
+		public static void MoveToTop(this IEnumerable<DBObject>? objects, Transaction? ongoingTransaction = null) => objects?.GetObjectIds()?.MoveToTop(ongoingTransaction);
 
 		/// <summary>
 		///     Returns a <see cref="SelectionFilter" /> for objects in this <paramref name="layerName" />.
@@ -786,13 +781,15 @@ namespace SPMTool.Extensions
 			var selRes = Model.Editor.SelectAll(layerName.LayerFilter());
 
 			return
-				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 ? selRes.Value.GetObjectIds() : new ObjectId[0];
+				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 
+					? selRes.Value.GetObjectIds()
+					: new ObjectId[0];
 		}
 
 		/// <summary>
 		///     Get a collection containing all the <see cref="ObjectId" />'s in those <paramref name="layerNames" />.
 		/// </summary>
-		public static IEnumerable<ObjectId> GetObjectIds(this IEnumerable<string> layerNames)
+		public static IEnumerable<ObjectId> GetObjectIds(this IEnumerable<string>? layerNames)
 		{
 			if (layerNames is null || !layerNames.Any())
 				return null;
@@ -801,18 +798,20 @@ namespace SPMTool.Extensions
 			var selRes = Model.Editor.SelectAll(layerNames.LayerFilter());
 
 			return
-				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 ? selRes.Value.GetObjectIds() : new ObjectId[0];
+				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0
+					? selRes.Value.GetObjectIds()
+					: new ObjectId[0];
 		}
 
 		/// <summary>
 		///     Get a collection containing all the <see cref="DBObject" />'s in this <see cref="layerName" />.
 		/// </summary>
-		public static IEnumerable<DBObject> GetDBObjects(this string layerName) => layerName.GetObjectIds()?.GetDBObjects();
+		public static IEnumerable<DBObject>? GetDBObjects(this string layerName) => layerName.GetObjectIds()?.GetDBObjects();
 
 		/// <summary>
 		///     Get a collection containing all the <see cref="DBObject" />'s in those <paramref name="layerNames" />.
 		/// </summary>
-		public static IEnumerable<DBObject> GetDBObjects(this IEnumerable<string> layerNames) => layerNames.GetObjectIds()?.GetDBObjects();
+		public static IEnumerable<DBObject>? GetDBObjects(this IEnumerable<string> layerNames) => layerNames.GetObjectIds()?.GetDBObjects();
 
 		/// <summary>
 		///     Create a block in the database.
@@ -821,7 +820,7 @@ namespace SPMTool.Extensions
 		/// <param name="originPoint">The origin point of the block.</param>
 		/// <param name="blockName">The name to save the block in database.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void CreateBlock(this IEnumerable<Entity> blockEntities, Point3d originPoint, string blockName, Transaction ongoingTransaction = null)
+		public static void CreateBlock(this IEnumerable<Entity>? blockEntities, Point3d originPoint, string blockName, Transaction? ongoingTransaction = null)
 		{
 			if (blockEntities is null)
 				return;
@@ -868,7 +867,7 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Get the surrounding <see cref="Line" />'s of this quadrilateral <paramref name="solid" />.
 		/// </summary>
-		public static IEnumerable<Line> GetEdges(this Solid solid)
+		public static IEnumerable<Line>? GetEdges(this Solid solid)
 		{
 			// Get the vertices ordered
 			var verts = solid.GetVertices().Order().ToArray();
@@ -928,7 +927,7 @@ namespace SPMTool.Extensions
 		/// </summary>
 		/// <param name="numberOfRows">The number of rows of new solids to return.</param>
 		/// <param name="numberOfColumns">The number of columns of new solids to return.</param>
-		public static IEnumerable<Solid> Divide(this Solid solid, int numberOfRows, int numberOfColumns)
+		public static IEnumerable<Solid>? Divide(this Solid solid, int numberOfRows, int numberOfColumns)
 		{
 			// Verify if the solid is rectangular
 			return
