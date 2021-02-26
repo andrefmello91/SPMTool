@@ -46,6 +46,15 @@ namespace SPMTool.Core
 		public T GetByObjectId(ObjectId objectId) => Find(e => e.ObjectId == objectId);
 
 		/// <summary>
+		///		Get objects in this collection that matches <paramref name="objectIds"/>.
+		/// </summary>
+		/// <param name="objectIds">The collection of required <seealso cref="ObjectId"/>'s.</param>
+		[return: MaybeNull]
+		public IEnumerable<T> GetByObjectIds(IEnumerable<ObjectId>? objectIds) => objectIds is null
+			? null
+			: FindAll(e => objectIds.Contains(e.ObjectId));
+
+		/// <summary>
 		///     Event to execute when an object is added to a list.
 		/// </summary>
 		public static void On_ObjectAdded(object? sender, ItemEventArgs<T>? e) => e?.Item?.AddToDrawing();
