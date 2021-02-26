@@ -45,7 +45,7 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		/// <inheritdoc />
 		public ConstraintObject(Point position, Constraint value)
-			: base(position, value, value.Direction)
+			: base(position, value)
 		{
 		}
 
@@ -83,7 +83,7 @@ namespace SPMTool.Core.Conditions
 				return Constraint.Free;
 
 			// Get value and direction
-			var direction = (ComponentDirection)data[(int)ForceIndex.Direction].ToInt();
+			var direction = (ComponentDirection)data[(int)ForceIndex.ValueY].ToInt();
 
 			return
 				Constraint.FromDirection(direction);

@@ -57,7 +57,7 @@ namespace SPMTool.Core.Conditions
 
 		public virtual T2 Value { get; protected set; }
 
-		public virtual ComponentDirection Direction { get; protected set; }
+		public abstract ComponentDirection Direction { get; }
 
 		public abstract Layer Layer { get; }
 
@@ -81,11 +81,10 @@ namespace SPMTool.Core.Conditions
 		/// <param name="value">The value.</param>
 		/// <param name="direction">The direction.</param>
 		/// <inheritdoc cref="ConditionObject()"/>
-		protected ConditionObject(Point position, T2 value, ComponentDirection direction)
+		protected ConditionObject(Point position, T2 value)
 		{
 			Position  = position;
 			Value     = value;
-			Direction = direction;
 		}
 
 		#endregion

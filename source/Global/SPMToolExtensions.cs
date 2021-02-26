@@ -241,7 +241,7 @@ namespace SPMTool.Extensions
 
 			// Rotate and scale the block
 			if (!rotationAngle.ApproxZero(1E-3))
-				blockRef.TransformBy(Matrix3d.Rotation(rotationAngle, DataBase.Ucs.Zaxis, insertionPoint));
+				blockRef.TransformBy(Matrix3d.Rotation(rotationAngle, Ucs.Zaxis, insertionPoint));
 
 			if (Settings.Units.Geometry != LengthUnit.Millimeter)
 				blockRef.TransformBy(Matrix3d.Scaling(Settings.Units.ScaleFactor, insertionPoint));
@@ -258,22 +258,21 @@ namespace SPMTool.Extensions
 			var layerName = layer.ToString();
 
 			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
-				// Open the Layer table for read
-			using (var lyrTbl = (LayerTable) trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead))
+			using var trans = StartTransaction();
+
+			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
+
+			if (!lyrTbl.Has(layerName))
+				return;
+
+			using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
 			{
-				if (!lyrTbl.Has(layerName))
-					return;
-
-				using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
-				{
-					// Verify the state
-					lyrTblRec.IsOff = !lyrTblRec.IsOff;
-				}
-
-				// Commit and dispose the transaction
-				trans.Commit();
+				// Verify the state
+				lyrTblRec.IsOff = !lyrTblRec.IsOff;
 			}
+
+			// Commit and dispose the transaction
+			trans.Commit();
 		}
 
 		/// <summary>
@@ -285,23 +284,22 @@ namespace SPMTool.Extensions
 			var layerName = layer.ToString();
 
 			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
-				// Open the Layer table for read
-			using (var lyrTbl = (LayerTable) trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead))
+			using var trans = StartTransaction();
+
+			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
+
+			if (!lyrTbl.Has(layerName))
+				return;
+
+			using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
 			{
-				if (!lyrTbl.Has(layerName))
-					return;
-
-				using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
-				{
-					// Verify the state
-					if (!lyrTblRec.IsOff)
-						lyrTblRec.IsOff = true;   // Turn it off
-				}
-
-				// Commit and dispose the transaction
-				trans.Commit();
+				// Verify the state
+				if (!lyrTblRec.IsOff)
+					lyrTblRec.IsOff = true;   // Turn it off
 			}
+
+			// Commit and dispose the transaction
+			trans.Commit();
 		}
 
 		/// <summary>
@@ -314,23 +312,22 @@ namespace SPMTool.Extensions
 			var layerName = layer.ToString();
 
 			// Start a transaction
-			using (var trans = DataBase.StartTransaction())
-				// Open the Layer table for read
-			using (var lyrTbl = (LayerTable) trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead))
+			using var trans = StartTransaction();
+
+			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
+
+			if (!lyrTbl.Has(layerName))
+				return;
+
+			using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
 			{
-				if (!lyrTbl.Has(layerName))
-					return;
-
-				using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
-				{
-					// Verify the state
-					if (lyrTblRec.IsOff)
-						lyrTblRec.IsOff = false;   // Turn it on
-				}
-
-				// Commit and dispose the transaction
-				trans.Commit();
+				// Verify the state
+				if (lyrTblRec.IsOff)
+					lyrTblRec.IsOff = false;   // Turn it on
 			}
+
+			// Commit and dispose the transaction
+			trans.Commit();
 		}
 
 		/// <summary>

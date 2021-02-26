@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using MathNet.Numerics;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
@@ -219,9 +220,12 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Get the elements of the force block.
+		///     Get the elements of the force in Y block.
 		/// </summary>
-		public static IEnumerable<Entity> Force()
+		/// <remarks>
+		///		Force pointing downwards.
+		/// </remarks>
+		public static IEnumerable<Entity> ForceY()
 		{
 			yield return
 				new Line
@@ -232,6 +236,25 @@ namespace SPMTool.Core
 
 			yield return
 				new Solid(new Point3d(0, 0, 0), new Point3d(-25, 37.5, 0), new Point3d(25, 37.5, 0));
+		}
+
+		/// <summary>
+		///     Get the elements of the force in X and Y block.
+		/// </summary>
+		/// <remarks>
+		///		Forces pointing right and downwards.
+		/// </remarks>
+		public static IEnumerable<Entity> ForceXY()
+		{
+			var y = ForceY().ToArray();
+
+			var x = ForceY().ToArray();
+
+			// Rotate elements for X
+			foreach (var ent in x)
+				ent.TransformBy(Matrix3d.Rotation(Constants.PiOver2, Vector3d.ZAxis, new Point3d(0, 0, 0)));
+
+			return y.Concat(x);
 		}
 
 		/// <summary>

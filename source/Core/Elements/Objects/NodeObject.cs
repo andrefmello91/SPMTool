@@ -48,7 +48,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="PlaneForce" /> in this object.
 		/// </summary>
-		public PlaneForce PlaneForce => Model.Forces.GetForceAtPosition(Position);
+		public PlaneForce PlaneForce => Model.Forces.GetForceByPosition(Position);
 
 		/// <summary>
 		///     Get the position.

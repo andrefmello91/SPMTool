@@ -47,9 +47,9 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get all the elements in this list that match <paramref name="position" />.
 		/// </summary>
-		/// <param name="position">The required position/>.</param>
-		[return: NotNull]
-		public List<T1> GetByPosition(Point position) => FindAll(c => c.Position == position);
+		/// <param name="position">The required position.</param>
+		[return: MaybeNull]
+		public T1 GetByPosition(Point position) => Find(c => c.Position == position);
 
 		/// <summary>
 		///     Change a condition at the same position of <paramref name="condition" />.
@@ -137,6 +137,19 @@ namespace SPMTool.Core.Conditions
 		/// <param name="position">The position of the object to remove.</param>
 		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)" />
 		public bool Remove(Point position, bool raiseEvents = true, bool sort = true)
+		{
+			var condition = Find(c => c.Position == position);
+
+			return
+				!(condition is null) && Remove(condition, raiseEvents, sort);
+		}
+
+		/// <summary>
+		///		Remove all objects that match <paramref name="position"/>.
+		/// </summary>
+		/// <param name="position">The position of objects to remove.</param>
+		/// <inheritdoc cref="Remove(Point, bool, bool)" />
+		public bool RemoveAll(Point position, bool raiseEvents = true, bool sort = true)
 		{
 			var condition = Find(c => c.Position == position);
 

@@ -186,16 +186,7 @@ namespace SPMTool.Core
 					return;
 
 				case Layer.Force:
-					// Get the force
-					var force = Forces.Find(f => f.ObjectId == id);
-
-					if (force is null)
-						return;
-
-					// Erase text
-					force.Text.RemoveFromDrawing();
-
-					Forces.Remove(force, false);
+					Forces.RemoveAll(f => f.ObjectId == id, false);
 					return;
 
 				case Layer.Support:

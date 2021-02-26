@@ -50,11 +50,21 @@ namespace SPMTool.Core.Conditions
 				? new ConstraintList()
 				: new ConstraintList(blocks.Where(b => !(b is null) && b.Layer == $"{Layer.Support}").Select(ConstraintObject.ReadFromBlock)!);
 
+		/// <remarks>
+		///		Item is not added if direction if <see cref="ComponentDirection.None"/>.
+		/// </remarks>
+		/// <inheritdoc/>
 		public override bool Add(Point position, Constraint value, bool raiseEvents = true, bool sort = true) =>
-			Add(new ConstraintObject(position, value), raiseEvents, sort);
+			value.Direction != ComponentDirection.None && Add(new ConstraintObject(position, value), raiseEvents, sort);
 
+		/// <remarks>
+		///		Item is not added if direction if <see cref="ComponentDirection.None"/>.
+		/// </remarks>
+		/// <inheritdoc/>
 		public override int AddRange(IEnumerable<Point>? positions, Constraint value, bool raiseEvents = true, bool sort = true) =>
-			AddRange(positions?.Select(p => new ConstraintObject(p, value)), raiseEvents, sort);
+			value.Direction == ComponentDirection.None
+				? 0
+				: AddRange(positions?.Select(p => new ConstraintObject(p, value)), raiseEvents, sort);
 
 		/// <summary>
 		///		Get the <see cref="Constraint"/> at <paramref name="position"/>.

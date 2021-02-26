@@ -105,8 +105,11 @@ namespace SPMTool.Enums
 		[Block(SupportXY, Layer.Support)]
 		SupportXY,
 
-		[Block(Force, Layer.Force)]
-		Force,
+		[Block(ForceY, Layer.Force)]
+		ForceY,
+
+		[Block(ForceXY, Layer.Force)]
+		ForceXY,
 
 		[Block(Shear, Layer.PanelForce)]
 		Shear,
@@ -178,9 +181,8 @@ namespace SPMTool.Enums
 	{
 		AppName,
 		XDataStr,
-		Value,
-		Direction,
-		TextHandle
+		ValueX,
+		ValueY,
 	}
 
 	/// <summary>

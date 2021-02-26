@@ -14,7 +14,7 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     Force list class.
 	/// </summary>
-	public class ForceList : ConditionList<ForceObject, Force>
+	public class ForceList : ConditionList<ForceObject, PlaneForce>
 	{
 		#region Constructors
 
@@ -52,7 +52,13 @@ namespace SPMTool.Core.Conditions
 				EraseTexts();
 
 				// Add new texts
-				forces.Select(f => f.Text).AddToDrawing();
+				forces
+					.Where(f => !f.Value.IsXZero)
+					.Select(f => f.TextX!)
+					.Concat(forces
+						.Where(f => !f.Value.IsYZero)
+						.Select(f => f.TextY!))
+					.AddToDrawing();
 			}
 
 			return forces;
@@ -83,76 +89,27 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		public static void EraseTexts() => Layer.ForceText.EraseObjects();
 
-		/// <summary>
-		///     Get a <see cref="PlaneForce" /> from this collection based in a <paramref name="position" />.
-		/// </summary>
-		/// <param name="position">The required position.</param>
-		public PlaneForce GetForceAtPosition(Point position) =>
-			GetByPosition(position)?.Select(f => f.AsPlaneForce())?.Aggregate(PlaneForce.Zero, (current, f) => current + f) ?? PlaneForce.Zero;
+        /// <remarks>
+        ///     Item is not added if force values are zero.
+        /// </remarks>
+        /// <inheritdoc/>
+		public override bool Add(Point position, PlaneForce value, bool raiseEvents = true, bool sort = true) =>
+			!value.IsZero && Add(new ForceObject(position, value), raiseEvents, sort);
 
         /// <remarks>
-        ///     This method will add a force in <see cref="Direction.X" />.
+        ///     Items are not added if force values are zero.
         /// </remarks>
-        /// <inheritdoc cref="Add(Point, Force, ComponentDirection, bool, bool)" />
-        public override bool Add(Point position, Force value, bool raiseEvents = true, bool sort = true) => Add(position, value, ComponentDirection.X, raiseEvents, sort);
+        /// <inheritdoc/>
+		public override int AddRange(IEnumerable<Point>? positions, PlaneForce value, bool raiseEvents = true, bool sort = true) =>
+            value.IsZero
+				? 0
+				: AddRange(positions?.Select(p => new ForceObject(p, value)), raiseEvents, sort);
 
-        /// <param name="direction">The force <see cref="ComponentDirection" />.</param>
-        /// <inheritdoc cref="ConditionList{T1,T2}.Add(Point, T2, bool, bool)" />
-        public bool Add(Point position, Force value, ComponentDirection direction, bool raiseEvents = true, bool sort = true) => Add(new ForceObject(position, value, direction), raiseEvents, sort);
-
-        /// <param name="value">The <see cref="PlaneForce" />.</param>
-        /// <inheritdoc cref="ConditionList{T1,T2}.Add(Point, T2, bool, bool)" />
-        public bool Add(Point position, PlaneForce value, bool raiseEvents = true, bool sort = true)
-		{
-			var xAdded = Add(position, value.X, ComponentDirection.X, raiseEvents, false);
-
-			var yAdded = Add(position, value.Y, ComponentDirection.Y, raiseEvents, sort);
-
-			return
-				xAdded || yAdded;
-		}
-
-        /// <remarks>
-        ///     This method will add forces in <see cref="Direction.X" />.
-        /// </remarks>
-        /// <inheritdoc cref="AddRange(IEnumerable{Point}, Force, ComponentDirection, bool, bool)" />
-        public override int AddRange(IEnumerable<Point>? positions, Force value, bool raiseEvents = true, bool sort = true) => AddRange(positions, value, ComponentDirection.X, raiseEvents, sort);
-
-		/// <param name="direction">The force <see cref="Direction" />.</param>
-		/// <inheritdoc cref="ConditionList{T1,T2}.AddRange(IEnumerable{Point}, T2, bool, bool)" />
-		public int AddRange(IEnumerable<Point> positions, Force value, ComponentDirection direction, bool raiseEvents = true, bool sort = true) => AddRange(positions.Select(p => new ForceObject(p, value, direction)), raiseEvents, sort);
-
-		/// <param name="value">The <see cref="PlaneForce" />.</param>
-		/// <inheritdoc cref="ConditionList{T1,T2}.AddRange(IEnumerable{Point}, T2, bool, bool)" />
-		public int AddRange(IEnumerable<Point> positions, PlaneForce value, bool raiseEvents = true, bool sort = true)
-		{
-			return
-				AddRange(positions, value.X, ComponentDirection.X, true, false) +
-				AddRange(positions, value.Y, ComponentDirection.Y);
-		}
-
-		/// <inheritdoc cref="ConditionList{T1,T2}.ChangeCondition(T1,bool,bool)" />
-		public bool ChangeCondition(Point position, PlaneForce value, bool raiseEvents = true, bool sort = true)
-		{
-			// Remove first
-			Remove(position, raiseEvents, false);
-
-			return
-				Add(position, value, raiseEvents, sort);
-		}
-
-        /// <inheritdoc cref="ConditionList{T1,T2}.ChangeConditions(IEnumerable{T1},bool,bool)" />
-        public int ChangeConditions(IEnumerable<Point>? positions, PlaneForce value, bool raiseEvents = true, bool sort = true)
-		{
-			if (positions is null)
-				return 0;
-
-			// Remove first
-			RemoveRange(positions, raiseEvents, false);
-
-			return
-				AddRange(positions, value, raiseEvents, sort);
-		}
+        /// <summary>
+        ///     Get a <see cref="PlaneForce"/> at this <paramref name="position"/>.
+        /// </summary>
+        /// <inheritdoc cref="ConditionList{T1,T2}.GetByPosition(Point)"/>
+        public PlaneForce GetForceByPosition(Point position) => GetByPosition(position)?.Value ?? PlaneForce.Zero;
 
         #endregion
 
@@ -375,5 +332,5 @@ namespace SPMTool.Core.Conditions
         //	// Erase objects
         //	toErase.RemoveFromDrawing();
         //}
-    }
+	}
 }

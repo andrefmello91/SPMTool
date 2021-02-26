@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Linq;
 using Autodesk.AutoCAD.Runtime;
+using OnPlaneComponents;
 using SPMTool.Core;
 using SPMTool.Core.Conditions;
 using SPMTool.Editor.Commands;
-
+using SPMTool.Extensions;
 using static SPMTool.Core.DataBase;
 using static SPMTool.Core.Model;
 
@@ -39,16 +40,10 @@ namespace SPMTool.Editor.Commands
 			    return;
 
 		    // Get node positions
-		    var positions = nds.Select(nd => nd.Position).ToArray();
+		    var positions = nds.Select(nd => nd.Position.ToPoint(units.Geometry)).ToArray();
 			
 		    // Erase blocks
-		    ForceList.EraseBlocks(positions);
-
-		    // Add force blocks
-		    ForceList.AddBlocks(positions, force.Value);
-
-			// Update
-			ForceList.Update();
+		    Forces.ChangeConditions(positions, force.Value);
 	    }
 
 		/// <summary>
@@ -64,28 +59,23 @@ namespace SPMTool.Editor.Commands
 				return;
 
 			// Ask the user set the support conditions:
-			var options = Enum.GetNames(typeof(Constraint));
+			var options = Enum.GetNames(typeof(ComponentDirection));
 
-			var keyword = UserInput.SelectKeyword("Add support in which direction?", options, "Free");
+			var keyword = UserInput.SelectKeyword("Add support in which direction?", options, "None");
 
 			if (keyword is null)
 				return;
 
 			// Set the support
-			var support = (Constraint) Enum.Parse(typeof(Constraint), keyword);
+			var direction  = (ComponentDirection) Enum.Parse(typeof(ComponentDirection), keyword);
+			var constraint = Constraint.FromDirection(direction);
 
 			// Get positions
-			var positions = nds.Select(nd => nd.Position).ToArray();
+			var unit = DataBase.Settings.Units.Geometry;
+			var positions = nds.Select(nd => nd.Position.ToPoint(unit)).ToArray();
 
 			// Erase blocks
-			ConstraintList.EraseBlocks(positions);
-
-			// If the node is not Free, add the support blocks
-			if (support != Constraint.Free)
-				ConstraintList.AddBlocks(positions, support);
-
-			// Update
-			ConstraintList.Update();
+			Constraints.ChangeConditions(positions, constraint);
 		}
     }
 }
