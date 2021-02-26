@@ -34,23 +34,12 @@ namespace SPMTool.Editor.Commands
 			    if (ent is null)
 				    return;
 
-			    string message;
+			    // Read the element
+			    var element = ent.GetSPMObject();
 
-			    if (ent.Layer == $"{Layer.Force}")
-				    message = ForceList.ReadForce((BlockReference) ent).ToString();
-
-			    else if (ent.Layer == $"{Layer.Support}")
-			    {
-				    message = $"Constraint in {ConstraintList.ReadConstraint((BlockReference) ent)}";
-			    }
-
-			    else
-			    {
-				    // Read the element
-				    var element = Model.GetElement(ent);
-
-				    message = element is null ? "Not a SPM element." : element.ToString();
-			    }
+			    var message = element is null
+				    ? "Not a SPM element."
+				    : element.ToString();
 
 				Model.Editor.WriteMessage($"\n{message}");
 		    }

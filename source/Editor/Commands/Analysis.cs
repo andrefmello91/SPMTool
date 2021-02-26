@@ -1,12 +1,11 @@
 ﻿using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.ApplicationServices.Core;
 using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
-using Analysis = SPM.Analysis.Analysis;
 
+using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
+using static SPMTool.Core.Results;
 
 [assembly: CommandClass(typeof(SPMTool.Editor.Commands.Analysis))]
 
@@ -22,7 +21,7 @@ namespace SPMTool.Editor.Commands
 
             if (!dataOk)
             {
-	            Application.ShowAlertDialog(message);
+	            ShowAlertDialog(message);
 				return;
             }
 
@@ -31,7 +30,7 @@ namespace SPMTool.Editor.Commands
 			analysis.Do();
 
             // Draw results of analysis
-            Model.DrawResults(analysis);
+            DrawResults(analysis);
         }
 
         [CommandMethod("DoNonLinearAnalysis")]
@@ -42,7 +41,7 @@ namespace SPMTool.Editor.Commands
 
 			if (!dataOk)
 			{
-				Application.ShowAlertDialog(message);
+				ShowAlertDialog(message);
 				return;
 			}
 
@@ -53,22 +52,22 @@ namespace SPMTool.Editor.Commands
 				return;
 
 			// Get analysis settings
-			var settings = Application.Settings.Analysis;
+			var settings = DataBase.Settings.Analysis;
 
             // Do analysis
             var analysis = new SecantAnalysis(input);
 			analysis.Do(uIndexn.Value, 1, settings.NumLoadSteps, settings.Tolerance, settings.MaxIterations);
 
             // Show load-displacement diagram
-            var units = Application.Settings.Units;
+            var units = DataBase.Settings.Units;
 
-            Application.ShowModelessWindow(Application.MainWindow.Handle, new GraphWindow(analysis.MonitoredDisplacements, analysis.MonitoredLoadFactor, units.Displacements));
+            ShowModelessWindow(MainWindow.Handle, new GraphWindow(analysis.MonitoredDisplacements, analysis.MonitoredLoadFactor, units.Displacements));
 
             // Draw results of analysis
-            Model.DrawResults(analysis);
+            DrawResults(analysis);
 
 			if (analysis.Stop)
-				Application.ShowAlertDialog(analysis.StopMessage);
+				ShowAlertDialog(analysis.StopMessage);
 		}
 	}
 }

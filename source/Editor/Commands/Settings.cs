@@ -1,7 +1,8 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.Runtime;
+﻿using Autodesk.AutoCAD.Runtime;
 using SPMTool.Editor.Commands;
 using SPMTool.Application.UserInterface;
+
+using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 [assembly: CommandClass(typeof(Settings))]
 
@@ -20,7 +21,7 @@ namespace SPMTool.Editor.Commands
 	    {
 		    // Start the window of units configuration
 		    var unitConfig = new UnitsConfig();
-		    Application.ShowModalWindow(Application.MainWindow.Handle, unitConfig, false);
+		    ShowModalWindow(MainWindow.Handle, unitConfig, false);
 	    }
 
 		/// <summary>
@@ -31,7 +32,7 @@ namespace SPMTool.Editor.Commands
 	    {
 		    // Start the window of units configuration
 		    var analysisConfig = new AnalysisConfig();
-		    Application.ShowModalWindow(Application.MainWindow.Handle, analysisConfig, false);
+		    ShowModalWindow(MainWindow.Handle, analysisConfig, false);
 	    }
     }
 }
