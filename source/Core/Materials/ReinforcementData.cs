@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
-using Extensions.AutoCAD;
 using Material.Reinforcement;
 using Material.Reinforcement.Biaxial;
 using Material.Reinforcement.Uniaxial;

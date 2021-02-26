@@ -4,7 +4,7 @@ using Autodesk.AutoCAD.Geometry;
 using SPMTool.Extensions;
 using UnitsNet.Units;
 
-namespace Extensions.AutoCAD
+namespace SPMTool.Comparers
 {
 	/// <summary>
 	/// <see cref="Line"/> equality comparer class.

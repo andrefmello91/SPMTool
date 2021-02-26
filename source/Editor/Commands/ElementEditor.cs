@@ -4,7 +4,6 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
-using Extensions.AutoCAD;
 using Extensions;
 using MathNet.Numerics;
 using SPM.Elements.PanelProperties;

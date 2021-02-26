@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
-using Extensions.AutoCAD;
 using Material.Concrete;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;

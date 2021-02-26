@@ -3,7 +3,8 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Core;
 using SPMTool.Application.UserInterface;
-using Application = Autodesk.AutoCAD.ApplicationServices.Core.Application;
+
+using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool
 {
@@ -17,14 +18,14 @@ namespace SPMTool
         /// </summary>
 		public void Initialize()
 		{
-			Application.Idle += On_ApplicationIdle;
+			Idle += On_ApplicationIdle;
 
 			// Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
 			DataBase.RegisterApp();
 
 			// Create layers and blocks
 			DataBase.CreateLayers();
-			Model.CreateBlocks();
+			Blocks.CreateBlocks();
 
 			// Set app parameters for drawing
 			Model.SetAppParameters();
@@ -33,7 +34,7 @@ namespace SPMTool
 		/// <summary>
 		/// Terminate application.
 		/// </summary>
-		public void Terminate() => Application.SystemVariableChanged -= ColorThemeChanged;
+		public void Terminate() => SystemVariableChanged -= ColorThemeChanged;
 
 		/// <summary>
 		/// Initialize user interface and create layers and blocks.
@@ -46,9 +47,9 @@ namespace SPMTool
 			// Add application buttons
 			Ribbon.AddButtons();
 
-			Application.SystemVariableChanged += ColorThemeChanged;
+			SystemVariableChanged += ColorThemeChanged;
 
-			Application.Idle -= On_ApplicationIdle;
+			Idle -= On_ApplicationIdle;
 		}
 
         /// <summary>

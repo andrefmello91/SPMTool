@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
+using Extensions;
 
-namespace Extensions.Interface
+namespace SPMTool.Extensions
 {
     /// <summary>
     /// Extensions for interface elements.
     /// </summary>
-    public static class Extensions
+    public static class UIExtensions
     {
 	    /// <summary>
 	    /// Disable this <paramref name="element"/>.

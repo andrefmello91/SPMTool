@@ -2,7 +2,6 @@
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Extensions.AutoCAD;
 using OnPlaneComponents;
 using SPM.Elements.StringerProperties;
 using SPMTool.Extensions;

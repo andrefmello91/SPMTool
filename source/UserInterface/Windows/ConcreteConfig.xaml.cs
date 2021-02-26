@@ -8,7 +8,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Extensions;
-using Extensions.Interface;
 using Extensions.Number;
 using Material;
 using Material.Concrete;

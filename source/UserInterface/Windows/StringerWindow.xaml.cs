@@ -9,8 +9,6 @@ using System.Windows.Media.Imaging;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
-using Extensions.AutoCAD;
-using Extensions.Interface;
 using Extensions.Number;
 using Material.Reinforcement;
 using Material.Reinforcement.Uniaxial;

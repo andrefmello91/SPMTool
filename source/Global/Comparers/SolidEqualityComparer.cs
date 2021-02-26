@@ -5,7 +5,8 @@ using Autodesk.AutoCAD.Geometry;
 using SPMTool.Extensions;
 using UnitsNet.Units;
 
-namespace Extensions.AutoCAD
+// ReSharper disable once CheckNamespace
+namespace SPMTool.Comparers
 {
 	/// <summary>
 	/// <see cref="Solid"/> equality comparer class.

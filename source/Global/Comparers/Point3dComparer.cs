@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using Autodesk.AutoCAD.Geometry;
-using Extensions.Number;
+using Extensions;
 using SPMTool.Extensions;
-using UnitsNet.Units;
 
-namespace Extensions.AutoCAD
+namespace SPMTool.Comparers
 {
 	/// <summary>
 	/// <see cref="Point3d"/> equality comparer class.
