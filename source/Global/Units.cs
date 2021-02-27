@@ -91,26 +91,7 @@ namespace SPMTool
 		/// <summary>
 		///     Get the <see cref="AreaUnit" /> for geometry.
 		/// </summary>
-		public AreaUnit GeometryArea
-		{
-			get
-			{
-				switch (Geometry)
-				{
-					case LengthUnit.Millimeter:
-						return AreaUnit.SquareMillimeter;
-
-					case LengthUnit.Centimeter:
-						return AreaUnit.SquareCentimeter;
-
-					case LengthUnit.Meter:
-						return AreaUnit.SquareMeter;
-
-					default:
-						return AreaUnit.SquareMillimeter;
-				}
-			}
-		}
+		public AreaUnit GeometryArea => Geometry.GetAreaUnit();
 
 		/// <summary>
 		///     Returns true if this <see cref="Units" /> has the default values.
@@ -129,30 +110,14 @@ namespace SPMTool
 		public PressureUnit PanelStresses    { get; set; }
 
 		/// <summary>
-		///     Get/set the <see cref="LengthUnit" /> for reinforcement.
+		///     Get/set the <see cref="LengthUnit" /> for reinforcement and concrete aggregate diameters.
 		/// </summary>
 		public LengthUnit Reinforcement    { get; set; }
 
 		/// <summary>
 		///     Get the <see cref="AreaUnit" /> for reinforcement.
 		/// </summary>
-		public AreaUnit ReinforcementArea
-		{
-			get
-			{
-				switch (Reinforcement)
-				{
-					case LengthUnit.Centimeter:
-						return AreaUnit.SquareCentimeter;
-
-					case LengthUnit.Meter:
-						return AreaUnit.SquareMeter;
-
-					default:
-						return AreaUnit.SquareMillimeter;
-				}
-			}
-		}
+		public AreaUnit ReinforcementArea => Reinforcement.GetAreaUnit();
 
 		/// <summary>
 		///     Get the drawing scale factor.
