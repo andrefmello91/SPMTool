@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0-windows;netcoreapp3.1;net48</TargetFrameworks>
+    <TargetFrameworks>net5.0-windows;netcoreapp3.1</TargetFrameworks>
 	  <LangVersion>9.0</LangVersion>
 	  <Nullable>enable</Nullable>
     <Usewpf>true</Usewpf>
@@ -12,7 +12,7 @@
     <PackageReference Include="LiveCharts.Core" Version="0.9.8" />
     <PackageReference Include="LiveCharts.Wpf.Core" Version="0.9.8" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.1" />
-    <PackageReference Include="UnitsNet" Version="4.83.0" />
+    <PackageReference Include="UnitsNet" Version="4.84.0" />
   </ItemGroup>
 
   <ItemGroup>

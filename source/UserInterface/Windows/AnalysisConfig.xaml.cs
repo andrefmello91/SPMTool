@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
-using Extensions.Number;
+using Extensions;
 using static SPMTool.Application.Settings;
 using MessageBox = System.Windows.MessageBox;
 
