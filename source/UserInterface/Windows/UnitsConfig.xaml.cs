@@ -2,13 +2,13 @@
 using System.Windows;
 using System.Windows.Input;
 using Extensions;
-using Extensions.Number;
 using SPMTool.Application;
 using SPMTool.Core;
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Application.Settings;
 using MessageBox = System.Windows.MessageBox;
+
+using static SPMTool.Application.Settings;
 
 namespace SPMTool.Application.UserInterface
 {
@@ -55,16 +55,11 @@ namespace SPMTool.Application.UserInterface
 		private bool FactorBoxFilled => FactorBox.Text.ParsedAndNotZero(out _);
 
         public UnitsConfig()
-			: this (Settings.Units)
-        {
-        }
-
-        public UnitsConfig(Units units)
         {
 	        InitializeComponent();
 
             // Read units
-            Units = units ?? Units.Default;
+            Units = DataBase.Settings.Units;
 
 			// Get sources
 			GetSources();
@@ -108,7 +103,7 @@ namespace SPMTool.Application.UserInterface
 			Units.DisplacementMagnifier = int.Parse(FactorBox.Text);
 
 			// Save units on database
-			Save(Units);
+			DataBase.Settings.Units = Units;
 
 			Close();
         }

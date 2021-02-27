@@ -3,8 +3,10 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 using Extensions;
-using static SPMTool.Application.Settings;
+using SPMTool.Core;
 using MessageBox = System.Windows.MessageBox;
+
+using static SPMTool.Core.DataBase;
 
 namespace SPMTool.Application.UserInterface
 {
@@ -16,7 +18,7 @@ namespace SPMTool.Application.UserInterface
 	    /// <summary>
 	    /// Get/set settings.
 	    /// </summary>
-	    private AnalysisSettings Settings
+	    private AnalysisSettings AnalysisSettings
 	    {
 		    get => new AnalysisSettings
 		    {
@@ -34,16 +36,11 @@ namespace SPMTool.Application.UserInterface
 	    }
 		
         public AnalysisConfig()
-			: this (SavedAnalysisSettings)
-        {
-        }
-
-        public AnalysisConfig(AnalysisSettings settings)
         {
 	        InitializeComponent();
 
             // Read units
-            Settings = settings ?? AnalysisSettings.Default;
+            AnalysisSettings = DataBase.Settings.Analysis;
         }
 
         private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
@@ -85,7 +82,7 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			// Save units on database
-			Save(Settings);
+			DataBase.Settings.Analysis = AnalysisSettings;
 
 			Close();
         }
@@ -93,6 +90,6 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
         /// Set default analysis settings.
         /// </summary>
-		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => Settings = AnalysisSettings.Default;
+		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => AnalysisSettings = AnalysisSettings.Default;
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Windows;
@@ -10,7 +9,6 @@ using LiveCharts.Defaults;
 using LiveCharts.Wpf;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.Data.Text;
-using SPMTool.Core.Conditions;
 using SPMTool.Core;
 using UnitsNet;
 using UnitsNet.Units;
@@ -86,7 +84,7 @@ namespace SPMTool.Application.UserInterface
 			SetMapper();
 
 			// Set initial point
-			LiveCharts.Wpf.CartesianChart.Series = LoadDisplacement;
+			CartesianChart.Series = LoadDisplacement;
             DataContext = this;
         }
 
