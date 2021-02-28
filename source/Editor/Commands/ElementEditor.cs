@@ -1,59 +1,53 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Extensions;
-using MathNet.Numerics;
-using SPM.Elements.PanelProperties;
-using SPM.Elements.StringerProperties;
+using SPMTool.Application.UserInterface;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Editor.Commands;
-using SPMTool.Enums;
-using SPMTool.Application.UserInterface;
 using SPMTool.Extensions;
 
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.Model;
-using static SPMTool.Core.DataBase;
 
 [assembly: CommandClass(typeof(ElementEditor))]
 
 namespace SPMTool.Editor.Commands
 {
-    /// <summary>
-    /// Element editor command class.
-    /// </summary>
-    public static class ElementEditor
-    {
+	/// <summary>
+	///     Element editor command class.
+	/// </summary>
+	public static class ElementEditor
+	{
+		#region  Methods
+
 		/// <summary>
-        /// Divide a stringer into new ones.
-        /// </summary>
-	    [CommandMethod("DivideStringer")]
-	    public static void DivideStringer()
-	    {
-		    // Prompt for select stringers
-		    var strs = UserInput.SelectStringers("Select stringers to divide")?.ToArray();
+		///     Divide a stringer into new ones.
+		/// </summary>
+		[CommandMethod("DivideStringer")]
+		public static void DivideStringer()
+		{
+			// Prompt for select stringers
+			var strs = UserInput.SelectStringers("Select stringers to divide")?.ToArray();
 
-		    if (strs.IsNullOrEmpty())
-			    return;
+			if (strs.IsNullOrEmpty())
+				return;
 
-		    // Prompt for the number of segments
-		    var numn = UserInput.GetInteger("Enter the number of new stringers:", 2);
+			// Prompt for the number of segments
+			var numn = UserInput.GetInteger("Enter the number of new stringers:", 2);
 
-		    if (!numn.HasValue)
-			    return;
+			if (!numn.HasValue)
+				return;
 
-		    int num = numn.Value;
+			var num = numn.Value;
 
 			// Get stringers from list
 			var toDivide = Stringers.GetByObjectIds(strs.GetObjectIds().ToArray())?.ToArray();
 
 			if (toDivide.IsNullOrEmpty())
 				return;
-			
+
 			// Divide the stringers
 			var newStrs = toDivide.SelectMany(s => s.Divide(num)).ToArray();
 
@@ -109,7 +103,7 @@ namespace SPMTool.Editor.Commands
 			//          strList.Remove(new StringerGeometry(strSt, strEnd, 0, 0));
 			//          stringerCollection = strList;
 			//         }
-	    }
+		}
 
 		[CommandMethod("DividePanel")]
 		public static void DividePanel()
@@ -136,7 +130,7 @@ namespace SPMTool.Editor.Commands
 				return;
 
 			// Get values
-			int 
+			int
 				row = rown.Value,
 				cln = clnn.Value;
 
@@ -145,7 +139,7 @@ namespace SPMTool.Editor.Commands
 
 			if (pnlsToDivide.IsNullOrEmpty())
 				return;
-			
+
 			// Remove non-rectangular panels
 			var nonRecSelected = pnlsToDivide.Any(p => !p.Vertices.IsRectangular);
 
@@ -218,14 +212,14 @@ namespace SPMTool.Editor.Commands
 			//// Auxiliary rectangular panel error
 			//var error = false;
 
-   //         // Create a collection of stringers and nodes to erase
-   //         var toErase = new List<DBObject>();
+			//         // Create a collection of stringers and nodes to erase
+			//         var toErase = new List<DBObject>();
 
 			//// Access the stringers in the model
 			//var strs = Model.StringerCollection;
 
-   //         // Access the internal nodes in the model
-   //         var intNds = Model.IntNodeCollection;
+			//         // Access the internal nodes in the model
+			//         var intNds = Model.IntNodeCollection;
 
 			//// Get the selection set and analyze the elements
 			//foreach (var pnl in pnls)
@@ -246,8 +240,8 @@ namespace SPMTool.Editor.Commands
 			//			if (!verts.Contains(str.StartPoint) || !verts.Contains(str.EndPoint))
 			//				continue;
 
-   //                     // Add the internal nodes for erasing
-   //                     toErase.AddRange(intNds.Where(nd => nd.Position.Approx(str.MidPoint())));
+			//                     // Add the internal nodes for erasing
+			//                     toErase.AddRange(intNds.Where(nd => nd.Position.Approx(str.MidPoint())));
 
 			//			// Erase and remove from the list
 			//			toErase.Add(str);
@@ -332,7 +326,7 @@ namespace SPMTool.Editor.Commands
 		}
 
 		/// <summary>
-		/// Set geometry to a selection of stringers.
+		///     Set geometry to a selection of stringers.
 		/// </summary>
 		[CommandMethod("SetStringerGeometry")]
 		public static void SetStringerGeometry()
@@ -340,33 +334,33 @@ namespace SPMTool.Editor.Commands
 			// Request objects to be selected in the drawing area
 			var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();
 
-			if (strs is null || !strs.Any())
+			if (strs.IsNullOrEmpty())
 				return;
 
 			// Start the config window
-			var geoWindow = new StringerWindow(strs);
+			var geoWindow = new StringerWindow(Stringers.GetByObjectIds(strs.GetObjectIds())!);
 			ShowModalWindow(MainWindow.Handle, geoWindow, false);
 		}
 
 		/// <summary>
-        /// Set geometry to a selection of panels.
-        /// </summary>
-        [CommandMethod("SetPanelGeometry")]
+		///     Set geometry to a selection of panels.
+		/// </summary>
+		[CommandMethod("SetPanelGeometry")]
 		public static void SetPanelGeometry()
 		{
 			// Request objects to be selected in the drawing area
 			var pnls = UserInput.SelectPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)")?.ToArray();
 
-			if (pnls is null || !pnls.Any())
+			if (pnls.IsNullOrEmpty())
 				return;
 
 			// Start the config window
-			var geoWindow = new PanelWindow(pnls);
+			var geoWindow = new PanelWindow(Panels.GetByObjectIds(pnls.GetObjectIds())!);
 			ShowModalWindow(MainWindow.Handle, geoWindow, false);
 		}
 
 		/// <summary>
-		/// Set the reinforcement in a collection of stringers.
+		///     Set the reinforcement in a collection of stringers.
 		/// </summary>
 		[CommandMethod("SetStringerReinforcement")]
 		public static void SetStringerReinforcement()
@@ -374,35 +368,35 @@ namespace SPMTool.Editor.Commands
 			// Request objects to be selected in the drawing area
 			var strs = UserInput.SelectStringers("Select the stringers to assign reinforcement (you can select other elements, the properties will be only applied to stringers).")?.ToArray();
 
-			if (strs is null || !strs.Any())
+			if (strs.IsNullOrEmpty())
 				return;
 
 			// Start the config window
-			var geoWindow = new StringerWindow(strs);
+			var geoWindow = new StringerWindow(Stringers.GetByObjectIds(strs.GetObjectIds())!);
 			ShowModalWindow(MainWindow.Handle, geoWindow, false);
 		}
 
-        /// <summary>
-        /// Set reinforcement to a collection of panels.
-        /// </summary>
-        [CommandMethod("SetPanelReinforcement")]
+		/// <summary>
+		///     Set reinforcement to a collection of panels.
+		/// </summary>
+		[CommandMethod("SetPanelReinforcement")]
 		public static void SetPanelReinforcement()
 		{
 			// Request objects to be selected in the drawing area
 			var pnls = UserInput.SelectPanels("Select the panels to assign reinforcement (you can select other elements, the properties will be only applied to panels).")?.ToArray();
 
-			if (pnls is null || !pnls.Any())
+			if (pnls.IsNullOrEmpty())
 				return;
 
 			// Start the config window
-			var geoWindow = new PanelWindow(pnls);
+			var geoWindow = new PanelWindow(Panels.GetByObjectIds(pnls.GetObjectIds())!);
 			ShowModalWindow(MainWindow.Handle, geoWindow, false);
 		}
 
-        /// <summary>
-        /// Update all the elements in the drawing.
-        /// </summary>
-        [CommandMethod("UpdateElements")]
+		/// <summary>
+		///     Update all the elements in the drawing.
+		/// </summary>
+		[CommandMethod("UpdateElements")]
 		public static void UpdateElements()
 		{
 			Model.UpdateElements();
@@ -410,5 +404,7 @@ namespace SPMTool.Editor.Commands
 			// Display the number of updated elements
 			Model.Editor.WriteMessage($"\n{Nodes.Count} nodes, {Stringers.Count} stringers and {Panels.Count} panels updated.");
 		}
-    }
+
+		#endregion
+	}
 }

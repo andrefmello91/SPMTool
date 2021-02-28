@@ -46,9 +46,9 @@ namespace SPMTool.Core.Elements
 		public override Layer Layer => GetLayer(Type);
 
 		/// <summary>
-		///     Get/set the <see cref="PlaneForce" /> in this object.
+		///     Get/set the <see cref="Force" /> in this object.
 		/// </summary>
-		public PlaneForce PlaneForce => Model.Forces.GetForceByPosition(Position);
+		public PlaneForce Force => Model.Forces.GetForceByPosition(Position);
 
 		/// <summary>
 		///     Get the position.
@@ -134,7 +134,7 @@ namespace SPMTool.Core.Elements
 			new Node(Position, Type, Settings.Units.Displacements)
 			{
 				Displacement = Displacement,
-				PlaneForce   = PlaneForce,
+				Force   = Force,
 				Constraint   = Constraint
 			};
 
