@@ -13,7 +13,7 @@ namespace SPMTool.Core
 	/// </summary>
 	/// <typeparam name="T">Any type that implements <see cref="IEntityCreator{T}" />.</typeparam>
 	public abstract class EntityCreatorList<T> : EList<T>
-		where T : IEntityCreator<Entity>
+		where T : IEntityCreator<Entity>, IEquatable<T>, IComparable<T>
 	{
 		#region Constructors
 

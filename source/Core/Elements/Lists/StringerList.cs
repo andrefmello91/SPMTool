@@ -5,6 +5,8 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
+using Material.Reinforcement;
+using Material.Reinforcement.Uniaxial;
 using OnPlaneComponents;
 using SPM.Elements;
 using SPM.Elements.PanelProperties;
@@ -69,12 +71,22 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the list of distinct <see cref="CrossSection" />'s from objects in this collection.
 		/// </summary>
-		public List<CrossSection> GetCrossSections() => GetGeometries().Select(g => g.CrossSection).Distinct().ToList();
+		public List<CrossSection> GetCrossSections() => GetGeometries().Select(g => g.CrossSection).Distinct().OrderBy(c => c).ToList();
 
 		/// <summary>
 		///     Get the list of distinct widths from this collection.
 		/// </summary>
-		public List<Length> GetWidths() => GetCrossSections().Select(c => c.Width).Distinct().ToList();
+		public List<Length> GetWidths() => GetCrossSections().Select(c => c.Width).Distinct().OrderBy(w => w).ToList();
+
+		/// <summary>
+		///		Get the list of distinct <see cref="UniaxialReinforcement"/>'s of this collection.
+		/// </summary>
+		public List<UniaxialReinforcement?> GetReinforcements() => this.Select(s => s.Reinforcement).Distinct().OrderBy(r => r).ToList();
+
+		/// <summary>
+		///		Get the list of distinct <see cref="Steel"/>'s of this collection.
+		/// </summary>
+		public List<Steel?> GetSteels() => this.Select(s => s.Reinforcement?.Steel).Distinct().OrderBy(s => s).ToList();
 
 		/// <summary>
 		///     Update all the stringers in this collection from drawing.

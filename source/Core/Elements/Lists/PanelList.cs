@@ -5,6 +5,8 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
+using Material.Reinforcement;
+using Material.Reinforcement.Biaxial;
 using MathNet.Numerics;
 using OnPlaneComponents;
 using SPM.Elements;
@@ -105,7 +107,22 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the list of distinct widths from this collection.
 		/// </summary>
-		public List<Length> GetWidths() => GetGeometries().Select(g => g.Width).Distinct().ToList();
+		public List<Length> GetWidths() => GetGeometries().Select(g => g.Width).Distinct().OrderBy(w => w).ToList();
+
+		/// <summary>
+		///		Get the list of distinct <see cref="WebReinforcement"/>'s in this collection.
+		/// </summary>
+		public List<WebReinforcement?> GetReinforcements() => this.Select(p => p.Reinforcement).Distinct().OrderBy(r => r).ToList();
+
+		/// <summary>
+		///		Get the list of distinct <see cref="WebReinforcementDirection"/>'s in this collection.
+		/// </summary>
+		public List<WebReinforcementDirection?> GetReinforcementDirections() => this.SelectMany(p => new[] {p.Reinforcement?.DirectionX, p.Reinforcement?.DirectionY}).Distinct().OrderBy(r => r).ToList();
+
+		/// <summary>
+		///		Get the list of distinct <see cref="Steel"/>'s in this collection.
+		/// </summary>
+		public List<Steel?> GetSteels() => this.SelectMany(p => new[] {p.Reinforcement?.DirectionX?.Steel, p.Reinforcement?.DirectionY?.Steel}).Distinct().OrderBy(r => r).ToList();
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		/// <param name="vertices">The collection of four <see cref="Point" /> vertices, in any order.</param>

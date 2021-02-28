@@ -1,30 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using Extensions;
-using Extensions.Number;
 using Material.Reinforcement;
 using Material.Reinforcement.Uniaxial;
-using MathNet.Numerics;
 using SPM.Elements.StringerProperties;
-using SPMTool.Application;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
-using SPMTool.Core.Materials;
 using SPMTool.Enums;
 using SPMTool.Extensions;
+using UnitsNet;
+using UnitsNet.Units;
 using MessageBox = System.Windows.MessageBox;
-using static SPMTool.Core.Elements.StringerList;
-using static SPMTool.Core.Elements.ElementData;
-using static SPMTool.Core.Materials.ReinforcementData;
 using Window = System.Windows.Window;
+
+using static SPMTool.Core.Model;
 
 namespace SPMTool.Application.UserInterface
 {
@@ -33,24 +26,24 @@ namespace SPMTool.Application.UserInterface
     /// </summary>
     public partial class StringerWindow : Window
     {
-	    private readonly Line[] _stringers;
-	    private StringerGeometry[] _savedGeometries;
-	    private UniaxialReinforcement[] _savedReinforcements;
-	    private Steel[] _savedSteel;
+	    private readonly List<StringerObject> _stringers;
+	    private PressureUnit _stressUnit;
+	    private LengthUnit _geometryUnit;
+	    private LengthUnit _reinforcementUnit;
 
         // Properties
-        public string GeometryUnit => Settings.Units.Geometry.Abbrev();
+        public string GeometryUnit => _geometryUnit.Abbrev();
 
-        public string DiameterUnit => Settings.Units.Reinforcement.Abbrev();
+        public string DiameterUnit => _reinforcementUnit.Abbrev();
 
-        public string StressUnit => Settings.Units.MaterialStrength.Abbrev();
+        public string StressUnit => _stressUnit.Abbrev();
 
         /// <summary>
         /// Get header text.
         /// </summary>
-        public string HeaderText => _stringers.Length == 1
-	        ? $"Stringer {_stringers[0].ReadXData()[(int) StringerIndex.Number].ToInt()}"
-	        : $"{_stringers.Length} stringers selected";
+        public string HeaderText => _stringers.Count == 1
+	        ? $"Stringer {_stringers[0].Number}"
+	        : $"{_stringers.Count} stringers selected";
 
         /// <summary>
         /// Gets and sets reinforcement checkbox state.
@@ -64,20 +57,20 @@ namespace SPMTool.Application.UserInterface
 		        {
 			        ReinforcementBoxes.Enable();
 
-					if (_savedSteel?.Any() ?? false)
+					if (Steels.Any())
 						SavedSteel.Enable();
 
-					if (_savedReinforcements?.Any() ?? false)
+					if (StringerReinforcements.Any())
 						SavedReinforcement.Enable();
 		        }
 		        else
 		        {
 			        ReinforcementBoxes.Disable();
 
-			        if (_savedSteel?.Any() ?? false)
+			        if (Steels.Any())
 				        SavedSteel.Disable();
 
-			        if (_savedReinforcements?.Any() ?? false)
+			        if (StringerReinforcements.Any())
 				        SavedReinforcement.Disable();
 		        }
 
@@ -124,21 +117,21 @@ namespace SPMTool.Application.UserInterface
         private bool ReinforcementFilled => CheckBoxes(ReinforcementBoxes);
 
         /// <summary>
-        /// Get/set width, in mm.
+        /// Get/set width.
         /// </summary>
-		private double StrWidth
+		private Length StrWidth
 		{
-			get => double.Parse(WBox.Text).Convert(Settings.Units.Geometry);
-			set => WBox.Text = $"{value.ConvertFromMillimeter(Settings.Units.Geometry):0.00}";
+			get => Length.From(double.Parse(WBox.Text), _geometryUnit);
+			set => WBox.Text = $"{value.Value:0.00}";
 		}
 
 		/// <summary>
-        /// Get/set height, in mm.
+        /// Get/set height.
         /// </summary>
-		private double StrHeight
+		private Length StrHeight
 		{
-			get => double.Parse(HBox.Text).Convert(Settings.Units.Geometry);
-			set => HBox.Text = $"{value.ConvertFromMillimeter(Settings.Units.Geometry):0.00}";
+			get => Length.From(double.Parse(HBox.Text), _geometryUnit);
+			set => HBox.Text = $"{value.Value:0.00}";
 		}
 
 		/// <summary>
@@ -151,38 +144,38 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
-		/// Get/set bar diameter, in mm.
+		/// Get/set bar diameter.
 		/// </summary>
-		private double BarDiameter
+		private Length BarDiameter
 		{
-			get => double.Parse(PhiBox.Text).Convert(Settings.Units.Reinforcement);
-			set => PhiBox.Text = $"{value.ConvertFromMillimeter(Settings.Units.Reinforcement):0.00}";
+			get => Length.From(double.Parse(PhiBox.Text), _reinforcementUnit);
+			set => PhiBox.Text = $"{value.Value:0.00}";
 		}
 
 		/// <summary>
-		/// Get/set bar yield stress, in MPa.
+		/// Get/set bar yield stress.
 		/// </summary>
-		private double YieldStress
+		private Pressure YieldStress
 		{
-			get => double.Parse(FBox.Text).Convert(Settings.Units.MaterialStrength);
-			set => FBox.Text = $"{value.ConvertFromMPa(Settings.Units.MaterialStrength):0.00}";
+			get => Pressure.From(double.Parse(FBox.Text), _stressUnit);
+			set => FBox.Text = $"{value.Value:0.00}";
 		}
 
 		/// <summary>
 		/// Get/set bar elastic module, in MPa.
 		/// </summary>
-		private double ElasticModule
+		private Pressure ElasticModule
 		{
-			get => double.Parse(EBox.Text).Convert(Settings.Units.MaterialStrength);
-			set => EBox.Text = $"{value.ConvertFromMPa(Settings.Units.MaterialStrength):0.00}";
+			get => Pressure.From(double.Parse(EBox.Text), _stressUnit);
+			set => EBox.Text = $"{value.Value:0.00}";
 		}
 
 		/// <summary>
-        /// Get geometry for output.
+        /// Get cross section for output.
         /// </summary>
-		private StringerGeometry OutputGeometry
+		private CrossSection OutputCrossSection
 		{
-			get => new StringerGeometry(Point3d.Origin, Point3d.Origin, StrWidth, StrHeight);
+			get => new CrossSection(StrWidth, StrHeight);
 			set
 			{
 				StrWidth  = value.Width;
@@ -193,37 +186,41 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
         /// Get steel for output.
         /// </summary>
-		private Steel OutputSteel
+		private Steel? OutputSteel
 		{
 			get => new Steel(YieldStress, ElasticModule);
 			set
 			{
-				YieldStress   = value?.YieldStress   ?? 500;
-				ElasticModule = value?.ElasticModule ?? 210000;
+				YieldStress   = value?.YieldStress   ?? Pressure.FromMegapascals(500);
+				ElasticModule = value?.ElasticModule ?? Pressure.FromMegapascals(210000);
 			}
 		}
 
 		/// <summary>
         /// Get reinforcement for output.
         /// </summary>
-		private UniaxialReinforcement OutputReinforcement
+		private UniaxialReinforcement? OutputReinforcement
 		{
-			get => ReinforcementChecked ? new UniaxialReinforcement(NumOfBars, BarDiameter, OutputSteel) : null;
+			get => ReinforcementChecked ? new UniaxialReinforcement(NumOfBars, BarDiameter, OutputSteel, Area.Zero) : null;
 			set
 			{
 				NumOfBars   = value?.NumberOfBars ?? 2;
-				BarDiameter = value?.BarDiameter  ?? 10;
+				BarDiameter = value?.BarDiameter  ?? Length.FromMillimeters(10);
 			}
 		}
 
-		public StringerWindow(IEnumerable<Line> stringers)
+		public StringerWindow(IEnumerable<StringerObject> stringers)
         {
-	        _stringers = stringers.ToArray();
+	        _stringers = stringers.ToList();
+
+	        _stressUnit        = DataBase.Settings.Units.MaterialStrength;
+	        _geometryUnit      = DataBase.Settings.Units.Geometry;
+	        _reinforcementUnit = DataBase.Settings.Units.Reinforcement;
 
 			InitializeComponent();
 
             // Get stringer image
-            SPM.Elements.StringerProperties.CrossSection.Source = Icons.GetBitmap(Properties.Resources.stringer_cross_section);
+            CrossSection.Source = Icons.GetBitmap(Properties.Resources.stringer_cross_section);
 
             GetInitialGeometry();
 
@@ -239,28 +236,26 @@ namespace SPMTool.Application.UserInterface
 		{
 			SetGeometry = true;
 
-			_savedGeometries = StringerGeometries?.OrderBy(g => g.Height).ThenBy(g => g.Width).ToArray();
-
-            if (_savedGeometries != null && _savedGeometries.Any())
+            if (!StringerCrossSections.IsNullOrEmpty())
 			{
 				SavedGeometries.ItemsSource = SavedGeoOptions();
 				SavedGeometries.SelectedIndex = 0;
 
-				if (_stringers.Length > 1)
-	                OutputGeometry  = _savedGeometries[0];
+				if (_stringers.Count > 1)
+	                OutputCrossSection  = StringerCrossSections[0];
             }
             else
             {
 	            SavedGeometries.Disable();
-	            StrWidth  = 100;
-	            StrHeight = 100;
+	            StrWidth  = Length.FromMillimeters(100);
+	            StrHeight = Length.FromMillimeters(100);
             }
 
-            if (_stringers.Length > 1)
+            if (_stringers.Count > 1)
 	            return;
 
 			// Only 1 stringer, get it's geometry
-			OutputGeometry = StringerObject.GetGeometry(_stringers[0]);
+			OutputCrossSection = _stringers[0].CrossSection;
 		}
 
         /// <summary>
@@ -270,15 +265,13 @@ namespace SPMTool.Application.UserInterface
         {
 	        SetReinforcement = true;
 
-			_savedSteel = ReinforcementData.SavedSteel?.OrderBy(s => s.ElasticModule).ThenBy(s => s.YieldStress).ToArray();
-
-			if (_savedSteel != null && _savedSteel.Any())
+			if (!Steels.IsNullOrEmpty())
 			{
 				SavedSteel.ItemsSource = SavedSteelOptions();
 				SavedSteel.SelectedIndex = 0;
 
-				if (_stringers.Length > 1)
-					OutputSteel = _savedSteel[0];
+				if (_stringers.Count > 1)
+					OutputSteel = Steels[0];
 			}
 			else
 			{
@@ -286,15 +279,13 @@ namespace SPMTool.Application.UserInterface
 				OutputSteel = null;
 			}
 
-            _savedReinforcements = SavedStringerReinforcement?.OrderBy(r => r.BarDiameter).ThenBy(r => r.NumberOfBars).ToArray();
-
-			if (_savedReinforcements != null && _savedReinforcements.Any())
+			if (!StringerReinforcements.IsNullOrEmpty())
 			{
 				SavedReinforcement.ItemsSource = SavedRefOptions();
 				SavedReinforcement.SelectedIndex = 0;
 
-				if (_stringers.Length > 1)
-					OutputReinforcement = _savedReinforcements[0];
+				if (_stringers.Count > 1)
+					OutputReinforcement = StringerReinforcements[0];
 			}
 			else
 			{
@@ -302,9 +293,9 @@ namespace SPMTool.Application.UserInterface
 				OutputReinforcement = null;
 			}
 			
-            if (_stringers.Length == 1)
+            if (_stringers.Count == 1)
             {
-	            var reinforcement = StringerObject.GetReinforcement(_stringers[0]);
+	            var reinforcement = _stringers[0].Reinforcement;
 
 	            ReinforcementChecked = !(reinforcement is null);
 
@@ -319,19 +310,19 @@ namespace SPMTool.Application.UserInterface
         /// Get saved geometry options as string collection.
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<string> SavedGeoOptions() => _savedGeometries.Select(geo => $"{geo.Width.ConvertFromMillimeter(Settings.Units.Geometry):0.0} {(char) Character.Times} {geo.Height.ConvertFromMillimeter(Settings.Units.Geometry):0.0}");
+        private static IEnumerable<string> SavedGeoOptions() => StringerCrossSections.Select(geo => $"{geo.Width.Value:0.0} {(char) Character.Times} {geo.Height.Value:0.0}");
         
         /// <summary>
         /// Get saved reinforcement options as string collection.
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<string> SavedRefOptions() => _savedReinforcements.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.ConvertFromMillimeter(Settings.Units.Reinforcement):0.00}");
+        private static IEnumerable<string> SavedRefOptions() => StringerReinforcements.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.Value:0.00}");
         
         /// <summary>
         /// Get saved steel options as string collection.
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<string> SavedSteelOptions() => _savedSteel.Select(s => $"{s.YieldStress.ConvertFromMPa(Settings.Units.MaterialStrength):0.00} | {s.ElasticModule.ConvertFromMPa(Settings.Units.MaterialStrength):0.00}");
+        public static IEnumerable<string> SavedSteelOptions() => Steels.Select(s => $"{s.YieldStress.Value:0.00} | {s.ElasticModule.Value:0.00}");
 
         /// <summary>
         /// Check if <paramref name="textBoxes"/> are filled and not zero.
@@ -355,18 +346,13 @@ namespace SPMTool.Application.UserInterface
         /// </summary>
 		private void SaveGeometry()
 		{
-			// Convert values
-			var geometry = OutputGeometry;
+			var crossSection = OutputCrossSection;
 
-			// Save on database
-			Save(geometry);
-
-			// Save width for panels
-			Save(StrWidth);
+			Model.StringerCrossSections.Add(crossSection, false);
 
 			// Set to stringers
 			foreach (var str in _stringers)
-				StringerObject.SetGeometry(str, geometry);
+				str.CrossSection = crossSection;
 		}
 
 		/// <summary>
@@ -376,12 +362,12 @@ namespace SPMTool.Application.UserInterface
 		{
 			var reinforcement = OutputReinforcement;
 
-			Save(reinforcement?.Steel);
-			Save(reinforcement);
+			Model.StringerReinforcements.Add(reinforcement, false);
+			Model.Steels.Add(reinforcement?.Steel);
 
 			// Set to stringers
-            foreach (var str in _stringers)
-				StringerObject.SetReinforcement(str, reinforcement);
+			foreach (var str in _stringers)
+				str.Reinforcement = reinforcement;
 		}
 
         private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
@@ -421,11 +407,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= _savedGeometries.Length || i < 0)
+			if (i >= StringerCrossSections.Count || i < 0)
 				return;
 
             // Update textboxes
-            OutputGeometry  = _savedGeometries[i];
+            OutputCrossSection  = StringerCrossSections[i];
 		}
 
 		private void SavedSteel_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -435,11 +421,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= _savedSteel.Length || i < 0)
+			if (i >= Steels.Count || i < 0)
 				return;
 
             // Update textboxes
-            OutputSteel = _savedSteel[i];
+            OutputSteel = Steels[i];
 		}
 
 		private void SavedReinforcement_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -449,11 +435,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= _savedReinforcements.Length || i < 0)
+			if (i >= StringerReinforcements.Count || i < 0)
 				return;
 
 			// Update textboxes
-			OutputReinforcement = _savedReinforcements[i];
+			OutputReinforcement = StringerReinforcements[i];
 		}
 
 		private void ReinforcementCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementChecked = ((CheckBox) sender).IsChecked ?? false;
