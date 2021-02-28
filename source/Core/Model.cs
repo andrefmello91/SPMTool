@@ -1,8 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
+using Extensions;
+using Material.Reinforcement;
+using Material.Reinforcement.Biaxial;
+using Material.Reinforcement.Uniaxial;
 using SPM.Analysis;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
@@ -13,7 +15,7 @@ using SPMTool.Extensions;
 using UnitsNet;
 using static SPMTool.Core.DataBase;
 
-#nullable enable
+#nullable disable
 
 namespace SPMTool.Core
 {
@@ -59,6 +61,31 @@ namespace SPMTool.Core
 		/// </summary>
 		public static readonly ConstraintList Constraints = ConstraintList.ReadFromDrawing();
 
+		/// <summary>
+		///     List of distinct widths from objects in the model.
+		/// </summary>
+		public static EList<Length> ElementWidths = Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToEList();
+
+		/// <summary>
+		///     List of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
+		/// </summary>
+		public static EList<CrossSection> StringerCrossSections = Stringers.GetCrossSections().ToEList();
+
+		/// <summary>
+		///     List of distinct reinforcements of stringers in the model.
+		/// </summary>
+		public static EList<UniaxialReinforcement> StringerReinforcements = Stringers.GetReinforcements().ToEList();
+
+		/// <summary>
+		///     List of distinct reinforcements of panels in the model.
+		/// </summary>
+		public static EList<WebReinforcementDirection> PanelReinforcements = Panels.GetReinforcementDirections().ToEList();
+
+		/// <summary>
+		///     List of distinct steels of elements in the model.
+		/// </summary>
+		public static EList<Steel> Steels = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList();
+
 		#endregion
 
 		#region Properties
@@ -67,16 +94,6 @@ namespace SPMTool.Core
 		///     Get application <see cref="Autodesk.AutoCAD.EditorInput.Editor" />.
 		/// </summary>
 		public static Autodesk.AutoCAD.EditorInput.Editor Editor => DataBase.Document.Editor;
-
-		/// <summary>
-		///     Get the list of distinct widths from objects in the model.
-		/// </summary>
-		public static List<Length> ElementWidths => Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToList();
-
-		/// <summary>
-		///     Get the list of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
-		/// </summary>
-		public static List<CrossSection> StringerCrossSections => Stringers.GetCrossSections();
 
 		#endregion
 
