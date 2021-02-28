@@ -1,7 +1,4 @@
-﻿using System.DirectoryServices;
-using System.Linq.Expressions;
-using Autodesk.AutoCAD.Geometry;
-using SPMTool.Attributes;
+﻿using SPMTool.Attributes;
 
 namespace SPMTool.Enums
 {

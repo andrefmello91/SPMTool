@@ -119,19 +119,10 @@
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="analysissettings" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\analysissettings.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="analysissettings1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\analysissettings.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>..\Resources\analysissettings.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="analysissettings_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\analysissettings_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="concrete" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\concrete.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="concretestresses" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\concretestresses.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="concretestresses_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\concretestresses_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -148,17 +139,11 @@
   <data name="concrete_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\concrete_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="crack" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\crack.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="crack_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\crack_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="crack_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\crack_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="displacements" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\displacements.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="displacements_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\displacements_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -166,17 +151,11 @@
   <data name="displacements_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\displacements_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="divpanel" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\divpanel.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="divpnl_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\divpnl_small.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="divpnl_small_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\divpnl_small_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="divstr" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\divstr.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="divstr_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\divstr_small.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -184,17 +163,11 @@
   <data name="divstr_small_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\divstr_small_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="elementdata" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\elementdata.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="elementdata_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\elementdata_small.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="elementdata_small_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\elementdata_small_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="force" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\force.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="force_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\force_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -202,17 +175,11 @@
   <data name="force_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\force_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="linear" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\linear.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="linear_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\linear_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="linear_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\linear_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="nonlinear" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\nonlinear.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="nonlinear_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\nonlinear_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -220,29 +187,17 @@
   <data name="nonlinear_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\nonlinear_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="panel" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\panel.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="panelforces" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\panelforces.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="panelforces_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panelforces_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="panelforces_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panelforces_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="panelreinforcement" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\panelreinforcement.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="panelreinforcement_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panelreinforcement_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="panelreinforcement_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panelreinforcement_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="panelstresses" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\panelstresses.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="panelstresses_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panelstresses_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -253,17 +208,11 @@
   <data name="panel_geometry" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panel-geometry.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="panel_geometry1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\panel-geometry.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="panel_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panel_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="panel_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\panel_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="set" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\set.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="set_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\set_small.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -271,26 +220,17 @@
   <data name="set_small_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\set_small_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="steel" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\steel.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="steel_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\steel_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="steel_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\steel_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="stringer" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\stringer.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="stringerforces_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\stringerforces_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="stringerforces_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\stringerforces_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="stringerreinforcement" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\stringerreinforcement.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="stringerreinforcement_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\stringerreinforcement_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -301,17 +241,11 @@
   <data name="stringer_cross_section" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\stringer-cross-section.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="stringer_cross_section1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\stringer-cross-section.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="stringer_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\stringer_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="stringer_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\stringer_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="support" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\support.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="support_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\support_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -322,14 +256,8 @@
   <data name="units" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\units.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="units1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\units.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="units_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\units_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="update" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\update.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="update_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\update_small.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -337,17 +265,11 @@
   <data name="update_small_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\update_small_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="viewforce" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\viewforce.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="viewforce_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\viewforce_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="viewforce_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\viewforce_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="viewnode" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\viewnode.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="viewnode_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\viewnode_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -355,26 +277,17 @@
   <data name="viewnode_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\viewnode_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="viewpanel" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\viewpanel.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="viewpanel_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\viewpanel_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="viewpanel_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\viewpanel_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="viewstringer" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\viewstringer.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="viewstringer_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\viewstringer_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="viewstringer_large_light" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\viewstringer_large_light.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="viewsupport" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\viewsupport.svg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="viewsupport_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\viewsupport_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
