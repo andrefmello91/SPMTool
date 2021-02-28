@@ -2,35 +2,25 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Extensions;
 using Material.Concrete;
-using Parameters = Material.Concrete.Parameters;
 using SPMTool.Core;
-using SPMTool.Core.Materials;
 using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
-using ComboBox = System.Windows.Controls.ComboBox;
-using MessageBox = System.Windows.MessageBox;
-using TextBox = System.Windows.Controls.TextBox;
 
 namespace SPMTool.Application.UserInterface
 {
-    /// <summary>
-    /// Lógica interna para ConcreteConfig.xaml
-    /// </summary>
-    public partial class ConcreteConfig : Window
+	/// <summary>
+	///     Lógica interna para ConcreteConfig.xaml
+	/// </summary>
+	public partial class ConcreteConfig : Window
 	{
-		// Properties
-		private readonly PressureUnit _stressUnit;
-		private readonly LengthUnit _aggUnit;
-		private ConstitutiveModel _constitutiveModel;
-		private IParameters _parameters;
+		#region Fields
 
 		// Options
 		private readonly string[]
@@ -38,25 +28,40 @@ namespace SPMTool.Application.UserInterface
 			_contitutiveOptions = { ConstitutiveModel.MCFT.ToString(), ConstitutiveModel.DSFM.ToString() },
 			_parameterOptions   = Enum.GetNames(typeof(ParameterModel));
 
-        /// <summary>
-        /// Get the stress unit.
-        /// </summary>
-        public string StressUnit => _stressUnit.Abbrev();
+		private readonly LengthUnit _aggUnit;
+
+		// Properties
+		private readonly PressureUnit _stressUnit;
+		private ConstitutiveModel _constitutiveModel;
+		private IParameters _parameters;
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
-        /// Get aggregate diameter unit.
-        /// </summary>
-        public string AggregateUnit =>_aggUnit.Abbrev();
+		///     Get aggregate diameter unit.
+		/// </summary>
+		public string AggregateUnit => _aggUnit.Abbrev();
 
 		/// <summary>
-		/// Verify if strength and aggregate diameter text boxes are filled.
+		///     Verify if custom parameters text boxes are filled.
+		/// </summary>
+		private bool CustomParametersSet => CheckBoxes(new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox });
+
+		/// <summary>
+		///     Verify if strength and aggregate diameter text boxes are filled.
 		/// </summary>
 		private bool ParametersSet => CheckBoxes(new[] { StrengthBox, AggDiamBox });
 
 		/// <summary>
-		/// Verify if custom parameters text boxes are filled.
+		///     Get the stress unit.
 		/// </summary>
-		private bool CustomParametersSet => CheckBoxes(new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox });
+		public string StressUnit => _stressUnit.Abbrev();
+
+		#endregion
+
+		#region Constructors
 
 		public ConcreteConfig()
 		{
@@ -72,47 +77,51 @@ namespace SPMTool.Application.UserInterface
 			_parameters.ChangeUnit(_stressUnit);
 			_parameters.ChangeUnit(_aggUnit);
 
-            InitializeComponent();
+			InitializeComponent();
 
-            // Get image
-            Graph.Source = Icons.GetBitmap(Properties.Resources.concrete_constitutive);
+			// Get image
+			Graph.Source = Icons.GetBitmap(Properties.Resources.concrete_constitutive);
 
 			// Initiate combo boxes with units set
-            InitiateComboBoxes();
+			InitiateComboBoxes();
 
-            DataContext = this;
+			DataContext = this;
 		}
 
+		#endregion
+
+		#region  Methods
+
 		/// <summary>
-        /// Check if <paramref name="textBoxes"/> are filled and not zero.
-        /// </summary>
+		///     Check if <paramref name="textBoxes" /> are filled and not zero.
+		/// </summary>
 		private bool CheckBoxes(IEnumerable<TextBox> textBoxes) => textBoxes.All(textBox => textBox.Text.ParsedAndNotZero(out _));
 
-        /// <summary>
-        /// Initiate combo boxes items.
-        /// </summary>
-        private void InitiateComboBoxes()
+		/// <summary>
+		///     Initiate combo boxes items.
+		/// </summary>
+		private void InitiateComboBoxes()
 		{
 			StrengthBox.Text = $"{_parameters.Strength.Value:0.00}";
 
 			AggDiamBox.Text = $"{_parameters.AggregateDiameter.Value:0.00}";
 
-            AggTypeBox.ItemsSource  = _aggTypeOptions;
+			AggTypeBox.ItemsSource  = _aggTypeOptions;
 			AggTypeBox.SelectedItem = _parameters.Type.ToString();
 
 			ParameterBox.ItemsSource  = _parameterOptions;
 			ParameterBox.SelectedItem = _parameters.Model.ToString();
 
-            ConstitutiveBox.ItemsSource  = _contitutiveOptions;
+			ConstitutiveBox.ItemsSource  = _contitutiveOptions;
 			ConstitutiveBox.SelectedItem = _constitutiveModel.ToString();
 
-            UpdateCustomParameterBoxes();
+			UpdateCustomParameterBoxes();
 		}
 
-        /// <summary>
-        /// Update parameters.
-        /// </summary>
-        private void UpdateParameters()
+		/// <summary>
+		///     Update parameters.
+		/// </summary>
+		private void UpdateParameters()
 		{
 			if (_parameters is CustomParameters || StrengthBox.Text == string.Empty || AggDiamBox.Text == string.Empty || AggTypeBox.SelectedItem.ToString() == string.Empty)
 				return;
@@ -124,10 +133,10 @@ namespace SPMTool.Application.UserInterface
 			_parameters.Type = (AggregateType) Enum.Parse(typeof(AggregateType), AggTypeBox.SelectedItem.ToString()!);
 		}
 
-        /// <summary>
-        /// Update custom parameters.
-        /// </summary>
-        private void UpdateCustomParameterBoxes()
+		/// <summary>
+		///     Update custom parameters.
+		/// </summary>
+		private void UpdateCustomParameterBoxes()
 		{
 			ModuleBox.Text  = $"{_parameters.ElasticModule.Value:0.00}";
 
@@ -138,10 +147,10 @@ namespace SPMTool.Application.UserInterface
 			UltStrainBox.Text = $"{-1000 * _parameters.UltimateStrain:0.00}";
 		}
 
-        /// <summary>
-        /// Get custom parameters.
-        /// </summary>
-        private void GetCustomParameters()
+		/// <summary>
+		///     Get custom parameters.
+		/// </summary>
+		private void GetCustomParameters()
 		{
 			// Read parameters
 			double
@@ -186,7 +195,7 @@ namespace SPMTool.Application.UserInterface
 				return;
 
 			_parameters.Strength = Pressure.From(double.Parse(fcBox.Text), _stressUnit);
-            UpdateCustomParameterBoxes();
+			UpdateCustomParameterBoxes();
 		}
 
 		private void AggTypeBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -196,29 +205,29 @@ namespace SPMTool.Application.UserInterface
 			if (_parameters.Model == ParameterModel.Custom || aggBox.SelectedItem.ToString() == string.Empty)
 				return;
 
-			_parameters.Type = (AggregateType)Enum.Parse(typeof(AggregateType), aggBox.SelectedItem.ToString()!);
+			_parameters.Type = (AggregateType) Enum.Parse(typeof(AggregateType), aggBox.SelectedItem.ToString()!);
 			UpdateCustomParameterBoxes();
 		}
 
 		private void ConstitutiveBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			var constBox = (ComboBox)sender;
+			var constBox = (ComboBox) sender;
 
 			if (constBox.SelectedItem.ToString() == string.Empty)
 				return;
 
-			_constitutiveModel = (ConstitutiveModel)Enum.Parse(typeof(ConstitutiveModel), constBox.SelectedItem.ToString()!);
+			_constitutiveModel = (ConstitutiveModel) Enum.Parse(typeof(ConstitutiveModel), constBox.SelectedItem.ToString()!);
 		}
 
-        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
+		private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
 		{
 			var regex = new Regex("[^0-9.]+");
 			e.Handled = regex.IsMatch(e.Text);
 		}
 
-        private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
+		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
 
-        private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
+		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Verify if text boxes are filled
 			if (!ParametersSet)
@@ -234,14 +243,19 @@ namespace SPMTool.Application.UserInterface
 					MessageBox.Show("Please set concrete custom parameters.", "Alert");
 					return;
 				}
+
 				GetCustomParameters();
 			}
 			else
+			{
 				UpdateParameters();
+			}
 
 			// Save units on database
 			DataBase.ConcreteData.Save(_parameters, _constitutiveModel);
 			Close();
 		}
+
+		#endregion
 	}
 }

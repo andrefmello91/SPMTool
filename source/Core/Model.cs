@@ -69,17 +69,17 @@ namespace SPMTool.Core
 		/// <summary>
 		///     List of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
 		/// </summary>
-		public static EList<CrossSection> StringerCrossSections = Stringers.GetCrossSections().ToEList();
+		public static EList<CrossSection> StringerCrossSections = GetCrossSections();
 
 		/// <summary>
 		///     List of distinct reinforcements of stringers in the model.
 		/// </summary>
-		public static EList<UniaxialReinforcement> StringerReinforcements = Stringers.GetReinforcements().ToEList();
+		public static EList<UniaxialReinforcement> StringerReinforcements = GetStringerReinforcements();
 
 		/// <summary>
 		///     List of distinct reinforcements of panels in the model.
 		/// </summary>
-		public static EList<WebReinforcementDirection> PanelReinforcements = Panels.GetReinforcementDirections().ToEList();
+		public static EList<WebReinforcementDirection> PanelReinforcements = GetPanelReinforcements();
 
 		/// <summary>
 		///     List of distinct steels of elements in the model.
@@ -98,6 +98,36 @@ namespace SPMTool.Core
 		#endregion
 
 		#region  Methods
+
+		/// <inheritdoc cref="StringerCrossSections" />
+		private static EList<CrossSection> GetCrossSections()
+		{
+			var list = Stringers.GetCrossSections().ToEList() ?? new EList<CrossSection>();
+
+			list.ItemAdded += On_CrossSection_Add;
+
+			return list;
+		}
+
+		/// <inheritdoc cref="StringerReinforcements" />
+		private static EList<UniaxialReinforcement> GetStringerReinforcements()
+		{
+			var list = Stringers.GetReinforcements().ToEList() ?? new EList<UniaxialReinforcement>();
+
+			list.ItemAdded += On_StrRef_Add;
+
+			return list;
+		}
+
+		/// <inheritdoc cref="PanelReinforcements" />
+		private static EList<WebReinforcementDirection> GetPanelReinforcements()
+		{
+			var list = Panels.GetReinforcementDirections().ToEList() ?? new EList<WebReinforcementDirection>();
+
+			list.ItemAdded += On_PanRef_Add;
+
+			return list;
+		}
 
 		/// <summary>
 		///     Update all the elements in the drawing.
@@ -214,6 +244,21 @@ namespace SPMTool.Core
 					return;
 			}
 		}
+
+		/// <summary>
+		///     Event to run when an item is added to <see cref="StringerCrossSections" />.
+		/// </summary>
+		public static void On_CrossSection_Add(object sender, ItemEventArgs<CrossSection> e) => ElementWidths.Add(e.Item.Width);
+
+		/// <summary>
+		///     Event to run when an item is added to <see cref="StringerReinforcements" />.
+		/// </summary>
+		public static void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e) => Steels.Add(e.Item?.Steel);
+
+		/// <summary>
+		///     Event to run when an item is added to <see cref="PanelReinforcements" />.
+		/// </summary>
+		public static void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e) => Steels.Add(e.Item?.Steel);
 
 		#endregion
 

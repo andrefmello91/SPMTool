@@ -4,66 +4,73 @@ using System.Windows;
 using System.Windows.Input;
 using Extensions;
 using SPMTool.Core;
-using MessageBox = System.Windows.MessageBox;
-
-using static SPMTool.Core.DataBase;
 
 namespace SPMTool.Application.UserInterface
 {
 	/// <summary>
-	/// Lógica interna para AnalysisConfig.xaml
+	///     Lógica interna para AnalysisConfig.xaml
 	/// </summary>
 	public partial class AnalysisConfig : Window
-    {
-	    /// <summary>
-	    /// Get/set settings.
-	    /// </summary>
-	    private AnalysisSettings AnalysisSettings
-	    {
-		    get => new AnalysisSettings
-		    {
-			    Tolerance     = double.Parse(ToleranceBox.Text),
-			    NumLoadSteps  = int.Parse(LoadStepsBox.Text),
-			    MaxIterations = int.Parse(IterationsBox.Text),
-		    };
-
-		    set
-		    {
-			    ToleranceBox.Text  = $"{value.Tolerance:G}";
-			    LoadStepsBox.Text  = $"{value.NumLoadSteps}";
-			    IterationsBox.Text = $"{value.MaxIterations}";
-		    }
-	    }
-		
-        public AnalysisConfig()
-        {
-	        InitializeComponent();
-
-            // Read units
-            AnalysisSettings = DataBase.Settings.Analysis;
-        }
-
-        private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
-        {
-	        var regex = new Regex("[^0-9]+");
-	        e.Handled = regex.IsMatch(e.Text);
-        }
-
-        private void DoubleValidationTextBox(object sender, TextCompositionEventArgs e)
-        {
-	        var regex = new Regex("[^0-9.]+e");
-	        e.Handled = regex.IsMatch(e.Text);
-        }
+	{
+		#region Properties
 
 		/// <summary>
-        /// Close window if cancel button is clicked.
-        /// </summary>
-        private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
+		///     Get/set settings.
+		/// </summary>
+		private AnalysisSettings AnalysisSettings
+		{
+			get => new AnalysisSettings
+			{
+				Tolerance     = double.Parse(ToleranceBox.Text),
+				NumLoadSteps  = int.Parse(LoadStepsBox.Text),
+				MaxIterations = int.Parse(IterationsBox.Text)
+			};
+
+			set
+			{
+				ToleranceBox.Text  = $"{value.Tolerance:G}";
+				LoadStepsBox.Text  = $"{value.NumLoadSteps}";
+				IterationsBox.Text = $"{value.MaxIterations}";
+			}
+		}
+
+		#endregion
+
+		#region Constructors
+
+		public AnalysisConfig()
+		{
+			InitializeComponent();
+
+			// Read units
+			AnalysisSettings = DataBase.Settings.Analysis;
+		}
+
+		#endregion
+
+		#region  Methods
+
+		private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
+		{
+			var regex = new Regex("[^0-9]+");
+			e.Handled = regex.IsMatch(e.Text);
+		}
+
+		private void DoubleValidationTextBox(object sender, TextCompositionEventArgs e)
+		{
+			var regex = new Regex("[^0-9.]+e");
+			e.Handled = regex.IsMatch(e.Text);
+		}
 
 		/// <summary>
-        /// Save units if OK button is clicked.
-        /// </summary>
-        private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
+		///     Close window if cancel button is clicked.
+		/// </summary>
+		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
+
+		/// <summary>
+		///     Save units if OK button is clicked.
+		/// </summary>
+		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Check if tolerance is positive
 			if (double.TryParse(ToleranceBox.Text, out var t) && t <= 0)
@@ -85,11 +92,13 @@ namespace SPMTool.Application.UserInterface
 			DataBase.Settings.Analysis = AnalysisSettings;
 
 			Close();
-        }
+		}
 
 		/// <summary>
-        /// Set default analysis settings.
-        /// </summary>
+		///     Set default analysis settings.
+		/// </summary>
 		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => AnalysisSettings = AnalysisSettings.Default;
-    }
+
+		#endregion
+	}
 }

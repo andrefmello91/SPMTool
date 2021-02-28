@@ -62,10 +62,18 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the <see cref="WebReinforcement" />.
 		/// </summary>
-		public WebReinforcement? Reinforcement =>
-			DirectionX is null && DirectionY is null
-				? null
-				: new WebReinforcement(DirectionX, DirectionY, Width);
+		public WebReinforcement? Reinforcement
+		{
+			get =>
+				DirectionX is null && DirectionY is null
+					? null
+					: new WebReinforcement(DirectionX, DirectionY, Width);
+			set
+			{
+				DirectionX = value?.DirectionX;
+				DirectionY = value?.DirectionY;
+			}
+		}
 
 		/// <summary>
 		///     Get panel's <see cref="SPM.Elements.PanelProperties.Vertices" />
