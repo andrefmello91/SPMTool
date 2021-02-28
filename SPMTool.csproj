@@ -17,6 +17,7 @@
     <Nullable>enable</Nullable>
     <Usewpf>true</Usewpf>
     <Version>0.1</Version>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -410,6 +411,10 @@
     <None Include="Resources\viewstringer_large_light.png" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include=".gitattributes" />
+    <Content Include=".gitignore" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Extensions\Extensions.csproj">
       <Project>{111c9205-16a0-46bd-b634-7e772c106441}</Project>
       <Name>Extensions</Name>
@@ -434,10 +439,6 @@
       <Project>{04980387-5e2f-4867-bfbe-39210bc7c501}</Project>
       <Name>SPMElements</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include=".gitattributes" />
-    <Content Include=".gitignore" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
