@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
@@ -28,14 +27,14 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Return the vertical distance from this <paramref name="point" /> to <paramref name="otherPoint" /> .
 		/// </summary>
-		/// <param name="otherPoint">The other <see cref="Point3d" />.</param>
+		/// <inheritdoc cref="DistanceInX" />
 		public static double DistanceInY(this Point3d point, Point3d otherPoint) => (otherPoint.Y - point.Y).Abs();
 
 		/// <summary>
 		///     Return the angle (in radians), related to horizontal axis, of a line that connects this to
 		///     <paramref name="otherPoint" /> .
 		/// </summary>
-		/// <param name="otherPoint">The other <see cref="Point3d" />.</param>
+		/// <inheritdoc cref="DistanceInX" />
 		/// <param name="tolerance">The tolerance to consider being zero.</param>
 		public static double AngleTo(this Point3d point, Point3d otherPoint, double tolerance = 1E-6)
 		{
@@ -59,7 +58,7 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Return the mid <see cref="Point3d" /> between this and <paramref name="otherPoint" />.
 		/// </summary>
-		/// <param name="otherPoint">The other <see cref="Point3d" />.</param>
+		/// <inheritdoc cref="DistanceInX" />
 		public static Point3d MidPoint(this Point3d point, Point3d otherPoint) => point == otherPoint ? point : new Point3d(0.5 * (point.X + otherPoint.X), 0.5 * (point.Y + otherPoint.Y), 0.5 * (point.Z + otherPoint.Z));
 
 		/// <summary>
@@ -126,9 +125,9 @@ namespace SPMTool.Extensions
 		///     Read a <see cref="DBObject" /> in the drawing from this <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static DBObject ToDBObject(this ObjectId objectId, Transaction? ongoingTransaction = null)
+		public static DBObject? GetDBObject(this ObjectId objectId, Transaction? ongoingTransaction = null)
 		{
-			if (!objectId.IsValid || objectId.IsNull || objectId.IsErased)
+			if (!objectId.IsOk())
 				return null;
 
 			// Start a transaction
@@ -146,8 +145,8 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Read a <see cref="Entity" /> in the drawing from this <see cref="ObjectId" />.
 		/// </summary>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static Entity GetEntity(this ObjectId objectId, Transaction? ongoingTransaction = null) => (Entity) objectId.ToDBObject(ongoingTransaction);
+		/// <inheritdoc cref="GetDBObject" />
+		public static Entity? GetEntity(this ObjectId objectId, Transaction? ongoingTransaction = null) => (Entity?) objectId.GetDBObject(ongoingTransaction);
 
 		/// <summary>
 		///     Get the <see cref="ObjectId" /> related to this <paramref name="handle" />.
@@ -157,14 +156,13 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Get the <see cref="Entity" /> related to this <paramref name="handle" />.
 		/// </summary>
-		public static Entity GetEntity(this Handle handle) => handle.GetObjectId().GetEntity();
+		public static Entity? GetEntity(this Handle handle) => handle.GetObjectId().GetEntity();
 
 		/// <summary>
 		///     Return a <see cref="DBObjectCollection" /> from an <see cref="ObjectIdCollection" />.
 		/// </summary>
-		/// <param name="collection"></param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static DBObjectCollection ToDBObjectCollection(this ObjectIdCollection collection, Transaction? ongoingTransaction = null)
+		/// <inheritdoc cref="GetDBObject" />
+		public static DBObjectCollection? ToDBObjectCollection(this ObjectIdCollection? collection, Transaction? ongoingTransaction = null)
 		{
 			if (collection is null)
 				return null;
@@ -190,29 +188,29 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Return an <see cref="ObjectIdCollection" /> from an<see cref="DBObjectCollection" />.
 		/// </summary>
-		/// <param name="collection"></param>
-		/// <returns></returns>
-		public static ObjectIdCollection ToObjectIdCollection(this DBObjectCollection collection)
+		public static ObjectIdCollection? ToObjectIdCollection(this DBObjectCollection? collection)
 		{
 			if (collection is null)
 				return null;
 
 			return
-				collection.Count > 0 ? new ObjectIdCollection((from DBObject obj in collection select obj.ObjectId).ToArray()) : new ObjectIdCollection();
+				collection.Count > 0
+					? new ObjectIdCollection((from DBObject obj in collection select obj.ObjectId).ToArray())
+					: new ObjectIdCollection();
 		}
 
 		/// <summary>
 		///     Get the collection of <see cref="ObjectId" />'s of <paramref name="objects" />.
 		/// </summary>
-		public static IEnumerable<ObjectId> GetObjectIds(this IEnumerable<DBObject>? objects) => objects?.Select(obj => obj.ObjectId);
+		public static IEnumerable<ObjectId>? GetObjectIds(this IEnumerable<DBObject>? objects) => objects?.Select(obj => obj.ObjectId);
 
 		/// <summary>
 		///     Get the collection of <see cref="DBObject" />'s of <paramref name="objectIds" />.
 		/// </summary>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static IEnumerable<DBObject> GetDBObjects(this IEnumerable<ObjectId>? objectIds, Transaction? ongoingTransaction = null)
+		/// <inheritdoc cref="GetDBObject" />
+		public static IEnumerable<DBObject>? GetDBObjects(this IEnumerable<ObjectId>? objectIds, Transaction? ongoingTransaction = null)
 		{
-			if (objectIds is null)
+			if (objectIds.IsNullOrEmpty())
 				return null;
 
 			// Start a transaction
@@ -229,27 +227,27 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Get this collection as <see cref="DBPoint" />'s.
 		/// </summary>
-		public static IEnumerable<DBPoint> ToPoints(this IEnumerable<DBObject>? objects) => objects?.Cast<DBPoint>();
+		public static IEnumerable<DBPoint?>? ToPoints(this IEnumerable<DBObject?>? objects) => objects?.Cast<DBPoint?>();
 
 		/// <summary>
 		///     Get this collection as <see cref="Line" />'s.
 		/// </summary>
-		public static IEnumerable<Line> ToLines(this IEnumerable<DBObject>? objects) => objects?.Cast<Line>();
+		public static IEnumerable<Line?>? ToLines(this IEnumerable<DBObject?>? objects) => objects?.Cast<Line?>();
 
 		/// <summary>
 		///     Get this collection as <see cref="Solid" />'s.
 		/// </summary>
-		public static IEnumerable<Solid> ToSolids(this IEnumerable<DBObject>? objects) => objects?.Cast<Solid>();
+		public static IEnumerable<Solid?>? ToSolids(this IEnumerable<DBObject?>? objects) => objects?.Cast<Solid?>();
 
 		/// <summary>
 		///     Get this collection as <see cref="BlockReference" />'s.
 		/// </summary>
-		public static IEnumerable<BlockReference> ToBlocks(this IEnumerable<DBObject>? objects) => objects?.Cast<BlockReference>();
+		public static IEnumerable<BlockReference?>? ToBlocks(this IEnumerable<DBObject?>? objects) => objects?.Cast<BlockReference?>();
 
 		/// <summary>
 		///     Get this collection as <see cref="DBText" />'s.
 		/// </summary>
-		public static IEnumerable<DBText> ToTexts(this IEnumerable<DBObject>? objects) => objects?.Cast<DBText>();
+		public static IEnumerable<DBText?>? ToTexts(this IEnumerable<DBObject?>? objects) => objects?.Cast<DBText?>();
 
 		/// <summary>
 		///     Get the <see cref="Point3d" /> vertices of this <paramref name="solid" />.
@@ -283,32 +281,70 @@ namespace SPMTool.Extensions
 		}
 
 		/// <summary>
-		///     Read this <see cref="DBObject" />'s XData as an <see cref="Array" /> of <see cref="TypedValue" />.
+		///     Read this <see cref="DBObject" />'s extended dictionary as an <see cref="Array" /> of <see cref="TypedValue" />.
 		/// </summary>
-		/// <param name="appName">The application name.</param>
-		public static TypedValue[]? ReadXData(this DBObject dbObject, string appName) => dbObject.GetXDataForApplication(appName)?.AsArray();
+		/// <inheritdoc cref="GetExtendedDictionary(ObjectId, string, Transaction)" />
+		public static TypedValue[]? GetExtendedDictionary(this DBObject? dbObject, string dataName, Transaction? ongoingTransaction = null) => dbObject?.ObjectId.GetExtendedDictionary(dataName, ongoingTransaction);
 
 		/// <summary>
-		///     Read this <see cref="Entity" />'s XData as an <see cref="Array" /> of <see cref="TypedValue" />.
+		///     Read this <see cref="Entity" />'s extended dictionary as an <see cref="Array" /> of <see cref="TypedValue" />.
 		/// </summary>
-		/// <param name="appName">The application name.</param>
-		public static TypedValue[]? ReadXData(this Entity entity, string appName) => entity.GetXDataForApplication(appName)?.AsArray();
+		/// <inheritdoc cref="GetExtendedDictionary(ObjectId, string, Transaction)" />
+		public static TypedValue[]? GetExtendedDictionary(this Entity? entity, string dataName, Transaction? ongoingTransaction = null) => entity?.ObjectId.GetExtendedDictionary(dataName, ongoingTransaction);
 
 		/// <summary>
-		///     Read this <see cref="ObjectId" />'s XData as an <see cref="Array" /> of <see cref="TypedValue" />.
+		///     Read the extended dictionary associated to this <see cref="ObjectId" />'s as an <see cref="Array" /> of
+		///     <see cref="TypedValue" />.
 		/// </summary>
-		/// <param name="appName">The application name.</param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static TypedValue[]? ReadXData(this ObjectId objectId, string appName, Transaction? ongoingTransaction = null)
+		/// <param name="dataName">The name of the required record.</param>
+		/// <inheritdoc cref="GetDBObject" />
+		public static TypedValue[]? GetExtendedDictionary(this ObjectId objectId, string dataName, Transaction? ongoingTransaction = null)
 		{
-			if (!objectId.IsValid || objectId.IsNull || objectId.IsErased)
+			if (!objectId.IsOk())
 				return null;
 
 			// Start a transaction
 			var trans = ongoingTransaction ?? StartTransaction();
 
-			// Get XData
-			var data = trans.GetObject(objectId, OpenMode.ForRead).ReadXData(appName);
+			// Get dictionary
+			var obj = trans.GetObject(objectId, OpenMode.ForRead);
+
+			// Get data from record
+			var data = obj.ExtensionDictionary.GetDataFromDictionary(dataName, trans);
+
+			if (ongoingTransaction is null)
+				trans.Dispose();
+
+			return
+				data;
+		}
+
+		/// <summary>
+		///     Verify the state of this <see cref="ObjectId" />.
+		/// </summary>
+		/// <returns>
+		///     True if <paramref name="objectId" /> is valid, not null and not erased.
+		/// </returns>
+		public static bool IsOk(this ObjectId objectId) => objectId.IsValid && !objectId.IsNull && !objectId.IsErased;
+
+		/// <summary>
+		///     Read a collection of <see cref="TypedValue" /> from a <see cref="DBDictionary" />'s <see cref="ObjectId" />.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId" /> of a <see cref="DBDictionary" />.</param>
+		/// <inheritdoc cref="GetExtendedDictionary(ObjectId, string, Transaction)" />
+		public static TypedValue[]? GetDataFromDictionary(this ObjectId objectId, string dataName, Transaction? ongoingTransaction = null)
+		{
+			if (!objectId.IsOk())
+				return null;
+
+			// Start a transaction
+			var trans = ongoingTransaction ?? StartTransaction();
+
+			// Get record
+			var obj  = trans.GetObject(objectId, OpenMode.ForRead);
+			var data = obj is DBDictionary dict
+				? dict.GetData(dataName, trans)
+				: null;
 
 			if (ongoingTransaction is null)
 				trans.Dispose();
@@ -317,87 +353,103 @@ namespace SPMTool.Extensions
 		}
 
 		/// <summary>
-		///     Set extended data to this <paramref name="objectId" />.
+		///     Read a collection of <see cref="TypedValue" /> from a <see cref="DBDictionary" />.
 		/// </summary>
-		/// <param name="objectId">The <see cref="ObjectId" />.</param>
-		/// <param name="data">The <see cref="ResultBuffer" /> containing the extended data.</param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void SetXData(this ObjectId objectId, ResultBuffer? data, Transaction? ongoingTransaction = null)
+		/// <param name="dbDictionary">The <see cref="DBDictionary"/>.</param>
+		/// <inheritdoc cref="GetExtendedDictionary(ObjectId, string, Transaction)" />
+		public static TypedValue[]? GetData(this DBDictionary? dbDictionary, string dataName, Transaction? ongoingTransaction = null)
 		{
-			if (!objectId.IsValid || objectId.IsNull || objectId.IsErased)
-				return;
+			if (dbDictionary is null)
+				return null;
 
 			// Start a transaction
-			using var lck = DataBase.Document.LockDocument();
-			using var trans = ongoingTransaction ?? StartTransaction();
+			var trans = ongoingTransaction ?? StartTransaction();
 
-			using var ent   = (Entity) trans.GetObject(objectId, OpenMode.ForWrite);
+			var data = dbDictionary.Contains(dataName)
+				? ((Xrecord) trans.GetObject(dbDictionary.GetAt(dataName), OpenMode.ForRead)).Data?.AsArray()
+				: null;
 
-			if (ent != null)
-				ent.XData = data;
+			if (ongoingTransaction is null)
+				trans.Dispose();
 
-			if (ongoingTransaction != null)
-				return;
-
-			trans.Commit();
-			trans.Dispose();
+			return data;
 		}
 
 		/// <summary>
-		///     Set extended data to this <paramref name="objectId" />.
+		///     Set extended dictionary to this <paramref name="objectId" /> and return its <see cref="ObjectId"/>.
 		/// </summary>
-		/// <param name="objectId">The <see cref="ObjectId" />.</param>
-		/// <param name="data">The collection of <see cref="TypedValue" /> containing the extended data.</param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void SetXData(this ObjectId objectId, IEnumerable<TypedValue>? data, Transaction? ongoingTransaction = null) => 
-			objectId.SetXData(new ResultBuffer(data?.ToArray()), ongoingTransaction);
+		/// <param name="objectId">The <see cref="ObjectId" /> to set the extended dictionary.</param>
+		/// <param name="data">The collection of <see cref="TypedValue" /> to set at <paramref name="dataName" />.</param>
+		/// <param name="dataName">The name to set to the record.</param>
+		/// <param name="overwrite">Overwrite record if it already exists?</param>
+		/// <inheritdoc cref="GetDBObject" />
+		public static ObjectId SetExtendedDictionary(this ObjectId objectId, IEnumerable<TypedValue>? data, string dataName, bool overwrite = true, Transaction? ongoingTransaction = null)
+		{
+			if (!objectId.IsOk())
+				return ObjectId.Null;
+
+			// Start a transaction
+			using var lck = Document.LockDocument();
+			using var trans = ongoingTransaction ?? StartTransaction();
+
+			using var obj = trans.GetObject(objectId, OpenMode.ForRead);
+
+			if (obj is null)
+				return ObjectId.Null;
+
+			obj.UpgradeOpen();
+
+			var extId = obj.ExtensionDictionary;
+
+			if (extId.IsNull)
+			{
+				obj.CreateExtensionDictionary();
+				extId = obj.ExtensionDictionary;
+			}
+
+			using var dbExt = (DBDictionary) trans.GetObject(extId, OpenMode.ForRead);
+
+			// Verify if name exists
+			if (!overwrite && dbExt.Contains(dataName))
+				return extId;
+
+			dbExt.UpgradeOpen();
+
+			Xrecord xRec = new Xrecord
+			{
+				Data = data is null
+					? null
+					: new ResultBuffer(data.ToArray())
+			};
+
+			// Set the data
+			dbExt.SetAt(dataName, xRec);
+			trans.AddNewlyCreatedDBObject(xRec, true);
+
+			if (ongoingTransaction is null)
+			{
+				trans.Commit();
+				trans.Dispose();
+			}
+
+			return extId;
+		}
 
 		/// <summary>
-		///     Set extended data to this <paramref name="dbObject" />.
+		///     Set extended data to this <paramref name="dbObject" /> and return its <see cref="ObjectId"/>.
 		/// </summary>
-		/// <param name="dbObject">The <see cref="DBObject" />.</param>
-		/// <param name="data">The <see cref="ResultBuffer" /> containing the extended data.</param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void SetXData(this DBObject dbObject, ResultBuffer? data, Transaction? ongoingTransaction = null) => dbObject.ObjectId.SetXData(data, ongoingTransaction);
+		/// <param name="dbObject">The <see cref="DBObject" /> to set the extended dictionary.</param>
+		/// <inheritdoc cref="SetExtendedDictionary" />
+		public static ObjectId SetExtendedDictionary(this DBObject dbObject, IEnumerable<TypedValue>? data, string dataName, bool overwrite = true, Transaction? ongoingTransaction = null) =>
+			dbObject.ObjectId.SetExtendedDictionary(data, dataName, overwrite, ongoingTransaction);
 
 		/// <summary>
-		///     Set extended data to this <paramref name="dbObject" />.
+		///     Set extended data to this <paramref name="entity" /> and return its <see cref="ObjectId"/>.
 		/// </summary>
-		/// <param name="dbObject">The <see cref="DBObject" />.</param>
-		/// <param name="data">The collection of <see cref="TypedValue" /> containing the extended data.</param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void SetXData(this DBObject dbObject, IEnumerable<TypedValue>? data, Transaction? ongoingTransaction = null) => dbObject.ObjectId.SetXData(data, ongoingTransaction);
-
-		/// <summary>
-		///     Set extended data to this <paramref name="entity" />.
-		/// </summary>
-		/// <param name="entity">The <see cref="Entity" />.</param>
-		/// <param name="data">The <see cref="ResultBuffer" /> containing the extended data.</param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void SetXData(this Entity entity, ResultBuffer? data, Transaction? ongoingTransaction = null) => entity.ObjectId.SetXData(data, ongoingTransaction);
-
-		/// <summary>
-		///     Set extended data to this <paramref name="entity" />.
-		/// </summary>
-		/// <param name="entity">The <see cref="Entity" />.</param>
-		/// <param name="data">The collection of <see cref="TypedValue" /> containing the extended data.</param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void SetXData(this Entity entity, IEnumerable<TypedValue>? data, Transaction? ongoingTransaction = null) => entity.ObjectId.SetXData(data, ongoingTransaction);
-
-		/// <summary>
-		///     Clean extended data attached to this <paramref name="objectId" />.
-		/// </summary>
-		public static void CleanXData(this ObjectId objectId) => objectId.SetXData((ResultBuffer?) null);
-
-		/// <summary>
-		///     Clean extended data attached to this <paramref name="dbObject" />.
-		/// </summary>
-		public static void CleanXData(this DBObject dbObject) => dbObject.SetXData((ResultBuffer?) null);
-
-		/// <summary>
-		///     Clean extended data attached to this <paramref name="entity" />.
-		/// </summary>
-		public static void CleanXData(this Entity entity) => entity.SetXData((ResultBuffer?) null);
+		/// <param name="entity">The <see cref="Entity" /> to set the extended dictionary.</param>
+		/// <inheritdoc cref="SetExtendedDictionary" />
+		public static ObjectId SetExtendedDictionary(this Entity entity, IEnumerable<TypedValue>? data, string dataName, bool overwrite = true, Transaction? ongoingTransaction = null) =>
+			entity.ObjectId.SetExtendedDictionary(data, dataName, overwrite, ongoingTransaction);
 
 		/// <summary>
 		///     Add this <paramref name="dbObject" /> to the drawing and return it's <see cref="ObjectId" />.
@@ -419,7 +471,7 @@ namespace SPMTool.Extensions
 				return ObjectId.Null;
 
 			// Start a transaction
-			using var lck = DataBase.Document.LockDocument();
+			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			// Open the Block table for read
@@ -442,7 +494,8 @@ namespace SPMTool.Extensions
 				trans.Dispose();
 			}
 
-			return entity.ObjectId;
+			return
+				entity.ObjectId;
 		}
 
 		/// <summary>
@@ -461,11 +514,11 @@ namespace SPMTool.Extensions
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
 		public static IEnumerable<ObjectId>? AddToDrawing(this IEnumerable<Entity>? entities, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
 		{
-			if (entities is null || !entities.Any())
+			if (entities.IsNullOrEmpty())
 				return null;
 
 			// Start a transaction
-			using var lck = DataBase.Document.LockDocument();
+			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			// Open the Block table for read
@@ -506,11 +559,11 @@ namespace SPMTool.Extensions
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
 		public static void RegisterErasedEvent(this ObjectId objectId, ObjectErasedEventHandler handler, Transaction? ongoingTransaction = null)
 		{
-			if (handler is null || !objectId.IsValid || objectId.IsNull || objectId.IsErased)
+			if (handler is null || !objectId.IsOk())
 				return;
 
 			// Start a transaction
-			using var lck = DataBase.Document.LockDocument();
+			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			using (var ent = (Entity) trans.GetObject(objectId, OpenMode.ForWrite))
@@ -533,11 +586,11 @@ namespace SPMTool.Extensions
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
 		public static void RegisterErasedEvent(this IEnumerable<ObjectId>? objectIds, ObjectErasedEventHandler handler, Transaction? ongoingTransaction = null)
 		{
-			if (handler is null || objectIds is null || !objectIds.Any())
+			if (handler is null || objectIds.IsNullOrEmpty())
 				return;
 
 			// Start a transaction
-			using var lck = DataBase.Document.LockDocument();
+			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			foreach (var obj in objectIds)
@@ -558,11 +611,11 @@ namespace SPMTool.Extensions
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
 		public static void UnregisterErasedEvent(this ObjectId objectId, ObjectErasedEventHandler handler, Transaction? ongoingTransaction = null)
 		{
-			if (handler is null || !objectId.IsValid || objectId.IsNull || objectId.IsErased)
+			if (handler is null || !objectId.IsOk())
 				return;
 
 			// Start a transaction
-			using var lck = DataBase.Document.LockDocument();
+			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			using (var ent = (Entity) trans.GetObject(objectId, OpenMode.ForWrite))
@@ -585,11 +638,11 @@ namespace SPMTool.Extensions
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
 		public static void UnregisterErasedEvent(this IEnumerable<ObjectId>? objectIds, ObjectErasedEventHandler handler, Transaction? ongoingTransaction = null)
 		{
-			if (handler is null || objectIds is null || !objectIds.Any())
+			if (handler is null || objectIds.IsNullOrEmpty())
 				return;
 
 			// Start a transaction
-			using var lck = DataBase.Document.LockDocument();
+			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			foreach (var obj in objectIds)
@@ -609,11 +662,11 @@ namespace SPMTool.Extensions
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
 		public static void RemoveFromDrawing(this ObjectId obj, Transaction? ongoingTransaction = null)
 		{
-			if (!obj.IsValid || obj.IsNull || obj.IsErased)
+			if (!obj.IsOk())
 				return;
 
 			// Start a transaction
-			using var lck = DataBase.Document.LockDocument();
+			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			using (var ent = (Entity) trans.GetObject(obj, OpenMode.ForWrite))
@@ -648,11 +701,11 @@ namespace SPMTool.Extensions
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
 		public static void RemoveFromDrawing(this IEnumerable<ObjectId>? objects, Transaction? ongoingTransaction = null)
 		{
-			if (objects is null || !objects.Any())
+			if (objects.IsNullOrEmpty())
 				return;
 
 			// Start a transaction
-			using var lck = DataBase.Document.LockDocument();
+			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			foreach (var obj in objects)
@@ -705,10 +758,10 @@ namespace SPMTool.Extensions
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
 		public static void MoveToBottom(this IEnumerable<ObjectId>? objectIds, Transaction? ongoingTransaction = null)
 		{
-			if (objectIds is null || !objectIds.Any())
+			if (objectIds.IsNullOrEmpty())
 				return;
 
-			using var lck = DataBase.Document.LockDocument();
+			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			var blkTbl = (BlockTable) trans.GetObject(BlockTableId, OpenMode.ForRead);
@@ -743,10 +796,10 @@ namespace SPMTool.Extensions
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
 		public static void MoveToTop(this IEnumerable<ObjectId>? objectIds, Transaction? ongoingTransaction = null)
 		{
-			if (objectIds is null || !objectIds.Any())
+			if (objectIds.IsNullOrEmpty())
 				return;
 
-			using var lck = DataBase.Document.LockDocument();
+			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			var blkTbl = (BlockTable) trans.GetObject(BlockTableId, OpenMode.ForRead);
@@ -794,7 +847,7 @@ namespace SPMTool.Extensions
 			var selRes = Model.Editor.SelectAll(layerName.LayerFilter());
 
 			return
-				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0 
+				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0
 					? selRes.Value.GetObjectIds()
 					: new ObjectId[0];
 		}
@@ -804,7 +857,7 @@ namespace SPMTool.Extensions
 		/// </summary>
 		public static IEnumerable<ObjectId> GetObjectIds(this IEnumerable<string>? layerNames)
 		{
-			if (layerNames is null || !layerNames.Any())
+			if (layerNames.IsNullOrEmpty())
 				return null;
 
 			// Get the entities on the layername
@@ -835,10 +888,10 @@ namespace SPMTool.Extensions
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
 		public static void CreateBlock(this IEnumerable<Entity>? blockEntities, Point3d originPoint, string blockName, Transaction? ongoingTransaction = null)
 		{
-			if (blockEntities is null)
+			if (blockEntities.IsNullOrEmpty())
 				return;
 
-			using var lck = DataBase.Document.LockDocument();
+			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			// Open the Block table for read

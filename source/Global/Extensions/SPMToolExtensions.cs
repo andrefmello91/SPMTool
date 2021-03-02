@@ -342,21 +342,6 @@ namespace SPMTool.Extensions
 		}
 
 		/// <summary>
-		///     Read this <see cref="DBObject" />'s XData as an <see cref="Array" /> of <see cref="TypedValue" />.
-		/// </summary>
-		public static TypedValue[] ReadXData(this DBObject dbObject) => dbObject.ReadXData(DataBase.AppName);
-
-		/// <summary>
-		///     Read this <see cref="Entity" />'s XData as an <see cref="Array" /> of <see cref="TypedValue" />.
-		/// </summary>
-		public static TypedValue[] ReadXData(this Entity entity) => entity.ReadXData(DataBase.AppName);
-
-		/// <summary>
-		///     Read this <see cref="ObjectId" />'s XData as an <see cref="Array" /> of <see cref="TypedValue" />.
-		/// </summary>
-		public static TypedValue[] ReadXData(this ObjectId objectId) => objectId.ReadXData(DataBase.AppName);
-
-		/// <summary>
 		///     Convert transparency to alpha.
 		/// </summary>
 		/// <param name="transparency">Transparency percent.</param>
