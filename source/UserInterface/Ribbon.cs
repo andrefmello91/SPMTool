@@ -16,16 +16,23 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		/// Icons for user interface.
 		/// </summary>
-		private static readonly Icons Icons = new Icons();
+		private static readonly Icons Icons;
 
 		/// <summary>
 		/// Create the application <see cref="RibbonTab"/>.
 		/// </summary>
-		private static readonly RibbonTab Tab = new RibbonTab
+		private static readonly RibbonTab Tab;
+
+		static Ribbon()
 		{
-			Title = DataBase.AppName,
-			Id    = DataBase.AppName
-		};
+			Icons = new Icons();
+
+			Tab   = new RibbonTab
+			{
+				Title = DataBase.AppName,
+				Id    = DataBase.AppName
+			};
+		}
 
 		/// <summary>
 		/// Add ribbon buttons to user interface.
@@ -85,7 +92,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.Stringer,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "AddStringer"
 			});
 
@@ -96,7 +103,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.Panel,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "AddPanel"
 			});
 
@@ -123,7 +130,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.StringerReinforcement,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "SetStringerReinforcement"
 			});
 
@@ -134,7 +141,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.PanelReinforcement,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "SetPanelReinforcement"
 			});
 
@@ -161,7 +168,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.AddConstraint,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "AddConstraint"
 			});
 
@@ -172,7 +179,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.AddForce,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "AddForce"
 			});
 
@@ -198,7 +205,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				Image = Icons.DivideStringer,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "DivideStringer"
 			});
 
@@ -209,7 +216,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				Image = Icons.DividePanel,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "DividePanel"
 			});
 
@@ -225,7 +232,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				Image = Icons.ElementData,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "ViewElementData"
 			});
 
@@ -237,7 +244,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				Image = Icons.UpdateElements,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "UpdateElements"
 			});
 			
@@ -263,7 +270,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.Concrete,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "SetConcreteParameters"
 			});
 		}
@@ -291,7 +298,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.LinearAnalysis,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "DoLinearAnalysis"
 			});
 
@@ -302,7 +309,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.NonLinearAnalysis,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "DoNonlinearAnalysis"
 			});
 
@@ -334,7 +341,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.ViewNodes,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "ToggleNodes"
 			});
 
@@ -345,7 +352,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.ViewStringers,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "ToggleStringers"
 			});
 
@@ -356,7 +363,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.ViewPanels,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "TogglePanels"
 			});
 
@@ -367,7 +374,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.ViewForces,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "ToggleForces"
 			});
 
@@ -378,7 +385,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.ViewSupports,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "ToggleSupports"
 			});
 
@@ -410,7 +417,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.StringerForces,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "ToggleStringerForces"
 			});
 
@@ -421,7 +428,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.PanelShear,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "TogglePanelForces"
 			});
 
@@ -432,7 +439,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.PanelStresses,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "TogglePanelStresses"
 			});
 
@@ -443,7 +450,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.ConcreteStresses,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "ToggleConcreteStresses"
 			});
 
@@ -454,7 +461,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.Displacements,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "ToggleDisplacements"
 			});
 
@@ -465,7 +472,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.Cracks,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "ToggleCracks"
 			});
 
@@ -490,7 +497,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.Units,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "SetUnits"
 			});
 
@@ -503,7 +510,7 @@ namespace SPMTool.Application.UserInterface
 				ShowText = true,
 				ShowImage = true,
 				LargeImage = Icons.AnalysisSettings,
-				CommandHandler = new CmdHandler(),
+				CommandHandler = new CommandHandler(),
 				CommandParameter = "SetAnalysisSettings"
 			});
 		}
@@ -511,7 +518,7 @@ namespace SPMTool.Application.UserInterface
         /// <summary>
         /// Command Handler class.
         /// </summary>
-        private class CmdHandler : System.Windows.Input.ICommand
+        private class CommandHandler : System.Windows.Input.ICommand
 		{
 			public event EventHandler CanExecuteChanged;
 

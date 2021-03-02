@@ -29,62 +29,62 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Collection of element <see cref="Layer" />'s.
 		/// </summary>
-		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
+		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support }  ;
 
 		/// <summary>
 		///     Command names for undo and redo.
 		/// </summary>
-		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" };
+		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" }  ;
 
 		/// <summary>
 		///     The collection of <see cref="NodeObject" />'s in the model.
 		/// </summary>
-		public static readonly NodeList Nodes = NodeList.ReadFromDrawing();
+		public static readonly NodeList Nodes;
 
 		/// <summary>
 		///     The collection of <see cref="StringerObject" />'s in the model.
 		/// </summary>
-		public static readonly StringerList Stringers = StringerList.ReadFromDrawing();
+		public static readonly StringerList Stringers;
 
 		/// <summary>
 		///     The collection of <see cref="PanelObject" />'s in the model.
 		/// </summary>
-		public static readonly PanelList Panels = PanelList.ReadFromDrawing();
+		public static readonly PanelList Panels;
 
 		/// <summary>
 		///     The collection of <see cref="ForceObject" />'s in the model.
 		/// </summary>
-		public static readonly ForceList Forces = ForceList.ReadFromDrawing();
+		public static readonly ForceList Forces;
 
 		/// <summary>
 		///     The collection of <see cref="ConstraintObject" />'s in the model.
 		/// </summary>
-		public static readonly ConstraintList Constraints = ConstraintList.ReadFromDrawing();
+		public static readonly ConstraintList Constraints;
 
 		/// <summary>
 		///     List of distinct widths from objects in the model.
 		/// </summary>
-		public static EList<Length> ElementWidths = Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToEList();
+		public static EList<Length> ElementWidths;
 
 		/// <summary>
 		///     List of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
 		/// </summary>
-		public static EList<CrossSection> StringerCrossSections = GetCrossSections();
+		public static EList<CrossSection> StringerCrossSections;
 
 		/// <summary>
 		///     List of distinct reinforcements of stringers in the model.
 		/// </summary>
-		public static EList<UniaxialReinforcement> StringerReinforcements = GetStringerReinforcements();
+		public static EList<UniaxialReinforcement> StringerReinforcements;
 
 		/// <summary>
 		///     List of distinct reinforcements of panels in the model.
 		/// </summary>
-		public static EList<WebReinforcementDirection> PanelReinforcements = GetPanelReinforcements();
+		public static EList<WebReinforcementDirection> PanelReinforcements;
 
 		/// <summary>
 		///     List of distinct steels of elements in the model.
 		/// </summary>
-		public static EList<Steel> Steels = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList();
+		public static EList<Steel> Steels;
 
 		#endregion
 
@@ -94,6 +94,30 @@ namespace SPMTool.Core
 		///     Get application <see cref="Autodesk.AutoCAD.EditorInput.Editor" />.
 		/// </summary>
 		public static Autodesk.AutoCAD.EditorInput.Editor Editor => DataBase.Document.Editor;
+
+		#endregion
+
+		#region Constructors
+
+		static Model()
+		{
+			// Get elements
+			Nodes       = NodeList.ReadFromDrawing();
+			Forces      = ForceList.ReadFromDrawing();
+			Constraints = ConstraintList.ReadFromDrawing();
+			Stringers   = StringerList.ReadFromDrawing();
+			Panels      = PanelList.ReadFromDrawing();
+
+			// Get properties
+			StringerCrossSections  = GetCrossSections();
+			ElementWidths          = Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToEList();
+			StringerReinforcements = GetStringerReinforcements();
+			PanelReinforcements    = GetPanelReinforcements();
+			Steels                 = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList();
+
+			// Set parameters
+			SetAppParameters();
+		}
 
 		#endregion
 

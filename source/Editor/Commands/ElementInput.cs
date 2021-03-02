@@ -46,14 +46,16 @@ namespace SPMTool.Editor.Commands
 			    // Prompt for the start point of Stringer
 			    var endPtn = UserInput.GetPoint("Enter the end point:", stPt);
 
-			    if (!endPtn.HasValue)
+			    if (endPtn is null)
 				    // Finish command
 				    break;
 
 			    var endPt = endPtn.Value;
 
+			    var pts = new[] {stPt, endPt}.OrderBy(p => p).ToArray();
+
 			    // Create the Stringer and add to drawing
-			    Stringers.Add(stPt, endPt);
+			    Stringers.Add(pts[0], pts[1]);
 
 			    // Set the start point of the new Stringer
 			    stPt = endPt;

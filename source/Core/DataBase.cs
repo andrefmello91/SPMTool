@@ -10,6 +10,8 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
+#nullable enable
+
 namespace SPMTool.Core
 {
 	/// <summary>
@@ -25,14 +27,14 @@ namespace SPMTool.Core
 		public const string AppName = "SPMTool";
 
 		/// <summary>
-		///		Application settings.
+		///     Application settings.
 		/// </summary>
-		public static readonly Settings Settings = new Settings();
+		public static readonly Settings Settings;
 
 		/// <summary>
-		///		Concrete parameters and constitutive model.
+		///     Concrete parameters and constitutive model.
 		/// </summary>
-		public static readonly ConcreteData ConcreteData = new ConcreteData();
+		public static readonly ConcreteData ConcreteData;
 
 		#endregion
 
@@ -85,6 +87,24 @@ namespace SPMTool.Core
 
 		#endregion
 
+		#region Constructors
+
+		static DataBase()
+		{
+            // Register app in AutoCAD
+            RegisterApp();
+
+            // Create layers and blocks
+            CreateLayers();
+            Blocks.CreateBlocks();
+
+            // Get app settings
+            Settings     = new Settings();
+            ConcreteData = new ConcreteData();
+        }
+
+		#endregion
+
 		#region  Methods
 
 		/// <summary>
@@ -98,15 +118,16 @@ namespace SPMTool.Core
 		public static void RegisterApp()
 		{
 			// Start a transaction
+			using var lck = Document.LockDocument();
 			using var trans = StartTransaction();
 
 			// Open the Registered Applications table for read
-			using var regAppTbl = (RegAppTable) trans.GetObject(Database.RegAppTableId, OpenMode.ForRead);
+			var regAppTbl = (RegAppTable) trans.GetObject(Database.RegAppTableId, OpenMode.ForRead);
 
 			if (regAppTbl.Has(AppName))
 				return;
 
-			using var regAppTblRec = new RegAppTableRecord { Name = AppName };
+			var regAppTblRec = new RegAppTableRecord { Name = AppName };
 			regAppTbl.UpgradeOpen();
 			regAppTbl.Add(regAppTblRec);
 			trans.AddNewlyCreatedDBObject(regAppTblRec, true);

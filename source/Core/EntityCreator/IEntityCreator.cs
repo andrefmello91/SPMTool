@@ -6,6 +6,8 @@ using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
+#nullable enable
+
 namespace SPMTool.Core
 {
 	/// <summary>
@@ -80,6 +82,8 @@ namespace SPMTool.Core
 		public static void AddToDrawing<T>(this IEnumerable<T>? objects)
 			where T : IEntityCreator<Entity>
 		{
+			using var lck = DataBase.Document.LockDocument();
+
 			if (objects is null || !objects.Any())
 				return;
 

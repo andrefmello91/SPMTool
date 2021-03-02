@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
@@ -9,6 +10,8 @@ using MathNet.Numerics;
 using SPMTool.Core;
 using UnitsNet.Units;
 using static SPMTool.Core.DataBase;
+
+#nullable enable
 
 namespace SPMTool.Extensions
 {
@@ -325,13 +328,13 @@ namespace SPMTool.Extensions
 				return;
 
 			// Start a transaction
-			var trans = ongoingTransaction ?? StartTransaction();
+			using var lck = DataBase.Document.LockDocument();
+			using var trans = ongoingTransaction ?? StartTransaction();
 
-			using (var ent   = (Entity) trans.GetObject(objectId, OpenMode.ForWrite))
-			{
-				if (ent != null)
-					ent.XData = data;
-			}
+			using var ent   = (Entity) trans.GetObject(objectId, OpenMode.ForWrite);
+
+			if (ent != null)
+				ent.XData = data;
 
 			if (ongoingTransaction != null)
 				return;
@@ -416,6 +419,7 @@ namespace SPMTool.Extensions
 				return ObjectId.Null;
 
 			// Start a transaction
+			using var lck = DataBase.Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			// Open the Block table for read
@@ -461,6 +465,7 @@ namespace SPMTool.Extensions
 				return null;
 
 			// Start a transaction
+			using var lck = DataBase.Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			// Open the Block table for read
@@ -505,6 +510,7 @@ namespace SPMTool.Extensions
 				return;
 
 			// Start a transaction
+			using var lck = DataBase.Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			using (var ent = (Entity) trans.GetObject(objectId, OpenMode.ForWrite))
@@ -531,6 +537,7 @@ namespace SPMTool.Extensions
 				return;
 
 			// Start a transaction
+			using var lck = DataBase.Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			foreach (var obj in objectIds)
@@ -555,6 +562,7 @@ namespace SPMTool.Extensions
 				return;
 
 			// Start a transaction
+			using var lck = DataBase.Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			using (var ent = (Entity) trans.GetObject(objectId, OpenMode.ForWrite))
@@ -581,6 +589,7 @@ namespace SPMTool.Extensions
 				return;
 
 			// Start a transaction
+			using var lck = DataBase.Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			foreach (var obj in objectIds)
@@ -604,6 +613,7 @@ namespace SPMTool.Extensions
 				return;
 
 			// Start a transaction
+			using var lck = DataBase.Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			using (var ent = (Entity) trans.GetObject(obj, OpenMode.ForWrite))
@@ -642,6 +652,7 @@ namespace SPMTool.Extensions
 				return;
 
 			// Start a transaction
+			using var lck = DataBase.Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			foreach (var obj in objects)
@@ -697,6 +708,7 @@ namespace SPMTool.Extensions
 			if (objectIds is null || !objectIds.Any())
 				return;
 
+			using var lck = DataBase.Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			var blkTbl = (BlockTable) trans.GetObject(BlockTableId, OpenMode.ForRead);
@@ -734,6 +746,7 @@ namespace SPMTool.Extensions
 			if (objectIds is null || !objectIds.Any())
 				return;
 
+			using var lck = DataBase.Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			var blkTbl = (BlockTable) trans.GetObject(BlockTableId, OpenMode.ForRead);
@@ -825,35 +838,35 @@ namespace SPMTool.Extensions
 			if (blockEntities is null)
 				return;
 
+			using var lck = DataBase.Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			// Open the Block table for read
-			using (var blkTbl = (BlockTable) trans.GetObject(BlockTableId, OpenMode.ForRead))
+			using var blkTbl = (BlockTable) trans.GetObject(BlockTableId, OpenMode.ForRead);
+
+			// Check if the support blocks already exist in the drawing
+			if (blkTbl.Has(blockName))
+				return;
+
+			// Create the X block
+			using var blkTblRec = new BlockTableRecord
 			{
-				// Check if the support blocks already exist in the drawing
-				if (blkTbl.Has(blockName))
-					return;
+				Name = blockName
+			};
 
-				// Create the X block
-				using (var blkTblRec = new BlockTableRecord())
-				{
-					blkTblRec.Name = blockName;
+			// Add the block table record to the block table and to the transaction
+			blkTbl.UpgradeOpen();
+			blkTbl.Add(blkTblRec);
+			trans.AddNewlyCreatedDBObject(blkTblRec, true);
 
-					// Add the block table record to the block table and to the transaction
-					blkTbl.UpgradeOpen();
-					blkTbl.Add(blkTblRec);
-					trans.AddNewlyCreatedDBObject(blkTblRec, true);
+			// Set the insertion point for the block
+			blkTblRec.Origin = originPoint;
 
-					// Set the insertion point for the block
-					blkTblRec.Origin = originPoint;
-
-					// Add the elements to the block
-					foreach (var ent in blockEntities)
-					{
-						blkTblRec.AppendEntity(ent);
-						trans.AddNewlyCreatedDBObject(ent, true);
-					}
-				}
+			// Add the elements to the block
+			foreach (var ent in blockEntities)
+			{
+				blkTblRec.AppendEntity(ent);
+				trans.AddNewlyCreatedDBObject(ent, true);
 			}
 
 			// Commit changes

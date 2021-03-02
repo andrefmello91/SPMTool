@@ -1,13 +1,13 @@
 ﻿using System;
-using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Material.Concrete;
-using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 
 using static Material.Concrete.Parameters;
+
+#nullable enable
 
 namespace SPMTool.Core.Materials
 {
@@ -30,12 +30,6 @@ namespace SPMTool.Core.Materials
         /// Get <see cref="Material.Concrete.ConstitutiveModel"/> saved in database.
         /// </summary>
         public ConstitutiveModel ConstitutiveModel { get; private set; } = ReadModel();
-
-        /// <summary>
-        /// Save concrete <see cref="Material.Concrete.Parameters"/> and <see cref="Material.Concrete.ConstitutiveModel"/> in database.
-        /// </summary>
-        /// <param name="concrete">The <see cref="ConcreteData"/> object.</param>
-        public void Save(Concrete concrete) => Save(concrete.Parameters, ConstitutiveModel);
 
 	    /// <summary>
 	    /// Save concrete <see cref="Material.Concrete.Parameters"/> and <see cref="Material.Concrete.ConstitutiveModel"/> in database.
@@ -78,7 +72,6 @@ namespace SPMTool.Core.Materials
 	    /// <summary>
 	    /// Read concrete <see cref="Parameters"/> saved in database.
 	    /// </summary>
-	    /// <param name="setConcrete">Concrete must be set by user if it's not set yet?</param>
 	    public static IParameters ReadFromDictionary()
 	    {
 		    var data = DataBase.ReadDictionaryEntry(ConcreteParams);

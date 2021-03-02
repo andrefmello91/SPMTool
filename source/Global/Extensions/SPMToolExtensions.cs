@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Windows.Media.Animation;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
@@ -15,6 +16,8 @@ using SPMTool.Core;
 using SPMTool.Enums;
 using UnitsNet.Units;
 using static SPMTool.Core.DataBase;
+
+#nullable enable 
 
 namespace SPMTool.Extensions
 {
@@ -90,6 +93,7 @@ namespace SPMTool.Extensions
 			var layerName = $"{layer}";
 
 			// Start a transaction
+			using var lck = Document.LockDocument();
 			using var trans = StartTransaction();
 
 			using var lyrTbl = (LayerTable) trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead);
@@ -103,17 +107,18 @@ namespace SPMTool.Extensions
 			using var lyrTblRec = new LayerTableRecord
 			{
 				Name = layerName,
-				Color = attribute.Color,
-				Transparency = attribute.Transparency
 			};
-
-
+			
 			// Upgrade the Layer table for write
 			lyrTbl.UpgradeOpen();
 
 			// Append the new layer to the Layer table and the transaction
 			lyrTbl.Add(lyrTblRec);
 			trans.AddNewlyCreatedDBObject(lyrTblRec, true);
+
+			// Set color and transparency
+			lyrTblRec.Color = attribute.Color;
+			lyrTblRec.Transparency = attribute.Transparency;
 
 			// Commit and dispose the transaction
 			trans.Commit();
@@ -125,9 +130,11 @@ namespace SPMTool.Extensions
 		public static void Create(this IEnumerable<Layer> layers)
 		{
 			// Start a transaction
+			using var lck = Document.LockDocument();
+
 			using var trans = StartTransaction();
 
-			using var lyrTbl = (LayerTable) trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead);
+			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
 
 			foreach (var layer in layers)
 			{
@@ -137,14 +144,12 @@ namespace SPMTool.Extensions
 				if (lyrTbl.Has(layerName))
 					continue;
 
-				// Get layer attributes
-				var attribute = layer.GetAttribute<LayerAttribute>()!;
+                //// Get layer attributes
+                var attribute = layer.GetAttribute<LayerAttribute>()!;
 
-				using var lyrTblRec = new LayerTableRecord
+                var lyrTblRec = new LayerTableRecord
 				{
 					Name         = layerName,
-					Color        = attribute.Color,
-					Transparency = attribute.Transparency
 				};
 
 				// Upgrade the Layer table for write
@@ -153,6 +158,10 @@ namespace SPMTool.Extensions
 				// Append the new layer to the Layer table and the transaction
 				lyrTbl.Add(lyrTblRec);
 				trans.AddNewlyCreatedDBObject(lyrTblRec, true);
+
+				// Set color and transparency
+				lyrTblRec.Color = attribute.Color;
+				lyrTblRec.Transparency = attribute.Transparency;
 			}
 
 			// Commit and dispose the transaction
@@ -170,6 +179,8 @@ namespace SPMTool.Extensions
 		/// </summary>
 		public static void Create(this IEnumerable<Block> blocks)
 		{
+			using var lck = Document.LockDocument();
+
 			using var trans = StartTransaction();
 
 			foreach (var block in blocks)
