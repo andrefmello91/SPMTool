@@ -45,9 +45,14 @@ namespace SPMTool.Application.UserInterface
 		public string AggregateUnit => _aggUnit.Abbrev();
 
 		/// <summary>
+		///		Get the text boxes for custom parameters.
+		/// </summary>
+		private TextBox[] CustomParameterBoxes => new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox };
+
+		/// <summary>
 		///     Verify if custom parameters text boxes are filled.
 		/// </summary>
-		private bool CustomParametersSet => CheckBoxes(new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox });
+		private bool CustomParametersSet => CheckBoxes(CustomParameterBoxes);
 
 		/// <summary>
 		///     Verify if strength and aggregate diameter text boxes are filled.
@@ -82,8 +87,9 @@ namespace SPMTool.Application.UserInterface
 			// Get image
 			Graph.Source = Icons.GetBitmap(Properties.Resources.concrete_constitutive);
 
-			// Initiate combo boxes with units set
+			// Initiate combo boxes and set events
 			InitiateComboBoxes();
+			SetEvents();
 
 			DataContext = this;
 		}
@@ -116,21 +122,44 @@ namespace SPMTool.Application.UserInterface
 			ConstitutiveBox.SelectedItem = _constitutiveModel.ToString();
 
 			UpdateCustomParameterBoxes();
+
+			if (_parameters.Model != ParameterModel.Custom)
+				CustomParameterBoxes.Disable();
+		}
+
+		/// <summary>
+		///		Set events in UI elements.
+		/// </summary>
+		private void SetEvents()
+		{
+			StrengthBox.TextChanged          += StrengthBox_OnTextChanged;
+			AggTypeBox.SelectionChanged      += AggTypeBox_OnSelectionChanged;
+			ConstitutiveBox.SelectionChanged += ConstitutiveBox_OnSelectionChanged;
+			ParameterBox.SelectionChanged    += ParameterBox_OnSelectionChanged;
 		}
 
 		/// <summary>
 		///     Update parameters.
 		/// </summary>
-		private void UpdateParameters()
+		private void UpdateParameters(ParameterModel model)
 		{
-			if (_parameters is CustomParameters || StrengthBox.Text == string.Empty || AggDiamBox.Text == string.Empty || AggTypeBox.SelectedItem.ToString() == string.Empty)
+			if (StrengthBox.Text == string.Empty || AggDiamBox.Text == string.Empty || AggTypeBox.SelectedItem.ToString() == string.Empty)
 				return;
 
-			// Read parameters
-			_parameters.Strength          = Pressure.From(double.Parse(StrengthBox.Text, CultureInfo.InvariantCulture), _stressUnit);
-			_parameters.AggregateDiameter = Length.From(double.Parse(AggDiamBox.Text, CultureInfo.InvariantCulture), _aggUnit);
+			var type  = (AggregateType)Enum.Parse(typeof(AggregateType), AggTypeBox.SelectedItem.ToString()!);
 
-			_parameters.Type = (AggregateType) Enum.Parse(typeof(AggregateType), AggTypeBox.SelectedItem.ToString()!);
+			_parameters = _parameters switch
+			{
+				CustomParameters cusPar when model != ParameterModel.Custom => cusPar.ToParameters(model, type),
+				Parameters       par    when model == ParameterModel.Custom => par.ToCustomParameters(),
+				_                                                           => _parameters
+			};
+
+			// Read parameters
+			_parameters.Model             = model;
+			_parameters.Strength          = Pressure.From(double.Parse(StrengthBox.Text), _stressUnit);
+			_parameters.AggregateDiameter = Length.From(double.Parse(AggDiamBox.Text), _aggUnit);
+			_parameters.Type              = type;
 		}
 
 		/// <summary>
@@ -152,19 +181,29 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void GetCustomParameters()
 		{
-			// Read parameters
-			double
-				fc    = double.Parse(StrengthBox.Text),
-				phiAg = double.Parse(AggDiamBox.Text),
-				Ec    = double.Parse(ModuleBox.Text),
-				ft    = double.Parse(TensileBox.Text),
-				ec    = double.Parse(PlasticStrainBox.Text) * -0.001,
-				ecu   = double.Parse(UltStrainBox.Text) * -0.001;
+			if (!(_parameters is CustomParameters cusPar))
+				return;
 
-			_parameters = new CustomParameters(fc, phiAg, ft, Ec, ec, ecu, _stressUnit, _aggUnit);
+			// Read parameters
+			cusPar.TensileStrength = Pressure.From(double.Parse(TensileBox.Text), _stressUnit);
+			cusPar.ElasticModule = Pressure.From(double.Parse(ModuleBox.Text), _stressUnit);
+			cusPar.PlasticStrain = double.Parse(PlasticStrainBox.Text) * -0.001;
+			cusPar.UltimateStrain = double.Parse(UltStrainBox.Text) * -0.001;
+
+			_parameters = cusPar;
+
+			//double
+			//	fc    = double.Parse(StrengthBox.Text),
+			//	phiAg = double.Parse(AggDiamBox.Text),
+			//	Ec    = double.Parse(ModuleBox.Text),
+			//	ft    = double.Parse(TensileBox.Text),
+			//	ec    = double.Parse(PlasticStrainBox.Text) * -0.001,
+			//	ecu   = double.Parse(UltStrainBox.Text) * -0.001;
+
+			//_parameters = new CustomParameters(fc, phiAg, ft, Ec, ec, ecu, _stressUnit, _aggUnit);
 		}
 
-		private void ParameterBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ParameterBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			var parBox = (ComboBox) sender;
 
@@ -173,18 +212,19 @@ namespace SPMTool.Application.UserInterface
 
 			var model = (ParameterModel) Enum.Parse(typeof(ParameterModel), parBox.SelectedItem.ToString()!);
 
-			var customBoxes = new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox };
+			// Update parameters
+			UpdateParameters(model);
 
-			if (model == ParameterModel.Custom)
+			if (model != ParameterModel.Custom)
 			{
-				customBoxes.Enable();
-				GetCustomParameters();
-				return;
+				UpdateCustomParameterBoxes();
+				CustomParameterBoxes.Disable();
 			}
-
-			UpdateParameters();
-			UpdateCustomParameterBoxes();
-			customBoxes.Disable();
+			else
+			{
+				GetCustomParameters();
+				CustomParameterBoxes.Enable();
+			}
 		}
 
 		private void StrengthBox_OnTextChanged(object sender, TextChangedEventArgs e)
@@ -236,7 +276,11 @@ namespace SPMTool.Application.UserInterface
 				return;
 			}
 
-			if (_parameters.Model == ParameterModel.Custom)
+			var model = (ParameterModel)Enum.Parse(typeof(ParameterModel), ParameterBox.SelectedItem.ToString()!);
+
+			UpdateParameters(model);
+
+			if (model == ParameterModel.Custom)
 			{
 				if (!CustomParametersSet)
 				{
@@ -245,10 +289,6 @@ namespace SPMTool.Application.UserInterface
 				}
 
 				GetCustomParameters();
-			}
-			else
-			{
-				UpdateParameters();
 			}
 
 			// Save units on database
