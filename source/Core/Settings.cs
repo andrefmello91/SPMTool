@@ -1,9 +1,6 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using Autodesk.AutoCAD.DatabaseServices;
+﻿using System.Diagnostics.CodeAnalysis;
 using Extensions;
 using SPMTool.Core;
-using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet.Units;
 
@@ -12,7 +9,7 @@ namespace SPMTool.Application
 	/// <summary>
 	///     Application settings class.
 	/// </summary>
-	public class Settings
+	public class Settings : DictionaryCreator
 	{
 		#region Fields
 
@@ -41,8 +38,8 @@ namespace SPMTool.Application
 		/// </summary>
 		public static readonly string[] StressUnits = { PressureUnit.Pascal.Abbrev(), PressureUnit.Kilopascal.Abbrev(), PressureUnit.Megapascal.Abbrev(), PressureUnit.Gigapascal.Abbrev() };
 
-		private AnalysisSettings _analysis = ReadSettingsFromDatabase();
-		private Units _units = ReadUnitsFromDatabase();
+		private AnalysisSettings _analysis;
+		private Units _units;
 
 		#endregion
 
@@ -54,7 +51,7 @@ namespace SPMTool.Application
 		public AnalysisSettings Analysis
 		{
 			get => _analysis;
-			set => Save(value);
+			set => SetAnalysisSettings(value);
 		}
 
 		/// <summary>
@@ -63,7 +60,17 @@ namespace SPMTool.Application
 		public Units Units
 		{
 			get => _units;
-			set => Save(value);
+			set => SetUnits(value);
+		}
+
+		#endregion
+
+		#region Constructors
+
+		public Settings()
+		{
+			DictionaryId = DataBase.NodId;
+			GetProperties();
 		}
 
 		#endregion
@@ -74,107 +81,80 @@ namespace SPMTool.Application
 		///     Read units on dictionary.
 		/// </summary>
 		[return: NotNull]
-		public static Units ReadUnitsFromDatabase()
+		private Units GetUnits()
 		{
-			var data = DataBase.ReadDictionaryEntry(USaveName);
+			var data = GetDictionary(USaveName);
 
-			switch (data)
+			return data switch
 			{
-				case null:
-					return Units.Default;
-
-				default:
-
-					// Remove later
-					var crckOp = data.Length < 11
-						? Units.Default.CrackOpenings
-						: (LengthUnit) data[(int) UnitsIndex.CrackOpenings].ToInt();
-
-					// Get the parameters from XData
-					return
-						new Units
-						{
-							Geometry              = (LengthUnit) data[(int) UnitsIndex.Geometry].ToInt(),
-							Reinforcement         = (LengthUnit) data[(int) UnitsIndex.Reinforcement].ToInt(),
-							Displacements         = (LengthUnit) data[(int) UnitsIndex.Displacements].ToInt(),
-							AppliedForces         = (ForceUnit) data[(int) UnitsIndex.AppliedForces].ToInt(),
-							StringerForces        = (ForceUnit) data[(int) UnitsIndex.StringerForces].ToInt(),
-							PanelStresses         = (PressureUnit) data[(int) UnitsIndex.PanelStresses].ToInt(),
-							MaterialStrength      = (PressureUnit) data[(int) UnitsIndex.MaterialStrength].ToInt(),
-							DisplacementMagnifier = data[(int) UnitsIndex.DisplacementFactor].ToInt(),
-							CrackOpenings         = crckOp
-						};
-			}
+				null => Units.Default,
+				_    => new Units
+				{
+					Geometry              = (LengthUnit)   data[0].ToInt(),
+					Reinforcement         = (LengthUnit)   data[1].ToInt(),
+					Displacements         = (LengthUnit)   data[2].ToInt(),
+					AppliedForces         = (ForceUnit)    data[3].ToInt(),
+					StringerForces        = (ForceUnit)    data[4].ToInt(),
+					PanelStresses         = (PressureUnit) data[5].ToInt(),
+					MaterialStrength      = (PressureUnit) data[6].ToInt(),
+					CrackOpenings         = (LengthUnit)   data[7].ToInt(),
+					DisplacementMagnifier = data[8].ToInt()
+				}
+			};
 		}
 
 		/// <summary>
 		///     Read analysis settings on dictionary.
 		/// </summary>
 		[return: NotNull]
-		public static AnalysisSettings ReadSettingsFromDatabase()
+		private AnalysisSettings GetAnalysisSettings()
 		{
-			var data = DataBase.ReadDictionaryEntry(ASSaveName);
+			var data = GetDictionary(ASSaveName);
 
-			return data.IsNullOrEmpty()
-				? AnalysisSettings.Default
-				: new AnalysisSettings
+			return data switch
+			{
+				null => AnalysisSettings.Default,
+				_    => new AnalysisSettings
 				{
-					Tolerance     = data[(int) AnalysisIndex.Tolerance].ToDouble(),
-					NumLoadSteps  = data[(int) AnalysisIndex.NumLoadSteps].ToInt(),
-					MaxIterations = data[(int) AnalysisIndex.MaxIterations].ToInt()
-				};
+					Tolerance     = data[0].ToDouble(),
+					NumLoadSteps  = data[1].ToInt(),
+					MaxIterations = data[2].ToInt()
+				}
+			};
 		}
 
 		/// <summary>
 		///     Save this <paramref name="units" /> in database.
 		/// </summary>
-		private void Save(Units units)
+		private void SetUnits(Units units)
 		{
 			_units = units;
 
-			// Get the Xdata size
-			var size = Enum.GetNames(typeof(UnitsIndex)).Length;
-			var data = new TypedValue[size];
-
-			// Set data
-			data[(int) UnitsIndex.AppName]            = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
-			data[(int) UnitsIndex.XDataStr]           = new TypedValue((int) DxfCode.ExtendedDataAsciiString, USaveName);
-			data[(int) UnitsIndex.Geometry]           = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Geometry);
-			data[(int) UnitsIndex.Reinforcement]      = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Reinforcement);
-			data[(int) UnitsIndex.Displacements]      = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.Displacements);
-			data[(int) UnitsIndex.AppliedForces]      = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.AppliedForces);
-			data[(int) UnitsIndex.StringerForces]     = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.StringerForces);
-			data[(int) UnitsIndex.PanelStresses]      = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.PanelStresses);
-			data[(int) UnitsIndex.MaterialStrength]   = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) units.MaterialStrength);
-			data[(int) UnitsIndex.DisplacementFactor] = new TypedValue((int) DxfCode.ExtendedDataReal,      units.DisplacementMagnifier);
-			data[(int) UnitsIndex.CrackOpenings]      = new TypedValue((int) DxfCode.ExtendedDataReal,      (int) units.CrackOpenings);
-
-			// Create the entry in the NOD and add to the transaction
-			using var rb = new ResultBuffer(data);
-			DataBase.SaveDictionary(rb, USaveName);
+			SetDictionary(units.GetTypedValues(), USaveName);
 		}
 
 		/// <summary>
 		///     Save this <paramref name="settings" /> in database.
 		/// </summary>
-		private void Save(AnalysisSettings settings)
+		private void SetAnalysisSettings(AnalysisSettings settings)
 		{
 			_analysis = settings;
 
-			// Get the Xdata size
-			var size = Enum.GetNames(typeof(AnalysisIndex)).Length;
-			var data = new TypedValue[size];
+			SetDictionary(settings.GetTypedValues(), ASSaveName);
+		}
 
-			// Set data
-			data[(int) AnalysisIndex.AppName]       = new TypedValue((int) DxfCode.ExtendedDataRegAppName, DataBase.AppName);
-			data[(int) AnalysisIndex.XDataStr]      = new TypedValue((int) DxfCode.ExtendedDataAsciiString, ASSaveName);
-			data[(int) AnalysisIndex.Tolerance]     = new TypedValue((int) DxfCode.ExtendedDataReal, settings.Tolerance);
-			data[(int) AnalysisIndex.NumLoadSteps]  = new TypedValue((int) DxfCode.ExtendedDataInteger32, settings.NumLoadSteps);
-			data[(int) AnalysisIndex.MaxIterations] = new TypedValue((int) DxfCode.ExtendedDataInteger32, settings.MaxIterations);
+		protected override bool GetProperties()
+		{
+			_analysis = GetAnalysisSettings();
+			_units    = GetUnits();
 
-			// Create the entry in the NOD and add to the transaction
-			using var rb = new ResultBuffer(data);
-			DataBase.SaveDictionary(rb, ASSaveName);
+			return true;
+		}
+
+		protected override void SetProperties()
+		{
+			SetAnalysisSettings(_analysis);
+			SetUnits(_units);
 		}
 
 		#endregion

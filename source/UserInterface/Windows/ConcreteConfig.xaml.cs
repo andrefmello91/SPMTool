@@ -252,7 +252,8 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			// Save units on database
-			DataBase.ConcreteData.Save(_parameters, _constitutiveModel);
+			DataBase.ConcreteData.Parameters        = _parameters;
+			DataBase.ConcreteData.ConstitutiveModel = _constitutiveModel;
 			Close();
 		}
 

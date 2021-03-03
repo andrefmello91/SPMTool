@@ -7,6 +7,7 @@ using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
+using Material.Concrete;
 using Material.Reinforcement;
 using Material.Reinforcement.Biaxial;
 using Material.Reinforcement.Uniaxial;
@@ -445,6 +446,58 @@ namespace SPMTool.Extensions
 				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.YieldStress.Megapascals   ?? 0),
 				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.ElasticModule.Megapascals ?? 0),
 			};
+
+		/// <summary>
+		///		Get an array of <see cref="TypedValue"/> from a <see cref="WebReinforcementDirection"/>.
+		/// </summary>
+		public static TypedValue[] GetTypedValues(this IParameters parameters) =>
+			new []
+			{
+				new TypedValue((int) DxfCode.Int32, (int) parameters.Model),
+				new TypedValue((int) DxfCode.Int32, (int) parameters.Type),
+				new TypedValue((int) DxfCode.Real, parameters.Strength.Megapascals),
+				new TypedValue((int) DxfCode.Real, parameters.AggregateDiameter.Millimeters),
+				new TypedValue((int) DxfCode.Real, parameters.TensileStrength.Megapascals),
+				new TypedValue((int) DxfCode.Real, parameters.ElasticModule.Megapascals),
+				new TypedValue((int) DxfCode.Real, parameters.PlasticStrain),
+				new TypedValue((int) DxfCode.Real, parameters.UltimateStrain)
+			};
+
+		/// <summary>
+		///		Get an array of <see cref="TypedValue"/> from a <see cref="WebReinforcementDirection"/>.
+		/// </summary>
+		public static TypedValue[] GetTypedValues(this Units? units)
+		{
+			units ??= Units.Default;
+
+			return new []
+			{
+				new TypedValue((int)DxfCode.Int32, (int)units.Geometry),
+				new TypedValue((int)DxfCode.Int32, (int)units.Reinforcement),
+				new TypedValue((int)DxfCode.Int32, (int)units.Displacements),
+				new TypedValue((int)DxfCode.Int32, (int)units.AppliedForces),
+				new TypedValue((int)DxfCode.Int32, (int)units.StringerForces),
+				new TypedValue((int)DxfCode.Int32, (int)units.PanelStresses),
+				new TypedValue((int)DxfCode.Int32, (int)units.MaterialStrength),
+				new TypedValue((int)DxfCode.Int32, (int)units.CrackOpenings),
+				new TypedValue((int)DxfCode.Int32, units.DisplacementMagnifier)
+			};
+		}
+
+		/// <summary>
+		///		Get an array of <see cref="TypedValue"/> from a <see cref="WebReinforcementDirection"/>.
+		/// </summary>
+		public static TypedValue[] GetTypedValues(this AnalysisSettings? settings)
+		{
+			settings ??= AnalysisSettings.Default;
+
+			return new []
+			{
+				new TypedValue((int)DxfCode.Real,  settings.Tolerance),
+				new TypedValue((int)DxfCode.Int32, settings.NumLoadSteps),
+				new TypedValue((int)DxfCode.Int32, settings.MaxIterations)
+			};
+		}
 
 		#endregion
 	}

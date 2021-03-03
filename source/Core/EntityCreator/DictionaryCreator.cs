@@ -11,7 +11,7 @@ namespace SPMTool.Core
 	/// </summary>
 	public abstract class DictionaryCreator
 	{
-		private ObjectId _objectId = ObjectId.Null;
+		protected ObjectId _objectId = ObjectId.Null;
 
 		#region Properties
 
@@ -57,10 +57,11 @@ namespace SPMTool.Core
 		/// <param name="overwrite">Overwrite record if it already exists?</param>
 		protected void SetDictionary(IEnumerable<TypedValue>? data, string dataName, bool overwrite = true)
 		{
-			var id = ObjectId.SetExtendedDictionary(data, dataName, overwrite);
+			if (DictionaryId.IsNull)
+				DictionaryId = ObjectId.SetExtendedDictionary(data, dataName, overwrite);
 
-			if (DictionaryId.IsNull && !id.IsNull)
-				DictionaryId = id;
+			else
+				DictionaryId.SetDataOnDictionary(data, dataName, overwrite);
 		}
 
 		/// <summary>

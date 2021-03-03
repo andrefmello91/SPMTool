@@ -1,100 +1,147 @@
-﻿using System;
-using Autodesk.AutoCAD.DatabaseServices;
+﻿using Autodesk.AutoCAD.DatabaseServices;
 using Material.Concrete;
-using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
-
 using static Material.Concrete.Parameters;
 
 #nullable enable
 
 namespace SPMTool.Core.Materials
 {
-    /// <summary>
-    ///		Concrete database class.
-    /// </summary>
-    public class ConcreteData
-    {
+	/// <summary>
+	///     Concrete database class.
+	/// </summary>
+	public class ConcreteData : DictionaryCreator
+	{
+		#region Fields
+
 		/// <summary>
-        /// Save string.
-        /// </summary>
-	    private const string ConcreteParams = "ConcreteParams";
+		///     Save string.
+		/// </summary>
+		private const string ConcreteParams = "ConcreteParams";
 
-        /// <summary>
-        /// Get/set <see cref="Material.Concrete.Parameters"/> saved in database.
-        /// </summary>
-        public IParameters Parameters { get; private set; } = ReadFromDictionary();
+		private ConstitutiveModel _model;
+		private IParameters _parameters;
 
-        /// <summary>
-        /// Get <see cref="Material.Concrete.ConstitutiveModel"/> saved in database.
-        /// </summary>
-        public ConstitutiveModel ConstitutiveModel { get; private set; } = ReadModel();
+		#endregion
 
-	    /// <summary>
-	    /// Save concrete <see cref="Material.Concrete.Parameters"/> and <see cref="Material.Concrete.ConstitutiveModel"/> in database.
-	    /// </summary>
-	    /// <param name="parameters">Concrete <see cref="Material.Concrete.Parameters"/>.</param>
-	    /// <param name="constitutiveModel">Concrete <see cref="Material.Concrete.ConstitutiveModel"/>.</param>
-	    public void Save(IParameters parameters, ConstitutiveModel constitutiveModel)
-	    {
-			// Set to concrete properties
-			Parameters        = parameters;
-			ConstitutiveModel = constitutiveModel;
+		#region Properties
 
-		    // Definition for the Extended Data
-		    var xdataStr = "Concrete data";
+		/// <summary>
+		///     Get <see cref="Material.Concrete.ConstitutiveModel" /> saved in database.
+		/// </summary>
+		public ConstitutiveModel ConstitutiveModel
+		{
+			get => _model;
+			set => SetConstitutive(value);
+		}
 
-		    // Read the parameter model
-		    var parModel = Parameters.Model;
+		/// <summary>
+		///     Get/set <see cref="Material.Concrete.Parameters" /> saved in database.
+		/// </summary>
+		public IParameters Parameters
+		{
+			get => _parameters;
+			set => SetParameters(value);
+		}
 
-		    // Get the Xdata size
-		    var size = Enum.GetNames(typeof(ConcreteIndex)).Length;
-		    var data = new TypedValue[size];
+		#endregion
 
-		    data[(int)ConcreteIndex.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
-		    data[(int)ConcreteIndex.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
-		    data[(int)ConcreteIndex.Model]    = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)parModel);
-		    data[(int)ConcreteIndex.Behavior] = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)constitutiveModel);
-		    data[(int)ConcreteIndex.fc]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.Strength.Megapascals);
-		    data[(int)ConcreteIndex.AggType]  = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)parameters.Type);
-		    data[(int)ConcreteIndex.AggDiam]  = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.AggregateDiameter.Millimeters);
-		    data[(int)ConcreteIndex.ft]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.TensileStrength.Megapascals);
-		    data[(int)ConcreteIndex.Ec]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.ElasticModule.Megapascals);
-		    data[(int)ConcreteIndex.ec]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.PlasticStrain);
-		    data[(int)ConcreteIndex.ecu]      = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.UltimateStrain);
+		#region Constructors
 
-		    // Create the entry in the NOD and add to the transaction
-		    using var rb = new ResultBuffer(data);
-		    DataBase.SaveDictionary(rb, ConcreteParams);
-	    }
+		public ConcreteData()
+		{
+			DictionaryId = DataBase.NodId;
+			GetProperties();
+		}
 
-	    /// <summary>
-	    /// Read concrete <see cref="Parameters"/> saved in database.
-	    /// </summary>
-	    public static IParameters ReadFromDictionary()
-	    {
-		    var data = DataBase.ReadDictionaryEntry(ConcreteParams);
+		#endregion
 
-		    switch (data)
-		    {
-			    case null:
-				    return C30(Length.FromMillimeters(19));
+		#region  Methods
+
+		private void SetParameters(IParameters parameters)
+		{
+			_parameters = parameters;
+
+			SetDictionary(_parameters.GetTypedValues(), ConcreteParams);
+		}
+
+		private void SetConstitutive(ConstitutiveModel model)
+		{
+			_model = model;
+
+			var data = new[]
+			{
+				new TypedValue((int) DxfCode.Int32, (int) model)
+			};
+
+			SetDictionary(data, "ConstitutiveModel");
+		}
+
+		//  /// <summary>
+		//  /// Save concrete <see cref="Material.Concrete.Parameters"/> and <see cref="Material.Concrete.ConstitutiveModel"/> in database.
+		//  /// </summary>
+		//  /// <param name="parameters">Concrete <see cref="Material.Concrete.Parameters"/>.</param>
+		//  /// <param name="constitutiveModel">Concrete <see cref="Material.Concrete.ConstitutiveModel"/>.</param>
+		//  public void Save(IParameters parameters, ConstitutiveModel constitutiveModel)
+		//  {
+		//// Set to concrete properties
+		//Parameters        = parameters;
+		//ConstitutiveModel = constitutiveModel;
+
+		//   // Definition for the Extended Data
+		//   var xdataStr = "Concrete data";
+
+		//   // Read the parameter model
+		//   var parModel = Parameters.Model;
+
+		//   // Get the Xdata size
+		//   var size = Enum.GetNames(typeof(ConcreteIndex)).Length;
+		//   var data = new TypedValue[size];
+
+		//   data[(int)ConcreteIndex.AppName]  = new TypedValue((int)DxfCode.ExtendedDataRegAppName,  DataBase.AppName);
+		//   data[(int)ConcreteIndex.XDataStr] = new TypedValue((int)DxfCode.ExtendedDataAsciiString, xdataStr);
+		//   data[(int)ConcreteIndex.Model]    = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)parModel);
+		//   data[(int)ConcreteIndex.Behavior] = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)constitutiveModel);
+		//   data[(int)ConcreteIndex.fc]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.Strength.Megapascals);
+		//   data[(int)ConcreteIndex.AggType]  = new TypedValue((int)DxfCode.ExtendedDataInteger32,   (int)parameters.Type);
+		//   data[(int)ConcreteIndex.AggDiam]  = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.AggregateDiameter.Millimeters);
+		//   data[(int)ConcreteIndex.ft]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.TensileStrength.Megapascals);
+		//   data[(int)ConcreteIndex.Ec]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.ElasticModule.Megapascals);
+		//   data[(int)ConcreteIndex.ec]       = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.PlasticStrain);
+		//   data[(int)ConcreteIndex.ecu]      = new TypedValue((int)DxfCode.ExtendedDataReal,        parameters.UltimateStrain);
+
+		//   // Create the entry in the NOD and add to the transaction
+		//   using var rb = new ResultBuffer(data);
+		//   DataBase.SaveDictionary(rb, ConcreteParams);
+		//  }
+
+		/// <summary>
+		///     Read concrete <see cref="Parameters" /> saved in database.
+		/// </summary>
+		private IParameters GetParameters()
+		{
+			var data = GetDictionary(ConcreteParams);
+
+			switch (data)
+			{
+				case null:
+					return C30(Length.FromMillimeters(19));
 
 				default:
 					// Get the parameters from XData
-					var parModel   = (ParameterModel)data[(int)ConcreteIndex.Model].ToInt();
-					var aggType    = (AggregateType)data[(int)ConcreteIndex.AggType].ToInt();
+					var parModel   = (ParameterModel) data[0].ToInt();
+					var aggType    = (AggregateType) data[1].ToInt();
 
 					double
-						fc    = data[(int)ConcreteIndex.fc].ToDouble(),
-						phiAg = data[(int)ConcreteIndex.AggDiam].ToDouble(),
+						fc    = data[2].ToDouble(),
+						phiAg = data[3].ToDouble(),
 
 						// Get additional parameters
-						fcr =  data[(int)ConcreteIndex.ft].ToDouble(),
-						Ec  =  data[(int)ConcreteIndex.Ec].ToDouble(),
-						ec  = -data[(int)ConcreteIndex.ec].ToDouble(),
-						ecu = -data[(int)ConcreteIndex.ecu].ToDouble();
+						fcr =  data[4].ToDouble(),
+						Ec  =  data[5].ToDouble(),
+						ec  = -data[6].ToDouble(),
+						ecu = -data[7].ToDouble();
 
 					// Get parameters and constitutive
 					return
@@ -103,20 +150,36 @@ namespace SPMTool.Core.Materials
 							ParameterModel.Custom => new CustomParameters(fc, fcr, Ec, phiAg, ec, ecu),
 							_                     => new Parameters(fc, phiAg, parModel, aggType)
 						};
-		    }
-	    }
+			}
+		}
 
-	    /// <summary>
-	    /// Read constitutive model.
-	    /// </summary>
-	    private static ConstitutiveModel ReadModel(TypedValue[]? concreteData = null)
-	    {
-		    var data = concreteData ?? DataBase.ReadDictionaryEntry(ConcreteParams);
+		/// <summary>
+		///     Read constitutive model.
+		/// </summary>
+		private ConstitutiveModel GetModel()
+		{
+			var data = GetDictionary("ConstitutiveModel");
 
-		    return
-			    data is null
-				    ? ConstitutiveModel.MCFT
-				    : (ConstitutiveModel) data[(int) ConcreteIndex.Behavior].ToInt();
-	    }
+			return
+				data is null
+					? ConstitutiveModel.MCFT
+					: (ConstitutiveModel) data[0].ToInt();
+		}
+
+		protected override bool GetProperties()
+		{
+			_parameters = GetParameters();
+			_model      = GetModel();
+
+			return true;
+		}
+
+		protected override void SetProperties()
+		{
+			SetParameters(_parameters);
+			SetConstitutive(_model);
+		}
+
+		#endregion
 	}
 }

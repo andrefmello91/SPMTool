@@ -328,6 +328,45 @@ namespace SPMTool.Extensions
 		public static bool IsOk(this ObjectId objectId) => objectId.IsValid && !objectId.IsNull && !objectId.IsErased;
 
 		/// <summary>
+		///     Set a collection of <see cref="TypedValue" /> from a <see cref="DBDictionary" />'s <see cref="ObjectId" />.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId" /> of a <see cref="DBDictionary" />.</param>
+		/// <param name="dataName">The name to set to the record.</param>
+		/// <inheritdoc cref="SetExtendedDictionary(ObjectId, IEnumerable{TypedValue}, string, bool, Transaction)" />
+		public static bool SetDataOnDictionary(this ObjectId objectId, IEnumerable<TypedValue>? data,  string dataName, bool overwrite = true, Transaction? ongoingTransaction = null)
+		{
+			if (!objectId.IsOk())
+				return false;
+
+			// Start a transaction
+			var trans = ongoingTransaction ?? StartTransaction();
+
+			// Get record
+			using var obj  = trans.GetObject(objectId, OpenMode.ForRead);
+
+			if (!(obj is DBDictionary dbExt) || !overwrite && dbExt.Contains(dataName))
+				return false;
+
+			dbExt.UpgradeOpen();
+
+			var xRec = new Xrecord
+			{
+				Data = data is null
+					? null
+					: new ResultBuffer(data.ToArray())
+			};
+
+			// Set the data
+			dbExt.SetAt(dataName, xRec);
+			trans.AddNewlyCreatedDBObject(xRec, true);
+
+			if (ongoingTransaction is null)
+				trans.Dispose();
+
+			return true;
+		}
+
+		/// <summary>
 		///     Read a collection of <see cref="TypedValue" /> from a <see cref="DBDictionary" />'s <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="objectId">The <see cref="ObjectId" /> of a <see cref="DBDictionary" />.</param>
@@ -341,7 +380,7 @@ namespace SPMTool.Extensions
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			// Get record
-			var obj  = trans.GetObject(objectId, OpenMode.ForRead);
+			using var obj  = trans.GetObject(objectId, OpenMode.ForRead);
 			var data = obj is DBDictionary dict
 				? dict.GetData(dataName, trans)
 				: null;
@@ -407,24 +446,7 @@ namespace SPMTool.Extensions
 				extId = obj.ExtensionDictionary;
 			}
 
-			using var dbExt = (DBDictionary) trans.GetObject(extId, OpenMode.ForRead);
-
-			// Verify if name exists
-			if (!overwrite && dbExt.Contains(dataName))
-				return extId;
-
-			dbExt.UpgradeOpen();
-
-			Xrecord xRec = new Xrecord
-			{
-				Data = data is null
-					? null
-					: new ResultBuffer(data.ToArray())
-			};
-
-			// Set the data
-			dbExt.SetAt(dataName, xRec);
-			trans.AddNewlyCreatedDBObject(xRec, true);
+			SetDataOnDictionary(extId, data, dataName, overwrite, trans);
 
 			if (ongoingTransaction is null)
 			{
@@ -439,7 +461,7 @@ namespace SPMTool.Extensions
 		///     Set extended data to this <paramref name="dbObject" /> and return its <see cref="ObjectId"/>.
 		/// </summary>
 		/// <param name="dbObject">The <see cref="DBObject" /> to set the extended dictionary.</param>
-		/// <inheritdoc cref="SetExtendedDictionary" />
+		/// <inheritdoc cref="SetExtendedDictionary(ObjectId, IEnumerable{TypedValue}, string, bool, Transaction)" />
 		public static ObjectId SetExtendedDictionary(this DBObject dbObject, IEnumerable<TypedValue>? data, string dataName, bool overwrite = true, Transaction? ongoingTransaction = null) =>
 			dbObject.ObjectId.SetExtendedDictionary(data, dataName, overwrite, ongoingTransaction);
 
@@ -447,7 +469,7 @@ namespace SPMTool.Extensions
 		///     Set extended data to this <paramref name="entity" /> and return its <see cref="ObjectId"/>.
 		/// </summary>
 		/// <param name="entity">The <see cref="Entity" /> to set the extended dictionary.</param>
-		/// <inheritdoc cref="SetExtendedDictionary" />
+		/// <inheritdoc cref="SetExtendedDictionary(ObjectId, IEnumerable{TypedValue}, string, bool, Transaction)" />
 		public static ObjectId SetExtendedDictionary(this Entity entity, IEnumerable<TypedValue>? data, string dataName, bool overwrite = true, Transaction? ongoingTransaction = null) =>
 			entity.ObjectId.SetExtendedDictionary(data, dataName, overwrite, ongoingTransaction);
 
