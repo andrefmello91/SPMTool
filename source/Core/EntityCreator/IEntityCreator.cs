@@ -24,7 +24,7 @@ namespace SPMTool.Core
 		/// </summary>
 		Layer Layer { get; }
 
-		/// <inheritdoc cref="XDataCreator.ObjectId" />
+		/// <inheritdoc cref="DictionaryCreator.ObjectId" />
 		ObjectId ObjectId { get; set; }
 
 		#endregion

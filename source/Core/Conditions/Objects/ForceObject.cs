@@ -89,28 +89,28 @@ namespace SPMTool.Core.Conditions
 					ObjectId = reference.ObjectId
 				};
 
-		/// <summary>
-		///     Create XData for forces
-		/// </summary>
-		/// <param name="force">The force value.</param>
-		public static TypedValue[] CreateXData(PlaneForce force)
-		{
-			// Definition for the Extended Data
-			var xdataStr = "Force Data";
+		///// <summary>
+		/////     Create XData for forces
+		///// </summary>
+		///// <param name="force">The force value.</param>
+		//public static TypedValue[] CreateXData(PlaneForce force)
+		//{
+		//	// Definition for the Extended Data
+		//	var xdataStr = "Force Data";
 
-			// Get the Xdata size
-			var size = Enum.GetNames(typeof(ForceIndex)).Length;
-			var data = new TypedValue[size];
+		//	// Get the Xdata size
+		//	var size = Enum.GetNames(typeof(ForceIndex)).Length;
+		//	var data = new TypedValue[size];
 
-			// Set values
-			data[(int) ForceIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, AppName);
-			data[(int) ForceIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-			data[(int) ForceIndex.ValueX]   = new TypedValue((int) DxfCode.ExtendedDataReal, force.X.Newtons);
-			data[(int) ForceIndex.ValueY]   = new TypedValue((int) DxfCode.ExtendedDataReal, force.Y.Newtons);
+		//	// Set values
+		//	data[(int) ForceIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, AppName);
+		//	data[(int) ForceIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
+		//	data[(int) ForceIndex.ValueX]   = new TypedValue((int) DxfCode.ExtendedDataReal, force.X.Newtons);
+		//	data[(int) ForceIndex.ValueY]   = new TypedValue((int) DxfCode.ExtendedDataReal, force.Y.Newtons);
 
-			// Add XData to force block
-			return data;
-		}
+		//	// Add XData to force block
+		//	return data;
+		//}
 
 		public override void AddToDrawing()
 		{
@@ -121,14 +121,19 @@ namespace SPMTool.Core.Conditions
 
 		public override void RemoveFromDrawing() => new[] {ObjectId, TextX?.ObjectId ?? ObjectId.Null, TextY?.ObjectId ?? ObjectId.Null}.RemoveFromDrawing();
 
-		public override void GetProperties()
+		protected override bool GetProperties()
 		{
-			var data = ReadXData();
+			var force = GetForce();
 
-			Value = GetForce(data);
+			if (!force.HasValue)
+				return false;
 
+			// Get values
+			Value = force.Value;
 			TextX = GetText(ComponentDirection.X);
 			TextY = GetText(ComponentDirection.Y);
+
+			return true;
 		}
 
 		/// <summary>
@@ -165,19 +170,27 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get <see cref="Force" /> value from extended data.
 		/// </summary>
-		/// <param name="data">The extended data of this object. Leave null to read.</param>
-		private PlaneForce GetForce(TypedValue[]? data = null)
+		private PlaneForce? GetForce()
 		{
-			data ??= ReadXData();
+			var data = GetDictionary("Force");
 
-			var fx = Force.FromNewtons(data?[(int) ForceIndex.ValueX].ToDouble() ?? 0).ToUnit(Settings.Units.AppliedForces);
-			var fy = Force.FromNewtons(data?[(int) ForceIndex.ValueY].ToDouble() ?? 0).ToUnit(Settings.Units.AppliedForces);
+			if (data is null)
+				return null;
+
+			var fx = Force.FromNewtons(data[0].ToDouble()).ToUnit(Settings.Units.AppliedForces);
+			var fy = Force.FromNewtons(data[0].ToDouble()).ToUnit(Settings.Units.AppliedForces);
 
 			return
 				new PlaneForce(fx, fy);
 		}
 
-		protected override TypedValue[] CreateXData() => CreateXData(Value);
+		protected override void SetProperties()
+		{
+			SetDictionary(Value.GetTypedValues(), "Force");
+
+			TextX = GetText(ComponentDirection.X);
+			TextY = GetText(ComponentDirection.Y);
+		}
 
 		#endregion
 

@@ -45,7 +45,7 @@ namespace SPMTool.Core.Conditions
 	///     Condition object base class.
 	/// </summary>
 	/// <inheritdoc cref="IConditionObject{T1,T2}" />
-	public abstract class ConditionObject<T1, T2> : XDataCreator, IConditionObject<T1, T2>, IEntityCreator<BlockReference>
+	public abstract class ConditionObject<T1, T2> : DictionaryCreator, IConditionObject<T1, T2>, IEntityCreator<BlockReference>
 		where T1 : IConditionObject<T1, T2>
 		where T2 : IEquatable<T2>
 	{

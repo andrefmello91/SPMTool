@@ -23,7 +23,7 @@ namespace SPMTool.Core.Elements
 	{
 		#region Fields
 
-		private PlaneDisplacement _displacement;
+		private PlaneDisplacement _displacement = PlaneDisplacement.Zero;
 
 		#endregion
 
@@ -100,27 +100,27 @@ namespace SPMTool.Core.Elements
 		};
 
 		/// <summary>
-		///     Create node XData.
+		///     Create node Data.
 		/// </summary>
-		public static TypedValue[] NodeXData(PlaneDisplacement? displacement = null)
-		{
-			// Definition for the Extended Data
-			string xdataStr = "Node Data";
+		//public static TypedValue[] NodeXData(PlaneDisplacement? displacement = null)
+		//{
+		//	// Definition for the Extended Data
+		//	string xdataStr = "Node Data";
 
-			// Get the Xdata size
-			var size = Enum.GetNames(typeof(NodeIndex)).Length;
+		//	// Get the Xdata size
+		//	var size = Enum.GetNames(typeof(NodeIndex)).Length;
 
-			// Initialize the array of typed values for XData
-			var data = new TypedValue[size];
+		//	// Initialize the array of typed values for XData
+		//	var data = new TypedValue[size];
 
-			// Set the initial parameters
-			data[(int) NodeIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  AppName);
-			data[(int) NodeIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-			data[(int) NodeIndex.Ux]       = new TypedValue((int) DxfCode.ExtendedDataReal,        displacement?.X.Millimeters ?? 0);
-			data[(int) NodeIndex.Uy]       = new TypedValue((int) DxfCode.ExtendedDataReal,        displacement?.Y.Millimeters ?? 0);
+		//	// Set the initial parameters
+		//	data[(int) NodeIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  AppName);
+		//	data[(int) NodeIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
+		//	data[(int) NodeIndex.Ux]       = new TypedValue((int) DxfCode.ExtendedDataReal,        displacement?.X.Millimeters ?? 0);
+		//	data[(int) NodeIndex.Uy]       = new TypedValue((int) DxfCode.ExtendedDataReal,        displacement?.Y.Millimeters ?? 0);
 
-			return data;
-		}
+		//	return data;
+		//}
 
 		public override DBPoint CreateEntity() => new DBPoint(Position.ToPoint3d())
 		{
@@ -134,13 +134,24 @@ namespace SPMTool.Core.Elements
 			new Node(Position, Type, Settings.Units.Displacements)
 			{
 				Displacement = Displacement,
-				Force   = Force,
+				Force        = Force,
 				Constraint   = Constraint
 			};
 
-		protected override TypedValue[] CreateXData() => NodeXData(Displacement);
+		protected override bool GetProperties()
+		{
+			var disp = GetDisplacement();
 
-		public override void GetProperties() => _displacement = GetDisplacement();
+			if (!disp.HasValue)
+				return false;
+
+			_displacement = disp.Value;
+			return true;
+
+			//_displacement = PlaneDisplacement.Zero;
+		}
+
+		protected override void SetProperties() => SetDisplacement(_displacement);
 
 		/// <summary>
 		///     Set <see cref="PlaneDisplacement" /> to this object XData.
@@ -150,38 +161,40 @@ namespace SPMTool.Core.Elements
 		{
 			_displacement = displacement;
 
-			// Get extended data
-			var data = ReadXData();
+			SetDictionary(Displacement.GetTypedValues(), "Displacements");
 
-			if (data is null)
-				data = NodeXData(displacement);
+			//// Get extended data
+			//var data = ReadDictionary();
 
-			else
-			{
-				// Save the displacements on the XData
-				data[(int) NodeIndex.Ux] = new TypedValue((int) DxfCode.ExtendedDataReal, displacement.X.Millimeters);
-				data[(int) NodeIndex.Uy] = new TypedValue((int) DxfCode.ExtendedDataReal, displacement.Y.Millimeters);
-			}
+			//if (data is null)
+			//	data = NodeXData(displacement);
+
+			//else
+			//{
+			//	// Save the displacements on the XData
+			//	data[(int) NodeIndex.Ux] = new TypedValue((int) DxfCode.Real, displacement.X.Millimeters);
+			//	data[(int) NodeIndex.Uy] = new TypedValue((int) DxfCode.Real, displacement.Y.Millimeters);
+			//}
 
 			// Save new XData
-			ObjectId.SetXData(data);
+			//ObjectId.SetExtendedDictionary(data, "Displacements");
 		}
 
 		/// <summary>
 		///     Get <see cref="PlaneDisplacement" /> saved in XData.
 		/// </summary>
-		private PlaneDisplacement GetDisplacement(TypedValue[]? data = null)
+		private PlaneDisplacement? GetDisplacement()
 		{
-			data ??= ReadXData();
+			var data = GetDictionary("Displacements");
 
 			if (data is null)
-				return PlaneDisplacement.Zero;
+				return null;
 
 			// Get units
 			var units = Settings.Units;
 
-			var ux = Length.FromMillimeters(data[(int) NodeIndex.Ux].ToDouble()).ToUnit(units.Displacements);
-			var uy = Length.FromMillimeters(data[(int) NodeIndex.Uy].ToDouble()).ToUnit(units.Displacements);
+			var ux = Length.FromMillimeters(data[0].ToDouble()).ToUnit(units.Displacements);
+			var uy = Length.FromMillimeters(data[1].ToDouble()).ToUnit(units.Displacements);
 
 			return
 				new PlaneDisplacement(ux, uy);

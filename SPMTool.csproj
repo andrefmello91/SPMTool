@@ -151,7 +151,7 @@
     <Compile Include="source\Core\EntityCreator\EntityCreatorList.cs" />
     <Compile Include="source\Core\EntityCreator\IEntityCreator.cs" />
     <Compile Include="source\Core\EntityCreator\TextCreator.cs" />
-    <Compile Include="source\Core\EntityCreator\XDataCreator.cs" />
+    <Compile Include="source\Core\EntityCreator\DictionaryCreator.cs" />
     <Compile Include="source\Core\Materials\ConcreteData.cs" />
     <Compile Include="source\Core\Materials\ReinforcementData.cs" />
     <Compile Include="source\Core\Model.cs" />

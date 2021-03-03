@@ -74,46 +74,57 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///		Get the <see cref="Constraint"/> in XData.
 		/// </summary>
-		private Constraint GetConstraint()
+		private Constraint? GetConstraint()
 		{
 			// Read the XData and get the necessary data
-			var data = ReadXData();
+			var data = GetDictionary("Constraint");
 
 			if (data is null)
-				return Constraint.Free;
+				return null;
 
 			// Get value and direction
-			var direction = (ComponentDirection)data[(int)ForceIndex.ValueY].ToInt();
+			var x = (bool) data[0].Value;
+			var y = (bool) data[1].Value;
 
 			return
-				Constraint.FromDirection(direction);
+				new Constraint(x, y);
 		}
 
-		/// <summary>
-		///     Create XData for supports.
-		/// </summary>
-		/// <param name="direction">The <see cref="Constraint" /> type.</param>
-		public static TypedValue[] CreateXData(ComponentDirection direction)
+		///// <summary>
+		/////     Create XData for supports.
+		///// </summary>
+		///// <param name="direction">The <see cref="Constraint" /> type.</param>
+		//public static TypedValue[] CreateXData(ComponentDirection direction)
+		//{
+		//	// Definition for the Extended Data
+		//	string xdataStr = "SupportDirection Data";
+
+		//	// Get the Xdata size
+		//	var size = Enum.GetNames(typeof(SupportIndex)).Length;
+		//	var data = new TypedValue[size];
+
+		//	// Set values
+		//	data[(int) SupportIndex.AppName]   = new TypedValue((int) DxfCode.ExtendedDataRegAppName, AppName);
+		//	data[(int) SupportIndex.XDataStr]  = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
+		//	data[(int) SupportIndex.Direction] = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) direction);
+
+		//	// Add XData to force block
+		//	return data;
+		//}
+
+		protected override void SetProperties() => SetDictionary(Value.GetTypedValues(), "Constraint");
+
+		protected override bool GetProperties()
 		{
-			// Definition for the Extended Data
-			string xdataStr = "SupportDirection Data";
+			var c = GetConstraint();
 
-			// Get the Xdata size
-			var size = Enum.GetNames(typeof(SupportIndex)).Length;
-			var data = new TypedValue[size];
+			if (!c.HasValue)
+				return false;
 
-			// Set values
-			data[(int) SupportIndex.AppName]   = new TypedValue((int) DxfCode.ExtendedDataRegAppName, AppName);
-			data[(int) SupportIndex.XDataStr]  = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-			data[(int) SupportIndex.Direction] = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) direction);
+			Value = c.Value;
 
-			// Add XData to force block
-			return data;
+			return true;
 		}
-
-		protected override TypedValue[] CreateXData() => CreateXData(Value.Direction);
-
-		public override void GetProperties() => Value = GetConstraint();
 
 		#endregion
 

@@ -4,6 +4,8 @@ using SPM.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
+#nullable enable
+
 namespace SPMTool.Core.Elements
 {
 	/// <summary>
@@ -48,7 +50,7 @@ namespace SPMTool.Core.Elements
 	/// <typeparam name="T2">The type that represents the main property of the object.</typeparam>
 	/// <typeparam name="T3">Any type that implements <see cref="INumberedElement" />.</typeparam>
 	/// <typeparam name="T4">Any type based on <see cref="Entity" />.</typeparam>
-	public abstract class SPMObject<T1, T2, T3, T4> : XDataCreator, ISPMObject<T1, T2, T3>, IEntityCreator<T4>
+	public abstract class SPMObject<T1, T2, T3, T4> : DictionaryCreator, ISPMObject<T1, T2, T3>, IEntityCreator<T4>
 		where T1 : ISPMObject<T1, T2, T3>
 		where T2 : IComparable<T2>, IEquatable<T2>
 		where T3 : INumberedElement
@@ -89,7 +91,7 @@ namespace SPMTool.Core.Elements
 
 		public abstract T4 CreateEntity();
 
-		public T4 GetEntity() => (T4) ObjectId.GetEntity();
+		public T4? GetEntity() => (T4?) ObjectId.GetEntity();
 
 		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing(Model.On_ObjectErase);
 

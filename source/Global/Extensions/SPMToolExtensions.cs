@@ -10,6 +10,7 @@ using Extensions;
 using Material.Reinforcement;
 using Material.Reinforcement.Biaxial;
 using Material.Reinforcement.Uniaxial;
+using OnPlaneComponents;
 using SPM.Elements.StringerProperties;
 using SPMTool.Attributes;
 using SPMTool.Core;
@@ -380,6 +381,70 @@ namespace SPMTool.Extensions
 		///     Erase all the objects in those <paramref name="layers" />.
 		/// </summary>
 		public static void EraseObjects(this IEnumerable<Layer> layers) => layers.GetObjectIds()?.RemoveFromDrawing();
+
+		/// <summary>
+		///		Get an array of <see cref="TypedValue"/> from a <see cref="PlaneDisplacement"/>.
+		/// </summary>
+		public static TypedValue[] GetTypedValues(this PlaneDisplacement displacement) =>
+			new[]
+			{
+				new TypedValue((int) DxfCode.Real, displacement.X.Millimeters),
+				new TypedValue((int) DxfCode.Real, displacement.Y.Millimeters)
+			};
+
+		/// <summary>
+		///		Get an array of <see cref="TypedValue"/> from a <see cref="PlaneForce"/>.
+		/// </summary>
+		public static TypedValue[] GetTypedValues(this PlaneForce force) =>
+			new[]
+			{
+				new TypedValue((int) DxfCode.Real, force.X.Newtons),
+				new TypedValue((int) DxfCode.Real, force.Y.Newtons)
+			};
+
+		/// <summary>
+		///		Get an array of <see cref="TypedValue"/> from a <see cref="Constraint"/>.
+		/// </summary>
+		public static TypedValue[] GetTypedValues(this Constraint constraint) =>
+			new[]
+			{
+				new TypedValue((int) DxfCode.Bool, constraint.X),
+				new TypedValue((int) DxfCode.Bool, constraint.Y)
+			};
+
+		/// <summary>
+		///		Get an array of <see cref="TypedValue"/> from a <see cref="CrossSection"/>.
+		/// </summary>
+		public static TypedValue[] GetTypedValues(this CrossSection crossSection) =>
+			new[]
+			{
+				new TypedValue((int) DxfCode.Real, crossSection.Width.Millimeters),
+				new TypedValue((int) DxfCode.Real, crossSection.Height.Millimeters)
+			};
+
+		/// <summary>
+		///		Get an array of <see cref="TypedValue"/> from a <see cref="UniaxialReinforcement"/>.
+		/// </summary>
+		public static TypedValue[] GetTypedValues(this UniaxialReinforcement? reinforcement) =>
+			new[]
+			{
+				new TypedValue((int) DxfCode.Int32, reinforcement?.NumberOfBars                     ?? 0),
+				new TypedValue((int) DxfCode.Real,  reinforcement?.BarDiameter.Millimeters          ?? 0),
+				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.YieldStress.Megapascals   ?? 0),
+				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.ElasticModule.Megapascals ?? 0),
+			};
+
+		/// <summary>
+		///		Get an array of <see cref="TypedValue"/> from a <see cref="WebReinforcementDirection"/>.
+		/// </summary>
+		public static TypedValue[] GetTypedValues(this WebReinforcementDirection? reinforcement) =>
+			new[]
+			{
+				new TypedValue((int) DxfCode.Real,  reinforcement?.BarDiameter.Millimeters          ?? 0),
+				new TypedValue((int) DxfCode.Real,  reinforcement?.BarSpacing.Millimeters           ?? 0),
+				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.YieldStress.Megapascals   ?? 0),
+				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.ElasticModule.Megapascals ?? 0),
+			};
 
 		#endregion
 	}
