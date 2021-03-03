@@ -361,7 +361,10 @@ namespace SPMTool.Extensions
 			trans.AddNewlyCreatedDBObject(xRec, true);
 
 			if (ongoingTransaction is null)
+			{
+				trans.Commit();
 				trans.Dispose();
+			}
 
 			return true;
 		}
