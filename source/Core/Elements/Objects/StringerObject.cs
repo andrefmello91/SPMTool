@@ -160,7 +160,11 @@ namespace SPMTool.Core.Elements
 			Layer = $"{Layer}"
 		};
 
-		public override Stringer GetElement() => throw new NotImplementedException();
+		/// <remarks>
+		///		This method a linear object.
+		/// </remarks>
+		/// <inheritdoc/>
+		public override Stringer GetElement() => GetElement(Model.Nodes.GetElements());
 
 		/// <inheritdoc cref="GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
@@ -193,49 +197,12 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the <see cref="CrossSection" /> from XData.
 		/// </summary>
-		private CrossSection? GetCrossSection()
-		{
-			// Access the XData as an array
-			var data = GetDictionary("CrossSection");
-
-			if (data is null)
-				return null;
-
-			Length
-				w = Length.FromMillimeters(data[0].ToDouble()).ToUnit(Settings.Units.Geometry),
-				h = Length.FromMillimeters(data[1].ToDouble()).ToUnit(Settings.Units.Geometry);
-
-			return
-				new CrossSection(w, h);
-		}
+		private CrossSection? GetCrossSection() => GetDictionary("CrossSection").GetCrossSection();
 
 		/// <summary>
 		///     Get this stringer <see cref="UniaxialReinforcement" />.
 		/// </summary>
-		private UniaxialReinforcement? GetReinforcement()
-		{
-			// Access the XData as an array
-			var data = GetDictionary("Reinforcement");
-
-			if (data is null)
-				return null;
-
-			// Get reinforcement
-			var numOfBars = data[0].ToInt();
-			var phi       = Length.FromMillimeters(data[1].ToDouble()).ToUnit(Settings.Units.Reinforcement);
-
-			if (numOfBars == 0 || phi.ApproxZero(Point.Tolerance))
-				return null;
-
-			// Get steel data
-			Pressure
-				fy = Pressure.FromMegapascals(data[2].ToDouble()).ToUnit(Settings.Units.MaterialStrength),
-				Es = Pressure.FromMegapascals(data[3].ToDouble()).ToUnit(Settings.Units.MaterialStrength);
-
-			// Set reinforcement
-			return
-				new UniaxialReinforcement(numOfBars, phi, new Steel(fy, Es), CrossSection.Area);
-		}
+		private UniaxialReinforcement? GetReinforcement() => GetDictionary("Reinforcement").GetReinforcement();
 
 		/// <summary>
 		///     Set the <seealso cref="CrossSection" /> to <see cref="Geometry" /> and XData.

@@ -81,47 +81,13 @@ namespace SPMTool.Application
 		///     Read units on dictionary.
 		/// </summary>
 		[return: NotNull]
-		private Units GetUnits()
-		{
-			var data = GetDictionary(USaveName);
-
-			return data switch
-			{
-				null => Units.Default,
-				_    => new Units
-				{
-					Geometry              = (LengthUnit)   data[0].ToInt(),
-					Reinforcement         = (LengthUnit)   data[1].ToInt(),
-					Displacements         = (LengthUnit)   data[2].ToInt(),
-					AppliedForces         = (ForceUnit)    data[3].ToInt(),
-					StringerForces        = (ForceUnit)    data[4].ToInt(),
-					PanelStresses         = (PressureUnit) data[5].ToInt(),
-					MaterialStrength      = (PressureUnit) data[6].ToInt(),
-					CrackOpenings         = (LengthUnit)   data[7].ToInt(),
-					DisplacementMagnifier = data[8].ToInt()
-				}
-			};
-		}
+		private Units GetUnits() => GetDictionary(USaveName).GetUnits() ?? Units.Default;
 
 		/// <summary>
 		///     Read analysis settings on dictionary.
 		/// </summary>
 		[return: NotNull]
-		private AnalysisSettings GetAnalysisSettings()
-		{
-			var data = GetDictionary(ASSaveName);
-
-			return data switch
-			{
-				null => AnalysisSettings.Default,
-				_    => new AnalysisSettings
-				{
-					Tolerance     = data[0].ToDouble(),
-					NumLoadSteps  = data[1].ToInt(),
-					MaxIterations = data[2].ToInt()
-				}
-			};
-		}
+		private AnalysisSettings GetAnalysisSettings() => GetDictionary(ASSaveName).GetAnalysisSettings() ?? AnalysisSettings.Default;
 
 		/// <summary>
 		///     Save this <paramref name="units" /> in database.

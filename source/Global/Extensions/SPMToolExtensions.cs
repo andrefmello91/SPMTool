@@ -11,6 +11,7 @@ using Material.Concrete;
 using Material.Reinforcement;
 using Material.Reinforcement.Biaxial;
 using Material.Reinforcement.Uniaxial;
+using MathNet.Numerics;
 using OnPlaneComponents;
 using SPM.Elements.StringerProperties;
 using SPMTool.Attributes;
@@ -18,6 +19,7 @@ using SPMTool.Core;
 using SPMTool.Enums;
 using UnitsNet.Units;
 using static SPMTool.Core.DataBase;
+using Direction = SPMTool.Enums.Direction;
 
 #nullable enable 
 
@@ -394,6 +396,15 @@ namespace SPMTool.Extensions
 			};
 
 		/// <summary>
+		///		Get a <see cref="PlaneDisplacement"/> from <see cref="TypedValue"/>'s.
+		/// </summary>
+		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="PlaneDisplacement"/>.</param>
+		public static PlaneDisplacement? GetDisplacement(this IEnumerable<TypedValue>? values) =>
+			values.IsNullOrEmpty() || values.Count() != 2
+				? (PlaneDisplacement?) null
+				: new PlaneDisplacement(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
+
+		/// <summary>
 		///		Get an array of <see cref="TypedValue"/> from a <see cref="PlaneForce"/>.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this PlaneForce force) =>
@@ -402,6 +413,15 @@ namespace SPMTool.Extensions
 				new TypedValue((int) DxfCode.Real, force.X.Newtons),
 				new TypedValue((int) DxfCode.Real, force.Y.Newtons)
 			};
+
+		/// <summary>
+		///		Get a <see cref="PlaneForce"/> from <see cref="TypedValue"/>'s.
+		/// </summary>
+		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="PlaneForce"/>.</param>
+		public static PlaneForce? GetForce(this IEnumerable<TypedValue>? values) =>
+			values.IsNullOrEmpty() || values.Count() != 2
+				? (PlaneForce?) null
+				: new PlaneForce(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
 
 		/// <summary>
 		///		Get an array of <see cref="TypedValue"/> from a <see cref="Constraint"/>.
@@ -414,6 +434,15 @@ namespace SPMTool.Extensions
 			};
 
 		/// <summary>
+		///		Get a <see cref="Constraint"/> from <see cref="TypedValue"/>'s.
+		/// </summary>
+		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="Constraint"/>.</param>
+		public static Constraint? GetConstraint(this IEnumerable<TypedValue>? values) =>
+			values.IsNullOrEmpty() || values.Count() != 2
+				? (Constraint?)null
+				: new Constraint((bool) values.ElementAt(0).Value, (bool) values.ElementAt(1).Value);
+
+		/// <summary>
 		///		Get an array of <see cref="TypedValue"/> from a <see cref="CrossSection"/>.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this CrossSection crossSection) =>
@@ -422,6 +451,15 @@ namespace SPMTool.Extensions
 				new TypedValue((int) DxfCode.Real, crossSection.Width.Millimeters),
 				new TypedValue((int) DxfCode.Real, crossSection.Height.Millimeters)
 			};
+
+		/// <summary>
+		///		Get a <see cref="CrossSection"/> from <see cref="TypedValue"/>'s.
+		/// </summary>
+		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="CrossSection"/>.</param>
+		public static CrossSection? GetCrossSection(this IEnumerable<TypedValue>? values) =>
+			values.IsNullOrEmpty() || values.Count() != 2
+				? (CrossSection?)null
+				: new CrossSection(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
 
 		/// <summary>
 		///		Get an array of <see cref="TypedValue"/> from a <see cref="UniaxialReinforcement"/>.
@@ -436,6 +474,27 @@ namespace SPMTool.Extensions
 			};
 
 		/// <summary>
+		///		Get a <see cref="UniaxialReinforcement"/> from <see cref="TypedValue"/>'s.
+		/// </summary>
+		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="UniaxialReinforcement"/>.</param>
+		public static UniaxialReinforcement? GetReinforcement(this IEnumerable<TypedValue>? values)
+		{
+			if (values.IsNullOrEmpty() || values.Count() != 4)
+				return null;
+
+			var nBars = values.ElementAt(0).ToInt();
+			var phi   = values.ElementAt(1).ToDouble();
+
+			if (nBars == 0 || phi.ApproxZero(1E-3))
+				return null;
+
+			var fy    = values.ElementAt(2).ToDouble();
+			var Es    = values.ElementAt(3).ToDouble();
+
+			return new UniaxialReinforcement(nBars, phi, new Steel(fy, Es));
+		}
+
+		/// <summary>
 		///		Get an array of <see cref="TypedValue"/> from a <see cref="WebReinforcementDirection"/>.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this WebReinforcementDirection? reinforcement) =>
@@ -446,6 +505,31 @@ namespace SPMTool.Extensions
 				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.YieldStress.Megapascals   ?? 0),
 				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.ElasticModule.Megapascals ?? 0),
 			};
+
+		/// <summary>
+		///		Get a <see cref="WebReinforcementDirection"/> from <see cref="TypedValue"/>'s.
+		/// </summary>
+		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="WebReinforcementDirection"/>.</param>
+		public static WebReinforcementDirection? GetReinforcementDirection(this IEnumerable<TypedValue>? values, Direction direction)
+		{
+			if (values.IsNullOrEmpty() || values.Count() != 4)
+				return null;
+
+			var phi = values.ElementAt(0).ToDouble();
+			var s   = values.ElementAt(1).ToDouble();
+
+			if (phi.ApproxZero(1E-3) || s.ApproxZero(1E-3))
+				return null;
+
+			var fy = values.ElementAt(2).ToDouble();
+			var Es = values.ElementAt(3).ToDouble();
+
+			var angle = direction is Direction.X
+				? 0
+				: Constants.PiOver2;
+
+			return new WebReinforcementDirection(phi, s, new Steel(fy, Es), 0, angle);
+		}
 
 		/// <summary>
 		///		Get an array of <see cref="TypedValue"/> from a <see cref="WebReinforcementDirection"/>.
@@ -459,12 +543,38 @@ namespace SPMTool.Extensions
 				new TypedValue((int) DxfCode.Real, parameters.AggregateDiameter.Millimeters),
 				new TypedValue((int) DxfCode.Real, parameters.TensileStrength.Megapascals),
 				new TypedValue((int) DxfCode.Real, parameters.ElasticModule.Megapascals),
-				new TypedValue((int) DxfCode.Real, parameters.PlasticStrain),
-				new TypedValue((int) DxfCode.Real, parameters.UltimateStrain)
+				new TypedValue((int) DxfCode.Real, parameters.PlasticStrain.Abs()),
+				new TypedValue((int) DxfCode.Real, parameters.UltimateStrain.Abs())
 			};
 
 		/// <summary>
-		///		Get an array of <see cref="TypedValue"/> from a <see cref="WebReinforcementDirection"/>.
+		///		Get a <see cref="IParameters"/> from <see cref="TypedValue"/>'s.
+		/// </summary>
+		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="IParameters"/>.</param>
+		public static IParameters? GetParameters(this IEnumerable<TypedValue>? values)
+		{
+			if (values.IsNullOrEmpty() || values.Count() != 8)
+				return null;
+
+			var model = (ParameterModel) values.ElementAt(0).ToInt();
+			var type  = (AggregateType)  values.ElementAt(1).ToInt();
+			var fc    = values.ElementAt(2).ToDouble();
+			var phiAg = values.ElementAt(3).ToDouble();
+
+			if (model != ParameterModel.Custom)
+				return new Parameters(fc, phiAg, model, type);
+
+			var ft  =  values.ElementAt(4).ToDouble();
+			var Ec  =  values.ElementAt(5).ToDouble();
+			var ec  = -values.ElementAt(6).ToDouble().Abs();
+			var ecu = -values.ElementAt(7).ToDouble().Abs();
+
+			return new CustomParameters(fc, ft, Ec, phiAg, ec, ecu);
+		}
+
+
+		/// <summary>
+		///		Get an array of <see cref="TypedValue"/> from an <see cref="Units"/>.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this Units? units)
 		{
@@ -475,17 +585,40 @@ namespace SPMTool.Extensions
 				new TypedValue((int)DxfCode.Int32, (int)units.Geometry),
 				new TypedValue((int)DxfCode.Int32, (int)units.Reinforcement),
 				new TypedValue((int)DxfCode.Int32, (int)units.Displacements),
+				new TypedValue((int)DxfCode.Int32, (int)units.CrackOpenings),
 				new TypedValue((int)DxfCode.Int32, (int)units.AppliedForces),
 				new TypedValue((int)DxfCode.Int32, (int)units.StringerForces),
 				new TypedValue((int)DxfCode.Int32, (int)units.PanelStresses),
 				new TypedValue((int)DxfCode.Int32, (int)units.MaterialStrength),
-				new TypedValue((int)DxfCode.Int32, (int)units.CrackOpenings),
 				new TypedValue((int)DxfCode.Int32, units.DisplacementMagnifier)
 			};
 		}
 
 		/// <summary>
-		///		Get an array of <see cref="TypedValue"/> from a <see cref="WebReinforcementDirection"/>.
+		///		Get a <see cref="Units"/> from <see cref="TypedValue"/>'s.
+		/// </summary>
+		/// <param name="values">The <see cref="TypedValue"/>'s that represent an <see cref="Units"/>.</param>
+		public static Units? GetUnits(this IEnumerable<TypedValue>? values)
+		{
+			if (values.IsNullOrEmpty() || values.Count() != 9)
+				return null;
+
+			return new Units
+			{
+				Geometry              = (LengthUnit)   values.ElementAt(0).ToInt(),
+				Reinforcement         = (LengthUnit)   values.ElementAt(1).ToInt(),
+				Displacements         = (LengthUnit)   values.ElementAt(2).ToInt(),
+				CrackOpenings         = (LengthUnit)   values.ElementAt(3).ToInt(),
+				AppliedForces         = (ForceUnit)    values.ElementAt(4).ToInt(),
+				StringerForces        = (ForceUnit)    values.ElementAt(5).ToInt(),
+				PanelStresses         = (PressureUnit) values.ElementAt(6).ToInt(),
+				MaterialStrength      = (PressureUnit) values.ElementAt(7).ToInt(),
+				DisplacementMagnifier =                values.ElementAt(8).ToInt()
+			};
+		}
+
+		/// <summary>
+		///		Get an array of <see cref="TypedValue"/> from an <see cref="AnalysisSettings"/>.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this AnalysisSettings? settings)
 		{
@@ -498,6 +631,38 @@ namespace SPMTool.Extensions
 				new TypedValue((int)DxfCode.Int32, settings.MaxIterations)
 			};
 		}
+
+		/// <summary>
+		///		Get an <see cref="AnalysisSettings"/> from <see cref="TypedValue"/>'s.
+		/// </summary>
+		/// <param name="values">The <see cref="TypedValue"/>'s that represent an <see cref="AnalysisSettings"/>.</param>
+		public static AnalysisSettings? GetAnalysisSettings(this IEnumerable<TypedValue>? values)
+		{
+			if (values.IsNullOrEmpty() || values.Count() != 3)
+				return null;
+
+			return new AnalysisSettings
+			{
+				Tolerance     = values.ElementAt(0).ToDouble(),
+				NumLoadSteps  = values.ElementAt(1).ToInt(),
+				MaxIterations = values.ElementAt(2).ToInt(),
+			};
+		}
+
+		/// <summary>
+		///		Get an array of <see cref="TypedValue"/> from an <see cref="Enum"/> value.
+		/// </summary>
+		/// <typeparam name="TEnum">An <see cref="Enum"/> type.</typeparam>
+		public static TypedValue[] GetTypedValues<TEnum>(this TEnum enumValue) where TEnum : Enum =>
+			new [] {new TypedValue((int) DxfCode.Int32, (int) (object) enumValue) };
+
+		/// <summary>
+		///		Get an int that represents an <see cref="Enum"/> value from <see cref="TypedValue"/>'s.
+		/// </summary>
+		public static int? GetEnumValue(this IEnumerable<TypedValue>? values) =>
+			values.IsNullOrEmpty() || values.Count() != 1
+				? (int?) null
+				: values.ElementAt(0).ToInt();
 
 		#endregion
 	}

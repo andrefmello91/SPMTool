@@ -70,12 +70,7 @@ namespace SPMTool.Core.Materials
 		{
 			_model = model;
 
-			var data = new[]
-			{
-				new TypedValue((int) DxfCode.Int32, (int) model)
-			};
-
-			SetDictionary(data, "ConstitutiveModel");
+			SetDictionary(model.GetTypedValues(), "ConstitutiveModel");
 		}
 
 		//  /// <summary>
@@ -119,52 +114,12 @@ namespace SPMTool.Core.Materials
 		/// <summary>
 		///     Read concrete <see cref="Parameters" /> saved in database.
 		/// </summary>
-		private IParameters GetParameters()
-		{
-			var data = GetDictionary(ConcreteParams);
-
-			switch (data)
-			{
-				case null:
-					return C30(Length.FromMillimeters(19));
-
-				default:
-					// Get the parameters from XData
-					var parModel   = (ParameterModel) data[0].ToInt();
-					var aggType    = (AggregateType) data[1].ToInt();
-
-					double
-						fc    = data[2].ToDouble(),
-						phiAg = data[3].ToDouble(),
-
-						// Get additional parameters
-						fcr =  data[4].ToDouble(),
-						Ec  =  data[5].ToDouble(),
-						ec  = -data[6].ToDouble(),
-						ecu = -data[7].ToDouble();
-
-					// Get parameters and constitutive
-					return
-						parModel switch
-						{
-							ParameterModel.Custom => new CustomParameters(fc, fcr, Ec, phiAg, ec, ecu),
-							_                     => new Parameters(fc, phiAg, parModel, aggType)
-						};
-			}
-		}
+		private IParameters GetParameters() => GetDictionary(ConcreteParams).GetParameters() ?? C30(Length.FromMillimeters(19));
 
 		/// <summary>
 		///     Read constitutive model.
 		/// </summary>
-		private ConstitutiveModel GetModel()
-		{
-			var data = GetDictionary("ConstitutiveModel");
-
-			return
-				data is null
-					? ConstitutiveModel.MCFT
-					: (ConstitutiveModel) data[0].ToInt();
-		}
+		private ConstitutiveModel GetModel() => (ConstitutiveModel) (GetDictionary("ConstitutiveModel").GetEnumValue() ?? (int) ConstitutiveModel.MCFT);
 
 		protected override bool GetProperties()
 		{

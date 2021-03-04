@@ -183,22 +183,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get <see cref="PlaneDisplacement" /> saved in XData.
 		/// </summary>
-		private PlaneDisplacement? GetDisplacement()
-		{
-			var data = GetDictionary("Displacements");
-
-			if (data is null)
-				return null;
-
-			// Get units
-			var units = Settings.Units;
-
-			var ux = Length.FromMillimeters(data[0].ToDouble()).ToUnit(units.Displacements);
-			var uy = Length.FromMillimeters(data[1].ToDouble()).ToUnit(units.Displacements);
-
-			return
-				new PlaneDisplacement(ux, uy);
-		}
+		private PlaneDisplacement? GetDisplacement() => GetDictionary("Displacements").GetDisplacement();
 
 		#endregion
 

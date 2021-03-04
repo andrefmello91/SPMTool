@@ -6,6 +6,8 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using static SPMTool.Core.DataBase;
 
+#nullable enable
+
 namespace SPMTool.Core.Conditions
 {
 	/// <summary>
@@ -74,21 +76,7 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///		Get the <see cref="Constraint"/> in XData.
 		/// </summary>
-		private Constraint? GetConstraint()
-		{
-			// Read the XData and get the necessary data
-			var data = GetDictionary("Constraint");
-
-			if (data is null)
-				return null;
-
-			// Get value and direction
-			var x = (bool) data[0].Value;
-			var y = (bool) data[1].Value;
-
-			return
-				new Constraint(x, y);
-		}
+		private Constraint? GetConstraint() => GetDictionary("Constraint").GetConstraint();
 
 		///// <summary>
 		/////     Create XData for supports.

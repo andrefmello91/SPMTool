@@ -170,19 +170,7 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get <see cref="Force" /> value from extended data.
 		/// </summary>
-		private PlaneForce? GetForce()
-		{
-			var data = GetDictionary("Force");
-
-			if (data is null)
-				return null;
-
-			var fx = Force.FromNewtons(data[0].ToDouble()).ToUnit(Settings.Units.AppliedForces);
-			var fy = Force.FromNewtons(data[0].ToDouble()).ToUnit(Settings.Units.AppliedForces);
-
-			return
-				new PlaneForce(fx, fy);
-		}
+		private PlaneForce? GetForce() => GetDictionary("Force").GetForce();
 
 		protected override void SetProperties()
 		{

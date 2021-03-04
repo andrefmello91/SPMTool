@@ -197,7 +197,11 @@ namespace SPMTool.Core.Elements
 				!w.HasValue && x is null && y is null;
 		}
 
-		public override Panel GetElement() => throw new NotImplementedException();
+		/// <remarks>
+		///		This method a linear object.
+		/// </remarks>
+		/// <inheritdoc/>
+		public override Panel GetElement() => GetElement(Model.Nodes.GetElements());
 
 		/// <summary>
 		///     Divide this <see cref="PanelObject" /> into new ones.
@@ -273,32 +277,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the <see cref="WebReinforcement" /> of a panel.
 		/// </summary>
-		private WebReinforcementDirection? GetReinforcement(Direction dir)
-		{
-			var data = GetDictionary($"Reinforcement{dir}");
-
-			if (data is null)
-				return null;
-
-			var units = Settings.Units;
-
-			// Angle
-			var angle = dir is Direction.X ? 0 : Constants.PiOver2;
-
-			// Get reinforcement
-			Length
-				phi  = Length.FromMillimeters(data[0].ToDouble()).ToUnit(units.Reinforcement),
-				sp   = Length.FromMillimeters(data[1].ToDouble()).ToUnit(units.Geometry);
-
-			// Get steel data
-			Pressure
-				fy = Pressure.FromMegapascals(data[2].ToDouble()).ToUnit(units.MaterialStrength),
-				Es = Pressure.FromMegapascals(data[3].ToDouble()).ToUnit(units.MaterialStrength);
-
-			// Get reinforcement
-			return
-				new WebReinforcementDirection(phi, sp, new Steel(fy, Es), Width, angle);
-		}
+		private WebReinforcementDirection? GetReinforcement(Direction dir) => GetDictionary($"Reinforcement{dir}").GetReinforcementDirection(dir);
 
 		/// <summary>
 		///     Set reinforcement to this object.
