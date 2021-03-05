@@ -14,7 +14,8 @@ using UnitsNet.Units;
 
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.DataBase;
-using static SPMTool.Core.Model;
+
+#nullable enable
 
 namespace SPMTool.Editor
 {
@@ -73,16 +74,15 @@ namespace SPMTool.Editor
 					return null;
 
 				// Start a transaction
-				using (var trans = DataBase.StartTransaction())
-				{
-					var ent = (Entity) trans.GetObject(entRes.ObjectId, OpenMode.ForRead);
+				using var trans = StartTransaction();
 
-					// Get layername
-					var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
+				var ent = (Entity) trans.GetObject(entRes.ObjectId, OpenMode.ForRead);
 
-					if (layers is null || layers.Contains(layer))
-						return ent;
-				}
+				// Get layername
+				var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
+
+				if (layers is null || layers.Contains(layer))
+					return ent;
 
 				ShowAlertDialog("Selected object is not the requested.");
 			}
@@ -92,7 +92,8 @@ namespace SPMTool.Editor
 		///     Get a collection of <see cref="DBObject" />'s from user.
 		/// </summary>
 		/// <inheritdoc cref="SelectEntity" />
-		public static IEnumerable<DBObject>? SelectObjects(string message, IEnumerable<Layer>? layers = null)
+		private static IEnumerable<TDBObject>? SelectObjects<TDBObject>(string message, IEnumerable<Layer>? layers = null)
+			where TDBObject : DBObject
 		{
 			// Prompt for user select elements
 			var selOp = new PromptSelectionOptions
@@ -101,7 +102,7 @@ namespace SPMTool.Editor
 			};
 
 			// Get the selection filter
-			var filter = LayerFilter(layers);
+			var filter = layers?.LayerFilter();
 
 			var selRes = filter is null
 				? Model.Editor.GetSelection(selOp)
@@ -111,7 +112,7 @@ namespace SPMTool.Editor
 				return null;
 
 			return
-				(from SelectedObject obj in selRes.Value select obj.ObjectId).GetDBObjects();
+				(from SelectedObject obj in selRes.Value select obj.ObjectId).ToArray().GetDBObjects<TDBObject>().Where(t => !(t is null))!;
 		}
 
 		/// <summary>
@@ -135,13 +136,13 @@ namespace SPMTool.Editor
 			// Create an infinite loop for selecting elements
 			for ( ; ; )
 			{
-				var nds = SelectObjects(message, layers)?.ToArray();
+				var nds = SelectObjects<DBPoint>(message, layers)?.ToArray();
 
 				if (nds is null)
 					return null;
 
 				if (nds.Any())
-					return nds.ToPoints();
+					return nds;
 
 				// No nodes selected
 				ShowAlertDialog($"Please select at least one {nodeType} nodes.");
@@ -159,13 +160,13 @@ namespace SPMTool.Editor
 			// Create an infinite loop for selecting elements
 			for ( ; ; )
 			{
-				var strs = SelectObjects(message, layers);
+				var strs = SelectObjects<Line>(message, layers)?.ToArray();
 
 				if (strs is null)
 					return null;
 
 				if (strs.Any())
-					return strs.ToLines();
+					return strs;
 
 				ShowAlertDialog("Please select at least one stringer.");
 			}
@@ -182,13 +183,13 @@ namespace SPMTool.Editor
 			// Create an infinite loop for selecting elements
 			for ( ; ; )
 			{
-				var pnls = SelectObjects(message, layers);
+				var pnls = SelectObjects<Solid>(message, layers)?.ToArray();
 
 				if (pnls is null)
 					return null;
 
 				if (pnls.Any())
-					return pnls.ToSolids();
+					return pnls;
 
 				ShowAlertDialog("Please select at least one panel.");
 			}
@@ -353,14 +354,6 @@ namespace SPMTool.Editor
 			return
 				index?[dirIndex];
 		}
-
-		/// <summary>
-		///     Create a <see cref="SelectionFilter" /> based on <paramref name="layers" />.
-		/// </summary>
-		private static SelectionFilter? LayerFilter(IEnumerable<Layer>? layers) =>
-			layers is null || !layers.Any()
-				? null
-				: new SelectionFilter(layers.Select(l => new TypedValue((int) DxfCode.LayerName, l.ToString())).ToArray());
 
 		#endregion
 	}

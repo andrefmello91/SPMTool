@@ -87,11 +87,14 @@ namespace SPMTool.Editor.Commands
 
 				// Check if there are four points
 				if (nds.Length == 4)
-					// Create the panel if it doesn't exist
+				{
 					Panels.Add(nds.Select(nd => nd.Position.ToPoint(unit)).ToArray());
+					continue;
+				}
 
-				else
-					ShowAlertDialog("Please select four external nodes.");
+				ShowAlertDialog("Please select four external nodes.");
+				//foreach (var id in nds.GetObjectIds().ToArray())
+				//	Model.Editor.WriteMessage($"\n{Nodes.GetByObjectId(id)}");
 			}
 		}
     }
