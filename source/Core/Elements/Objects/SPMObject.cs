@@ -36,7 +36,7 @@ namespace SPMTool.Core.Elements
 		#region  Methods
 
 		/// <summary>
-		///     Get the element associated to this object.
+		///     Get the SPM element associated to this object.
 		/// </summary>
 		T3 GetElement();
 

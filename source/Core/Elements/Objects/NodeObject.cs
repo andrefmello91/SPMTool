@@ -88,7 +88,9 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="NodeObject" /> from an <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="nodeObjectId">The <see cref="ObjectId" /> of the node.</param>
-		public static NodeObject ReadFromObjectId(ObjectId nodeObjectId) => ReadFromPoint((DBPoint) nodeObjectId.GetEntity());
+		public static NodeObject? ReadFromObjectId(ObjectId nodeObjectId) => nodeObjectId.GetEntity() is DBPoint point 
+			? ReadFromPoint(point) 
+			: null;
 
 		/// <summary>
 		///     Read a <see cref="NodeObject" /> from a <see cref="DBPoint" />.

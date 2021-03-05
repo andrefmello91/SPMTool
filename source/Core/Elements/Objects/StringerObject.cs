@@ -96,7 +96,9 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="StringerObject" /> in the drawing.
 		/// </summary>
 		/// <param name="stringerObjectId">The <see cref="ObjectId" /> of the stringer.</param>
-		public static StringerObject ReadFromObjectId(ObjectId stringerObjectId) => ReadFromLine((Line) stringerObjectId.GetEntity());
+		public static StringerObject? ReadFromObjectId(ObjectId stringerObjectId) => stringerObjectId.GetEntity() is Line line
+			? ReadFromLine(line)
+			: null;
 
 		/// <summary>
 		///     Read a <see cref="StringerObject" /> in the drawing.
