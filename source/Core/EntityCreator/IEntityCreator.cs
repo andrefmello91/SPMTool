@@ -100,16 +100,32 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Get a <see cref="IEntityCreator{T}" /> from this <paramref name="objectId"/>.
+		///     Get a SPM object from this <paramref name="objectId"/>.
 		/// </summary>
 		/// <param name="objectId">The <see cref="ObjectId" />.</param>
-		public static IEntityCreator<Entity>? GetSPMObject(this ObjectId objectId) => objectId.GetEntity()?.GetSPMObject();
+		public static IEntityCreator<Entity>? GetSPMObject(this ObjectId objectId) => objectId.GetEntity()?.CreateSPMObject();
 
 		/// <summary>
-		///     Get a <see cref="IEntityCreator{T}" /> from this <paramref name="entity"/>.
+		///     Get a SPM object from this <paramref name="entity"/>.
+		/// </summary>
+		/// <param name="entity">The <see cref="Entity" />.</param>
+		public static IEntityCreator<Entity>? GetSPMObject(this Entity? entity) =>
+			entity switch
+			{
+				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => Model.Nodes.GetByObjectId(entity.ObjectId),
+				Line l when l.Layer == $"{Layer.Stringer}"                                    => Model.Stringers.GetByObjectId(entity.ObjectId),
+				Solid s when s.Layer == $"{Layer.Panel}"                                      => Model.Panels.GetByObjectId(entity.ObjectId),
+				BlockReference b when b.Layer == $"{Layer.Force}"                             => Model.Forces.GetByObjectId(entity.ObjectId),
+				BlockReference b when b.Layer == $"{Layer.Support}"                           => Model.Constraints.GetByObjectId(entity.ObjectId),
+				_                                                                             => null
+			};
+
+
+		/// <summary>
+		///     Create a <see cref="IEntityCreator{T}" /> from this <paramref name="entity"/>.
 		/// </summary>
 		/// <param name="entity">The <see cref="Entity"/>.</param>
-		public static IEntityCreator<Entity>? GetSPMObject(this Entity? entity) =>
+		public static IEntityCreator<Entity>? CreateSPMObject(this Entity? entity) =>
 			entity switch
 			{
 				DBPoint        p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => NodeObject.ReadFromPoint(p),

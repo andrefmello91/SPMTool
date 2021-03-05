@@ -9,6 +9,8 @@ using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 
+#nullable enable
+
 namespace SPMTool.Core.Conditions
 {
 	/// <summary>
@@ -77,12 +79,12 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the force objects in the drawing.
 		/// </summary>
-		public static IEnumerable<BlockReference>? GetObjects() => Layer.Force.GetDBObjects()?.ToBlocks();
+		public static IEnumerable<BlockReference>? GetObjects() => Layer.Force.GetDBObjects<BlockReference>();
 
 		/// <summary>
 		///     Get the force text objects in the drawing.
 		/// </summary>
-		public static IEnumerable<DBText>? GetTexts() => Layer.ForceText.GetDBObjects()?.ToTexts();
+		public static IEnumerable<DBText>? GetTexts() => Layer.ForceText.GetDBObjects<DBText>();
 
 		/// <summary>
 		///     Erase all the force text objects in the drawing.

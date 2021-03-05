@@ -133,6 +133,7 @@ namespace SPMTool.Core.Elements
 		public override Node GetElement() =>
 			new Node(Position, Type, Settings.Units.Displacements)
 			{
+				Number       = Number,
 				Displacement = Displacement,
 				Force        = Force,
 				Constraint   = Constraint

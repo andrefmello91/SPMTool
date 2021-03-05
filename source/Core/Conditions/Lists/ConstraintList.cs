@@ -8,6 +8,8 @@ using OnPlaneComponents;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
+#nullable enable
+
 namespace SPMTool.Core.Conditions
 {
 	/// <summary>
@@ -33,7 +35,7 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the support objects in the drawing.
 		/// </summary>
-		public static IEnumerable<BlockReference>? GetObjects() => Layer.Support.GetDBObjects()?.ToBlocks();
+		public static IEnumerable<BlockReference>? GetObjects() => Layer.Support.GetDBObjects<BlockReference>();
 
 		/// <summary>
 		///     Read all <see cref="ConstraintObject" />'s from drawing.

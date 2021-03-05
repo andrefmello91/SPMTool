@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Windows.Media.Animation;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
 using Material.Concrete;
@@ -21,7 +20,7 @@ using UnitsNet.Units;
 using static SPMTool.Core.DataBase;
 using Direction = SPMTool.Enums.Direction;
 
-#nullable enable 
+#nullable enable
 
 namespace SPMTool.Extensions
 {
@@ -100,7 +99,7 @@ namespace SPMTool.Extensions
 			using var lck = Document.LockDocument();
 			using var trans = StartTransaction();
 
-			using var lyrTbl = (LayerTable) trans.GetObject(DataBase.LayerTableId, OpenMode.ForRead);
+			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
 
 			if (lyrTbl.Has(layerName))
 				return;
@@ -110,9 +109,9 @@ namespace SPMTool.Extensions
 
 			using var lyrTblRec = new LayerTableRecord
 			{
-				Name = layerName,
+				Name = layerName
 			};
-			
+
 			// Upgrade the Layer table for write
 			lyrTbl.UpgradeOpen();
 
@@ -148,12 +147,12 @@ namespace SPMTool.Extensions
 				if (lyrTbl.Has(layerName))
 					continue;
 
-                //// Get layer attributes
-                var attribute = layer.GetAttribute<LayerAttribute>()!;
+				//// Get layer attributes
+				var attribute = layer.GetAttribute<LayerAttribute>()!;
 
-                var lyrTblRec = new LayerTableRecord
+				var lyrTblRec = new LayerTableRecord
 				{
-					Name         = layerName,
+					Name         = layerName
 				};
 
 				// Upgrade the Layer table for write
@@ -237,7 +236,10 @@ namespace SPMTool.Extensions
 		///     Get the <see cref="BlockReference" /> of this <paramref name="block" />.
 		/// </summary>
 		/// <param name="insertionPoint">Thw insertion <see cref="Point3d" /> for the <see cref="BlockReference" />.</param>
-		/// <param name="layer">The <see cref="Layer"/> to set to <see cref="BlockReference"/>. Leave null to set default layer from block attribute.</param>
+		/// <param name="layer">
+		///     The <see cref="Layer" /> to set to <see cref="BlockReference" />. Leave null to set default layer
+		///     from block attribute.
+		/// </param>
 		/// <param name="rotationAngle">The rotation angle for block transformation (positive for counterclockwise).</param>
 		public static BlockReference? GetReference(this Block block, Point3d insertionPoint, Layer? layer = null, double rotationAngle = 0)
 		{
@@ -363,17 +365,29 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Get a collection containing all the <see cref="ObjectId" />'s in those <paramref name="layers" />.
 		/// </summary>
-		public static IEnumerable<ObjectId> GetObjectIds(this IEnumerable<Layer> layers) => layers?.Select(l => $"{l}").GetObjectIds();
+		public static IEnumerable<ObjectId>? GetObjectIds(this IEnumerable<Layer> layers) => layers?.Select(l => $"{l}").GetObjectIds();
 
 		/// <summary>
 		///     Get a collection containing all the <see cref="DBObject" />'s in this <see cref="Layer" />.
 		/// </summary>
-		public static IEnumerable<DBObject> GetDBObjects(this Layer layer) => layer.GetObjectIds()?.GetDBObjects();
+		public static IEnumerable<TDBObject?>? GetDBObjects<TDBObject>(this Layer layer) where TDBObject : DBObject =>
+			layer.GetObjectIds()?.GetDBObjects<TDBObject>();
 
 		/// <summary>
 		///     Get a collection containing all the <see cref="DBObject" />'s in those <paramref name="layers" />.
 		/// </summary>
-		public static IEnumerable<DBObject> GetDBObjects(this IEnumerable<Layer> layers) => layers.GetObjectIds()?.GetDBObjects();
+		public static IEnumerable<TDBObject?>? GetDBObjects<TDBObject>(this IEnumerable<Layer> layers) where TDBObject : DBObject =>
+			layers.GetObjectIds()?.GetDBObjects<TDBObject>();
+
+		/// <summary>
+		///     Returns a <see cref="SelectionFilter" /> for objects in this <paramref name="layer" />.
+		/// </summary>
+		public static SelectionFilter LayerFilter(this Layer layer) => layer.ToString().LayerFilter();
+
+		/// <summary>
+		///     Returns a <see cref="SelectionFilter" /> for objects in these <paramref name="layers" />.
+		/// </summary>
+		public static SelectionFilter LayerFilter(this IEnumerable<Layer> layers) => layers.Select(l => l.ToString()).LayerFilter();
 
 		/// <summary>
 		///     Erase all the objects in this <paramref name="layer" />.
@@ -386,7 +400,7 @@ namespace SPMTool.Extensions
 		public static void EraseObjects(this IEnumerable<Layer> layers) => layers.GetObjectIds()?.RemoveFromDrawing();
 
 		/// <summary>
-		///		Get an array of <see cref="TypedValue"/> from a <see cref="PlaneDisplacement"/>.
+		///     Get an array of <see cref="TypedValue" /> from a <see cref="PlaneDisplacement" />.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this PlaneDisplacement displacement) =>
 			new[]
@@ -396,16 +410,16 @@ namespace SPMTool.Extensions
 			};
 
 		/// <summary>
-		///		Get a <see cref="PlaneDisplacement"/> from <see cref="TypedValue"/>'s.
+		///     Get a <see cref="PlaneDisplacement" /> from <see cref="TypedValue" />'s.
 		/// </summary>
-		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="PlaneDisplacement"/>.</param>
+		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="PlaneDisplacement" />.</param>
 		public static PlaneDisplacement? GetDisplacement(this IEnumerable<TypedValue>? values) =>
 			values.IsNullOrEmpty() || values.Count() != 2
 				? (PlaneDisplacement?) null
 				: new PlaneDisplacement(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
 
 		/// <summary>
-		///		Get an array of <see cref="TypedValue"/> from a <see cref="PlaneForce"/>.
+		///     Get an array of <see cref="TypedValue" /> from a <see cref="PlaneForce" />.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this PlaneForce force) =>
 			new[]
@@ -415,16 +429,16 @@ namespace SPMTool.Extensions
 			};
 
 		/// <summary>
-		///		Get a <see cref="PlaneForce"/> from <see cref="TypedValue"/>'s.
+		///     Get a <see cref="PlaneForce" /> from <see cref="TypedValue" />'s.
 		/// </summary>
-		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="PlaneForce"/>.</param>
+		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="PlaneForce" />.</param>
 		public static PlaneForce? GetForce(this IEnumerable<TypedValue>? values) =>
 			values.IsNullOrEmpty() || values.Count() != 2
 				? (PlaneForce?) null
 				: new PlaneForce(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
 
 		/// <summary>
-		///		Get an array of <see cref="TypedValue"/> from a <see cref="Constraint"/>.
+		///     Get an array of <see cref="TypedValue" /> from a <see cref="Constraint" />.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this Constraint constraint) =>
 			new[]
@@ -434,16 +448,16 @@ namespace SPMTool.Extensions
 			};
 
 		/// <summary>
-		///		Get a <see cref="Constraint"/> from <see cref="TypedValue"/>'s.
+		///     Get a <see cref="Constraint" /> from <see cref="TypedValue" />'s.
 		/// </summary>
-		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="Constraint"/>.</param>
+		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="Constraint" />.</param>
 		public static Constraint? GetConstraint(this IEnumerable<TypedValue>? values) =>
 			values.IsNullOrEmpty() || values.Count() != 2
-				? (Constraint?)null
+				? (Constraint?) null
 				: new Constraint((bool) values.ElementAt(0).Value, (bool) values.ElementAt(1).Value);
 
 		/// <summary>
-		///		Get an array of <see cref="TypedValue"/> from a <see cref="CrossSection"/>.
+		///     Get an array of <see cref="TypedValue" /> from a <see cref="CrossSection" />.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this CrossSection crossSection) =>
 			new[]
@@ -453,16 +467,16 @@ namespace SPMTool.Extensions
 			};
 
 		/// <summary>
-		///		Get a <see cref="CrossSection"/> from <see cref="TypedValue"/>'s.
+		///     Get a <see cref="CrossSection" /> from <see cref="TypedValue" />'s.
 		/// </summary>
-		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="CrossSection"/>.</param>
+		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="CrossSection" />.</param>
 		public static CrossSection? GetCrossSection(this IEnumerable<TypedValue>? values) =>
 			values.IsNullOrEmpty() || values.Count() != 2
-				? (CrossSection?)null
+				? (CrossSection?) null
 				: new CrossSection(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
 
 		/// <summary>
-		///		Get an array of <see cref="TypedValue"/> from a <see cref="UniaxialReinforcement"/>.
+		///     Get an array of <see cref="TypedValue" /> from a <see cref="UniaxialReinforcement" />.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this UniaxialReinforcement? reinforcement) =>
 			new[]
@@ -470,13 +484,13 @@ namespace SPMTool.Extensions
 				new TypedValue((int) DxfCode.Int32, reinforcement?.NumberOfBars                     ?? 0),
 				new TypedValue((int) DxfCode.Real,  reinforcement?.BarDiameter.Millimeters          ?? 0),
 				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.YieldStress.Megapascals   ?? 0),
-				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.ElasticModule.Megapascals ?? 0),
+				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.ElasticModule.Megapascals ?? 0)
 			};
 
 		/// <summary>
-		///		Get a <see cref="UniaxialReinforcement"/> from <see cref="TypedValue"/>'s.
+		///     Get a <see cref="UniaxialReinforcement" /> from <see cref="TypedValue" />'s.
 		/// </summary>
-		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="UniaxialReinforcement"/>.</param>
+		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="UniaxialReinforcement" />.</param>
 		public static UniaxialReinforcement? GetReinforcement(this IEnumerable<TypedValue>? values)
 		{
 			if (values.IsNullOrEmpty() || values.Count() != 4)
@@ -495,7 +509,7 @@ namespace SPMTool.Extensions
 		}
 
 		/// <summary>
-		///		Get an array of <see cref="TypedValue"/> from a <see cref="WebReinforcementDirection"/>.
+		///     Get an array of <see cref="TypedValue" /> from a <see cref="WebReinforcementDirection" />.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this WebReinforcementDirection? reinforcement) =>
 			new[]
@@ -503,13 +517,13 @@ namespace SPMTool.Extensions
 				new TypedValue((int) DxfCode.Real,  reinforcement?.BarDiameter.Millimeters          ?? 0),
 				new TypedValue((int) DxfCode.Real,  reinforcement?.BarSpacing.Millimeters           ?? 0),
 				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.YieldStress.Megapascals   ?? 0),
-				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.ElasticModule.Megapascals ?? 0),
+				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel?.ElasticModule.Megapascals ?? 0)
 			};
 
 		/// <summary>
-		///		Get a <see cref="WebReinforcementDirection"/> from <see cref="TypedValue"/>'s.
+		///     Get a <see cref="WebReinforcementDirection" /> from <see cref="TypedValue" />'s.
 		/// </summary>
-		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="WebReinforcementDirection"/>.</param>
+		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="WebReinforcementDirection" />.</param>
 		public static WebReinforcementDirection? GetReinforcementDirection(this IEnumerable<TypedValue>? values, Direction direction)
 		{
 			if (values.IsNullOrEmpty() || values.Count() != 4)
@@ -532,7 +546,7 @@ namespace SPMTool.Extensions
 		}
 
 		/// <summary>
-		///		Get an array of <see cref="TypedValue"/> from a <see cref="WebReinforcementDirection"/>.
+		///     Get an array of <see cref="TypedValue" /> from a <see cref="WebReinforcementDirection" />.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this IParameters parameters) =>
 			new []
@@ -548,9 +562,9 @@ namespace SPMTool.Extensions
 			};
 
 		/// <summary>
-		///		Get a <see cref="IParameters"/> from <see cref="TypedValue"/>'s.
+		///     Get a <see cref="IParameters" /> from <see cref="TypedValue" />'s.
 		/// </summary>
-		/// <param name="values">The <see cref="TypedValue"/>'s that represent a <see cref="IParameters"/>.</param>
+		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="IParameters" />.</param>
 		public static IParameters? GetParameters(this IEnumerable<TypedValue>? values)
 		{
 			if (values.IsNullOrEmpty() || values.Count() != 8)
@@ -574,7 +588,7 @@ namespace SPMTool.Extensions
 
 
 		/// <summary>
-		///		Get an array of <see cref="TypedValue"/> from an <see cref="Units"/>.
+		///     Get an array of <see cref="TypedValue" /> from an <see cref="Units" />.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this Units? units)
 		{
@@ -582,22 +596,22 @@ namespace SPMTool.Extensions
 
 			return new []
 			{
-				new TypedValue((int)DxfCode.Int32, (int)units.Geometry),
-				new TypedValue((int)DxfCode.Int32, (int)units.Reinforcement),
-				new TypedValue((int)DxfCode.Int32, (int)units.Displacements),
-				new TypedValue((int)DxfCode.Int32, (int)units.CrackOpenings),
-				new TypedValue((int)DxfCode.Int32, (int)units.AppliedForces),
-				new TypedValue((int)DxfCode.Int32, (int)units.StringerForces),
-				new TypedValue((int)DxfCode.Int32, (int)units.PanelStresses),
-				new TypedValue((int)DxfCode.Int32, (int)units.MaterialStrength),
-				new TypedValue((int)DxfCode.Int32, units.DisplacementMagnifier)
+				new TypedValue((int) DxfCode.Int32, (int) units.Geometry),
+				new TypedValue((int) DxfCode.Int32, (int) units.Reinforcement),
+				new TypedValue((int) DxfCode.Int32, (int) units.Displacements),
+				new TypedValue((int) DxfCode.Int32, (int) units.CrackOpenings),
+				new TypedValue((int) DxfCode.Int32, (int) units.AppliedForces),
+				new TypedValue((int) DxfCode.Int32, (int) units.StringerForces),
+				new TypedValue((int) DxfCode.Int32, (int) units.PanelStresses),
+				new TypedValue((int) DxfCode.Int32, (int) units.MaterialStrength),
+				new TypedValue((int) DxfCode.Int32, units.DisplacementMagnifier)
 			};
 		}
 
 		/// <summary>
-		///		Get a <see cref="Units"/> from <see cref="TypedValue"/>'s.
+		///     Get a <see cref="Units" /> from <see cref="TypedValue" />'s.
 		/// </summary>
-		/// <param name="values">The <see cref="TypedValue"/>'s that represent an <see cref="Units"/>.</param>
+		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="Units" />.</param>
 		public static Units? GetUnits(this IEnumerable<TypedValue>? values)
 		{
 			if (values.IsNullOrEmpty() || values.Count() != 9)
@@ -618,7 +632,7 @@ namespace SPMTool.Extensions
 		}
 
 		/// <summary>
-		///		Get an array of <see cref="TypedValue"/> from an <see cref="AnalysisSettings"/>.
+		///     Get an array of <see cref="TypedValue" /> from an <see cref="AnalysisSettings" />.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this AnalysisSettings? settings)
 		{
@@ -626,16 +640,16 @@ namespace SPMTool.Extensions
 
 			return new []
 			{
-				new TypedValue((int)DxfCode.Real,  settings.Tolerance),
-				new TypedValue((int)DxfCode.Int32, settings.NumLoadSteps),
-				new TypedValue((int)DxfCode.Int32, settings.MaxIterations)
+				new TypedValue((int) DxfCode.Real,  settings.Tolerance),
+				new TypedValue((int) DxfCode.Int32, settings.NumLoadSteps),
+				new TypedValue((int) DxfCode.Int32, settings.MaxIterations)
 			};
 		}
 
 		/// <summary>
-		///		Get an <see cref="AnalysisSettings"/> from <see cref="TypedValue"/>'s.
+		///     Get an <see cref="AnalysisSettings" /> from <see cref="TypedValue" />'s.
 		/// </summary>
-		/// <param name="values">The <see cref="TypedValue"/>'s that represent an <see cref="AnalysisSettings"/>.</param>
+		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="AnalysisSettings" />.</param>
 		public static AnalysisSettings? GetAnalysisSettings(this IEnumerable<TypedValue>? values)
 		{
 			if (values.IsNullOrEmpty() || values.Count() != 3)
@@ -645,19 +659,19 @@ namespace SPMTool.Extensions
 			{
 				Tolerance     = values.ElementAt(0).ToDouble(),
 				NumLoadSteps  = values.ElementAt(1).ToInt(),
-				MaxIterations = values.ElementAt(2).ToInt(),
+				MaxIterations = values.ElementAt(2).ToInt()
 			};
 		}
 
 		/// <summary>
-		///		Get an array of <see cref="TypedValue"/> from an <see cref="Enum"/> value.
+		///     Get an array of <see cref="TypedValue" /> from an <see cref="Enum" /> value.
 		/// </summary>
-		/// <typeparam name="TEnum">An <see cref="Enum"/> type.</typeparam>
+		/// <typeparam name="TEnum">An <see cref="Enum" /> type.</typeparam>
 		public static TypedValue[] GetTypedValues<TEnum>(this TEnum enumValue) where TEnum : Enum =>
 			new [] {new TypedValue((int) DxfCode.Int32, (int) (object) enumValue) };
 
 		/// <summary>
-		///		Get an int that represents an <see cref="Enum"/> value from <see cref="TypedValue"/>'s.
+		///     Get an int that represents an <see cref="Enum" /> value from <see cref="TypedValue" />'s.
 		/// </summary>
 		public static int? GetEnumValue(this IEnumerable<TypedValue>? values) =>
 			values.IsNullOrEmpty() || values.Count() != 1

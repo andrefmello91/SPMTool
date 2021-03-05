@@ -7,6 +7,7 @@ using Autodesk.AutoCAD.Geometry;
 using Extensions;
 using MathNet.Numerics;
 using SPMTool.Core;
+using SPMTool.Enums;
 using UnitsNet.Units;
 using static SPMTool.Core.DataBase;
 
@@ -208,7 +209,8 @@ namespace SPMTool.Extensions
 		///     Get the collection of <see cref="DBObject" />'s of <paramref name="objectIds" />.
 		/// </summary>
 		/// <inheritdoc cref="GetDBObject" />
-		public static IEnumerable<DBObject>? GetDBObjects(this IEnumerable<ObjectId>? objectIds, Transaction? ongoingTransaction = null)
+		public static IEnumerable<TDBObject?>? GetDBObjects<TDBObject>(this IEnumerable<ObjectId>? objectIds, Transaction? ongoingTransaction = null)
+			where TDBObject : DBObject
 		{
 			if (objectIds.IsNullOrEmpty())
 				return null;
@@ -216,38 +218,13 @@ namespace SPMTool.Extensions
 			// Start a transaction
 			var trans = ongoingTransaction ?? StartTransaction();
 
-			var objs = objectIds.Select(obj => trans.GetObject(obj, OpenMode.ForRead)).ToArray();
+			var objs = objectIds.Select(obj => trans.GetObject(obj, OpenMode.ForRead)).Cast<TDBObject?>().ToArray();
 
 			if (ongoingTransaction is null)
 				trans.Dispose();
 
 			return objs;
 		}
-
-		/// <summary>
-		///     Get this collection as <see cref="DBPoint" />'s.
-		/// </summary>
-		public static IEnumerable<DBPoint?>? ToPoints(this IEnumerable<DBObject?>? objects) => objects?.Cast<DBPoint?>();
-
-		/// <summary>
-		///     Get this collection as <see cref="Line" />'s.
-		/// </summary>
-		public static IEnumerable<Line?>? ToLines(this IEnumerable<DBObject?>? objects) => objects?.Cast<Line?>();
-
-		/// <summary>
-		///     Get this collection as <see cref="Solid" />'s.
-		/// </summary>
-		public static IEnumerable<Solid?>? ToSolids(this IEnumerable<DBObject?>? objects) => objects?.Cast<Solid?>();
-
-		/// <summary>
-		///     Get this collection as <see cref="BlockReference" />'s.
-		/// </summary>
-		public static IEnumerable<BlockReference?>? ToBlocks(this IEnumerable<DBObject?>? objects) => objects?.Cast<BlockReference?>();
-
-		/// <summary>
-		///     Get this collection as <see cref="DBText" />'s.
-		/// </summary>
-		public static IEnumerable<DBText?>? ToTexts(this IEnumerable<DBObject?>? objects) => objects?.Cast<DBText?>();
 
 		/// <summary>
 		///     Get the <see cref="Point3d" /> vertices of this <paramref name="solid" />.
@@ -880,7 +857,7 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Get a collection containing all the <see cref="ObjectId" />'s in those <paramref name="layerNames" />.
 		/// </summary>
-		public static IEnumerable<ObjectId> GetObjectIds(this IEnumerable<string>? layerNames)
+		public static IEnumerable<ObjectId>? GetObjectIds(this IEnumerable<string>? layerNames)
 		{
 			if (layerNames.IsNullOrEmpty())
 				return null;
@@ -893,16 +870,6 @@ namespace SPMTool.Extensions
 					? selRes.Value.GetObjectIds()
 					: new ObjectId[0];
 		}
-
-		/// <summary>
-		///     Get a collection containing all the <see cref="DBObject" />'s in this <see cref="layerName" />.
-		/// </summary>
-		public static IEnumerable<DBObject>? GetDBObjects(this string layerName) => layerName.GetObjectIds()?.GetDBObjects();
-
-		/// <summary>
-		///     Get a collection containing all the <see cref="DBObject" />'s in those <paramref name="layerNames" />.
-		/// </summary>
-		public static IEnumerable<DBObject>? GetDBObjects(this IEnumerable<string> layerNames) => layerNames.GetObjectIds()?.GetDBObjects();
 
 		/// <summary>
 		///     Create a block in the database.

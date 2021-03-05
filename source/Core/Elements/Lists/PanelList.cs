@@ -45,7 +45,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the collection of panels in the drawing.
 		/// </summary>
-		public static IEnumerable<Solid>? GetObjects() => Layer.Panel.GetDBObjects()?.ToSolids();
+		public static IEnumerable<Solid>? GetObjects() => Layer.Panel.GetDBObjects<Solid>();
 
 		/// <summary>
 		///     Read all the <see cref="PanelObject" />'s in the drawing.

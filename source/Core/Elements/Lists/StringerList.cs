@@ -47,7 +47,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the collection of stringers in the drawing.
 		/// </summary>
-		public static IEnumerable<Line>? GetObjects() => Layer.Stringer.GetDBObjects()?.ToLines();
+		public static IEnumerable<Line>? GetObjects() => Layer.Stringer.GetDBObjects<Line>();
 
 		/// <summary>
 		///     Read all the <see cref="StringerObject" />'s in the drawing.

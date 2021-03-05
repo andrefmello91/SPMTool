@@ -44,19 +44,19 @@ namespace SPMTool.Core.Elements
 		///     <see cref="NodeType.External" /> nodes.
 		/// </remarks>
 		/// <param name="type">The <see cref="NodeType" />.</param>
-		public static IEnumerable<DBPoint>? GetDBPoints(NodeType? type = null) =>
+		public static IEnumerable<DBPoint?>? GetDBPoints(NodeType? type = null) =>
 			type switch
 			{
-				NodeType.Internal  => Layer.IntNode.GetDBObjects()?.ToPoints(),
-				NodeType.External  => Layer.ExtNode.GetDBObjects()?.ToPoints(),
-				NodeType.Displaced => Layer.Displacements.GetDBObjects()?.ToPoints(),
-				_                  => new[] { Layer.IntNode, Layer.ExtNode }.GetDBObjects()?.ToPoints()
+				NodeType.Internal  => Layer.IntNode.GetDBObjects<DBPoint>(),
+				NodeType.External  => Layer.ExtNode.GetDBObjects<DBPoint>(),
+				NodeType.Displaced => Layer.Displacements.GetDBObjects<DBPoint>(),
+				_                  => new[] { Layer.IntNode, Layer.ExtNode }.GetDBObjects<DBPoint>()
 			};
 
 		/// <summary>
 		///     Read all <see cref="NodeObject" />'s from drawing.
 		/// </summary>
-		public static NodeList ReadFromDrawing() => ReadFromPoints(GetDBPoints());
+		public static NodeList ReadFromDrawing() => ReadFromPoints(GetDBPoints()?.ToArray());
 
 		/// <summary>
 		///     Read <see cref="NodeObject" />'s from a collection of <see cref="DBPoint" />'s.
@@ -109,19 +109,22 @@ namespace SPMTool.Core.Elements
 			if (geometries.IsNullOrEmpty())
 				return 0;
 
-			var geoList = geometries.ToList();
-
 			// Create a list
-			var extNds = new EList<Point>();
+			var nds = geometries.SelectMany(g => new[]
+			{
+				new NodeObject(g.InitialPoint, NodeType.External),
+				new NodeObject(g.CenterPoint,  NodeType.Internal),
+				new NodeObject(g.EndPoint,     NodeType.External)
+			}).Distinct().ToList();
 
-			// Add external nodes
-			extNds.AddRange(geoList.Select(str => str.InitialPoint));
-			extNds.AddRange(geoList.Select(str => str.EndPoint));
-			var c = AddRange(extNds, NodeType.External, raiseEvents, sort);
+			//// Add external nodes
+			//extNds.AddRange(geoList.Select(str => str.InitialPoint));
+			//extNds.AddRange(geoList.Select(str => str.EndPoint));
+			//var c = AddRange(extNds, NodeType.External, raiseEvents, false);
 
 			// Add internal nodes
 			return
-				c + AddRange(geoList.Select(str => str.CenterPoint).ToArray(), NodeType.Internal, raiseEvents, sort);
+				AddRange(nds, raiseEvents, sort);
 		}
 
 		/// <inheritdoc cref="Add(NodeObject, bool, bool)" />
@@ -194,16 +197,16 @@ namespace SPMTool.Core.Elements
 				return c;
 			}
 
-			// Get stringers
-			var geoList = geometries.ToList();
-
 			// Get the stringer points
-			var toRemove = geoList.Select(str => str.CenterPoint).ToEList();
-			toRemove!.AddRange(geoList.Select(str => str.InitialPoint));
-			toRemove!.AddRange(geoList.Select(str => str.EndPoint));
+			var toRemove = geometries.SelectMany(g => new[]
+			{
+				g.InitialPoint,
+				g.CenterPoint,
+				g.EndPoint
+			}).Distinct().ToList();
 
 			return
-				RemoveAll(n => toRemove.Contains(n.Position), raiseEvents, sort);
+				RemoveAll(n => !toRemove.Contains(n.Position), raiseEvents, sort);
 		}
 
 		/// <summary>
@@ -226,11 +229,6 @@ namespace SPMTool.Core.Elements
 			// Set the style for all point objects in the drawing
 			SetPointSize();
 		}
-
-		/// <summary>
-		///     Get a node from the list with corresponding <see cref="ObjectId" />.
-		/// </summary>
-		public NodeObject? GetByObjectId(ObjectId objectId) => Find(n => n.ObjectId == objectId);
 
 		#endregion
 	}

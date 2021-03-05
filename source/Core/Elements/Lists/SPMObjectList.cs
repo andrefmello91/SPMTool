@@ -28,8 +28,11 @@ namespace SPMTool.Core.Elements
 		protected SPMObjectList() => SetEvents();
 
 		protected SPMObjectList(IEnumerable<T1> collection)
-			: base(collection) =>
+			: base(collection)
+		{
 			SetEvents();
+			Sort(true);
+		}
 
 		#endregion
 
