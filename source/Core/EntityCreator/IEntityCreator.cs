@@ -95,6 +95,14 @@ namespace SPMTool.Core
 			// Set object ids
 			for (var i = 0; i < objects.Count(); i++)
 				objects.ElementAt(i).ObjectId = objIds[i];
+
+			// Set events
+			foreach (var entity in entities)
+			{
+				entity.Unappended += Model.On_ObjectUnappended;
+				entity.Reappended += Model.On_ObjectReappended;
+				entity.Copied     += Model.On_ObjectCopied;
+			}
 		}
 
 		/// <summary>

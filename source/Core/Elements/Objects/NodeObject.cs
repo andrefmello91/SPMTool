@@ -53,7 +53,11 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the position.
 		/// </summary>
-		public Point Position => PropertyField;
+		public Point Position
+		{
+			get => PropertyField;
+			set => PropertyField = value;
+		}
 
 		/// <summary>
 		///     Get the node type.

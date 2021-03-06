@@ -71,7 +71,11 @@ namespace SPMTool.Core.Elements
 
 		public int Number { get; set; } = 0;
 		
-		public T2 Property => PropertyField;
+		public T2 Property
+		{
+			get => PropertyField;
+			set => PropertyField = value;
+		}
 
 		#endregion
 
@@ -93,7 +97,16 @@ namespace SPMTool.Core.Elements
 
 		public T4? GetEntity() => (T4?) ObjectId.GetEntity();
 
-		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing(Model.On_ObjectErase);
+		public void AddToDrawing()
+		{
+			var entity = CreateEntity();
+
+			ObjectId = entity.AddToDrawing(Model.On_ObjectErase);
+
+			entity.Unappended += Model.On_ObjectUnappended;
+			entity.Reappended += Model.On_ObjectReappended;
+			entity.Copied     += Model.On_ObjectCopied;
+		}
 
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 

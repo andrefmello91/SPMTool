@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions;
@@ -13,7 +14,9 @@ using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
+
 using static SPMTool.Core.DataBase;
+using static Autodesk.AutoCAD.ApplicationServices.Application;
 
 #nullable disable
 
@@ -224,6 +227,90 @@ namespace SPMTool.Core
 		public static void SetLineWeightDisplay() => DataBase.Database.LineWeightDisplay = true;
 
 		/// <summary>
+		///		Get the SPM object associated to an <see cref="Entity"/> and remove from its list.
+		/// </summary>
+		public static bool Remove(Entity entity, bool raiseEvents = false) => Remove(entity.GetSPMObject(), raiseEvents);
+
+		/// <summary>
+		///		Remove a SPM object from its list.
+		/// </summary>
+		public static bool Remove(IEntityCreator<Entity> obj, bool raiseEvents = false)
+		{
+			if (obj is null)
+				return false;
+
+			switch (obj)
+			{
+				case NodeObject node:
+					var nd = Nodes.Remove(node, raiseEvents, false);
+					Nodes.Update();
+					return nd;
+
+				case StringerObject stringer:
+					var str = Stringers.Remove(stringer, raiseEvents);
+					Nodes.Update();
+					return str;
+
+				case PanelObject panel:
+					return Panels.Remove(panel, raiseEvents);
+
+				case ForceObject force:
+					var removed = Forces.Remove(force, raiseEvents);
+					if (removed)
+						force.EraseTexts();
+					return removed;
+
+				case ConstraintObject constraint:
+					return Constraints.Remove(constraint, raiseEvents);
+
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		///		Create an SPM object associated to an <see cref="Entity"/> and add to its list.
+		/// </summary>
+		public static bool Add(Entity entity, bool raiseEvents = false) => Add(entity.CreateSPMObject(), raiseEvents);
+
+		/// <summary>
+		///		Add a SPM object to its list.
+		/// </summary>
+		public static bool Add(IEntityCreator<Entity> obj, bool raiseEvents = false)
+		{
+			if (obj is null)
+				return false;
+
+			switch (obj)
+			{
+				case NodeObject node:
+					var add = Nodes.Add(node, raiseEvents, false);
+					Nodes.Update();
+					return add;
+
+				case StringerObject stringer:
+					var adds = Stringers.Add(stringer, raiseEvents);
+					Nodes.Update();
+					return adds;
+
+				case PanelObject panel:
+					return Panels.Add(panel, raiseEvents);
+
+				case ForceObject force:
+					var added = Forces.Add(force, raiseEvents);
+					if (added)
+						force.AddTextsToDrawing();
+					return added;
+
+				case ConstraintObject constraint:
+					return Constraints.Add(constraint, raiseEvents);
+
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
 		///     Event to run after undo or redo commands.
 		/// </summary>
 		public static void On_UndoOrRedo(object sender, CommandEventArgs e)
@@ -233,40 +320,75 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Event to execute when an object is erased.
+		///     Event to execute when an object is erased or unerased.
 		/// </summary>
 		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
 		{
-			var layer = ((Entity) e.DBObject).ReadLayer();
+			var entity = (Entity) sender;
 
-			var id = e.DBObject.ObjectId;
+			if (entity is null)
+				return;
 
-			switch (layer)
+			if (e.Erased)
 			{
-				case Layer.ExtNode:
-				case Layer.IntNode:
-					Nodes.RemoveAll(n => n.ObjectId == id, false);
-					return;
-
-				case Layer.Stringer :
-					Stringers.RemoveAll(s => s.ObjectId == id, false);
-					return;
-
-				case Layer.Panel:
-					Panels.RemoveAll(p => p.ObjectId == id, false);
-					return;
-
-				case Layer.Force:
-					Forces.RemoveAll(f => f.ObjectId == id, false);
-					return;
-
-				case Layer.Support:
-					Constraints.RemoveAll(c => c.ObjectId == id, false);
-					return;
-
-				default:
-					return;
+				var obj = entity.GetSPMObject();
+				if (Remove(obj))
+					Editor.WriteMessage($"\n{obj.GetType()} removed");
+				return;
 			}
+
+			var obj1 = entity.CreateSPMObject();
+
+			if (Add(obj1))
+				Editor.WriteMessage($"\n{obj1.GetType()} added");
+		}
+
+		/// <summary>
+		///		Event to execute when an object is unappended from database.
+		/// </summary>
+		public static void On_ObjectUnappended(object sender, EventArgs e)
+		{
+			var entity = (Entity) sender;
+
+			if (entity is null)
+				return;
+
+			var obj = entity.GetSPMObject();
+
+			Remove(obj);
+			Editor.WriteMessage($"\n{obj.GetType()} removed");
+		}
+		
+		/// <summary>
+		///		Event to execute when an object is reappended to database.
+		/// </summary>
+		public static void On_ObjectReappended(object sender, EventArgs e)
+		{
+			var entity = (Entity) sender;
+
+			if (entity is null)
+				return;
+
+			var obj = entity.CreateSPMObject();
+
+			Add(obj);
+			Editor.WriteMessage($"\n{obj.GetType()} added");
+		}
+
+		/// <summary>
+		///		Event to execute when an object is copied.
+		/// </summary>
+		public static void On_ObjectCopied(object sender, ObjectEventArgs e)
+		{
+			var entity = (Entity)e.DBObject;
+
+			if (entity is null)
+				return;
+
+			var obj = entity.CreateSPMObject();
+
+			Add(obj);
+			Editor.WriteMessage($"\n{obj.GetType()} copied.");
 		}
 
 		/// <summary>

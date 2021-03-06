@@ -78,7 +78,11 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get panel's <see cref="SPM.Elements.PanelProperties.Vertices" />
 		/// </summary>
-		public Vertices Vertices => Geometry.Vertices;
+		public Vertices Vertices
+		{
+			get => Geometry.Vertices;
+			set => PropertyField = new PanelGeometry(value, Width);
+		}
 
 		/// <summary>
 		///     Get the geometry.

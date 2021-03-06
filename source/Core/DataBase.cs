@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.DataExtraction;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Application;
 using SPMTool.Core.Materials;
@@ -101,7 +102,7 @@ namespace SPMTool.Core
             // Get app settings
             Settings     = new Settings();
             ConcreteData = new ConcreteData();
-        }
+		}
 
 		#endregion
 

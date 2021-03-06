@@ -45,7 +45,11 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the geometry of this object.
 		/// </summary>
-		public StringerGeometry Geometry => PropertyField;
+		public StringerGeometry Geometry
+		{
+			get => PropertyField;
+			set => PropertyField = new StringerGeometry(value.InitialPoint, value.EndPoint, CrossSection);
+		}
 
 		public override Layer Layer => Layer.Stringer;
 

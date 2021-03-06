@@ -16,20 +16,7 @@ namespace SPMTool
 		/// <summary>
         /// Initialize application.
         /// </summary>
-		public void Initialize()
-		{
-			Idle += On_ApplicationIdle;
-
-            // Open the Registered Applications table and check if custom app exists. If it doesn't, then it's created:
-            //DataBase.RegisterApp();
-
-            // Create layers and blocks
-            //DataBase.CreateLayers();
-            //Blocks.CreateBlocks();
-
-            //// Set app parameters for drawing
-            //Model.SetAppParameters();
-        }
+		public void Initialize() => Idle += On_ApplicationIdle;
 
 		/// <summary>
 		/// Terminate application.
@@ -41,9 +28,6 @@ namespace SPMTool
 		/// </summary>
 		public void On_ApplicationIdle(object sender, EventArgs e)
 		{
-			// Add command event handler
-			//DataBase.Document.CommandEnded += Model.On_UndoOrRedo;
-
 			// Add application buttons
 			Ribbon.AddButtons();
 

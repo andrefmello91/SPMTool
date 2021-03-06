@@ -115,11 +115,24 @@ namespace SPMTool.Core.Conditions
 		public override void AddToDrawing()
 		{
 			base.AddToDrawing();
+			AddTextsToDrawing();
+		}
+
+		/// <summary>
+		///		Add the text objects to drawing.
+		/// </summary>
+		public void AddTextsToDrawing()
+		{
 			TextX?.AddToDrawing();
 			TextY?.AddToDrawing();
 		}
 
 		public override void RemoveFromDrawing() => new[] {ObjectId, TextX?.ObjectId ?? ObjectId.Null, TextY?.ObjectId ?? ObjectId.Null}.RemoveFromDrawing();
+
+		/// <summary>
+		///		Erase texts from drawing.
+		/// </summary>
+		public void EraseTexts() => new[] { TextX?.ObjectId ?? ObjectId.Null, TextY?.ObjectId ?? ObjectId.Null }.RemoveFromDrawing();
 
 		protected override bool GetProperties()
 		{
