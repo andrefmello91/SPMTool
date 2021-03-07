@@ -104,7 +104,7 @@ namespace SPMTool.Core.Elements
 		public bool Add(Point startPoint, Point endPoint, bool raiseEvents = true, bool sort = true)
 		{
 			// Order points
-			var pts = new[] { startPoint, endPoint }.ToList();
+			var pts = new[] { startPoint, endPoint }.OrderBy(p => p).ToList();
 			pts.Sort();
 
 			return

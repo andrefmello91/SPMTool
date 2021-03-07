@@ -25,12 +25,12 @@ namespace SPMTool.Core.Elements
 	{
 		#region Constructors
 
-		protected SPMObjectList() => SetEvents();
+		protected SPMObjectList() => SetSortEvent();
 
 		protected SPMObjectList(IEnumerable<T1> collection)
 			: base(collection)
 		{
-			SetEvents();
+			SetSortEvent();
 			Sort(true);
 		}
 
@@ -77,13 +77,9 @@ namespace SPMTool.Core.Elements
 		public IEnumerable<T1>? GetByProperties(IEnumerable<T2>? properties) => this.Where(t => properties.Contains(t.Property));
 
 		/// <summary>
-		///     Set events on this collection.
+		///     Set sort event to this collection.
 		/// </summary>
-		protected new void SetEvents()
-		{
-			base.SetEvents();
-			ListSorted += On_ListSort;
-		}
+		protected void SetSortEvent() => ListSorted += On_ListSort;
 
 		/// <summary>
 		///     Event to execute when a list is sorted.

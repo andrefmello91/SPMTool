@@ -326,12 +326,10 @@ namespace SPMTool.Extensions
 
 			dbExt.UpgradeOpen();
 
-			var xRec = new Xrecord
-			{
-				Data = data is null
-					? null
-					: new ResultBuffer(data.ToArray())
-			};
+			var xRec = new Xrecord();
+
+			if (!(data is null))
+				xRec.Data = new ResultBuffer(data.ToArray());
 
 			// Set the data
 			dbExt.SetAt(dataName, xRec);

@@ -27,7 +27,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get/set the <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> of this object's extended dictionary.
 		/// </summary>
-		public ObjectId DictionaryId { get; set; } = ObjectId.Null;
+		public ObjectId DictionaryId { get; protected set; } = ObjectId.Null;
 
 		#endregion
 

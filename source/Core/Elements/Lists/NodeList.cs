@@ -143,7 +143,7 @@ namespace SPMTool.Core.Elements
 					base.Add(item, raiseEvents, sort);
 
 			// Just add to drawing
-			item.AddToDrawing();
+			item.CreateEntity().AddToDrawing();
 			return false;
 		}
 
@@ -161,13 +161,13 @@ namespace SPMTool.Core.Elements
 				return 0;
 
 			// Get displaced nodes
-			var dispNodes = collection.Where(n => n.Type is NodeType.Displaced).ToList();
+			var dispNodes = collection.Where(n => n.Type is NodeType.Displaced).Select(n => n.CreateEntity()).ToList();
 
 			if (dispNodes.Any())
 				dispNodes.AddToDrawing();
 
 			return
-				base.AddRange(collection.Where(n => n.Type != NodeType.Displaced), raiseEvents, sort);
+				base.AddRange(collection.Where(n => n.Type != NodeType.Displaced).ToList(), raiseEvents, sort);
 		}
 
 		public int RemoveRange(IEnumerable<Point>? positions, bool raiseEvents = true, bool sort = true) =>
