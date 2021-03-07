@@ -48,6 +48,9 @@ namespace SPMTool.Editor.Commands
 			if (toDivide.IsNullOrEmpty())
 				return;
 
+			// Remove mid nodes
+			Nodes.RemoveRange(toDivide.Select(s => s.Geometry.CenterPoint).ToArray());
+
 			// Divide the stringers
 			var newStrs = toDivide.SelectMany(s => s.Divide(num)).ToArray();
 
@@ -59,58 +62,11 @@ namespace SPMTool.Editor.Commands
 
 			// Update nodes
 			Nodes.Update();
-
-			//foreach (var str in strs)
-			//         {
-			//          // Get the coordinates of the initial and end points
-			//          Point3d
-			//           strSt  = str.StartPoint,
-			//           strEnd = str.EndPoint;
-
-			//          // Calculate the distance of the points in X and Y
-			//          double
-			//           distX = strEnd.DistanceInX(strSt) / num,
-			//           distY = strEnd.DistanceInY(strSt) / num;
-
-			//          // Initialize the start point
-			//          var stPt = strSt;
-
-			//          // Get the midpoint
-			//          var midPt = strSt.MidPoint(strEnd);
-
-			//          // Read the internal nodes to erase
-			//          ndsToErase.AddRange(intNds.Where(nd => nd.Position.Approx(midPt)));
-
-			//          // Create the new stringers
-			//          for (int i = 1; i <= num; i++)
-			//          {
-			//           // Get the coordinates of the other points
-			//           double
-			//            xCrd = str.StartPoint.X + i * distX,
-			//            yCrd = str.StartPoint.Y + i * distY;
-
-			//           var endPt = new Point3d(xCrd, yCrd, 0);
-
-			//           // Create the Stringer
-			//           Stringers.Add(stPt, endPt);
-
-			//           // Set the start point of the next Stringer
-			//           stPt = endPt;
-			//          }
-
-			//          // Remove from the list
-			//          var strList = stringerCollection.ToList();
-			//          strList.Remove(new StringerGeometry(strSt, strEnd, 0, 0));
-			//          stringerCollection = strList;
-			//         }
 		}
 
 		[CommandMethod("DividePanel")]
 		public static void DividePanel()
 		{
-			// Get units
-			var units = DataBase.Settings.Units;
-
 			// Prompt for select panels
 			var pnls = UserInput.SelectPanels("Select panels to divide")?.ToArray();
 
@@ -184,6 +140,9 @@ namespace SPMTool.Editor.Commands
 						newStrs.AddRange(ver);
 				}
 			}
+
+			// Remove mid nodes
+			Nodes.RemoveRange(strsToDivide.Select(s => s.Geometry.CenterPoint).ToArray());
 
 			// Erase the original elements
 			Panels.RemoveRange(pnlsToDivide);
