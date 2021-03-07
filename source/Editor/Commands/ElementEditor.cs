@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using Extensions;
+using SPM.Elements.PanelProperties;
+using SPM.Elements.StringerProperties;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
@@ -113,8 +116,8 @@ namespace SPMTool.Editor.Commands
 			var newPanels = pnlsToDivide.SelectMany(p => p.Divide(row, cln)).ToArray();
 
 			// Get the stringers to divide and divide them
-			var strsToDivide = new List<StringerObject>();
-			var newStrs      = new List<StringerObject>();
+			var strsToDivide = new EList<StringerObject>();
+			var newStrs      = new EList<StringerObject>();
 
 			foreach (var pnl in pnlsToDivide)
 			{
@@ -141,6 +144,9 @@ namespace SPMTool.Editor.Commands
 				}
 			}
 
+			// Add other stringers
+			newStrs.AddRange(newPanels.SelectMany(p => p.Geometry.Edges.Select(e => new StringerObject(e.InitialVertex, e.FinalVertex))).ToArray());
+
 			// Remove mid nodes
 			Nodes.RemoveRange(strsToDivide.Select(s => s.Geometry.CenterPoint).ToArray());
 
@@ -156,132 +162,13 @@ namespace SPMTool.Editor.Commands
 			Nodes.Update();
 
 			// Show alert if there was a non-rectangular panel
-			if (nonRecSelected)
-				ShowAlertDialog("Only rectangular panels were divided.");
+			var message = nonRecSelected
+				? "Only rectangular panels were divided.\n\n"
+				: string.Empty;
 
-			//// Get the list of start and endpoints
-			//var geoList = StringerList.GetGeometries;
+			message += "Set geometry to new internal stringers!";
 
-			//// Get the list of panels
-			//var pnlList = PanelList.VerticesList;
-
-			//// Create a list of lines for adding the stringers later
-			//var newStrList = new List<Line>();
-
-			//// Auxiliary rectangular panel error
-			//var error = false;
-
-			//         // Create a collection of stringers and nodes to erase
-			//         var toErase = new List<DBObject>();
-
-			//// Access the stringers in the model
-			//var strs = Model.StringerCollection;
-
-			//         // Access the internal nodes in the model
-			//         var intNds = Model.IntNodeCollection;
-
-			//// Get the selection set and analyze the elements
-			//foreach (var pnl in pnls)
-			//{
-			//	// Get vertices
-			//	var verts = pnl.GetVertices().ToArray();
-
-			//	// Get panel geometry
-			//	var geometry = new PanelGeometry(verts, 0, units.Geometry);
-
-			//	// Verify if the panel is rectangular
-			//	if (geometry.Rectangular) // panel is rectangular
-			//	{
-			//		// Get the surrounding stringers to erase
-			//		foreach (var str in strs)
-			//		{
-			//			// Verify if the Stringer starts and ends in a panel vertex
-			//			if (!verts.Contains(str.StartPoint) || !verts.Contains(str.EndPoint))
-			//				continue;
-
-			//                     // Add the internal nodes for erasing
-			//                     toErase.AddRange(intNds.Where(nd => nd.Position.Approx(str.MidPoint())));
-
-			//			// Erase and remove from the list
-			//			toErase.Add(str);
-			//			geoList.Remove(new StringerGeometry(str.StartPoint, str.EndPoint, 0, 0));
-			//		}
-
-			//		// Calculate the distance of the points in X and Y
-			//		double
-			//			distX = (geometry.Edge1.Length / cln).ConvertFromMillimeter(units.Geometry),
-			//			distY = (geometry.Edge2.Length / row).ConvertFromMillimeter(units.Geometry);
-
-			//		// Initialize the start point
-			//		var stPt = verts[0];
-
-			//		// Create the new panels
-			//		for (int i = 0; i < row; i++)
-			//		{
-			//			for (int j = 0; j < cln; j++)
-			//			{
-			//				// Get the vertices of the panel and add to a list
-			//				var newVerts = new[]
-			//				{
-			//					new Point3d(stPt.X + j * distX, stPt.Y + i * distY, 0),
-			//					new Point3d(stPt.X + (j + 1) * distX, stPt.Y + i * distY, 0),
-			//					new Point3d(stPt.X + j * distX, stPt.Y + (i + 1) * distY, 0),
-			//					new Point3d(stPt.X + (j + 1) * distX, stPt.Y + (i + 1) * distY, 0)
-			//				};
-
-			//				// Create the panel with XData of the original panel
-			//				PanelList.Add(newVerts);
-
-			//				// Create tuples to adding the stringers later
-			//				var strsToAdd = new[]
-			//				{
-			//					new StringerGeometry(newVerts[0], newVerts[1], 0, 0), 
-			//					new StringerGeometry(newVerts[0], newVerts[2], 0, 0),
-			//					new StringerGeometry(newVerts[2], newVerts[3], 0, 0),
-			//					new StringerGeometry(newVerts[1], newVerts[3], 0, 0)
-			//				};
-
-			//				// Add to the list of new stringers
-			//				newStrList.AddRange(strsToAdd.Where(geo => !geoList.Contains(geo)).Select(geo => new Line(geo.InitialPoint, geo.EndPoint)));
-			//			}
-			//		}
-
-			//		// Add to objects to erase
-			//		toErase.Add(pnl);
-
-			//		// Remove from the list
-			//		var list = pnlList.ToList();
-			//		list.Remove(geometry.Vertices);
-			//		pnlList = list;
-			//	}
-
-			//	else // panel is not rectangular
-			//	{
-			//		error = true;
-			//		break;
-			//	}
-			//}
-
-			//if (error)
-			//{
-			//	Application.ShowAlertDialog("\nAt least one selected panel is not rectangular.");
-			//	return;
-			//}
-
-			//// Erase objects
-			//toErase.RemoveFromDrawing();
-
-			//// Create the stringers
-			//foreach (var str in newStrList)
-			//	StringerList.Add(str);
-
-			//// Create the nodes and update elements
-			//NodeList.Update();
-			//StringerList.Update(false);
-			//PanelList.Update(false);
-
-			//// Show an alert for editing stringers
-			//Application.ShowAlertDialog("Alert: stringers and panels' parameters must be set again.");
+			ShowAlertDialog(message);
 		}
 
 		/// <summary>
