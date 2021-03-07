@@ -297,6 +297,37 @@ namespace SPMTool.Extensions
 		}
 
 		/// <summary>
+		///     Get the <see cref="ObjectId"/> of the extended dictionary associated to an object's <see cref="ObjectId" />.
+		/// </summary>
+		/// <inheritdoc cref="GetDBObject" />
+		public static ObjectId GetExtendedDictionaryId(this ObjectId objectId, Transaction? ongoingTransaction = null)
+		{
+			if (!objectId.IsOk())
+				return ObjectId.Null;
+
+			// Start a transaction
+			var trans = ongoingTransaction ?? StartTransaction();
+
+			// Get dictionary
+			var obj = trans.GetObject(objectId, OpenMode.ForRead);
+
+			// Get data from record
+			var id = obj.ExtensionDictionary;
+
+			if (ongoingTransaction is null)
+				trans.Dispose();
+
+			return id;
+		}
+
+		/// <summary>
+		///     Get the <see cref="ObjectId"/> of the extended dictionary associated to a <see cref="DBObject" />.
+		/// </summary>
+		/// <inheritdoc cref="GetDBObject" />
+		public static ObjectId GetExtendedDictionaryId(this DBObject? dbObject, Transaction? ongoingTransaction = null) =>
+			dbObject?.ObjectId.GetExtendedDictionaryId(ongoingTransaction) ?? ObjectId.Null;
+
+		/// <summary>
 		///     Verify the state of this <see cref="ObjectId" />.
 		/// </summary>
 		/// <returns>

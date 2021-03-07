@@ -84,6 +84,9 @@ namespace SPMTool.Core
             // Set value
             _objectId = objectId;
 
+			// Set dictionary id
+			DictionaryId = objectId.GetExtendedDictionaryId();
+
 			if (!GetProperties())
 	            SetProperties();
         }

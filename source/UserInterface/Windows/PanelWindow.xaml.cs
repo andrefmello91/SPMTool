@@ -8,6 +8,7 @@ using Extensions;
 using Material.Reinforcement;
 using Material.Reinforcement.Biaxial;
 using MathNet.Numerics;
+using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
@@ -15,6 +16,8 @@ using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.Model;
 using Window = System.Windows.Window;
+
+#nullable enable
 
 namespace SPMTool.Application.UserInterface
 {
@@ -291,7 +294,7 @@ namespace SPMTool.Application.UserInterface
 		private Length YSpacing
 		{
 			get => Length.From(double.Parse(SyBox.Text), _geometryUnit);
-			set => SyBox.Text = $"{value:0.00}";
+			set => SyBox.Text = $"{value.Value:0.00}";
 		}
 
 		/// <summary>
@@ -310,6 +313,10 @@ namespace SPMTool.Application.UserInterface
 		public PanelWindow(IEnumerable<PanelObject> panels)
 		{
 			_panels = panels.ToList();
+
+			_geometryUnit      = DataBase.Settings.Units.Geometry;
+			_reinforcementUnit = DataBase.Settings.Units.Reinforcement;
+			_stressUnit        = DataBase.Settings.Units.MaterialStrength;
 
 			InitializeComponent();
 
