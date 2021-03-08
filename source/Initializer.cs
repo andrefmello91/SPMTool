@@ -21,7 +21,7 @@ namespace SPMTool
 		/// <summary>
 		/// Terminate application.
 		/// </summary>
-		public void Terminate() => SystemVariableChanged -= ColorThemeChanged;
+		public void Terminate() => SystemVariableChanged -= SPMToolInterface.ColorThemeChanged;
 
 		/// <summary>
 		/// Initialize user interface and create layers and blocks.
@@ -31,22 +31,9 @@ namespace SPMTool
 			// Add application buttons
 			SPMToolInterface.AddButtons();
 
-			SystemVariableChanged += ColorThemeChanged;
+			SystemVariableChanged += SPMToolInterface.ColorThemeChanged;
 
 			Idle -= On_ApplicationIdle;
-		}
-
-        /// <summary>
-        /// Alternate colors if theme is changed.
-        /// </summary>
-        public void ColorThemeChanged(object senderObj, SystemVariableChangedEventArgs sysVarChEvtArgs)
-		{
-			// Check if it's a theme change
-			if (sysVarChEvtArgs.Name != "COLORTHEME")
-				return;
-
-			// Reinitialize the ribbon buttons
-			SPMToolInterface.AddButtons();
 		}
 	}
 }
