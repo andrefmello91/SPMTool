@@ -1,26 +1,25 @@
-﻿using System.Windows.Controls;
-using Autodesk.AutoCAD.ApplicationServices;
+﻿using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
-using SPMTool.Attributes;
 using SPMTool.Core;
 using SPMTool.Editor.Commands;
 using SPMTool.Extensions;
 
 namespace SPMTool.Application.UserInterface
 {
-
 	/// <summary>
-	/// Ribbon class.
+	///     Ribbon class.
 	/// </summary>
 	public class SPMToolInterface
 	{
+		#region Fields
+
 		/// <summary>
-		/// Icons for user interface.
+		///     Icons for user interface.
 		/// </summary>
 		public static readonly Icons Icons = new Icons();
 
 		/// <summary>
-		/// Create the application <see cref="RibbonTab"/>.
+		///     Create the application <see cref="RibbonTab" />.
 		/// </summary>
 		private readonly RibbonTab _tab = new RibbonTab
 		{
@@ -28,38 +27,46 @@ namespace SPMTool.Application.UserInterface
 			Id    = DataBase.AppName
 		};
 
+		#endregion
+
+		#region Properties
+
 		/// <summary>
-		///		Get the Ribbon Control from AutoCAD.
+		///     Get the Ribbon Control from AutoCAD.
 		/// </summary>
 		public static RibbonControl Ribbon => ComponentManager.Ribbon;
 
+		#endregion
+
+		#region  Methods
+
 		/// <summary>
-		/// Add ribbon buttons to user interface.
+		///     Add ribbon buttons to user interface.
 		/// </summary>
 		public static void AddButtons()
-        {
+		{
 			var spmInt = new SPMToolInterface();
 
-            // Check if the tab already exists
-            var tab = Ribbon.FindTab(DataBase.AppName);
+			// Check if the tab already exists
+			var tab = Ribbon.FindTab(DataBase.AppName);
 
-            if (tab != null)
-	            Ribbon.Tabs.Remove(tab);
+			if (tab != null)
+				Ribbon.Tabs.Remove(tab);
 
-            Ribbon.Tabs.Add(spmInt._tab);
+			Ribbon.Tabs.Add(spmInt._tab);
 
 			// Update Icons
 			Icons.GetIcons();
 
-            // Create the Ribbon panels
+			// Create the Ribbon panels
 			spmInt.CreatePanels();
 
 			// Activate tab
 			spmInt._tab.IsActive = true;
-        }
+		}
 
 		/// <summary>
-		///		Create the Ribbon panels.
+		///     Create the Ribbon panels.
 		/// </summary>
 		private void CreatePanels()
 		{
@@ -72,7 +79,7 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
-		/// Create Model Panel.
+		///     Create Model Panel.
 		/// </summary>
 		private void ModelPanel()
 		{
@@ -160,15 +167,15 @@ namespace SPMTool.Application.UserInterface
 			subPnl3.Items.Add(Command.ElementData.GetRibbonButton(RibbonItemSize.Standard));
 			subPnl3.Items.Add(new RibbonRowBreak());
 			subPnl3.Items.Add(Command.UpdateElements.GetRibbonButton(RibbonItemSize.Standard));
-			
+
 			// Add the sub panel to the panel source
 			pnlSrc.Items.Add(subPnl3);
 		}
 
-        /// <summary>
-        /// Create Concrete Panel.
-        /// </summary>
-        private void ConcretePanel()
+		/// <summary>
+		///     Create Concrete Panel.
+		/// </summary>
+		private void ConcretePanel()
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Concrete" };
 			_tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
@@ -177,10 +184,10 @@ namespace SPMTool.Application.UserInterface
 			pnlSrc.Items.Add(Command.Parameters.GetRibbonButton());
 		}
 
-        /// <summary>
-        /// Create Analysis Panel.
-        /// </summary>
-        private void AnalysisPanel()
+		/// <summary>
+		///     Create Analysis Panel.
+		/// </summary>
+		private void AnalysisPanel()
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Analysis" };
 			_tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
@@ -202,7 +209,7 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
-		/// Create View Panel.
+		///     Create View Panel.
 		/// </summary>
 		private void ViewPanel()
 		{
@@ -232,10 +239,10 @@ namespace SPMTool.Application.UserInterface
 			pnlSrc.Items.Add(splitButton);
 		}
 
-        /// <summary>
-        /// Create Results Panel.
-        /// </summary>
-        private void ResultsPanel()
+		/// <summary>
+		///     Create Results Panel.
+		/// </summary>
+		private void ResultsPanel()
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Results" };
 			_tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
@@ -265,10 +272,10 @@ namespace SPMTool.Application.UserInterface
 			pnlSrc.Items.Add(splitButton);
 		}
 
-        /// <summary>
-        /// Create Settings Panel.
-        /// </summary>
-        private void SettingsPanel()
+		/// <summary>
+		///     Create Settings Panel.
+		/// </summary>
+		private void SettingsPanel()
 		{
 			var pnlSrc = new RibbonPanelSource {Title = "Settings" };
 			_tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
@@ -278,17 +285,19 @@ namespace SPMTool.Application.UserInterface
 			pnlSrc.Items.Add(Command.Analysis.GetRibbonButton());
 		}
 
-        /// <summary>
-        /// Alternate colors if theme is changed.
-        /// </summary>
-        public static void ColorThemeChanged(object senderObj, SystemVariableChangedEventArgs sysVarChEvtArgs)
-        {
-	        // Check if it's a theme change
-	        if (sysVarChEvtArgs.Name != "COLORTHEME")
-		        return;
+		/// <summary>
+		///     Alternate colors if theme is changed.
+		/// </summary>
+		public static void ColorThemeChanged(object senderObj, SystemVariableChangedEventArgs sysVarChEvtArgs)
+		{
+			// Check if it's a theme change
+			if (sysVarChEvtArgs.Name != "COLORTHEME")
+				return;
 
-	        // Reinitialize the ribbon buttons
-	        SPMToolInterface.AddButtons();
-        }
+			// Reinitialize the ribbon buttons
+			AddButtons();
+		}
+
+		#endregion
 	}
 }

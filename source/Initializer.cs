@@ -1,7 +1,5 @@
 ﻿using System;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Runtime;
-using SPMTool.Core;
 using SPMTool.Application.UserInterface;
 
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
