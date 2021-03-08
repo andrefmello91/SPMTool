@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using Autodesk.Windows;
 using Extensions;
 using Material.Concrete;
 using Material.Reinforcement;
@@ -15,6 +16,7 @@ using OnPlaneComponents;
 using SPM.Elements.StringerProperties;
 using SPMTool.Attributes;
 using SPMTool.Core;
+using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using UnitsNet.Units;
 using static SPMTool.Core.DataBase;
@@ -260,8 +262,8 @@ namespace SPMTool.Extensions
 			if (!rotationAngle.ApproxZero(1E-3))
 				blockRef.TransformBy(Matrix3d.Rotation(rotationAngle, Ucs.Zaxis, insertionPoint));
 
-			if (Settings.Units.Geometry != LengthUnit.Millimeter)
-				blockRef.TransformBy(Matrix3d.Scaling(Settings.Units.ScaleFactor, insertionPoint));
+			if (DataBase.Settings.Units.Geometry != LengthUnit.Millimeter)
+				blockRef.TransformBy(Matrix3d.Scaling(DataBase.Settings.Units.ScaleFactor, insertionPoint));
 
 			return blockRef;
 		}
@@ -677,6 +679,12 @@ namespace SPMTool.Extensions
 			values.IsNullOrEmpty() || values.Count() != 1
 				? (int?) null
 				: values.ElementAt(0).ToInt();
+
+		/// <summary>
+		///		Create a <see cref="RibbonButton"/> based in a command name, contained in <see cref="CommandName"/>.
+		/// </summary>
+		public static RibbonButton? GetRibbonButton(this string commandName, RibbonItemSize size = RibbonItemSize.Large, bool showText = true) =>
+			((CommandButtonAttribute?) typeof(CommandName).GetMember(commandName)?[0]?.GetCustomAttributes(typeof(CommandButtonAttribute), false)?[0])?.CreateRibbonButton(size, showText);
 
 		#endregion
 	}

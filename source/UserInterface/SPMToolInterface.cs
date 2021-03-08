@@ -1,9 +1,9 @@
-﻿using System;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 using Autodesk.Windows;
+using SPMTool.Attributes;
 using SPMTool.Core;
-
-using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
+using SPMTool.Editor.Commands;
+using SPMTool.Extensions;
 
 namespace SPMTool.Application.UserInterface
 {
@@ -11,19 +11,19 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	/// Ribbon class.
 	/// </summary>
-	public static class Ribbon
+	public partial class SPMToolInterface
 	{
 		/// <summary>
 		/// Icons for user interface.
 		/// </summary>
-		private static readonly Icons Icons;
+		public static readonly Icons Icons;
 
 		/// <summary>
 		/// Create the application <see cref="RibbonTab"/>.
 		/// </summary>
 		private static readonly RibbonTab Tab;
 
-		static Ribbon()
+		static SPMToolInterface()
 		{
 			Icons = new Icons();
 
@@ -85,27 +85,9 @@ namespace SPMTool.Application.UserInterface
 				IsSynchronizedWithCurrentItem = true
 			};
 
-			splitButton1.Items.Add(new RibbonButton
-			{
-				Text = "Add stringer",
-				ToolTip = "Create a stringer connecting two nodes",
-				ShowText = true,
-				ShowImage = true,
-				LargeImage = Icons.Stringer,
-				CommandHandler = new CommandHandler(),
-				CommandParameter = "AddStringer"
-			});
+			splitButton1.Items.Add(CommandName.AddStringer.GetRibbonButton());
 
-			splitButton1.Items.Add(new RibbonButton
-			{
-				Text = "Add panel",
-				ToolTip = "Create a panel connecting four nodes",
-				ShowText = true,
-				ShowImage = true,
-				LargeImage = Icons.Panel,
-				CommandHandler = new CommandHandler(),
-				CommandParameter = "AddPanel"
-			});
+			splitButton1.Items.Add(CommandName.AddPanel.GetRibbonButton());
 
 			// Add to the panel source
 			pnlSrc.Items.Add(splitButton1);
@@ -129,9 +111,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "Set geometry and reinforcement to a selection of stringers",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.StringerReinforcement,
+				LargeImage = Icons.EditStringer,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "SetStringerReinforcement"
+				CommandParameter = CommandName.EditStringer
 			});
 
 			splitButton2.Items.Add(new RibbonButton
@@ -140,9 +122,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "Set width and reinforcement to a selection of panels",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.PanelReinforcement,
+				LargeImage = Icons.EditPanel,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "SetPanelReinforcement"
+				CommandParameter = CommandName.EditPanel
 			});
 
 			subPnl1.Items.Add(splitButton2);
@@ -169,7 +151,7 @@ namespace SPMTool.Application.UserInterface
 				ShowImage = true,
 				LargeImage = Icons.AddConstraint,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "AddConstraint"
+				CommandParameter = CommandName.AddConstraint
 			});
 
 			splitButton3.Items.Add(new RibbonButton
@@ -180,7 +162,7 @@ namespace SPMTool.Application.UserInterface
 				ShowImage = true,
 				LargeImage = Icons.AddForce,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "AddForce"
+				CommandParameter = CommandName.AddForce
 			});
 
 			subPnl2.Items.Add(splitButton3);
@@ -206,7 +188,7 @@ namespace SPMTool.Application.UserInterface
 				ShowImage = true,
 				Image = Icons.DivideStringer,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "DivideStringer"
+				CommandParameter = CommandName.DivideStringer
 			});
 
 			rbSpBtn3.Items.Add(new RibbonButton
@@ -217,7 +199,7 @@ namespace SPMTool.Application.UserInterface
 				ShowImage = true,
 				Image = Icons.DividePanel,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "DividePanel"
+				CommandParameter = CommandName.DividePanel
 			});
 
 			// Add to the sub panel and create a new ribbon row
@@ -233,7 +215,7 @@ namespace SPMTool.Application.UserInterface
 				ShowImage = true,
 				Image = Icons.ElementData,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "ViewElementData"
+				CommandParameter = CommandName.ElementData
 			});
 
 			subPnl3.Items.Add(new RibbonRowBreak());
@@ -245,7 +227,7 @@ namespace SPMTool.Application.UserInterface
 				ShowImage = true,
 				Image = Icons.UpdateElements,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "UpdateElements"
+				CommandParameter = CommandName.UpdateElements
 			});
 			
 			// Add the sub panel to the panel source
@@ -269,9 +251,9 @@ namespace SPMTool.Application.UserInterface
 				Orientation = Orientation.Vertical,
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.Concrete,
+				LargeImage = Icons.ConcreteParameters,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "SetConcreteParameters"
+				CommandParameter = CommandName.ConcreteParameters
 			});
 		}
 
@@ -299,7 +281,7 @@ namespace SPMTool.Application.UserInterface
 				ShowImage = true,
 				LargeImage = Icons.LinearAnalysis,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "DoLinearAnalysis"
+				CommandParameter = CommandName.LinearAnalysis
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -310,7 +292,7 @@ namespace SPMTool.Application.UserInterface
 				ShowImage = true,
 				LargeImage = Icons.NonLinearAnalysis,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "DoNonlinearAnalysis"
+				CommandParameter = CommandName.NonLinearAnalysis
 			});
 
 			// Add to the panel source
@@ -340,9 +322,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "Toggle view for nodes",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.ViewNodes,
+				LargeImage = Icons.ToggleNodes,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "ToggleNodes"
+				CommandParameter = CommandName.ToggleNodes
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -351,9 +333,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "Toggle view for stringers",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.ViewStringers,
+				LargeImage = Icons.ToggleStringers,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "ToggleStringers"
+				CommandParameter = CommandName.ToggleStringers
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -362,9 +344,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "Toggle view for panels",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.ViewPanels,
+				LargeImage = Icons.TogglePanels,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "TogglePanels"
+				CommandParameter = CommandName.TogglePanels
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -373,9 +355,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "Toggle view for forces",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.ViewForces,
+				LargeImage = Icons.ToggleForces,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "ToggleForces"
+				CommandParameter = CommandName.ToggleForces
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -384,9 +366,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "Toggle view for supports",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.ViewSupports,
+				LargeImage = Icons.ToggleSupports,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "ToggleSupports"
+				CommandParameter = CommandName.ToggleSupports
 			});
 
 			// Add to the panel source
@@ -416,9 +398,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "View stringer forces",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.StringerForces,
+				LargeImage = Icons.ToggleStringerForces,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "ToggleStringerForces"
+				CommandParameter = CommandName.ToggleStringerForces
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -427,9 +409,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "View panel shear stresses",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.PanelShear,
+				LargeImage = Icons.TogglePanelForces,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "TogglePanelForces"
+				CommandParameter = CommandName.TogglePanelForces
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -438,9 +420,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "View panel average principal stresses",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.PanelStresses,
+				LargeImage = Icons.TogglePanelStresses,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "TogglePanelStresses"
+				CommandParameter = CommandName.TogglePanelStresses
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -449,9 +431,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "View concrete principal stresses",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.ConcreteStresses,
+				LargeImage = Icons.ToggleConcreteStresses,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "ToggleConcreteStresses"
+				CommandParameter = CommandName.ToggleConcreteStresses
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -460,9 +442,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "View magnified displacements",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.Displacements,
+				LargeImage = Icons.ToggleDisplacements,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "ToggleDisplacements"
+				CommandParameter = CommandName.ToggleDisplacements
 			});
 
 			splitButton.Items.Add(new RibbonButton
@@ -471,9 +453,9 @@ namespace SPMTool.Application.UserInterface
 				ToolTip = "View average crack openings",
 				ShowText = true,
 				ShowImage = true,
-				LargeImage = Icons.Cracks,
+				LargeImage = Icons.ToogleCracks,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "ToggleCracks"
+				CommandParameter = CommandName.ToggleCracks
 			});
 
 			// Add to the panel source
@@ -498,7 +480,7 @@ namespace SPMTool.Application.UserInterface
 				ShowImage = true,
 				LargeImage = Icons.Units,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "SetUnits"
+				CommandParameter = CommandName.Units
 			});
 
 			pnlSrc.Items.Add(new RibbonButton
@@ -511,57 +493,8 @@ namespace SPMTool.Application.UserInterface
 				ShowImage = true,
 				LargeImage = Icons.AnalysisSettings,
 				CommandHandler = new CommandHandler(),
-				CommandParameter = "SetAnalysisSettings"
+				CommandParameter = CommandName.AnalysisSettings
 			});
-		}
-
-        /// <summary>
-        /// Command Handler class.
-        /// </summary>
-        private class CommandHandler : System.Windows.Input.ICommand
-		{
-			public event EventHandler CanExecuteChanged;
-
-            public bool CanExecute(object parameter) => true;
-
-			/// <summary>
-            /// Execute a command.
-            /// </summary>
-            public void Execute(object parameter)
-			{
-				if (parameter is null || !(parameter is RibbonButton button))
-					return;
-
-				// Get escape command
-				var esc = CommandEscape();
-
-				//Make sure the command text either ends with ";", or a " "
-				var cmdText = ((string) button.CommandParameter).Trim();
-
-				if (!cmdText.EndsWith(";"))
-					cmdText += " ";
-
-				DataBase.Document.SendStringToExecute(esc + cmdText, true, false, true);
-			}
-
-			/// <summary>
-            /// Escape running commands.
-            /// </summary>
-			private string CommandEscape()
-			{
-				var cmds = (string) GetSystemVariable("CMDNAMES");
-
-				if (cmds.Length == 0)
-					return string.Empty;
-
-				var cmdNum = cmds.Split('\'').Length;
-
-				var esc = string.Empty;
-				for (int i = 0; i < cmdNum; i++)
-					esc += '\x03';
-
-				return esc;
-			}
 		}
 	}
 }

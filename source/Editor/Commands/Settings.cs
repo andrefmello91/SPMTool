@@ -1,7 +1,6 @@
 ﻿using Autodesk.AutoCAD.Runtime;
 using SPMTool.Editor.Commands;
 using SPMTool.Application.UserInterface;
-
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 [assembly: CommandClass(typeof(Settings))]
@@ -16,7 +15,7 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
         /// Set units.
         /// </summary>
-	    [CommandMethod("SetUnits")]
+	    [CommandMethod(CommandName.Units)]
 	    public static void SetUnits()
 	    {
 		    // Start the window of units configuration
@@ -27,7 +26,7 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
         /// Set analysis settings.
         /// </summary>
-	    [CommandMethod("SetAnalysisSettings")]
+	    [CommandMethod(CommandName.AnalysisSettings)]
 	    public static void SetAnalysisSettings()
 	    {
 		    // Start the window of units configuration

@@ -2,12 +2,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Windows.Media.Imaging;
 using Autodesk.AutoCAD.Colors;
+using Autodesk.AutoCAD.Customization;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.Runtime;
+using Autodesk.Windows;
+using SPMTool.Application.UserInterface;
 using SPMTool.Core;
+using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using SPMTool.Extensions;
+using Orientation = System.Windows.Controls.Orientation;
+
+#nullable enable
 
 namespace SPMTool.Attributes
 {
@@ -63,5 +72,41 @@ namespace SPMTool.Attributes
 			ColorCode       = colorCode;
 			_transparency   = transparency;
 		}
+	}
+
+	public class CommandButtonAttribute : Attribute
+	{
+		public string CommandName { get; }
+
+		public string Text { get; }
+
+		public string Tooltip { get; }
+
+		public BitmapImage Icon => (BitmapImage) SPMToolInterface.Icons.GetType().GetProperty(CommandName).GetValue(SPMToolInterface.Icons);
+
+		public CommandButtonAttribute(string commandName, string text, string tooltip)
+		{
+			CommandName = commandName;
+			Text        = text;
+			Tooltip     = tooltip;
+		}
+
+		public Autodesk.Windows.RibbonButton CreateRibbonButton(RibbonItemSize size = RibbonItemSize.Large, bool showText = true) => new Autodesk.Windows.RibbonButton
+		{
+			Text = Text,
+			ToolTip = Tooltip,
+			Size = size,
+			Orientation = Orientation.Vertical,
+			ShowText = showText,
+			ShowImage = true,
+			Image = size is RibbonItemSize.Standard 
+				? Icon 
+				: null,
+			LargeImage = size is RibbonItemSize.Large 
+				? Icon 
+				: null,
+			CommandHandler = new CommandHandler(),
+			CommandParameter = CommandName
+		};
 	}
 }

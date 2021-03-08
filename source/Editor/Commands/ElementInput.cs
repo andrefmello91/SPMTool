@@ -5,7 +5,6 @@ using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Editor.Commands;
 using SPMTool.Extensions;
-
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.DataBase;
 using static SPMTool.Core.Model;
@@ -23,7 +22,7 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
         ///		Add a stringer to to stringer list and drawing.
         /// </summary>
-	    [CommandMethod("AddStringer")]
+	    [CommandMethod(CommandName.AddStringer)]
 	    public static void AddStringer()
 	    {
 			// Get current OSMODE
@@ -71,7 +70,7 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
 		///		Add a panel to panel list and drawing.
 		/// </summary>
-		[CommandMethod("AddPanel")]
+		[CommandMethod(CommandName.AddPanel)]
 		public static void AddPanel()
 		{
 			var unit = DataBase.Settings.Units.Geometry;

@@ -26,12 +26,12 @@ namespace SPMTool.Application.UserInterface
         /// <summary>
         /// Get AddStringer icon.
         /// </summary>
-	    public BitmapImage Stringer => GetBitmap(_strBmp);
+	    public BitmapImage AddStringer => GetBitmap(_strBmp);
 
         /// <summary>
         /// Get AddPanel icon.
         /// </summary>
-	    public BitmapImage Panel => GetBitmap(_pnlBmp);
+	    public BitmapImage AddPanel => GetBitmap(_pnlBmp);
 
         /// <summary>
         /// Get DivideStringer icon.
@@ -56,17 +56,17 @@ namespace SPMTool.Application.UserInterface
         /// <summary>
         /// Get StringerReinforcement icon.
         /// </summary>
-	    public BitmapImage StringerReinforcement => GetBitmap(_strRefBmp);
+	    public BitmapImage EditStringer => GetBitmap(_strRefBmp);
 
         /// <summary>
         /// Get PanelReinforcement icon.
         /// </summary>
-	    public BitmapImage PanelReinforcement => GetBitmap(_pnlRefBmp);
+	    public BitmapImage EditPanel => GetBitmap(_pnlRefBmp);
 
         /// <summary>
         /// Get Concrete icon.
         /// </summary>
-	    public BitmapImage Concrete => GetBitmap(_cncrtBmp);
+	    public BitmapImage ConcreteParameters => GetBitmap(_cncrtBmp);
 
         /// <summary>
         /// Get AddConstraint icon.
@@ -91,57 +91,57 @@ namespace SPMTool.Application.UserInterface
         /// <summary>
         /// Get ViewNodes icon.
         /// </summary>
-	    public BitmapImage ViewNodes => GetBitmap(_viewNdBmp);
+	    public BitmapImage ToggleNodes => GetBitmap(_viewNdBmp);
 
         /// <summary>
         /// Get ViewStringers icon.
         /// </summary>
-	    public BitmapImage ViewStringers => GetBitmap(_viewStrBmp);
+	    public BitmapImage ToggleStringers => GetBitmap(_viewStrBmp);
 
         /// <summary>
         /// Get ViewPanels icon.
         /// </summary>
-	    public BitmapImage ViewPanels => GetBitmap(_viewPnlBmp);
+	    public BitmapImage TogglePanels => GetBitmap(_viewPnlBmp);
 
         /// <summary>
         /// Get ViewForces icon.
         /// </summary>
-	    public BitmapImage ViewForces => GetBitmap(_viewFBmp);
+	    public BitmapImage ToggleForces => GetBitmap(_viewFBmp);
 
         /// <summary>
         /// Get ViewSupports icon.
         /// </summary>
-	    public BitmapImage ViewSupports => GetBitmap(_viewSupBmp);
+	    public BitmapImage ToggleSupports => GetBitmap(_viewSupBmp);
 
         /// <summary>
         /// Get StringerForces icon.
         /// </summary>
-	    public BitmapImage StringerForces => GetBitmap(_strFBmp);
+	    public BitmapImage ToggleStringerForces => GetBitmap(_strFBmp);
 
         /// <summary>
         /// Get PanelShear icon.
         /// </summary>
-	    public BitmapImage PanelShear => GetBitmap(_pnlShBmp);
+	    public BitmapImage TogglePanelForces => GetBitmap(_pnlShBmp);
 
         /// <summary>
         /// Get PanelStresses icon.
         /// </summary>
-	    public BitmapImage PanelStresses => GetBitmap(_pnlStBmp);
+	    public BitmapImage TogglePanelStresses => GetBitmap(_pnlStBmp);
 
         /// <summary>
         /// Get ConcreteStresses icon.
         /// </summary>
-	    public BitmapImage ConcreteStresses => GetBitmap(_concStBmp);
+	    public BitmapImage ToggleConcreteStresses => GetBitmap(_concStBmp);
 
         /// <summary>
         /// Get Displacements icon.
         /// </summary>
-	    public BitmapImage Displacements => GetBitmap(_dispBmp);
+	    public BitmapImage ToggleDisplacements => GetBitmap(_dispBmp);
 
         /// <summary>
         /// Get Cracks icon.
         /// </summary>
-	    public BitmapImage Cracks => GetBitmap(_crackBmp);
+	    public BitmapImage ToogleCracks => GetBitmap(_crackBmp);
 
         /// <summary>
         /// Get Units icon.

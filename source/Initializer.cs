@@ -29,7 +29,7 @@ namespace SPMTool
 		public void On_ApplicationIdle(object sender, EventArgs e)
 		{
 			// Add application buttons
-			Ribbon.AddButtons();
+			SPMToolInterface.AddButtons();
 
 			SystemVariableChanged += ColorThemeChanged;
 
@@ -46,7 +46,7 @@ namespace SPMTool
 				return;
 
 			// Reinitialize the ribbon buttons
-			Ribbon.AddButtons();
+			SPMToolInterface.AddButtons();
 		}
 	}
 }

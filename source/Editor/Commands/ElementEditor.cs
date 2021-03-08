@@ -10,7 +10,6 @@ using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Editor.Commands;
 using SPMTool.Extensions;
-
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.Model;
 
@@ -28,7 +27,7 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
 		///     Divide a stringer into new ones.
 		/// </summary>
-		[CommandMethod("DivideStringer")]
+		[CommandMethod(CommandName.DivideStringer)]
 		public static void DivideStringer()
 		{
 			// Prompt for select stringers
@@ -67,7 +66,7 @@ namespace SPMTool.Editor.Commands
 			Nodes.Update();
 		}
 
-		[CommandMethod("DividePanel")]
+		[CommandMethod(CommandName.DividePanel)]
 		public static void DividePanel()
 		{
 			// Prompt for select panels
@@ -174,8 +173,8 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
 		///     Set geometry to a selection of stringers.
 		/// </summary>
-		[CommandMethod("SetStringerGeometry")]
-		public static void SetStringerGeometry()
+		[CommandMethod(CommandName.EditStringer)]
+		public static void EditStringer()
 		{
 			// Request objects to be selected in the drawing area
 			var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();
@@ -191,8 +190,8 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
 		///     Set geometry to a selection of panels.
 		/// </summary>
-		[CommandMethod("SetPanelGeometry")]
-		public static void SetPanelGeometry()
+		[CommandMethod(CommandName.EditPanel)]
+		public static void EditPanel()
 		{
 			// Request objects to be selected in the drawing area
 			var pnls = UserInput.SelectPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)")?.ToArray();
@@ -206,43 +205,9 @@ namespace SPMTool.Editor.Commands
 		}
 
 		/// <summary>
-		///     Set the reinforcement in a collection of stringers.
-		/// </summary>
-		[CommandMethod("SetStringerReinforcement")]
-		public static void SetStringerReinforcement()
-		{
-			// Request objects to be selected in the drawing area
-			var strs = UserInput.SelectStringers("Select the stringers to assign reinforcement (you can select other elements, the properties will be only applied to stringers).")?.ToArray();
-
-			if (strs.IsNullOrEmpty())
-				return;
-
-			// Start the config window
-			var geoWindow = new StringerWindow(Stringers.GetByObjectIds(strs.GetObjectIds())!);
-			ShowModalWindow(MainWindow.Handle, geoWindow, false);
-		}
-
-		/// <summary>
-		///     Set reinforcement to a collection of panels.
-		/// </summary>
-		[CommandMethod("SetPanelReinforcement")]
-		public static void SetPanelReinforcement()
-		{
-			// Request objects to be selected in the drawing area
-			var pnls = UserInput.SelectPanels("Select the panels to assign reinforcement (you can select other elements, the properties will be only applied to panels).")?.ToArray();
-
-			if (pnls.IsNullOrEmpty())
-				return;
-
-			// Start the config window
-			var geoWindow = new PanelWindow(Panels.GetByObjectIds(pnls.GetObjectIds())!);
-			ShowModalWindow(MainWindow.Handle, geoWindow, false);
-		}
-
-		/// <summary>
 		///     Update all the elements in the drawing.
 		/// </summary>
-		[CommandMethod("UpdateElements")]
+		[CommandMethod(CommandName.UpdateElements)]
 		public static void UpdateElements()
 		{
 			Model.UpdateElements();

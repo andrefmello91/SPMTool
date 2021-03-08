@@ -15,8 +15,8 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
         /// Set concrete parameters to model.
         /// </summary>
-	    [CommandMethod("SetConcreteParameters")]
-	    public static void SetConcreteParameters()
+	    [CommandMethod(CommandName.ConcreteParameters)]
+	    public static void ConcreteParameters()
 	    {
 		    // Start the config window
 		    var concreteConfig = new ConcreteConfig();

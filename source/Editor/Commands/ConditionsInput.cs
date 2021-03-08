@@ -21,7 +21,7 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
         /// Add forces to model.
         /// </summary>
-	    [CommandMethod("AddForce")]
+	    [CommandMethod(CommandName.AddForce)]
 	    public static void AddForce()
 	    {
 		    // Read units
@@ -49,7 +49,7 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
         /// Add constraints to model.
         /// </summary>
-		[CommandMethod("AddConstraint")]
+		[CommandMethod(CommandName.AddConstraint)]
 		public static void AddConstraint()
 		{
 			// Request objects to be selected in the drawing area

@@ -158,6 +158,7 @@
     <Compile Include="source\Core\Results.cs" />
     <Compile Include="source\Core\Settings.cs" />
     <Compile Include="source\Editor\Commands\Analysis.cs" />
+    <Compile Include="source\Editor\Commands\CommandNames.cs" />
     <Compile Include="source\Editor\Commands\ConditionsInput.cs" />
     <Compile Include="source\Editor\Commands\ElementEditor.cs" />
     <Compile Include="source\Editor\Commands\ElementInput.cs" />
@@ -178,8 +179,9 @@
     <Compile Include="source\Global\FlowAnalysisAttributes.cs" />
     <Compile Include="source\Global\Units.cs" />
     <Compile Include="source\Initializer.cs" />
+    <Compile Include="source\Editor\Commands\CommandHandler.cs" />
     <Compile Include="source\UserInterface\Icons.cs" />
-    <Compile Include="source\UserInterface\Ribbon.cs" />
+    <Compile Include="source\UserInterface\SPMToolInterface.cs" />
     <Compile Include="source\UserInterface\Windows\AnalysisConfig.xaml.cs">
       <DependentUpon>AnalysisConfig.xaml</DependentUpon>
     </Compile>

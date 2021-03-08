@@ -3,7 +3,7 @@ using SPM.Analysis;
 using SPM.Elements;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
-
+using SPMTool.Enums;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.Results;
 
@@ -13,8 +13,8 @@ namespace SPMTool.Editor.Commands
 {
 	public static class Analysis
 	{
-		[CommandMethod("DoLinearAnalysis")]
-		public static void DoLinearAnalysis()
+		[CommandMethod(CommandName.LinearAnalysis)]
+		public static void LinearAnalysis()
 		{
             // Get input data
             var input = Model.GenerateInput(AnalysisType.Linear, out var dataOk, out var message);
@@ -33,8 +33,8 @@ namespace SPMTool.Editor.Commands
             DrawResults(analysis);
         }
 
-        [CommandMethod("DoNonLinearAnalysis")]
-		public static void DoNonLinearAnalysis()
+        [CommandMethod(CommandName.NonLinearAnalysis)]
+		public static void NonLinearAnalysis()
 		{
 			// Get input data
 			var input = Model.GenerateInput(AnalysisType.NonLinear, out var dataOk, out var message);
