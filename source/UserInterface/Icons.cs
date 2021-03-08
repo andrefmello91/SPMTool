@@ -8,6 +8,8 @@ using SPMTool.Enums;
 using SPMTool.Properties;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
+#nullable enable
+
 namespace SPMTool.Application.UserInterface
 {
 	/// <summary>
@@ -66,7 +68,7 @@ namespace SPMTool.Application.UserInterface
         /// <summary>
         /// Get Concrete icon.
         /// </summary>
-	    public BitmapImage ConcreteParameters => GetBitmap(_cncrtBmp);
+	    public BitmapImage Parameters => GetBitmap(_cncrtBmp);
 
         /// <summary>
         /// Get AddConstraint icon.
@@ -81,67 +83,67 @@ namespace SPMTool.Application.UserInterface
         /// <summary>
         /// Get LinearAnalysis icon.
         /// </summary>
-	    public BitmapImage LinearAnalysis => GetBitmap(_linBmp);
+	    public BitmapImage Linear => GetBitmap(_linBmp);
 
         /// <summary>
         /// Get NonLinearAnalysis icon.
         /// </summary>
-	    public BitmapImage NonLinearAnalysis => GetBitmap(_nlinBmp);
+	    public BitmapImage Nonlinear => GetBitmap(_nlinBmp);
 
         /// <summary>
         /// Get ViewNodes icon.
         /// </summary>
-	    public BitmapImage ToggleNodes => GetBitmap(_viewNdBmp);
+	    public BitmapImage Nodes => GetBitmap(_viewNdBmp);
 
         /// <summary>
         /// Get ViewStringers icon.
         /// </summary>
-	    public BitmapImage ToggleStringers => GetBitmap(_viewStrBmp);
+	    public BitmapImage Stringers => GetBitmap(_viewStrBmp);
 
         /// <summary>
         /// Get ViewPanels icon.
         /// </summary>
-	    public BitmapImage TogglePanels => GetBitmap(_viewPnlBmp);
+	    public BitmapImage Panels => GetBitmap(_viewPnlBmp);
 
         /// <summary>
         /// Get ViewForces icon.
         /// </summary>
-	    public BitmapImage ToggleForces => GetBitmap(_viewFBmp);
+	    public BitmapImage Forces => GetBitmap(_viewFBmp);
 
         /// <summary>
         /// Get ViewSupports icon.
         /// </summary>
-	    public BitmapImage ToggleSupports => GetBitmap(_viewSupBmp);
+	    public BitmapImage Supports => GetBitmap(_viewSupBmp);
 
         /// <summary>
         /// Get StringerForces icon.
         /// </summary>
-	    public BitmapImage ToggleStringerForces => GetBitmap(_strFBmp);
+	    public BitmapImage StringerForces => GetBitmap(_strFBmp);
 
         /// <summary>
         /// Get PanelShear icon.
         /// </summary>
-	    public BitmapImage TogglePanelForces => GetBitmap(_pnlShBmp);
+	    public BitmapImage PanelShear => GetBitmap(_pnlShBmp);
 
         /// <summary>
         /// Get PanelStresses icon.
         /// </summary>
-	    public BitmapImage TogglePanelStresses => GetBitmap(_pnlStBmp);
+	    public BitmapImage PanelStresses => GetBitmap(_pnlStBmp);
 
         /// <summary>
         /// Get ConcreteStresses icon.
         /// </summary>
-	    public BitmapImage ToggleConcreteStresses => GetBitmap(_concStBmp);
+	    public BitmapImage ConcreteStresses => GetBitmap(_concStBmp);
 
         /// <summary>
         /// Get Displacements icon.
         /// </summary>
-	    public BitmapImage ToggleDisplacements => GetBitmap(_dispBmp);
+	    public BitmapImage Displacements => GetBitmap(_dispBmp);
 
         /// <summary>
         /// Get Cracks icon.
         /// </summary>
-	    public BitmapImage ToogleCracks => GetBitmap(_crackBmp);
+	    public BitmapImage Cracks => GetBitmap(_crackBmp);
 
         /// <summary>
         /// Get Units icon.
@@ -151,7 +153,7 @@ namespace SPMTool.Application.UserInterface
         /// <summary>
         /// Get analysis settings icon.
         /// </summary>
-	    public BitmapImage AnalysisSettings => GetBitmap(_anSetBmp);
+	    public BitmapImage Analysis => GetBitmap(_anSetBmp);
 
         /// <summary>
         /// Get application icons based on system theme.

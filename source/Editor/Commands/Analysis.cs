@@ -13,7 +13,7 @@ namespace SPMTool.Editor.Commands
 {
 	public static class Analysis
 	{
-		[CommandMethod(CommandName.LinearAnalysis)]
+		[CommandMethod(CommandName.Linear)]
 		public static void LinearAnalysis()
 		{
             // Get input data
@@ -33,7 +33,7 @@ namespace SPMTool.Editor.Commands
             DrawResults(analysis);
         }
 
-        [CommandMethod(CommandName.NonLinearAnalysis)]
+        [CommandMethod(CommandName.Nonlinear)]
 		public static void NonLinearAnalysis()
 		{
 			// Get input data

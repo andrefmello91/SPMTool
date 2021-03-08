@@ -48,7 +48,7 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
 		/// Toggle view for forces.
 		/// </summary>
-		[CommandMethod(CommandName.ToggleForces)]
+		[CommandMethod(CommandName.Forces)]
 	    public static void ToggleForces()
 	    {
 		    Layer.Force.Toggle();
@@ -58,13 +58,13 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
 		/// Toggle view for supports.
 		/// </summary>
-		[CommandMethod(CommandName.ToggleSupports)]
+		[CommandMethod(CommandName.Supports)]
 	    public static void ToggleSupports() => Layer.Support.Toggle();
 
 		/// <summary>
 		/// Toggle view for nodes.
 		/// </summary>
-		[CommandMethod(CommandName.ToggleNodes)]
+		[CommandMethod(CommandName.Nodes)]
 	    public static void ToggleNodes()
 	    {
 		    Layer.ExtNode.Toggle();
@@ -74,25 +74,25 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
 		/// Toggle view for stringers.
 		/// </summary>
-		[CommandMethod(CommandName.ToggleStringers)]
+		[CommandMethod(CommandName.Stringers)]
 	    public static void ToggleStringers() => Layer.Stringer.Toggle();
 
 		/// <summary>
 		/// Toggle view for panels.
 		/// </summary>
-		[CommandMethod(CommandName.TogglePanels)]
+		[CommandMethod(CommandName.Panels)]
 	    public static void TogglePanels() => Layer.Panel.Toggle();
 
 		/// <summary>
 		/// Toggle view for stringer forces.
 		/// </summary>
-		[CommandMethod(CommandName.ToggleStringerForces)]
+		[CommandMethod(CommandName.StringerForces)]
 	    public static void ToggleStringerForces() => Layer.StringerForce.Toggle();
 
 		/// <summary>
 		/// Toggle view for panel forces.
 		/// </summary>
-		[CommandMethod(CommandName.TogglePanelForces)]
+		[CommandMethod(CommandName.PanelForces)]
 	    public static void TogglePanelForces()
 	    {
 			// Turn off layers
@@ -107,7 +107,7 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
 		/// Toggle view for panel stresses.
 		/// </summary>
-		[CommandMethod(CommandName.TogglePanelStresses)]
+		[CommandMethod(CommandName.PanelStresses)]
 	    public static void TogglePanelStresses()
 	    {
 			// Turn off layers
@@ -122,7 +122,7 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
 		/// Toggle view for concrete principal stresses.
 		/// </summary>
-		[CommandMethod(CommandName.ToggleConcreteStresses)]
+		[CommandMethod(CommandName.ConcreteStresses)]
 	    public static void ToggleConcreteStresses()
 	    {
 		    // Turn off layers
@@ -137,13 +137,13 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
 		/// Toggle view for displacements.
 		/// </summary>
-		[CommandMethod(CommandName.ToggleDisplacements)]
+		[CommandMethod(CommandName.Displacements)]
 	    public static void ToggleDisplacements() => Layer.Displacements.Toggle();
 
 		/// <summary>
 		/// Toggle view for cracks.
 		/// </summary>
-		[CommandMethod(CommandName.ToggleCracks)]
+		[CommandMethod(CommandName.Cracks)]
 	    public static void ToggleCracks() => Layer.Cracks.Toggle();
     }
 }

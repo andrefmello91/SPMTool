@@ -26,7 +26,7 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
         /// Set analysis settings.
         /// </summary>
-	    [CommandMethod(CommandName.AnalysisSettings)]
+	    [CommandMethod(CommandName.Analysis)]
 	    public static void SetAnalysisSettings()
 	    {
 		    // Start the window of units configuration
