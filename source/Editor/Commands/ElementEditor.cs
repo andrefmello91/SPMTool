@@ -160,6 +160,8 @@ namespace SPMTool.Editor.Commands
 			// Update nodes
 			Nodes.Update();
 
+			Panels.Select(p => p.ObjectId).MoveToBottom();
+
 			// Show alert if there was a non-rectangular panel
 			var message = nonRecSelected
 				? "Only rectangular panels were divided.\n\n"

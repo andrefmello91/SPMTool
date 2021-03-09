@@ -5,6 +5,8 @@ using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
+#nullable enable
+
 namespace SPMTool.Core.Conditions
 {
 	/// <summary>
@@ -79,7 +81,6 @@ namespace SPMTool.Core.Conditions
 
 		/// <param name="position">The position.</param>
 		/// <param name="value">The value.</param>
-		/// <param name="direction">The direction.</param>
 		/// <inheritdoc cref="ConditionObject()"/>
 		protected ConditionObject(Point position, T2 value)
 		{
@@ -91,11 +92,11 @@ namespace SPMTool.Core.Conditions
 
 		#region  Methods
 
-		public BlockReference? CreateEntity() => Block.GetReference(Position.ToPoint3d(), Layer, RotationAngle);
+		public BlockReference CreateEntity() => Block.GetReference(Position.ToPoint3d(), Layer, RotationAngle)!;
 
-		public virtual BlockReference? GetEntity() => (BlockReference) ObjectId.GetEntity();
+		public virtual BlockReference? GetEntity() => (BlockReference?) ObjectId.GetEntity();
 
-		public virtual void AddToDrawing() => ObjectId = CreateEntity()?.AddToDrawing(Model.On_ObjectErase) ?? ObjectId.Null;
+		public virtual void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing(Model.On_ObjectErase);
 
 		public virtual void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 

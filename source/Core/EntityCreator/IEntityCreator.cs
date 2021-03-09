@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
+using Extensions;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
@@ -66,14 +67,14 @@ namespace SPMTool.Core
 		/// </summary>
 		/// <param name="element">The object to remove.</param>
 		public static void RemoveFromDrawing<T>(this T element)
-			where T : IEntityCreator<Entity> => element?.ObjectId.RemoveFromDrawing();
+			where T : IEntityCreator<Entity> => element?.ObjectId.RemoveFromDrawing(Model.On_ObjectErase);
 
 		/// <summary>
 		///     Remove a collection of objects from drawing.
 		/// </summary>
 		/// <param name="elements">The objects to remove.</param>
 		public static void RemoveFromDrawing<T>(this IEnumerable<T>? elements)
-			where T : IEntityCreator<Entity> => elements?.Select(e => e.ObjectId)?.ToArray()?.RemoveFromDrawing();
+			where T : IEntityCreator<Entity> => elements?.Select(e => e.ObjectId)?.ToArray()?.RemoveFromDrawing(Model.On_ObjectErase);
 
 		/// <summary>
 		///     Add a collection of objects to drawing and set their <see cref="ObjectId" />.
@@ -84,7 +85,7 @@ namespace SPMTool.Core
 		{
 			using var lck = DataBase.Document.LockDocument();
 
-			if (objects is null || !objects.Any())
+			if (objects.IsNullOrEmpty())
 				return;
 
 			var entities = objects.Select(n => n.CreateEntity()!).ToList();
@@ -97,12 +98,12 @@ namespace SPMTool.Core
 				objects.ElementAt(i).ObjectId = objIds[i];
 
 			// Set events
-			foreach (var entity in entities)
-			{
-				entity.Unappended += Model.On_ObjectUnappended;
-				entity.Reappended += Model.On_ObjectReappended;
-				entity.Copied     += Model.On_ObjectCopied;
-			}
+			//foreach (var entity in entities)
+			//{
+			//	entity.Unappended += Model.On_ObjectUnappended;
+			//	entity.Reappended += Model.On_ObjectReappended;
+			//	entity.Copied     += Model.On_ObjectCopied;
+			//}
 		}
 
 		/// <summary>

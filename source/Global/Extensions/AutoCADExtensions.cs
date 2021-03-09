@@ -690,8 +690,9 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Remove this object from drawing.
 		/// </summary>
+		/// <param name="erasedEvent">The event to remove from object.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this ObjectId obj, Transaction? ongoingTransaction = null)
+		public static void RemoveFromDrawing(this ObjectId obj, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
 		{
 			if (!obj.IsOk())
 				return;
@@ -700,10 +701,12 @@ namespace SPMTool.Extensions
 			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
-			using (var ent = (Entity) trans.GetObject(obj, OpenMode.ForWrite))
-			{
-				ent.Erase();
-			}
+			using var ent = (Entity) trans.GetObject(obj, OpenMode.ForWrite);
+
+			if (erasedEvent != null)
+				ent.Erased -= erasedEvent;
+
+			ent.Erase();
 
 			// Commit changes
 			if (ongoingTransaction != null)
@@ -717,20 +720,15 @@ namespace SPMTool.Extensions
 		///     Remove this object from drawing.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this DBObject? obj, Transaction? ongoingTransaction = null) => obj?.ObjectId.RemoveFromDrawing(ongoingTransaction);
-
-		/// <summary>
-		///     Remove this <paramref name="entity" /> from drawing.
-		/// </summary>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this Entity? entity, Transaction? ongoingTransaction = null) => entity?.ObjectId.RemoveFromDrawing(ongoingTransaction);
+		public static void RemoveFromDrawing(this DBObject? obj, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null) =>
+			obj?.ObjectId.RemoveFromDrawing(erasedEvent, ongoingTransaction);
 
 		/// <summary>
 		///     Remove all the objects in this collection from drawing.
 		/// </summary>
 		/// <param name="objects">The collection containing the <see cref="ObjectId" />'s to erase.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this IEnumerable<ObjectId>? objects, Transaction? ongoingTransaction = null)
+		public static void RemoveFromDrawing(this IEnumerable<ObjectId>? objects, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
 		{
 			if (objects.IsNullOrEmpty())
 				return;
@@ -740,7 +738,7 @@ namespace SPMTool.Extensions
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			foreach (var obj in objects)
-				obj.RemoveFromDrawing(trans);
+				obj.RemoveFromDrawing(erasedEvent, trans);
 
 			// Commit changes
 			if (ongoingTransaction != null)
@@ -755,33 +753,22 @@ namespace SPMTool.Extensions
 		/// </summary>
 		/// <param name="objects">The collection containing the <see cref="DBObject" />'s to erase.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this IEnumerable<DBObject>? objects, Transaction? ongoingTransaction = null) => objects?.GetObjectIds()?.RemoveFromDrawing(ongoingTransaction);
-
-		/// <summary>
-		///     Remove all the objects in this collection from drawing.
-		/// </summary>
-		/// <param name="objects">The <see cref="ObjectIdCollection" /> containing the objects to erase.</param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this ObjectIdCollection? objects, Transaction? ongoingTransaction = null) => objects?.Cast<ObjectId>().RemoveFromDrawing(ongoingTransaction);
-
-		/// <summary>
-		///     Erase all the objects in this <see cref="DBObjectCollection" />.
-		/// </summary>
-		/// <param name="objects">The <see cref="DBObjectCollection" /> containing the objects to erase.</param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this DBObjectCollection? objects, Transaction? ongoingTransaction = null) => objects?.ToObjectIdCollection()?.RemoveFromDrawing(ongoingTransaction);
+		public static void RemoveFromDrawing(this IEnumerable<DBObject>? objects, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null) =>
+			objects?.GetObjectIds()?.RemoveFromDrawing(erasedEvent, ongoingTransaction);
 
 		/// <summary>
 		///     Erase all the objects in this <paramref name="layerName" />.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this string layerName, Transaction? ongoingTransaction = null) => layerName.GetObjectIds()?.RemoveFromDrawing(ongoingTransaction);
+		public static void RemoveFromDrawing(this string layerName, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null) =>
+			layerName.GetObjectIds()?.RemoveFromDrawing(erasedEvent, ongoingTransaction);
 
 		/// <summary>
 		///     Erase all the objects in these <paramref name="layerNames" />.
 		/// </summary>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static void RemoveFromDrawing(this IEnumerable<string> layerNames, Transaction? ongoingTransaction = null) => layerNames.GetObjectIds()?.RemoveFromDrawing(ongoingTransaction);
+		public static void RemoveFromDrawing(this IEnumerable<string> layerNames, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null) =>
+			layerNames.GetObjectIds()?.RemoveFromDrawing(erasedEvent, ongoingTransaction);
 
 		/// <summary>
 		///     Move the objects in this collection to drawing bottom.

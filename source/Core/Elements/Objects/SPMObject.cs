@@ -99,13 +99,11 @@ namespace SPMTool.Core.Elements
 
 		public void AddToDrawing()
 		{
-			var entity = CreateEntity();
+			ObjectId = CreateEntity().AddToDrawing(Model.On_ObjectErase);
 
-			ObjectId = entity.AddToDrawing(Model.On_ObjectErase);
-
-			entity.Unappended += Model.On_ObjectUnappended;
-			entity.Reappended += Model.On_ObjectReappended;
-			entity.Copied     += Model.On_ObjectCopied;
+			//entity.Unappended += Model.On_ObjectUnappended;
+			//entity.Reappended += Model.On_ObjectReappended;
+			//entity.Copied     += Model.On_ObjectCopied;
 		}
 
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
