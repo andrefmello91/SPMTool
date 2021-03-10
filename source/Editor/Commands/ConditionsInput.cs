@@ -2,6 +2,7 @@
 using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using OnPlaneComponents;
+using SPM.Elements;
 using SPMTool.Core;
 using SPMTool.Core.Conditions;
 using SPMTool.Editor.Commands;
@@ -28,7 +29,7 @@ namespace SPMTool.Editor.Commands
 		    var units = DataBase.Settings.Units;
 
 		    // Request objects to be selected in the drawing area
-		    var nds = UserInput.SelectNodes("Select nodes to add load:");
+		    var nds = UserInput.SelectNodes("Select nodes to add load:", NodeType.External);
 
 		    if (nds is null)
 			    return;
@@ -53,7 +54,7 @@ namespace SPMTool.Editor.Commands
 		public static void AddConstraint()
 		{
 			// Request objects to be selected in the drawing area
-			var nds = UserInput.SelectNodes("Select nodes to add support conditions:")?.ToArray();
+			var nds = UserInput.SelectNodes("Select nodes to add support conditions:", NodeType.External)?.ToArray();
 
 			if (nds is null)
 				return;

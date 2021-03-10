@@ -445,8 +445,7 @@ namespace SPMTool.Extensions
 		public static TypedValue[] GetTypedValues(this Constraint constraint) =>
 			new[]
 			{
-				new TypedValue((int) DxfCode.Bool, constraint.X),
-				new TypedValue((int) DxfCode.Bool, constraint.Y)
+				new TypedValue((int) DxfCode.Int32, (int) constraint.Direction),
 			};
 
 		/// <summary>
@@ -454,9 +453,9 @@ namespace SPMTool.Extensions
 		/// </summary>
 		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="Constraint" />.</param>
 		public static Constraint? GetConstraint(this IEnumerable<TypedValue>? values) =>
-			values.IsNullOrEmpty() || values.Count() != 2
+			values.IsNullOrEmpty() || values.Count() != 1
 				? (Constraint?) null
-				: new Constraint((bool) values.ElementAt(0).Value, (bool) values.ElementAt(1).Value);
+				: Constraint.FromDirection((ComponentDirection) values.ElementAt(0).ToInt());
 
 		/// <summary>
 		///     Get an array of <see cref="TypedValue" /> from a <see cref="CrossSection" />.

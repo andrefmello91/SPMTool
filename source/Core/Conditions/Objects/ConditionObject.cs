@@ -92,7 +92,7 @@ namespace SPMTool.Core.Conditions
 
 		#region  Methods
 
-		public BlockReference CreateEntity() => Block.GetReference(Position.ToPoint3d(), Layer, RotationAngle)!;
+		public virtual BlockReference CreateEntity() => Block.GetReference(Position.ToPoint3d(), Layer, RotationAngle)!;
 
 		public virtual BlockReference? GetEntity() => (BlockReference?) ObjectId.GetEntity();
 

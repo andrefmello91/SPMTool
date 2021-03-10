@@ -59,7 +59,7 @@ namespace SPMTool.Core.Conditions
 		///     Read a <see cref="ConstraintObject" /> from an <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="forceObjectId">The <see cref="ObjectId" /> of the force.</param>
-		public static ConstraintObject? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference) forceObjectId.GetEntity());
+		public static ConstraintObject? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference?) forceObjectId.GetEntity());
 
 		/// <summary>
 		///     Read a <see cref="ConstraintObject" /> from a <see cref="BlockReference" />.

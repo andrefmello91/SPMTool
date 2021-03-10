@@ -92,5 +92,5 @@ namespace SPMTool.Core
 			else
 				GetProperties();
         }
-    }
+	}
 }

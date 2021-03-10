@@ -1,5 +1,7 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Geometry;
+using Extensions;
 using MathNet.Numerics;
 using OnPlaneComponents;
 using SPMTool.Enums;
@@ -39,18 +41,19 @@ namespace SPMTool.Core.Conditions
 
 		public override Layer Layer => Layer.Force;
 
-		protected override double RotationAngle =>
-			Direction switch
-			{
-				ComponentDirection.Both when Value.X >= Force.Zero && Value.Y >= Force.Zero => Constants.Pi,
-				ComponentDirection.Both when Value.X >= Force.Zero && Value.Y <  Force.Zero => 0,
-				ComponentDirection.Both when Value.X <  Force.Zero && Value.Y >= Force.Zero => Constants.PiOver2,
-				ComponentDirection.Both when Value.X <  Force.Zero && Value.Y <  Force.Zero => Constants.Pi3Over2,
-				ComponentDirection.X    when Value.X >= Force.Zero                          => Constants.PiOver2,
-				ComponentDirection.X    when Value.X <  Force.Zero                          => Constants.Pi3Over2,
-				ComponentDirection.Y    when Value.Y >  Force.Zero                          => Constants.Pi,
-				_                                                                           => 0
-			};
+		/// <summary>
+		///		Get rotation angle for X direction. Rotation around Y axis.
+		/// </summary>
+		protected override double RotationAngle => Value.X >= Force.Zero
+			? 0
+			: Constants.Pi;
+
+		/// <summary>
+		///		Get rotation angle for Y direction. Rotation around X axis.
+		/// </summary>
+		protected double RotationAngleY => Value.Y <= Force.Zero
+			? 0
+			: Constants.Pi;
 
 		#endregion
 
@@ -75,7 +78,7 @@ namespace SPMTool.Core.Conditions
 		///     Read a <see cref="ForceObject" /> from an <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="forceObjectId">The <see cref="ObjectId" /> of the force.</param>
-		public static ForceObject? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference) forceObjectId.GetEntity());
+		public static ForceObject? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference?) forceObjectId.GetEntity());
 
 		/// <summary>
 		///     Read a <see cref="ForceObject" /> from a <see cref="BlockReference" />.
@@ -111,6 +114,22 @@ namespace SPMTool.Core.Conditions
 		//	// Add XData to force block
 		//	return data;
 		//}
+
+		public override BlockReference CreateEntity()
+		{
+			var insertionPoint = Position.ToPoint3d();
+
+			var block = Block.GetReference(insertionPoint, Layer)!;
+
+			// Rotate the block
+			if (!RotationAngle.ApproxZero(1E-3))
+				block.TransformBy(Matrix3d.Rotation(RotationAngle, Ucs.Yaxis, insertionPoint));
+
+			if (!RotationAngleY.ApproxZero(1E-3))
+				block.TransformBy(Matrix3d.Rotation(RotationAngleY, Ucs.Xaxis, insertionPoint));
+
+			return block;
+		}
 
 		public override void AddToDrawing()
 		{
@@ -155,7 +174,9 @@ namespace SPMTool.Core.Conditions
 		private TextCreator? GetText(ComponentDirection direction)
 		{
 			// Get force value
-			var value = direction is ComponentDirection.X ? Value.X : Value.Y;
+			var value = direction is ComponentDirection.X
+				? Value.X
+				: Value.Y;
 
 			return value != Force.Zero
 				? new TextCreator(TextInsertionPoint(direction), Layer.ForceText, $"{value.ToUnit(Settings.Units.AppliedForces).Value:0.00}")
@@ -169,13 +190,13 @@ namespace SPMTool.Core.Conditions
 		{
 			var x = Position.X;
 			var y = Position.Y;
-
+			
 			return direction switch
 			{
-				ComponentDirection.X when Value.X > Force.Zero => new Point(x - Length.FromMillimeters(200), y + Length.FromMillimeters(25)),
-				ComponentDirection.X when Value.X < Force.Zero => new Point(x + Length.FromMillimeters(75), y + Length.FromMillimeters(25)),
-				ComponentDirection.Y when Value.Y > Force.Zero => new Point(x + Length.FromMillimeters(25), y - Length.FromMillimeters(125)),
-				ComponentDirection.Y when Value.Y < Force.Zero => new Point(x + Length.FromMillimeters(25), y + Length.FromMillimeters(100)),
+				ComponentDirection.X when Value.X > Force.Zero => new Point(x + Length.FromMillimeters(75),  y + Length.FromMillimeters(25)),
+				ComponentDirection.X when Value.X < Force.Zero => new Point(x - Length.FromMillimeters(200), y + Length.FromMillimeters(25)),
+				ComponentDirection.Y when Value.Y > Force.Zero => new Point(x + Length.FromMillimeters(25),  y + Length.FromMillimeters(100)),
+				ComponentDirection.Y when Value.Y < Force.Zero => new Point(x + Length.FromMillimeters(25),  y - Length.FromMillimeters(125)),
 				_ => Position
 			};
 		}

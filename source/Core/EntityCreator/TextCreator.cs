@@ -3,6 +3,8 @@ using OnPlaneComponents;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
+#nullable enable
+
 namespace SPMTool.Core
 {
 	/// <summary>
@@ -65,7 +67,7 @@ namespace SPMTool.Core
 			Height     = Height * DataBase.Settings.Units.ScaleFactor
 		};
 
-		public DBText? GetEntity() => (DBText) ObjectId.GetEntity();
+		public DBText? GetEntity() => (DBText?) ObjectId.GetEntity();
 
 		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing();
 

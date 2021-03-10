@@ -60,6 +60,7 @@ namespace SPMTool.Core.Conditions
 					.Concat(forces
 						.Where(f => !f.Value.IsYZero)
 						.Select(f => f.TextY!))
+					.ToArray()
 					.AddToDrawing();
 			}
 
@@ -79,12 +80,12 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the force objects in the drawing.
 		/// </summary>
-		public static IEnumerable<BlockReference>? GetObjects() => Layer.Force.GetDBObjects<BlockReference>();
+		public static IEnumerable<BlockReference?>? GetObjects() => Layer.Force.GetDBObjects<BlockReference>();
 
 		/// <summary>
 		///     Get the force text objects in the drawing.
 		/// </summary>
-		public static IEnumerable<DBText>? GetTexts() => Layer.ForceText.GetDBObjects<DBText>();
+		public static IEnumerable<DBText?>? GetTexts() => Layer.ForceText.GetDBObjects<DBText>();
 
 		/// <summary>
 		///     Erase all the force text objects in the drawing.
