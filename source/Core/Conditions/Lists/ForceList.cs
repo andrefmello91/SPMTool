@@ -44,34 +44,13 @@ namespace SPMTool.Core.Conditions
         ///			This updates text's <see cref="ObjectId"/>'s in <seealso cref="ForceObject"/>'s.
         ///		</para>
         /// </param>
-        public static ForceList ReadFromDrawing(bool updateTexts = true)
-		{
-			var forces = ReadFromBlocks(GetObjects());
+        public static ForceList ReadFromDrawing(bool updateTexts = true) => ReadFromBlocks(GetObjects());
 
-			if (updateTexts && forces.Any())
-			{
-				// Erase force texts
-				EraseTexts();
-
-				// Add new texts
-				forces
-					.Where(f => !f.Value.IsXZero)
-					.Select(f => f.TextX!)
-					.Concat(forces
-						.Where(f => !f.Value.IsYZero)
-						.Select(f => f.TextY!))
-					.ToArray()
-					.AddToDrawing();
-			}
-
-			return forces;
-		}
-
-		/// <summary>
+        /// <summary>
 		///     Read <see cref="ForceObject" />'s from a collection of <see cref="BlockReference" />'s.
 		/// </summary>
 		/// <param name="blocks">The collection containing the <see cref="BlockReference" />'s of drawing.</param>
-		public static ForceList ReadFromBlocks(IEnumerable<BlockReference>? blocks) =>
+		public static ForceList ReadFromBlocks(IEnumerable<BlockReference?>? blocks) =>
 			blocks.IsNullOrEmpty()
 				? new ForceList()
 				: new ForceList(blocks.Where(b => !(b is null) && b.Layer == $"{Layer.Force}").Select(ForceObject.ReadFromBlock)!);

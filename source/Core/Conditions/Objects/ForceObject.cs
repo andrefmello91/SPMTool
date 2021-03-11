@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
@@ -20,16 +21,6 @@ namespace SPMTool.Core.Conditions
 	public class ForceObject : ConditionObject<ForceObject, PlaneForce>
 	{
 		#region Fields
-
-		/// <summary>
-		///     <see cref="TextCreator" /> for X force.
-		/// </summary>
-		public TextCreator? TextX;
-
-		/// <summary>
-		///     <see cref="TextCreator" /> for Y force.
-		/// </summary>
-		public TextCreator? TextY;
 
 		#endregion
 
@@ -66,8 +57,6 @@ namespace SPMTool.Core.Conditions
 		public ForceObject(Point position, PlaneForce value)
 			: base(position, value)
 		{
-			TextX = GetText(ComponentDirection.X);
-			TextY = GetText(ComponentDirection.Y);
 		}
 
 		#endregion
@@ -92,29 +81,6 @@ namespace SPMTool.Core.Conditions
 					ObjectId = reference.ObjectId
 				};
 
-		///// <summary>
-		/////     Create XData for forces
-		///// </summary>
-		///// <param name="force">The force value.</param>
-		//public static TypedValue[] CreateXData(PlaneForce force)
-		//{
-		//	// Definition for the Extended Data
-		//	var xdataStr = "Force Data";
-
-		//	// Get the Xdata size
-		//	var size = Enum.GetNames(typeof(ForceIndex)).Length;
-		//	var data = new TypedValue[size];
-
-		//	// Set values
-		//	data[(int) ForceIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName, AppName);
-		//	data[(int) ForceIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-		//	data[(int) ForceIndex.ValueX]   = new TypedValue((int) DxfCode.ExtendedDataReal, force.X.Newtons);
-		//	data[(int) ForceIndex.ValueY]   = new TypedValue((int) DxfCode.ExtendedDataReal, force.Y.Newtons);
-
-		//	// Add XData to force block
-		//	return data;
-		//}
-
 		public override BlockReference CreateEntity()
 		{
 			var insertionPoint = Position.ToPoint3d();
@@ -131,28 +97,6 @@ namespace SPMTool.Core.Conditions
 			return block;
 		}
 
-		public override void AddToDrawing()
-		{
-			base.AddToDrawing();
-			AddTextsToDrawing();
-		}
-
-		/// <summary>
-		///		Add the text objects to drawing.
-		/// </summary>
-		public void AddTextsToDrawing()
-		{
-			TextX?.AddToDrawing();
-			TextY?.AddToDrawing();
-		}
-
-		public override void RemoveFromDrawing() => new[] {ObjectId, TextX?.ObjectId ?? ObjectId.Null, TextY?.ObjectId ?? ObjectId.Null}.RemoveFromDrawing();
-
-		/// <summary>
-		///		Erase texts from drawing.
-		/// </summary>
-		public void EraseTexts() => new[] { TextX?.ObjectId ?? ObjectId.Null, TextY?.ObjectId ?? ObjectId.Null }.RemoveFromDrawing();
-
 		protected override bool GetProperties()
 		{
 			var force = GetForce();
@@ -162,25 +106,8 @@ namespace SPMTool.Core.Conditions
 
 			// Get values
 			Value = force.Value;
-			TextX = GetText(ComponentDirection.X);
-			TextY = GetText(ComponentDirection.Y);
 
 			return true;
-		}
-
-		/// <summary>
-		///     Get a <see cref="TextCreator" /> based in this object's properties.
-		/// </summary>
-		private TextCreator? GetText(ComponentDirection direction)
-		{
-			// Get force value
-			var value = direction is ComponentDirection.X
-				? Value.X
-				: Value.Y;
-
-			return value != Force.Zero
-				? new TextCreator(TextInsertionPoint(direction), Layer.ForceText, $"{value.ToUnit(Settings.Units.AppliedForces).Value:0.00}")
-				: null;
 		}
 
 		/// <summary>
@@ -206,13 +133,7 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		private PlaneForce? GetForce() => GetDictionary("Force").GetForce();
 
-		protected override void SetProperties()
-		{
-			SetDictionary(Value.GetTypedValues(), "Force");
-
-			TextX = GetText(ComponentDirection.X);
-			TextY = GetText(ComponentDirection.Y);
-		}
+		protected override void SetProperties() => SetDictionary(Value.GetTypedValues(), "Force");
 
 		#endregion
 

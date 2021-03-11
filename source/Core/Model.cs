@@ -255,10 +255,7 @@ namespace SPMTool.Core
 					return Panels.Remove(panel, raiseEvents);
 
 				case ForceObject force:
-					var removed = Forces.Remove(force, raiseEvents);
-					if (removed)
-						force.EraseTexts();
-					return removed;
+					return Forces.Remove(force, raiseEvents);
 
 				case ConstraintObject constraint:
 					return Constraints.Remove(constraint, raiseEvents);
@@ -297,10 +294,7 @@ namespace SPMTool.Core
 					return Panels.Add(panel, raiseEvents);
 
 				case ForceObject force:
-					var added = Forces.Add(force, raiseEvents);
-					if (added)
-						force.AddTextsToDrawing();
-					return added;
+					return Forces.Add(force, raiseEvents);
 
 				case ConstraintObject constraint:
 					return Constraints.Add(constraint, raiseEvents);

@@ -64,7 +64,8 @@ namespace SPMTool.Core
 			Position   = InsertionPoint.ToPoint3d(),
 			Layer      = $"{Layer}",
 			TextString = Text,
-			Height     = Height * DataBase.Settings.Units.ScaleFactor
+			Height     = Height * DataBase.Settings.Units.ScaleFactor,
+			AlignmentPoint = InsertionPoint.ToPoint3d()
 		};
 
 		public DBText? GetEntity() => (DBText?) ObjectId.GetEntity();

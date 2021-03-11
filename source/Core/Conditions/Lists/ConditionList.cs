@@ -144,19 +144,6 @@ namespace SPMTool.Core.Conditions
 				!(condition is null) && Remove(condition, raiseEvents, sort);
 		}
 
-		/// <summary>
-		///		Remove all objects that match <paramref name="position"/>.
-		/// </summary>
-		/// <param name="position">The position of objects to remove.</param>
-		/// <inheritdoc cref="Remove(Point, bool, bool)" />
-		public bool RemoveAll(Point position, bool raiseEvents = true, bool sort = true)
-		{
-			var condition = Find(c => c.Position == position);
-
-			return
-				!(condition is null) && Remove(condition, raiseEvents, sort);
-		}
-
 		/// <param name="positions">The position of objects to remove.</param>
 		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)" />
 		public int RemoveRange(IEnumerable<Point> positions, bool raiseEvents = true, bool sort = true) => RemoveAll(c => positions.Contains(c.Position), raiseEvents, sort);

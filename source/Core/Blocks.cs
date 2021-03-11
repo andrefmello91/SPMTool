@@ -223,20 +223,53 @@ namespace SPMTool.Core
 		///     Get the elements of the force in Y block.
 		/// </summary>
 		/// <remarks>
-		///		Force pointing downwards.
+		///		Default force pointing downwards.
 		/// </remarks>
-		public static IEnumerable<Entity> ForceY()
-		{
-			yield return
-				new Line
-				{
-					StartPoint = new Point3d(0, 37.5, 0),
-					EndPoint   = new Point3d(0, 125, 0)
-				};
+		public static IEnumerable<Entity> ForceY() => ForceBlock(Direction.Y);
 
-			yield return
-				new Solid(new Point3d(0, 0, 0), new Point3d(-25, 37.5, 0), new Point3d(25, 37.5, 0));
+		/// <summary>
+		///     Get the elements of the force block.
+		/// </summary>
+		/// <inheritdoc cref="ForceY"/>
+		public static IEnumerable<Entity> ForceBlock(Direction direction, bool addAttribute = true)
+		{
+			// Get elements for force in Y
+			var line = new Line
+			{
+				StartPoint = new Point3d(0, 37.5, 0),
+				EndPoint   = new Point3d(0, 125, 0)
+			};
+
+			var solid = new Solid(new Point3d(0, 0, 0), new Point3d(-25, 37.5, 0), new Point3d(25, 37.5, 0));
+
+			// Rotate
+			if (direction is Direction.X)
+			{
+				line.TransformBy(Matrix3d.Rotation(Constants.PiOver2, Vector3d.ZAxis, new Point3d(0, 0, 0)));
+				solid.TransformBy(Matrix3d.Rotation(Constants.PiOver2, Vector3d.ZAxis, new Point3d(0, 0, 0)));
+			}
+
+			yield return line;
+			yield return solid;
+
+			if (addAttribute)
+				yield return ForceAttributeDefinition(direction);
 		}
+
+		/// <summary>
+		///		Get the <see cref="AttributeDefinition"/> for force blocks.
+		/// </summary>
+		/// <param name="direction"></param>
+		/// <returns></returns>
+		public static AttributeDefinition ForceAttributeDefinition(Direction direction) =>
+			new AttributeDefinition
+			{
+				Position   = new Point3d(0, 0, 0),
+				Tag        = $"Force{direction}",
+				TextString = $"F{direction}",
+				Height     = 30,
+				Justify    = AttachmentPoint.MiddleLeft
+			};
 
 		/// <summary>
 		///     Get the elements of the force in X and Y block.
@@ -244,18 +277,7 @@ namespace SPMTool.Core
 		/// <remarks>
 		///		Forces pointing right and downwards.
 		/// </remarks>
-		public static IEnumerable<Entity> ForceXY()
-		{
-			var y = ForceY().ToArray();
-
-			var x = ForceY().ToArray();
-
-			// Rotate elements for X
-			foreach (var ent in x)
-				ent.TransformBy(Matrix3d.Rotation(Constants.PiOver2, Vector3d.ZAxis, new Point3d(0, 0, 0)));
-
-			return y.Concat(x);
-		}
+		public static IEnumerable<Entity> ForceXY() => ForceBlock(Direction.Y).Concat(ForceBlock(Direction.X));
 
 		/// <summary>
 		///     Get the elements of X Block.
