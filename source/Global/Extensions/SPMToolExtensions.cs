@@ -206,19 +206,6 @@ namespace SPMTool.Extensions
 				method is null
 					? null
 					: ((IEnumerable<Entity>) method.Invoke(null, null)!).ToArray();
-
-			//return block switch
-			//{
-			//	Block.Force             => Blocks.Force().ToArray(),
-			//	Block.SupportY          => Blocks.SupportY().ToArray(),
-			//	Block.SupportXY         => Blocks.SupportXY().ToArray(),
-			//	Block.Shear             => Blocks.Shear().ToArray(),
-			//	Block.CompressiveStress => Blocks.CompressiveStress().ToArray(),
-			//	Block.TensileStress     => Blocks.TensileStress().ToArray(),
-			//	Block.PanelCrack        => Blocks.PanelCrack().ToArray(),
-			//	Block.StringerCrack     => Blocks.StringerCrack().ToArray(),
-			//	_                       => null
-			//};
 		}
 
 		/// <summary>
@@ -269,95 +256,10 @@ namespace SPMTool.Extensions
 		}
 
 		/// <summary>
-		///     Get the <see cref="BlockReference" /> of this <paramref name="block" /> and its related <seealso cref="AttributeReference"/>s..
+		///		Set attributes to a <see cref="BlockReference"/>.
 		/// </summary>
-		/// <inheritdoc cref="GetReference(Block, Point3d, Layer?, double)"/>
-		/// <param name="attributes">A list of the returned <see cref="BlockReference"/> attributes.</param>
-		public static BlockReference? GetReference(this Block block, Point3d insertionPoint, out List<AttributeReference>? attributes, Layer? layer = null, double rotationAngle = 0)
-		{
-			attributes = null;
-
-			// Start a transaction
-			using var trans = StartTransaction();
-			using var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
-			using var blkRec = (BlockTableRecord)trans.GetObject(blkTbl[$"{block}"], OpenMode.ForRead);
-
-			if (blkRec is null)
-				return null;
-
-			layer ??= block.GetAttribute<BlockAttribute>()!.Layer;
-
-			var blockRef = new BlockReference(insertionPoint, blkRec.ObjectId)
-			{
-				Layer = $"{layer}"
-			};
-
-			// Rotate and scale the block
-			if (!rotationAngle.ApproxZero(1E-3))
-				blockRef.TransformBy(Matrix3d.Rotation(rotationAngle, Ucs.Zaxis, insertionPoint));
-
-			if (DataBase.Settings.Units.Geometry != LengthUnit.Millimeter)
-				blockRef.TransformBy(Matrix3d.Scaling(DataBase.Settings.Units.ScaleFactor, insertionPoint));
-
-			if (!blkRec.HasAttributeDefinitions)
-				return blockRef;
-
-			attributes = new List<AttributeReference>();
-
-			// Add attributes from the block table record
-			foreach (var objID in blkRec)
-			{
-				if (!(trans.GetObject(objID, OpenMode.ForRead) is AttributeDefinition attDef) || attDef.Constant)
-					continue;
-
-				var attRef = new AttributeReference();
-				attRef.SetAttributeFromBlock(attDef, blockRef.BlockTransform);
-                attRef.Position = attDef.Position.TransformBy(blockRef.BlockTransform);
-                attRef.Layer = $"{layer}";
-				attRef.TextString = attDef.TextString;
-				attRef.IsMirroredInX = false;
-				attRef.IsMirroredInY = false;
-				attRef.TransformBy(Matrix3d.Rotation(-rotationAngle, Vector3d.ZAxis, attRef.Position));
-				//blockRef.AttributeCollection.AppendAttribute(attRef);
-				attributes.Add(attRef);
-			}
-
-			return blockRef;
-		}
-
-		/// <summary>
-		///     Get the <see cref="BlockReference" /> of this <paramref name="block" />.
-		/// </summary>
-		/// <param name="insertionPoint">Thw insertion <see cref="Point3d" /> for the <see cref="BlockReference" />.</param>
-		/// <param name="rotationAngle">The rotation angle for block transformation (positive for counterclockwise).</param>
-		public static BlockReference? GetForceBlockReference(this Block block, Point3d insertionPoint, double rotationAngle = 0)
-		{
-			if (block != Block.ForceY || block != Block.ForceXY)
-				return null;
-
-			// Start a transaction
-			using var trans = StartTransaction();
-			using var blkTbl = (BlockTable)trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
-			var id = blkTbl[$"{block}"];
-
-			if (!id.IsValid)
-				return null;
-
-			var blockRef = new BlockReference(insertionPoint, id)
-			{
-				Layer = $"{Layer.Force}"
-			};
-
-			// Rotate and scale the block
-			if (!rotationAngle.ApproxZero(1E-3))
-				blockRef.TransformBy(Matrix3d.Rotation(rotationAngle, Ucs.Zaxis, insertionPoint));
-
-			if (DataBase.Settings.Units.Geometry != LengthUnit.Millimeter)
-				blockRef.TransformBy(Matrix3d.Scaling(DataBase.Settings.Units.ScaleFactor, insertionPoint));
-
-			return blockRef;
-		}
-
+		/// <param name="blockRefId">The <see cref="ObjectId"/> of a <see cref="BlockReference"/>.</param>
+		/// <param name="attributes">The collection of <seealso cref="AttributeReference"/>s.</param>
 		public static void SetBlockAttributes(this ObjectId blockRefId, IEnumerable<AttributeReference?>? attributes)
 		{
 			if (!blockRefId.IsOk() || attributes.IsNullOrEmpty())
@@ -366,20 +268,26 @@ namespace SPMTool.Extensions
 			// Start a transaction
 			using var trans = StartTransaction();
 
-			using var block = (BlockReference) trans.GetObject(blockRefId, OpenMode.ForWrite);
+			using var obj = trans.GetObject(blockRefId, OpenMode.ForRead);
 
-			//if (!(obj is BlockReference block))
-			//	return;
+            if (!(obj is BlockReference block))
+                return;
 
-			//block.UpgradeOpen();
+            block.UpgradeOpen();
 
-			foreach (var attRef in attributes)
+            foreach (var attRef in attributes)
 			{
 				if (attRef is null)
 					continue;
 
+				// Set position
+				var pos = new Point3d(block.Position.X + attRef.Position.X, block.Position.Y + attRef.Position.Y, 0);
+
 				block.AttributeCollection.AppendAttribute(attRef);
+
 				trans.AddNewlyCreatedDBObject(attRef, true);
+
+				attRef.AlignmentPoint = pos;
 			}
 
 			trans.Commit();

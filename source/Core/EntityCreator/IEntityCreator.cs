@@ -97,6 +97,10 @@ namespace SPMTool.Core
 			for (var i = 0; i < objects.Count(); i++)
 				objects.ElementAt(i).ObjectId = objIds[i];
 
+			foreach (var obj in objects)
+				if (obj is ForceObject force)
+					force.SetAttributes();
+
 			// Set events
 			//foreach (var entity in entities)
 			//{

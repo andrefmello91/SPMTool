@@ -112,7 +112,7 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///		Set attributes to the force block.
 		/// </summary>
-		private void SetAttributes() => ObjectId.SetBlockAttributes(ForceAttributeReference()?.ToList());
+		public void SetAttributes() => ObjectId.SetBlockAttributes(ForceAttributeReference()?.ToList());
 
 		/// <summary>
 		///		Get the attribute references for force block.
@@ -120,8 +120,10 @@ namespace SPMTool.Core.Conditions
 		private IEnumerable<AttributeReference?>? ForceAttributeReference()
 		{
 			if (!Value.IsXZero)
-				yield return new AttributeReference(TextInsertionPoint(ComponentDirection.X).ToPoint3d(), $"{Value.X.Value.Abs():0.00}", "FX", DataBase.Database.Textstyle)
+				yield return new AttributeReference
 				{
+					Position            = TextInsertionPoint(ComponentDirection.X).ToPoint3d(),
+					TextString          = $"{Value.X.Value.Abs():0.00}",
 					Height              = 30 * Settings.Units.ScaleFactor,
 					Justify             = AttachmentPoint.MiddleLeft,
 					LockPositionInBlock = true,
@@ -129,12 +131,14 @@ namespace SPMTool.Core.Conditions
 				};
 
 			if (!Value.IsYZero)
-				yield return new AttributeReference(TextInsertionPoint(ComponentDirection.Y).ToPoint3d(), $"{Value.Y.Value.Abs():0.00}", "FY", DataBase.Database.Textstyle)
+				yield return new AttributeReference
 				{
-					Height = 30 * Settings.Units.ScaleFactor,
-					Justify = AttachmentPoint.MiddleLeft,
-					LockPositionInBlock = true,
-					Invisible = false
+					Position             = TextInsertionPoint(ComponentDirection.Y).ToPoint3d(),
+					TextString           = $"{Value.Y.Value.Abs():0.00}",
+					Height               = 30 * Settings.Units.ScaleFactor,
+					Justify              = AttachmentPoint.MiddleLeft,
+					LockPositionInBlock  = true,
+					Invisible            = false
 				};
 		}
 
@@ -154,20 +158,15 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the insertion point of the associated text.
 		/// </summary>
-		private Point TextInsertionPoint(ComponentDirection direction)
-		{
-			var x = Position.X;
-			var y = Position.Y;
-			
-			return direction switch
+		private Point TextInsertionPoint(ComponentDirection direction) =>
+			direction switch
 			{
-				ComponentDirection.X when Value.X < Force.Zero => new Point(x + Length.FromMillimeters(75),  y + Length.FromMillimeters(25)),
-				ComponentDirection.X when Value.X > Force.Zero => new Point(x - Length.FromMillimeters(200), y + Length.FromMillimeters(25)),
-				ComponentDirection.Y when Value.Y < Force.Zero => new Point(x + Length.FromMillimeters(25),  y + Length.FromMillimeters(100)),
-				ComponentDirection.Y when Value.Y > Force.Zero => new Point(x + Length.FromMillimeters(25),  y - Length.FromMillimeters(125)),
+				ComponentDirection.X when Value.X < Force.Zero => new Point(Length.FromMillimeters(75),  Length.FromMillimeters(25)),
+				ComponentDirection.X when Value.X > Force.Zero => new Point(Length.FromMillimeters(-200), Length.FromMillimeters(25)),
+				ComponentDirection.Y when Value.Y < Force.Zero => new Point(Length.FromMillimeters(25),  Length.FromMillimeters(100)),
+				ComponentDirection.Y when Value.Y > Force.Zero => new Point(Length.FromMillimeters(25),  Length.FromMillimeters(-125)),
 				_ => Position
 			};
-		}
 
 		/// <summary>
 		///     Get <see cref="Force" /> value from extended data.
