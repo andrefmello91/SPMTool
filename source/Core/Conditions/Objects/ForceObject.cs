@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
@@ -21,6 +22,8 @@ namespace SPMTool.Core.Conditions
 	public class ForceObject : ConditionObject<ForceObject, PlaneForce>
 	{
 		#region Fields
+
+		private List<AttributeReference?> _attributes;
 
 		#endregion
 
@@ -88,13 +91,51 @@ namespace SPMTool.Core.Conditions
 			var block = Block.GetReference(insertionPoint, Layer)!;
 
 			// Rotate the block
+			if (Direction is ComponentDirection.X)
+				block.TransformBy(Matrix3d.Rotation(Constants.PiOver2, Ucs.Zaxis, insertionPoint));
+
+			else if (!RotationAngleY.ApproxZero(1E-3))
+				block.TransformBy(Matrix3d.Rotation(RotationAngleY, Ucs.Xaxis, insertionPoint));
+
 			if (!RotationAngle.ApproxZero(1E-3))
 				block.TransformBy(Matrix3d.Rotation(RotationAngle, Ucs.Yaxis, insertionPoint));
 
-			if (!RotationAngleY.ApproxZero(1E-3))
-				block.TransformBy(Matrix3d.Rotation(RotationAngleY, Ucs.Xaxis, insertionPoint));
-
 			return block;
+		}
+
+		public override void AddToDrawing()
+		{
+			ObjectId = CreateEntity().AddToDrawing();
+			SetAttributes();
+		}
+
+		/// <summary>
+		///		Set attributes to the force block.
+		/// </summary>
+		private void SetAttributes() => ObjectId.SetBlockAttributes(ForceAttributeReference()?.ToList());
+
+		/// <summary>
+		///		Get the attribute references for force block.
+		/// </summary>
+		private IEnumerable<AttributeReference?>? ForceAttributeReference()
+		{
+			if (!Value.IsXZero)
+				yield return new AttributeReference(TextInsertionPoint(ComponentDirection.X).ToPoint3d(), $"{Value.X.Value.Abs():0.00}", "FX", DataBase.Database.Textstyle)
+				{
+					Height              = 30 * Settings.Units.ScaleFactor,
+					Justify             = AttachmentPoint.MiddleLeft,
+					LockPositionInBlock = true,
+					Invisible           = false
+				};
+
+			if (!Value.IsYZero)
+				yield return new AttributeReference(TextInsertionPoint(ComponentDirection.Y).ToPoint3d(), $"{Value.Y.Value.Abs():0.00}", "FY", DataBase.Database.Textstyle)
+				{
+					Height = 30 * Settings.Units.ScaleFactor,
+					Justify = AttachmentPoint.MiddleLeft,
+					LockPositionInBlock = true,
+					Invisible = false
+				};
 		}
 
 		protected override bool GetProperties()
@@ -120,10 +161,10 @@ namespace SPMTool.Core.Conditions
 			
 			return direction switch
 			{
-				ComponentDirection.X when Value.X > Force.Zero => new Point(x + Length.FromMillimeters(75),  y + Length.FromMillimeters(25)),
-				ComponentDirection.X when Value.X < Force.Zero => new Point(x - Length.FromMillimeters(200), y + Length.FromMillimeters(25)),
-				ComponentDirection.Y when Value.Y > Force.Zero => new Point(x + Length.FromMillimeters(25),  y + Length.FromMillimeters(100)),
-				ComponentDirection.Y when Value.Y < Force.Zero => new Point(x + Length.FromMillimeters(25),  y - Length.FromMillimeters(125)),
+				ComponentDirection.X when Value.X < Force.Zero => new Point(x + Length.FromMillimeters(75),  y + Length.FromMillimeters(25)),
+				ComponentDirection.X when Value.X > Force.Zero => new Point(x - Length.FromMillimeters(200), y + Length.FromMillimeters(25)),
+				ComponentDirection.Y when Value.Y < Force.Zero => new Point(x + Length.FromMillimeters(25),  y + Length.FromMillimeters(100)),
+				ComponentDirection.Y when Value.Y > Force.Zero => new Point(x + Length.FromMillimeters(25),  y - Length.FromMillimeters(125)),
 				_ => Position
 			};
 		}

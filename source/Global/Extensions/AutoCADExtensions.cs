@@ -496,7 +496,7 @@ namespace SPMTool.Extensions
 		/// <param name="entity">The <see cref="Entity" />.</param>
 		/// <param name="erasedEvent">The event to call if <paramref name="entity" /> is erased.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static ObjectId AddToDrawing(this Entity entity, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
+		public static ObjectId AddToDrawing(this Entity? entity, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
 		{
 			if (entity is null)
 				return ObjectId.Null;
@@ -518,6 +518,14 @@ namespace SPMTool.Extensions
 			if (erasedEvent != null)
 				entity.Erased += erasedEvent;
 
+			// Verify if there is attributes
+			if (entity is BlockReference blkRef && !(blkRef.AttributeCollection is null) && blkRef.AttributeCollection.Count > 0)
+				foreach (AttributeReference attRef in blkRef.AttributeCollection)
+				{
+					blkTblRec.AppendEntity(attRef);
+					trans.AddNewlyCreatedDBObject(attRef, true);
+				}
+
 			// Commit changes
 			if (ongoingTransaction is null)
 			{
@@ -528,6 +536,47 @@ namespace SPMTool.Extensions
 			return
 				entity.ObjectId;
 		}
+
+		///// <summary>
+		/////     Add this <paramref name="blockReference" /> to the drawing and return it's <see cref="ObjectId" />.
+		///// </summary>
+		///// <param name="blockReference">The <see cref="BlockReference" />.</param>
+		///// <param name="attributes">A collection of custom <seealso cref="AttributeReference"/> to add to <paramref name="blockReference"/>.</param>
+		///// <param name="erasedEvent">The event to call if <paramref name="blockReference" /> is erased.</param>
+		///// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
+		//public static ObjectId AddToDrawing(this BlockReference? blockReference, IEnumerable<AttributeReference?>? attributes = null, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
+		//{
+		//	if (blockReference is null)
+		//		return ObjectId.Null;
+
+		//	// Start a transaction
+		//	using var lck = Document.LockDocument();
+		//	var trans = ongoingTransaction ?? StartTransaction();
+
+		//	// Add to drawing
+		//	blockReference.AddToDrawing(erasedEvent, trans);
+
+		//	// Verify if there is attributes
+		//	if (!attributes.IsNullOrEmpty() && trans.GetObject(blockReference.ObjectId, OpenMode.ForWrite) is BlockReference blkRef)
+		//		foreach (var attRef in attributes)
+		//		{
+		//			if (attRef is null)
+		//				continue;
+
+		//			blkRef.AttributeCollection.AppendAttribute(attRef);
+		//			trans.AddNewlyCreatedDBObject(attRef, true);
+		//		}
+
+		//	// Commit changes
+		//	if (ongoingTransaction is null)
+		//	{
+		//		trans.Commit();
+		//		trans.Dispose();
+		//	}
+
+		//	return
+		//		blockReference.ObjectId;
+		//}
 
 		/// <summary>
 		///     Add the <paramref name="objects" /> in this collection to the drawing and return the collection of
@@ -705,6 +754,14 @@ namespace SPMTool.Extensions
 
 			if (erasedEvent != null)
 				ent.Erased -= erasedEvent;
+
+			// Verify if there is attributes
+			if (ent is BlockReference blkRef && !(blkRef.AttributeCollection is null) && blkRef.AttributeCollection.Count > 0)
+				foreach (ObjectId attId in blkRef.AttributeCollection)
+				{
+					var attEnt = trans.GetObject(attId, OpenMode.ForWrite);
+					attEnt.Erase();
+				}
 
 			ent.Erase();
 

@@ -237,7 +237,7 @@ namespace SPMTool.Core
 			var line = new Line
 			{
 				StartPoint = new Point3d(0, 37.5, 0),
-				EndPoint   = new Point3d(0, 125, 0)
+				EndPoint   = new Point3d(0,  125, 0)
 			};
 
 			var solid = new Solid(new Point3d(0, 0, 0), new Point3d(-25, 37.5, 0), new Point3d(25, 37.5, 0));
@@ -252,8 +252,11 @@ namespace SPMTool.Core
 			yield return line;
 			yield return solid;
 
-			if (addAttribute)
-				yield return ForceAttributeDefinition(direction);
+			//if (!addAttribute)
+			//	yield break;
+
+			//yield return ForceAttributeDefinition(Direction.X);
+			//yield return ForceAttributeDefinition(Direction.Y);
 		}
 
 		/// <summary>
@@ -264,11 +267,14 @@ namespace SPMTool.Core
 		public static AttributeDefinition ForceAttributeDefinition(Direction direction) =>
 			new AttributeDefinition
 			{
-				Position   = new Point3d(0, 0, 0),
-				Tag        = $"Force{direction}",
+				Position   = direction is Direction.X
+					? new Point3d(-200,  25, 0)
+					: new Point3d(  25, 100, 0),
+				Tag        = $"F{direction}",
 				TextString = $"F{direction}",
 				Height     = 30,
-				Justify    = AttachmentPoint.MiddleLeft
+				Justify    = AttachmentPoint.MiddleLeft,
+				//Invisible  = true
 			};
 
 		/// <summary>
@@ -277,7 +283,7 @@ namespace SPMTool.Core
 		/// <remarks>
 		///		Forces pointing right and downwards.
 		/// </remarks>
-		public static IEnumerable<Entity> ForceXY() => ForceBlock(Direction.Y).Concat(ForceBlock(Direction.X));
+		public static IEnumerable<Entity> ForceXY() => ForceBlock(Direction.X).Concat(ForceBlock(Direction.Y, false));
 
 		/// <summary>
 		///     Get the elements of X Block.
