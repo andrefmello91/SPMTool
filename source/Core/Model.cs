@@ -12,11 +12,8 @@ using SPM.Elements.StringerProperties;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
-using SPMTool.Extensions;
 using UnitsNet;
-
 using static SPMTool.Core.DataBase;
-using static Autodesk.AutoCAD.ApplicationServices.Application;
 
 #nullable disable
 
@@ -227,12 +224,12 @@ namespace SPMTool.Core
 		public static void SetLineWeightDisplay() => DataBase.Database.LineWeightDisplay = true;
 
 		/// <summary>
-		///		Get the SPM object associated to an <see cref="Entity"/> and remove from its list.
+		///     Get the SPM object associated to an <see cref="Entity" /> and remove from its list.
 		/// </summary>
 		public static bool Remove(Entity entity, bool raiseEvents = false) => Remove(entity.GetSPMObject(), raiseEvents);
 
 		/// <summary>
-		///		Remove a SPM object from its list.
+		///     Remove a SPM object from its list.
 		/// </summary>
 		public static bool Remove(IEntityCreator<Entity> obj, bool raiseEvents = false)
 		{
@@ -266,12 +263,12 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///		Create an SPM object associated to an <see cref="Entity"/> and add to its list.
+		///     Create an SPM object associated to an <see cref="Entity" /> and add to its list.
 		/// </summary>
 		public static bool Add(Entity entity, bool raiseEvents = false) => Add(entity.CreateSPMObject(), raiseEvents);
 
 		/// <summary>
-		///		Add a SPM object to its list.
+		///     Add a SPM object to its list.
 		/// </summary>
 		public static bool Add(IEntityCreator<Entity> obj, bool raiseEvents = false)
 		{
@@ -338,7 +335,7 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///		Event to execute when an object is unappended from database.
+		///     Event to execute when an object is unappended from database.
 		/// </summary>
 		public static void On_ObjectUnappended(object sender, EventArgs e)
 		{
@@ -352,9 +349,9 @@ namespace SPMTool.Core
 			Remove(obj);
 			Editor.WriteMessage($"\n{obj.GetType()} removed");
 		}
-		
+
 		/// <summary>
-		///		Event to execute when an object is reappended to database.
+		///     Event to execute when an object is reappended to database.
 		/// </summary>
 		public static void On_ObjectReappended(object sender, EventArgs e)
 		{
@@ -370,11 +367,11 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///		Event to execute when an object is copied.
+		///     Event to execute when an object is copied.
 		/// </summary>
 		public static void On_ObjectCopied(object sender, ObjectEventArgs e)
 		{
-			var entity = (Entity)e.DBObject;
+			var entity = (Entity) e.DBObject;
 
 			if (entity is null)
 				return;
