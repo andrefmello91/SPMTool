@@ -29,13 +29,17 @@ namespace SPMTool.Editor.Commands
 		    var units = DataBase.Settings.Units;
 
 		    // Request objects to be selected in the drawing area
-		    var nds = UserInput.SelectNodes("Select nodes to add load:", NodeType.External);
+		    var nds = UserInput.SelectNodes("Select nodes to add load:", NodeType.External).ToArray();
 
 		    if (nds is null)
 			    return;
 
 		    // Get force from user
-		    var force = UserInput.GetForceValue(units.AppliedForces);
+		    var initialForce = nds.Length == 1
+			    ? Forces.GetForceByPosition(nds[0].Position.ToPoint(DataBase.Settings.Units.Geometry))
+			    : (PlaneForce?) null;
+
+		    var force = UserInput.GetForceValue(initialForce);
 
 		    if (!force.HasValue)
 			    return;
@@ -60,9 +64,13 @@ namespace SPMTool.Editor.Commands
 				return;
 
 			// Ask the user set the support conditions:
+			var defDirection = nds.Length == 1
+				? Constraints.GetConstraintByPosition(nds[0].Position.ToPoint(DataBase.Settings.Units.Geometry)).Direction
+				: ComponentDirection.None;
+
 			var options = Enum.GetNames(typeof(ComponentDirection));
 
-			var keyword = UserInput.SelectKeyword("Add support in which direction?", options, "None");
+			var keyword = UserInput.SelectKeyword("Add support in which direction?", options, $"{defDirection}");
 
 			if (keyword is null)
 				return;

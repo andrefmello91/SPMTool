@@ -154,7 +154,7 @@ namespace SPMTool.Extensions
 
 				var lyrTblRec = new LayerTableRecord
 				{
-					Name         = layerName
+					Name = layerName
 				};
 
 				// Upgrade the Layer table for write

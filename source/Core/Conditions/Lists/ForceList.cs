@@ -91,7 +91,7 @@ namespace SPMTool.Core.Conditions
         ///     Get a <see cref="PlaneForce"/> at this <paramref name="position"/>.
         /// </summary>
         /// <inheritdoc cref="ConditionList{T1,T2}.GetByPosition(Point)"/>
-        public PlaneForce GetForceByPosition(Point position) => GetByPosition(position)?.Value ?? PlaneForce.Zero;
+        public PlaneForce GetForceByPosition(Point position) => (GetByPosition(position)?.Value ?? PlaneForce.Zero).Convert(DataBase.Settings.Units.AppliedForces);
 
         #endregion
 
