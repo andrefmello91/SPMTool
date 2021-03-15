@@ -67,6 +67,8 @@ namespace SPMTool.Core.Elements
 
 		#region Properties
 
+		public abstract string Name { get; }
+
 		public abstract Layer Layer { get; }
 
 		public int Number { get; set; } = 0;

@@ -14,6 +14,8 @@ namespace SPMTool.Core
 	{
 		#region Properties
 
+		public string Name => $"Text at {InsertionPoint}";
+
 		public ObjectId ObjectId { get; set; }
 
 		/// <summary>

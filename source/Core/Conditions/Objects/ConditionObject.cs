@@ -53,6 +53,8 @@ namespace SPMTool.Core.Conditions
 	{
 		#region Properties
 
+		public abstract string Name { get; }
+
 		public abstract Block Block { get; }
 
 		public Point Position { get; }

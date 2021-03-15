@@ -324,14 +324,14 @@ namespace SPMTool.Core
 			{
 				var obj = entity.GetSPMObject();
 				if (Remove(obj))
-					Editor.WriteMessage($"\n{obj.GetType()} removed");
+					Editor.WriteMessage($"\n{obj.Name} removed");
 				return;
 			}
 
 			var obj1 = entity.CreateSPMObject();
 
 			if (Add(obj1))
-				Editor.WriteMessage($"\n{obj1.GetType()} added");
+				Editor.WriteMessage($"\n{obj1.Name} re-added");
 		}
 
 		/// <summary>

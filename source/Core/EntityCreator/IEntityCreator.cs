@@ -21,6 +21,11 @@ namespace SPMTool.Core
 		#region Properties
 
 		/// <summary>
+		///		Get the name of this object.
+		/// </summary>
+		string Name { get; }
+
+		/// <summary>
 		///     Get the <see cref="Enums.Layer" /> of this object.
 		/// </summary>
 		Layer Layer { get; }

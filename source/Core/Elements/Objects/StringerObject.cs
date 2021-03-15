@@ -33,6 +33,8 @@ namespace SPMTool.Core.Elements
 
 		#region Properties
 
+		public override string Name => $"Stringer {Number}";
+
 		/// <summary>
 		///     Get/set the height of <see cref="Geometry" />.
 		/// </summary>

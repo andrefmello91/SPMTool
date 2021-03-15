@@ -17,6 +17,8 @@ namespace SPMTool.Core.Conditions
 	{
 		#region Properties
 
+		public override string Name => $"Constraint at {Position}";
+
 		public override Block Block =>
 			Value.Direction switch
 			{

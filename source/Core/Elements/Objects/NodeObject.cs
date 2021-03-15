@@ -29,6 +29,8 @@ namespace SPMTool.Core.Elements
 
 		#region Properties
 
+		public override string Name => $"Node {Number}";
+
 		/// <summary>
 		///     Get/set the <see cref="OnPlaneComponents.Constraint" /> in this object.
 		/// </summary>

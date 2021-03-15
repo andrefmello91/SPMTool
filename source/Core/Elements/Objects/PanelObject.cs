@@ -34,6 +34,8 @@ namespace SPMTool.Core.Elements
 
 		#region Properties
 
+		public override string Name => $"Panel {Number}";
+
 		/// <summary>
 		///     Get/set the horizontal <see cref="WebReinforcementDirection" />.
 		/// </summary>

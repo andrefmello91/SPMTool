@@ -22,6 +22,8 @@ namespace SPMTool.Core.Conditions
 	{
 		#region Properties
 
+		public override string Name => $"Force at {Position}";
+
 		public override Block Block => Direction is ComponentDirection.Both ? Block.ForceXY : Block.ForceY;
 
 		public override ComponentDirection Direction => Value.Direction;
