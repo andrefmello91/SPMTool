@@ -439,43 +439,5 @@ namespace SPMTool.Core
 		public static void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e) => Steels.Add(e.Item?.Steel);
 
 		#endregion
-
-		///// <summary>
-		/////     Return an <see cref="SPMElement" /> from <paramref name="entity" />.
-		///// </summary>
-		///// <param name="entity">The <see cref="Entity" /> of SPM object.</param>
-		//public static SPMElement GetElement(Entity entity)
-		//{
-		//	// Get element layer
-		//	var layer = (Layer)Enum.Parse(typeof(Layer), entity.Layer);
-
-		//	if (!ElementLayers.Contains(layer))
-		//		return null;
-
-		//	// Get concrete and units
-		//	var parameters = ConcreteData.Parameters;
-		//	var constitutive = ConcreteData.ConstitutiveModel;
-		//	var units = Settings.Units;
-
-		//	if (layer is Layer.IntNode || layer is Layer.ExtNode)
-		//		return Nodes.GetByObjectId(entity.ObjectId).AsNode();
-
-		//	// Read nodes
-		//	var nodes = NodeList.ReadFromPoints(NodeCollection).Select(n => n.AsNode()).ToArray();
-
-		//	if (layer is Layer.Stringer)
-		//		return Stringers.Read((Line)entity, units, parameters, constitutive, nodes);
-
-		//	if (layer is Layer.Panel)
-		//		return Panels.Read((Solid)entity, units, parameters, constitutive, nodes);
-
-		//	return null;
-		//}
-
-		///// <summary>
-		/////     Return an <see cref="SPMElement" /> from <paramref name="objectId" />.
-		///// </summary>
-		///// <param name="objectId">The <see cref="ObjectId" /> of SPM object.</param>
-		//public static SPMElement GetElement(ObjectId objectId) => GetElement(objectId.GetEntity());
 	}
 }
