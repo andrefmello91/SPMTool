@@ -57,22 +57,62 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Event to execute when an object is added to a list.
 		/// </summary>
-		public static void On_ObjectAdded(object? sender, ItemEventArgs<T>? e) => e?.Item?.AddToDrawing();
+		public static void On_ObjectAdded(object? sender, ItemEventArgs<T>? e)
+		{
+			var obj = e.Item;
+
+			// Remove from trash
+			if (!(obj is null))
+				Model.Trash.Remove(obj);
+
+			// Add to drawing
+			e?.Item?.AddToDrawing();
+		}
 
 		/// <summary>
 		///     Event to execute when a range of objects is added to a list.
 		/// </summary>
-		public static void On_ObjectsAdded(object? sender, RangeEventArgs<T>? e) => e?.ItemCollection?.AddToDrawing();
+		public static void On_ObjectsAdded(object? sender, RangeEventArgs<T>? e)
+		{
+			var objs = (IEnumerable<IEntityCreator<Entity>>?) e.ItemCollection;
+
+			// Remove from trash
+			if (!(objs is null))
+				Model.Trash.RemoveAll(objs.Contains);
+
+			// Add to drawing
+			e?.ItemCollection?.AddToDrawing();
+		}
 
 		/// <summary>
 		///     Event to execute when an object is removed from a list.
 		/// </summary>
-		public static void On_ObjectRemoved(object? sender, ItemEventArgs<T>? e) => e?.Item?.RemoveFromDrawing();
+		public static void On_ObjectRemoved(object? sender, ItemEventArgs<T>? e)
+		{
+			var obj = e.Item;
+
+			// Add to trash
+			if (!(obj is null) && !Model.Trash.Contains(obj))
+				Model.Trash.Add(obj);
+
+			// Remove
+			obj?.RemoveFromDrawing();
+		}
 
 		/// <summary>
 		///     Event to execute when a range of objects is removed from a list.
 		/// </summary>
-		public static void On_ObjectsRemoved(object? sender, RangeEventArgs<T>? e) => e?.ItemCollection?.RemoveFromDrawing();
+		public static void On_ObjectsRemoved(object? sender, RangeEventArgs<T>? e)
+		{
+			var objs = (IEnumerable<IEntityCreator<Entity>>?) e.ItemCollection;
+
+			// Add to trash
+			if (!(objs.IsNullOrEmpty()))
+				Model.Trash.AddRange(objs.Where(obj => !(obj is null) && !Model.Trash.Contains(obj)));
+
+			// Remove
+			objs?.RemoveFromDrawing();
+		}
 
 		#endregion
 	}

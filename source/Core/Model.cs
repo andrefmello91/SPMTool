@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Documents;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions;
@@ -12,6 +14,7 @@ using SPM.Elements.StringerProperties;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
+using SPMTool.Extensions;
 using UnitsNet;
 using static SPMTool.Core.DataBase;
 
@@ -35,6 +38,11 @@ namespace SPMTool.Core
 		///     Command names for undo and redo.
 		/// </summary>
 		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" }  ;
+
+		/// <summary>
+		///		Collection of removed elements.
+		/// </summary>
+		public static readonly List<IEntityCreator<Entity>> Trash;
 
 		/// <summary>
 		///     The collection of <see cref="NodeObject" />'s in the model.
@@ -101,6 +109,9 @@ namespace SPMTool.Core
 
 		static Model()
 		{
+			// Initiate trash
+			Trash = new List<IEntityCreator<Entity>>();
+
 			// Get elements
 			Nodes       = NodeList.ReadFromDrawing();
 			Forces      = ForceList.ReadFromDrawing();
@@ -115,6 +126,9 @@ namespace SPMTool.Core
 			PanelReinforcements    = GetPanelReinforcements();
 			Steels                 = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList();
 
+			// Register events
+			RegisterEventsToEntities();
+
 			// Set parameters
 			SetAppParameters();
 		}
@@ -122,6 +136,23 @@ namespace SPMTool.Core
 		#endregion
 
 		#region  Methods
+
+		/// <summary>
+		///		Register events for AutoCAD entities.
+		/// </summary>
+		public static void RegisterEventsToEntities()
+		{
+			// Get object ids
+			var ids = Nodes.Select(n => n.ObjectId)
+				.Concat(Forces.Select(f => f.ObjectId))
+				.Concat(Constraints.Select(c => c.ObjectId))
+				.Concat(Stringers.Select(s => s.ObjectId))
+				.Concat(Panels.Select(p => p.ObjectId))
+				.ToList();
+
+			// Register event
+			ids.RegisterErasedEvent(On_ObjectErase);
+		}
 
 		/// <inheritdoc cref="StringerCrossSections" />
 		private static EList<CrossSection> GetCrossSections()
@@ -323,15 +354,25 @@ namespace SPMTool.Core
 			if (e.Erased)
 			{
 				var obj = entity.GetSPMObject();
-				if (Remove(obj))
-					Editor.WriteMessage($"\n{obj.Name} removed");
+
+				if (!Remove(obj))
+					return;
+
+				Trash.Add(obj);
+
+				Editor.WriteMessage($"\n{obj.Name} removed");
+
 				return;
 			}
 
-			var obj1 = entity.CreateSPMObject();
+			var obj1 = Trash.Find(t => t.ObjectId == entity.ObjectId);
 
-			if (Add(obj1))
-				Editor.WriteMessage($"\n{obj1.Name} re-added");
+			if (!Add(obj1))
+				return;
+
+			Trash.Remove(obj1);
+
+			Editor.WriteMessage($"\n{obj1.Name} re-added");
 		}
 
 		/// <summary>

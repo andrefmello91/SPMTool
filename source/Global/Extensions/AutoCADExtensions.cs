@@ -674,7 +674,10 @@ namespace SPMTool.Extensions
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			foreach (var obj in objectIds)
-				obj.RegisterErasedEvent(handler, trans);
+			{
+				using var ent = (Entity) trans.GetObject(obj, OpenMode.ForWrite);
+				ent.Erased += handler;
+			}
 
 			// Commit changes
 			if (ongoingTransaction != null)
@@ -698,10 +701,8 @@ namespace SPMTool.Extensions
 			using var lck = Document.LockDocument();
 			var trans = ongoingTransaction ?? StartTransaction();
 
-			using (var ent = (Entity) trans.GetObject(objectId, OpenMode.ForWrite))
-			{
-				ent.Erased -= handler;
-			}
+			using var ent = (Entity) trans.GetObject(objectId, OpenMode.ForWrite);
+			ent.Erased -= handler;
 
 			// Commit changes
 			if (ongoingTransaction != null)
@@ -726,7 +727,10 @@ namespace SPMTool.Extensions
 			var trans = ongoingTransaction ?? StartTransaction();
 
 			foreach (var obj in objectIds)
-				obj.UnregisterErasedEvent(handler, trans);
+			{
+				using var ent = (Entity)trans.GetObject(obj, OpenMode.ForWrite);
+				ent.Erased -= handler;
+			}
 
 			// Commit changes
 			if (ongoingTransaction != null)
