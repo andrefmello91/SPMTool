@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Extensions;
-using Material.Reinforcement;
 using Material.Reinforcement.Uniaxial;
 using OnPlaneComponents;
 using SPM.Elements;
 using SPM.Elements.StringerProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.DataBase;
 
@@ -81,7 +77,7 @@ namespace SPMTool.Core.Elements
 		/// <param name="initialPoint">The initial <see cref="Point" />.</param>
 		/// <param name="endPoint">The end <see cref="Point" />.</param>
 		public StringerObject(Point initialPoint, Point endPoint)
-			: this (new StringerGeometry(initialPoint, endPoint, 100, 100))
+			: this(new StringerGeometry(initialPoint, endPoint, 100, 100))
 		{
 		}
 
@@ -96,24 +92,26 @@ namespace SPMTool.Core.Elements
 
 		#endregion
 
-		#region  Methods
+		#region Methods
 
 		/// <summary>
 		///     Read a <see cref="StringerObject" /> in the drawing.
 		/// </summary>
 		/// <param name="stringerObjectId">The <see cref="ObjectId" /> of the stringer.</param>
-		public static StringerObject? ReadFromObjectId(ObjectId stringerObjectId) => stringerObjectId.GetEntity() is Line line
-			? ReadFromLine(line)
-			: null;
+		public static StringerObject? ReadFromObjectId(ObjectId stringerObjectId) =>
+			stringerObjectId.GetEntity() is Line line
+				? ReadFromLine(line)
+				: null;
 
 		/// <summary>
 		///     Read a <see cref="StringerObject" /> in the drawing.
 		/// </summary>
 		/// <param name="line">The <see cref="Line" /> object of the stringer.</param>
-		public static StringerObject ReadFromLine(Line line) => new StringerObject(line.StartPoint, line.EndPoint, Settings.Units.Geometry)
-		{
-			ObjectId = line.ObjectId
-		};
+		public static StringerObject ReadFromLine(Line line) =>
+			new(line.StartPoint, line.EndPoint, Settings.Units.Geometry)
+			{
+				ObjectId = line.ObjectId
+			};
 
 		///// <summary>
 		/////     Create new extended data for stringers.
@@ -163,22 +161,30 @@ namespace SPMTool.Core.Elements
 				};
 		}
 
-		public override Line CreateEntity() => new Line(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
+		public override Line CreateEntity()
 		{
-			Layer = $"{Layer}"
-		};
+			return new(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
+			{
+				Layer = $"{Layer}"
+			};
+		}
 
 		/// <remarks>
-		///		This method a linear object.
+		///     This method a linear object.
 		/// </remarks>
-		/// <inheritdoc/>
-		public override Stringer GetElement() => GetElement(Model.Nodes.GetElements());
+		/// <inheritdoc />
+		public override Stringer GetElement()
+		{
+			return GetElement(Model.Nodes.GetElements());
+		}
 
 		/// <inheritdoc cref="GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
 		/// <param name="analysisType">The <see cref="AnalysisType" />.</param>
-		public Stringer GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
-			Stringer.Read(analysisType, Number, nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement?.Clone());
+		public Stringer GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
+		{
+			return Stringer.Read(analysisType, Number, nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement?.Clone());
+		}
 
 		protected override bool GetProperties()
 		{
@@ -205,12 +211,18 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the <see cref="CrossSection" /> from XData.
 		/// </summary>
-		private CrossSection? GetCrossSection() => GetDictionary("CrossSection").GetCrossSection();
+		private CrossSection? GetCrossSection()
+		{
+			return GetDictionary("CrossSection").GetCrossSection();
+		}
 
 		/// <summary>
 		///     Get this stringer <see cref="UniaxialReinforcement" />.
 		/// </summary>
-		private UniaxialReinforcement? GetReinforcement() => GetDictionary("Reinforcement").GetReinforcement();
+		private UniaxialReinforcement? GetReinforcement()
+		{
+			return GetDictionary("Reinforcement").GetReinforcement();
+		}
 
 		/// <summary>
 		///     Set the <seealso cref="CrossSection" /> to <see cref="Geometry" /> and XData.
@@ -278,12 +290,18 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Returns true if objects are equal.
 		/// </summary>
-		public static bool operator == (StringerObject left, StringerObject right) => !(left is null) && left.Equals(right);
+		public static bool operator ==(StringerObject left, StringerObject right)
+		{
+			return !(left is null) && left.Equals(right);
+		}
 
 		/// <summary>
 		///     Returns true if objects are different.
 		/// </summary>
-		public static bool operator != (StringerObject left, StringerObject right) => !(left is null) && !left.Equals(right);
+		public static bool operator !=(StringerObject left, StringerObject right)
+		{
+			return !(left is null) && !left.Equals(right);
+		}
 
 		#endregion
 	}

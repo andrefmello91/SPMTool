@@ -24,8 +24,8 @@ namespace SPMTool.Editor.Commands
 	            ShowAlertDialog(message);
 				return;
             }
-
-            // Do a linear analysis
+			
+			// Do a linear analysis
             var analysis = new SPM.Analysis.Analysis(input);
 			analysis.Do();
 
