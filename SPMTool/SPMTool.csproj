@@ -89,6 +89,34 @@
       <HintPath>packages\AutoCAD.NET.24.0.0\lib\net47\AdWindows.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="andrefmello91.EList, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.EList.1.0.2\lib\netstandard2.0\andrefmello91.EList.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="andrefmello91.Extensions, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.Extensions.1.0.2\lib\netstandard2.0\andrefmello91.Extensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="andrefmello91.FEMAnalysis, Version=0.1.5.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.FEMAnalysis.0.1.5\lib\netstandard2.0\andrefmello91.FEMAnalysis.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="andrefmello91.Material, Version=1.0.1.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.Material.1.0.1\lib\netstandard2.0\andrefmello91.Material.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="andrefmello91.OnPlaneComponents, Version=1.0.1.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.OnPlaneComponents.1.0.1\lib\netstandard2.0\andrefmello91.OnPlaneComponents.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="andrefmello91.ReinforcedConcreteMembrane, Version=1.0.1.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.ReinforcedConcreteMembrane.1.0.1\lib\netstandard2.0\andrefmello91.ReinforcedConcreteMembrane.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="andrefmello91.SPMElements, Version=0.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.SPMElements.0.1.0\lib\netstandard2.0\andrefmello91.SPMElements.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="LiveCharts, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
       <HintPath>packages\LiveCharts.0.9.7\lib\net45\LiveCharts.dll</HintPath>
     </Reference>
@@ -119,8 +147,9 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="UnitsNet, Version=4.0.0.0, Culture=neutral, PublicKeyToken=f8601875a1f041da, processorArchitecture=MSIL">
-      <HintPath>packages\UnitsNet.4.86.0\lib\net40\UnitsNet.dll</HintPath>
+    <Reference Include="UnitsNet, Version=4.0.0.0, Culture=neutral, PublicKeyToken=f8601875a1f041da">
+      <HintPath>..\packages\UnitsNet.4.87.0\lib\net40\UnitsNet.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
@@ -131,98 +160,98 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="source\Core\Blocks.cs" />
-    <Compile Include="source\Core\Conditions\Lists\ConditionList.cs" />
-    <Compile Include="source\Core\Conditions\Lists\ConstraintList.cs" />
-    <Compile Include="source\Core\Conditions\Lists\ForceList.cs" />
-    <Compile Include="source\Core\Conditions\Objects\ConditionObject.cs" />
-    <Compile Include="source\Core\Conditions\Objects\ConstraintObject.cs" />
-    <Compile Include="source\Core\Conditions\Objects\ForceObject.cs" />
-    <Compile Include="source\Core\DataBase.cs" />
-    <Compile Include="source\Core\Elements\ElementData.cs" />
-    <Compile Include="source\Core\Elements\Lists\NodeList.cs" />
-    <Compile Include="source\Core\Elements\Lists\PanelList.cs" />
-    <Compile Include="source\Core\Elements\Lists\SPMObjectList.cs" />
-    <Compile Include="source\Core\Elements\Lists\StringerList.cs" />
-    <Compile Include="source\Core\Elements\Objects\NodeObject.cs" />
-    <Compile Include="source\Core\Elements\Objects\PanelObject.cs" />
-    <Compile Include="source\Core\Elements\Objects\SPMObject.cs" />
-    <Compile Include="source\Core\Elements\Objects\StringerObject.cs" />
-    <Compile Include="source\Core\EntityCreator\EntityCreatorList.cs" />
-    <Compile Include="source\Core\EntityCreator\IEntityCreator.cs" />
-    <Compile Include="source\Core\EntityCreator\TextCreator.cs" />
-    <Compile Include="source\Core\EntityCreator\DictionaryCreator.cs" />
-    <Compile Include="source\Core\Materials\ConcreteData.cs" />
-    <Compile Include="source\Core\Materials\ReinforcementData.cs" />
-    <Compile Include="source\Core\Model.cs" />
-    <Compile Include="source\Core\Results.cs" />
-    <Compile Include="source\Core\Settings.cs" />
-    <Compile Include="source\Editor\Commands\Analysis.cs" />
-    <Compile Include="source\Editor\Commands\CommandNames.cs" />
-    <Compile Include="source\Editor\Commands\ConditionsInput.cs" />
-    <Compile Include="source\Editor\Commands\ElementEditor.cs" />
-    <Compile Include="source\Editor\Commands\ElementInput.cs" />
-    <Compile Include="source\Editor\Commands\MaterialInput.cs" />
-    <Compile Include="source\Editor\Commands\Settings.cs" />
-    <Compile Include="source\Editor\Commands\View.cs" />
-    <Compile Include="source\Editor\UserInput.cs" />
-    <Compile Include="source\Global\AnalysisSettings.cs" />
-    <Compile Include="source\Global\Attributes.cs" />
-    <Compile Include="source\Global\Comparers\LineEqualityComparer .cs" />
-    <Compile Include="source\Global\Comparers\Point3dComparer.cs" />
-    <Compile Include="source\Global\Comparers\SolidEqualityComparer.cs" />
-    <Compile Include="source\Global\Enums.cs" />
-    <Compile Include="source\Global\Extensions\AutoCADExtensions.cs" />
-    <Compile Include="source\Global\Extensions\PointExtensions.cs" />
-    <Compile Include="source\Global\Extensions\SPMToolExtensions.cs" />
-    <Compile Include="source\Global\Extensions\UIExtensions.cs" />
-    <Compile Include="source\Global\FlowAnalysisAttributes.cs" />
-    <Compile Include="source\Global\Units.cs" />
-    <Compile Include="source\Initializer.cs" />
-    <Compile Include="source\Editor\Commands\CommandHandler.cs" />
-    <Compile Include="source\UserInterface\Icons.cs" />
-    <Compile Include="source\UserInterface\SPMToolInterface.cs" />
-    <Compile Include="source\UserInterface\Windows\AnalysisConfig.xaml.cs">
+    <Compile Include="Core\Blocks.cs" />
+    <Compile Include="Core\Conditions\Lists\ConditionList.cs" />
+    <Compile Include="Core\Conditions\Lists\ConstraintList.cs" />
+    <Compile Include="Core\Conditions\Lists\ForceList.cs" />
+    <Compile Include="Core\Conditions\Objects\ConditionObject.cs" />
+    <Compile Include="Core\Conditions\Objects\ConstraintObject.cs" />
+    <Compile Include="Core\Conditions\Objects\ForceObject.cs" />
+    <Compile Include="Core\DataBase.cs" />
+    <Compile Include="Core\Elements\ElementData.cs" />
+    <Compile Include="Core\Elements\Lists\NodeList.cs" />
+    <Compile Include="Core\Elements\Lists\PanelList.cs" />
+    <Compile Include="Core\Elements\Lists\SPMObjectList.cs" />
+    <Compile Include="Core\Elements\Lists\StringerList.cs" />
+    <Compile Include="Core\Elements\Objects\NodeObject.cs" />
+    <Compile Include="Core\Elements\Objects\PanelObject.cs" />
+    <Compile Include="Core\Elements\Objects\SPMObject.cs" />
+    <Compile Include="Core\Elements\Objects\StringerObject.cs" />
+    <Compile Include="Core\EntityCreator\EntityCreatorList.cs" />
+    <Compile Include="Core\EntityCreator\IEntityCreator.cs" />
+    <Compile Include="Core\EntityCreator\TextCreator.cs" />
+    <Compile Include="Core\EntityCreator\DictionaryCreator.cs" />
+    <Compile Include="Core\Materials\ConcreteData.cs" />
+    <Compile Include="Core\Materials\ReinforcementData.cs" />
+    <Compile Include="Core\Model.cs" />
+    <Compile Include="Core\Results.cs" />
+    <Compile Include="Core\Settings.cs" />
+    <Compile Include="Editor\Commands\Analysis.cs" />
+    <Compile Include="Editor\Commands\CommandNames.cs" />
+    <Compile Include="Editor\Commands\ConditionsInput.cs" />
+    <Compile Include="Editor\Commands\ElementEditor.cs" />
+    <Compile Include="Editor\Commands\ElementInput.cs" />
+    <Compile Include="Editor\Commands\MaterialInput.cs" />
+    <Compile Include="Editor\Commands\Settings.cs" />
+    <Compile Include="Editor\Commands\View.cs" />
+    <Compile Include="Editor\UserInput.cs" />
+    <Compile Include="Global\AnalysisSettings.cs" />
+    <Compile Include="Global\Attributes.cs" />
+    <Compile Include="Global\Comparers\LineEqualityComparer .cs" />
+    <Compile Include="Global\Comparers\Point3dComparer.cs" />
+    <Compile Include="Global\Comparers\SolidEqualityComparer.cs" />
+    <Compile Include="Global\Enums.cs" />
+    <Compile Include="Global\Extensions\AutoCADExtensions.cs" />
+    <Compile Include="Global\Extensions\PointExtensions.cs" />
+    <Compile Include="Global\Extensions\SPMToolExtensions.cs" />
+    <Compile Include="Global\Extensions\UIExtensions.cs" />
+    <Compile Include="Global\FlowAnalysisAttributes.cs" />
+    <Compile Include="Global\Units.cs" />
+    <Compile Include="Initializer.cs" />
+    <Compile Include="Editor\Commands\CommandHandler.cs" />
+    <Compile Include="UserInterface\Icons.cs" />
+    <Compile Include="UserInterface\SPMToolInterface.cs" />
+    <Compile Include="UserInterface\Windows\AnalysisConfig.xaml.cs">
       <DependentUpon>AnalysisConfig.xaml</DependentUpon>
     </Compile>
-    <Compile Include="source\UserInterface\Windows\ConcreteConfig.xaml.cs">
+    <Compile Include="UserInterface\Windows\ConcreteConfig.xaml.cs">
       <DependentUpon>ConcreteConfig.xaml</DependentUpon>
     </Compile>
-    <Compile Include="source\UserInterface\Windows\GraphWindow.xaml.cs">
+    <Compile Include="UserInterface\Windows\GraphWindow.xaml.cs">
       <DependentUpon>GraphWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="source\UserInterface\Windows\PanelWindow.xaml.cs">
+    <Compile Include="UserInterface\Windows\PanelWindow.xaml.cs">
       <DependentUpon>PanelWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="source\UserInterface\Windows\StringerWindow.xaml.cs">
+    <Compile Include="UserInterface\Windows\StringerWindow.xaml.cs">
       <DependentUpon>StringerWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="source\UserInterface\Windows\UnitsConfig.xaml.cs">
+    <Compile Include="UserInterface\Windows\UnitsConfig.xaml.cs">
       <DependentUpon>UnitsConfig.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="source\UserInterface\Windows\AnalysisConfig.xaml">
+    <Page Include="UserInterface\Windows\AnalysisConfig.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="source\UserInterface\Windows\ConcreteConfig.xaml">
+    <Page Include="UserInterface\Windows\ConcreteConfig.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="source\UserInterface\Windows\GraphWindow.xaml">
+    <Page Include="UserInterface\Windows\GraphWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="source\UserInterface\Windows\PanelWindow.xaml">
+    <Page Include="UserInterface\Windows\PanelWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="source\UserInterface\Windows\StringerWindow.xaml">
+    <Page Include="UserInterface\Windows\StringerWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="source\UserInterface\Windows\UnitsConfig.xaml">
+    <Page Include="UserInterface\Windows\UnitsConfig.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

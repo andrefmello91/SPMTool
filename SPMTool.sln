@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPMTool", "SPMTool.csproj", "{25CFFFC7-0EA2-4774-8125-F594D5E51E2A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPMTool", "SPMTool\SPMTool.csproj", "{25CFFFC7-0EA2-4774-8125-F594D5E51E2A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

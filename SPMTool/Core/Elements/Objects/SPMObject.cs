@@ -1,6 +1,6 @@
 ﻿using System;
+using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
-using SPM.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
@@ -11,13 +11,9 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Interface for SPM objects.
 	/// </summary>
-	/// <typeparam name="T1">Any type that implements <see cref="ISPMObject{T1,T2,T3}" />.</typeparam>
-	/// <typeparam name="T2">The type that represents the main property of the object.</typeparam>
-	/// <typeparam name="T3">Any type that implements <see cref="INumberedElement" />.</typeparam>
-	public interface ISPMObject<T1, out T2, out T3> : IEquatable<T1>, IComparable<T1>
-		where T1 : ISPMObject<T1, T2, T3>?
-		where T2 : IComparable<T2>, IEquatable<T2>
-		where T3 : INumberedElement
+	/// <typeparam name="T1">The type that represents the main property of the object.</typeparam>
+	public interface ISPMObject<T1> : IEquatable<ISPMObject<T1>>, IComparable<ISPMObject<T1>
+		where T1 : IComparable<T1>, IEquatable<T1>
 	{
 		#region Properties
 
@@ -29,7 +25,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the main property of this object.
 		/// </summary>
-		T2 Property { get; }
+		T1 Property { get; }
 
 		#endregion
 
@@ -38,7 +34,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the SPM element associated to this object.
 		/// </summary>
-		T3 GetElement();
+		INumberedElement GetElement();
 
 		#endregion
 	}
@@ -46,22 +42,16 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     SPM object base class
 	/// </summary>
-	/// <typeparam name="T1">Any type that implements <see cref="ISPMObject{T1,T2,T3}"/>.</typeparam>
-	/// <typeparam name="T2">The type that represents the main property of the object.</typeparam>
-	/// <typeparam name="T3">Any type that implements <see cref="INumberedElement" />.</typeparam>
-	/// <typeparam name="T4">Any type based on <see cref="Entity" />.</typeparam>
-	public abstract class SPMObject<T1, T2, T3, T4> : DictionaryCreator, ISPMObject<T1, T2, T3>, IEntityCreator<T4>
-		where T1 : ISPMObject<T1, T2, T3>
-		where T2 : IComparable<T2>, IEquatable<T2>
-		where T3 : INumberedElement
-		where T4 : Entity
+	/// <typeparam name="T1">The type that represents the main property of the object.</typeparam>
+	public abstract class SPMObject<T1> : DictionaryCreator, ISPMObject<T1>, IEntityCreator<Entity>
+		where T1 : IComparable<T1>, IEquatable<T1>
 	{
 		#region Fields
 
 		/// <summary>
 		///     Auxiliary property field.
 		/// </summary>
-		protected T2 PropertyField;
+		protected T1 PropertyField;
 
 		#endregion
 
@@ -73,7 +63,7 @@ namespace SPMTool.Core.Elements
 
 		public int Number { get; set; } = 0;
 		
-		public T2 Property
+		public T1 Property
 		{
 			get => PropertyField;
 			set => PropertyField = value;
@@ -87,17 +77,17 @@ namespace SPMTool.Core.Elements
 		{
 		}
 
-		protected SPMObject(T2 property) => PropertyField = property;
+		protected SPMObject(T1 property) => PropertyField = property;
 
 		#endregion
 
 		#region  Methods
 
-		public abstract T3 GetElement();
+		public abstract INumberedElement GetElement();
 
-		public abstract T4 CreateEntity();
+		public abstract Entity CreateEntity();
 
-		public T4? GetEntity() => (T4?) ObjectId.GetEntity();
+		public Entity? GetEntity() => ObjectId.GetEntity();
 
 		public void AddToDrawing()
 		{
@@ -110,11 +100,11 @@ namespace SPMTool.Core.Elements
 
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
-		public int CompareTo(T1 other) => other is null
-			? 1
+		public int CompareTo(ISPMObject<T1>? other) => other is null || other.GetType() != GetType()
+			? 0
 			: Property.CompareTo(other.Property);
 
-		public bool Equals(T1 other) => !(other is null) && Property.Equals(other.Property);
+		public bool Equals(ISPMObject<T1>? other) => !(other is null) && other.GetType() == GetType() && Property.Equals(other.Property);
 
 		public override int GetHashCode() => Property.GetHashCode();
 

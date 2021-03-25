@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows.Documents;
+using andrefmello91.EList;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using Extensions;
-using Material.Reinforcement;
-using Material.Reinforcement.Biaxial;
-using Material.Reinforcement.Uniaxial;
-using SPM.Analysis;
-using SPM.Elements;
-using SPM.Elements.StringerProperties;
+using andrefmello91.EList;
+using andrefmello91.Material.Reinforcement;
+using andrefmello91.FEMAnalysis;
+using andrefmello91.Material.Reinforcement.Uniaxial;
+using andrefmello91.SPMElements;
+using andrefmello91.SPMElements.StringerProperties;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
@@ -125,7 +125,7 @@ namespace SPMTool.Core
 			ElementWidths          = Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToEList();
 			StringerReinforcements = GetStringerReinforcements();
 			PanelReinforcements    = GetPanelReinforcements();
-			Steels                 = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList();
+			Steels                 = andrefmello91.EList.Extensions.ToEList(Stringers.GetSteels().Concat(Panels.GetSteels()));
 
 			// Register events
 			RegisterEventsToEntities();
