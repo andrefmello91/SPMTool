@@ -5,18 +5,6 @@ VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPMTool", "SPMTool.csproj", "{25CFFFC7-0EA2-4774-8125-F594D5E51E2A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Extensions", "..\Extensions\Extensions.csproj", "{111C9205-16A0-46BD-B634-7E772C106441}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Material", "..\Material\Material.csproj", "{D57F60E2-55E5-4812-A654-02D0C31528AD}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "On-Plane-Components", "..\On-Plane-Components\On-Plane-Components.csproj", "{CFC7FEAB-4FD2-484C-9644-7BE2C24F2E87}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RCMembrane", "..\Reinforced-Concrete-Membrane\RCMembrane.csproj", "{77518A20-39F5-4B19-8266-95DEA457631F}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SPMElements", "..\SPMElements\SPMElements.csproj", "{04980387-5E2F-4867-BFBE-39210BC7C501}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SPMAnalysis", "..\SPMAnalysis\SPMAnalysis.csproj", "{A6C87320-8A18-4EF4-9B95-0E2DA00E67CD}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,30 +15,6 @@ Global
 		{25CFFFC7-0EA2-4774-8125-F594D5E51E2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{25CFFFC7-0EA2-4774-8125-F594D5E51E2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{25CFFFC7-0EA2-4774-8125-F594D5E51E2A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{111C9205-16A0-46BD-B634-7E772C106441}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{111C9205-16A0-46BD-B634-7E772C106441}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{111C9205-16A0-46BD-B634-7E772C106441}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{111C9205-16A0-46BD-B634-7E772C106441}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D57F60E2-55E5-4812-A654-02D0C31528AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D57F60E2-55E5-4812-A654-02D0C31528AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D57F60E2-55E5-4812-A654-02D0C31528AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D57F60E2-55E5-4812-A654-02D0C31528AD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CFC7FEAB-4FD2-484C-9644-7BE2C24F2E87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CFC7FEAB-4FD2-484C-9644-7BE2C24F2E87}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CFC7FEAB-4FD2-484C-9644-7BE2C24F2E87}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CFC7FEAB-4FD2-484C-9644-7BE2C24F2E87}.Release|Any CPU.Build.0 = Release|Any CPU
-		{77518A20-39F5-4B19-8266-95DEA457631F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{77518A20-39F5-4B19-8266-95DEA457631F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{77518A20-39F5-4B19-8266-95DEA457631F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{77518A20-39F5-4B19-8266-95DEA457631F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{04980387-5E2F-4867-BFBE-39210BC7C501}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{04980387-5E2F-4867-BFBE-39210BC7C501}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{04980387-5E2F-4867-BFBE-39210BC7C501}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{04980387-5E2F-4867-BFBE-39210BC7C501}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A6C87320-8A18-4EF4-9B95-0E2DA00E67CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A6C87320-8A18-4EF4-9B95-0E2DA00E67CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A6C87320-8A18-4EF4-9B95-0E2DA00E67CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A6C87320-8A18-4EF4-9B95-0E2DA00E67CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

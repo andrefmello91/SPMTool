@@ -28,6 +28,8 @@ namespace SPMTool.Editor.Commands
 			// Do a linear analysis
             var analysis = new SPM.Analysis.Analysis(input);
 			analysis.Do();
+			
+			Model.Editor.WriteMessage(analysis.ToString());
 
             // Draw results of analysis
             DrawResults(analysis);
