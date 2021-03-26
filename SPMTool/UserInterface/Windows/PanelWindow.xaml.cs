@@ -6,7 +6,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using Extensions;
 using andrefmello91.Material.Reinforcement;
-using Material.Reinforcement.Biaxial;
 using MathNet.Numerics;
 using SPMTool.Core;
 using SPMTool.Core.Elements;

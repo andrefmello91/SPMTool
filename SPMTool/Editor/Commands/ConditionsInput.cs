@@ -2,6 +2,7 @@
 using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using andrefmello91.OnPlaneComponents;
+using andrefmello91.OnPlaneComponents.Force;
 using andrefmello91.SPMElements;
 using SPMTool.Core;
 using SPMTool.Core.Conditions;

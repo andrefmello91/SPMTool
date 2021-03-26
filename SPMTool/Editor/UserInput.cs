@@ -6,6 +6,7 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
 using andrefmello91.OnPlaneComponents;
+using andrefmello91.OnPlaneComponents.Force;
 using andrefmello91.SPMElements;
 using SPMTool.Core;
 using SPMTool.Enums;

@@ -185,7 +185,7 @@
     <Compile Include="Core\Model.cs" />
     <Compile Include="Core\Results.cs" />
     <Compile Include="Core\Settings.cs" />
-    <Compile Include="Editor\Commands\Analysis.cs" />
+    <Compile Include="Editor\Commands\SPMAnalysis.cs" />
     <Compile Include="Editor\Commands\CommandNames.cs" />
     <Compile Include="Editor\Commands\ConditionsInput.cs" />
     <Compile Include="Editor\Commands\ElementEditor.cs" />
@@ -216,8 +216,8 @@
     <Compile Include="UserInterface\Windows\ConcreteConfig.xaml.cs">
       <DependentUpon>ConcreteConfig.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserInterface\Windows\GraphWindow.xaml.cs">
-      <DependentUpon>GraphWindow.xaml</DependentUpon>
+    <Compile Include="UserInterface\Windows\PlotWindow.xaml.cs">
+      <DependentUpon>PlotWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UserInterface\Windows\PanelWindow.xaml.cs">
       <DependentUpon>PanelWindow.xaml</DependentUpon>
@@ -238,7 +238,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="UserInterface\Windows\GraphWindow.xaml">
+    <Page Include="UserInterface\Windows\PlotWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

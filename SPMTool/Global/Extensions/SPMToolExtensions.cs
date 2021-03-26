@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.Material.Concrete;
 using andrefmello91.Material.Reinforcement;
-using andrefmello91.Material.Reinforcement.Uniaxial;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.OnPlaneComponents.Displacement;
 using andrefmello91.OnPlaneComponents.Force;

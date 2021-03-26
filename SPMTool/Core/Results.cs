@@ -6,6 +6,7 @@ using Autodesk.AutoCAD.Geometry;
 using Extensions;
 using MathNet.Numerics;
 using andrefmello91.SPMElements;
+using Autodesk.AutoCAD.Windows;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -332,19 +333,21 @@ namespace SPMTool.Core
 		///     Draw stringer forces.
 		/// </summary>
 		/// <param name="stringers">The collection of <see cref="Stringer" />'s.</param>
-		/// <param name="maxForce">The maximum stringer force.</param>
-		public static void DrawForces(IEnumerable<Stringer> stringers, Force maxForce)
+		public static void DrawForces(IEnumerable<Stringer> stringers)
 		{
 			// Get units
 			var units = Settings.Units;
 
 			// Get the scale factor
 			var scFctr = units.ScaleFactor;
+			
+			// Get maximum force
+			var maxForce = stringers.Select(s => s.MaxForce.Abs()).Max();
 
 			foreach (var stringer in stringers)
 			{
 				// Check if the stringer is loaded
-				if (stringer.State is Stringer.ForceState.Unloaded)
+				if (stringer.State is StringerForceState.Unloaded)
 					continue;
 
 				// Get the parameters of the Stringer
@@ -364,7 +367,7 @@ namespace SPMTool.Core
 					h3 = (150 * N3 / maxForce).ConvertFromMillimeter(units.Geometry);
 
 				// Check if load state is pure tension or compression
-				if (stringer.State != Stringer.ForceState.Combined)
+				if (stringer.State != StringerForceState.Combined)
 					PureTensionOrCompression();
 
 				else
@@ -617,24 +620,26 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Draw results of <paramref name="analysis" />.
+		///     Draw results of analysis.
 		/// </summary>
-		/// <param name="analysis">The <see cref="Analysis" /> done.</param>
-		public static void DrawResults(Analysis analysis)
+		/// <param name="stringers">The collection of <see cref="Stringer"/>'s in the model.</param>
+		/// <param name="panels">The collection of <see cref="Panel"/>'s in the model.</param>
+		/// <param name="drawCracks">Draw cracks after nonlinear analysis?</param>
+		public static void DrawResults(IEnumerable<Stringer> stringers, IEnumerable<Panel> panels, bool drawCracks)
 		{
 			// Erase result objects
 			ResultLayers.EraseObjects();
 
 			//Nodes.SetDisplacements(analysis.Nodes);
-			DrawDisplacements(analysis.Stringers);
-			DrawForces(analysis.Stringers, analysis.MaxStringerForce);
-			DrawStresses(analysis.Panels);
+			DrawDisplacements(stringers);
+			DrawForces(stringers);
+			DrawStresses(panels);
 
-			if (!(analysis is SecantAnalysis))
+			if (!drawCracks)
 				return;
 
-			DrawCracks(analysis.Panels);
-			DrawCracks(analysis.Stringers);
+			DrawCracks(panels);
+			DrawCracks(stringers);
 		}
 
 		/// <summary>
