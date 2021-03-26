@@ -1,7 +1,7 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics;
-using OnPlaneComponents;
+using andrefmello91.OnPlaneComponents;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using static SPMTool.Core.DataBase;
@@ -13,7 +13,7 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     Constraint object class.
 	/// </summary>
-	public class ConstraintObject : ConditionObject<ConstraintObject, Constraint>
+	public class ConstraintObject : ConditionObject<Constraint>, IEquatable<ConstraintObject>
 	{
 		#region Properties
 
@@ -80,28 +80,6 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		private Constraint? GetConstraint() => GetDictionary("Constraint").GetConstraint();
 
-		///// <summary>
-		/////     Create XData for supports.
-		///// </summary>
-		///// <param name="direction">The <see cref="Constraint" /> type.</param>
-		//public static TypedValue[] CreateXData(ComponentDirection direction)
-		//{
-		//	// Definition for the Extended Data
-		//	string xdataStr = "SupportDirection Data";
-
-		//	// Get the Xdata size
-		//	var size = Enum.GetNames(typeof(SupportIndex)).Length;
-		//	var data = new TypedValue[size];
-
-		//	// Set values
-		//	data[(int) SupportIndex.AppName]   = new TypedValue((int) DxfCode.ExtendedDataRegAppName, AppName);
-		//	data[(int) SupportIndex.XDataStr]  = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-		//	data[(int) SupportIndex.Direction] = new TypedValue((int) DxfCode.ExtendedDataInteger32, (int) direction);
-
-		//	// Add XData to force block
-		//	return data;
-		//}
-
 		protected override void SetProperties() => SetDictionary(Value.GetTypedValues(), "Constraint");
 
 		protected override bool GetProperties()
@@ -118,18 +96,6 @@ namespace SPMTool.Core.Conditions
 
 		#endregion
 
-		#region Operators
-
-		/// <summary>
-		///     Returns true if objects are equal.
-		/// </summary>
-		public static bool operator == (ConstraintObject left, ConstraintObject right) => !(left is null) && left.Equals(right);
-
-		/// <summary>
-		///     Returns true if objects are different.
-		/// </summary>
-		public static bool operator != (ConstraintObject left, ConstraintObject right) => !(left is null) && !left.Equals(right);
-
-		#endregion
+		public bool Equals(ConstraintObject other) => base.Equals(other);
 	}
 }

@@ -1,6 +1,6 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
-using OnPlaneComponents;
+using andrefmello91.OnPlaneComponents;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
@@ -12,11 +12,9 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     ICondition interface.
 	/// </summary>
-	/// <typeparam name="T1">Any type that implements <see cref="IConditionObject{T1,T2}" />.</typeparam>
-	/// <typeparam name="T2">The type that represents the value of this object.</typeparam>
-	public interface IConditionObject<T1, out T2> : IEquatable<T1>, IComparable<T1>
-		where T1 : IConditionObject<T1, T2>
-		where T2 : IEquatable<T2>
+	/// <typeparam name="T">The type that represents the value of this object.</typeparam>
+	public interface IConditionObject<out T>
+		where T : IEquatable<T>
 	{
 		#region Properties
 
@@ -33,7 +31,7 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the value of this condition.
 		/// </summary>
-		T2 Value { get; }
+		T Value { get; }
 
 		/// <summary>
 		///		Get the direction of this condition.
@@ -46,10 +44,9 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     Condition object base class.
 	/// </summary>
-	/// <inheritdoc cref="IConditionObject{T1,T2}" />
-	public abstract class ConditionObject<T1, T2> : DictionaryCreator, IConditionObject<T1, T2>, IEntityCreator<BlockReference>
-		where T1 : IConditionObject<T1, T2>
-		where T2 : IEquatable<T2>
+	/// <inheritdoc cref="IConditionObject{T}" />
+	public abstract class ConditionObject<T> : DictionaryCreator, IConditionObject<T>, IEntityCreator<BlockReference>, IEquatable<ConditionObject<T>>, IComparable<ConditionObject<T>>
+		where T : IEquatable<T>
 	{
 		#region Properties
 
@@ -59,7 +56,7 @@ namespace SPMTool.Core.Conditions
 
 		public Point Position { get; }
 
-		public virtual T2 Value { get; protected set; }
+		public virtual T Value { get; protected set; }
 
 		public abstract ComponentDirection Direction { get; }
 
@@ -84,7 +81,7 @@ namespace SPMTool.Core.Conditions
 		/// <param name="position">The position.</param>
 		/// <param name="value">The value.</param>
 		/// <inheritdoc cref="ConditionObject()"/>
-		protected ConditionObject(Point position, T2 value)
+		protected ConditionObject(Point position, T value)
 		{
 			Position  = position;
 			Value     = value;
@@ -102,14 +99,29 @@ namespace SPMTool.Core.Conditions
 
 		public virtual void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
-		public virtual bool Equals(T1 other) => !(other is null) && Position == other.Position;
+		public virtual bool Equals(ConditionObject<T>? other) => !(other is null) && Position == other.Position;
 
-		public int CompareTo(T1 other) => other is null
-			? 1
+		public int CompareTo(ConditionObject<T>? other) => other is null
+			? 0
 			: Position.CompareTo(other.Position);
 
 		public override string ToString() => Value.ToString();
 
 		#endregion
+		
+		#region Operators
+
+		/// <summary>
+		///     Returns true if objects are equal.
+		/// </summary>
+		public static bool operator == (ConditionObject<T>? left, ConditionObject<T>? right) => !(left is null) && left.Equals(right);
+
+		/// <summary>
+		///     Returns true if objects are different.
+		/// </summary>
+		public static bool operator != (ConditionObject<T>? left, ConditionObject<T>? right) => !(left is null) && !left.Equals(right);
+
+		#endregion
+
 	}
 }

@@ -2,8 +2,8 @@
 //using System.Linq;
 //using Autodesk.AutoCAD.DatabaseServices;
 //using Autodesk.AutoCAD.Geometry;
-//using OnPlaneComponents;
-//using SPM.Elements.StringerProperties;
+//using andrefmello91.OnPlaneComponents;
+//using andrefmello91.SPMElements.StringerProperties;
 //using SPMTool.Extensions;
 
 //namespace SPMTool.Core.Elements

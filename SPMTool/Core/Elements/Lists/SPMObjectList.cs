@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions;
-using SPM.Elements;
+using andrefmello91.SPMElements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
@@ -15,13 +16,11 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     SPMObjects base class.
 	/// </summary>
-	/// <typeparam name="T1">Any type that implements <see cref="ISPMObject{T1,T2,T3}" />.</typeparam>
+	/// <typeparam name="T1">Any type that implements <see cref="ISPMObject{T1}" />.</typeparam>
 	/// <typeparam name="T2">The type that represents the main property of the object.</typeparam>
-	/// <typeparam name="T3">Any type that implements <see cref="INumberedElement" />.</typeparam>
-	public abstract class SPMObjectList<T1, T2, T3> : EntityCreatorList<T1>
-		where T1 : ISPMObject<T1, T2, T3>, IEntityCreator<Entity>
+	public abstract class SPMObjectList<T1, T2> : EntityCreatorList<T1>
+		where T1 : SPMObject<T2>, IEntityCreator<Entity>, IEquatable<T1>, IComparable<T1>
 		where T2 : IComparable<T2>, IEquatable<T2>
-		where T3 : INumberedElement
 	{
 		#region Constructors
 
@@ -70,7 +69,7 @@ namespace SPMTool.Core.Elements
 		///     Get the the list of SPM elements from objects in this collection.
 		/// </summary>
 		[return:NotNull]
-		public List<T3> GetElements() => this.Select(t => t.GetElement()).ToList();
+		public IEnumerable<INumberedElement> GetElements() => this.Select(t => t.GetElement());
 
 		public T1 GetByProperty(T2 property) => Find(t => t.Property.Equals(property));
 

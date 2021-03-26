@@ -1,11 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using andrefmello91.FEMAnalysis;
+using andrefmello91.Material.Reinforcement;
+using andrefmello91.OnPlaneComponents;
+using andrefmello91.SPMElements;
+using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Material.Reinforcement.Uniaxial;
-using OnPlaneComponents;
-using SPM.Elements;
-using SPM.Elements.StringerProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet.Units;
@@ -19,17 +21,14 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Stringer object class.
 	/// </summary>
-	public class StringerObject : SPMObject<StringerObject, StringerGeometry, Stringer, Line>
+	public class StringerObject : SPMObject<StringerGeometry>, IEquatable<StringerObject>
 	{
 		#region Fields
 
 		private UniaxialReinforcement? _reinforcement;
 
 		#endregion
-
 		#region Properties
-
-		public override string Name => $"Stringer {Number}";
 
 		/// <summary>
 		///     Get/set the height of <see cref="Geometry" />.
@@ -51,6 +50,8 @@ namespace SPMTool.Core.Elements
 
 		public override Layer Layer => Layer.Stringer;
 
+		public override string Name => $"Stringer {Number}";
+
 		/// <summary>
 		///     Get the <see cref="UniaxialReinforcement" /> of this stringer.
 		/// </summary>
@@ -61,7 +62,6 @@ namespace SPMTool.Core.Elements
 		}
 
 		#endregion
-
 		#region Constructors
 
 		/// <inheritdoc cref="StringerObject(StringerGeometry)" />
@@ -91,17 +91,7 @@ namespace SPMTool.Core.Elements
 		}
 
 		#endregion
-
 		#region Methods
-
-		/// <summary>
-		///     Read a <see cref="StringerObject" /> in the drawing.
-		/// </summary>
-		/// <param name="stringerObjectId">The <see cref="ObjectId" /> of the stringer.</param>
-		public static StringerObject? ReadFromObjectId(ObjectId stringerObjectId) =>
-			stringerObjectId.GetEntity() is Line line
-				? ReadFromLine(line)
-				: null;
 
 		/// <summary>
 		///     Read a <see cref="StringerObject" /> in the drawing.
@@ -113,38 +103,20 @@ namespace SPMTool.Core.Elements
 				ObjectId = line.ObjectId
 			};
 
-		///// <summary>
-		/////     Create new extended data for stringers.
-		///// </summary>
-		///// <remarks>
-		/////     Leave values null to set default values.
-		///// </remarks>
-		///// <param name="crossSection">The <seealso cref="SPM.Elements.StringerProperties.CrossSection" />.</param>
-		///// <param name="reinforcement">The <seealso cref="UniaxialReinforcement" />.</param>
-		//public static TypedValue[] StringerXData(CrossSection? crossSection = null, UniaxialReinforcement? reinforcement = null)
-		//{
-		//	// Definition for the Extended Data
-		//	string xdataStr = "Stringer Data";
+		/// <summary>
+		///     Read a <see cref="StringerObject" /> in the drawing.
+		/// </summary>
+		/// <param name="stringerObjectId">The <see cref="ObjectId" /> of the stringer.</param>
+		public static StringerObject? ReadFromObjectId(ObjectId stringerObjectId) =>
+			stringerObjectId.GetEntity() is Line line
+				? ReadFromLine(line)
+				: null;
 
-		//	// Get the Xdata size
-		//	var size = Enum.GetNames(typeof(StringerIndex)).Length;
-
-		//	var steel = reinforcement?.Steel;
-
-		//	var newData = new TypedValue[size];
-
-		//	// Set the initial parameters
-		//	newData[(int) StringerIndex.AppName]   = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  AppName);
-		//	newData[(int) StringerIndex.XDataStr]  = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-		//	newData[(int) StringerIndex.Width]     = new TypedValue((int) DxfCode.ExtendedDataReal,        crossSection?.Width.Millimeters        ?? 100);
-		//	newData[(int) StringerIndex.Height]    = new TypedValue((int) DxfCode.ExtendedDataReal,        crossSection?.Height.Millimeters       ?? 100);
-		//	newData[(int) StringerIndex.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32,   reinforcement?.NumberOfBars            ?? 0);
-		//	newData[(int) StringerIndex.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal,        reinforcement?.BarDiameter.Millimeters ?? 0);
-		//	newData[(int) StringerIndex.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal,        steel?.YieldStress.Megapascals         ?? 0);
-		//	newData[(int) StringerIndex.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal,        steel?.ElasticModule.Megapascals       ?? 0);
-
-		//	return newData;
-		//}
+		public override Entity CreateEntity() =>
+			new Line(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
+			{
+				Layer = $"{Layer}"
+			};
 
 		/// <summary>
 		///     Divide this <see cref="StringerObject" /> in a <paramref name="number" /> of new ones.
@@ -161,29 +133,20 @@ namespace SPMTool.Core.Elements
 				};
 		}
 
-		public override Line CreateEntity()
-		{
-			return new(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
-			{
-				Layer = $"{Layer}"
-			};
-		}
-
 		/// <remarks>
-		///     This method a linear object.
+		///     This method returns a linear object.
 		/// </remarks>
 		/// <inheritdoc />
-		public override Stringer GetElement()
-		{
-			return GetElement(Model.Nodes.GetElements());
-		}
+		public override INumberedElement GetElement() => GetElement(Model.Nodes.GetElements().Cast<Node>().ToArray());
 
 		/// <inheritdoc cref="GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
-		/// <param name="analysisType">The <see cref="AnalysisType" />.</param>
-		public Stringer GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear)
+		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
+		public SPMElement GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
 		{
-			return Stringer.Read(analysisType, Number, nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement?.Clone());
+			var stringer = Stringer.FromNodes(nodes, Geometry.InitialPoint, Geometry.EndPoint, Geometry.CrossSection, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement?.Clone(), elementModel);
+			stringer.Number = Number;
+			return stringer;
 		}
 
 		protected override bool GetProperties()
@@ -211,18 +174,12 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the <see cref="CrossSection" /> from XData.
 		/// </summary>
-		private CrossSection? GetCrossSection()
-		{
-			return GetDictionary("CrossSection").GetCrossSection();
-		}
+		private CrossSection? GetCrossSection() => GetDictionary("CrossSection").GetCrossSection();
 
 		/// <summary>
 		///     Get this stringer <see cref="UniaxialReinforcement" />.
 		/// </summary>
-		private UniaxialReinforcement? GetReinforcement()
-		{
-			return GetDictionary("Reinforcement").GetReinforcement();
-		}
+		private UniaxialReinforcement? GetReinforcement() => GetDictionary("Reinforcement").GetReinforcement();
 
 		/// <summary>
 		///     Set the <seealso cref="CrossSection" /> to <see cref="Geometry" /> and XData.
@@ -233,23 +190,6 @@ namespace SPMTool.Core.Elements
 			PropertyField.CrossSection = crossSection;
 
 			SetDictionary(crossSection.GetTypedValues(), "CrossSection");
-
-			//// Access the XData as an array
-			//data ??= GetDictionary();
-
-			//if (data is null)
-			//{
-			//	data = StringerXData(crossSection);
-			//}
-
-			//else
-			//{
-			//	// Set the new geometry
-			//	data[(int) StringerIndex.Width]  = new TypedValue((int) DxfCode.ExtendedDataReal, crossSection.Width.Millimeters);
-			//	data[(int) StringerIndex.Height] = new TypedValue((int) DxfCode.ExtendedDataReal, crossSection.Height.Millimeters);
-			//}
-
-			//ObjectId.SetExtendedDictionary(data);
 		}
 
 		/// <summary>
@@ -261,48 +201,10 @@ namespace SPMTool.Core.Elements
 			_reinforcement = reinforcement;
 
 			SetDictionary(reinforcement?.GetTypedValues(), "Reinforcement");
-
-			//// Access the XData as an array
-			//data ??= GetDictionary();
-
-			//if (data is null)
-			//{
-			//	data = StringerXData(null, reinforcement);
-			//}
-
-			//else
-			//{
-			//	// Set values
-			//	data[(int) StringerIndex.NumOfBars] = new TypedValue((int) DxfCode.ExtendedDataInteger32, reinforcement?.NumberOfBars                     ?? 0);
-			//	data[(int) StringerIndex.BarDiam]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.BarDiameter.Millimeters          ?? 0);
-
-			//	data[(int) StringerIndex.Steelfy]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.Steel?.YieldStress.Megapascals   ?? 0);
-			//	data[(int) StringerIndex.SteelEs]   = new TypedValue((int) DxfCode.ExtendedDataReal,      reinforcement?.Steel?.ElasticModule.Megapascals ?? 0);
-			//}
-
-			//ObjectId.SetExtendedDictionary(data);
 		}
 
 		#endregion
 
-		#region Operators
-
-		/// <summary>
-		///     Returns true if objects are equal.
-		/// </summary>
-		public static bool operator ==(StringerObject left, StringerObject right)
-		{
-			return !(left is null) && left.Equals(right);
-		}
-
-		/// <summary>
-		///     Returns true if objects are different.
-		/// </summary>
-		public static bool operator !=(StringerObject left, StringerObject right)
-		{
-			return !(left is null) && !left.Equals(right);
-		}
-
-		#endregion
+		public bool Equals(StringerObject other) => base.Equals(other);
 	}
 }

@@ -3,14 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using Extensions;
-using Material.Reinforcement;
-using Material.Reinforcement.Biaxial;
-using MathNet.Numerics;
-using OnPlaneComponents;
-using SPM.Elements;
-using SPM.Elements.PanelProperties;
+using andrefmello91.Material.Reinforcement;
+using andrefmello91.OnPlaneComponents;
+using andrefmello91.SPMElements;
+using andrefmello91.SPMElements.PanelProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -24,7 +21,7 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Panels class.
 	/// </summary>
-	public class PanelList : SPMObjectList<PanelObject, PanelGeometry, Panel>
+	public class PanelList : SPMObjectList<PanelObject, PanelGeometry>
 	{
 		#region Constructors
 
@@ -61,7 +58,7 @@ namespace SPMTool.Core.Elements
 		public static PanelList ReadFromSolids(IEnumerable<Solid>? panelSolids) =>
 			panelSolids.IsNullOrEmpty()
 				? new PanelList()
-				: new PanelList(panelSolids.Select(PanelObject.ReadFromSolid));
+				: new PanelList(panelSolids.Select(PanelObject.GetFromSolid));
 
 		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)" />
 		/// <param name="vertices">The <see cref="Vertices" /> of panel to remove.</param>
@@ -139,9 +136,9 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the <see cref="Panel" />'s associated to objects in this collection.
 		/// </summary>
-		/// <inheritdoc cref="PanelObject.GetElement(IEnumerable{Node}, AnalysisType)" />
+		/// <inheritdoc cref="PanelObject.GetElement(IEnumerable{Node}, ElementModel)" />
 		[return: NotNull]
-		public List<Panel> GetElements(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) => this.Select(s => s.GetElement(nodes, analysisType)).ToList();
+		public IEnumerable<SPMElement> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) => this.Select(s => s.GetElement(nodes, elementModel));
 
 		#endregion
 	}

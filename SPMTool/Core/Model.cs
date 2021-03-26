@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Windows.Documents;
 using andrefmello91.EList;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using andrefmello91.EList;
 using andrefmello91.Material.Reinforcement;
 using andrefmello91.FEMAnalysis;
-using andrefmello91.Material.Reinforcement.Uniaxial;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
 using SPMTool.Core.Conditions;
@@ -125,7 +121,7 @@ namespace SPMTool.Core
 			ElementWidths          = Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToEList();
 			StringerReinforcements = GetStringerReinforcements();
 			PanelReinforcements    = GetPanelReinforcements();
-			Steels                 = andrefmello91.EList.Extensions.ToEList(Stringers.GetSteels().Concat(Panels.GetSteels()));
+			Steels                 = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList();
 
 			// Register events
 			RegisterEventsToEntities();
@@ -198,20 +194,27 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Get the <see cref="InputData" /> from objects in drawing.
+		///     Get the <see cref="FEMInput" /> from objects in drawing.
 		/// </summary>
 		/// <param name="dataOk">Returns true if data is consistent to start analysis.</param>
 		/// <param name="message">Message to show if data is inconsistent.</param>
 		/// <param name="analysisType">The type of analysis to perform.</param>
-		public static InputData? GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
+		public static FEMInput GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
 		{
+			// Get the element model
+			var elementModel = analysisType switch
+			{
+				AnalysisType.Linear => ElementModel.Elastic,
+				_                   => ElementModel.Nonlinear
+			};
+				
 			// Read elements
-			var nodes     = Nodes.GetElements();
-			var stringers = Stringers.GetElements(nodes, analysisType);
-			var panels    = Panels.GetElements(nodes, analysisType);
+			var nodes     = Nodes.GetElements().Cast<Node>().ToArray();
+			var stringers = Stringers.GetElements(nodes, elementModel).ToArray();
+			var panels    = Panels.GetElements(nodes, elementModel).ToArray();
 
 			// Verify if there is stringers and nodes at least
-			if (nodes.Count == 0 || stringers.Count == 0)
+			if (nodes.Length == 0 || stringers.Length == 0)
 			{
 				dataOk = false;
 				message = "Please input model geometry";
@@ -223,7 +226,7 @@ namespace SPMTool.Core
 			message = string.Empty;
 
 			return
-				new InputData(nodes, stringers, panels, analysisType);
+				new FEMInput(stringers.Concat(panels).ToArray());
 		}
 
 		/// <summary>

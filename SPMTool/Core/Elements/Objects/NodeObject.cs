@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Linq;
+using andrefmello91.FEMAnalysis;
+using andrefmello91.OnPlaneComponents;
+using andrefmello91.OnPlaneComponents.Displacement;
+using andrefmello91.OnPlaneComponents.Force;
+using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using OnPlaneComponents;
-using SPM.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -19,7 +22,7 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Node object class.
 	/// </summary>
-	public class NodeObject : SPMObject<NodeObject, Point, Node, DBPoint>
+	public class NodeObject : SPMObject<Point>, IEquatable<NodeObject>
 	{
 		#region Fields
 
@@ -32,7 +35,7 @@ namespace SPMTool.Core.Elements
 		public override string Name => $"Node {Number}";
 
 		/// <summary>
-		///     Get/set the <see cref="OnPlaneComponents.Constraint" /> in this object.
+		///     Get/set the <see cref="andrefmello91.OnPlaneComponents.Constraint" /> in this object.
 		/// </summary>
 		public Constraint Constraint => Model.Constraints.GetConstraintByPosition(Position);
 
@@ -94,43 +97,20 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="NodeObject" /> from an <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="nodeObjectId">The <see cref="ObjectId" /> of the node.</param>
-		public static NodeObject? ReadFromObjectId(ObjectId nodeObjectId) => nodeObjectId.GetEntity() is DBPoint point 
-			? ReadFromPoint(point) 
+		public static NodeObject? GetFromObjectId(ObjectId nodeObjectId) => nodeObjectId.GetEntity() is DBPoint point 
+			? GetFromPoint(point) 
 			: null;
 
 		/// <summary>
 		///     Read a <see cref="NodeObject" /> from a <see cref="DBPoint" />.
 		/// </summary>
 		/// <param name="dbPoint">The <see cref="DBPoint" /> object of the node.</param>
-		public static NodeObject ReadFromPoint(DBPoint dbPoint) => new NodeObject(dbPoint.Position, GetNodeType(dbPoint), Settings.Units.Geometry)
+		public static NodeObject GetFromPoint(DBPoint dbPoint) => new NodeObject(dbPoint.Position, GetNodeType(dbPoint), Settings.Units.Geometry)
 		{
 			ObjectId = dbPoint.ObjectId
 		};
 
-		/// <summary>
-		///     Create node Data.
-		/// </summary>
-		//public static TypedValue[] NodeXData(PlaneDisplacement? displacement = null)
-		//{
-		//	// Definition for the Extended Data
-		//	string xdataStr = "Node Data";
-
-		//	// Get the Xdata size
-		//	var size = Enum.GetNames(typeof(NodeIndex)).Length;
-
-		//	// Initialize the array of typed values for XData
-		//	var data = new TypedValue[size];
-
-		//	// Set the initial parameters
-		//	data[(int) NodeIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  AppName);
-		//	data[(int) NodeIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-		//	data[(int) NodeIndex.Ux]       = new TypedValue((int) DxfCode.ExtendedDataReal,        displacement?.X.Millimeters ?? 0);
-		//	data[(int) NodeIndex.Uy]       = new TypedValue((int) DxfCode.ExtendedDataReal,        displacement?.Y.Millimeters ?? 0);
-
-		//	return data;
-		//}
-
-		public override DBPoint CreateEntity() => new DBPoint(Position.ToPoint3d())
+		public override Entity CreateEntity() => new DBPoint(Position.ToPoint3d())
 		{
 			Layer = $"{Layer}"
 		};
@@ -138,7 +118,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get this object as a <see cref="Node" />.
 		/// </summary>
-		public override Node GetElement() =>
+		public override INumberedElement GetElement() =>
 			new Node(Position, Type, Settings.Units.Displacements)
 			{
 				Number       = Number,
@@ -169,24 +149,7 @@ namespace SPMTool.Core.Elements
 		private void SetDisplacement(PlaneDisplacement displacement)
 		{
 			_displacement = displacement;
-
 			SetDictionary(Displacement.GetTypedValues(), "Displacements");
-
-			//// Get extended data
-			//var data = ReadDictionary();
-
-			//if (data is null)
-			//	data = NodeXData(displacement);
-
-			//else
-			//{
-			//	// Save the displacements on the XData
-			//	data[(int) NodeIndex.Ux] = new TypedValue((int) DxfCode.Real, displacement.X.Millimeters);
-			//	data[(int) NodeIndex.Uy] = new TypedValue((int) DxfCode.Real, displacement.Y.Millimeters);
-			//}
-
-			// Save new XData
-			//ObjectId.SetExtendedDictionary(data, "Displacements");
 		}
 
 		/// <summary>
@@ -196,18 +159,6 @@ namespace SPMTool.Core.Elements
 
 		#endregion
 
-		#region Operators
-
-		/// <summary>
-		///     Returns true if objects are equal.
-		/// </summary>
-		public static bool operator == (NodeObject left, NodeObject right) => !(left is null) && left.Equals(right);
-
-		/// <summary>
-		///     Returns true if objects are different.
-		/// </summary>
-		public static bool operator != (NodeObject left, NodeObject right) => !(left is null) && !left.Equals(right);
-
-		#endregion
+		public bool Equals(NodeObject other) => base.Equals(other);
 	}
 }

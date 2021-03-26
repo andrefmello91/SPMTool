@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
 using MathNet.Numerics;
-using OnPlaneComponents;
+using andrefmello91.OnPlaneComponents;
+using andrefmello91.OnPlaneComponents.Force;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -18,13 +20,15 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     Force object class.
 	/// </summary>
-	public class ForceObject : ConditionObject<ForceObject, PlaneForce>
+	public class ForceObject : ConditionObject<PlaneForce>, IEquatable<ForceObject>
 	{
 		#region Properties
 
 		public override string Name => $"Force at {Position}";
 
-		public override Block Block => Direction is ComponentDirection.Both ? Block.ForceXY : Block.ForceY;
+		public override Block Block => Direction is ComponentDirection.Both 
+			? Block.ForceXY 
+			: Block.ForceY;
 
 		public override ComponentDirection Direction => Value.Direction;
 
@@ -172,18 +176,6 @@ namespace SPMTool.Core.Conditions
 
 		#endregion
 
-		#region Operators
-
-		/// <summary>
-		///     Returns true if objects are equal.
-		/// </summary>
-		public static bool operator == (ForceObject left, ForceObject right) => !(left is null) && left.Equals(right);
-
-		/// <summary>
-		///     Returns true if objects are different.
-		/// </summary>
-		public static bool operator != (ForceObject left, ForceObject right) => !(left is null) && !left.Equals(right);
-
-		#endregion
+		public bool Equals(ForceObject other) => base.Equals(other);
 	}
 }

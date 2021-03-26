@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Material.Reinforcement;
-using Material.Reinforcement.Biaxial;
-using MathNet.Numerics;
-using OnPlaneComponents;
-using SPM.Elements;
-using SPM.Elements.PanelProperties;
+using andrefmello91.Material.Reinforcement;
+using andrefmello91.OnPlaneComponents;
+using andrefmello91.SPMElements;
+using andrefmello91.SPMElements.PanelProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -24,7 +23,7 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Panel object class.
 	/// </summary>
-	public class PanelObject : SPMObject<PanelObject, PanelGeometry, Panel, Solid>
+	public class PanelObject : SPMObject<PanelGeometry>, IEquatable<PanelObject>
 	{
 		#region Fields
 
@@ -78,7 +77,7 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <summary>
-		///     Get panel's <see cref="SPM.Elements.PanelProperties.Vertices" />
+		///     Get panel's <see cref="andrefmello91.SPMElements.PanelProperties.Vertices" />
 		/// </summary>
 		public Vertices Vertices
 		{
@@ -131,53 +130,20 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="PanelObject" /> in the drawing.
 		/// </summary>
 		/// <param name="panelObjectId">The <see cref="ObjectId" /> of the node.</param>
-		public static PanelObject ReadFromObjectId(ObjectId panelObjectId) => ReadFromSolid((Solid) panelObjectId.GetEntity());
+		public static PanelObject? GetFromObjectId(ObjectId panelObjectId) => panelObjectId.GetEntity() is Solid solid
+			? GetFromSolid(solid)
+			: null;
 
 		/// <summary>
 		///     Read a <see cref="PanelObject" /> in the drawing.
 		/// </summary>
 		/// <param name="solid">The <see cref="Solid" /> object of the stringer.</param>
-		public static PanelObject ReadFromSolid(Solid solid) => new PanelObject(solid.GetVertices().ToArray(), Settings.Units.Geometry)
+		public static PanelObject GetFromSolid(Solid solid) => new PanelObject(solid.GetVertices().ToArray(), Settings.Units.Geometry)
 		{
 			ObjectId = solid.ObjectId
 		};
 
-		///// <summary>
-		/////     Create new XData for panels.
-		///// </summary>
-		///// <remarks>
-		/////     Leave null values for default values.
-		///// </remarks>
-		///// <param name="width">The width.</param>
-		///// <param name="x">The <see cref="WebReinforcementDirection" /> for X direction.</param>
-		///// <param name="y">The <see cref="WebReinforcementDirection" /> for Y direction.</param>
-		//public static TypedValue[] PanelXData(Length? width = null, WebReinforcementDirection? x = null, WebReinforcementDirection? y = null)
-		//{
-		//	// Definition for the Extended Data
-		//	string xdataStr = "Panel Data";
-
-		//	// Get the Xdata size
-		//	var size = Enum.GetNames(typeof(PanelIndex)).Length;
-
-		//	var newData = new TypedValue[size];
-
-		//	// Set the initial parameters
-		//	newData[(int) PanelIndex.AppName]  = new TypedValue((int) DxfCode.ExtendedDataRegAppName,  AppName);
-		//	newData[(int) PanelIndex.XDataStr] = new TypedValue((int) DxfCode.ExtendedDataAsciiString, xdataStr);
-		//	newData[(int) PanelIndex.Width]    = new TypedValue((int) DxfCode.ExtendedDataReal,        width?.Millimeters                  ?? 100);
-		//	newData[(int) PanelIndex.XDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal,        x?.BarDiameter.Millimeters          ?? 0);
-		//	newData[(int) PanelIndex.Sx]       = new TypedValue((int) DxfCode.ExtendedDataReal,        x?.BarSpacing.Millimeters           ?? 0);
-		//	newData[(int) PanelIndex.fyx]      = new TypedValue((int) DxfCode.ExtendedDataReal,        x?.Steel?.YieldStress.Megapascals   ?? 0);
-		//	newData[(int) PanelIndex.Esx]      = new TypedValue((int) DxfCode.ExtendedDataReal,        x?.Steel?.ElasticModule.Megapascals ?? 0);
-		//	newData[(int) PanelIndex.YDiam]    = new TypedValue((int) DxfCode.ExtendedDataReal,        y?.BarDiameter.Millimeters          ?? 0);
-		//	newData[(int) PanelIndex.Sy]       = new TypedValue((int) DxfCode.ExtendedDataReal,        y?.BarSpacing.Millimeters           ?? 0);
-		//	newData[(int) PanelIndex.fyy]      = new TypedValue((int) DxfCode.ExtendedDataReal,        y?.Steel?.YieldStress.Megapascals   ?? 0);
-		//	newData[(int) PanelIndex.Esy]      = new TypedValue((int) DxfCode.ExtendedDataReal,        y?.Steel?.ElasticModule.Megapascals ?? 0);
-
-		//	return newData;
-		//}
-
-		public override Solid CreateEntity() => new Solid(Vertices.Vertex1.ToPoint3d(), Vertices.Vertex2.ToPoint3d(), Vertices.Vertex4.ToPoint3d(), Vertices.Vertex3.ToPoint3d())
+		public override Entity CreateEntity() => new Solid(Vertices.Vertex1.ToPoint3d(), Vertices.Vertex2.ToPoint3d(), Vertices.Vertex4.ToPoint3d(), Vertices.Vertex3.ToPoint3d())
 		{
 			Layer = $"{Layer}"
 		};
@@ -207,12 +173,13 @@ namespace SPMTool.Core.Elements
 		///		This method a linear object.
 		/// </remarks>
 		/// <inheritdoc/>
-		public override Panel GetElement() => GetElement(Model.Nodes.GetElements());
+		public override INumberedElement GetElement() => GetElement(Model.Nodes.GetElements().Cast<Node>().ToArray());
 
 		/// <summary>
 		///     Divide this <see cref="PanelObject" /> into new ones.
 		/// </summary>
-		/// <inheritdoc cref="Vertices.Divide(int, int)" />
+		/// <param name="rows">The number of rows.</param>
+		/// <param name="columns">The number of columns.</param>
 		public IEnumerable<PanelObject> Divide(int rows, int columns)
 		{
 			if (!Vertices.IsRectangular)
@@ -234,9 +201,13 @@ namespace SPMTool.Core.Elements
 
 		/// <inheritdoc cref="GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
-		/// <param name="analysisType">The <see cref="AnalysisType" />.</param>
-		public Panel GetElement(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) =>
-			Panel.Read(analysisType, Number, nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement);
+		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
+		public SPMElement GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
+		{
+			var panel = Panel.FromNodes(nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement, elementModel);
+			panel.Number = Number;
+			return panel;
+		}
 
 		/// <summary>
 		///     Set <paramref name="width" /> to this object.
@@ -299,47 +270,10 @@ namespace SPMTool.Core.Elements
 				_y = direction;
 
 			SetDictionary(direction.GetTypedValues(), $"Reinforcement{dir}");
-
-			//if (data is null)
-			//{
-			//	data = dir is Direction.X
-			//		? PanelXData(null, direction)
-			//		: PanelXData(null, null, direction);
-			//}
-
-			//else
-			//{
-			//	// Get indexes
-			//	int
-			//		phi = dir is Direction.X ? (int) PanelIndex.XDiam : (int) PanelIndex.YDiam,
-			//		s   = dir is Direction.X ? (int) PanelIndex.Sx    : (int) PanelIndex.Sy,
-			//		fy  = dir is Direction.X ? (int) PanelIndex.fyx   : (int) PanelIndex.fyy,
-			//		es  = dir is Direction.X ? (int) PanelIndex.Esx   : (int) PanelIndex.Esy;
-
-			//	data[phi] = new TypedValue((int) DxfCode.ExtendedDataReal, direction?.BarDiameter.Millimeters          ?? 0);
-			//	data[s]   = new TypedValue((int) DxfCode.ExtendedDataReal, direction?.BarSpacing.Millimeters           ?? 0);
-			//	data[fy]  = new TypedValue((int) DxfCode.ExtendedDataReal, direction?.Steel?.YieldStress.Megapascals   ?? 0);
-			//	data[es]  = new TypedValue((int) DxfCode.ExtendedDataReal, direction?.Steel?.ElasticModule.Megapascals ?? 0);
-			//}
-
-			//// Add the new XData
-			//ObjectId.SetExtendedDictionary(data);
 		}
 
 		#endregion
 
-		#region Operators
-
-		/// <summary>
-		///     Returns true if objects are equal.
-		/// </summary>
-		public static bool operator == (PanelObject left, PanelObject right) => !(left is null) && left.Equals(right);
-
-		/// <summary>
-		///     Returns true if objects are different.
-		/// </summary>
-		public static bool operator != (PanelObject left, PanelObject right) => !(left is null) && !left.Equals(right);
-
-		#endregion
+		public bool Equals(PanelObject other) => base.Equals(other);
 	}
 }

@@ -1,16 +1,13 @@
-﻿using System;
+﻿using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using Extensions;
-using Material.Reinforcement;
-using Material.Reinforcement.Uniaxial;
-using OnPlaneComponents;
-using SPM.Elements;
-using SPM.Elements.PanelProperties;
-using SPM.Elements.StringerProperties;
+using andrefmello91.Material.Reinforcement;
+using andrefmello91.OnPlaneComponents;
+using andrefmello91.SPMElements;
+using andrefmello91.SPMElements.PanelProperties;
+using andrefmello91.SPMElements.StringerProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -26,7 +23,7 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Stringers class.
 	/// </summary>
-	public class StringerList : SPMObjectList<StringerObject, StringerGeometry, Stringer>
+	public class StringerList : SPMObjectList<StringerObject, StringerGeometry>
 	{
 		#region Constructors
 
@@ -130,9 +127,9 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the <see cref="Stringer" />'s associated to objects in this collection.
 		/// </summary>
-		/// <inheritdoc cref="StringerObject.GetElement(IEnumerable{Node}, AnalysisType)" />
+		/// <inheritdoc cref="StringerObject.GetElement(IEnumerable{Node}, ElementModel)" />
 		[return:NotNull]
-		public List<Stringer> GetElements(IEnumerable<Node> nodes, AnalysisType analysisType = AnalysisType.Linear) => this.Select(s => s.GetElement(nodes, analysisType)).ToList();
+		public IEnumerable<SPMElement> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) => this.Select(s => s.GetElement(nodes, elementModel));
 
 		/// <summary>
 		///		Get a <see cref="StringerObject"/> from this collection that matches <paramref name="panelEdge"/>.
@@ -147,7 +144,7 @@ namespace SPMTool.Core.Elements
 		public IEnumerable<StringerObject?> GetFromPanelGeometry(PanelGeometry panelGeometry) => panelGeometry.Edges.Select(GetFromPanelEdge);
 
 		/// <summary>
-		///		Get a collection of <see cref="StringerObject"/>'s from this collection that matches any of <paramref name="panelGeometry"/>.
+		///		Get a collection of <see cref="StringerObject"/>'s from this collection that matches any of <paramref name="panelGeometries"/>.
 		/// </summary>
 		/// <param name="panelGeometries">A collection of <see cref="PanelGeometry"/>'s.</param>
 		public IEnumerable<StringerObject?> GetFromPanelGeometries(IEnumerable<PanelGeometry> panelGeometries) => panelGeometries.SelectMany(GetFromPanelGeometry);

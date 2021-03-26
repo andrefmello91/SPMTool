@@ -101,20 +101,20 @@
       <HintPath>..\packages\andrefmello91.FEMAnalysis.0.1.5\lib\netstandard2.0\andrefmello91.FEMAnalysis.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="andrefmello91.Material, Version=1.0.1.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\andrefmello91.Material.1.0.1\lib\netstandard2.0\andrefmello91.Material.dll</HintPath>
+    <Reference Include="andrefmello91.Material, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.Material.1.0.2\lib\netstandard2.0\andrefmello91.Material.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="andrefmello91.OnPlaneComponents, Version=1.0.1.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\packages\andrefmello91.OnPlaneComponents.1.0.1\lib\netstandard2.0\andrefmello91.OnPlaneComponents.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="andrefmello91.ReinforcedConcreteMembrane, Version=1.0.1.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\andrefmello91.ReinforcedConcreteMembrane.1.0.1\lib\netstandard2.0\andrefmello91.ReinforcedConcreteMembrane.dll</HintPath>
+    <Reference Include="andrefmello91.ReinforcedConcreteMembrane, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.ReinforcedConcreteMembrane.1.0.2\lib\netstandard2.0\andrefmello91.ReinforcedConcreteMembrane.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="andrefmello91.SPMElements, Version=0.1.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\andrefmello91.SPMElements.0.1.0\lib\netstandard2.0\andrefmello91.SPMElements.dll</HintPath>
+    <Reference Include="andrefmello91.SPMElements, Version=0.1.2.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.SPMElements.0.1.2\lib\netstandard2.0\andrefmello91.SPMElements.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="LiveCharts, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
@@ -182,7 +182,6 @@
     <Compile Include="Core\EntityCreator\TextCreator.cs" />
     <Compile Include="Core\EntityCreator\DictionaryCreator.cs" />
     <Compile Include="Core\Materials\ConcreteData.cs" />
-    <Compile Include="Core\Materials\ReinforcementData.cs" />
     <Compile Include="Core\Model.cs" />
     <Compile Include="Core\Results.cs" />
     <Compile Include="Core\Settings.cs" />

@@ -3,9 +3,9 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Extensions;
-using OnPlaneComponents;
-using SPM.Elements;
-using SPM.Elements.StringerProperties;
+using andrefmello91.OnPlaneComponents;
+using andrefmello91.SPMElements;
+using andrefmello91.SPMElements.StringerProperties;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
@@ -18,7 +18,7 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Nodes class.
 	/// </summary>
-	public class NodeList : SPMObjectList<NodeObject, Point, Node>
+	public class NodeList : SPMObjectList<NodeObject, Point>
 	{
 		#region Constructors
 
@@ -65,7 +65,7 @@ namespace SPMTool.Core.Elements
 		public static NodeList ReadFromPoints(IEnumerable<DBPoint>? nodePoints) =>
 			nodePoints.IsNullOrEmpty()
 				? new NodeList()
-				: new NodeList(nodePoints.Select(NodeObject.ReadFromPoint));
+				: new NodeList(nodePoints.Select(NodeObject.GetFromPoint));
 
 		/// <summary>
 		///     Get <see cref="NodeType" />.
@@ -173,7 +173,7 @@ namespace SPMTool.Core.Elements
 		public int RemoveRange(IEnumerable<Point>? positions, bool raiseEvents = true, bool sort = true) =>
 			positions.IsNullOrEmpty()
 				? 0
-				: RemoveAll(n => positions.Contains(n.Position), raiseEvents, sort);
+				: RemoveAll(n => positions.Contains(n.Property), raiseEvents, sort);
 
 		/// <summary>
 		///     Remove unnecessary nodes from this collection based on a collection of <see cref="StringerGeometry" />'s.

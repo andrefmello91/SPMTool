@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Linq;
 using Autodesk.AutoCAD.Runtime;
-using OnPlaneComponents;
-using SPM.Elements;
+using andrefmello91.OnPlaneComponents;
+using andrefmello91.SPMElements;
 using SPMTool.Core;
 using SPMTool.Core.Conditions;
 using SPMTool.Editor.Commands;

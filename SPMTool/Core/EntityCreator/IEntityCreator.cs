@@ -144,9 +144,9 @@ namespace SPMTool.Core
 		public static IEntityCreator<Entity>? CreateSPMObject(this Entity? entity) =>
 			entity switch
 			{
-				DBPoint        p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => NodeObject.ReadFromPoint(p),
+				DBPoint        p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => NodeObject.GetFromPoint(p),
 				Line           l when l.Layer == $"{Layer.Stringer}"                                 => StringerObject.ReadFromLine(l),
-				Solid          s when s.Layer == $"{Layer.Panel}"                                    => PanelObject.ReadFromSolid(s),
+				Solid          s when s.Layer == $"{Layer.Panel}"                                    => PanelObject.GetFromSolid(s),
 				BlockReference b when b.Layer == $"{Layer.Force}"                                    => ForceObject.ReadFromBlock(b),
 				BlockReference b when b.Layer == $"{Layer.Support}"                                  => ConstraintObject.ReadFromBlock(b),
 				_                                                                                    => null

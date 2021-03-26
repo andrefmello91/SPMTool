@@ -2,7 +2,7 @@
 using Autodesk.AutoCAD.ApplicationServices.Core;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Runtime;
-using SPM.Elements;
+using andrefmello91.SPMElements;
 using SPMTool.Core;
 using SPMTool.Core.Conditions;
 using SPMTool.Editor.Commands;

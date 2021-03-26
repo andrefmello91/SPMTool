@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Autodesk.AutoCAD.DatabaseServices;
-using Extensions;
-using OnPlaneComponents;
+using andrefmello91.OnPlaneComponents;
+using andrefmello91.EList;
 
 namespace SPMTool.Core.Conditions
 {
@@ -12,12 +11,12 @@ namespace SPMTool.Core.Conditions
 	///     Condition list base class.
 	/// </summary>
 	/// <typeparam name="T1">
-	///     Any type that implements <see cref="IConditionObject{T1,T2}" /> and
+	///     Any type that implements <see cref="IConditionObject{T1}" /> and
 	///     <seealso cref="IEntityCreator{T}" />.
 	/// </typeparam>
 	/// <typeparam name="T2">The type that represents the value of the objects in this list.</typeparam>
 	public abstract class ConditionList<T1, T2> : EntityCreatorList<T1>
-		where T1 : ConditionObject<T1, T2>, IEntityCreator<BlockReference>
+		where T1 : ConditionObject<T2>, IEquatable<T1>
 		where T2 : IEquatable<T2>
 	{
 		#region Properties
@@ -57,7 +56,7 @@ namespace SPMTool.Core.Conditions
 		/// <remarks>
 		///		If an item at <paramref name="condition"/>'s position is not at this list, <paramref name="condition"/> is just added.
 		/// </remarks>
-		/// <param name="condition">The <seealso cref="ConditionObject{T1,T2}" /> at the position to change.</param>
+		/// <param name="condition">The <seealso cref="ConditionObject{T}" /> at the position to change.</param>
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		public bool ChangeCondition(T1 condition, bool raiseEvents = true, bool sort = true)
 		{
@@ -77,7 +76,7 @@ namespace SPMTool.Core.Conditions
 		/// <returns>
 		///     The number of items changed in this collection.
 		/// </returns>
-		/// <param name="conditions">The collection of <seealso cref="ConditionObject{T1,T2}" />'s at the positions to change.</param>
+		/// <param name="conditions">The collection of <seealso cref="ConditionObject{T}" />'s at the positions to change.</param>
 		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
 		public int ChangeConditions(IEnumerable<T1>? conditions, bool raiseEvents = true, bool sort = true)
 		{
@@ -112,7 +111,7 @@ namespace SPMTool.Core.Conditions
 		/// <param name="positions">The collection of positions to change.</param>
 		/// <param name="value">The new value to set at each position.</param>
 		/// <inheritdoc cref="ChangeConditions(IEnumerable{T1},bool,bool)" />
-		public int ChangeConditions(IEnumerable<Point> positions, T2 value, bool raiseEvents = true, bool sort = true)
+		public int ChangeConditions(IEnumerable<Point>? positions, T2 value, bool raiseEvents = true, bool sort = true)
 		{
 			if (positions is null)
 				return 0;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using andrefmello91.EList;
 using Autodesk.AutoCAD.DatabaseServices;
 using Extensions;
 #nullable enable

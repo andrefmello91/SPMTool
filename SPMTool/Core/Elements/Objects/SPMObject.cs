@@ -11,9 +11,9 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Interface for SPM objects.
 	/// </summary>
-	/// <typeparam name="T1">The type that represents the main property of the object.</typeparam>
-	public interface ISPMObject<T1> : IEquatable<ISPMObject<T1>>, IComparable<ISPMObject<T1>
-		where T1 : IComparable<T1>, IEquatable<T1>
+	/// <typeparam name="T">The type that represents the main property of the object.</typeparam>
+	public interface ISPMObject<T>
+		where T : IComparable<T>, IEquatable<T>
 	{
 		#region Properties
 
@@ -25,7 +25,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the main property of this object.
 		/// </summary>
-		T1 Property { get; }
+		T Property { get; }
 
 		#endregion
 
@@ -42,16 +42,16 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     SPM object base class
 	/// </summary>
-	/// <typeparam name="T1">The type that represents the main property of the object.</typeparam>
-	public abstract class SPMObject<T1> : DictionaryCreator, ISPMObject<T1>, IEntityCreator<Entity>
-		where T1 : IComparable<T1>, IEquatable<T1>
+	/// <typeparam name="T">The type that represents the main property of the object.</typeparam>
+	public abstract class SPMObject<T> : DictionaryCreator, ISPMObject<T>, IEntityCreator<Entity>, IEquatable<SPMObject<T>>, IComparable<SPMObject<T>>
+		where T : IComparable<T>, IEquatable<T>
 	{
 		#region Fields
 
 		/// <summary>
 		///     Auxiliary property field.
 		/// </summary>
-		protected T1 PropertyField;
+		protected T PropertyField;
 
 		#endregion
 
@@ -63,7 +63,7 @@ namespace SPMTool.Core.Elements
 
 		public int Number { get; set; } = 0;
 		
-		public T1 Property
+		public T Property
 		{
 			get => PropertyField;
 			set => PropertyField = value;
@@ -77,7 +77,7 @@ namespace SPMTool.Core.Elements
 		{
 		}
 
-		protected SPMObject(T1 property) => PropertyField = property;
+		protected SPMObject(T property) => PropertyField = property;
 
 		#endregion
 
@@ -100,17 +100,27 @@ namespace SPMTool.Core.Elements
 
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
-		public int CompareTo(ISPMObject<T1>? other) => other is null || other.GetType() != GetType()
+		public int CompareTo(SPMObject<T>? other) => other is null || other.GetType() != GetType()
 			? 0
 			: Property.CompareTo(other.Property);
 
-		public bool Equals(ISPMObject<T1>? other) => !(other is null) && other.GetType() == GetType() && Property.Equals(other.Property);
+		public bool Equals(SPMObject<T>? other) => !(other is null) && other.GetType() == GetType() && Property.Equals(other.Property);
 
 		public override int GetHashCode() => Property.GetHashCode();
 
 		public override string ToString() => GetElement()?.ToString() ?? "Null element";
 
-		public override bool Equals(object? other) => other is T1 obj && Equals(obj);
+		public override bool Equals(object? other) => other is T obj && Equals(obj);
+
+		/// <summary>
+		///     Returns true if objects are equal.
+		/// </summary>
+		public static bool operator == (SPMObject<T>? left, SPMObject<T>? right) => !(left is null) && left.Equals(right);
+
+		/// <summary>
+		///     Returns true if objects are different.
+		/// </summary>
+		public static bool operator != (SPMObject<T>? left, SPMObject<T>? right) => !(left is null) && !left.Equals(right);
 
 		#endregion
 	}
