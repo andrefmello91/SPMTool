@@ -35,7 +35,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Draw panel stresses.
 		/// </summary>
-		/// <param name="panels">The collection of <see cref="Panel" />'s.</param>
+		/// <inheritdoc cref="DrawResults"/>
 		public static void DrawStresses(IEnumerable<Panel> panels)
 		{
 			// Get units
@@ -245,7 +245,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Draw panel cracks.
 		/// </summary>
-		/// <param name="panels">The collection of <see cref="Panel" />'s.</param>
+		/// <inheritdoc cref="DrawResults"/>
 		public static void DrawCracks(IEnumerable<Panel> panels)
 		{
 			var units = Settings.Units;
@@ -332,7 +332,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Draw stringer forces.
 		/// </summary>
-		/// <param name="stringers">The collection of <see cref="Stringer" />'s.</param>
+		/// <inheritdoc cref="DrawResults"/>
 		public static void DrawForces(IEnumerable<Stringer> stringers)
 		{
 			// Get units
@@ -530,7 +530,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Draw cracks at the stringers.
 		/// </summary>
-		/// <param name="stringers">The collection of stringers in the model.</param>
+		/// <inheritdoc cref="DrawResults"/>
 		public static void DrawCracks(IEnumerable<Stringer> stringers)
 		{
 			// Get units
@@ -622,15 +622,16 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Draw results of analysis.
 		/// </summary>
+		/// <param name="nodes">The collection of <see cref="Node"/>'s in the model.</param>
 		/// <param name="stringers">The collection of <see cref="Stringer"/>'s in the model.</param>
 		/// <param name="panels">The collection of <see cref="Panel"/>'s in the model.</param>
 		/// <param name="drawCracks">Draw cracks after nonlinear analysis?</param>
-		public static void DrawResults(IEnumerable<Stringer> stringers, IEnumerable<Panel> panels, bool drawCracks)
+		public static void DrawResults(IEnumerable<Node> nodes, IEnumerable<Stringer> stringers, IEnumerable<Panel> panels, bool drawCracks)
 		{
 			// Erase result objects
 			ResultLayers.EraseObjects();
 
-			//Nodes.SetDisplacements(analysis.Nodes);
+			SetDisplacements(nodes);
 			DrawDisplacements(stringers);
 			DrawForces(stringers);
 			DrawStresses(panels);
@@ -643,9 +644,23 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
+		///		Set displacement to <see cref="Model.Nodes"/>.
+		/// </summary>
+		/// <inheritdoc cref="DrawResults"/>
+		public static void SetDisplacements(IEnumerable<Node> nodes)
+		{
+			// Enumerate
+			var ordNodes = nodes.OrderBy(n => n.Number).ToArray();
+			
+			// Set to node objects
+			for (int i = 0; i < Nodes.Count; i++)
+				Nodes[i].Displacement = ordNodes[i].Displacement;
+		}
+		
+		/// <summary>
 		///     Draw displacements.
 		/// </summary>
-		/// <param name="stringers">The collection of <see cref="Stringer" />'s.</param>
+		/// <inheritdoc cref="DrawResults"/>
 		public static void DrawDisplacements(IEnumerable<Stringer> stringers)
 		{
 			// Get units

@@ -20,7 +20,7 @@ namespace SPMTool.Editor.Commands
 		public static void LinearAnalysis()
 		{
             // Get input data
-            var input = Model.GenerateInput(AnalysisType.Linear, out var dataOk, out var message, out _, out var stringers, out var panels);
+            var input = Model.GenerateInput(AnalysisType.Linear, out var dataOk, out var message, out var nodes, out var stringers, out var panels);
 
             if (!dataOk)
             {
@@ -35,14 +35,14 @@ namespace SPMTool.Editor.Commands
 			Model.Editor.WriteMessage(analysis.ToString());
 
             // Draw results of analysis
-            DrawResults(stringers.Cast<Stringer>().ToArray(), panels.Cast<Panel>().ToArray(), false);
+            DrawResults(nodes, stringers.Cast<Stringer>().ToArray(), panels.Cast<Panel>().ToArray(), false);
         }
 
         [CommandMethod(CommandName.Nonlinear)]
 		public static void NonLinearAnalysis()
 		{
 			// Get input data
-			var input = Model.GenerateInput(AnalysisType.NonLinear, out var dataOk, out var message, out _, out var stringers, out var panels);
+			var input = Model.GenerateInput(AnalysisType.NonLinear, out var dataOk, out var message, out var nodes, out var stringers, out var panels);
 
 			if (!dataOk)
 			{
@@ -75,7 +75,7 @@ namespace SPMTool.Editor.Commands
 			plot.UpdatePlot();
 			
             // Draw results of analysis
-            DrawResults(stringers.Cast<Stringer>().ToArray(), panels.Cast<Panel>().ToArray(), true);
+            DrawResults(nodes, stringers.Cast<Stringer>().ToArray(), panels.Cast<Panel>().ToArray(), true);
 		}
 	}
 }
