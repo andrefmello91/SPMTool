@@ -160,6 +160,18 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		private PlaneDisplacement? GetDisplacement() => GetDictionary("Displacements").GetDisplacement();
 
+		/// <summary>
+		///		Set displacement from the associated <see cref="Node"/>.
+		/// </summary>
+		public void SetDisplacementFromNode()
+		{
+			if (_node is not null)
+				Displacement = _node.Displacement;
+		}
+
+		/// <inheritdoc />
+		public override string ToString() => _node?.ToString() ?? base.ToString();
+
 		#endregion
 
 		public bool Equals(NodeObject other) => base.Equals(other);

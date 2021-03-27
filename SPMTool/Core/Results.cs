@@ -7,6 +7,7 @@ using andrefmello91.Extensions;
 using MathNet.Numerics;
 using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.Windows;
+using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -631,7 +632,7 @@ namespace SPMTool.Core
 			// Erase result objects
 			ResultLayers.EraseObjects();
 
-			SetDisplacements(nodes);
+			SetDisplacements();
 			DrawDisplacements(stringers);
 			DrawForces(stringers);
 			DrawStresses(panels);
@@ -647,14 +648,10 @@ namespace SPMTool.Core
 		///		Set displacement to <see cref="Model.Nodes"/>.
 		/// </summary>
 		/// <inheritdoc cref="DrawResults"/>
-		public static void SetDisplacements(IEnumerable<Node> nodes)
+		public static void SetDisplacements()
 		{
-			// Enumerate
-			var ordNodes = nodes.OrderBy(n => n.Number).ToArray();
-			
-			// Set to node objects
-			for (int i = 0; i < Nodes.Count; i++)
-				Nodes[i].Displacement = ordNodes[i].Displacement;
+			foreach (var node in Nodes)
+				node.SetDisplacementFromNode();
 		}
 		
 		/// <summary>
