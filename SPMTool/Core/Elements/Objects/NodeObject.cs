@@ -24,6 +24,7 @@ namespace SPMTool.Core.Elements
 	{
 		#region Fields
 
+		private PlaneDisplacement _displacement = PlaneDisplacement.Zero;
 		private Node? _node;
 
 		#endregion
@@ -42,7 +43,7 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		public PlaneDisplacement Displacement
 		{
-			get => _node?.Displacement ?? PlaneDisplacement.Zero;
+			get => _displacement;
 			set => SetDisplacement(value);
 		}
 
@@ -121,7 +122,7 @@ namespace SPMTool.Core.Elements
 			_node = new Node(Position, Type, Settings.Units.Displacements)
 			{
 				Number       = Number,
-				Displacement = Displacement,
+				// Displacement = Displacement,
 				Force        = Force,
 				Constraint   = Constraint
 			};
@@ -136,16 +137,13 @@ namespace SPMTool.Core.Elements
 			if (!disp.HasValue)
 				return false;
 
-			_node ??= (Node) GetElement();
-			
-			_node.Displacement = disp.Value;
-			
+			_displacement = disp.Value;
 			return true;
 
 			//_displacement = PlaneDisplacement.Zero;
 		}
 
-		protected override void SetProperties() => SetDisplacement(_node?.Displacement ?? PlaneDisplacement.Zero);
+		protected override void SetProperties() => SetDisplacement(_displacement);
 
 		/// <summary>
 		///     Set <see cref="PlaneDisplacement" /> to this object XData.
@@ -153,10 +151,7 @@ namespace SPMTool.Core.Elements
 		/// <param name="displacement">The <see cref="PlaneDisplacement" /> to set.</param>
 		private void SetDisplacement(PlaneDisplacement displacement)
 		{
-			_node ??= (Node) GetElement();
-			
-			_node.Displacement =   displacement;
-			
+			_displacement = displacement;
 			SetDictionary(Displacement.GetTypedValues(), "Displacements");
 		}
 
