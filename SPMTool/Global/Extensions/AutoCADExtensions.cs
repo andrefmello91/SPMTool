@@ -4,7 +4,7 @@ using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Extensions;
+using andrefmello91.Extensions;
 using MathNet.Numerics;
 using SPMTool.Core;
 using SPMTool.Enums;

@@ -8,7 +8,7 @@ using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.Windows;
-using Extensions;
+using andrefmello91.Extensions;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
 using SPMTool.Editor.Commands;

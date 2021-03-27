@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
-using Extensions;
+using andrefmello91.Extensions;
 using SPMTool.Core;
 using UnitsNet;
 using UnitsNet.Units;

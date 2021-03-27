@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.EList;
 using Autodesk.AutoCAD.Runtime;
-using Extensions;
+using andrefmello91.Extensions;
 using andrefmello91.SPMElements.PanelProperties;
 using andrefmello91.SPMElements.StringerProperties;
 using SPMTool.Application.UserInterface;

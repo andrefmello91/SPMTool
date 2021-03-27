@@ -2,8 +2,6 @@
 using System.Linq;
 using andrefmello91.FEMAnalysis;
 using andrefmello91.OnPlaneComponents;
-using andrefmello91.OnPlaneComponents.Displacement;
-using andrefmello91.OnPlaneComponents.Force;
 using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;

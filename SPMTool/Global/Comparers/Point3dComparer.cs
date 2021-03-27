@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using Autodesk.AutoCAD.Geometry;
-using Extensions;
+using andrefmello91.Extensions;
 using SPMTool.Extensions;
 
 namespace SPMTool.Comparers

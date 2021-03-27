@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
-using Extensions;
+using andrefmello91.Extensions;
 using andrefmello91.SPMElements;
 using SPMTool.Enums;
 using SPMTool.Extensions;

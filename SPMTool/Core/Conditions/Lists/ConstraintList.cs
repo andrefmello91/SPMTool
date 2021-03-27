@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Extensions;
+using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using SPMTool.Enums;
 using SPMTool.Extensions;

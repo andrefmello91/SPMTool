@@ -42,7 +42,7 @@ namespace SPMTool.Editor.Commands
 		public static void NonLinearAnalysis()
 		{
 			// Get input data
-			var input = Model.GenerateInput(AnalysisType.NonLinear, out var dataOk, out var message, out var nodes, out var stringers, out var panels);
+			var input = Model.GenerateInput(AnalysisType.Nonlinear, out var dataOk, out var message, out var nodes, out var stringers, out var panels);
 
 			if (!dataOk)
 			{

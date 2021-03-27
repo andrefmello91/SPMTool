@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.EList;
 using Autodesk.AutoCAD.DatabaseServices;
-using Extensions;
+using andrefmello91.Extensions;
 #nullable enable
 
 namespace SPMTool.Core

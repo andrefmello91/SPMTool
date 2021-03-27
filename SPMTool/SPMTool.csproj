@@ -93,28 +93,28 @@
       <HintPath>..\packages\andrefmello91.EList.1.0.2\lib\netstandard2.0\andrefmello91.EList.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="andrefmello91.Extensions, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\andrefmello91.Extensions.1.0.2\lib\netstandard2.0\andrefmello91.Extensions.dll</HintPath>
+    <Reference Include="andrefmello91.Extensions, Version=1.0.3.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.Extensions.1.0.3\lib\netstandard2.0\andrefmello91.Extensions.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="andrefmello91.FEMAnalysis, Version=0.1.5.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\andrefmello91.FEMAnalysis.0.1.5\lib\netstandard2.0\andrefmello91.FEMAnalysis.dll</HintPath>
+    <Reference Include="andrefmello91.FEMAnalysis, Version=0.1.7.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.FEMAnalysis.0.1.7\lib\netstandard2.0\andrefmello91.FEMAnalysis.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="andrefmello91.Material, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\andrefmello91.Material.1.0.2\lib\netstandard2.0\andrefmello91.Material.dll</HintPath>
+    <Reference Include="andrefmello91.Material, Version=1.0.6.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.Material.1.0.6\lib\netstandard2.0\andrefmello91.Material.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="andrefmello91.OnPlaneComponents, Version=1.0.1.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\andrefmello91.OnPlaneComponents.1.0.1\lib\netstandard2.0\andrefmello91.OnPlaneComponents.dll</HintPath>
+    <Reference Include="andrefmello91.OnPlaneComponents, Version=1.0.5.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.OnPlaneComponents.1.0.5\lib\netstandard2.0\andrefmello91.OnPlaneComponents.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="andrefmello91.ReinforcedConcreteMembrane, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\andrefmello91.ReinforcedConcreteMembrane.1.0.2\lib\netstandard2.0\andrefmello91.ReinforcedConcreteMembrane.dll</HintPath>
+    <Reference Include="andrefmello91.ReinforcedConcreteMembrane, Version=1.0.7.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.ReinforcedConcreteMembrane.1.0.7\lib\netstandard2.0\andrefmello91.ReinforcedConcreteMembrane.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="andrefmello91.SPMElements, Version=0.1.2.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\andrefmello91.SPMElements.0.1.2\lib\netstandard2.0\andrefmello91.SPMElements.dll</HintPath>
+    <Reference Include="andrefmello91.SPMElements, Version=0.1.5.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.SPMElements.0.1.5\lib\netstandard2.0\andrefmello91.SPMElements.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="LiveCharts, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
@@ -262,7 +262,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="LICENSE" />
     <None Include="packages.config" />
     <None Include="Resources\viewsupport_large.png" />
   </ItemGroup>
@@ -439,36 +438,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\viewstringer_large_light.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include=".gitattributes" />
-    <Content Include=".gitignore" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Extensions\Extensions.csproj">
-      <Project>{111c9205-16a0-46bd-b634-7e772c106441}</Project>
-      <Name>Extensions</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Material\Material.csproj">
-      <Project>{d57f60e2-55e5-4812-a654-02d0c31528ad}</Project>
-      <Name>Material</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\On-Plane-Components\On-Plane-Components.csproj">
-      <Project>{cfc7feab-4fd2-484c-9644-7be2c24f2e87}</Project>
-      <Name>On-Plane-Components</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Reinforced-Concrete-Membrane\RCMembrane.csproj">
-      <Project>{77518a20-39f5-4b19-8266-95dea457631f}</Project>
-      <Name>RCMembrane</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SPMAnalysis\SPMAnalysis.csproj">
-      <Project>{a6c87320-8a18-4ef4-9b95-0e2da00e67cd}</Project>
-      <Name>SPMAnalysis</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SPMElements\SPMElements.csproj">
-      <Project>{04980387-5e2f-4867-bfbe-39210bc7c501}</Project>
-      <Name>SPMElements</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

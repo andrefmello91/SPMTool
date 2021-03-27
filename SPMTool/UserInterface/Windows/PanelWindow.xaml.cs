@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Extensions;
+using andrefmello91.Extensions;
 using andrefmello91.Material.Reinforcement;
 using MathNet.Numerics;
 using SPMTool.Core;

@@ -2,7 +2,6 @@
 using System.Linq;
 using Autodesk.AutoCAD.Runtime;
 using andrefmello91.OnPlaneComponents;
-using andrefmello91.OnPlaneComponents.Force;
 using andrefmello91.SPMElements;
 using SPMTool.Core;
 using SPMTool.Core.Conditions;
@@ -30,7 +29,7 @@ namespace SPMTool.Editor.Commands
 		    var units = DataBase.Settings.Units;
 
 		    // Request objects to be selected in the drawing area
-		    var nds = UserInput.SelectNodes("Select nodes to add load:", NodeType.External).ToArray();
+		    var nds = UserInput.SelectNodes("Select nodes to add load:", NodeType.External)?.ToArray();
 
 		    if (nds is null)
 			    return;

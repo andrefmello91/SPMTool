@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using Extensions;
+using andrefmello91.Extensions;
 using MathNet.Numerics;
 using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.Windows;

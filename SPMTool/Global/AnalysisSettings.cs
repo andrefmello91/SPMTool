@@ -1,5 +1,5 @@
 ﻿using System;
-using Extensions;
+using andrefmello91.Extensions;
 
 namespace SPMTool
 {

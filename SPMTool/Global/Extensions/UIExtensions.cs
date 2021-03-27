@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
-using Extensions;
+using andrefmello91.Extensions;
 
 namespace SPMTool.Extensions
 {

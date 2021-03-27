@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Extensions;
+using andrefmello91.Extensions;
 using SPMTool.Core;
 using SPMTool.Extensions;
 using UnitsNet.Units;

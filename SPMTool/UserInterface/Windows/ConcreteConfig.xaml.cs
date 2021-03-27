@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Extensions;
+using andrefmello91.Extensions;
 using andrefmello91.Material.Concrete;
 using SPMTool.Core;
 using SPMTool.Extensions;

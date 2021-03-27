@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
-using Extensions;
+using andrefmello91.Extensions;
 using SPMTool.Core;
 
 namespace SPMTool.Application.UserInterface

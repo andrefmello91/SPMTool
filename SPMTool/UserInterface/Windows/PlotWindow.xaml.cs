@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Media;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.Windows.BlockStream;
-using Extensions;
+using andrefmello91.Extensions;
 using LiveCharts;
 using LiveCharts.Configurations;
 using LiveCharts.Defaults;
