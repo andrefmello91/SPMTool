@@ -91,9 +91,6 @@ namespace SPMTool.Editor.Commands
 					continue;
 				}
 
-				// Move panels to bottom
-				Panels.Select(p => p.ObjectId).MoveToBottom();
-
 				ShowAlertDialog("Please select four external nodes.");
 				//foreach (var id in nds.GetObjectIds().ToArray())
 				//	Model.Editor.WriteMessage($"\n{Nodes.GetByObjectId(id)}");

@@ -24,7 +24,7 @@ namespace SPMTool.Core.Elements
 	{
 		#region Fields
 
-		private PlaneDisplacement _displacement = PlaneDisplacement.Zero;
+		private Node? _node;
 
 		#endregion
 
@@ -42,7 +42,7 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		public PlaneDisplacement Displacement
 		{
-			get => _displacement;
+			get => _node?.Displacement ?? PlaneDisplacement.Zero;
 			set => SetDisplacement(value);
 		}
 
@@ -116,14 +116,18 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get this object as a <see cref="Node" />.
 		/// </summary>
-		public override INumberedElement GetElement() =>
-			new Node(Position, Type, Settings.Units.Displacements)
+		public override INumberedElement GetElement()
+		{
+			_node = new Node(Position, Type, Settings.Units.Displacements)
 			{
 				Number       = Number,
 				Displacement = Displacement,
 				Force        = Force,
 				Constraint   = Constraint
 			};
+
+			return _node;
+		}
 
 		protected override bool GetProperties()
 		{
@@ -132,13 +136,16 @@ namespace SPMTool.Core.Elements
 			if (!disp.HasValue)
 				return false;
 
-			_displacement = disp.Value;
+			_node ??= (Node) GetElement();
+			
+			_node.Displacement = disp.Value;
+			
 			return true;
 
 			//_displacement = PlaneDisplacement.Zero;
 		}
 
-		protected override void SetProperties() => SetDisplacement(_displacement);
+		protected override void SetProperties() => SetDisplacement(_node?.Displacement ?? PlaneDisplacement.Zero);
 
 		/// <summary>
 		///     Set <see cref="PlaneDisplacement" /> to this object XData.
@@ -146,7 +153,10 @@ namespace SPMTool.Core.Elements
 		/// <param name="displacement">The <see cref="PlaneDisplacement" /> to set.</param>
 		private void SetDisplacement(PlaneDisplacement displacement)
 		{
-			_displacement = displacement;
+			_node ??= (Node) GetElement();
+			
+			_node.Displacement =   displacement;
+			
 			SetDictionary(Displacement.GetTypedValues(), "Displacements");
 		}
 
@@ -158,5 +168,21 @@ namespace SPMTool.Core.Elements
 		#endregion
 
 		public bool Equals(NodeObject other) => base.Equals(other);
+
+		/// <summary>
+		///		Get the <see cref="Node"/> element from a <see cref="NodeObject"/>.
+		/// </summary>
+		public static explicit operator Node?(NodeObject? nodeObject) => (Node?) nodeObject?.GetElement();
+
+		/// <summary>
+		///		Get the <see cref="NodeObject"/> from <see cref="Model.Nodes"/> associated to a <see cref="Node"/>.
+		/// </summary>
+		/// <remarks>
+		///		A <see cref="NodeObject"/> is created if <paramref name="node"/> is not null and is not listed.
+		/// </remarks>
+		public static explicit operator NodeObject?(Node? node) => node is null 
+			? null 
+			: Model.Nodes.GetByProperty(node.Position) 
+			  ?? new NodeObject(node.Position, node.Type);
 	}
 }

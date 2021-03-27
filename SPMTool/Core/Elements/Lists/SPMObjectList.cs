@@ -71,7 +71,7 @@ namespace SPMTool.Core.Elements
 		[return:NotNull]
 		public IEnumerable<INumberedElement> GetElements() => this.Select(t => t.GetElement());
 
-		public T1 GetByProperty(T2 property) => Find(t => t.Property.Equals(property));
+		public T1? GetByProperty(T2 property) => Find(t => t.Property.Equals(property));
 
 		public IEnumerable<T1>? GetByProperties(IEnumerable<T2>? properties) => this.Where(t => properties.Contains(t.Property));
 

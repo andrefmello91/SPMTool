@@ -44,27 +44,27 @@ namespace SPMTool.Core
 		/// <summary>
 		///     The collection of <see cref="NodeObject" />'s in the model.
 		/// </summary>
-		public static readonly NodeList Nodes;
+		public static NodeList Nodes;
 
 		/// <summary>
 		///     The collection of <see cref="StringerObject" />'s in the model.
 		/// </summary>
-		public static readonly StringerList Stringers;
+		public static StringerList Stringers;
 
 		/// <summary>
 		///     The collection of <see cref="PanelObject" />'s in the model.
 		/// </summary>
-		public static readonly PanelList Panels;
+		public static PanelList Panels;
 
 		/// <summary>
 		///     The collection of <see cref="ForceObject" />'s in the model.
 		/// </summary>
-		public static readonly ForceList Forces;
+		public static ForceList Forces;
 
 		/// <summary>
 		///     The collection of <see cref="ConstraintObject" />'s in the model.
 		/// </summary>
-		public static readonly ConstraintList Constraints;
+		public static ConstraintList Constraints;
 
 		/// <summary>
 		///     List of distinct widths from objects in the model.
@@ -134,6 +134,19 @@ namespace SPMTool.Core
 
 		#region  Methods
 
+		/// <summary>
+		///		Update collections from objects in drawing.
+		/// </summary>
+		public static void UpdateObjects()
+		{
+			// Get elements
+			Nodes       = NodeList.ReadFromDrawing();
+			Forces      = ForceList.ReadFromDrawing();
+			Constraints = ConstraintList.ReadFromDrawing();
+			Stringers   = StringerList.ReadFromDrawing();
+			Panels      = PanelList.ReadFromDrawing();
+		}
+		
 		/// <summary>
 		///		Register events for AutoCAD entities.
 		/// </summary>
@@ -372,8 +385,17 @@ namespace SPMTool.Core
 				return;
 			}
 
-			var obj1 = Trash.Find(t => t.ObjectId == entity.ObjectId);
-
+			IEntityCreator<Entity> obj1;
+			try
+			{
+				obj1 = Trash.Find(t => t.ObjectId == entity.ObjectId);
+			}
+			catch
+			{
+				Editor.WriteMessage("\nNot found in trash.");
+				obj1 = entity.CreateSPMObject();
+			}
+				
 			if (!Add(obj1))
 				return;
 

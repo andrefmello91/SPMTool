@@ -26,6 +26,7 @@ namespace SPMTool.Core.Elements
 		#region Fields
 
 		private UniaxialReinforcement? _reinforcement;
+		private Stringer? _stringer;
 
 		#endregion
 		#region Properties
@@ -139,14 +140,14 @@ namespace SPMTool.Core.Elements
 		/// <inheritdoc />
 		public override INumberedElement GetElement() => GetElement(Model.Nodes.GetElements().Cast<Node>().ToArray());
 
-		/// <inheritdoc cref="GetElement()" />
+		/// <inheritdoc cref="SPMObject{T}.GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
 		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
 		public SPMElement GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
 		{
-			var stringer = Stringer.FromNodes(nodes, Geometry.InitialPoint, Geometry.EndPoint, Geometry.CrossSection, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement?.Clone(), elementModel);
-			stringer.Number = Number;
-			return stringer;
+			_stringer = Stringer.FromNodes(nodes, Geometry.InitialPoint, Geometry.EndPoint, Geometry.CrossSection, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement?.Clone(), elementModel);
+			_stringer.Number = Number;
+			return _stringer;
 		}
 
 		protected override bool GetProperties()
@@ -206,5 +207,32 @@ namespace SPMTool.Core.Elements
 		#endregion
 
 		public bool Equals(StringerObject other) => base.Equals(other);
+		
+		
+		/// <summary>
+		///		Get the <see cref="Stringer"/> element from a <see cref="StringerObject"/>.
+		/// </summary>
+		public static explicit operator Stringer?(StringerObject? stringerObject) => (Stringer?) stringerObject?.GetElement();
+
+		/// <summary>
+		///		Get the <see cref="StringerObject"/> from <see cref="Model.Stringers"/> associated to a <see cref="Stringer"/>.
+		/// </summary>
+		/// <remarks>
+		///		A <see cref="StringerObject"/> is created if <paramref name="stringer"/> is not null and is not listed.
+		/// </remarks>
+		public static explicit operator StringerObject?(Stringer? stringer) => stringer is null 
+			? null 
+			: Model.Stringers.GetByProperty(stringer.Geometry) 
+			  ?? new StringerObject(stringer.Geometry);
+
+		/// <summary>
+		///		Get the <see cref="StringerObject"/> from <see cref="Model.Stringers"/> associated to a <see cref="SPMElement"/>.
+		/// </summary>
+		/// <remarks>
+		///		A <see cref="StringerObject"/> is created if <paramref name="spmElement"/> is not null and is not listed.
+		/// </remarks>
+		public static explicit operator StringerObject?(SPMElement? spmElement) => spmElement is Stringer stringer 
+			? (StringerObject?) stringer 
+			: null;
 	}
 }

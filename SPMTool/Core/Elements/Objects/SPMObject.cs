@@ -1,4 +1,5 @@
 ﻿using System;
+using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
@@ -115,13 +116,14 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Returns true if objects are equal.
 		/// </summary>
-		public static bool operator == (SPMObject<T>? left, SPMObject<T>? right) => !(left is null) && left.Equals(right);
+		public static bool operator ==(SPMObject<T>? left, SPMObject<T>? right) => left.IsEqualTo(right);
 
 		/// <summary>
 		///     Returns true if objects are different.
 		/// </summary>
-		public static bool operator != (SPMObject<T>? left, SPMObject<T>? right) => !(left is null) && !left.Equals(right);
+		public static bool operator !=(SPMObject<T>? left, SPMObject<T>? right) => left.IsNotEqualTo(right);
 
 		#endregion
+
 	}
 }

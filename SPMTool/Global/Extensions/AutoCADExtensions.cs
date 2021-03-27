@@ -850,10 +850,9 @@ namespace SPMTool.Extensions
 			var drawOrder = (DrawOrderTable) trans.GetObject(blkTblRec.DrawOrderTableId, OpenMode.ForWrite);
 
 			// Move the panels to bottom
-			using (var objs = new ObjectIdCollection(objectIds.ToArray()))
-			{
-				drawOrder.MoveToBottom(objs);
-			}
+			using var objs = new ObjectIdCollection(objectIds.ToArray());
+			
+			drawOrder.MoveToBottom(objs);
 
 			// Commit changes
 			if (ongoingTransaction != null)

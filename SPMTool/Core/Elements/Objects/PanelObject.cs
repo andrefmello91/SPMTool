@@ -28,6 +28,7 @@ namespace SPMTool.Core.Elements
 		#region Fields
 
 		private WebReinforcementDirection? _x, _y;
+		private Panel? _panel;
 
 		#endregion
 
@@ -98,7 +99,7 @@ namespace SPMTool.Core.Elements
 
 		#region Constructors
 
-		/// <inheritdoc cref="PanelObject" />
+		/// <inheritdoc cref="PanelObject(PanelGeometry)" />
 		/// <param name="vertices">The collection of panel's four <see cref="Point3d" /> vertices.</param>
 		/// <param name="unit">The <see cref="LengthUnit" /> of <paramref name="vertices" />.</param>
 		public PanelObject(IEnumerable<Point3d> vertices, LengthUnit unit = LengthUnit.Millimeter)
@@ -106,19 +107,26 @@ namespace SPMTool.Core.Elements
 		{
 		}
 
-		/// <inheritdoc cref="PanelObject" />
+		/// <inheritdoc cref="PanelObject(PanelGeometry)" />
 		/// <param name="vertices">The collection of panel's four <see cref="Point" /> vertices.</param>
 		public PanelObject(IEnumerable<Point> vertices)
 			: this (new Vertices(vertices))
 		{
 		}
 
+		/// <inheritdoc cref="PanelObject(PanelGeometry)" />
+		/// <param name="vertices">The panel <see cref="Vertices" />.</param>
+		public PanelObject(Vertices vertices)
+			: this(new PanelGeometry(vertices, 100))
+		{
+		}
+		
 		/// <summary>
 		///     Create the panel object.
 		/// </summary>
-		/// <param name="vertices">The panel <see cref="Vertices" />.</param>
-		public PanelObject(Vertices vertices)
-			: base(new PanelGeometry(vertices, 100))
+		/// <param name="geometry">The panel <see cref="Vertices" />.</param>
+		public PanelObject(PanelGeometry geometry)
+			: base(geometry)
 		{
 		}
 
@@ -204,9 +212,11 @@ namespace SPMTool.Core.Elements
 		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
 		public SPMElement GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
 		{
-			var panel = Panel.FromNodes(nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement, elementModel);
-			panel.Number = Number;
-			return panel;
+			_panel = Panel.FromNodes(nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement, elementModel);
+			
+			_panel.Number = Number;
+			
+			return _panel;
 		}
 
 		/// <summary>
@@ -275,5 +285,32 @@ namespace SPMTool.Core.Elements
 		#endregion
 
 		public bool Equals(PanelObject other) => base.Equals(other);
+		
+		/// <summary>
+		///		Get the <see cref="Panel"/> element from a <see cref="PanelObject"/>.
+		/// </summary>
+		public static explicit operator Panel?(PanelObject? panelObject) => (Panel?) panelObject?.GetElement();
+
+		/// <summary>
+		///		Get the <see cref="PanelObject"/> from <see cref="Model.Panels"/> associated to a <see cref="Panel"/>.
+		/// </summary>
+		/// <remarks>
+		///		A <see cref="PanelObject"/> is created if <paramref name="panel"/> is not null and is not listed.
+		/// </remarks>
+		public static explicit operator PanelObject?(Panel? panel) => panel is null 
+			? null 
+			: Model.Panels.GetByProperty(panel.Geometry) 
+			  ?? new PanelObject(panel.Geometry);
+
+		/// <summary>
+		///		Get the <see cref="PanelObject"/> from <see cref="Model.Stringers"/> associated to a <see cref="SPMElement"/>.
+		/// </summary>
+		/// <remarks>
+		///		A <see cref="PanelObject"/> is created if <paramref name="spmElement"/> is not null and is not listed.
+		/// </remarks>
+		public static explicit operator PanelObject?(SPMElement? spmElement) => spmElement is Panel panel 
+			? (PanelObject?) panel 
+			: null;
+
 	}
 }

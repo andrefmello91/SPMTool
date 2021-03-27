@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using andrefmello91.EList;
 using Autodesk.AutoCAD.DatabaseServices;
 using andrefmello91.Extensions;
 using andrefmello91.Material.Reinforcement;
@@ -27,12 +28,16 @@ namespace SPMTool.Core.Elements
 
 		private PanelList()
 			: base()
-        {
+		{
+			ItemAdded  += On_PanelAdd;
+			RangeAdded += On_PanelAdd;
 		}
 
 		private PanelList(IEnumerable<PanelObject> panelObjects)
 			: base(panelObjects)
 		{
+			ItemAdded  += On_PanelAdd;
+			RangeAdded += On_PanelAdd;
 		}
 
 		#endregion
@@ -139,6 +144,17 @@ namespace SPMTool.Core.Elements
 		/// <inheritdoc cref="PanelObject.GetElement(IEnumerable{Node}, ElementModel)" />
 		[return: NotNull]
 		public IEnumerable<SPMElement> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) => this.Select(s => s.GetElement(nodes, elementModel));
+
+		/// <summary>
+		///		Move panel objects to bottom after adding to list.
+		/// </summary>
+		private static void On_PanelAdd(object sender, EventArgs e)
+		{
+			if (sender is not PanelList panelList)
+				return;
+
+			panelList.Select(p => p.ObjectId).MoveToBottom();
+		}
 
 		#endregion
 	}
