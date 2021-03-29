@@ -272,7 +272,7 @@ namespace SPMTool.Extensions
                 return;
 
             block.UpgradeOpen();
-
+            
             foreach (var attRef in attributes)
 			{
 				if (attRef is null)

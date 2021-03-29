@@ -43,7 +43,7 @@ namespace SPMTool.Core
 		#region Constructors
 
 		/// <summary>
-		///     Force text constructor.
+		///     Text creator constructor.
 		/// </summary>
 		/// <param name="insertionPoint">The insertion <see cref="Point" /> of text.</param>
 		/// <param name="layer">The <see cref="Enums.Layer" /> of text.</param>

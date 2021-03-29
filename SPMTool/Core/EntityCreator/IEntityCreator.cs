@@ -103,8 +103,16 @@ namespace SPMTool.Core
 				objects.ElementAt(i).ObjectId = objIds[i];
 
 			foreach (var obj in objects)
-				if (obj is ForceObject force)
-					force.SetAttributes();
+				switch (obj)
+				{
+					case ForceObject force:
+						force.SetAttributes();
+						break;
+
+					case BlockCreator blockCreator:
+						blockCreator.SetAttributes();
+						break;
+				}
 
 			// Set events
 			//foreach (var entity in entities)
