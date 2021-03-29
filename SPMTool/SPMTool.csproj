@@ -97,10 +97,6 @@
       <HintPath>..\packages\andrefmello91.Extensions.1.0.3\lib\netstandard2.0\andrefmello91.Extensions.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="andrefmello91.FEMAnalysis, Version=0.1.7.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\andrefmello91.FEMAnalysis.0.1.7\lib\netstandard2.0\andrefmello91.FEMAnalysis.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="andrefmello91.Material, Version=1.0.6.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\packages\andrefmello91.Material.1.0.6\lib\netstandard2.0\andrefmello91.Material.dll</HintPath>
       <Private>True</Private>
@@ -111,10 +107,6 @@
     </Reference>
     <Reference Include="andrefmello91.ReinforcedConcreteMembrane, Version=1.0.7.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\packages\andrefmello91.ReinforcedConcreteMembrane.1.0.7\lib\netstandard2.0\andrefmello91.ReinforcedConcreteMembrane.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="andrefmello91.SPMElements, Version=0.1.5.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\andrefmello91.SPMElements.0.1.5\lib\netstandard2.0\andrefmello91.SPMElements.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="LiveCharts, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
@@ -438,6 +430,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\viewstringer_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\FEMAnalysis\andrefmello91.FEMAnalysis\andrefmello91.FEMAnalysis.csproj">
+      <Project>{11ff8a9f-3315-47ff-a437-44fa658492e8}</Project>
+      <Name>andrefmello91.FEMAnalysis</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SPMElements\andrefmello91.SPMElements\andrefmello91.SPMElements.csproj">
+      <Project>{47286cce-9482-4c49-ba2f-279f42ca3fac}</Project>
+      <Name>andrefmello91.SPMElements</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

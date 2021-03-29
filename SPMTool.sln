@@ -5,6 +5,10 @@ VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPMTool", "SPMTool\SPMTool.csproj", "{25CFFFC7-0EA2-4774-8125-F594D5E51E2A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "andrefmello91.FEMAnalysis", "..\FEMAnalysis\andrefmello91.FEMAnalysis\andrefmello91.FEMAnalysis.csproj", "{11FF8A9F-3315-47FF-A437-44FA658492E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "andrefmello91.SPMElements", "..\SPMElements\andrefmello91.SPMElements\andrefmello91.SPMElements.csproj", "{47286CCE-9482-4C49-BA2F-279F42CA3FAC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{25CFFFC7-0EA2-4774-8125-F594D5E51E2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{25CFFFC7-0EA2-4774-8125-F594D5E51E2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{25CFFFC7-0EA2-4774-8125-F594D5E51E2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11FF8A9F-3315-47FF-A437-44FA658492E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11FF8A9F-3315-47FF-A437-44FA658492E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11FF8A9F-3315-47FF-A437-44FA658492E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11FF8A9F-3315-47FF-A437-44FA658492E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47286CCE-9482-4C49-BA2F-279F42CA3FAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47286CCE-9482-4C49-BA2F-279F42CA3FAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47286CCE-9482-4C49-BA2F-279F42CA3FAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47286CCE-9482-4C49-BA2F-279F42CA3FAC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
