@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
@@ -8,6 +9,7 @@ using andrefmello91.Material.Reinforcement;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.PanelProperties;
+using SPMTool.Core.Blocks;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -27,6 +29,7 @@ namespace SPMTool.Core.Elements
 	{
 		#region Fields
 
+		private BlockCreator? _shear, _compressive, _tensile, _concreteCompressive, _concreteTensile;
 		private WebReinforcementDirection? _x, _y;
 		private Panel? _panel;
 
@@ -42,7 +45,7 @@ namespace SPMTool.Core.Elements
 		public WebReinforcementDirection? DirectionX
 		{
 			get => _x;
-			set => SetReinforcement(value, Direction.X);
+			set => SetReinforcement(value, Axis.X);
 		}
 
 		/// <summary>
@@ -51,7 +54,7 @@ namespace SPMTool.Core.Elements
 		public WebReinforcementDirection? DirectionY
 		{
 			get => _y;
-			set => SetReinforcement(value, Direction.Y);
+			set => SetReinforcement(value, Axis.Y);
 		}
 
 		/// <summary>
@@ -163,12 +166,12 @@ namespace SPMTool.Core.Elements
 			if (w.HasValue)
 				PropertyField.Width = w.Value;
 
-			var x = GetReinforcement(Direction.X);
+			var x = GetReinforcement(Axis.X);
 
 			if (!(x is null))
 				_x = x;
 
-			var y = GetReinforcement(Direction.Y);
+			var y = GetReinforcement(Axis.Y);
 
 			if (!(y is null))
 				_y = y;
@@ -244,11 +247,34 @@ namespace SPMTool.Core.Elements
 
 			SetDictionary(wData, "Width");
 
-			SetDictionary(_x.GetTypedValues(), $"Reinforcement{Direction.X}");
+			SetDictionary(_x.GetTypedValues(), $"Reinforcement{Axis.X}");
 
-			SetDictionary(_y.GetTypedValues(), $"Reinforcement{Direction.Y}");
+			SetDictionary(_y.GetTypedValues(), $"Reinforcement{Axis.Y}");
 		}
 
+		/// <summary>
+		///		Get the shear <see cref="BlockCreator"/>.
+		/// </summary>
+		public BlockCreator? ShearBlock()
+		{
+			if (_panel is null || _panel.AverageStresses.IsXYZero)
+			{
+				_shear = null;
+				return _shear;
+			}
+
+			var scale = BlockScaleFactor();
+			
+			_shear ??= new ShearBlockCreator(Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY, 0.8 * scale);
+			
+			return _shear;
+		}
+
+		/// <summary>
+		///		Calculate the scale factor for block insertion.
+		/// </summary>
+		private double BlockScaleFactor() => Geometry.EdgeLengths.Max().Value * Settings.Units.ScaleFactor;
+		
 		/// <summary>
 		///     Get the width of a panel.
 		/// </summary>
@@ -264,17 +290,17 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the <see cref="WebReinforcement" /> of a panel.
 		/// </summary>
-		private WebReinforcementDirection? GetReinforcement(Direction dir) => GetDictionary($"Reinforcement{dir}").GetReinforcementDirection(dir);
+		private WebReinforcementDirection? GetReinforcement(Axis dir) => GetDictionary($"Reinforcement{dir}").GetReinforcementDirection(dir);
 
 		/// <summary>
 		///     Set reinforcement to this object.
 		/// </summary>
 		/// <param name="direction">The <see cref="WebReinforcementDirection" /> for horizontal direction.</param>
-		/// <param name="dir">The <see cref="Direction" /> to set (X or Y).</param>
+		/// <param name="dir">The <see cref="Axis" /> to set (X or Y).</param>
 		/// <inheritdoc cref="GetWidth" />
-		private void SetReinforcement(WebReinforcementDirection? direction, Direction dir)
+		private void SetReinforcement(WebReinforcementDirection? direction, Axis dir)
 		{
-			if (dir is Direction.X)
+			if (dir is Axis.X)
 				_x = direction;
 			else
 				_y = direction;

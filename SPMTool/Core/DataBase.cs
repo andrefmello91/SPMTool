@@ -6,6 +6,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.DataExtraction;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Application;
+using SPMTool.Core.Blocks;
 using SPMTool.Core.Materials;
 using SPMTool.Enums;
 using SPMTool.Extensions;
@@ -97,7 +98,7 @@ namespace SPMTool.Core
 
             // Create layers and blocks
             CreateLayers();
-            Blocks.CreateBlocks();
+            BlockElements.CreateBlocks();
 
             // Get app settings
             Settings     = new Settings();

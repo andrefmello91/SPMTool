@@ -11,6 +11,7 @@ using Autodesk.Windows;
 using andrefmello91.Extensions;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
+using SPMTool.Core.Blocks;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using SPMTool.Extensions;
@@ -30,7 +31,7 @@ namespace SPMTool.Attributes
 
 		public Point3d OriginPoint => Block.OriginPoint();
 
-		public MethodInfo? Method => typeof(Blocks).GetMethod($"{Block}");
+		public MethodInfo? Method => typeof(BlockElements).GetMethod($"{Block}");
 
 		public Entity[]? Elements => Method?.Invoke(null, null) is IEnumerable<Entity> entities
 			? entities.ToArray()

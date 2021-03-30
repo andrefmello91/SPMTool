@@ -146,14 +146,15 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Core\EntityCreator\BlockCreator.cs" />
+    <Compile Include="Core\Blocks\BlockCreator.cs" />
+    <Compile Include="Core\Blocks\ShearBlockCreator.cs" />
+    <Compile Include="Core\Blocks\BlockElements.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Core\Blocks.cs" />
     <Compile Include="Core\Conditions\Lists\ConditionList.cs" />
     <Compile Include="Core\Conditions\Lists\ConstraintList.cs" />
     <Compile Include="Core\Conditions\Lists\ForceList.cs" />

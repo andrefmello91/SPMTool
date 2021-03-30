@@ -18,7 +18,6 @@ using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using UnitsNet.Units;
 using static SPMTool.Core.DataBase;
-using Direction = SPMTool.Enums.Direction;
 
 #nullable enable
 
@@ -196,14 +195,14 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Get the collection of entities that forms <paramref name="block" />
 		/// </summary>
-		public static Entity[]? GetElements(this Block block)
+		public static IEnumerable<Entity>? GetElements(this Block block)
 		{
 			var method = block.GetAttribute<BlockAttribute>()?.Method;
 
 			return
 				method is null
 					? null
-					: ((IEnumerable<Entity>) method.Invoke(null, null)!).ToArray();
+					: ((IEnumerable<Entity>?) method.Invoke(null, null)!).ToArray();
 		}
 
 		/// <summary>
@@ -227,8 +226,11 @@ namespace SPMTool.Extensions
 		///     The <see cref="Layer" /> to set to <see cref="BlockReference" />. Leave null to set default layer
 		///     from block attribute.
 		/// </param>
+		/// <param name="colorCode">A custom <see cref="ColorCode"/>. Leave null to set default color from <paramref name="layer"/>.</param>
 		/// <param name="rotationAngle">The rotation angle for block transformation (positive for counterclockwise).</param>
-		public static BlockReference? GetReference(this Block block, Point3d insertionPoint, Layer? layer = null, double rotationAngle = 0)
+		/// <param name="rotationAxis">The <see cref="Axis"/> to apply rotation. Leave null to use <see cref="Autodesk.AutoCAD.Geometry.CoordinateSystem3d.Zaxis"/>.</param>
+		/// <param name="scaleFactor">The scale factor.</param>
+		public static BlockReference? GetReference(this Block block, Point3d insertionPoint, Layer? layer = null, ColorCode? colorCode = null, double rotationAngle = 0, Axis rotationAxis = Axis.Z, double scaleFactor = 1)
 		{
 			// Start a transaction
 			using var trans = StartTransaction();
@@ -243,16 +245,31 @@ namespace SPMTool.Extensions
 				Layer = $"{layer ?? block.GetAttribute<BlockAttribute>()!.Layer}"
 			};
 
+			// Set color
+			if (colorCode is not null)
+				blockRef.Color = Color.FromColorIndex(ColorMethod.ByAci, (short) colorCode);
+			
 			// Rotate and scale the block
 			if (!rotationAngle.ApproxZero(1E-3))
-				blockRef.TransformBy(Matrix3d.Rotation(rotationAngle, Ucs.Zaxis, insertionPoint));
+				blockRef.TransformBy(Matrix3d.Rotation(rotationAngle, rotationAxis.GetAxis(), insertionPoint));
 
-			if (DataBase.Settings.Units.Geometry != LengthUnit.Millimeter)
+			if (scaleFactor >= 0 && !scaleFactor.Approx(1, 1E-6))
 				blockRef.TransformBy(Matrix3d.Scaling(DataBase.Settings.Units.ScaleFactor, insertionPoint));
 
 			return blockRef;
 		}
 
+		/// <summary>
+		///		Get the <see cref="Vector3d"/> associated to this <paramref name="axis"/>.
+		/// </summary>
+		public static Vector3d GetAxis(this Axis axis) =>
+			axis switch
+			{
+				Axis.X => Vector3d.XAxis,
+				Axis.Y => Vector3d.YAxis,
+				_      => Vector3d.ZAxis
+			};
+		
 		/// <summary>
 		///		Set attributes to a <see cref="BlockReference"/>.
 		/// </summary>
@@ -548,7 +565,7 @@ namespace SPMTool.Extensions
 		///     Get a <see cref="WebReinforcementDirection" /> from <see cref="TypedValue" />'s.
 		/// </summary>
 		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="WebReinforcementDirection" />.</param>
-		public static WebReinforcementDirection? GetReinforcementDirection(this IEnumerable<TypedValue>? values, Direction direction)
+		public static WebReinforcementDirection? GetReinforcementDirection(this IEnumerable<TypedValue>? values, Axis direction)
 		{
 			if (values.IsNullOrEmpty() || values.Count() != 4)
 				return null;
@@ -562,7 +579,7 @@ namespace SPMTool.Extensions
 			var fy = values.ElementAt(2).ToDouble();
 			var Es = values.ElementAt(3).ToDouble();
 
-			var angle = direction is Direction.X
+			var angle = direction is Axis.X
 				? 0
 				: Constants.PiOver2;
 

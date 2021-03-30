@@ -2,6 +2,7 @@
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using andrefmello91.Extensions;
+using SPMTool.Core.Blocks;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
@@ -102,9 +103,13 @@ namespace SPMTool.Core
 			for (var i = 0; i < objects.Count(); i++)
 				objects.ElementAt(i).ObjectId = objIds[i];
 
+			// Set attributes for blocks
 			foreach (var obj in objects)
 				switch (obj)
 				{
+					case null:
+						break;
+					
 					case ForceObject force:
 						force.SetAttributes();
 						break;

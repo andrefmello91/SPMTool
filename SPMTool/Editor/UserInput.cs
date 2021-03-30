@@ -344,8 +344,8 @@ namespace SPMTool.Editor
 			// Ask direction to monitor
 			var options = new []
 			{
-				$"{Direction.X}",
-				$"{Direction.Y}"
+				$"{Axis.X}",
+				$"{Axis.Y}"
 			};
 
 			var res = SelectKeyword("Select a direction to monitor displacement:", options, out var dirIndex, options[0]);

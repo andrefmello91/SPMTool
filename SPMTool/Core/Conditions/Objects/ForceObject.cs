@@ -86,7 +86,7 @@ namespace SPMTool.Core.Conditions
 		{
 			var insertionPoint = Position.ToPoint3d();
 
-			var block = Block.GetReference(insertionPoint, Layer)!;
+			var block = Block.GetReference(insertionPoint, Layer, null, 0, Axis.Z, Settings.Units.ScaleFactor)!;
 
 			// Rotate the block
 			if (Direction is ComponentDirection.X)

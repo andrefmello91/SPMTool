@@ -53,8 +53,8 @@ namespace SPMTool.Core
 				// Read the object Ids of the support blocks
 				ObjectId
 					shearBlock = blkTbl[$"{Block.Shear}"],
-					compStress = blkTbl[$"{Block.CompressiveStress}"],
-					tensStress = blkTbl[$"{Block.TensileStress}"];
+					compStress = blkTbl[$"{Block.PureCompressiveStress}"],
+					tensStress = blkTbl[$"{Block.PureTensileStress}"];
 
 				foreach (var pnl in panels)
 				{
@@ -635,8 +635,11 @@ namespace SPMTool.Core
 			SetDisplacements();
 			DrawDisplacements(stringers);
 			DrawForces(stringers);
-			DrawStresses(panels);
+			// DrawStresses(panels);
 
+			Panels.Select(p => p.ShearBlock()).AddToDrawing();
+			
+			
 			if (!drawCracks)
 				return;
 

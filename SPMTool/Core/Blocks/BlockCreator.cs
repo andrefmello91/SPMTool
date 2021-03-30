@@ -7,24 +7,25 @@ using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Attributes;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-
 #nullable enable
 
-namespace SPMTool.Core
+namespace SPMTool.Core.Blocks
 {
 	/// <summary>
 	///     Block creator class.
 	/// </summary>
 	public class BlockCreator : IEntityCreator<BlockReference>, IDisposable
 	{
-
-		private AttributeReference[]? _attributes;
+		/// <summary>
+		///		Get/set the attribute collection for block.
+		/// </summary>
+		public AttributeReference[]? Attributes { get; set; }
 		
 		/// <inheritdoc />
 		public string Name => $"{Block}";
 
 		/// <inheritdoc />
-		public Layer Layer { get; }
+		public Layer Layer => Block.GetAttribute<BlockAttribute>()!.Layer;
 
 		/// <inheritdoc />
 		public ObjectId ObjectId { get; set; }
@@ -42,7 +43,22 @@ namespace SPMTool.Core
 		/// <summary>
 		///		Get the rotation angle for block insertion.
 		/// </summary>
-		protected double RotationAngle { get; }
+		public double RotationAngle { get; set; }
+		
+		/// <summary>
+		///		Get the scale factor for block insertion.
+		/// </summary>
+		public double ScaleFactor { get; set; }
+
+		/// <summary>
+		///		Get/set the rotation axis of block.
+		/// </summary>
+		public Axis RotationAxis { get; set; }
+		
+		/// <summary>
+		///		Get/set a custom color code. Leave null to set default color from <see cref="Block"/>'s layer.
+		/// </summary>
+		public ColorCode? ColorCode { get; set; }
 
 		/// <summary>
 		///     Block creator constructor.
@@ -50,18 +66,23 @@ namespace SPMTool.Core
 		/// <param name="insertionPoint">The insertion <see cref="Point" /> of block.</param>
 		/// <param name="block">The <see cref="Enums.Block" /> of block.</param>
 		/// <param name="rotationAngle">The block rotation angle.</param>
+		/// <param name="scaleFactor">The scale factor.</param>
+		/// <param name="rotationAxis">The rotation <see cref="Axis"/>.</param>
+		/// <param name="colorCode">A custom <see cref="ColorCode"/>. Leave null to set default color from <paramref name="block"/>'s layer.</param>
 		/// <param name="attributes">The collection of <see cref="AttributeReference"/>'s to add to block.</param>
-		public BlockCreator(Point insertionPoint, Block block, double rotationAngle, IEnumerable<AttributeReference>? attributes = null)
+		public BlockCreator(Point insertionPoint, Block block, double rotationAngle, double scaleFactor, Axis rotationAxis = Axis.Z, ColorCode? colorCode = null, IEnumerable<AttributeReference>? attributes = null)
 		{
 			Position      = insertionPoint;
 			Block         = block;
-			Layer         = block.GetAttribute<BlockAttribute>()!.Layer;
 			RotationAngle = rotationAngle;
-			_attributes   = attributes?.ToArray();
+			ScaleFactor   = scaleFactor;
+			RotationAxis  = rotationAxis;
+			ColorCode     = colorCode;
+			Attributes    = attributes?.ToArray();
 		}
 
 		/// <inheritdoc />
-		public BlockReference? CreateEntity() => Block.GetReference(Position.ToPoint3d(), Layer, RotationAngle)!;
+		public virtual BlockReference CreateEntity() => Block.GetReference(Position.ToPoint3d(), null, ColorCode, RotationAngle, RotationAxis, ScaleFactor)!;
 
 		/// <inheritdoc />
 		public BlockReference? GetEntity() => (BlockReference?) ObjectId.GetEntity();
@@ -76,7 +97,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///		Set attributes to block.
 		/// </summary>
-		public void SetAttributes() => ObjectId.SetBlockAttributes(_attributes);
+		public void SetAttributes() => ObjectId.SetBlockAttributes(Attributes);
 
 		/// <inheritdoc />
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
@@ -84,10 +105,10 @@ namespace SPMTool.Core
 		/// <inheritdoc />
 		public void Dispose()
 		{
-			if(_attributes.IsNullOrEmpty())
+			if(Attributes.IsNullOrEmpty())
 				return;
 			
-			foreach (var att in _attributes)
+			foreach (var att in Attributes)
 				att.Dispose();
 		}
 	}
