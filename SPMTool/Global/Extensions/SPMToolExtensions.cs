@@ -25,18 +25,6 @@ namespace SPMTool.Extensions
 {
 	public static partial class Extensions
 	{
-		#region Fields
-
-		/// <summary>
-		///     Array of transparent layers.
-		/// </summary>
-		private static readonly Layer[] TransparentLayers =
-		{
-			Layer.Panel , Layer.CompressivePanelStress , Layer.ConcreteCompressiveStress , Layer.TensilePanelStress, Layer.ConcreteTensileStress
-		};
-
-		#endregion
-
 		#region  Methods
 
 		/// <summary>

@@ -25,7 +25,7 @@ namespace SPMTool.Core.Blocks
 		public string Name => $"{Block}";
 
 		/// <inheritdoc />
-		public Layer Layer => Block.GetAttribute<BlockAttribute>()!.Layer;
+		public Layer Layer { get; protected set; }
 
 		/// <inheritdoc />
 		public ObjectId ObjectId { get; set; }
@@ -74,6 +74,7 @@ namespace SPMTool.Core.Blocks
 		{
 			Position      = insertionPoint;
 			Block         = block;
+			Layer         = block.GetAttribute<BlockAttribute>()!.Layer;
 			RotationAngle = rotationAngle;
 			ScaleFactor   = scaleFactor;
 			RotationAxis  = rotationAxis;
@@ -82,7 +83,7 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <inheritdoc />
-		public virtual BlockReference CreateEntity() => Block.GetReference(Position.ToPoint3d(), null, ColorCode, RotationAngle, RotationAxis, ScaleFactor)!;
+		public BlockReference CreateEntity() => Block.GetReference(Position.ToPoint3d(), Layer, ColorCode, RotationAngle, RotationAxis, ScaleFactor)!;
 
 		/// <inheritdoc />
 		public BlockReference? GetEntity() => (BlockReference?) ObjectId.GetEntity();

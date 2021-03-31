@@ -2,6 +2,7 @@
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
 using andrefmello91.Extensions;
+using MathNet.Numerics;
 using SPMTool.Core.Blocks;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
@@ -41,7 +42,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Create an <see cref="Entity" /> based in this object's properties.
 		/// </summary>
-		T? CreateEntity();
+		T CreateEntity();
 
 		/// <summary>
 		///     Get the <see cref="Entity" /> in drawing associated to this object.
@@ -86,22 +87,23 @@ namespace SPMTool.Core
 		///     Add a collection of objects to drawing and set their <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="objects">The objects to add to drawing.</param>
-		public static void AddToDrawing<T>(this IEnumerable<T>? objects)
+		public static void AddToDrawing<T>(this IEnumerable<T?>? objects)
 			where T : IEntityCreator<Entity>
 		{
-			using var lck = DataBase.Document.LockDocument();
-
 			if (objects.IsNullOrEmpty())
 				return;
+			
+			using var lck = DataBase.Document.LockDocument();
 
-			var entities = objects.Select(n => n.CreateEntity()!).ToList();
+			var entities = objects.Select(n => n?.CreateEntity()).ToList();
 
 			// Add objects to drawing
 			var objIds = entities.AddToDrawing(Model.On_ObjectErase)!.ToList();
 
 			// Set object ids
 			for (var i = 0; i < objects.Count(); i++)
-				objects.ElementAt(i).ObjectId = objIds[i];
+				if (objects.ElementAt(i) is not null)
+					objects.ElementAt(i).ObjectId = objIds[i];
 
 			// Set attributes for blocks
 			foreach (var obj in objects)
@@ -112,10 +114,6 @@ namespace SPMTool.Core
 					
 					case ForceObject force:
 						force.SetAttributes();
-						break;
-
-					case BlockCreator blockCreator:
-						blockCreator.SetAttributes();
 						break;
 				}
 
@@ -128,6 +126,18 @@ namespace SPMTool.Core
 			//}
 		}
 
+		/// <summary>
+		///		Set attributes to blocks in this collection.
+		/// </summary>
+		public static void SetAttributes(this IEnumerable<BlockCreator?>? blockCreators)
+		{
+			if (blockCreators.IsNullOrEmpty())
+				return;
+
+			foreach (var block in blockCreators)
+				block?.SetAttributes();
+		}
+		
 		/// <summary>
 		///     Get a SPM object from this <paramref name="objectId"/>.
 		/// </summary>

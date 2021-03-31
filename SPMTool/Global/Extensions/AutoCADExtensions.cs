@@ -592,10 +592,10 @@ namespace SPMTool.Extensions
 		/// </summary>
 		/// <param name="erasedEvent">The event to call if <paramref name="entities" /> are erased.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static IEnumerable<ObjectId>? AddToDrawing(this IEnumerable<Entity>? entities, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
+		public static IEnumerable<ObjectId>? AddToDrawing(this IEnumerable<Entity?>? entities, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
 		{
 			if (entities.IsNullOrEmpty())
-				return null;
+				yield break;
 
 			// Start a transaction
 			using var lck = Document.LockDocument();
@@ -607,19 +607,19 @@ namespace SPMTool.Extensions
 			// Open the Block table record Model space for write
 			var blkTblRec = (BlockTableRecord) trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
 
-			// Get a list to return
-			var list = new List<ObjectId>();
-
 			// Add the objects to the drawing
 			foreach (var ent in entities)
 			{
-				blkTblRec.AppendEntity(ent);
-				trans.AddNewlyCreatedDBObject(ent, true);
+				if (ent is not null)
+				{
+					blkTblRec.AppendEntity(ent);
+					trans.AddNewlyCreatedDBObject(ent, true);
 
-				if (erasedEvent != null)
-					ent.Erased += erasedEvent;
+					if (erasedEvent != null)
+						ent.Erased += erasedEvent;
+				}
 
-				list.Add(ent.ObjectId);
+				yield return ent?.ObjectId ?? ObjectId.Null;
 			}
 
 			// Commit changes
@@ -629,7 +629,6 @@ namespace SPMTool.Extensions
 				trans.Dispose();
 			}
 
-			return list;
 		}
 
 		/// <summary>

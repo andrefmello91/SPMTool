@@ -96,10 +96,8 @@ namespace SPMTool.Editor.Commands
 	    public static void TogglePanelForces()
 	    {
 			// Turn off layers
-			Layer.CompressivePanelStress.Off();
-			Layer.TensilePanelStress.Off();
-		    Layer.ConcreteCompressiveStress.Off();
-		    Layer.ConcreteTensileStress.Off();
+			Layer.PanelStress.Off();
+			Layer.ConcreteStress.Off();
 
 			Layer.PanelForce.Toggle();
 	    }
@@ -112,11 +110,9 @@ namespace SPMTool.Editor.Commands
 	    {
 			// Turn off layers
 			Layer.PanelForce.Off();
-		    Layer.ConcreteCompressiveStress.Off();
-		    Layer.ConcreteTensileStress.Off();
+			Layer.ConcreteStress.Off();
 
-			Layer.CompressivePanelStress.Toggle();
-		    Layer.TensilePanelStress.Toggle();
+			Layer.PanelStress.Toggle();
 	    }
 
 		/// <summary>
@@ -127,11 +123,9 @@ namespace SPMTool.Editor.Commands
 	    {
 		    // Turn off layers
 		    Layer.PanelForce.Off();
-		    Layer.CompressivePanelStress.Off();
-		    Layer.TensilePanelStress.Off();
-
-			Layer.ConcreteCompressiveStress.Toggle();
-		    Layer.ConcreteTensileStress.Toggle();
+		    Layer.PanelStress.Off();
+		    
+		    Layer.ConcreteStress.Toggle();
 	    }
 
 		/// <summary>

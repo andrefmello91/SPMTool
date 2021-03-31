@@ -27,12 +27,13 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Collection of result <see cref="Layer" />'s.
 		/// </summary>
-		public static readonly Layer[] ResultLayers = { Layer.StringerForce, Layer.PanelForce, Layer.CompressivePanelStress, Layer.TensilePanelStress, Layer.ConcreteCompressiveStress, Layer.ConcreteTensileStress, Layer.Displacements, Layer.Cracks};
+		public static readonly Layer[] ResultLayers = { Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Displacements, Layer.Cracks};
 
 		#endregion
 
 		#region  Methods
 
+		/*
 		/// <summary>
 		///     Draw panel stresses.
 		/// </summary>
@@ -76,8 +77,8 @@ namespace SPMTool.Core
 
 					// Add average stresses blocks
 					var stresses = pnl.AveragePrincipalStresses;
-					AddCompressiveBlock(Layer.CompressivePanelStress);
-					AddTensileBlock(Layer.TensilePanelStress);
+					AddCompressiveBlock(Layer.PanelStress);
+					AddTensileBlock(Layer.ConcreteStress);
 
 					// Add concrete stresses blocks
 					stresses = pnl.ConcretePrincipalStresses;
@@ -236,12 +237,11 @@ namespace SPMTool.Core
 
 			// Turn the layer on
 			Layer.PanelForce.On();
-			Layer.CompressivePanelStress.Off();
-			Layer.TensilePanelStress.Off();
-			Layer.ConcreteCompressiveStress.Off();
-			Layer.ConcreteTensileStress.Off();
+			Layer.PanelStress.Off();
+			Layer.ConcreteStress.Off();
 			Layer.Cracks.Off();
 		}
+		*/
 
 		/// <summary>
 		///     Draw panel cracks.
@@ -637,7 +637,12 @@ namespace SPMTool.Core
 			DrawForces(stringers);
 			// DrawStresses(panels);
 
-			Panels.Select(p => p.ShearBlock()).AddToDrawing();
+			// Get panel blocks
+			var blocks = Panels.SelectMany(p => p.GetBlocks()).Where(b => b is not null);
+			
+			// Add to drawing and set attributes
+			blocks.AddToDrawing();
+			blocks.SetAttributes();
 			
 			
 			if (!drawCracks)

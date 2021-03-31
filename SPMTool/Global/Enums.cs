@@ -83,17 +83,11 @@ namespace SPMTool.Enums
 		[Layer(ColorCode.Green)]
 		PanelForce,
 
-		[Layer(ColorCode.Blue1, 80)]
-		CompressivePanelStress,
+		[Layer(ColorCode.Blue1)]
+		PanelStress,
 
-		[Layer(ColorCode.Red, 80)]
-		TensilePanelStress,
-
-		[Layer(ColorCode.Blue1, 80)]
-		ConcreteCompressiveStress,
-
-		[Layer(ColorCode.Red, 80)]
-		ConcreteTensileStress,
+		[Layer(ColorCode.Red)]
+		ConcreteStress,
 
 		[Layer(ColorCode.Yellow1)]
 		Displacements,
@@ -122,19 +116,19 @@ namespace SPMTool.Enums
 		[Block(Shear, Layer.PanelForce)]
 		Shear,
 
-		[Block(PureCompressiveStress, Layer.CompressivePanelStress)]
+		[Block(PureCompressiveStress, Layer.PanelStress)]
 		PureCompressiveStress,
 
-		[Block(PureTensileStress, Layer.TensilePanelStress)]
+		[Block(PureTensileStress, Layer.ConcreteStress)]
 		PureTensileStress,
 
-		[Block(CombinedStress, Layer.CompressivePanelStress)]
+		[Block(CombinedStress, Layer.PanelStress)]
 		CombinedStress,
 
-		[Block(UniaxialCompressiveStress, Layer.CompressivePanelStress)]
+		[Block(UniaxialCompressiveStress, Layer.PanelStress)]
 		UniaxialCompressiveStress,
 
-		[Block(UniaxialTensileStress, Layer.TensilePanelStress)]
+		[Block(UniaxialTensileStress, Layer.ConcreteStress)]
 		UniaxialTensileStress,
 
 		[Block(PanelCrack, Layer.Cracks)]

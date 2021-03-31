@@ -29,7 +29,6 @@ namespace SPMTool.Core.Elements
 	{
 		#region Fields
 
-		private BlockCreator? _shear, _compressive, _tensile, _concreteCompressive, _concreteTensile;
 		private WebReinforcementDirection? _x, _y;
 		private Panel? _panel;
 
@@ -255,21 +254,36 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///		Get the shear <see cref="BlockCreator"/>.
 		/// </summary>
-		public BlockCreator? ShearBlock()
+		private BlockCreator? ShearBlock() => 
+			_panel is null || _panel.AverageStresses.IsXYZero 
+				? null 
+				: new ShearBlockCreator(Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY, 0.8 * BlockScaleFactor());
+
+		/// <summary>
+		///		Get the average stress <see cref="BlockCreator"/>.
+		/// </summary>
+		private BlockCreator? AverageStressBlock() => 
+			_panel is null || _panel.AveragePrincipalStresses.IsZero 
+				? null 
+				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses, BlockScaleFactor(), Layer.PanelStress);
+		
+		/// <summary>
+		///		Get the concrete stress <see cref="BlockCreator"/>.
+		/// </summary>
+		private BlockCreator? ConcreteStressBlock() => 
+			_panel is null || _panel.AveragePrincipalStresses.IsZero 
+				? null 
+				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses, BlockScaleFactor(), Layer.ConcreteStress);
+
+		/// <summary>
+		///		Get panel block creators.
+		/// </summary>
+		public IEnumerable<BlockCreator?> GetBlocks() => new[]
 		{
-			if (_panel is null || _panel.AverageStresses.IsXYZero)
-			{
-				_shear = null;
-				return _shear;
-			}
-
-			var scale = BlockScaleFactor();
-			
-			_shear ??= new ShearBlockCreator(Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY, 0.8 * scale);
-			
-			return _shear;
-		}
-
+			ShearBlock(), AverageStressBlock(), ConcreteStressBlock()
+		};
+		
+		
 		/// <summary>
 		///		Calculate the scale factor for block insertion.
 		/// </summary>
