@@ -129,7 +129,7 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		/// <inheritdoc cref="StringerObject.GetElement(IEnumerable{Node}, ElementModel)" />
 		[return:NotNull]
-		public IEnumerable<SPMElement> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) => this.Select(s => s.GetElement(nodes, elementModel));
+		public IEnumerable<Stringer> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) => this.Select(s => s.GetElement(nodes, elementModel));
 
 		/// <summary>
 		///		Get a <see cref="StringerObject"/> from this collection that matches <paramref name="panelEdge"/>.

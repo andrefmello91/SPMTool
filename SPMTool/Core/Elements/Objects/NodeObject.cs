@@ -129,7 +129,7 @@ namespace SPMTool.Core.Elements
 
 			return _node;
 		}
-
+		
 		protected override bool GetProperties()
 		{
 			var disp = GetDisplacement();

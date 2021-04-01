@@ -212,10 +212,7 @@ namespace SPMTool.Core
 		/// <param name="dataOk">Returns true if data is consistent to start analysis.</param>
 		/// <param name="message">Message to show if data is inconsistent.</param>
 		/// <param name="analysisType">The type of analysis to perform.</param>
-		/// <param name="nodes">The collection of <see cref="Node"/>'s in the model.</param>
-		/// <param name="stringers">The collection of <see cref="Stringer"/>'s in the model.</param>
-		/// <param name="panels">The collection of <see cref="Panel"/>'s in the model.</param>
-		public static FEMInput GenerateInput(AnalysisType analysisType, out bool dataOk, out string message, out Node[] nodes, out SPMElement[] stringers, out SPMElement[] panels)
+		public static SPMInput GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
 		{
 			// Get the element model
 			var elementModel = analysisType switch
@@ -225,12 +222,12 @@ namespace SPMTool.Core
 			};
 				
 			// Read elements
-			nodes     = Nodes.GetElements().Cast<Node>().ToArray();
-			stringers = Stringers.GetElements(nodes, elementModel).ToArray();
-			panels    = Panels.GetElements(nodes, elementModel).ToArray();
+			var nodes     = Nodes.GetElements().Cast<Node>().ToList();
+			var stringers = Stringers.GetElements(nodes, elementModel).ToList();
+			var panels    = Panels.GetElements(nodes, elementModel).ToList();
 
 			// Verify if there is stringers and nodes at least
-			if (nodes.Length == 0 || stringers.Length == 0)
+			if (!nodes.Any() || !stringers.Any())
 			{
 				dataOk = false;
 				message = "Please input model geometry";
@@ -242,7 +239,7 @@ namespace SPMTool.Core
 			message = string.Empty;
 
 			return
-				new FEMInput(stringers.Concat(panels).ToArray());
+				new SPMInput(stringers, panels, nodes);
 		}
 
 		/// <summary>

@@ -143,7 +143,7 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		/// <inheritdoc cref="PanelObject.GetElement(IEnumerable{Node}, ElementModel)" />
 		[return: NotNull]
-		public IEnumerable<SPMElement> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) => this.Select(s => s.GetElement(nodes, elementModel));
+		public IEnumerable<Panel> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) => this.Select(s => s.GetElement(nodes, elementModel));
 
 		/// <summary>
 		///		Move panel objects to bottom after adding to list.

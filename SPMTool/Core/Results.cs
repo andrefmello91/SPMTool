@@ -623,18 +623,16 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Draw results of analysis.
 		/// </summary>
-		/// <param name="nodes">The collection of <see cref="Node"/>'s in the model.</param>
-		/// <param name="stringers">The collection of <see cref="Stringer"/>'s in the model.</param>
-		/// <param name="panels">The collection of <see cref="Panel"/>'s in the model.</param>
+		/// <param name="input">The <see cref="SPMInput"/>.</param>
 		/// <param name="drawCracks">Draw cracks after nonlinear analysis?</param>
-		public static void DrawResults(IEnumerable<Node> nodes, IEnumerable<Stringer> stringers, IEnumerable<Panel> panels, bool drawCracks)
+		public static void DrawResults(SPMInput input, bool drawCracks)
 		{
 			// Erase result objects
 			ResultLayers.EraseObjects();
 
 			SetDisplacements();
-			DrawDisplacements(stringers);
-			DrawForces(stringers);
+			// DrawDisplacements(stringers);
+			// DrawForces(stringers);
 			// DrawStresses(panels);
 
 			// Get panel blocks
@@ -643,13 +641,22 @@ namespace SPMTool.Core
 			// Add to drawing and set attributes
 			blocks.AddToDrawing();
 			blocks.SetAttributes();
-			
+
+			foreach (var panel in input.Panels)
+				Model.Editor.WriteMessage
+				(
+					$"\nPanel {panel.Number}:" +
+					$"\n AvgStress:" +
+					$"\n{panel.AverageStresses}" +
+					$"\nPrincipals:" +
+					$"\n{panel.AveragePrincipalStresses}"
+				);
 			
 			if (!drawCracks)
 				return;
 
-			DrawCracks(panels);
-			DrawCracks(stringers);
+			DrawCracks(input.Panels);
+			DrawCracks(input.Stringers);
 		}
 
 		/// <summary>
