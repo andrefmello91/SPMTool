@@ -98,11 +98,23 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="StringerObject" /> in the drawing.
 		/// </summary>
 		/// <param name="line">The <see cref="Line" /> object of the stringer.</param>
-		public static StringerObject ReadFromLine(Line line) =>
-			new(line.StartPoint, line.EndPoint, Settings.Units.Geometry)
+		public static StringerObject ReadFromLine(Line line)
+		{
+			var pts = new List<Point>
 			{
-				ObjectId = line.ObjectId
+				line.StartPoint.ToPoint(),
+				line.EndPoint.ToPoint()
 			};
+			
+			// Sort list
+			pts.Sort();
+
+			return
+				new StringerObject(pts[0], pts[1])
+				{
+					ObjectId = line.ObjectId
+				};
+		}
 
 		/// <summary>
 		///     Read a <see cref="StringerObject" /> in the drawing.

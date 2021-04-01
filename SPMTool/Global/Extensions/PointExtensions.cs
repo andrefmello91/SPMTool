@@ -2,6 +2,7 @@
 using System.Linq;
 using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.Geometry;
+using SPMTool.Core;
 using UnitsNet.Units;
 
 namespace SPMTool.Extensions
@@ -13,13 +14,19 @@ namespace SPMTool.Extensions
         /// </summary>
         /// <param name="point3d">The <see cref="Point3d"/> to convert.</param>
         /// <param name="unit">The <see cref="LengthUnit"/> of <paramref name="point3d"/> coordinates.</param>
-        public static Point ToPoint(this Point3d point3d, LengthUnit unit = LengthUnit.Millimeter) => new Point(point3d.X, point3d.Y, unit);
+        public static Point ToPoint(this Point3d point3d, LengthUnit unit) => new (point3d.X, point3d.Y, unit);
+        
+        /// <inheritdoc cref="ToPoint(Point3d, LengthUnit)"/>
+        /// <remarks>
+        ///     This uses unit from <see cref="DataBase.Settings"/>.
+        /// </remarks>
+        public static Point ToPoint(this Point3d point3d) => new (point3d.X, point3d.Y, DataBase.Settings.Units.Geometry);
 
         /// <summary>
         /// Convert a <see cref="Point"/> to <see cref="Point3d"/>.
         /// </summary>
         /// <param name="point">The <see cref="Point"/> to convert.</param>
-        public static Point3d ToPoint3d(this Point point) => new Point3d(point.X.Value, point.Y.Value, 0);
+        public static Point3d ToPoint3d(this Point point) => new (point.X.Value, point.Y.Value, 0);
 
         /// <summary>
         /// Convert a collection of <see cref="Point3d"/>'s to a collection of <see cref="Point"/>'s.

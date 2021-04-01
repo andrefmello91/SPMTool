@@ -101,8 +101,8 @@
       <HintPath>..\packages\andrefmello91.Material.1.0.6\lib\netstandard2.0\andrefmello91.Material.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="andrefmello91.OnPlaneComponents, Version=1.0.5.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\andrefmello91.OnPlaneComponents.1.0.5\lib\netstandard2.0\andrefmello91.OnPlaneComponents.dll</HintPath>
+    <Reference Include="andrefmello91.OnPlaneComponents, Version=1.0.6.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\andrefmello91.OnPlaneComponents.1.0.6-beta1\lib\netstandard2.0\andrefmello91.OnPlaneComponents.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="andrefmello91.ReinforcedConcreteMembrane, Version=1.0.7.0, Culture=neutral, PublicKeyToken=null">
