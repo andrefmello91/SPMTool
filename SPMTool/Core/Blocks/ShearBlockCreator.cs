@@ -42,7 +42,7 @@ namespace SPMTool.Core.Blocks
 		{
 			_shearStress = shearStress;
 			
-			Attributes   = new[] { GetAttribute(shearStress, ScaleFactor) };
+			Attributes   = new[] { GetAttribute(shearStress, scaleFactor) };
 		}
 
 		/// <summary>

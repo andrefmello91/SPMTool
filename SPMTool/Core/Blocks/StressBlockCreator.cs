@@ -2,6 +2,7 @@
 using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
+using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
@@ -40,15 +41,13 @@ namespace SPMTool.Core.Blocks
 		/// <param name="insertionPoint">The insertion <see cref="Point" /> of block.</param>
 		/// <param name="stressState">The <see cref="PrincipalStressState"/>.</param>
 		/// <param name="scaleFactor">The scale factor.</param>
-		/// <param name="layer">The layer for the stress block.</param>
-		public StressBlockCreator(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, Layer layer)
-			: base(insertionPoint, GetBlock(stressState), stressState.Theta1, scaleFactor)
+		/// <inheritdoc />
+		public StressBlockCreator(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, Layer? layer = null)
+			: base(insertionPoint, GetBlock(stressState), stressState.Theta1, scaleFactor, Axis.Z, layer)
 		{
 			_stressState = stressState;
 			
-			Attributes   = GetAttributes(stressState, ScaleFactor).ToArray();
-
-			Layer = layer;
+			Attributes   = GetAttributes(stressState, scaleFactor).ToArray();
 		}
 
 		/// <summary>
@@ -78,12 +77,14 @@ namespace SPMTool.Core.Blocks
 			{
 				var sigma1 = stressState.Sigma1.ToUnit(DataBase.Settings.Units.PanelStresses).Value.Abs();
 				var pt1    = GetTextInsertionPoint(stressState.Theta1, scaleFactor);
+				var color1 = stressState.Sigma1.GetColorCode();
 
 				yield return new AttributeReference
 				{
 					Position            = pt1.ToPoint3d(),
 					TextString          = $"{sigma1:0.00}",
 					Height              = 30 * scaleFactor,
+					Color               = Color.FromColorIndex(ColorMethod.ByAci, (short) color1),
 					Justify             = AttachmentPoint.MiddleLeft,
 					LockPositionInBlock = true,
 					Invisible           = false
@@ -96,12 +97,14 @@ namespace SPMTool.Core.Blocks
 
 			var sigma2 = stressState.Sigma2.ToUnit(DataBase.Settings.Units.PanelStresses).Value.Abs();
 			var pt2    = GetTextInsertionPoint(stressState.Theta1 - Constants.PiOver2, scaleFactor);
+			var color2 = stressState.Sigma2.GetColorCode();
 
 			yield return new AttributeReference
 			{
 				Position            = pt2.ToPoint3d(),
 				TextString          = $"{sigma2:0.00}",
 				Height              = 30 * scaleFactor,
+				Color               = Color.FromColorIndex(ColorMethod.ByAci, (short) color2),
 				Justify             = AttachmentPoint.MiddleLeft,
 				LockPositionInBlock = true,
 				Invisible           = false

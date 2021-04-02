@@ -267,7 +267,7 @@ namespace SPMTool.Core.Elements
 		{
 			return _panel is null || _panel.AveragePrincipalStresses.IsZero
 				? null
-				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses, BlockScaleFactor(), Layer.PanelStress);
+				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses, BlockScaleFactor());
 		}
 
 		/// <summary>
@@ -292,7 +292,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///		Calculate the scale factor for block insertion.
 		/// </summary>
-		private double BlockScaleFactor() => Geometry.EdgeLengths.Max().Value * Settings.Units.ScaleFactor;
+		private double BlockScaleFactor() => Geometry.EdgeLengths.Max().ToUnit(Settings.Units.Geometry).Value * 0.001;
 		
 		/// <summary>
 		///     Get the width of a panel.

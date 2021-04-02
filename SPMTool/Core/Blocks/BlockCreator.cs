@@ -68,13 +68,14 @@ namespace SPMTool.Core.Blocks
 		/// <param name="rotationAngle">The block rotation angle.</param>
 		/// <param name="scaleFactor">The scale factor.</param>
 		/// <param name="rotationAxis">The rotation <see cref="Axis"/>.</param>
+		/// <param name="layer">A custom <see cref="Layer"/>. Leave null to set default color from <paramref name="block"/>.</param>
 		/// <param name="colorCode">A custom <see cref="ColorCode"/>. Leave null to set default color from <paramref name="block"/>'s layer.</param>
 		/// <param name="attributes">The collection of <see cref="AttributeReference"/>'s to add to block.</param>
-		public BlockCreator(Point insertionPoint, Block block, double rotationAngle, double scaleFactor, Axis rotationAxis = Axis.Z, ColorCode? colorCode = null, IEnumerable<AttributeReference>? attributes = null)
+		public BlockCreator(Point insertionPoint, Block block, double rotationAngle, double scaleFactor, Axis rotationAxis = Axis.Z, Layer? layer = null, ColorCode? colorCode = null, IEnumerable<AttributeReference>? attributes = null)
 		{
 			Position      = insertionPoint;
 			Block         = block;
-			Layer         = block.GetAttribute<BlockAttribute>()!.Layer;
+			Layer         = layer ?? block.GetAttribute<BlockAttribute>()!.Layer;
 			RotationAngle = rotationAngle;
 			ScaleFactor   = scaleFactor;
 			RotationAxis  = rotationAxis;
