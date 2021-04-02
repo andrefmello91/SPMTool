@@ -18,7 +18,7 @@ namespace SPMTool.Editor.Commands
 		/// </summary>
 		public void Execute(object parameter)
 		{
-			if (parameter is null || !(parameter is RibbonButton button))
+			if (parameter is not RibbonButton button)
 				return;
 
 			// Get escape command
