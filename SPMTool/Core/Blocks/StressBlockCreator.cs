@@ -76,7 +76,10 @@ namespace SPMTool.Core.Blocks
 			if (!stressState.Is1Zero)
 			{
 				var sigma1 = stressState.Sigma1.ToUnit(DataBase.Settings.Units.PanelStresses).Value.Abs();
-				var pt1    = GetTextInsertionPoint(stressState.Theta1, scaleFactor);
+				
+				// Improve angle
+				var angle1 = ImproveAngle(stressState.Theta1);
+				var pt1    = GetTextInsertionPoint(angle1, scaleFactor);
 				var color1 = stressState.Sigma1.GetColorCode();
 
 				yield return new AttributeReference
@@ -96,7 +99,10 @@ namespace SPMTool.Core.Blocks
 				yield break;
 
 			var sigma2 = stressState.Sigma2.ToUnit(DataBase.Settings.Units.PanelStresses).Value.Abs();
-			var pt2    = GetTextInsertionPoint(stressState.Theta1 - Constants.PiOver2, scaleFactor);
+			
+			// Improve angle
+			var angle2 = ImproveAngle(stressState.Theta2);
+			var pt2    = GetTextInsertionPoint(angle2, scaleFactor);
 			var color2 = stressState.Sigma2.GetColorCode();
 
 			yield return new AttributeReference
@@ -124,5 +130,12 @@ namespace SPMTool.Core.Blocks
 			return
 				new Point(210 * cos * scaleFactor, 210 * sin * scaleFactor);
 		}
+		
+		/// <summary>
+		///	Improve the angle.
+		/// </summary>
+		private static double ImproveAngle(double angle) => angle > Constants.PiOver2
+			? angle - Constants.Pi
+			: angle;
 	}
 }

@@ -60,7 +60,7 @@ namespace SPMTool.Core.Blocks
 				{
 					Position            = Point3d.Origin,
 					TextString          = $"{tau:0.00}",
-					Height              = 30 * scaleFactor,
+					Height              = 37.5 * scaleFactor,
 					Justify             = AttachmentPoint.MiddleCenter,
 					LockPositionInBlock = true,
 					Invisible           = false
