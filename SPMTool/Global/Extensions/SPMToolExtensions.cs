@@ -16,6 +16,7 @@ using SPMTool.Attributes;
 using SPMTool.Core;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
+using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.DataBase;
 
@@ -326,6 +327,27 @@ namespace SPMTool.Extensions
 
 			return isOn;
 		}
+
+		/// <summary>
+		///		Get the <see cref="ColorCode"/> corresponding to this <paramref name="quantity"/>.
+		/// </summary>
+		/// <returns>
+		/// <see cref="ColorCode.Grey"/> is <paramref name="quantity"/> is approximately zero.
+		///	<para>
+		///	<see cref="ColorCode.Red"/> is <paramref name="quantity"/> is positive.
+		/// </para>
+		///	<para>
+		///	<see cref="ColorCode.Blue1"/> is <paramref name="quantity"/> is negative.
+		/// </para>
+		/// </returns>
+		public static ColorCode GetColorCode<TQuantity>(this TQuantity quantity)
+			where TQuantity : IQuantity =>
+			quantity.IsPositive() switch
+			{
+				false when quantity.Value.ApproxZero() => ColorCode.Grey,
+				false                                  => ColorCode.Blue1,
+				true                                   => ColorCode.Red,
+			};
 
 		/// <summary>
 		///     Turn off this <see cref="Layer" />.
