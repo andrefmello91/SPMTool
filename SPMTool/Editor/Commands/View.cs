@@ -92,14 +92,15 @@ namespace SPMTool.Editor.Commands
 		/// <summary>
 		/// Toggle view for panel forces.
 		/// </summary>
-		[CommandMethod(CommandName.PanelForces)]
+		[CommandMethod(CommandName.PanelShear)]
 	    public static void TogglePanelForces()
 	    {
+		    if (!Layer.PanelForce.Toggle())
+				return;
+
 			// Turn off layers
 			Layer.PanelStress.Off();
 			Layer.ConcreteStress.Off();
-
-			Layer.PanelForce.Toggle();
 	    }
 
 		/// <summary>
@@ -108,11 +109,12 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.PanelStresses)]
 	    public static void TogglePanelStresses()
 	    {
+		    if (!Layer.PanelStress.Toggle())
+			    return;
+
 			// Turn off layers
 			Layer.PanelForce.Off();
 			Layer.ConcreteStress.Off();
-
-			Layer.PanelStress.Toggle();
 	    }
 
 		/// <summary>
@@ -121,11 +123,12 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.ConcreteStresses)]
 	    public static void ToggleConcreteStresses()
 	    {
+		    if (!Layer.ConcreteStress.Toggle())
+			    return;
+
 		    // Turn off layers
 		    Layer.PanelForce.Off();
 		    Layer.PanelStress.Off();
-		    
-		    Layer.ConcreteStress.Toggle();
 	    }
 
 		/// <summary>

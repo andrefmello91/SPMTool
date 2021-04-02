@@ -127,7 +127,7 @@ namespace SPMTool.Editor.Commands
 
 		public const string StringerForces = nameof(StringerForces);
 
-		public const string PanelForces = nameof(PanelForces);
+		public const string PanelShear = nameof(PanelShear);
 
 		public const string PanelStresses = nameof(PanelStresses);
 

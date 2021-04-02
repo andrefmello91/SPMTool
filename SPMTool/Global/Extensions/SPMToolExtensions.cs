@@ -297,9 +297,12 @@ namespace SPMTool.Extensions
 		}
 
 		/// <summary>
-		///     Toogle view of this <see cref="Layer" /> (on and off).
+		///     Toogle view of this <see cref="Layer" /> and return it's actual state.
 		/// </summary>
-		public static void Toggle(this Layer layer)
+		/// <returns>
+		///		True if layer is on, else false.
+		/// </returns>
+		public static bool Toggle(this Layer layer)
 		{
 			// Get layer name
 			var layerName = layer.ToString();
@@ -310,16 +313,18 @@ namespace SPMTool.Extensions
 			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
 
 			if (!lyrTbl.Has(layerName))
-				return;
+				return false;
 
-			using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
-			{
-				// Verify the state
-				lyrTblRec.IsOff = !lyrTblRec.IsOff;
-			}
+			using var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite);
+
+			// Switch the state
+			var isOn = !lyrTblRec.IsOff;
+			lyrTblRec.IsOff = isOn;
 
 			// Commit and dispose the transaction
 			trans.Commit();
+
+			return isOn;
 		}
 
 		/// <summary>
