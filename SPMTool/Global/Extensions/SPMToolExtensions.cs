@@ -11,6 +11,7 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.Windows;
 using andrefmello91.Extensions;
+using andrefmello91.FEMAnalysis;
 using MathNet.Numerics;
 using SPMTool.Attributes;
 using SPMTool.Core;
@@ -319,13 +320,13 @@ namespace SPMTool.Extensions
 			using var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite);
 
 			// Switch the state
-			var isOn = !lyrTblRec.IsOff;
-			lyrTblRec.IsOff = isOn;
+			var isOff = lyrTblRec.IsOff;
+			lyrTblRec.IsOff = !isOff;
 
 			// Commit and dispose the transaction
 			trans.Commit();
 
-			return isOn;
+			return !lyrTblRec.IsOff;
 		}
 
 		/// <summary>
@@ -365,12 +366,15 @@ namespace SPMTool.Extensions
 			if (!lyrTbl.Has(layerName))
 				return;
 
-			using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
-			{
-				// Verify the state
-				if (!lyrTblRec.IsOff)
-					lyrTblRec.IsOff = true;   // Turn it off
-			}
+			using var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForRead);
+
+			// Verify the state
+			if (lyrTblRec.IsOff)
+				return;
+			
+			// Turn it off
+			lyrTblRec.UpgradeOpen();
+			lyrTblRec.IsOff = true;
 
 			// Commit and dispose the transaction
 			trans.Commit();
@@ -393,12 +397,15 @@ namespace SPMTool.Extensions
 			if (!lyrTbl.Has(layerName))
 				return;
 
-			using (var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForWrite))
-			{
-				// Verify the state
-				if (lyrTblRec.IsOff)
-					lyrTblRec.IsOff = false;   // Turn it on
-			}
+			using var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForRead);
+
+			// Verify the state
+			if (!lyrTblRec.IsOff)
+				return;
+			
+			// Turn it on
+			lyrTblRec.UpgradeOpen();
+			lyrTblRec.IsOff = false;
 
 			// Commit and dispose the transaction
 			trans.Commit();
