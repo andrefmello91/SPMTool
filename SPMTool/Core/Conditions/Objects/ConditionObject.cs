@@ -1,7 +1,6 @@
 ﻿using System;
 using Autodesk.AutoCAD.DatabaseServices;
 using andrefmello91.OnPlaneComponents;
-using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 
@@ -92,6 +91,12 @@ namespace SPMTool.Core.Conditions
 		#region  Methods
 
 		public virtual BlockReference CreateEntity() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, DataBase.Settings.Units.ScaleFactor)!;
+
+		/// <inheritdoc />
+		Entity? IEntityCreator.GetEntity() => GetEntity();
+
+		/// <inheritdoc />
+		Entity IEntityCreator.CreateEntity() => CreateEntity();
 
 		public virtual BlockReference? GetEntity() => (BlockReference?) ObjectId.GetEntity();
 

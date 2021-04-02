@@ -24,7 +24,7 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Panel object class.
 	/// </summary>
-	public class PanelObject : SPMObject<PanelGeometry>, IEquatable<PanelObject>
+	public class PanelObject : SPMObject<PanelGeometry>, IEntityCreator<Solid>, IEquatable<PanelObject>
 	{
 		#region Fields
 
@@ -61,6 +61,12 @@ namespace SPMTool.Core.Elements
 		public PanelGeometry Geometry => PropertyField;
 
 		public override Layer Layer => Layer.Panel;
+
+		/// <inheritdoc />
+		Solid IEntityCreator<Solid>.CreateEntity() => (Solid) CreateEntity();
+
+		/// <inheritdoc />
+		Solid? IEntityCreator<Solid>.GetEntity() => (Solid?) base.GetEntity();
 
 		/// <summary>
 		///     Get the <see cref="WebReinforcement" />.

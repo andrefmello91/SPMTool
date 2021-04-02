@@ -20,7 +20,7 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Node object class.
 	/// </summary>
-	public class NodeObject : SPMObject<Point>, IEquatable<NodeObject>
+	public class NodeObject : SPMObject<Point>, IEntityCreator<DBPoint>, IEquatable<NodeObject>
 	{
 		#region Fields
 
@@ -48,6 +48,12 @@ namespace SPMTool.Core.Elements
 		}
 
 		public override Layer Layer => GetLayer(Type);
+
+		/// <inheritdoc />
+		DBPoint IEntityCreator<DBPoint>.CreateEntity() => (DBPoint) CreateEntity();
+
+		/// <inheritdoc />
+		DBPoint? IEntityCreator<DBPoint>.GetEntity() => (DBPoint?) base.GetEntity();
 
 		/// <summary>
 		///     Get/set the <see cref="Force" /> in this object.

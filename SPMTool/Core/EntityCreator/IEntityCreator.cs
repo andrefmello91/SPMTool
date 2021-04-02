@@ -17,8 +17,7 @@ namespace SPMTool.Core
 	///     Interface for getting and creating entities in drawing.
 	/// </summary>
 	/// <typeparam name="T">Any type based on <see cref="Entity" />.</typeparam>
-	public interface IEntityCreator<out T>
-		where T : Entity
+	public interface IEntityCreator
 	{
 		#region Properties
 
@@ -42,12 +41,12 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Create an <see cref="Entity" /> based in this object's properties.
 		/// </summary>
-		T CreateEntity();
+		Entity CreateEntity();
 
 		/// <summary>
 		///     Get the <see cref="Entity" /> in drawing associated to this object.
 		/// </summary>
-		T? GetEntity();
+		Entity? GetEntity();
 
 		/// <summary>
 		///     Add a this object to drawing and set it's <see cref="ObjectId" />.
@@ -61,9 +60,27 @@ namespace SPMTool.Core
 
 		#endregion
 	}
+	
+	/// <summary>
+	///     Generic interface for getting and creating entities in drawing.
+	/// </summary>
+	/// <typeparam name="TEntity">Any type based on <see cref="Entity" />.</typeparam>
+	public interface IEntityCreator<out TEntity> : IEntityCreator
+		where TEntity : Entity
+	{
+		#region  Methods
+
+		/// <inheritdoc cref="IEntityCreator.CreateEntity"/>
+		new TEntity CreateEntity();
+
+		/// <inheritdoc cref="IEntityCreator.GetEntity"/>
+		new TEntity? GetEntity();
+
+		#endregion
+	}
 
 	/// <summary>
-	///     Extensions for <see cref="IEntityCreator{T}" />.
+	///     Extensions for <see cref="IEntityCreator" />.
 	/// </summary>
 	public static class EntityCreatorExtensions
 	{
@@ -73,22 +90,22 @@ namespace SPMTool.Core
 		///     Remove an object from drawing.
 		/// </summary>
 		/// <param name="element">The object to remove.</param>
-		public static void RemoveFromDrawing<T>(this T element)
-			where T : IEntityCreator<Entity> => element?.ObjectId.RemoveFromDrawing(Model.On_ObjectErase);
+		public static void RemoveFromDrawing<TEntityCreator>(this TEntityCreator? element)
+			where TEntityCreator : IEntityCreator => element?.ObjectId.RemoveFromDrawing(Model.On_ObjectErase);
 
 		/// <summary>
 		///     Remove a collection of objects from drawing.
 		/// </summary>
 		/// <param name="elements">The objects to remove.</param>
-		public static void RemoveFromDrawing<T>(this IEnumerable<T>? elements)
-			where T : IEntityCreator<Entity> => elements?.Select(e => e.ObjectId)?.ToArray()?.RemoveFromDrawing(Model.On_ObjectErase);
+		public static void RemoveFromDrawing<TEntityCreator>(this IEnumerable<TEntityCreator?>? elements)
+			where TEntityCreator : IEntityCreator => elements?.Where(e => e is not null).Select(e => e!.ObjectId)?.ToArray()?.RemoveFromDrawing(Model.On_ObjectErase);
 
 		/// <summary>
 		///     Add a collection of objects to drawing and set their <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="objects">The objects to add to drawing.</param>
-		public static void AddToDrawing<T>(this IEnumerable<T?>? objects)
-			where T : IEntityCreator<Entity>
+		public static void AddToDrawing<TEntityCreator>(this IEnumerable<TEntityCreator?>? objects)
+			where TEntityCreator : IEntityCreator
 		{
 			if (objects.IsNullOrEmpty())
 				return;
@@ -142,13 +159,13 @@ namespace SPMTool.Core
 		///     Get a SPM object from this <paramref name="objectId"/>.
 		/// </summary>
 		/// <param name="objectId">The <see cref="ObjectId" />.</param>
-		public static IEntityCreator<Entity>? GetSPMObject(this ObjectId objectId) => objectId.GetEntity()?.CreateSPMObject();
+		public static IEntityCreator? GetSPMObject(this ObjectId objectId) => objectId.GetEntity()?.CreateSPMObject();
 
 		/// <summary>
 		///     Get a SPM object from this <paramref name="entity"/>.
 		/// </summary>
 		/// <param name="entity">The <see cref="Entity" />.</param>
-		public static IEntityCreator<Entity>? GetSPMObject(this Entity? entity) =>
+		public static IEntityCreator? GetSPMObject(this Entity? entity) =>
 			entity switch
 			{
 				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => Model.Nodes.GetByObjectId(entity.ObjectId),
@@ -164,7 +181,7 @@ namespace SPMTool.Core
 		///     Create a <see cref="IEntityCreator{T}" /> from this <paramref name="entity"/>.
 		/// </summary>
 		/// <param name="entity">The <see cref="Entity"/>.</param>
-		public static IEntityCreator<Entity>? CreateSPMObject(this Entity? entity) =>
+		public static IEntityCreator? CreateSPMObject(this Entity? entity) =>
 			entity switch
 			{
 				DBPoint        p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => NodeObject.GetFromPoint(p),

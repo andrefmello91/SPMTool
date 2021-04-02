@@ -39,7 +39,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///		Collection of removed elements.
 		/// </summary>
-		public static readonly List<IEntityCreator<Entity>> Trash;
+		public static readonly List<IEntityCreator> Trash;
 
 		/// <summary>
 		///     The collection of <see cref="NodeObject" />'s in the model.
@@ -107,7 +107,7 @@ namespace SPMTool.Core
 		static Model()
 		{
 			// Initiate trash
-			Trash = new List<IEntityCreator<Entity>>();
+			Trash = new List<IEntityCreator>();
 
 			// Get elements
 			Nodes       = NodeList.ReadFromDrawing();
@@ -279,7 +279,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Remove a SPM object from its list.
 		/// </summary>
-		public static bool Remove(IEntityCreator<Entity> obj, bool raiseEvents = false)
+		public static bool Remove(IEntityCreator obj, bool raiseEvents = false)
 		{
 			if (obj is null)
 				return false;
@@ -318,7 +318,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Add a SPM object to its list.
 		/// </summary>
-		public static bool Add(IEntityCreator<Entity> obj, bool raiseEvents = false)
+		public static bool Add(IEntityCreator obj, bool raiseEvents = false)
 		{
 			if (obj is null)
 				return false;
@@ -382,7 +382,7 @@ namespace SPMTool.Core
 				return;
 			}
 
-			IEntityCreator<Entity> obj1;
+			IEntityCreator obj1;
 			try
 			{
 				obj1 = Trash.Find(t => t.ObjectId == entity.ObjectId);

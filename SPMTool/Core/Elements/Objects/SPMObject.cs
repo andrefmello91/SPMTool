@@ -44,7 +44,7 @@ namespace SPMTool.Core.Elements
 	///     SPM object base class
 	/// </summary>
 	/// <typeparam name="T">The type that represents the main property of the object.</typeparam>
-	public abstract class SPMObject<T> : DictionaryCreator, ISPMObject<T>, IEntityCreator<Entity>, IEquatable<SPMObject<T>>, IComparable<SPMObject<T>>
+	public abstract class SPMObject<T> : DictionaryCreator, ISPMObject<T>, IEntityCreator, IEquatable<SPMObject<T>>, IComparable<SPMObject<T>>
 		where T : IComparable<T>, IEquatable<T>
 	{
 		#region Fields

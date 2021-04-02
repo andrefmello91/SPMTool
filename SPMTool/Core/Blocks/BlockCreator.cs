@@ -87,6 +87,12 @@ namespace SPMTool.Core.Blocks
 		public BlockReference CreateEntity() => Block.GetReference(Position.ToPoint3d(), Layer, ColorCode, RotationAngle, RotationAxis, ScaleFactor)!;
 
 		/// <inheritdoc />
+		Entity? IEntityCreator.GetEntity() => GetEntity();
+
+		/// <inheritdoc />
+		Entity IEntityCreator.CreateEntity() => CreateEntity();
+
+		/// <inheritdoc />
 		public BlockReference? GetEntity() => (BlockReference?) ObjectId.GetEntity();
 
 		/// <inheritdoc />

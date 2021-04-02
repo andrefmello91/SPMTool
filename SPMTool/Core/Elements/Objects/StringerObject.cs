@@ -21,7 +21,7 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Stringer object class.
 	/// </summary>
-	public class StringerObject : SPMObject<StringerGeometry>, IEquatable<StringerObject>
+	public class StringerObject : SPMObject<StringerGeometry>, IEntityCreator<Line>, IEquatable<StringerObject>
 	{
 		#region Fields
 
@@ -50,6 +50,12 @@ namespace SPMTool.Core.Elements
 		}
 
 		public override Layer Layer => Layer.Stringer;
+
+		/// <inheritdoc />
+		Line IEntityCreator<Line>.CreateEntity() => (Line) CreateEntity();
+
+		/// <inheritdoc />
+		Line? IEntityCreator<Line>.GetEntity() => (Line?) base.GetEntity();
 
 		public override string Name => $"Stringer {Number}";
 

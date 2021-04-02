@@ -70,6 +70,12 @@ namespace SPMTool.Core
 			AlignmentPoint = InsertionPoint.ToPoint3d()
 		};
 
+		/// <inheritdoc />
+		Entity? IEntityCreator.GetEntity() => GetEntity();
+
+		/// <inheritdoc />
+		Entity IEntityCreator.CreateEntity() => CreateEntity();
+
 		public DBText? GetEntity() => (DBText?) ObjectId.GetEntity();
 
 		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing();
