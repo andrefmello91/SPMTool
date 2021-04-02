@@ -57,11 +57,11 @@ namespace SPMTool.Core.Blocks
 		private static Block GetBlock(PrincipalStressState stressState) =>
 			stressState.Case switch
 			{
-				PrincipalCase.PureTension     when stressState.Is2Zero                 => Block.UniaxialTensileStress,
-				PrincipalCase.PureTension     when stressState.Sigma2 > Pressure.Zero  => Block.PureTensileStress,
-				PrincipalCase.PureCompression when stressState.Is1Zero                 => Block.UniaxialTensileStress,
-				PrincipalCase.PureCompression when stressState.Sigma1 < Pressure.Zero  => Block.PureCompressiveStress,
-				_                                                                      => Block.CombinedStress,
+				PrincipalCase.UniaxialTension     => Block.UniaxialTensileStress,
+				PrincipalCase.PureTension         => Block.PureTensileStress,
+				PrincipalCase.UniaxialCompression => Block.UniaxialCompressiveStress,
+				PrincipalCase.PureCompression     => Block.PureCompressiveStress,
+				_                                 => Block.CombinedStress,
 			};
 
 		/// <summary>
