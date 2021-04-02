@@ -636,7 +636,7 @@ namespace SPMTool.Core
 			// DrawStresses(panels);
 
 			// Get panel blocks
-			var blocks = Panels.SelectMany(p => p.GetBlocks()).Where(b => b is not null);
+			var blocks = Panels.SelectMany(p => p.GetBlocks()).ToList();
 			
 			// Add to drawing and set attributes
 			blocks.AddToDrawing();
@@ -646,9 +646,9 @@ namespace SPMTool.Core
 				Model.Editor.WriteMessage
 				(
 					$"\nPanel {panel.Number}:" +
-					$"\n AvgStress:" +
+					"\n AvgStress:" +
 					$"\n{panel.AverageStresses}" +
-					$"\nPrincipals:" +
+					"\nPrincipals:" +
 					$"\n{panel.AveragePrincipalStresses}"
 				);
 			

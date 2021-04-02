@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
@@ -31,6 +30,7 @@ namespace SPMTool.Core.Elements
 
 		private WebReinforcementDirection? _x, _y;
 		private Panel? _panel;
+		private BlockCreator? _shearBlock, _avgStress, _concreteStress;
 
 		#endregion
 
@@ -254,26 +254,38 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///		Get the shear <see cref="BlockCreator"/>.
 		/// </summary>
-		private BlockCreator? ShearBlock() => 
-			_panel is null || _panel.AverageStresses.IsXYZero 
-				? null 
+		private BlockCreator? ShearBlock()
+		{
+			_shearBlock = _panel is null || _panel.AverageStresses.IsXYZero
+				? null
 				: new ShearBlockCreator(Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY, 0.8 * BlockScaleFactor());
+
+			return _shearBlock;
+		}
 
 		/// <summary>
 		///		Get the average stress <see cref="BlockCreator"/>.
 		/// </summary>
-		private BlockCreator? AverageStressBlock() => 
-			_panel is null || _panel.AveragePrincipalStresses.IsZero 
-				? null 
+		private BlockCreator? AverageStressBlock()
+		{
+			_avgStress = _panel is null || _panel.AveragePrincipalStresses.IsZero
+				? null
 				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses, BlockScaleFactor(), Layer.PanelStress);
-		
+
+			return _avgStress;
+		}
+
 		/// <summary>
 		///		Get the concrete stress <see cref="BlockCreator"/>.
 		/// </summary>
-		private BlockCreator? ConcreteStressBlock() => 
-			_panel is null || _panel.AveragePrincipalStresses.IsZero 
-				? null 
+		private BlockCreator? ConcreteStressBlock()
+		{
+			_concreteStress = _panel is null || _panel.AveragePrincipalStresses.IsZero
+				? null
 				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses, BlockScaleFactor(), Layer.ConcreteStress);
+
+			return _concreteStress;
+		}
 
 		/// <summary>
 		///		Get panel block creators.
