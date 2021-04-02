@@ -30,7 +30,6 @@ namespace SPMTool.Core.Elements
 
 		private WebReinforcementDirection? _x, _y;
 		private Panel? _panel;
-		private BlockCreator? _shearBlock, _avgStress, _concreteStress;
 
 		#endregion
 
@@ -256,11 +255,9 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		private BlockCreator? ShearBlock()
 		{
-			_shearBlock = _panel is null || _panel.AverageStresses.IsXYZero
+			return _panel is null || _panel.AverageStresses.IsXYZero
 				? null
 				: new ShearBlockCreator(Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY, 0.8 * BlockScaleFactor());
-
-			return _shearBlock;
 		}
 
 		/// <summary>
@@ -268,11 +265,9 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		private BlockCreator? AverageStressBlock()
 		{
-			_avgStress = _panel is null || _panel.AveragePrincipalStresses.IsZero
+			return _panel is null || _panel.AveragePrincipalStresses.IsZero
 				? null
 				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses, BlockScaleFactor(), Layer.PanelStress);
-
-			return _avgStress;
 		}
 
 		/// <summary>
@@ -280,11 +275,9 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		private BlockCreator? ConcreteStressBlock()
 		{
-			_concreteStress = _panel is null || _panel.AveragePrincipalStresses.IsZero
+			return _panel is null || _panel.AveragePrincipalStresses.IsZero
 				? null
 				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses, BlockScaleFactor(), Layer.ConcreteStress);
-
-			return _concreteStress;
 		}
 
 		/// <summary>
