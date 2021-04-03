@@ -4,56 +4,62 @@ using andrefmello91.Extensions;
 
 namespace SPMTool.Extensions
 {
-    /// <summary>
-    /// Extensions for interface elements.
-    /// </summary>
-    public static class UIExtensions
-    {
-	    /// <summary>
-	    /// Disable this <paramref name="element"/>.
-	    /// </summary>
-	    public static void Disable(this UIElement? element)
-	    {
-            if (element is null)
-                return;
+	/// <summary>
+	///     Extensions for interface elements.
+	/// </summary>
+	public static class UIExtensions
+	{
 
-		    element.IsEnabled = false;
-	    }
+		#region Methods
 
-	    /// <summary>
-        /// Enable this <paramref name="element"/>.
-        /// </summary>
-        public static void Enable(this UIElement? element)
-	    {
-		    if (element is null)
-			    return;
+		/// <summary>
+		///     Disable this <paramref name="element" />.
+		/// </summary>
+		public static void Disable(this UIElement? element)
+		{
+			if (element is null)
+				return;
 
-		    element.IsEnabled = true;
-	    }
+			element.IsEnabled = false;
+		}
 
 
-        /// <summary>
-        /// Disable these <paramref name="elements"/>.
-        /// </summary>
-        public static void Disable(this IEnumerable<UIElement>? elements)
-        {
-            if (elements.IsNullOrEmpty())
-                return;
+		/// <summary>
+		///     Disable these <paramref name="elements" />.
+		/// </summary>
+		public static void Disable(this IEnumerable<UIElement>? elements)
+		{
+			if (elements.IsNullOrEmpty())
+				return;
 
-			foreach(var element in elements)
+			foreach (var element in elements)
 				element.Disable();
-        }
+		}
 
-        /// <summary>
-        /// Enable these <paramref name="elements"/>.
-        /// </summary>
-        public static void Enable(this IEnumerable<UIElement>? elements)
-        {
-	        if (elements.IsNullOrEmpty())
-		        return;
+		/// <summary>
+		///     Enable this <paramref name="element" />.
+		/// </summary>
+		public static void Enable(this UIElement? element)
+		{
+			if (element is null)
+				return;
 
-            foreach (var element in elements)
+			element.IsEnabled = true;
+		}
+
+		/// <summary>
+		///     Enable these <paramref name="elements" />.
+		/// </summary>
+		public static void Enable(this IEnumerable<UIElement>? elements)
+		{
+			if (elements.IsNullOrEmpty())
+				return;
+
+			foreach (var element in elements)
 				element.Enable();
-        }
-    }
+		}
+
+		#endregion
+
+	}
 }

@@ -14,6 +14,7 @@ namespace SPMTool.Application.UserInterface
 	/// </summary>
 	public partial class UnitsConfig : Window
 	{
+
 		#region Properties
 
 		/// <summary>
@@ -26,14 +27,14 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private Units Units
 		{
-			get => new Units
+			get => new()
 			{
-				Geometry              = UnitParser.Default.Parse<LengthUnit>  ((string) GeometryBox.SelectedItem),
-				Reinforcement         = UnitParser.Default.Parse<LengthUnit>  ((string) ReinforcementBox.SelectedItem),
-				Displacements         = UnitParser.Default.Parse<LengthUnit>  ((string) DisplacementsBox.SelectedItem),
-				CrackOpenings         = UnitParser.Default.Parse<LengthUnit>  ((string) CracksBox.SelectedItem),
-				AppliedForces         = UnitParser.Default.Parse<ForceUnit>   ((string) AppliedForcesBox.SelectedItem),
-				StringerForces        = UnitParser.Default.Parse<ForceUnit>   ((string) StringerForcesBox.SelectedItem),
+				Geometry              = UnitParser.Default.Parse<LengthUnit>((string) GeometryBox.SelectedItem),
+				Reinforcement         = UnitParser.Default.Parse<LengthUnit>((string) ReinforcementBox.SelectedItem),
+				Displacements         = UnitParser.Default.Parse<LengthUnit>((string) DisplacementsBox.SelectedItem),
+				CrackOpenings         = UnitParser.Default.Parse<LengthUnit>((string) CracksBox.SelectedItem),
+				AppliedForces         = UnitParser.Default.Parse<ForceUnit>((string) AppliedForcesBox.SelectedItem),
+				StringerForces        = UnitParser.Default.Parse<ForceUnit>((string) StringerForcesBox.SelectedItem),
 				PanelStresses         = UnitParser.Default.Parse<PressureUnit>((string) PanelStressesBox.SelectedItem),
 				MaterialStrength      = UnitParser.Default.Parse<PressureUnit>((string) MaterialBox.SelectedItem),
 				DisplacementMagnifier = int.Parse(FactorBox.Text)
@@ -72,28 +73,17 @@ namespace SPMTool.Application.UserInterface
 
 		#endregion
 
-		#region  Methods
-
-		/// <summary>
-		///     Get sources of combo boxes.
-		/// </summary>
-		private void GetSources()
-		{
-			GeometryBox.ItemsSource      = ReinforcementBox.ItemsSource  = DisplacementsBox.ItemsSource = CracksBox.ItemsSource = DimensionUnits;
-			AppliedForcesBox.ItemsSource = StringerForcesBox.ItemsSource = ForceUnits;
-			MaterialBox.ItemsSource      = PanelStressesBox.ItemsSource  = StressUnits;
-		}
-
-		private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
-		{
-			var regex = new Regex("[^0-9]+");
-			e.Handled = regex.IsMatch(e.Text);
-		}
+		#region Methods
 
 		/// <summary>
 		///     Close window if cancel button is clicked.
 		/// </summary>
 		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
+
+		/// <summary>
+		///     Set default units.
+		/// </summary>
+		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => Units = Units.Default;
 
 		/// <summary>
 		///     Save units if OK button is clicked.
@@ -116,10 +106,22 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
-		///     Set default units.
+		///     Get sources of combo boxes.
 		/// </summary>
-		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => Units = Units.Default;
+		private void GetSources()
+		{
+			GeometryBox.ItemsSource      = ReinforcementBox.ItemsSource  = DisplacementsBox.ItemsSource = CracksBox.ItemsSource = DimensionUnits;
+			AppliedForcesBox.ItemsSource = StringerForcesBox.ItemsSource = ForceUnits;
+			MaterialBox.ItemsSource      = PanelStressesBox.ItemsSource  = StressUnits;
+		}
+
+		private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
+		{
+			var regex = new Regex("[^0-9]+");
+			e.Handled = regex.IsMatch(e.Text);
+		}
 
 		#endregion
+
 	}
 }

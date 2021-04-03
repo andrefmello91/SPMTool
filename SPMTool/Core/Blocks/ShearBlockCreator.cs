@@ -14,10 +14,17 @@ namespace SPMTool.Core.Blocks
 	/// </summary>
 	public class ShearBlockCreator : BlockCreator
 	{
+
+		#region Fields
+
 		private Pressure _shearStress;
 
+		#endregion
+
+		#region Properties
+
 		/// <summary>
-		///		Get/set the shear stress.
+		///     Get/set the shear stress.
 		/// </summary>
 		public Pressure ShearStress
 		{
@@ -25,11 +32,15 @@ namespace SPMTool.Core.Blocks
 			set
 			{
 				_shearStress = value;
-				
+
 				// Update attribute
 				Attributes = new[] { GetAttribute(value, ScaleFactor) };
 			}
 		}
+
+		#endregion
+
+		#region Constructors
 
 		/// <summary>
 		///     Block creator constructor.
@@ -41,14 +52,18 @@ namespace SPMTool.Core.Blocks
 			: base(insertionPoint, Block.Shear, GetRotationAngle(shearStress), scaleFactor, Axis.Y)
 		{
 			_shearStress = shearStress;
-			
-			Attributes   = new[] { GetAttribute(shearStress, scaleFactor) };
+
+			Attributes = new[] { GetAttribute(shearStress, scaleFactor) };
 		}
 
+		#endregion
+
+		#region Methods
+
 		/// <summary>
-		///		Get the attribute for shear block.
+		///     Get the attribute for shear block.
 		/// </summary>
-		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double)"/>
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double)" />
 		private static AttributeReference GetAttribute(Pressure shearStress, double scaleFactor)
 		{
 			// Get shear stress
@@ -68,11 +83,14 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <summary>
-		///		Get the rotation angle for shear block.
+		///     Get the rotation angle for shear block.
 		/// </summary>
-		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double)"/>
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double)" />
 		private static double GetRotationAngle(Pressure shearStress) => shearStress >= Pressure.Zero
 			? 0
 			: Constants.Pi;
+
+		#endregion
+
 	}
 }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.DataExtraction;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Application;
 using SPMTool.Core.Blocks;
@@ -21,6 +20,7 @@ namespace SPMTool.Core
 	/// </summary>
 	public static class DataBase
 	{
+
 		#region Fields
 
 		/// <summary>
@@ -93,50 +93,21 @@ namespace SPMTool.Core
 
 		static DataBase()
 		{
-            // Register app in AutoCAD
-            RegisterApp();
+			// Register app in AutoCAD
+			RegisterApp();
 
-            // Create layers and blocks
-            CreateLayers();
-            BlockElements.CreateBlocks();
+			// Create layers and blocks
+			CreateLayers();
+			BlockElements.CreateBlocks();
 
-            // Get app settings
-            Settings     = new Settings();
-            ConcreteData = new ConcreteData();
+			// Get app settings
+			Settings     = new Settings();
+			ConcreteData = new ConcreteData();
 		}
 
 		#endregion
 
-		#region  Methods
-
-		/// <summary>
-		///     Start a new transaction in <see cref="Database" />.
-		/// </summary>
-		public static Transaction StartTransaction() => Database.TransactionManager.StartTransaction();
-
-		/// <summary>
-		///     Add the app to the Registered Applications Record.
-		/// </summary>
-		public static void RegisterApp()
-		{
-			// Start a transaction
-			using var lck = Document.LockDocument();
-			using var trans = StartTransaction();
-
-			// Open the Registered Applications table for read
-			var regAppTbl = (RegAppTable) trans.GetObject(Database.RegAppTableId, OpenMode.ForRead);
-
-			if (regAppTbl.Has(AppName))
-				return;
-
-			var regAppTblRec = new RegAppTableRecord { Name = AppName };
-			regAppTbl.UpgradeOpen();
-			regAppTbl.Add(regAppTblRec);
-			trans.AddNewlyCreatedDBObject(regAppTblRec, true);
-
-			// Commit and dispose the transaction
-			trans.Commit();
-		}
+		#region Methods
 
 		/// <summary>
 		///     Create layers for use with SPMTool.
@@ -154,6 +125,97 @@ namespace SPMTool.Core
 		///     Get folder path of current file.
 		/// </summary>
 		public static string GetFilePath() => GetSystemVariable("DWGPREFIX").ToString()!;
+
+		/// <summary>
+		///     Read dictionary entries that contains <paramref name="name" />.
+		/// </summary>
+		/// <param name="name">The name of entry.</param>
+		public static IEnumerable<ResultBuffer> ReadDictionaryEntries(string name)
+		{
+			// Start a transaction
+			using var trans = StartTransaction();
+
+			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForRead);
+
+			var resList = new List<ResultBuffer>();
+
+			// Check if name contains
+			foreach (var entry in nod)
+			{
+				if (!entry.Key.Contains(name))
+					continue;
+
+				var xRec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+
+				// Add data
+				resList.Add(xRec.Data);
+			}
+
+			return resList;
+		}
+
+		/// <summary>
+		///     Read data on a dictionary entry.
+		/// </summary>
+		/// <param name="name">The name of entry.</param>
+		/// <param name="fullName">Return only data corresponding to full name?</param>
+		public static TypedValue[]? ReadDictionaryEntry(string name, bool fullName = true)
+		{
+			// Start a transaction
+			using var trans = StartTransaction();
+
+			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForRead);
+
+			// Check if it exists as full name
+			if (fullName && nod.Contains(name))
+
+				// Read the concrete Xrecord
+			{
+				using var xrec = (Xrecord) trans.GetObject(nod.GetAt(name), OpenMode.ForRead);
+				return
+					xrec.Data.AsArray();
+			}
+
+			// Check if name contains
+			foreach (var entry in nod)
+			{
+				if (!entry.Key.Contains(name))
+					continue;
+
+				// Read data
+				var refXrec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+
+				return
+					refXrec.Data.AsArray();
+			}
+
+			// Not set
+			return null;
+		}
+
+		/// <summary>
+		///     Add the app to the Registered Applications Record.
+		/// </summary>
+		public static void RegisterApp()
+		{
+			// Start a transaction
+			using var lck   = Document.LockDocument();
+			using var trans = StartTransaction();
+
+			// Open the Registered Applications table for read
+			var regAppTbl = (RegAppTable) trans.GetObject(Database.RegAppTableId, OpenMode.ForRead);
+
+			if (regAppTbl.Has(AppName))
+				return;
+
+			var regAppTblRec = new RegAppTableRecord { Name = AppName };
+			regAppTbl.UpgradeOpen();
+			regAppTbl.Add(regAppTblRec);
+			trans.AddNewlyCreatedDBObject(regAppTblRec, true);
+
+			// Commit and dispose the transaction
+			trans.Commit();
+		}
 
 		/// <summary>
 		///     Save <paramref name="data" /> in <see cref="DBDictionary" />.
@@ -187,71 +249,11 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Read data on a dictionary entry.
+		///     Start a new transaction in <see cref="Database" />.
 		/// </summary>
-		/// <param name="name">The name of entry.</param>
-		/// <param name="fullName">Return only data corresponding to full name?</param>
-		public static TypedValue[]? ReadDictionaryEntry(string name, bool fullName = true)
-		{
-			// Start a transaction
-			using var trans = StartTransaction();
-
-			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForRead);
-
-			// Check if it exists as full name
-			if (fullName && nod.Contains(name))
-				// Read the concrete Xrecord
-			{
-				using var xrec = (Xrecord) trans.GetObject(nod.GetAt(name), OpenMode.ForRead);
-				return
-					xrec.Data.AsArray();
-			}
-
-			// Check if name contains
-			foreach (var entry in nod)
-			{
-				if (!entry.Key.Contains(name))
-					continue;
-
-				// Read data
-				var refXrec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
-
-				return
-					refXrec.Data.AsArray();
-			}
-
-			// Not set
-			return null;
-		}
-
-		/// <summary>
-		///     Read dictionary entries that contains <paramref name="name" />.
-		/// </summary>
-		/// <param name="name">The name of entry.</param>
-		public static IEnumerable<ResultBuffer> ReadDictionaryEntries(string name)
-		{
-			// Start a transaction
-			using var trans = StartTransaction();
-
-			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForRead);
-
-			var resList = new List<ResultBuffer>();
-
-			// Check if name contains
-			foreach (var entry in nod)
-			{
-				if (!entry.Key.Contains(name))
-					continue;
-
-				var xRec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
-
-				// Add data
-				resList.Add(xRec.Data);
-			}
-
-			return resList;
-		}
+		public static Transaction StartTransaction() => Database.TransactionManager.StartTransaction();
 
 		#endregion
+
 	}
 }

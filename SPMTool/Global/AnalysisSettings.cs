@@ -8,12 +8,13 @@ namespace SPMTool
 	/// </summary>
 	public class AnalysisSettings : IEquatable<AnalysisSettings>
 	{
+
 		#region Fields
 
 		/// <summary>
 		///     Default <see cref="AnalysisSettings" /> object.
 		/// </summary>
-		public static readonly AnalysisSettings Default = new AnalysisSettings
+		public static readonly AnalysisSettings Default = new()
 		{
 			Tolerance     = 1E-6,
 			NumLoadSteps  = 50,
@@ -46,15 +47,15 @@ namespace SPMTool
 
 		#endregion
 
-		#region  Methods
+		#region Methods
+
+		public override bool Equals(object obj) => obj is AnalysisSettings settings && Equals(settings);
 
 		/// <summary>
 		///     Returns true if all parameters coincide.
 		/// </summary>
 		/// <param name="other">The other <see cref="AnalysisSettings" /> object.</param>
 		public bool Equals(AnalysisSettings other) => Tolerance.Approx(other.Tolerance) && NumLoadSteps == other.NumLoadSteps && MaxIterations == other.MaxIterations;
-
-		public override bool Equals(object obj) => obj is AnalysisSettings settings && Equals(settings);
 
 		public override int GetHashCode() => base.GetHashCode();
 
@@ -65,13 +66,14 @@ namespace SPMTool
 		/// <summary>
 		///     Returns true if all units coincide.
 		/// </summary>
-		public static bool operator == (AnalysisSettings left, AnalysisSettings right) => !(left is null) && left.Equals(right);
+		public static bool operator ==(AnalysisSettings left, AnalysisSettings right) => !(left is null) && left.Equals(right);
 
 		/// <summary>
 		///     Returns true if at least a unit do not coincide.
 		/// </summary>
-		public static bool operator != (AnalysisSettings left, AnalysisSettings right) => !(left is null) && !left.Equals(right);
+		public static bool operator !=(AnalysisSettings left, AnalysisSettings right) => !(left is null) && !left.Equals(right);
 
 		#endregion
+
 	}
 }

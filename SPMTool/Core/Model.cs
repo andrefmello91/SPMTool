@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.EList;
-using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
-using andrefmello91.Material.Reinforcement;
 using andrefmello91.FEMAnalysis;
+using andrefmello91.Material.Reinforcement;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
+using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
@@ -24,20 +24,21 @@ namespace SPMTool.Core
 	/// </summary>
 	public static class Model
 	{
+
 		#region Fields
 
 		/// <summary>
 		///     Collection of element <see cref="Layer" />'s.
 		/// </summary>
-		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support }  ;
+		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
 
 		/// <summary>
 		///     Command names for undo and redo.
 		/// </summary>
-		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" }  ;
+		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" };
 
 		/// <summary>
-		///		Collection of removed elements.
+		///     Collection of removed elements.
 		/// </summary>
 		public static readonly List<IEntityCreator> Trash;
 
@@ -132,183 +133,7 @@ namespace SPMTool.Core
 
 		#endregion
 
-		#region  Methods
-
-		/// <summary>
-		///		Update collections from objects in drawing.
-		/// </summary>
-		public static void UpdateObjects()
-		{
-			// Get elements
-			Nodes       = NodeList.ReadFromDrawing();
-			Forces      = ForceList.ReadFromDrawing();
-			Constraints = ConstraintList.ReadFromDrawing();
-			Stringers   = StringerList.ReadFromDrawing();
-			Panels      = PanelList.ReadFromDrawing();
-		}
-		
-		/// <summary>
-		///		Register events for AutoCAD entities.
-		/// </summary>
-		public static void RegisterEventsToEntities()
-		{
-			// Get object ids
-			var ids = Nodes.Select(n => n.ObjectId)
-				.Concat(Forces.Select(f => f.ObjectId))
-				.Concat(Constraints.Select(c => c.ObjectId))
-				.Concat(Stringers.Select(s => s.ObjectId))
-				.Concat(Panels.Select(p => p.ObjectId))
-				.ToList();
-
-			// Register event
-			ids.RegisterErasedEvent(On_ObjectErase);
-		}
-
-		/// <inheritdoc cref="StringerCrossSections" />
-		private static EList<CrossSection> GetCrossSections()
-		{
-			var list = Stringers.GetCrossSections().ToEList() ?? new EList<CrossSection>();
-
-			list.ItemAdded += On_CrossSection_Add;
-
-			return list;
-		}
-
-		/// <inheritdoc cref="StringerReinforcements" />
-		private static EList<UniaxialReinforcement> GetStringerReinforcements()
-		{
-			var list = Stringers.GetReinforcements().ToEList() ?? new EList<UniaxialReinforcement>();
-
-			list.ItemAdded += On_StrRef_Add;
-
-			return list;
-		}
-
-		/// <inheritdoc cref="PanelReinforcements" />
-		private static EList<WebReinforcementDirection> GetPanelReinforcements()
-		{
-			var list = Panels.GetReinforcementDirections().ToEList() ?? new EList<WebReinforcementDirection>();
-
-			list.ItemAdded += On_PanRef_Add;
-
-			return list;
-		}
-
-		/// <summary>
-		///     Update all the elements in the drawing.
-		/// </summary>
-		/// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
-		/// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
-		public static void UpdateElements(bool addNodes = true, bool removeNodes = true)
-		{
-			Stringers.Update();
-			Panels.Update();
-			Nodes.Update(addNodes, removeNodes);
-		}
-
-		/// <summary>
-		///     Get the <see cref="FEMInput" /> from objects in drawing.
-		/// </summary>
-		/// <param name="dataOk">Returns true if data is consistent to start analysis.</param>
-		/// <param name="message">Message to show if data is inconsistent.</param>
-		/// <param name="analysisType">The type of analysis to perform.</param>
-		public static SPMInput GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
-		{
-			// Get the element model
-			var elementModel = analysisType switch
-			{
-				AnalysisType.Linear => ElementModel.Elastic,
-				_                   => ElementModel.Nonlinear
-			};
-				
-			// Read elements
-			var nodes     = Nodes.GetElements().Cast<Node>().ToList();
-			var stringers = Stringers.GetElements(nodes, elementModel).ToList();
-			var panels    = Panels.GetElements(nodes, elementModel).ToList();
-
-			// Verify if there is stringers and nodes at least
-			if (!nodes.Any() || !stringers.Any())
-			{
-				dataOk = false;
-				message = "Please input model geometry";
-				return null;
-			}
-
-			// Generate input
-			dataOk  = true;
-			message = string.Empty;
-
-			return
-				new SPMInput(stringers, panels, nodes);
-		}
-
-		/// <summary>
-		///     Set application parameters for drawing.
-		/// </summary>
-		public static void SetAppParameters()
-		{
-			SetPointSize();
-			SetLineWeightDisplay();
-		}
-
-		/// <summary>
-		///     Set size to points in the drawing.
-		/// </summary>
-		public static void SetPointSize()
-		{
-			// Set the style for all point objects in the drawing
-			DataBase.Database.Pdmode = 32;
-			DataBase.Database.Pdsize = 40 * Settings.Units.ScaleFactor;
-		}
-
-		/// <summary>
-		///     Turn off fillmode setting.
-		/// </summary>
-		public static void SetFillMode() => DataBase.Database.Fillmode = false;
-
-		/// <summary>
-		///     Turn on line weight display.
-		/// </summary>
-		public static void SetLineWeightDisplay() => DataBase.Database.LineWeightDisplay = true;
-
-		/// <summary>
-		///     Get the SPM object associated to an <see cref="Entity" /> and remove from its list.
-		/// </summary>
-		public static bool Remove(Entity entity, bool raiseEvents = false) => Remove(entity.GetSPMObject(), raiseEvents);
-
-		/// <summary>
-		///     Remove a SPM object from its list.
-		/// </summary>
-		public static bool Remove(IEntityCreator obj, bool raiseEvents = false)
-		{
-			if (obj is null)
-				return false;
-
-			switch (obj)
-			{
-				case NodeObject node:
-					var nd = Nodes.Remove(node, raiseEvents, false);
-					Nodes.Update();
-					return nd;
-
-				case StringerObject stringer:
-					var str = Stringers.Remove(stringer, raiseEvents);
-					Nodes.Update();
-					return str;
-
-				case PanelObject panel:
-					return Panels.Remove(panel, raiseEvents);
-
-				case ForceObject force:
-					return Forces.Remove(force, raiseEvents);
-
-				case ConstraintObject constraint:
-					return Constraints.Remove(constraint, raiseEvents);
-
-				default:
-					return false;
-			}
-		}
+		#region Methods
 
 		/// <summary>
 		///     Create an SPM object associated to an <see cref="Entity" /> and add to its list.
@@ -350,12 +175,60 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Event to run after undo or redo commands.
+		///     Get the <see cref="FEMInput" /> from objects in drawing.
 		/// </summary>
-		public static void On_UndoOrRedo(object sender, CommandEventArgs e)
+		/// <param name="dataOk">Returns true if data is consistent to start analysis.</param>
+		/// <param name="message">Message to show if data is inconsistent.</param>
+		/// <param name="analysisType">The type of analysis to perform.</param>
+		public static SPMInput GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
 		{
-			if (CmdNames.Any(cmd => cmd.Contains(e.GlobalCommandName.ToUpper())))
-				UpdateElements(false);
+			// Get the element model
+			var elementModel = analysisType switch
+			{
+				AnalysisType.Linear => ElementModel.Elastic,
+				_                   => ElementModel.Nonlinear
+			};
+
+			// Read elements
+			var nodes     = Nodes.GetElements().Cast<Node>().ToList();
+			var stringers = Stringers.GetElements(nodes, elementModel).ToList();
+			var panels    = Panels.GetElements(nodes, elementModel).ToList();
+
+			// Verify if there is stringers and nodes at least
+			if (!nodes.Any() || !stringers.Any())
+			{
+				dataOk  = false;
+				message = "Please input model geometry";
+				return null;
+			}
+
+			// Generate input
+			dataOk  = true;
+			message = string.Empty;
+
+			return
+				new SPMInput(stringers, panels, nodes);
+		}
+
+		/// <summary>
+		///     Event to run when an item is added to <see cref="StringerCrossSections" />.
+		/// </summary>
+		public static void On_CrossSection_Add(object sender, ItemEventArgs<CrossSection> e) => ElementWidths.Add(e.Item.Width);
+
+		/// <summary>
+		///     Event to execute when an object is copied.
+		/// </summary>
+		public static void On_ObjectCopied(object sender, ObjectEventArgs e)
+		{
+			var entity = (Entity) e.DBObject;
+
+			if (entity is null)
+				return;
+
+			var obj = entity.CreateSPMObject();
+
+			Add(obj);
+			Editor.WriteMessage($"\n{obj.GetType()} copied.");
 		}
 
 		/// <summary>
@@ -392,29 +265,13 @@ namespace SPMTool.Core
 				Editor.WriteMessage("\nNot found in trash.");
 				obj1 = entity.CreateSPMObject();
 			}
-				
+
 			if (!Add(obj1))
 				return;
 
 			Trash.Remove(obj1);
 
 			Editor.WriteMessage($"\n{obj1.Name} re-added");
-		}
-
-		/// <summary>
-		///     Event to execute when an object is unappended from database.
-		/// </summary>
-		public static void On_ObjectUnappended(object sender, EventArgs e)
-		{
-			var entity = (Entity) sender;
-
-			if (entity is null)
-				return;
-
-			var obj = entity.GetSPMObject();
-
-			Remove(obj);
-			Editor.WriteMessage($"\n{obj.GetType()} removed");
 		}
 
 		/// <summary>
@@ -434,25 +291,25 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Event to execute when an object is copied.
+		///     Event to execute when an object is unappended from database.
 		/// </summary>
-		public static void On_ObjectCopied(object sender, ObjectEventArgs e)
+		public static void On_ObjectUnappended(object sender, EventArgs e)
 		{
-			var entity = (Entity) e.DBObject;
+			var entity = (Entity) sender;
 
 			if (entity is null)
 				return;
 
-			var obj = entity.CreateSPMObject();
+			var obj = entity.GetSPMObject();
 
-			Add(obj);
-			Editor.WriteMessage($"\n{obj.GetType()} copied.");
+			Remove(obj);
+			Editor.WriteMessage($"\n{obj.GetType()} removed");
 		}
 
 		/// <summary>
-		///     Event to run when an item is added to <see cref="StringerCrossSections" />.
+		///     Event to run when an item is added to <see cref="PanelReinforcements" />.
 		/// </summary>
-		public static void On_CrossSection_Add(object sender, ItemEventArgs<CrossSection> e) => ElementWidths.Add(e.Item.Width);
+		public static void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e) => Steels.Add(e.Item?.Steel);
 
 		/// <summary>
 		///     Event to run when an item is added to <see cref="StringerReinforcements" />.
@@ -460,10 +317,155 @@ namespace SPMTool.Core
 		public static void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e) => Steels.Add(e.Item?.Steel);
 
 		/// <summary>
-		///     Event to run when an item is added to <see cref="PanelReinforcements" />.
+		///     Event to run after undo or redo commands.
 		/// </summary>
-		public static void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e) => Steels.Add(e.Item?.Steel);
+		public static void On_UndoOrRedo(object sender, CommandEventArgs e)
+		{
+			if (CmdNames.Any(cmd => cmd.Contains(e.GlobalCommandName.ToUpper())))
+				UpdateElements(false);
+		}
+
+		/// <summary>
+		///     Register events for AutoCAD entities.
+		/// </summary>
+		public static void RegisterEventsToEntities()
+		{
+			// Get object ids
+			var ids = Nodes.Select(n => n.ObjectId)
+				.Concat(Forces.Select(f => f.ObjectId))
+				.Concat(Constraints.Select(c => c.ObjectId))
+				.Concat(Stringers.Select(s => s.ObjectId))
+				.Concat(Panels.Select(p => p.ObjectId))
+				.ToList();
+
+			// Register event
+			ids.RegisterErasedEvent(On_ObjectErase);
+		}
+
+		/// <summary>
+		///     Get the SPM object associated to an <see cref="Entity" /> and remove from its list.
+		/// </summary>
+		public static bool Remove(Entity entity, bool raiseEvents = false) => Remove(entity.GetSPMObject(), raiseEvents);
+
+		/// <summary>
+		///     Remove a SPM object from its list.
+		/// </summary>
+		public static bool Remove(IEntityCreator obj, bool raiseEvents = false)
+		{
+			if (obj is null)
+				return false;
+
+			switch (obj)
+			{
+				case NodeObject node:
+					var nd = Nodes.Remove(node, raiseEvents, false);
+					Nodes.Update();
+					return nd;
+
+				case StringerObject stringer:
+					var str = Stringers.Remove(stringer, raiseEvents);
+					Nodes.Update();
+					return str;
+
+				case PanelObject panel:
+					return Panels.Remove(panel, raiseEvents);
+
+				case ForceObject force:
+					return Forces.Remove(force, raiseEvents);
+
+				case ConstraintObject constraint:
+					return Constraints.Remove(constraint, raiseEvents);
+
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		///     Set application parameters for drawing.
+		/// </summary>
+		public static void SetAppParameters()
+		{
+			SetPointSize();
+			SetLineWeightDisplay();
+		}
+
+		/// <summary>
+		///     Turn off fillmode setting.
+		/// </summary>
+		public static void SetFillMode() => DataBase.Database.Fillmode = false;
+
+		/// <summary>
+		///     Turn on line weight display.
+		/// </summary>
+		public static void SetLineWeightDisplay() => DataBase.Database.LineWeightDisplay = true;
+
+		/// <summary>
+		///     Set size to points in the drawing.
+		/// </summary>
+		public static void SetPointSize()
+		{
+			// Set the style for all point objects in the drawing
+			DataBase.Database.Pdmode = 32;
+			DataBase.Database.Pdsize = 40 * Settings.Units.ScaleFactor;
+		}
+
+		/// <summary>
+		///     Update all the elements in the drawing.
+		/// </summary>
+		/// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
+		/// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
+		public static void UpdateElements(bool addNodes = true, bool removeNodes = true)
+		{
+			Stringers.Update();
+			Panels.Update();
+			Nodes.Update(addNodes, removeNodes);
+		}
+
+		/// <summary>
+		///     Update collections from objects in drawing.
+		/// </summary>
+		public static void UpdateObjects()
+		{
+			// Get elements
+			Nodes       = NodeList.ReadFromDrawing();
+			Forces      = ForceList.ReadFromDrawing();
+			Constraints = ConstraintList.ReadFromDrawing();
+			Stringers   = StringerList.ReadFromDrawing();
+			Panels      = PanelList.ReadFromDrawing();
+		}
+
+		/// <inheritdoc cref="StringerCrossSections" />
+		private static EList<CrossSection> GetCrossSections()
+		{
+			var list = Stringers.GetCrossSections().ToEList() ?? new EList<CrossSection>();
+
+			list.ItemAdded += On_CrossSection_Add;
+
+			return list;
+		}
+
+		/// <inheritdoc cref="PanelReinforcements" />
+		private static EList<WebReinforcementDirection> GetPanelReinforcements()
+		{
+			var list = Panels.GetReinforcementDirections().ToEList() ?? new EList<WebReinforcementDirection>();
+
+			list.ItemAdded += On_PanRef_Add;
+
+			return list;
+		}
+
+		/// <inheritdoc cref="StringerReinforcements" />
+		private static EList<UniaxialReinforcement> GetStringerReinforcements()
+		{
+			var list = Stringers.GetReinforcements().ToEList() ?? new EList<UniaxialReinforcement>();
+
+			list.ItemAdded += On_StrRef_Add;
+
+			return list;
+		}
 
 		#endregion
+
 	}
 }

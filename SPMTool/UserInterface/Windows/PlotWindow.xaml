@@ -4,20 +4,20 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
-        xmlns:local="clr-namespace:SPMTool.Application.UserInterface"
         mc:Ignorable="d"
         Title="Load x Displacement - Monitored Node" Height="520" Width="710">
     <Grid Background="#282c34" Width="700" Height="Auto">
         <Grid.RowDefinitions>
-            <RowDefinition Height="450"/>
-            <RowDefinition Height="30"/>
+            <RowDefinition Height="450" />
+            <RowDefinition Height="30" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="10"/>
-            <ColumnDefinition Width="680"/>
-            <ColumnDefinition Width="10"/>
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="680" />
+            <ColumnDefinition Width="10" />
         </Grid.ColumnDefinitions>
-        <lvc:CartesianChart Name="CartesianChart" Background="#282c34" DisableAnimations="True" Hoverable="False" Grid.Column="1">
+        <lvc:CartesianChart Name="CartesianChart" Background="#282c34" DisableAnimations="True" Hoverable="False"
+                            Grid.Column="1">
             <lvc:CartesianChart.AxisX>
                 <lvc:Axis Name="DisplacementAxis" Title="{Binding DisplacementTitle}">
                     <lvc:Axis.Separator>
@@ -41,10 +41,12 @@
                 </lvc:Axis>
             </lvc:CartesianChart.AxisY>
             <lvc:CartesianChart.DataTooltip>
-                <lvc:DefaultTooltip SelectionMode="OnlySender" ShowSeries="False"/>
+                <lvc:DefaultTooltip SelectionMode="OnlySender" ShowSeries="False" />
             </lvc:CartesianChart.DataTooltip>
         </lvc:CartesianChart>
-        <Button Content="Export" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" Margin="0,0,80,0"  Width="58" Click="ButtonExport_OnClick" ToolTip="Export analysis results"/>
-        <Button Content="OK"     HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" Margin="0,0,10,0"  Width="47" Click="ButtonOK_OnClick"/>
+        <Button Content="Export" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
+                Margin="0,0,80,0" Width="58" Click="ButtonExport_OnClick" ToolTip="Export analysis results" />
+        <Button Content="OK" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
+                Margin="0,0,10,0" Width="47" Click="ButtonOK_OnClick" />
     </Grid>
 </Window>

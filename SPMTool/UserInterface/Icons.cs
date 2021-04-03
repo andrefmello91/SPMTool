@@ -15,6 +15,7 @@ namespace SPMTool.Application.UserInterface
 	/// </summary>
 	public class Icons
 	{
+
 		#region Fields
 
 		// Auxiliary bitmaps
@@ -182,14 +183,7 @@ namespace SPMTool.Application.UserInterface
 
 		#endregion
 
-		#region  Methods
-
-		/// <summary>
-		///     Get a <see cref="Bitmap" /> icon from resources.
-		/// </summary>
-		/// <param name="name">The icon name.</param>
-		/// <param name="colorTheme">The application <see cref="ColorTheme" />.</param>
-		public static Bitmap? GetFromResource(string name, ColorTheme colorTheme) => (Bitmap?) Resources.ResourceManager.GetObject(colorTheme is ColorTheme.Light ? name : $"{name}_light");
+		#region Methods
 
 		/// <summary>
 		///     Get a bitmap from <paramref name="image" />.
@@ -206,6 +200,13 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
+		///     Get a <see cref="Bitmap" /> icon from resources.
+		/// </summary>
+		/// <param name="name">The icon name.</param>
+		/// <param name="colorTheme">The application <see cref="ColorTheme" />.</param>
+		public static Bitmap? GetFromResource(string name, ColorTheme colorTheme) => (Bitmap?) Resources.ResourceManager.GetObject(colorTheme is ColorTheme.Light ? name : $"{name}_light");
+
+		/// <summary>
 		///     Get application icons based on system theme.
 		/// </summary>
 		public void GetIcons()
@@ -213,34 +214,35 @@ namespace SPMTool.Application.UserInterface
 			// Check the current theme
 			var theme = (ColorTheme) (short) GetSystemVariable("COLORTHEME");
 
-			_strBmp = GetFromResource("stringer_large", theme)!;
-			_pnlBmp = GetFromResource("panel_large", theme)!;
-			_dvStrBmp = GetFromResource("divstr_small", theme)!;
-			_dvPnlBmp = GetFromResource("divpnl_small", theme)!;
-			_updtBmp = GetFromResource("update_small", theme)!;
-			_elmDtBmp = GetFromResource("elementdata_small", theme)!;
-			_strRefBmp = GetFromResource("stringerreinforcement_large", theme)!;
-			_pnlRefBmp = GetFromResource("panelreinforcement_large", theme)!;
-			_cncrtBmp = GetFromResource("concrete_large", theme)!;
-			_suprtBmp = GetFromResource("support_large", theme)!;
-			_fcBmp = GetFromResource("force_large", theme)!;
-			_linBmp = GetFromResource("linear_large", theme)!;
-			_nlinBmp = GetFromResource("nonlinear_large", theme)!;
-			_viewNdBmp = GetFromResource("viewnode_large", theme)!;
+			_strBmp     = GetFromResource("stringer_large", theme)!;
+			_pnlBmp     = GetFromResource("panel_large", theme)!;
+			_dvStrBmp   = GetFromResource("divstr_small", theme)!;
+			_dvPnlBmp   = GetFromResource("divpnl_small", theme)!;
+			_updtBmp    = GetFromResource("update_small", theme)!;
+			_elmDtBmp   = GetFromResource("elementdata_small", theme)!;
+			_strRefBmp  = GetFromResource("stringerreinforcement_large", theme)!;
+			_pnlRefBmp  = GetFromResource("panelreinforcement_large", theme)!;
+			_cncrtBmp   = GetFromResource("concrete_large", theme)!;
+			_suprtBmp   = GetFromResource("support_large", theme)!;
+			_fcBmp      = GetFromResource("force_large", theme)!;
+			_linBmp     = GetFromResource("linear_large", theme)!;
+			_nlinBmp    = GetFromResource("nonlinear_large", theme)!;
+			_viewNdBmp  = GetFromResource("viewnode_large", theme)!;
 			_viewStrBmp = GetFromResource("viewstringer_large", theme)!;
 			_viewPnlBmp = GetFromResource("viewpanel_large", theme)!;
-			_viewFBmp = GetFromResource("viewforce_large", theme)!;
+			_viewFBmp   = GetFromResource("viewforce_large", theme)!;
 			_viewSupBmp = GetFromResource("viewsupport_large", theme)!;
-			_strFBmp = GetFromResource("stringerforces_large", theme)!;
-			_pnlShBmp = GetFromResource("panelforces_large", theme)!;
-			_pnlStBmp = GetFromResource("panelstresses_large", theme)!;
-			_concStBmp = GetFromResource("concretestresses_large", theme)!;
-			_dispBmp = GetFromResource("displacements_large", theme)!;
-			_crackBmp = GetFromResource("crack_large", theme)!;
-			_unitsBmp = GetFromResource("units", theme)!;
-			_anSetBmp = GetFromResource("analysissettings", theme)!;
+			_strFBmp    = GetFromResource("stringerforces_large", theme)!;
+			_pnlShBmp   = GetFromResource("panelforces_large", theme)!;
+			_pnlStBmp   = GetFromResource("panelstresses_large", theme)!;
+			_concStBmp  = GetFromResource("concretestresses_large", theme)!;
+			_dispBmp    = GetFromResource("displacements_large", theme)!;
+			_crackBmp   = GetFromResource("crack_large", theme)!;
+			_unitsBmp   = GetFromResource("units", theme)!;
+			_anSetBmp   = GetFromResource("analysissettings", theme)!;
 		}
 
 		#endregion
+
 	}
 }

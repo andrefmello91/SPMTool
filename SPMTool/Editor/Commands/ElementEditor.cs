@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using andrefmello91.EList;
-using Autodesk.AutoCAD.Runtime;
 using andrefmello91.Extensions;
-using andrefmello91.SPMElements.PanelProperties;
-using andrefmello91.SPMElements.StringerProperties;
+using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
@@ -23,49 +19,8 @@ namespace SPMTool.Editor.Commands
 	/// </summary>
 	public static class ElementEditor
 	{
-		#region  Methods
 
-		/// <summary>
-		///     Divide a stringer into new ones.
-		/// </summary>
-		[CommandMethod(CommandName.DivideStringer)]
-		public static void DivideStringer()
-		{
-			// Prompt for select stringers
-			var strs = UserInput.SelectStringers("Select stringers to divide")?.ToArray();
-
-			if (strs.IsNullOrEmpty())
-				return;
-
-			// Prompt for the number of segments
-			var numn = UserInput.GetInteger("Enter the number of new stringers:", 2);
-
-			if (!numn.HasValue)
-				return;
-
-			var num = numn.Value;
-
-			// Get stringers from list
-			var toDivide = Stringers.GetByObjectIds(strs.GetObjectIds().ToArray())?.ToArray();
-
-			if (toDivide.IsNullOrEmpty())
-				return;
-
-			// Remove mid nodes
-			Nodes.RemoveRange(toDivide.Select(s => s.Geometry.CenterPoint).ToArray());
-
-			// Divide the stringers
-			var newStrs = toDivide.SelectMany(s => s.Divide(num)).ToArray();
-
-			// Erase the original stringers
-			Stringers.RemoveRange(toDivide);
-
-			// Add the stringers
-			Stringers.AddRange(newStrs);
-
-			// Update nodes
-			Nodes.Update();
-		}
+		#region Methods
 
 		[CommandMethod(CommandName.DividePanel)]
 		public static void DividePanel()
@@ -133,7 +88,7 @@ namespace SPMTool.Editor.Commands
 				{
 					var j = 2 * i;
 
-					var hor = strEdges[j    ]?.Divide(cln)?.Where(s => !(s is null))?.ToArray();
+					var hor = strEdges[j]?.Divide(cln)?.Where(s => !(s is null))?.ToArray();
 					var ver = strEdges[j + 1]?.Divide(row)?.Where(s => !(s is null))?.ToArray();
 
 					if (!hor.IsNullOrEmpty())
@@ -174,20 +129,45 @@ namespace SPMTool.Editor.Commands
 		}
 
 		/// <summary>
-		///     Set geometry to a selection of stringers.
+		///     Divide a stringer into new ones.
 		/// </summary>
-		[CommandMethod(CommandName.EditStringer)]
-		public static void EditStringer()
+		[CommandMethod(CommandName.DivideStringer)]
+		public static void DivideStringer()
 		{
-			// Request objects to be selected in the drawing area
-			var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();
+			// Prompt for select stringers
+			var strs = UserInput.SelectStringers("Select stringers to divide")?.ToArray();
 
 			if (strs.IsNullOrEmpty())
 				return;
 
-			// Start the config window
-			var geoWindow = new StringerWindow(Stringers.GetByObjectIds(strs.GetObjectIds())!);
-			ShowModalWindow(MainWindow.Handle, geoWindow, false);
+			// Prompt for the number of segments
+			var numn = UserInput.GetInteger("Enter the number of new stringers:", 2);
+
+			if (!numn.HasValue)
+				return;
+
+			var num = numn.Value;
+
+			// Get stringers from list
+			var toDivide = Stringers.GetByObjectIds(strs.GetObjectIds().ToArray())?.ToArray();
+
+			if (toDivide.IsNullOrEmpty())
+				return;
+
+			// Remove mid nodes
+			Nodes.RemoveRange(toDivide.Select(s => s.Geometry.CenterPoint).ToArray());
+
+			// Divide the stringers
+			var newStrs = toDivide.SelectMany(s => s.Divide(num)).ToArray();
+
+			// Erase the original stringers
+			Stringers.RemoveRange(toDivide);
+
+			// Add the stringers
+			Stringers.AddRange(newStrs);
+
+			// Update nodes
+			Nodes.Update();
 		}
 
 		/// <summary>
@@ -208,6 +188,23 @@ namespace SPMTool.Editor.Commands
 		}
 
 		/// <summary>
+		///     Set geometry to a selection of stringers.
+		/// </summary>
+		[CommandMethod(CommandName.EditStringer)]
+		public static void EditStringer()
+		{
+			// Request objects to be selected in the drawing area
+			var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();
+
+			if (strs.IsNullOrEmpty())
+				return;
+
+			// Start the config window
+			var geoWindow = new StringerWindow(Stringers.GetByObjectIds(strs.GetObjectIds())!);
+			ShowModalWindow(MainWindow.Handle, geoWindow, false);
+		}
+
+		/// <summary>
 		///     Update all the elements in the drawing.
 		/// </summary>
 		[CommandMethod(CommandName.UpdateElements)]
@@ -220,5 +217,6 @@ namespace SPMTool.Editor.Commands
 		}
 
 		#endregion
+
 	}
 }

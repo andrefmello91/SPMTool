@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using andrefmello91.Extensions;
+using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using andrefmello91.Extensions;
 using MathNet.Numerics;
-using andrefmello91.SPMElements;
-using Autodesk.AutoCAD.Windows;
-using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -22,16 +20,17 @@ namespace SPMTool.Core
 	/// </summary>
 	public static class Results
 	{
+
 		#region Fields
 
 		/// <summary>
 		///     Collection of result <see cref="Layer" />'s.
 		/// </summary>
-		public static readonly Layer[] ResultLayers = { Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Displacements, Layer.Cracks};
+		public static readonly Layer[] ResultLayers = { Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Displacements, Layer.Cracks };
 
 		#endregion
 
-		#region  Methods
+		#region Methods
 
 		/*
 		/// <summary>
@@ -246,7 +245,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Draw panel cracks.
 		/// </summary>
-		/// <inheritdoc cref="DrawResults"/>
+		/// <inheritdoc cref="DrawResults" />
 		public static void DrawCracks(IEnumerable<Panel> panels)
 		{
 			var units = Settings.Units;
@@ -309,10 +308,10 @@ namespace SPMTool.Core
 						var algnPt = new Point3d(cntrPt.X, cntrPt.Y - 40 * scFctr, 0);
 
 						// Set the parameters
-						crkTxt.Layer = $"{Layer.Cracks}";
-						crkTxt.Height = 30 * units.ScaleFactor;
-						crkTxt.TextString = $"{w.ToUnit(units.CrackOpenings).Value:0.00E+00}";
-						crkTxt.Position = algnPt;
+						crkTxt.Layer          = $"{Layer.Cracks}";
+						crkTxt.Height         = 30 * units.ScaleFactor;
+						crkTxt.TextString     = $"{w.ToUnit(units.CrackOpenings).Value:0.00E+00}";
+						crkTxt.Position       = algnPt;
 						crkTxt.HorizontalMode = TextHorizontalMode.TextCenter;
 						crkTxt.AlignmentPoint = algnPt;
 
@@ -331,9 +330,168 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
+		///     Draw cracks at the stringers.
+		/// </summary>
+		/// <inheritdoc cref="DrawResults" />
+		public static void DrawCracks(IEnumerable<Stringer> stringers)
+		{
+			// Get units
+			var units  = Settings.Units;
+			var scFctr = units.ScaleFactor;
+
+			// Start a transaction
+			using (var trans = StartTransaction())
+			using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
+			{
+				// Read the object Id of the crack block
+				var crackBlock = blkTbl[$"{Block.StringerCrack}"];
+
+				foreach (var str in stringers)
+				{
+					// Get the average crack opening
+					var cracks = str.CrackOpenings;
+
+					// Get length converted and angle
+					var l = str.Geometry.Length.ToUnit(units.Geometry).Value;
+					var a = str.Geometry.Angle;
+
+					// Get insertion points
+					var stPt = str.Geometry.InitialPoint.ToPoint3d();
+
+					var points = new[]
+					{
+						new Point3d(stPt.X + 0.1 * l, 0, 0),
+						new Point3d(stPt.X + 0.5 * l, 0, 0),
+						new Point3d(stPt.X + 0.9 * l, 0, 0)
+					};
+
+					for (var i = 0; i < cracks.Length; i++)
+					{
+						if (cracks[i].ApproxZero(LengthTolerance))
+							continue;
+
+						// Add crack blocks
+						AddCrackBlock(cracks[i].ToUnit(Settings.Units.CrackOpenings).Value, points[i]);
+					}
+
+					// Create crack block
+					void AddCrackBlock(double w, Point3d position)
+					{
+						// Insert the block into the current space
+						using (var blkRef = new BlockReference(position, crackBlock))
+						{
+							blkRef.Layer = $"{Layer.Cracks}";
+
+							// Set the scale of the block
+							blkRef.TransformBy(Matrix3d.Scaling(scFctr, position));
+
+							// Rotate
+							if (!a.ApproxZero(1E-3))
+								blkRef.TransformBy(Matrix3d.Rotation(a, Ucs.Zaxis, stPt));
+
+							blkRef.AddToDrawing(null, trans);
+						}
+
+						// Create the texts
+						using (var crkTxt = new DBText())
+						{
+							// Set the alignment point
+							var algnPt = new Point3d(position.X, position.Y - 100 * scFctr, 0);
+
+							// Set the parameters
+							crkTxt.Layer          = $"{Layer.Cracks}";
+							crkTxt.Height         = 30 * scFctr;
+							crkTxt.TextString     = $"{w.Abs():0.00E+00}";
+							crkTxt.Position       = algnPt;
+							crkTxt.HorizontalMode = TextHorizontalMode.TextCenter;
+							crkTxt.AlignmentPoint = algnPt;
+
+							// Rotate text
+							if (!a.ApproxZero(1E-3))
+								crkTxt.TransformBy(Matrix3d.Rotation(a, Ucs.Zaxis, stPt));
+
+							// Add the text to the drawing
+							crkTxt.AddToDrawing(null, trans);
+						}
+					}
+				}
+
+				// Save the new objects to the database
+				trans.Commit();
+			}
+		}
+
+		/// <summary>
+		///     Draw displacements.
+		/// </summary>
+		/// <inheritdoc cref="DrawResults" />
+		public static void DrawDisplacements(IEnumerable<Stringer> stringers)
+		{
+			// Get units
+			var units = Settings.Units;
+
+			// Turn the layer off
+			Layer.Displacements.Off();
+
+			// Set a scale factor for displacements
+			var scFctr = units.DisplacementScaleFactor;
+
+			// Create lists of points for adding the nodes later
+			var dispNds = new List<Point3d>();
+
+			foreach (var str in stringers)
+			{
+				// Get displacements of the initial and end nodes
+				var d1 = str.Grip1.Displacement.Clone();
+				var d3 = str.Grip3.Displacement.Clone();
+				d1.ChangeUnit(units.Displacements);
+				d3.ChangeUnit(units.Displacements);
+
+				double
+					ux1 = d1.X.Value * scFctr,
+					uy1 = d1.X.Value * scFctr,
+					ux3 = d3.X.Value * scFctr,
+					uy3 = d3.X.Value * scFctr,
+					ix  = str.Geometry.InitialPoint.X.ToUnit(units.Geometry).Value,
+					iy  = str.Geometry.InitialPoint.Y.ToUnit(units.Geometry).Value,
+					ex  = str.Geometry.EndPoint.X.ToUnit(units.Geometry).Value,
+					ey  = str.Geometry.EndPoint.Y.ToUnit(units.Geometry).Value;
+
+				// Calculate the displaced nodes
+				Point3d
+					stPt  = new(ix + ux1, iy + uy1, 0),
+					enPt  = new(ex + ux3, ey + uy3, 0),
+					midPt = stPt.MidPoint(enPt);
+
+				// Draw the displaced Stringer
+				using (var newStr = new Line(stPt, enPt))
+				{
+					// Set the layer to Stringer
+					newStr.Layer = $"{Layer.Displacements}";
+
+					// Add the line to the drawing
+					newStr.AddToDrawing();
+				}
+
+				// Add the position of the nodes to the list
+				if (!dispNds.Contains(stPt))
+					dispNds.Add(stPt);
+
+				if (!dispNds.Contains(enPt))
+					dispNds.Add(enPt);
+
+				if (!dispNds.Contains(midPt))
+					dispNds.Add(midPt);
+			}
+
+			// Add the nodes
+			Nodes.AddRange(dispNds.ToPoints(units.Geometry), NodeType.Displaced, false, false);
+		}
+
+		/// <summary>
 		///     Draw stringer forces.
 		/// </summary>
-		/// <inheritdoc cref="DrawResults"/>
+		/// <inheritdoc cref="DrawResults" />
 		public static void DrawForces(IEnumerable<Stringer> stringers)
 		{
 			// Get units
@@ -341,7 +499,7 @@ namespace SPMTool.Core
 
 			// Get the scale factor
 			var scFctr = units.ScaleFactor;
-			
+
 			// Get maximum force
 			var maxForce = stringers.Select(s => s.MaxForce.Abs()).Max();
 
@@ -383,16 +541,16 @@ namespace SPMTool.Core
 					Point3d[] vrts =
 					{
 						stPt,
-						new Point3d(stPt.X + l,      stPt.Y, 0),
-						new Point3d(    stPt.X, stPt.Y + h1, 0),
-						new Point3d(stPt.X + l, stPt.Y + h3, 0)
+						new(stPt.X + l, stPt.Y, 0),
+						new(stPt.X, stPt.Y + h1, 0),
+						new(stPt.X + l, stPt.Y + h3, 0)
 					};
 
 					// Create the diagram as a solid with 4 segments (4 points)
 					using (var dgrm = new Solid(vrts[0], vrts[1], vrts[2], vrts[3]))
 					{
 						// Set the layer and transparency
-						dgrm.Layer = $"{Layer.StringerForce}";
+						dgrm.Layer        = $"{Layer.StringerForce}";
 						dgrm.Transparency = 80.Transparency();
 
 						// Set the color (blue to compression and red to tension)
@@ -409,7 +567,7 @@ namespace SPMTool.Core
 				void Combined()
 				{
 					// Calculate the point where the Stringer force will be zero
-					var x = h1.Abs() * l / (h1.Abs() + h3.Abs());
+					var x     = h1.Abs() * l / (h1.Abs() + h3.Abs());
 					var invPt = new Point3d(stPt.X + x, stPt.Y, 0);
 
 					// Calculate the points (the solid will be rotated later)
@@ -417,21 +575,21 @@ namespace SPMTool.Core
 					{
 						stPt,
 						invPt,
-						new Point3d(stPt.X, stPt.Y + h1, 0)
+						new(stPt.X, stPt.Y + h1, 0)
 					};
 
 					Point3d[] vrts3 =
 					{
 						invPt,
-						new Point3d(stPt.X + l, stPt.Y,      0),
-						new Point3d(stPt.X + l, stPt.Y + h3, 0)
+						new(stPt.X + l, stPt.Y, 0),
+						new(stPt.X + l, stPt.Y + h3, 0)
 					};
 
 					// Create the diagrams as solids with 3 segments (3 points)
 					using (var dgrm1 = new Solid(vrts1[0], vrts1[1], vrts1[2]))
 					{
 						// Set the layer and transparency
-						dgrm1.Layer = $"{Layer.StringerForce}";
+						dgrm1.Layer        = $"{Layer.StringerForce}";
 						dgrm1.Transparency = 80.Transparency();
 
 						// Set the color (blue to compression and red to tension)
@@ -447,7 +605,7 @@ namespace SPMTool.Core
 					using (var dgrm3 = new Solid(vrts3[0], vrts3[1], vrts3[2]))
 					{
 						// Set the layer and transparency
-						dgrm3.Layer = $"{Layer.StringerForce}";
+						dgrm3.Layer        = $"{Layer.StringerForce}";
 						dgrm3.Transparency = 80.Transparency();
 
 						// Set the color (blue to compression and red to tension)
@@ -529,101 +687,9 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Draw cracks at the stringers.
-		/// </summary>
-		/// <inheritdoc cref="DrawResults"/>
-		public static void DrawCracks(IEnumerable<Stringer> stringers)
-		{
-			// Get units
-			var units  = Settings.Units;
-			var scFctr = units.ScaleFactor;
-
-			// Start a transaction
-			using (var trans = StartTransaction())
-			using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
-			{
-				// Read the object Id of the crack block
-				var crackBlock = blkTbl[$"{Block.StringerCrack}"];
-
-				foreach (var str in stringers)
-				{
-					// Get the average crack opening
-					var cracks = str.CrackOpenings;
-
-					// Get length converted and angle
-					var l = str.Geometry.Length.ToUnit(units.Geometry).Value;
-					var a = str.Geometry.Angle;
-
-					// Get insertion points
-					var stPt = str.Geometry.InitialPoint.ToPoint3d();
-
-					var points = new[]
-					{
-						new Point3d(stPt.X + 0.1 * l, 0, 0),
-						new Point3d(stPt.X + 0.5 * l, 0, 0),
-						new Point3d(stPt.X + 0.9 * l, 0, 0)
-					};
-
-					for (var i = 0; i < cracks.Length; i++)
-					{
-						if (cracks[i].ApproxZero(LengthTolerance))
-							continue;
-
-						// Add crack blocks
-						AddCrackBlock(cracks[i].ToUnit(Settings.Units.CrackOpenings).Value, points[i]);
-					}
-
-					// Create crack block
-					void AddCrackBlock(double w, Point3d position)
-					{
-						// Insert the block into the current space
-						using (var blkRef = new BlockReference(position, crackBlock))
-						{
-							blkRef.Layer = $"{Layer.Cracks}";
-
-							// Set the scale of the block
-							blkRef.TransformBy(Matrix3d.Scaling(scFctr, position));
-
-							// Rotate
-							if (!a.ApproxZero(1E-3))
-								blkRef.TransformBy(Matrix3d.Rotation(a, Ucs.Zaxis, stPt));
-
-							blkRef.AddToDrawing(null, trans);
-						}
-
-						// Create the texts
-						using (var crkTxt = new DBText())
-						{
-							// Set the alignment point
-							var algnPt = new Point3d(position.X, position.Y - 100 * scFctr, 0);
-
-							// Set the parameters
-							crkTxt.Layer = $"{Layer.Cracks}";
-							crkTxt.Height = 30 * scFctr;
-							crkTxt.TextString = $"{w.Abs():0.00E+00}";
-							crkTxt.Position = algnPt;
-							crkTxt.HorizontalMode = TextHorizontalMode.TextCenter;
-							crkTxt.AlignmentPoint = algnPt;
-
-							// Rotate text
-							if (!a.ApproxZero(1E-3))
-								crkTxt.TransformBy(Matrix3d.Rotation(a, Ucs.Zaxis, stPt));
-
-							// Add the text to the drawing
-							crkTxt.AddToDrawing(null, trans);
-						}
-					}
-				}
-
-				// Save the new objects to the database
-				trans.Commit();
-			}
-		}
-
-		/// <summary>
 		///     Draw results of analysis.
 		/// </summary>
-		/// <param name="input">The <see cref="SPMInput"/>.</param>
+		/// <param name="input">The <see cref="SPMInput" />.</param>
 		/// <param name="drawCracks">Draw cracks after nonlinear analysis?</param>
 		public static void DrawResults(SPMInput input, bool drawCracks)
 		{
@@ -631,13 +697,14 @@ namespace SPMTool.Core
 			ResultLayers.EraseObjects();
 
 			SetDisplacements();
+
 			// DrawDisplacements(stringers);
 			// DrawForces(stringers);
 			// DrawStresses(panels);
 
 			// Get panel blocks
 			var blocks = Panels.SelectMany(p => p.GetBlocks()).ToList();
-			
+
 			// Add to drawing and set attributes
 			blocks.AddToDrawing();
 			blocks.SetAttributes();
@@ -651,7 +718,7 @@ namespace SPMTool.Core
 					"\nPrincipals:" +
 					$"\n{panel.AveragePrincipalStresses}"
 				);
-			
+
 			if (!drawCracks)
 				return;
 
@@ -660,82 +727,16 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///		Set displacement to <see cref="Model.Nodes"/>.
+		///     Set displacement to <see cref="Model.Nodes" />.
 		/// </summary>
-		/// <inheritdoc cref="DrawResults"/>
+		/// <inheritdoc cref="DrawResults" />
 		public static void SetDisplacements()
 		{
 			foreach (var node in Nodes)
 				node.SetDisplacementFromNode();
 		}
-		
-		/// <summary>
-		///     Draw displacements.
-		/// </summary>
-		/// <inheritdoc cref="DrawResults"/>
-		public static void DrawDisplacements(IEnumerable<Stringer> stringers)
-		{
-			// Get units
-			var units = Settings.Units;
-
-			// Turn the layer off
-			Layer.Displacements.Off();
-
-			// Set a scale factor for displacements
-			var scFctr = units.DisplacementScaleFactor;
-
-			// Create lists of points for adding the nodes later
-			var dispNds = new List<Point3d>();
-
-			foreach (var str in stringers)
-			{
-				// Get displacements of the initial and end nodes
-				var d1 = str.Grip1.Displacement.Clone();
-				var d3 = str.Grip3.Displacement.Clone();
-				d1.ChangeUnit(units.Displacements);
-				d3.ChangeUnit(units.Displacements);
-
-				double
-					ux1 = d1.X.Value * scFctr,
-					uy1 = d1.X.Value * scFctr,
-					ux3 = d3.X.Value * scFctr,
-					uy3 = d3.X.Value * scFctr,
-					ix  = str.Geometry.InitialPoint.X.ToUnit(units.Geometry).Value,
-					iy  = str.Geometry.InitialPoint.Y.ToUnit(units.Geometry).Value,
-					ex  = str.Geometry.EndPoint.X.ToUnit(units.Geometry).Value,
-					ey  = str.Geometry.EndPoint.Y.ToUnit(units.Geometry).Value;
-
-				// Calculate the displaced nodes
-				Point3d
-					stPt = new Point3d(ix + ux1, iy + uy1, 0),
-					enPt = new Point3d(ex + ux3, ey + uy3, 0),
-					midPt = stPt.MidPoint(enPt);
-
-				// Draw the displaced Stringer
-				using (var newStr = new Line(stPt, enPt))
-				{
-					// Set the layer to Stringer
-					newStr.Layer = $"{Layer.Displacements}";
-
-					// Add the line to the drawing
-					newStr.AddToDrawing();
-				}
-
-				// Add the position of the nodes to the list
-				if (!dispNds.Contains(stPt))
-					dispNds.Add(stPt);
-
-				if (!dispNds.Contains(enPt))
-					dispNds.Add(enPt);
-
-				if (!dispNds.Contains(midPt))
-					dispNds.Add(midPt);
-			}
-
-			// Add the nodes
-			Nodes.AddRange(dispNds.ToPoints(units.Geometry), NodeType.Displaced, false, false);
-		}
 
 		#endregion
+
 	}
 }

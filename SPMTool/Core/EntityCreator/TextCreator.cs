@@ -1,8 +1,7 @@
-﻿using Autodesk.AutoCAD.DatabaseServices;
-using andrefmello91.OnPlaneComponents;
+﻿using andrefmello91.OnPlaneComponents;
+using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-
 #nullable enable
 
 namespace SPMTool.Core
@@ -12,16 +11,8 @@ namespace SPMTool.Core
 	/// </summary>
 	public class TextCreator : IEntityCreator<DBText>
 	{
+
 		#region Properties
-
-		public string Name => $"Text at {InsertionPoint}";
-
-		public ObjectId ObjectId { get; set; }
-
-		/// <summary>
-		///     Get/set the <see cref="Enums.Layer" /> of text.
-		/// </summary>
-		public Layer Layer { get; set; }
 
 		/// <summary>
 		///     Get/set the text height.
@@ -37,6 +28,15 @@ namespace SPMTool.Core
 		///     Get/set the text string.
 		/// </summary>
 		public string Text { get; set; }
+
+		/// <summary>
+		///     Get/set the <see cref="Enums.Layer" /> of text.
+		/// </summary>
+		public Layer Layer { get; set; }
+
+		public string Name => $"Text at {InsertionPoint}";
+
+		public ObjectId ObjectId { get; set; }
 
 		#endregion
 
@@ -59,29 +59,30 @@ namespace SPMTool.Core
 
 		#endregion
 
-		#region  Methods
-
-		public DBText CreateEntity() => new DBText
-		{
-			Position   = InsertionPoint.ToPoint3d(),
-			Layer      = $"{Layer}",
-			TextString = Text,
-			Height     = Height * DataBase.Settings.Units.ScaleFactor,
-			AlignmentPoint = InsertionPoint.ToPoint3d()
-		};
-
-		/// <inheritdoc />
-		Entity? IEntityCreator.GetEntity() => GetEntity();
-
-		/// <inheritdoc />
-		Entity IEntityCreator.CreateEntity() => CreateEntity();
-
-		public DBText? GetEntity() => (DBText?) ObjectId.GetEntity();
+		#region Methods
 
 		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing();
 
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
+		public DBText CreateEntity() => new()
+		{
+			Position       = InsertionPoint.ToPoint3d(),
+			Layer          = $"{Layer}",
+			TextString     = Text,
+			Height         = Height * DataBase.Settings.Units.ScaleFactor,
+			AlignmentPoint = InsertionPoint.ToPoint3d()
+		};
+
+		public DBText? GetEntity() => (DBText?) ObjectId.GetEntity();
+
+		/// <inheritdoc />
+		Entity IEntityCreator.CreateEntity() => CreateEntity();
+
+		/// <inheritdoc />
+		Entity? IEntityCreator.GetEntity() => GetEntity();
+
 		#endregion
+
 	}
 }

@@ -1,14 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
+using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-
 using static SPMTool.Core.Model;
 
 #nullable enable
@@ -20,10 +18,10 @@ namespace SPMTool.Core.Elements
 	/// </summary>
 	public class NodeList : SPMObjectList<NodeObject, Point>
 	{
+
 		#region Constructors
 
 		private NodeList()
-			: base()
 		{
 		}
 
@@ -34,7 +32,7 @@ namespace SPMTool.Core.Elements
 
 		#endregion
 
-		#region  Methods
+		#region Methods
 
 		/// <summary>
 		///     Get the collection of <see cref="DBPoint" />'s in the drawing, based in the <see cref="NodeType" />.
@@ -54,18 +52,16 @@ namespace SPMTool.Core.Elements
 			};
 
 		/// <summary>
-		///     Read all <see cref="NodeObject" />'s from drawing.
+		///     Get the layer name based on <paramref name="nodeType" />.
 		/// </summary>
-		public static NodeList ReadFromDrawing() => ReadFromPoints(GetDBPoints()?.ToArray());
-
-		/// <summary>
-		///     Read <see cref="NodeObject" />'s from a collection of <see cref="DBPoint" />'s.
-		/// </summary>
-		/// <param name="nodePoints">The collection containing the <see cref="DBPoint" />'s of drawing.</param>
-		public static NodeList ReadFromPoints(IEnumerable<DBPoint>? nodePoints) =>
-			nodePoints.IsNullOrEmpty()
-				? new NodeList()
-				: new NodeList(nodePoints.Select(NodeObject.GetFromPoint));
+		/// <param name="nodeType">The <see cref="NodeType" /> (excluding <see cref="NodeType.All" />).</param>
+		public static Layer GetLayer(NodeType nodeType) =>
+			nodeType switch
+			{
+				NodeType.Internal => Layer.IntNode,
+				NodeType.External => Layer.ExtNode,
+				_                 => Layer.Displacements
+			};
 
 		/// <summary>
 		///     Get <see cref="NodeType" />.
@@ -79,53 +75,18 @@ namespace SPMTool.Core.Elements
 					: NodeType.Displaced;
 
 		/// <summary>
-		///     Get the layer name based on <paramref name="nodeType" />.
+		///     Read all <see cref="NodeObject" />'s from drawing.
 		/// </summary>
-		/// <param name="nodeType">The <see cref="NodeType" /> (excluding <see cref="NodeType.All" />).</param>
-		public static Layer GetLayer(NodeType nodeType) =>
-			nodeType switch
-			{
-				NodeType.Internal  => Layer.IntNode,
-				NodeType.External  => Layer.ExtNode,
-				_                  => Layer.Displacements
-			};
+		public static NodeList ReadFromDrawing() => ReadFromPoints(GetDBPoints()?.ToArray());
 
 		/// <summary>
-		///     Get a list of nodes' <see cref="Point" /> positions.
+		///     Read <see cref="NodeObject" />'s from a collection of <see cref="DBPoint" />'s.
 		/// </summary>
-		public List<Point> GetPositions() => GetProperties();
-
-		/// <summary>
-		///     Add nodes in all necessary positions, based on a collection of <seealso cref="StringerGeometry" />'s.
-		/// </summary>
-		/// <remarks>
-		///     Nodes are added at each <see cref="StringerGeometry.InitialPoint" /> , <see cref="StringerGeometry.CenterPoint" />
-		///     and <see cref="StringerGeometry.EndPoint" />.
-		/// </remarks>
-		/// <param name="geometries">The collection of <see cref="StringerGeometry" />'s for adding nodes.</param>
-		/// <inheritdoc cref="AddRange(IEnumerable{NodeObject}, bool, bool)" />
-		public int AddNecessary(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true)
-		{
-			if (geometries.IsNullOrEmpty())
-				return 0;
-
-			// Create a list
-			var nds = geometries.SelectMany(g => new[]
-			{
-				new NodeObject(g.InitialPoint, NodeType.External),
-				new NodeObject(g.CenterPoint,  NodeType.Internal),
-				new NodeObject(g.EndPoint,     NodeType.External)
-			}).Distinct().ToList();
-
-			//// Add external nodes
-			//extNds.AddRange(geoList.Select(str => str.InitialPoint));
-			//extNds.AddRange(geoList.Select(str => str.EndPoint));
-			//var c = AddRange(extNds, NodeType.External, raiseEvents, false);
-
-			// Add internal nodes
-			return
-				AddRange(nds, raiseEvents, sort);
-		}
+		/// <param name="nodePoints">The collection containing the <see cref="DBPoint" />'s of drawing.</param>
+		public static NodeList ReadFromPoints(IEnumerable<DBPoint>? nodePoints) =>
+			nodePoints.IsNullOrEmpty()
+				? new NodeList()
+				: new NodeList(nodePoints.Select(NodeObject.GetFromPoint));
 
 		/// <inheritdoc cref="Add(NodeObject, bool, bool)" />
 		/// <param name="position">The <see cref="Point" /> position.</param>
@@ -145,6 +106,38 @@ namespace SPMTool.Core.Elements
 			// Just add to drawing
 			item.CreateEntity().AddToDrawing();
 			return false;
+		}
+
+		/// <summary>
+		///     Add nodes in all necessary positions, based on a collection of <seealso cref="StringerGeometry" />'s.
+		/// </summary>
+		/// <remarks>
+		///     Nodes are added at each <see cref="StringerGeometry.InitialPoint" /> , <see cref="StringerGeometry.CenterPoint" />
+		///     and <see cref="StringerGeometry.EndPoint" />.
+		/// </remarks>
+		/// <param name="geometries">The collection of <see cref="StringerGeometry" />'s for adding nodes.</param>
+		/// <inheritdoc cref="AddRange(IEnumerable{NodeObject}, bool, bool)" />
+		public int AddNecessary(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true)
+		{
+			if (geometries.IsNullOrEmpty())
+				return 0;
+
+			// Create a list
+			var nds = geometries.SelectMany(g => new[]
+			{
+				new NodeObject(g.InitialPoint, NodeType.External),
+				new NodeObject(g.CenterPoint, NodeType.Internal),
+				new NodeObject(g.EndPoint, NodeType.External)
+			}).Distinct().ToList();
+
+			//// Add external nodes
+			//extNds.AddRange(geoList.Select(str => str.InitialPoint));
+			//extNds.AddRange(geoList.Select(str => str.EndPoint));
+			//var c = AddRange(extNds, NodeType.External, raiseEvents, false);
+
+			// Add internal nodes
+			return
+				AddRange(nds, raiseEvents, sort);
 		}
 
 		/// <inheritdoc cref="AddRange(IEnumerable{NodeObject}, bool, bool)" />
@@ -169,6 +162,11 @@ namespace SPMTool.Core.Elements
 			return
 				base.AddRange(collection.Where(n => n.Type != NodeType.Displaced).ToList(), raiseEvents, sort);
 		}
+
+		/// <summary>
+		///     Get a list of nodes' <see cref="Point" /> positions.
+		/// </summary>
+		public List<Point> GetPositions() => GetProperties();
 
 		public int RemoveRange(IEnumerable<Point>? positions, bool raiseEvents = true, bool sort = true) =>
 			positions.IsNullOrEmpty()
@@ -231,5 +229,6 @@ namespace SPMTool.Core.Elements
 		}
 
 		#endregion
+
 	}
 }

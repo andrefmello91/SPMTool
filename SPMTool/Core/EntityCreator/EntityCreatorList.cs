@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.EList;
-using Autodesk.AutoCAD.DatabaseServices;
 using andrefmello91.Extensions;
+using Autodesk.AutoCAD.DatabaseServices;
 #nullable enable
 
 namespace SPMTool.Core
@@ -16,6 +16,7 @@ namespace SPMTool.Core
 	public abstract class EntityCreatorList<T> : EList<T>
 		where T : IEntityCreator, IEquatable<T>, IComparable<T>
 	{
+
 		#region Constructors
 
 		protected EntityCreatorList() => SetEvents();
@@ -26,34 +27,7 @@ namespace SPMTool.Core
 
 		#endregion
 
-		#region  Methods
-
-		/// <summary>
-		///     Set events on this collection.
-		/// </summary>
-		protected void SetEvents()
-		{
-			ItemAdded    += On_ObjectAdded;
-			ItemRemoved  += On_ObjectRemoved;
-			RangeAdded   += On_ObjectsAdded;
-			RangeRemoved += On_ObjectsRemoved;
-		}
-
-		/// <summary>
-		///		Get an object in this collection that matches <paramref name="objectId"/>.
-		/// </summary>
-		/// <param name="objectId">The required <seealso cref="ObjectId"/>.</param>
-		[return:MaybeNull]
-		public T GetByObjectId(ObjectId objectId) => Find(e => e.ObjectId == objectId);
-
-		/// <summary>
-		///		Get objects in this collection that matches <paramref name="objectIds"/>.
-		/// </summary>
-		/// <param name="objectIds">The collection of required <seealso cref="ObjectId"/>'s.</param>
-		[return: MaybeNull]
-		public IEnumerable<T> GetByObjectIds(IEnumerable<ObjectId>? objectIds) => objectIds is null
-			? null
-			: FindAll(e => objectIds.Contains(e.ObjectId));
+		#region Methods
 
 		/// <summary>
 		///     Event to execute when an object is added to a list.
@@ -68,21 +42,6 @@ namespace SPMTool.Core
 
 			// Add to drawing
 			e?.Item?.AddToDrawing();
-		}
-
-		/// <summary>
-		///     Event to execute when a range of objects is added to a list.
-		/// </summary>
-		public static void On_ObjectsAdded(object? sender, RangeEventArgs<T>? e)
-		{
-			var objs = (IEnumerable<IEntityCreator>?) e.ItemCollection;
-
-			// Remove from trash
-			if (!(objs is null))
-				Model.Trash.RemoveAll(objs.Contains);
-
-			// Add to drawing
-			e?.ItemCollection?.AddToDrawing();
 		}
 
 		/// <summary>
@@ -101,6 +60,21 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
+		///     Event to execute when a range of objects is added to a list.
+		/// </summary>
+		public static void On_ObjectsAdded(object? sender, RangeEventArgs<T>? e)
+		{
+			var objs = (IEnumerable<IEntityCreator>?) e.ItemCollection;
+
+			// Remove from trash
+			if (!(objs is null))
+				Model.Trash.RemoveAll(objs.Contains);
+
+			// Add to drawing
+			e?.ItemCollection?.AddToDrawing();
+		}
+
+		/// <summary>
 		///     Event to execute when a range of objects is removed from a list.
 		/// </summary>
 		public static void On_ObjectsRemoved(object? sender, RangeEventArgs<T>? e)
@@ -108,13 +82,41 @@ namespace SPMTool.Core
 			var objs = (IEnumerable<IEntityCreator>?) e.ItemCollection;
 
 			// Add to trash
-			if (!(objs.IsNullOrEmpty()))
+			if (!objs.IsNullOrEmpty())
 				Model.Trash.AddRange(objs.Where(obj => !(obj is null) && !Model.Trash.Contains(obj)));
 
 			// Remove
 			objs?.RemoveFromDrawing();
 		}
 
+		/// <summary>
+		///     Get an object in this collection that matches <paramref name="objectId" />.
+		/// </summary>
+		/// <param name="objectId">The required <seealso cref="ObjectId" />.</param>
+		[return: MaybeNull]
+		public T GetByObjectId(ObjectId objectId) => Find(e => e.ObjectId == objectId);
+
+		/// <summary>
+		///     Get objects in this collection that matches <paramref name="objectIds" />.
+		/// </summary>
+		/// <param name="objectIds">The collection of required <seealso cref="ObjectId" />'s.</param>
+		[return: MaybeNull]
+		public IEnumerable<T> GetByObjectIds(IEnumerable<ObjectId>? objectIds) => objectIds is null
+			? null
+			: FindAll(e => objectIds.Contains(e.ObjectId));
+
+		/// <summary>
+		///     Set events on this collection.
+		/// </summary>
+		protected void SetEvents()
+		{
+			ItemAdded    += On_ObjectAdded;
+			ItemRemoved  += On_ObjectRemoved;
+			RangeAdded   += On_ObjectsAdded;
+			RangeRemoved += On_ObjectsRemoved;
+		}
+
 		#endregion
+
 	}
 }

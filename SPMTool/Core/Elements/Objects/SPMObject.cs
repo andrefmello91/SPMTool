@@ -4,7 +4,6 @@ using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-
 #nullable enable
 
 namespace SPMTool.Core.Elements
@@ -16,6 +15,7 @@ namespace SPMTool.Core.Elements
 	public interface ISPMObject<T>
 		where T : IComparable<T>, IEquatable<T>
 	{
+
 		#region Properties
 
 		/// <summary>
@@ -30,7 +30,7 @@ namespace SPMTool.Core.Elements
 
 		#endregion
 
-		#region  Methods
+		#region Methods
 
 		/// <summary>
 		///     Get the SPM element associated to this object.
@@ -38,6 +38,7 @@ namespace SPMTool.Core.Elements
 		INumberedElement GetElement();
 
 		#endregion
+
 	}
 
 	/// <summary>
@@ -47,6 +48,7 @@ namespace SPMTool.Core.Elements
 	public abstract class SPMObject<T> : DictionaryCreator, ISPMObject<T>, IEntityCreator, IEquatable<SPMObject<T>>, IComparable<SPMObject<T>>
 		where T : IComparable<T>, IEquatable<T>
 	{
+
 		#region Fields
 
 		/// <summary>
@@ -58,12 +60,12 @@ namespace SPMTool.Core.Elements
 
 		#region Properties
 
-		public abstract string Name { get; }
-
 		public abstract Layer Layer { get; }
 
+		public abstract string Name { get; }
+
 		public int Number { get; set; } = 0;
-		
+
 		public T Property
 		{
 			get => PropertyField;
@@ -82,13 +84,13 @@ namespace SPMTool.Core.Elements
 
 		#endregion
 
-		#region  Methods
+		#region Methods
 
-		public abstract INumberedElement GetElement();
+		public override bool Equals(object? other) => other is T obj && Equals(obj);
 
-		public abstract Entity CreateEntity();
-
-		public Entity? GetEntity() => ObjectId.GetEntity();
+		public int CompareTo(SPMObject<T>? other) => other is null || other.GetType() != GetType()
+			? 0
+			: Property.CompareTo(other.Property);
 
 		public void AddToDrawing()
 		{
@@ -99,19 +101,23 @@ namespace SPMTool.Core.Elements
 			//entity.Copied     += Model.On_ObjectCopied;
 		}
 
+		public abstract Entity CreateEntity();
+
+		public Entity? GetEntity() => ObjectId.GetEntity();
+
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
-		public int CompareTo(SPMObject<T>? other) => other is null || other.GetType() != GetType()
-			? 0
-			: Property.CompareTo(other.Property);
-
 		public bool Equals(SPMObject<T>? other) => !(other is null) && other.GetType() == GetType() && Property.Equals(other.Property);
+
+		public abstract INumberedElement GetElement();
 
 		public override int GetHashCode() => Property.GetHashCode();
 
 		public override string ToString() => GetElement()?.ToString() ?? "Null element";
 
-		public override bool Equals(object? other) => other is T obj && Equals(obj);
+		#endregion
+
+		#region Operators
 
 		/// <summary>
 		///     Returns true if objects are equal.

@@ -1,28 +1,20 @@
 ﻿using System;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
-
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool
 {
 	/// <summary>
-    /// Initializer class.
-    /// </summary>
+	///     Initializer class.
+	/// </summary>
 	public class Initializer : IExtensionApplication
 	{
-		/// <summary>
-        /// Initialize application.
-        /// </summary>
-		public void Initialize() => Idle += On_ApplicationIdle;
+
+		#region Methods
 
 		/// <summary>
-		/// Terminate application.
-		/// </summary>
-		public void Terminate() => SystemVariableChanged -= SPMToolInterface.ColorThemeChanged;
-
-		/// <summary>
-		/// Initialize user interface and create layers and blocks.
+		///     Initialize user interface and create layers and blocks.
 		/// </summary>
 		public void On_ApplicationIdle(object sender, EventArgs e)
 		{
@@ -33,5 +25,18 @@ namespace SPMTool
 
 			Idle -= On_ApplicationIdle;
 		}
+
+		/// <summary>
+		///     Initialize application.
+		/// </summary>
+		public void Initialize() => Idle += On_ApplicationIdle;
+
+		/// <summary>
+		///     Terminate application.
+		/// </summary>
+		public void Terminate() => SystemVariableChanged -= SPMToolInterface.ColorThemeChanged;
+
+		#endregion
+
 	}
 }

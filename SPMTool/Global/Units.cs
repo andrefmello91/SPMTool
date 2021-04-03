@@ -10,13 +10,14 @@ namespace SPMTool
 	/// </summary>
 	public class Units : IEquatable<Units>
 	{
+
 		#region Fields
 
 		/// <summary>
 		///     Default units object.
 		///     <para>Default units: mm, kN, MPa.</para>
 		/// </summary>
-		public static readonly Units Default = new Units
+		public static readonly Units Default = new()
 		{
 			Geometry              = LengthUnit.Millimeter,
 			Reinforcement         = LengthUnit.Millimeter,
@@ -61,12 +62,12 @@ namespace SPMTool
 		/// <summary>
 		///     Get/set the <see cref="ForceUnit" /> for applied forces.
 		/// </summary>
-		public ForceUnit  AppliedForces    { get; set; }
+		public ForceUnit AppliedForces { get; set; }
 
 		/// <summary>
 		///     Get/set the <see cref="LengthUnit" /> for crack openings.
 		/// </summary>
-		public LengthUnit CrackOpenings    { get; set; }
+		public LengthUnit CrackOpenings { get; set; }
 
 		/// <summary>
 		///     Get/set the displacement magnifier factor.
@@ -76,7 +77,7 @@ namespace SPMTool
 		/// <summary>
 		///     Get/set the <see cref="LengthUnit" /> for displacements.
 		/// </summary>
-		public LengthUnit Displacements    { get; set; }
+		public LengthUnit Displacements { get; set; }
 
 		/// <summary>
 		///     Get the displacement scale factor.
@@ -86,7 +87,7 @@ namespace SPMTool
 		/// <summary>
 		///     Get/set the <see cref="LengthUnit" /> for geometry.
 		/// </summary>
-		public LengthUnit Geometry         { get; set; }
+		public LengthUnit Geometry { get; set; }
 
 		/// <summary>
 		///     Get the <see cref="AreaUnit" /> for geometry.
@@ -107,12 +108,12 @@ namespace SPMTool
 		/// <summary>
 		///     Get/set the <see cref="PressureUnit" /> for panel stresses.
 		/// </summary>
-		public PressureUnit PanelStresses    { get; set; }
+		public PressureUnit PanelStresses { get; set; }
 
 		/// <summary>
 		///     Get/set the <see cref="LengthUnit" /> for reinforcement and concrete aggregate diameters.
 		/// </summary>
-		public LengthUnit Reinforcement    { get; set; }
+		public LengthUnit Reinforcement { get; set; }
 
 		/// <summary>
 		///     Get the <see cref="AreaUnit" /> for reinforcement.
@@ -127,7 +128,7 @@ namespace SPMTool
 		/// <summary>
 		///     Get/set the <see cref="ForceUnit" /> for stringer forces.
 		/// </summary>
-		public ForceUnit  StringerForces   { get; set; }
+		public ForceUnit StringerForces { get; set; }
 
 		/// <summary>
 		///     Get the tolerance for geometry comparisons.
@@ -136,15 +137,15 @@ namespace SPMTool
 
 		#endregion
 
-		#region  Methods
+		#region Methods
+
+		public override bool Equals(object obj) => obj is Units units && Equals(units);
 
 		/// <summary>
 		///     Returns true if all units coincide.
 		/// </summary>
 		/// <param name="other">The other <see cref="Units" /> object.</param>
 		public bool Equals(Units other) => !(other is null) && Geometry == other.Geometry && Reinforcement == other.Reinforcement && Displacements == other.Displacements && AppliedForces == other.AppliedForces && StringerForces == other.StringerForces && PanelStresses == other.PanelStresses && MaterialStrength == other.MaterialStrength;
-
-		public override bool Equals(object obj) => obj is Units units && Equals(units);
 
 		public override int GetHashCode() => base.GetHashCode();
 
@@ -155,13 +156,14 @@ namespace SPMTool
 		/// <summary>
 		///     Returns true if all units coincide.
 		/// </summary>
-		public static bool operator == (Units left, Units right) => !(left is null) && left.Equals(right);
+		public static bool operator ==(Units left, Units right) => !(left is null) && left.Equals(right);
 
 		/// <summary>
 		///     Returns true if at least a unit do not coincide.
 		/// </summary>
-		public static bool operator != (Units left, Units right) => !(left is null) && !left.Equals(right);
+		public static bool operator !=(Units left, Units right) => !(left is null) && !left.Equals(right);
 
 		#endregion
+
 	}
 }

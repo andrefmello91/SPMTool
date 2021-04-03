@@ -11,6 +11,7 @@ namespace SPMTool.Application
 	/// </summary>
 	public class Settings : DictionaryCreator
 	{
+
 		#region Fields
 
 		/// <summary>
@@ -75,39 +76,7 @@ namespace SPMTool.Application
 
 		#endregion
 
-		#region  Methods
-
-		/// <summary>
-		///     Read units on dictionary.
-		/// </summary>
-		[return: NotNull]
-		private Units GetUnits() => GetDictionary(USaveName).GetUnits() ?? Units.Default;
-
-		/// <summary>
-		///     Read analysis settings on dictionary.
-		/// </summary>
-		[return: NotNull]
-		private AnalysisSettings GetAnalysisSettings() => GetDictionary(ASSaveName).GetAnalysisSettings() ?? AnalysisSettings.Default;
-
-		/// <summary>
-		///     Save this <paramref name="units" /> in database.
-		/// </summary>
-		private void SetUnits(Units units)
-		{
-			_units = units;
-
-			SetDictionary(units.GetTypedValues(), USaveName);
-		}
-
-		/// <summary>
-		///     Save this <paramref name="settings" /> in database.
-		/// </summary>
-		private void SetAnalysisSettings(AnalysisSettings settings)
-		{
-			_analysis = settings;
-
-			SetDictionary(settings.GetTypedValues(), ASSaveName);
-		}
+		#region Methods
 
 		protected override bool GetProperties()
 		{
@@ -123,6 +92,39 @@ namespace SPMTool.Application
 			SetUnits(_units);
 		}
 
+		/// <summary>
+		///     Read analysis settings on dictionary.
+		/// </summary>
+		[return: NotNull]
+		private AnalysisSettings GetAnalysisSettings() => GetDictionary(ASSaveName).GetAnalysisSettings() ?? AnalysisSettings.Default;
+
+		/// <summary>
+		///     Read units on dictionary.
+		/// </summary>
+		[return: NotNull]
+		private Units GetUnits() => GetDictionary(USaveName).GetUnits() ?? Units.Default;
+
+		/// <summary>
+		///     Save this <paramref name="settings" /> in database.
+		/// </summary>
+		private void SetAnalysisSettings(AnalysisSettings settings)
+		{
+			_analysis = settings;
+
+			SetDictionary(settings.GetTypedValues(), ASSaveName);
+		}
+
+		/// <summary>
+		///     Save this <paramref name="units" /> in database.
+		/// </summary>
+		private void SetUnits(Units units)
+		{
+			_units = units;
+
+			SetDictionary(units.GetTypedValues(), USaveName);
+		}
+
 		#endregion
+
 	}
 }

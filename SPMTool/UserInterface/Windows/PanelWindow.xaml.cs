@@ -25,6 +25,7 @@ namespace SPMTool.Application.UserInterface
 	/// </summary>
 	public partial class PanelWindow : Window
 	{
+
 		#region Fields
 
 		private readonly LengthUnit _geometryUnit;
@@ -48,6 +49,8 @@ namespace SPMTool.Application.UserInterface
 			? $"Panel {_panels[0].Number}"
 			: $"{_panels.Count} panels selected";
 
+		public string StressUnit => _stressUnit.Abbrev();
+
 		/// <summary>
 		///     Get/set reinforcement for output (steel is not set).
 		/// </summary>
@@ -69,8 +72,8 @@ namespace SPMTool.Application.UserInterface
 			get => ReinforcementXChecked ? new WebReinforcementDirection(XBarDiameter, XSpacing, OutputSteelX, PnlWidth, 0) : null;
 			set
 			{
-				XSpacing     = value?.BarSpacing   ?? Length.FromMillimeters(100);
-				XBarDiameter = value?.BarDiameter  ?? Length.FromMillimeters(8);
+				XSpacing     = value?.BarSpacing ?? Length.FromMillimeters(100);
+				XBarDiameter = value?.BarDiameter ?? Length.FromMillimeters(8);
 			}
 		}
 
@@ -82,8 +85,8 @@ namespace SPMTool.Application.UserInterface
 			get => ReinforcementYChecked ? new WebReinforcementDirection(YBarDiameter, YSpacing, OutputSteelY, PnlWidth, Constants.PiOver2) : null;
 			set
 			{
-				YSpacing     = value?.BarSpacing   ?? Length.FromMillimeters(100);
-				YBarDiameter = value?.BarDiameter  ?? Length.FromMillimeters(8);
+				YSpacing     = value?.BarSpacing ?? Length.FromMillimeters(100);
+				YBarDiameter = value?.BarDiameter ?? Length.FromMillimeters(8);
 			}
 		}
 
@@ -92,10 +95,10 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private Steel? OutputSteelX
 		{
-			get => new Steel(XYieldStress, XElasticModule);
+			get => new(XYieldStress, XElasticModule);
 			set
 			{
-				XYieldStress   = value?.YieldStress   ?? Pressure.FromMegapascals(500);
+				XYieldStress   = value?.YieldStress ?? Pressure.FromMegapascals(500);
 				XElasticModule = value?.ElasticModule ?? Pressure.FromMegapascals(210000);
 			}
 		}
@@ -105,10 +108,10 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private Steel? OutputSteelY
 		{
-			get => new Steel(YYieldStress, YElasticModule);
+			get => new(YYieldStress, YElasticModule);
 			set
 			{
-				YYieldStress   = value?.YieldStress   ?? Pressure.FromMegapascals(500);
+				YYieldStress   = value?.YieldStress ?? Pressure.FromMegapascals(500);
 				YElasticModule = value?.ElasticModule ?? Pressure.FromMegapascals(210000);
 			}
 		}
@@ -125,7 +128,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Get X reinforcement <see cref="TextBox" />'s.
 		/// </summary>
-		private IEnumerable<TextBox> ReinforcementXBoxes => new [] { SxBox, PhiXBox, FxBox, ExBox };
+		private IEnumerable<TextBox> ReinforcementXBoxes => new[] { SxBox, PhiXBox, FxBox, ExBox };
 
 		/// <summary>
 		///     Gets and sets X reinforcement checkbox state.
@@ -168,7 +171,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Get Y reinforcement <see cref="TextBox" />'s.
 		/// </summary>
-		private IEnumerable<TextBox> ReinforcementYBoxes => new [] { SyBox, PhiYBox, FyBox, EyBox };
+		private IEnumerable<TextBox> ReinforcementYBoxes => new[] { SyBox, PhiYBox, FyBox, EyBox };
 
 		/// <summary>
 		///     Gets and sets Y reinforcement checkbox state.
@@ -226,12 +229,10 @@ namespace SPMTool.Application.UserInterface
 			set => SetReinforcementBox.IsChecked = value;
 		}
 
-		public string StressUnit => _stressUnit.Abbrev();
-
 		/// <summary>
 		///     Verify if geometry text boxes are filled.
 		/// </summary>
-		private bool WidthFilled => CheckBoxes(new [] {WBox});
+		private bool WidthFilled => CheckBoxes(new[] { WBox });
 
 		/// <summary>
 		///     Get/set X bar diameter.
@@ -331,7 +332,7 @@ namespace SPMTool.Application.UserInterface
 
 		#endregion
 
-		#region  Methods
+		#region Methods
 
 		/// <summary>
 		///     Get saved geometry options as string collection.
@@ -351,130 +352,7 @@ namespace SPMTool.Application.UserInterface
 		/// <returns></returns>
 		private static IEnumerable<string> SavedSteelOptions() => StringerWindow.SavedSteelOptions();
 
-		/// <summary>
-		///     Get the initial geometry data of panels.
-		/// </summary>
-		private void GetInitialGeometry()
-		{
-			SetGeometry = true;
-
-			if (ElementWidths.Any())
-			{
-				SavedGeometries.ItemsSource = SavedGeoOptions();
-				SavedGeometries.SelectedIndex = 0;
-
-				if (_panels.Count > 1)
-					PnlWidth  = ElementWidths[0];
-			}
-			else
-			{
-				SavedGeometries.Disable();
-				PnlWidth  = Length.FromMillimeters(100);
-			}
-
-			if (_panels.Count > 1)
-				return;
-
-			// Only 1 stringer, get it's geometry
-			PnlWidth = _panels[0].Width;
-		}
-
-		/// <summary>
-		///     Get the initial reinforcement data of panels.
-		/// </summary>
-		private void GetInitialReinforcement()
-		{
-			SetReinforcement = true;
-
-			if (Steels.Any())
-			{
-				SavedSteelX.ItemsSource   = SavedSteelY.ItemsSource = SavedSteelOptions();
-				SavedSteelX.SelectedIndex = SavedSteelY.SelectedIndex = 0;
-
-				if (_panels.Count > 1)
-					OutputSteelX = OutputSteelY = Steels[0];
-			}
-			else
-			{
-				SavedSteelX.Disable();
-				SavedSteelY.Disable();
-				OutputSteelX = OutputSteelY = null;
-			}
-
-			if (PanelReinforcements.Any())
-			{
-				SavedReinforcementX.ItemsSource = SavedReinforcementY.ItemsSource = SavedRefOptions();
-				SavedReinforcementX.SelectedIndex = SavedReinforcementY.SelectedIndex = 0;
-
-				if (_panels.Count > 1)
-					OutputReinforcementX = OutputReinforcementY = PanelReinforcements[0];
-			}
-			else
-			{
-				SavedReinforcementX.Disable();
-				SavedReinforcementY.Disable();
-				OutputReinforcementX = OutputReinforcementY = null;
-			}
-
-			if (_panels.Count == 1)
-			{
-				var reinforcement = _panels[0].Reinforcement;
-
-				ReinforcementXChecked = !(reinforcement?.DirectionX is null);
-				ReinforcementYChecked = !(reinforcement?.DirectionY is null);
-
-				OutputReinforcement = reinforcement;
-				OutputSteelX = reinforcement?.DirectionX?.Steel;
-				OutputSteelY = reinforcement?.DirectionY?.Steel;
-			}
-
-			else
-			{
-				ReinforcementXChecked = ReinforcementYChecked = false;
-			}
-		}
-
-		/// <summary>
-		///     Check if <paramref name="textBoxes" /> are filled and not zero.
-		/// </summary>
-		private bool CheckBoxes(IEnumerable<TextBox> textBoxes) => textBoxes.All(textBox => textBox.Text.ParsedAndNotZero(out _));
-
-		private void DoubleValidationTextBox(object sender, TextCompositionEventArgs e)
-		{
-			var regex = new Regex("[^0-9.]+");
-			e.Handled = regex.IsMatch(e.Text);
-		}
-
-		/// <summary>
-		///     Save data in the stringer object.
-		/// </summary>
-		private void SaveGeometry()
-		{
-			// Convert values
-			var width = PnlWidth;
-
-			// Save on database
-			ElementWidths.Add(width);
-
-			// Set to panels
-			foreach (var pnl in _panels)
-				pnl.Width = width;
-		}
-
-		/// <summary>
-		///     Save data in the stringer object.
-		/// </summary>
-		private void SaveReinforcement()
-		{
-			// Set to panels
-			var reinforcement = OutputReinforcement;
-
-			PanelReinforcements.Add(reinforcement?.DirectionX);
-			PanelReinforcements.Add(reinforcement?.DirectionY);
-
-			foreach (var pnl in _panels)
-				pnl.Reinforcement = reinforcement;
-		}
+		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
@@ -511,7 +389,103 @@ namespace SPMTool.Application.UserInterface
 			Close();
 		}
 
-		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
+		/// <summary>
+		///     Check if <paramref name="textBoxes" /> are filled and not zero.
+		/// </summary>
+		private bool CheckBoxes(IEnumerable<TextBox> textBoxes) => textBoxes.All(textBox => textBox.Text.ParsedAndNotZero(out _));
+
+		private void DoubleValidationTextBox(object sender, TextCompositionEventArgs e)
+		{
+			var regex = new Regex("[^0-9.]+");
+			e.Handled = regex.IsMatch(e.Text);
+		}
+
+		/// <summary>
+		///     Get the initial geometry data of panels.
+		/// </summary>
+		private void GetInitialGeometry()
+		{
+			SetGeometry = true;
+
+			if (ElementWidths.Any())
+			{
+				SavedGeometries.ItemsSource   = SavedGeoOptions();
+				SavedGeometries.SelectedIndex = 0;
+
+				if (_panels.Count > 1)
+					PnlWidth = ElementWidths[0];
+			}
+			else
+			{
+				SavedGeometries.Disable();
+				PnlWidth = Length.FromMillimeters(100);
+			}
+
+			if (_panels.Count > 1)
+				return;
+
+			// Only 1 stringer, get it's geometry
+			PnlWidth = _panels[0].Width;
+		}
+
+		/// <summary>
+		///     Get the initial reinforcement data of panels.
+		/// </summary>
+		private void GetInitialReinforcement()
+		{
+			SetReinforcement = true;
+
+			if (Steels.Any())
+			{
+				SavedSteelX.ItemsSource   = SavedSteelY.ItemsSource   = SavedSteelOptions();
+				SavedSteelX.SelectedIndex = SavedSteelY.SelectedIndex = 0;
+
+				if (_panels.Count > 1)
+					OutputSteelX = OutputSteelY = Steels[0];
+			}
+			else
+			{
+				SavedSteelX.Disable();
+				SavedSteelY.Disable();
+				OutputSteelX = OutputSteelY = null;
+			}
+
+			if (PanelReinforcements.Any())
+			{
+				SavedReinforcementX.ItemsSource   = SavedReinforcementY.ItemsSource   = SavedRefOptions();
+				SavedReinforcementX.SelectedIndex = SavedReinforcementY.SelectedIndex = 0;
+
+				if (_panels.Count > 1)
+					OutputReinforcementX = OutputReinforcementY = PanelReinforcements[0];
+			}
+			else
+			{
+				SavedReinforcementX.Disable();
+				SavedReinforcementY.Disable();
+				OutputReinforcementX = OutputReinforcementY = null;
+			}
+
+			if (_panels.Count == 1)
+			{
+				var reinforcement = _panels[0].Reinforcement;
+
+				ReinforcementXChecked = !(reinforcement?.DirectionX is null);
+				ReinforcementYChecked = !(reinforcement?.DirectionY is null);
+
+				OutputReinforcement = reinforcement;
+				OutputSteelX        = reinforcement?.DirectionX?.Steel;
+				OutputSteelY        = reinforcement?.DirectionY?.Steel;
+			}
+
+			else
+			{
+				ReinforcementXChecked = ReinforcementYChecked = false;
+			}
+		}
+
+		private void ReinforcementXCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementXChecked = ((CheckBox) sender).IsChecked ?? false;
+
+		private void ReinforcementYCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementYChecked = ((CheckBox) sender).IsChecked ?? false;
 
 		private void SavedGeometries_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
@@ -524,35 +498,7 @@ namespace SPMTool.Application.UserInterface
 				return;
 
 			// Update textboxes
-			PnlWidth  = ElementWidths[i];
-		}
-
-		private void SavedSteelX_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			var box = (ComboBox) sender;
-
-			// Get index
-			var i = box.SelectedIndex;
-
-			if (i >= Steels.Count || i < 0)
-				return;
-
-			// Update textboxes
-			OutputSteelX = Steels[i];
-		}
-
-		private void SavedSteelY_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			var box = (ComboBox) sender;
-
-			// Get index
-			var i = box.SelectedIndex;
-
-			if (i >= Steels.Count || i < 0)
-				return;
-
-			// Update textboxes
-			OutputSteelY = Steels[i];
+			PnlWidth = ElementWidths[i];
 		}
 
 		private void SavedReinforcementX_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -583,14 +529,70 @@ namespace SPMTool.Application.UserInterface
 			OutputReinforcementY = PanelReinforcements[i];
 		}
 
-		private void ReinforcementXCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementXChecked = ((CheckBox) sender).IsChecked ?? false;
+		private void SavedSteelX_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+		{
+			var box = (ComboBox) sender;
 
-		private void ReinforcementYCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementYChecked = ((CheckBox) sender).IsChecked ?? false;
+			// Get index
+			var i = box.SelectedIndex;
+
+			if (i >= Steels.Count || i < 0)
+				return;
+
+			// Update textboxes
+			OutputSteelX = Steels[i];
+		}
+
+		private void SavedSteelY_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+		{
+			var box = (ComboBox) sender;
+
+			// Get index
+			var i = box.SelectedIndex;
+
+			if (i >= Steels.Count || i < 0)
+				return;
+
+			// Update textboxes
+			OutputSteelY = Steels[i];
+		}
+
+		/// <summary>
+		///     Save data in the stringer object.
+		/// </summary>
+		private void SaveGeometry()
+		{
+			// Convert values
+			var width = PnlWidth;
+
+			// Save on database
+			ElementWidths.Add(width);
+
+			// Set to panels
+			foreach (var pnl in _panels)
+				pnl.Width = width;
+		}
+
+		/// <summary>
+		///     Save data in the stringer object.
+		/// </summary>
+		private void SaveReinforcement()
+		{
+			// Set to panels
+			var reinforcement = OutputReinforcement;
+
+			PanelReinforcements.Add(reinforcement?.DirectionX);
+			PanelReinforcements.Add(reinforcement?.DirectionY);
+
+			foreach (var pnl in _panels)
+				pnl.Reinforcement = reinforcement;
+		}
 
 		private void SetGeometry_OnCheck(object sender, RoutedEventArgs e) => SetGeometry = ((CheckBox) sender).IsChecked ?? false;
 
 		private void SetReinforcement_OnCheck(object sender, RoutedEventArgs e) => SetReinforcement = ((CheckBox) sender).IsChecked ?? false;
 
 		#endregion
+
 	}
 }

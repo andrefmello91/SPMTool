@@ -4,7 +4,6 @@ using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
 using SPMTool.Enums;
 using SPMTool.Extensions;
@@ -18,10 +17,17 @@ namespace SPMTool.Core.Blocks
 	/// </summary>
 	public class StressBlockCreator : BlockCreator
 	{
+
+		#region Fields
+
 		private PrincipalStressState _stressState;
 
+		#endregion
+
+		#region Properties
+
 		/// <summary>
-		///		Get/set the stress state.
+		///     Get/set the stress state.
 		/// </summary>
 		public PrincipalStressState StressState
 		{
@@ -29,44 +35,39 @@ namespace SPMTool.Core.Blocks
 			set
 			{
 				_stressState = value;
-				
+
 				// Update attribute
 				Attributes = GetAttributes(value, ScaleFactor).ToArray();
 			}
 		}
 
+		#endregion
+
+		#region Constructors
+
 		/// <summary>
 		///     Block creator constructor.
 		/// </summary>
 		/// <param name="insertionPoint">The insertion <see cref="Point" /> of block.</param>
-		/// <param name="stressState">The <see cref="PrincipalStressState"/>.</param>
+		/// <param name="stressState">The <see cref="PrincipalStressState" />.</param>
 		/// <param name="scaleFactor">The scale factor.</param>
 		/// <inheritdoc />
 		public StressBlockCreator(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, Layer? layer = null)
 			: base(insertionPoint, GetBlock(stressState), stressState.Theta1, scaleFactor, Axis.Z, layer)
 		{
 			_stressState = stressState;
-			
-			Attributes   = GetAttributes(stressState, scaleFactor).ToArray();
+
+			Attributes = GetAttributes(stressState, scaleFactor).ToArray();
 		}
 
-		/// <summary>
-		///		Get the correct block for <paramref name="stressState"/>
-		/// </summary>
-		private static Block GetBlock(PrincipalStressState stressState) =>
-			stressState.Case switch
-			{
-				PrincipalCase.UniaxialTension     => Block.UniaxialTensileStress,
-				PrincipalCase.PureTension         => Block.PureTensileStress,
-				PrincipalCase.UniaxialCompression => Block.UniaxialCompressiveStress,
-				PrincipalCase.PureCompression     => Block.PureCompressiveStress,
-				_                                 => Block.CombinedStress,
-			};
+		#endregion
+
+		#region Methods
 
 		/// <summary>
-		///		Get the attribute for shear block.
+		///     Get the attribute for shear block.
 		/// </summary>
-		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double)"/>
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double)" />
 		private static IEnumerable<AttributeReference> GetAttributes(PrincipalStressState stressState, double scaleFactor)
 		{
 			if (stressState.IsZero)
@@ -76,7 +77,7 @@ namespace SPMTool.Core.Blocks
 			if (!stressState.Is1Zero)
 			{
 				var sigma1 = stressState.Sigma1.ToUnit(DataBase.Settings.Units.PanelStresses).Value.Abs();
-				
+
 				// Improve angle
 				var angle1 = ImproveAngle(stressState.Theta1);
 				var pt1    = GetTextInsertionPoint(angle1, scaleFactor);
@@ -93,13 +94,13 @@ namespace SPMTool.Core.Blocks
 					Invisible           = false
 				};
 			}
-			
+
 			// Text for sigma 1
 			if (stressState.Is2Zero)
 				yield break;
 
 			var sigma2 = stressState.Sigma2.ToUnit(DataBase.Settings.Units.PanelStresses).Value.Abs();
-			
+
 			// Improve angle
 			var angle2 = ImproveAngle(stressState.Theta2);
 			var pt2    = GetTextInsertionPoint(angle2, scaleFactor);
@@ -118,7 +119,20 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <summary>
-		///		Get insertion point for text.
+		///     Get the correct block for <paramref name="stressState" />
+		/// </summary>
+		private static Block GetBlock(PrincipalStressState stressState) =>
+			stressState.Case switch
+			{
+				PrincipalCase.UniaxialTension     => Block.UniaxialTensileStress,
+				PrincipalCase.PureTension         => Block.PureTensileStress,
+				PrincipalCase.UniaxialCompression => Block.UniaxialCompressiveStress,
+				PrincipalCase.PureCompression     => Block.PureCompressiveStress,
+				_                                 => Block.CombinedStress
+			};
+
+		/// <summary>
+		///     Get insertion point for text.
 		/// </summary>
 		/// <param name="stressAngle">The angle of the stress.</param>
 		/// <param name="scaleFactor"></param>
@@ -130,12 +144,15 @@ namespace SPMTool.Core.Blocks
 			return
 				new Point(210 * cos * scaleFactor, 210 * sin * scaleFactor);
 		}
-		
+
 		/// <summary>
-		///	Improve the angle.
+		///     Improve the angle.
 		/// </summary>
 		private static double ImproveAngle(double angle) => angle > Constants.PiOver2
 			? angle - Constants.Pi
 			: angle;
+
+		#endregion
+
 	}
 }

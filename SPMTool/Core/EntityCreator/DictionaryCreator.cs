@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Extensions;
-
 #nullable enable
 
 namespace SPMTool.Core
@@ -11,43 +10,67 @@ namespace SPMTool.Core
 	/// </summary>
 	public abstract class DictionaryCreator
 	{
+
+		#region Fields
+
 		protected ObjectId _objectId = ObjectId.Null;
 
-		#region Properties
+		#endregion
 
-		/// <summary>
-		///     Get/set the <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> of this object.
-		/// </summary>
-		public ObjectId ObjectId 
-		{
-			get => _objectId;
-			set => AttachObject(value);
-		}
+		#region Properties
 
 		/// <summary>
 		///     Get/set the <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> of this object's extended dictionary.
 		/// </summary>
 		public ObjectId DictionaryId { get; protected set; } = ObjectId.Null;
 
+		/// <summary>
+		///     Get/set the <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> of this object.
+		/// </summary>
+		public ObjectId ObjectId
+		{
+			get => _objectId;
+			set => AttachObject(value);
+		}
+
 		#endregion
 
-		#region  Methods
+		#region Methods
+
+		/// <summary>
+		///     Attach an <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> to this object.
+		/// </summary>
+		/// <param name="objectId">The <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> to attach.</param>
+		public void AttachObject(ObjectId objectId)
+		{
+			if (objectId.IsNull)
+				return;
+
+			// Set value
+			_objectId = objectId;
+
+			// Set dictionary id
+			DictionaryId = objectId.GetExtendedDictionaryId();
+
+			if (DictionaryId.IsNull)
+				SetProperties();
+			else
+				GetProperties();
+		}
+
+		/// <summary>
+		///     Read the extended dictionary associated to this object.
+		/// </summary>
+		/// <param name="dataName">The name of the required record.</param>
+		protected TypedValue[]? GetDictionary(string dataName) => DictionaryId.GetDataFromDictionary(dataName);
 
 		/// <summary>
 		///     Get properties from the extended dictionary for this object.
 		/// </summary>
 		/// <returns>
-		///		True if properties were successfully read from object dictionary.
+		///     True if properties were successfully read from object dictionary.
 		/// </returns>
 		protected abstract bool GetProperties();
-
-		/// <summary>
-		///     Set properties for the extended dictionary for this object.
-		/// </summary>
-		/// <returns>
-		///		True if properties were successfully set to object dictionary.
-		/// </returns>
-		protected abstract void SetProperties();
 
 		/// <summary>
 		///     Create the extended dictionary for this object.
@@ -65,32 +88,14 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Read the extended dictionary associated to this object.
+		///     Set properties for the extended dictionary for this object.
 		/// </summary>
-		/// <param name="dataName">The name of the required record.</param>
-		protected TypedValue[]? GetDictionary(string dataName) => DictionaryId.GetDataFromDictionary(dataName);
+		/// <returns>
+		///     True if properties were successfully set to object dictionary.
+		/// </returns>
+		protected abstract void SetProperties();
 
-        #endregion
+		#endregion
 
-        /// <summary>
-        ///     Attach an <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> to this object.
-        /// </summary>
-        /// <param name="objectId">The <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> to attach.</param>
-        public void AttachObject(ObjectId objectId)
-        {
-            if (objectId.IsNull)
-                return;
-
-            // Set value
-            _objectId = objectId;
-
-			// Set dictionary id
-			DictionaryId = objectId.GetExtendedDictionaryId();
-
-			if (DictionaryId.IsNull)
-	            SetProperties();
-			else
-				GetProperties();
-        }
 	}
 }

@@ -11,17 +11,18 @@ namespace SPMTool.Application.UserInterface
 	/// </summary>
 	public class SPMToolInterface
 	{
+
 		#region Fields
 
 		/// <summary>
 		///     Icons for user interface.
 		/// </summary>
-		public static readonly Icons Icons = new Icons();
+		public static readonly Icons Icons = new();
 
 		/// <summary>
 		///     Create the application <see cref="RibbonTab" />.
 		/// </summary>
-		private readonly RibbonTab _tab = new RibbonTab
+		private readonly RibbonTab _tab = new()
 		{
 			Title = DataBase.AppName,
 			Id    = DataBase.AppName
@@ -38,7 +39,7 @@ namespace SPMTool.Application.UserInterface
 
 		#endregion
 
-		#region  Methods
+		#region Methods
 
 		/// <summary>
 		///     Add ribbon buttons to user interface.
@@ -66,6 +67,55 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
+		///     Alternate colors if theme is changed.
+		/// </summary>
+		public static void ColorThemeChanged(object senderObj, SystemVariableChangedEventArgs sysVarChEvtArgs)
+		{
+			// Check if it's a theme change
+			if (sysVarChEvtArgs.Name != "COLORTHEME")
+				return;
+
+			// Reinitialize the ribbon buttons
+			AddButtons();
+		}
+
+		/// <summary>
+		///     Create Analysis Panel.
+		/// </summary>
+		private void AnalysisPanel()
+		{
+			var pnlSrc = new RibbonPanelSource { Title = "Analysis" };
+			_tab.Panels.Add(new RibbonPanel { Source   = pnlSrc });
+
+			var splitButton = new RibbonSplitButton
+			{
+				ShowText                      = true,
+				IsSplit                       = true,
+				Size                          = RibbonItemSize.Large,
+				IsSynchronizedWithCurrentItem = true
+			};
+
+			splitButton.Items.Add(Command.Linear.GetRibbonButton());
+
+			splitButton.Items.Add(Command.Nonlinear.GetRibbonButton());
+
+			// Add to the panel source
+			pnlSrc.Items.Add(splitButton);
+		}
+
+		/// <summary>
+		///     Create Concrete Panel.
+		/// </summary>
+		private void ConcretePanel()
+		{
+			var pnlSrc = new RibbonPanelSource { Title = "Concrete" };
+			_tab.Panels.Add(new RibbonPanel { Source   = pnlSrc });
+
+			// Material parameters button
+			pnlSrc.Items.Add(Command.Parameters.GetRibbonButton());
+		}
+
+		/// <summary>
 		///     Create the Ribbon panels.
 		/// </summary>
 		private void CreatePanels()
@@ -83,16 +133,16 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void ModelPanel()
 		{
-			var pnlSrc = new RibbonPanelSource {Title = "Model" };
-			_tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
+			var pnlSrc = new RibbonPanelSource { Title = "Model" };
+			_tab.Panels.Add(new RibbonPanel { Source   = pnlSrc });
 
 			// Create a split button for geometry creation
 			var splitButton1 = new RibbonSplitButton
 			{
-				ShowText = true,
-				Text = "Add element",
-				IsSplit = true,
-				Size = RibbonItemSize.Large,
+				ShowText                      = true,
+				Text                          = "Add element",
+				IsSplit                       = true,
+				Size                          = RibbonItemSize.Large,
 				IsSynchronizedWithCurrentItem = true
 			};
 
@@ -109,9 +159,9 @@ namespace SPMTool.Application.UserInterface
 			// Create a split button for geometry
 			var splitButton2 = new RibbonSplitButton
 			{
-				ShowText = true,
-				IsSplit = true,
-				Size = RibbonItemSize.Large,
+				ShowText                      = true,
+				IsSplit                       = true,
+				Size                          = RibbonItemSize.Large,
 				IsSynchronizedWithCurrentItem = true
 			};
 
@@ -129,10 +179,10 @@ namespace SPMTool.Application.UserInterface
 			// Create a split button for constraints and forces
 			var splitButton3 = new RibbonSplitButton
 			{
-				ShowText = true,
-				Text = "Constraints / forces",
-				IsSplit = true,
-				Size = RibbonItemSize.Large,
+				ShowText                      = true,
+				Text                          = "Constraints / forces",
+				IsSplit                       = true,
+				Size                          = RibbonItemSize.Large,
 				IsSynchronizedWithCurrentItem = true
 			};
 
@@ -149,9 +199,9 @@ namespace SPMTool.Application.UserInterface
 			// Create a split button for Element division
 			var rbSpBtn3 = new RibbonSplitButton
 			{
-				ShowText = true,
-				Text = "Divide element",
-				IsSplit = true,
+				ShowText                      = true,
+				Text                          = "Divide element",
+				IsSplit                       = true,
 				IsSynchronizedWithCurrentItem = true
 			};
 
@@ -173,86 +223,19 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
-		///     Create Concrete Panel.
-		/// </summary>
-		private void ConcretePanel()
-		{
-			var pnlSrc = new RibbonPanelSource {Title = "Concrete" };
-			_tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
-
-			// Material parameters button
-			pnlSrc.Items.Add(Command.Parameters.GetRibbonButton());
-		}
-
-		/// <summary>
-		///     Create Analysis Panel.
-		/// </summary>
-		private void AnalysisPanel()
-		{
-			var pnlSrc = new RibbonPanelSource {Title = "Analysis" };
-			_tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
-
-			var splitButton = new RibbonSplitButton
-			{
-				ShowText = true,
-				IsSplit = true,
-				Size = RibbonItemSize.Large,
-				IsSynchronizedWithCurrentItem = true
-			};
-
-			splitButton.Items.Add(Command.Linear.GetRibbonButton());
-
-			splitButton.Items.Add(Command.Nonlinear.GetRibbonButton());
-
-			// Add to the panel source
-			pnlSrc.Items.Add(splitButton);
-		}
-
-		/// <summary>
-		///     Create View Panel.
-		/// </summary>
-		private void ViewPanel()
-		{
-			var pnlSrc = new RibbonPanelSource {Title = "View" };
-			_tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
-
-			// Create a split button
-			var splitButton = new RibbonSplitButton
-			{
-				ShowText = true,
-				IsSplit = true,
-				Size = RibbonItemSize.Large,
-				IsSynchronizedWithCurrentItem = true
-			};
-
-			splitButton.Items.Add(Command.Nodes.GetRibbonButton());
-
-			splitButton.Items.Add(Command.Stringers.GetRibbonButton());
-
-			splitButton.Items.Add(Command.Panels.GetRibbonButton());
-
-			splitButton.Items.Add(Command.Forces.GetRibbonButton());
-
-			splitButton.Items.Add(Command.Supports.GetRibbonButton());
-
-			// Add to the panel source
-			pnlSrc.Items.Add(splitButton);
-		}
-
-		/// <summary>
 		///     Create Results Panel.
 		/// </summary>
 		private void ResultsPanel()
 		{
-			var pnlSrc = new RibbonPanelSource {Title = "Results" };
-			_tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
+			var pnlSrc = new RibbonPanelSource { Title = "Results" };
+			_tab.Panels.Add(new RibbonPanel { Source   = pnlSrc });
 
 			// Create a split button
 			var splitButton = new RibbonSplitButton
 			{
-				ShowText = true,
-				IsSplit = true,
-				Size = RibbonItemSize.Large,
+				ShowText                      = true,
+				IsSplit                       = true,
+				Size                          = RibbonItemSize.Large,
 				IsSynchronizedWithCurrentItem = true
 			};
 
@@ -277,8 +260,8 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void SettingsPanel()
 		{
-			var pnlSrc = new RibbonPanelSource {Title = "Settings" };
-			_tab.Panels.Add(new RibbonPanel { Source = pnlSrc });
+			var pnlSrc = new RibbonPanelSource { Title = "Settings" };
+			_tab.Panels.Add(new RibbonPanel { Source   = pnlSrc });
 
 			pnlSrc.Items.Add(Command.Units.GetRibbonButton());
 
@@ -286,18 +269,37 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
-		///     Alternate colors if theme is changed.
+		///     Create View Panel.
 		/// </summary>
-		public static void ColorThemeChanged(object senderObj, SystemVariableChangedEventArgs sysVarChEvtArgs)
+		private void ViewPanel()
 		{
-			// Check if it's a theme change
-			if (sysVarChEvtArgs.Name != "COLORTHEME")
-				return;
+			var pnlSrc = new RibbonPanelSource { Title = "View" };
+			_tab.Panels.Add(new RibbonPanel { Source   = pnlSrc });
 
-			// Reinitialize the ribbon buttons
-			AddButtons();
+			// Create a split button
+			var splitButton = new RibbonSplitButton
+			{
+				ShowText                      = true,
+				IsSplit                       = true,
+				Size                          = RibbonItemSize.Large,
+				IsSynchronizedWithCurrentItem = true
+			};
+
+			splitButton.Items.Add(Command.Nodes.GetRibbonButton());
+
+			splitButton.Items.Add(Command.Stringers.GetRibbonButton());
+
+			splitButton.Items.Add(Command.Panels.GetRibbonButton());
+
+			splitButton.Items.Add(Command.Forces.GetRibbonButton());
+
+			splitButton.Items.Add(Command.Supports.GetRibbonButton());
+
+			// Add to the panel source
+			pnlSrc.Items.Add(splitButton);
 		}
 
 		#endregion
+
 	}
 }

@@ -12,6 +12,7 @@ namespace SPMTool.Application.UserInterface
 	/// </summary>
 	public partial class AnalysisConfig : Window
 	{
+
 		#region Properties
 
 		/// <summary>
@@ -19,7 +20,7 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private AnalysisSettings AnalysisSettings
 		{
-			get => new AnalysisSettings
+			get => new()
 			{
 				Tolerance     = double.Parse(ToleranceBox.Text),
 				NumLoadSteps  = int.Parse(LoadStepsBox.Text),
@@ -48,24 +49,17 @@ namespace SPMTool.Application.UserInterface
 
 		#endregion
 
-		#region  Methods
-
-		private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
-		{
-			var regex = new Regex("[^0-9]+");
-			e.Handled = regex.IsMatch(e.Text);
-		}
-
-		private void DoubleValidationTextBox(object sender, TextCompositionEventArgs e)
-		{
-			var regex = new Regex("[^0-9.]+e");
-			e.Handled = regex.IsMatch(e.Text);
-		}
+		#region Methods
 
 		/// <summary>
 		///     Close window if cancel button is clicked.
 		/// </summary>
 		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
+
+		/// <summary>
+		///     Set default analysis settings.
+		/// </summary>
+		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => AnalysisSettings = AnalysisSettings.Default;
 
 		/// <summary>
 		///     Save units if OK button is clicked.
@@ -79,7 +73,7 @@ namespace SPMTool.Application.UserInterface
 				return;
 			}
 
-			var boxes = new [] {ToleranceBox, LoadStepsBox, IterationsBox};
+			var boxes = new[] { ToleranceBox, LoadStepsBox, IterationsBox };
 
 			// Check if parameters parse
 			if (!boxes.All(d => d.Text.ParsedAndNotZero(out _)))
@@ -94,11 +88,19 @@ namespace SPMTool.Application.UserInterface
 			Close();
 		}
 
-		/// <summary>
-		///     Set default analysis settings.
-		/// </summary>
-		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => AnalysisSettings = AnalysisSettings.Default;
+		private void DoubleValidationTextBox(object sender, TextCompositionEventArgs e)
+		{
+			var regex = new Regex("[^0-9.]+e");
+			e.Handled = regex.IsMatch(e.Text);
+		}
+
+		private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
+		{
+			var regex = new Regex("[^0-9]+");
+			e.Handled = regex.IsMatch(e.Text);
+		}
 
 		#endregion
+
 	}
 }

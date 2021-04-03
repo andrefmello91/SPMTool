@@ -1,5 +1,4 @@
 ﻿using SPMTool.Attributes;
-using SPMTool.Enums;
 
 namespace SPMTool.Editor.Commands
 {
@@ -85,10 +84,13 @@ namespace SPMTool.Editor.Commands
 	}
 
 	/// <summary>
-	///		Command name class.
+	///     Command name class.
 	/// </summary>
 	public static class CommandName
 	{
+
+		#region Fields
+
 		public const string AddConstraint = nameof(AddConstraint);
 
 		public const string AddForce = nameof(AddForce);
@@ -140,5 +142,8 @@ namespace SPMTool.Editor.Commands
 		public const string UpdateElements = nameof(UpdateElements);
 
 		public const string Units = nameof(Units);
+
+		#endregion
+
 	}
 }

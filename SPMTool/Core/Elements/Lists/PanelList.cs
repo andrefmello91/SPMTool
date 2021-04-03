@@ -3,18 +3,15 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.EList;
-using Autodesk.AutoCAD.DatabaseServices;
 using andrefmello91.Extensions;
 using andrefmello91.Material.Reinforcement;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.PanelProperties;
+using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
-using static SPMTool.Core.DataBase;
-using static SPMTool.Units;
-
 #nullable enable
 
 namespace SPMTool.Core.Elements
@@ -24,10 +21,10 @@ namespace SPMTool.Core.Elements
 	/// </summary>
 	public class PanelList : SPMObjectList<PanelObject, PanelGeometry>
 	{
+
 		#region Constructors
 
 		private PanelList()
-			: base()
 		{
 			ItemAdded  += On_PanelAdd;
 			RangeAdded += On_PanelAdd;
@@ -42,7 +39,7 @@ namespace SPMTool.Core.Elements
 
 		#endregion
 
-		#region  Methods
+		#region Methods
 
 		/// <summary>
 		///     Get the collection of panels in the drawing.
@@ -65,13 +62,28 @@ namespace SPMTool.Core.Elements
 				? new PanelList()
 				: new PanelList(panelSolids.Select(PanelObject.GetFromSolid));
 
-		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)" />
-		/// <param name="vertices">The <see cref="Vertices" /> of panel to remove.</param>
-		public bool Remove(Vertices vertices, bool raiseEvents = true, bool sort = true) => Remove(new PanelObject(vertices), raiseEvents, sort);
+		/// <summary>
+		///     Move panel objects to bottom after adding to list.
+		/// </summary>
+		private static void On_PanelAdd(object sender, EventArgs e)
+		{
+			if (sender is not PanelList panelList)
+				return;
 
-		/// <inheritdoc cref="EList{T}.RemoveRange(IEnumerable{T}, bool, bool)" />
-		/// <param name="vertices">The collection of <see cref="Vertices" /> of panels to remove.</param>
-		public int RemoveRange(IEnumerable<Vertices>? vertices, bool raiseEvents = true, bool sort = true) => RemoveRange(vertices?.Select(v => new PanelObject(v)), raiseEvents, sort);
+			panelList.Select(p => p.ObjectId).MoveToBottom();
+		}
+
+		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
+		/// <param name="vertices">The collection of four <see cref="Point" /> vertices, in any order.</param>
+		public bool Add(IEnumerable<Point>? vertices, bool raiseEvents = true, bool sort = true) => !(vertices is null) && Add(new PanelObject(vertices), raiseEvents, sort);
+
+		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
+		/// <param name="vertices">The panel <see cref="Vertices" /> object.</param>
+		public bool Add(Vertices vertices, bool raiseEvents = true, bool sort = true) => Add(new PanelObject(vertices), raiseEvents, sort);
+
+		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
+		/// <param name="verticesCollection">The collection of <see cref="Vertices" />'s that represents the panels.</param>
+		public int AddRange(IEnumerable<Vertices>? verticesCollection, bool raiseEvents = true, bool sort = true) => AddRange(verticesCollection?.Select(v => new PanelObject(v)), raiseEvents, sort);
 
 		/// <summary>
 		///     Get a <see cref="PanelObject" /> in this collection with the corresponding <paramref name="vertices" />.
@@ -87,19 +99,31 @@ namespace SPMTool.Core.Elements
 		public IEnumerable<PanelObject>? GetByVertices(IEnumerable<Vertices>? vertices) => this.Where(p => vertices.Contains(p.Vertices));
 
 		/// <summary>
-		///     Update all the panels in this collection from drawing.
+		///     Get the <see cref="Panel" />'s associated to objects in this collection.
 		/// </summary>
-		public void Update()
-		{
-			Clear(false);
-
-			AddRange(ReadFromDrawing(), false);
-		}
+		/// <inheritdoc cref="PanelObject.GetElement(IEnumerable{Node}, ElementModel)" />
+		[return: NotNull]
+		public IEnumerable<Panel> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) => this.Select(s => s.GetElement(nodes, elementModel));
 
 		/// <summary>
 		///     Get the list of <see cref="PanelGeometry" />'s from this collection.
 		/// </summary>
 		public List<PanelGeometry> GetGeometries() => GetProperties();
+
+		/// <summary>
+		///     Get the list of distinct <see cref="WebReinforcementDirection" />'s in this collection.
+		/// </summary>
+		public List<WebReinforcementDirection?> GetReinforcementDirections() => this.SelectMany(p => new[] { p.Reinforcement?.DirectionX, p.Reinforcement?.DirectionY }).Distinct().OrderBy(r => r).ToList();
+
+		/// <summary>
+		///     Get the list of distinct <see cref="WebReinforcement" />'s in this collection.
+		/// </summary>
+		public List<WebReinforcement?> GetReinforcements() => this.Select(p => p.Reinforcement).Distinct().OrderBy(r => r).ToList();
+
+		/// <summary>
+		///     Get the list of distinct <see cref="Steel" />'s in this collection.
+		/// </summary>
+		public List<Steel?> GetSteels() => this.SelectMany(p => new[] { p.Reinforcement?.DirectionX?.Steel, p.Reinforcement?.DirectionY?.Steel }).Distinct().OrderBy(r => r).ToList();
 
 		/// <summary>
 		///     Get the list of <see cref="Vertices" />'s from this collection.
@@ -111,51 +135,25 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		public List<Length> GetWidths() => GetGeometries().Select(g => g.Width).Distinct().OrderBy(w => w).ToList();
 
-		/// <summary>
-		///		Get the list of distinct <see cref="WebReinforcement"/>'s in this collection.
-		/// </summary>
-		public List<WebReinforcement?> GetReinforcements() => this.Select(p => p.Reinforcement).Distinct().OrderBy(r => r).ToList();
+		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)" />
+		/// <param name="vertices">The <see cref="Vertices" /> of panel to remove.</param>
+		public bool Remove(Vertices vertices, bool raiseEvents = true, bool sort = true) => Remove(new PanelObject(vertices), raiseEvents, sort);
+
+		/// <inheritdoc cref="EList{T}.RemoveRange(IEnumerable{T}, bool, bool)" />
+		/// <param name="vertices">The collection of <see cref="Vertices" /> of panels to remove.</param>
+		public int RemoveRange(IEnumerable<Vertices>? vertices, bool raiseEvents = true, bool sort = true) => RemoveRange(vertices?.Select(v => new PanelObject(v)), raiseEvents, sort);
 
 		/// <summary>
-		///		Get the list of distinct <see cref="WebReinforcementDirection"/>'s in this collection.
+		///     Update all the panels in this collection from drawing.
 		/// </summary>
-		public List<WebReinforcementDirection?> GetReinforcementDirections() => this.SelectMany(p => new[] {p.Reinforcement?.DirectionX, p.Reinforcement?.DirectionY}).Distinct().OrderBy(r => r).ToList();
-
-		/// <summary>
-		///		Get the list of distinct <see cref="Steel"/>'s in this collection.
-		/// </summary>
-		public List<Steel?> GetSteels() => this.SelectMany(p => new[] {p.Reinforcement?.DirectionX?.Steel, p.Reinforcement?.DirectionY?.Steel}).Distinct().OrderBy(r => r).ToList();
-
-		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
-		/// <param name="vertices">The collection of four <see cref="Point" /> vertices, in any order.</param>
-		public bool Add(IEnumerable<Point>? vertices, bool raiseEvents = true, bool sort = true) => !(vertices is null) && Add(new PanelObject(vertices), raiseEvents, sort);
-
-		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
-		/// <param name="vertices">The panel <see cref="Vertices" /> object.</param>
-		public bool Add(Vertices vertices, bool raiseEvents = true, bool sort = true) => Add(new PanelObject(vertices), raiseEvents, sort);
-
-		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
-		/// <param name="verticesCollection">The collection of <see cref="Vertices" />'s that represents the panels.</param>
-		public int AddRange(IEnumerable<Vertices>? verticesCollection, bool raiseEvents = true, bool sort = true) => AddRange(verticesCollection?.Select(v => new PanelObject(v)), raiseEvents, sort);
-
-		/// <summary>
-		///     Get the <see cref="Panel" />'s associated to objects in this collection.
-		/// </summary>
-		/// <inheritdoc cref="PanelObject.GetElement(IEnumerable{Node}, ElementModel)" />
-		[return: NotNull]
-		public IEnumerable<Panel> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) => this.Select(s => s.GetElement(nodes, elementModel));
-
-		/// <summary>
-		///		Move panel objects to bottom after adding to list.
-		/// </summary>
-		private static void On_PanelAdd(object sender, EventArgs e)
+		public void Update()
 		{
-			if (sender is not PanelList panelList)
-				return;
+			Clear(false);
 
-			panelList.Select(p => p.ObjectId).MoveToBottom();
+			AddRange(ReadFromDrawing(), false);
 		}
 
 		#endregion
+
 	}
 }

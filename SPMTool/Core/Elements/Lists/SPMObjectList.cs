@@ -3,12 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.FEMAnalysis;
-using Autodesk.AutoCAD.DatabaseServices;
-using andrefmello91.Extensions;
-using andrefmello91.SPMElements;
-using SPMTool.Enums;
-using SPMTool.Extensions;
-
 #nullable enable
 
 namespace SPMTool.Core.Elements
@@ -22,6 +16,7 @@ namespace SPMTool.Core.Elements
 		where T1 : SPMObject<T2>, IEntityCreator, IEquatable<T1>, IComparable<T1>
 		where T2 : IComparable<T2>, IEquatable<T2>
 	{
+
 		#region Constructors
 
 		protected SPMObjectList() => SetSortEvent();
@@ -30,12 +25,17 @@ namespace SPMTool.Core.Elements
 			: base(collection)
 		{
 			SetSortEvent();
-			Sort(true);
+			Sort();
 		}
 
 		#endregion
 
-		#region  Methods
+		#region Methods
+
+		/// <summary>
+		///     Event to execute when a list is sorted.
+		/// </summary>
+		public static void On_ListSort(object? sender, EventArgs? e) => SetNumbers((IEnumerable<T1>?) sender);
 
 		/// <summary>
 		///     Set numbers to a collection of objects.
@@ -60,31 +60,27 @@ namespace SPMTool.Core.Elements
 			}
 		}
 
+		public IEnumerable<T1>? GetByProperties(IEnumerable<T2>? properties) => this.Where(t => properties.Contains(t.Property));
+
+		public T1? GetByProperty(T2 property) => Find(t => t.Property.Equals(property));
+
+		/// <summary>
+		///     Get the the list of SPM elements from objects in this collection.
+		/// </summary>
+		[return: NotNull]
+		public IEnumerable<INumberedElement> GetElements() => this.Select(t => t.GetElement());
+
 		/// <summary>
 		///     Get the list of the main properties from objects in this collection.
 		/// </summary>
 		public List<T2> GetProperties() => this.Select(t => t.Property).ToList();
 
 		/// <summary>
-		///     Get the the list of SPM elements from objects in this collection.
-		/// </summary>
-		[return:NotNull]
-		public IEnumerable<INumberedElement> GetElements() => this.Select(t => t.GetElement());
-
-		public T1? GetByProperty(T2 property) => Find(t => t.Property.Equals(property));
-
-		public IEnumerable<T1>? GetByProperties(IEnumerable<T2>? properties) => this.Where(t => properties.Contains(t.Property));
-
-		/// <summary>
 		///     Set sort event to this collection.
 		/// </summary>
 		protected void SetSortEvent() => ListSorted += On_ListSort;
 
-		/// <summary>
-		///     Event to execute when a list is sorted.
-		/// </summary>
-		public static void On_ListSort(object? sender, EventArgs? e) => SetNumbers((IEnumerable<T1>?) sender);
-
 		#endregion
+
 	}
 }

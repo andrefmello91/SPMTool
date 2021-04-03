@@ -1,5 +1,5 @@
-﻿using Autodesk.AutoCAD.DatabaseServices;
-using andrefmello91.Material.Concrete;
+﻿using andrefmello91.Material.Concrete;
+using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Extensions;
 using UnitsNet;
 using static andrefmello91.Material.Concrete.Parameters;
@@ -13,6 +13,7 @@ namespace SPMTool.Core.Materials
 	/// </summary>
 	public class ConcreteData : DictionaryCreator
 	{
+
 		#region Fields
 
 		/// <summary>
@@ -57,31 +58,7 @@ namespace SPMTool.Core.Materials
 
 		#endregion
 
-		#region  Methods
-
-		private void SetParameters(IParameters parameters)
-		{
-			_parameters = parameters;
-
-			SetDictionary(_parameters.GetTypedValues(), ConcreteParams);
-		}
-
-		private void SetConstitutive(ConstitutiveModel model)
-		{
-			_model = model;
-
-			SetDictionary(model.GetTypedValues(), "ConstitutiveModel");
-		}
-
-		/// <summary>
-		///     Read concrete <see cref="Parameters" /> saved in database.
-		/// </summary>
-		private IParameters GetParameters() => GetDictionary(ConcreteParams).GetParameters() ?? C30(Length.FromMillimeters(19));
-
-		/// <summary>
-		///     Read constitutive model.
-		/// </summary>
-		private ConstitutiveModel GetModel() => (ConstitutiveModel) (GetDictionary("ConstitutiveModel").GetEnumValue() ?? (int) ConstitutiveModel.MCFT);
+		#region Methods
 
 		protected override bool GetProperties()
 		{
@@ -97,6 +74,31 @@ namespace SPMTool.Core.Materials
 			SetConstitutive(_model);
 		}
 
+		/// <summary>
+		///     Read constitutive model.
+		/// </summary>
+		private ConstitutiveModel GetModel() => (ConstitutiveModel) (GetDictionary("ConstitutiveModel").GetEnumValue() ?? (int) ConstitutiveModel.MCFT);
+
+		/// <summary>
+		///     Read concrete <see cref="Parameters" /> saved in database.
+		/// </summary>
+		private IParameters GetParameters() => GetDictionary(ConcreteParams).GetParameters() ?? C30(Length.FromMillimeters(19));
+
+		private void SetConstitutive(ConstitutiveModel model)
+		{
+			_model = model;
+
+			SetDictionary(model.GetTypedValues(), "ConstitutiveModel");
+		}
+
+		private void SetParameters(IParameters parameters)
+		{
+			_parameters = parameters;
+
+			SetDictionary(_parameters.GetTypedValues(), ConcreteParams);
+		}
+
 		#endregion
+
 	}
 }
