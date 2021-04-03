@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.Extensions;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -18,14 +19,6 @@ namespace SPMTool.Extensions
 	{
 
 		#region Methods
-
-		/// <summary>
-		///     Add this <paramref name="dbObject" /> to the drawing and return it's <see cref="ObjectId" />.
-		/// </summary>
-		/// <param name="dbObject">The <see cref="DBObject" />.</param>
-		/// <param name="erasedEvent">The event to call if <paramref name="dbObject" /> is erased.</param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static ObjectId AddToDrawing(this DBObject dbObject, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null) => ((Entity) dbObject).AddToDrawing(erasedEvent, ongoingTransaction);
 
 		/// <summary>
 		///     Add this <paramref name="entity" /> to the drawing and return it's <see cref="ObjectId" />.
@@ -74,69 +67,17 @@ namespace SPMTool.Extensions
 				entity.ObjectId;
 		}
 
-		///// <summary>
-		/////     Add this <paramref name="blockReference" /> to the drawing and return it's <see cref="ObjectId" />.
-		///// </summary>
-		///// <param name="blockReference">The <see cref="BlockReference" />.</param>
-		///// <param name="attributes">A collection of custom <seealso cref="AttributeReference"/> to add to <paramref name="blockReference"/>.</param>
-		///// <param name="erasedEvent">The event to call if <paramref name="blockReference" /> is erased.</param>
-		///// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		//public static ObjectId AddToDrawing(this BlockReference? blockReference, IEnumerable<AttributeReference?>? attributes = null, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
-		//{
-		//	if (blockReference is null)
-		//		return ObjectId.Null;
-
-		//	// Start a transaction
-		//	using var lck = Document.LockDocument();
-		//	var trans = ongoingTransaction ?? StartTransaction();
-
-		//	// Add to drawing
-		//	blockReference.AddToDrawing(erasedEvent, trans);
-
-		//	// Verify if there is attributes
-		//	if (!attributes.IsNullOrEmpty() && trans.GetObject(blockReference.ObjectId, OpenMode.ForWrite) is BlockReference blkRef)
-		//		foreach (var attRef in attributes)
-		//		{
-		//			if (attRef is null)
-		//				continue;
-
-		//			blkRef.AttributeCollection.AppendAttribute(attRef);
-		//			trans.AddNewlyCreatedDBObject(attRef, true);
-		//		}
-
-		//	// Commit changes
-		//	if (ongoingTransaction is null)
-		//	{
-		//		trans.Commit();
-		//		trans.Dispose();
-		//	}
-
-		//	return
-		//		blockReference.ObjectId;
-		//}
-
-		/// <summary>
-		///     Add the <paramref name="objects" /> in this collection to the drawing and return the collection of
-		///     <see cref="ObjectId" />'s.
-		/// </summary>
-		/// <param name="erasedEvent">The event to call if <paramref name="objects" /> are erased.</param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static IEnumerable<ObjectId>? AddToDrawing(this IEnumerable<DBObject>? objects, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null) => objects?.Cast<Entity>()?.AddToDrawing(erasedEvent, ongoingTransaction);
-
 		/// <summary>
 		///     Add the <paramref name="entities" /> in this collection to the drawing and return the collection of
 		///     <see cref="ObjectId" />'s.
 		/// </summary>
 		/// <param name="erasedEvent">The event to call if <paramref name="entities" /> are erased.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static IEnumerable<ObjectId>? AddToDrawing(this IEnumerable<Entity?>? entities, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
+		public static IEnumerable<ObjectId> AddToDrawing([NotNull] this IEnumerable<Entity?> entities, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
 		{
-			if (entities.IsNullOrEmpty())
-				yield break;
-
 			// Start a transaction
 			using var lck   = Document.LockDocument();
-			var       trans = ongoingTransaction ?? StartTransaction();
+			using var trans = ongoingTransaction ?? StartTransaction();
 
 			// Open the Block table for read
 			var blkTbl = (BlockTable) trans.GetObject(BlockTableId, OpenMode.ForRead);
@@ -145,6 +86,7 @@ namespace SPMTool.Extensions
 			var blkTblRec = (BlockTableRecord) trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
 
 			// Add the objects to the drawing
+			var list = new List<ObjectId>();
 			foreach (var ent in entities)
 			{
 				if (ent is not null)
@@ -156,15 +98,14 @@ namespace SPMTool.Extensions
 						ent.Erased += erasedEvent;
 				}
 
-				yield return ent?.ObjectId ?? ObjectId.Null;
+				list.Add(ent?.ObjectId ?? ObjectId.Null);
 			}
 
 			// Commit changes
 			if (ongoingTransaction is null)
-			{
 				trans.Commit();
-				trans.Dispose();
-			}
+
+			return list;
 		}
 
 		/// <summary>
