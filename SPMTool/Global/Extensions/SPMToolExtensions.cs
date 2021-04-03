@@ -556,28 +556,36 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Turn off this <see cref="Layer" />.
 		/// </summary>
-		public static void Off(this Layer layer)
+		public static void Off(this Layer layer) => TurnOff(layer);
+		
+		/// <summary>
+		///     Turn off all these <see cref="Layer" />'s.
+		/// </summary>
+		public static void TurnOff(params Layer[] layers)
 		{
-			// Get layer name
-			var layerName = layer.ToString();
-
 			// Start a transaction
 			using var trans = StartTransaction();
 
 			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
+			
+			foreach (var layer in layers)
+			{
+				// Get layer name
+				var layerName = layer.ToString();
+				
+				if (!lyrTbl.Has(layerName))
+					continue;
 
-			if (!lyrTbl.Has(layerName))
-				return;
+				using var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForRead);
+				
+				// Verify the state
+				if (lyrTblRec.IsOff)
+					continue;
 
-			using var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForRead);
-
-			// Verify the state
-			if (lyrTblRec.IsOff)
-				return;
-
-			// Turn it off
-			lyrTblRec.UpgradeOpen();
-			lyrTblRec.IsOff = true;
+				// Turn it off
+				lyrTblRec.UpgradeOpen();
+				lyrTblRec.IsOff = true;
+			}
 
 			// Commit and dispose the transaction
 			trans.Commit();
@@ -587,28 +595,36 @@ namespace SPMTool.Extensions
 		///     Turn on this <see cref="Layer" />.
 		/// </summary>
 		/// <param name="layer">The <see cref="Layer" />.</param>
-		public static void On(this Layer layer)
+		public static void On(this Layer layer) => TurnOn(layer);
+		
+		/// <summary>
+		///     Turn on all these <see cref="Layer" />'s.
+		/// </summary>
+		public static void TurnOn(params Layer[] layers)
 		{
-			// Get layer name
-			var layerName = layer.ToString();
-
 			// Start a transaction
 			using var trans = StartTransaction();
 
 			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
+			
+			foreach (var layer in layers)
+			{
+				// Get layer name
+				var       layerName = layer.ToString();
+				
+				if (!lyrTbl.Has(layerName))
+					continue;
 
-			if (!lyrTbl.Has(layerName))
-				return;
+				using var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForRead);
+				
+				// Verify the state
+				if (!lyrTblRec.IsOff)
+					continue;
 
-			using var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForRead);
-
-			// Verify the state
-			if (!lyrTblRec.IsOff)
-				return;
-
-			// Turn it on
-			lyrTblRec.UpgradeOpen();
-			lyrTblRec.IsOff = false;
+				// Turn it off
+				lyrTblRec.UpgradeOpen();
+				lyrTblRec.IsOff = true;
+			}
 
 			// Commit and dispose the transaction
 			trans.Commit();
