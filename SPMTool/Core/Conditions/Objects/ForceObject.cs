@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using andrefmello91.Extensions;
+using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using andrefmello91.Extensions;
 using MathNet.Numerics;
-using andrefmello91.OnPlaneComponents;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -21,27 +21,28 @@ namespace SPMTool.Core.Conditions
 	/// </summary>
 	public class ForceObject : ConditionObject<PlaneForce>, IEquatable<ForceObject>
 	{
+
 		#region Properties
 
-		public override string Name => $"Force at {Position}";
-
-		public override Block Block => Direction is ComponentDirection.Both 
-			? Block.ForceXY 
+		public override Block Block => Direction is ComponentDirection.Both
+			? Block.ForceXY
 			: Block.ForceY;
 
 		public override ComponentDirection Direction => Value.Direction;
 
 		public override Layer Layer => Layer.Force;
 
+		public override string Name => $"Force at {Position}";
+
 		/// <summary>
-		///		Get rotation angle for X direction. Rotation around Y axis.
+		///     Get rotation angle for X direction. Rotation around Y axis.
 		/// </summary>
 		protected override double RotationAngle => Value.X >= Force.Zero
 			? 0
 			: Constants.Pi;
 
 		/// <summary>
-		///		Get rotation angle for Y direction. Rotation around X axis.
+		///     Get rotation angle for Y direction. Rotation around X axis.
 		/// </summary>
 		protected double RotationAngleY => Value.Y <= Force.Zero
 			? 0
@@ -62,13 +63,7 @@ namespace SPMTool.Core.Conditions
 
 		#endregion
 
-		#region  Methods
-
-		/// <summary>
-		///     Read a <see cref="ForceObject" /> from an <see cref="ObjectId" />.
-		/// </summary>
-		/// <param name="forceObjectId">The <see cref="ObjectId" /> of the force.</param>
-		public static ForceObject? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference?) forceObjectId.GetEntity());
+		#region Methods
 
 		/// <summary>
 		///     Read a <see cref="ForceObject" /> from a <see cref="BlockReference" />.
@@ -81,6 +76,18 @@ namespace SPMTool.Core.Conditions
 				{
 					ObjectId = reference.ObjectId
 				};
+
+		/// <summary>
+		///     Read a <see cref="ForceObject" /> from an <see cref="ObjectId" />.
+		/// </summary>
+		/// <param name="forceObjectId">The <see cref="ObjectId" /> of the force.</param>
+		public static ForceObject? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference?) forceObjectId.GetEntity());
+
+		public override void AddToDrawing()
+		{
+			ObjectId = CreateEntity().AddToDrawing();
+			SetAttributes();
+		}
 
 		public override BlockReference CreateEntity()
 		{
@@ -101,19 +108,30 @@ namespace SPMTool.Core.Conditions
 			return block;
 		}
 
-		public override void AddToDrawing()
-		{
-			ObjectId = CreateEntity().AddToDrawing();
-			SetAttributes();
-		}
-
 		/// <summary>
-		///		Set attributes to the force block.
+		///     Set attributes to the force block.
 		/// </summary>
 		public void SetAttributes() => ObjectId.SetBlockAttributes(ForceAttributeReference()?.ToList());
 
+		public bool Equals(ForceObject other) => base.Equals(other);
+
+		protected override bool GetProperties()
+		{
+			var force = GetForce();
+
+			if (!force.HasValue)
+				return false;
+
+			// Get values
+			Value = force.Value;
+
+			return true;
+		}
+
+		protected override void SetProperties() => SetDictionary(Value.GetTypedValues(), "Force");
+
 		/// <summary>
-		///		Get the attribute references for force block.
+		///     Get the attribute references for force block.
 		/// </summary>
 		private IEnumerable<AttributeReference?>? ForceAttributeReference()
 		{
@@ -131,27 +149,19 @@ namespace SPMTool.Core.Conditions
 			if (!Value.IsYZero)
 				yield return new AttributeReference
 				{
-					Position             = TextInsertionPoint(ComponentDirection.Y).ToPoint3d(),
-					TextString           = $"{Value.Y.Value.Abs():0.00}",
-					Height               = 30 * Settings.Units.ScaleFactor,
-					Justify              = AttachmentPoint.MiddleLeft,
-					LockPositionInBlock  = true,
-					Invisible            = false
+					Position            = TextInsertionPoint(ComponentDirection.Y).ToPoint3d(),
+					TextString          = $"{Value.Y.Value.Abs():0.00}",
+					Height              = 30 * Settings.Units.ScaleFactor,
+					Justify             = AttachmentPoint.MiddleLeft,
+					LockPositionInBlock = true,
+					Invisible           = false
 				};
 		}
 
-		protected override bool GetProperties()
-		{
-			var force = GetForce();
-
-			if (!force.HasValue)
-				return false;
-
-			// Get values
-			Value = force.Value;
-
-			return true;
-		}
+		/// <summary>
+		///     Get <see cref="Force" /> value from extended data.
+		/// </summary>
+		private PlaneForce? GetForce() => GetDictionary("Force").GetForce();
 
 		/// <summary>
 		///     Get the insertion point of the associated text.
@@ -159,22 +169,36 @@ namespace SPMTool.Core.Conditions
 		private Point TextInsertionPoint(ComponentDirection direction) =>
 			direction switch
 			{
-				ComponentDirection.X when Value.X < Force.Zero => new Point(Length.FromMillimeters(75),  Length.FromMillimeters(25)),
+				ComponentDirection.X when Value.X < Force.Zero => new Point(Length.FromMillimeters(75), Length.FromMillimeters(25)),
 				ComponentDirection.X when Value.X > Force.Zero => new Point(Length.FromMillimeters(-200), Length.FromMillimeters(25)),
-				ComponentDirection.Y when Value.Y < Force.Zero => new Point(Length.FromMillimeters(25),  Length.FromMillimeters(100)),
-				ComponentDirection.Y when Value.Y > Force.Zero => new Point(Length.FromMillimeters(25),  Length.FromMillimeters(-125)),
-				_ => Position
+				ComponentDirection.Y when Value.Y < Force.Zero => new Point(Length.FromMillimeters(25), Length.FromMillimeters(100)),
+				ComponentDirection.Y when Value.Y > Force.Zero => new Point(Length.FromMillimeters(25), Length.FromMillimeters(-125)),
+				_                                              => Position
 			};
-
-		/// <summary>
-		///     Get <see cref="Force" /> value from extended data.
-		/// </summary>
-		private PlaneForce? GetForce() => GetDictionary("Force").GetForce();
-
-		protected override void SetProperties() => SetDictionary(Value.GetTypedValues(), "Force");
 
 		#endregion
 
-		public bool Equals(ForceObject other) => base.Equals(other);
+		#region Operators
+
+		/// <summary>
+		///     Get the <see cref="PlaneForce" /> associated to a <see cref="ForceObject" />.
+		/// </summary>
+		/// <remarks>
+		///     Returns <see cref="PlaneForce.Zero" /> if <paramref name="forceObject" /> is null.
+		/// </remarks>
+		public static explicit operator PlaneForce(ForceObject? forceObject) => forceObject?.Value ?? PlaneForce.Zero;
+
+		/// <summary>
+		///     Get the <see cref="ForceObject" /> from <see cref="Model.Forces" /> associated to a <see cref="BlockReference" />.
+		/// </summary>
+		/// <remarks>
+		///     Can be null if <paramref name="blockReference" /> is null or doesn't correspond to a <see cref="ForceObject" />
+		/// </remarks>
+		public static explicit operator ForceObject?(BlockReference? blockReference) => blockReference is null
+			? null
+			: Model.Forces.GetByObjectId(blockReference.ObjectId);
+
+		#endregion
+
 	}
 }

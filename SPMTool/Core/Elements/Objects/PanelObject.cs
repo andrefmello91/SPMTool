@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.FEMAnalysis;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using andrefmello91.Material.Reinforcement;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.PanelProperties;
+using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Geometry;
 using SPMTool.Core.Blocks;
 using SPMTool.Enums;
 using SPMTool.Extensions;
@@ -26,16 +26,16 @@ namespace SPMTool.Core.Elements
 	/// </summary>
 	public class PanelObject : SPMObject<PanelGeometry>, IEntityCreator<Solid>, IEquatable<PanelObject>
 	{
+
 		#region Fields
 
-		private WebReinforcementDirection? _x, _y;
 		private Panel? _panel;
+
+		private WebReinforcementDirection? _x, _y;
 
 		#endregion
 
 		#region Properties
-
-		public override string Name => $"Panel {Number}";
 
 		/// <summary>
 		///     Get/set the horizontal <see cref="WebReinforcementDirection" />.
@@ -59,14 +59,6 @@ namespace SPMTool.Core.Elements
 		///     Get the geometry of this object.
 		/// </summary>
 		public PanelGeometry Geometry => PropertyField;
-
-		public override Layer Layer => Layer.Panel;
-
-		/// <inheritdoc />
-		Solid IEntityCreator<Solid>.CreateEntity() => (Solid) CreateEntity();
-
-		/// <inheritdoc />
-		Solid? IEntityCreator<Solid>.GetEntity() => (Solid?) base.GetEntity();
 
 		/// <summary>
 		///     Get the <see cref="WebReinforcement" />.
@@ -102,6 +94,10 @@ namespace SPMTool.Core.Elements
 			set => SetWidth(value);
 		}
 
+		public override Layer Layer => Layer.Panel;
+
+		public override string Name => $"Panel {Number}";
+
 		#endregion
 
 		#region Constructors
@@ -110,14 +106,14 @@ namespace SPMTool.Core.Elements
 		/// <param name="vertices">The collection of panel's four <see cref="Point3d" /> vertices.</param>
 		/// <param name="unit">The <see cref="LengthUnit" /> of <paramref name="vertices" />.</param>
 		public PanelObject(IEnumerable<Point3d> vertices, LengthUnit unit = LengthUnit.Millimeter)
-			: this (new Vertices(vertices.Select(v => v.ToPoint(unit)).ToArray()))
+			: this(new Vertices(vertices.Select(v => v.ToPoint(unit)).ToArray()))
 		{
 		}
 
 		/// <inheritdoc cref="PanelObject(PanelGeometry)" />
 		/// <param name="vertices">The collection of panel's four <see cref="Point" /> vertices.</param>
 		public PanelObject(IEnumerable<Point> vertices)
-			: this (new Vertices(vertices))
+			: this(new Vertices(vertices))
 		{
 		}
 
@@ -127,7 +123,7 @@ namespace SPMTool.Core.Elements
 			: this(new PanelGeometry(vertices, 100))
 		{
 		}
-		
+
 		/// <summary>
 		///     Create the panel object.
 		/// </summary>
@@ -139,7 +135,7 @@ namespace SPMTool.Core.Elements
 
 		#endregion
 
-		#region  Methods
+		#region Methods
 
 		/// <summary>
 		///     Read a <see cref="PanelObject" /> in the drawing.
@@ -153,15 +149,83 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="PanelObject" /> in the drawing.
 		/// </summary>
 		/// <param name="solid">The <see cref="Solid" /> object of the stringer.</param>
-		public static PanelObject GetFromSolid(Solid solid) => new PanelObject(solid.GetVertices().ToArray(), Settings.Units.Geometry)
+		public static PanelObject GetFromSolid(Solid solid) => new(solid.GetVertices().ToArray(), Settings.Units.Geometry)
 		{
 			ObjectId = solid.ObjectId
 		};
+
+		/// <summary>
+		///     Divide this <see cref="PanelObject" /> into new ones.
+		/// </summary>
+		/// <param name="rows">The number of rows.</param>
+		/// <param name="columns">The number of columns.</param>
+		public IEnumerable<PanelObject> Divide(int rows, int columns)
+		{
+			if (!Vertices.IsRectangular)
+			{
+				yield return this;
+				yield break;
+			}
+
+			var verts = Vertices.Divide(rows, columns).ToArray();
+
+			foreach (var vert in verts)
+				yield return new PanelObject(vert)
+				{
+					Width = Width,
+					_x    = _x?.Clone(),
+					_y    = _y?.Clone()
+				};
+		}
+
+		/// <summary>
+		///     Get panel block creators.
+		/// </summary>
+		public IEnumerable<BlockCreator?> GetBlocks() => new[]
+		{
+			ShearBlock(), AverageStressBlock(), ConcreteStressBlock()
+		};
+
+		/// <remarks>
+		///     This method a linear object.
+		/// </remarks>
+		/// <inheritdoc />
+		public override INumberedElement GetElement() => GetElement(Model.Nodes.GetElements().Cast<Node>().ToArray());
+
+		/// <inheritdoc cref="GetElement()" />
+		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
+		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
+		public Panel GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
+		{
+			_panel = Panel.FromNodes(nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement, elementModel);
+
+			_panel.Number = Number;
+
+			return _panel;
+		}
+
+		/// <summary>
+		///     Set <paramref name="width" /> to this object.
+		/// </summary>
+		/// <param name="width">The width.</param>
+		public void SetWidth(Length width)
+		{
+			PropertyField.Width = width;
+
+			var data = new[]
+			{
+				new TypedValue((int) DxfCode.Real, width.Millimeters)
+			};
+
+			SetDictionary(data, "Width");
+		}
 
 		public override Entity CreateEntity() => new Solid(Vertices.Vertex1.ToPoint3d(), Vertices.Vertex2.ToPoint3d(), Vertices.Vertex4.ToPoint3d(), Vertices.Vertex3.ToPoint3d())
 		{
 			Layer = $"{Layer}"
 		};
+
+		public bool Equals(PanelObject other) => base.Equals(other);
 
 		protected override bool GetProperties()
 		{
@@ -184,64 +248,6 @@ namespace SPMTool.Core.Elements
 				!w.HasValue && x is null && y is null;
 		}
 
-		/// <remarks>
-		///		This method a linear object.
-		/// </remarks>
-		/// <inheritdoc/>
-		public override INumberedElement GetElement() => GetElement(Model.Nodes.GetElements().Cast<Node>().ToArray());
-
-		/// <summary>
-		///     Divide this <see cref="PanelObject" /> into new ones.
-		/// </summary>
-		/// <param name="rows">The number of rows.</param>
-		/// <param name="columns">The number of columns.</param>
-		public IEnumerable<PanelObject> Divide(int rows, int columns)
-		{
-			if (!Vertices.IsRectangular)
-			{
-				yield return this;
-				yield break;
-			}
-
-			var verts = Vertices.Divide(rows, columns).ToArray();
-
-			foreach (var vert in verts)
-				yield return new PanelObject(vert)
-				{
-					Width = Width,
-					_x = _x?.Clone(),
-					_y = _y?.Clone()
-				};
-		}
-
-		/// <inheritdoc cref="GetElement()" />
-		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
-		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
-		public Panel GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
-		{
-			_panel = Panel.FromNodes(nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement, elementModel);
-			
-			_panel.Number = Number;
-			
-			return _panel;
-		}
-
-		/// <summary>
-		///     Set <paramref name="width" /> to this object.
-		/// </summary>
-		/// <param name="width">The width.</param>
-		public void SetWidth(Length width)
-		{
-			PropertyField.Width = width;
-
-			var data = new []
-			{
-				new TypedValue((int) DxfCode.Real, width.Millimeters)
-			};
-
-			SetDictionary(data, "Width");
-		}
-
 		protected override void SetProperties()
 		{
 			var wData = new[]
@@ -257,49 +263,32 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <summary>
-		///		Get the shear <see cref="BlockCreator"/>.
+		///     Get the average stress <see cref="BlockCreator" />.
 		/// </summary>
-		private BlockCreator? ShearBlock()
-		{
-			return _panel is null || _panel.AverageStresses.IsXYZero
-				? null
-				: new ShearBlockCreator(Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY, 0.8 * BlockScaleFactor());
-		}
-
-		/// <summary>
-		///		Get the average stress <see cref="BlockCreator"/>.
-		/// </summary>
-		private BlockCreator? AverageStressBlock()
-		{
-			return _panel is null || _panel.AveragePrincipalStresses.IsZero
+		private BlockCreator? AverageStressBlock() =>
+			_panel is null || _panel.AveragePrincipalStresses.IsZero
 				? null
 				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses, BlockScaleFactor());
-		}
+
 
 		/// <summary>
-		///		Get the concrete stress <see cref="BlockCreator"/>.
-		/// </summary>
-		private BlockCreator? ConcreteStressBlock()
-		{
-			return _panel is null || _panel.AveragePrincipalStresses.IsZero
-				? null
-				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses, BlockScaleFactor(), Layer.ConcreteStress);
-		}
-
-		/// <summary>
-		///		Get panel block creators.
-		/// </summary>
-		public IEnumerable<BlockCreator?> GetBlocks() => new[]
-		{
-			ShearBlock(), AverageStressBlock(), ConcreteStressBlock()
-		};
-		
-		
-		/// <summary>
-		///		Calculate the scale factor for block insertion.
+		///     Calculate the scale factor for block insertion.
 		/// </summary>
 		private double BlockScaleFactor() => Geometry.EdgeLengths.Max().ToUnit(Settings.Units.Geometry).Value * 0.001;
-		
+
+		/// <summary>
+		///     Get the concrete stress <see cref="BlockCreator" />.
+		/// </summary>
+		private BlockCreator? ConcreteStressBlock() =>
+			_panel is null || _panel.AveragePrincipalStresses.IsZero
+				? null
+				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses, BlockScaleFactor(), Layer.ConcreteStress);
+
+		/// <summary>
+		///     Get the <see cref="WebReinforcement" /> of a panel.
+		/// </summary>
+		private WebReinforcementDirection? GetReinforcement(Axis dir) => GetDictionary($"Reinforcement{dir}").GetReinforcementDirection(dir);
+
 		/// <summary>
 		///     Get the width of a panel.
 		/// </summary>
@@ -311,11 +300,6 @@ namespace SPMTool.Core.Elements
 				? (Length?) null
 				: Length.FromMillimeters(data[0].ToDouble()).ToUnit(Settings.Units.Geometry);
 		}
-
-		/// <summary>
-		///     Get the <see cref="WebReinforcement" /> of a panel.
-		/// </summary>
-		private WebReinforcementDirection? GetReinforcement(Axis dir) => GetDictionary($"Reinforcement{dir}").GetReinforcementDirection(dir);
 
 		/// <summary>
 		///     Set reinforcement to this object.
@@ -333,35 +317,69 @@ namespace SPMTool.Core.Elements
 			SetDictionary(direction.GetTypedValues(), $"Reinforcement{dir}");
 		}
 
+		/// <summary>
+		///     Get the shear <see cref="BlockCreator" />.
+		/// </summary>
+		private BlockCreator? ShearBlock() =>
+			_panel is null || _panel.AverageStresses.IsXYZero
+				? null
+				: new ShearBlockCreator(Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY, 0.8 * BlockScaleFactor());
+
+		/// <inheritdoc />
+		Solid IEntityCreator<Solid>.CreateEntity() => (Solid) CreateEntity();
+
+		/// <inheritdoc />
+		Solid? IEntityCreator<Solid>.GetEntity() => (Solid?) base.GetEntity();
+
 		#endregion
 
-		public bool Equals(PanelObject other) => base.Equals(other);
-		
+		#region Operators
+
 		/// <summary>
-		///		Get the <see cref="Panel"/> element from a <see cref="PanelObject"/>.
+		///     Get the <see cref="Panel" /> element from a <see cref="PanelObject" />.
 		/// </summary>
 		public static explicit operator Panel?(PanelObject? panelObject) => (Panel?) panelObject?.GetElement();
 
 		/// <summary>
-		///		Get the <see cref="PanelObject"/> from <see cref="Model.Panels"/> associated to a <see cref="Panel"/>.
+		///     Get the <see cref="PanelObject" /> from <see cref="Model.Panels" /> associated to a <see cref="Panel" />.
 		/// </summary>
 		/// <remarks>
-		///		A <see cref="PanelObject"/> is created if <paramref name="panel"/> is not null and is not listed.
+		///     A <see cref="PanelObject" /> is created if <paramref name="panel" /> is not null and is not listed.
 		/// </remarks>
-		public static explicit operator PanelObject?(Panel? panel) => panel is null 
-			? null 
-			: Model.Panels.GetByProperty(panel.Geometry) 
+		public static explicit operator PanelObject?(Panel? panel) => panel is null
+			? null
+			: Model.Panels.GetByProperty(panel.Geometry)
 			  ?? new PanelObject(panel.Geometry);
 
 		/// <summary>
-		///		Get the <see cref="PanelObject"/> from <see cref="Model.Stringers"/> associated to a <see cref="SPMElement"/>.
+		///     Get the <see cref="PanelObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="SPMElement" />.
 		/// </summary>
 		/// <remarks>
-		///		A <see cref="PanelObject"/> is created if <paramref name="spmElement"/> is not null and is not listed.
+		///     A <see cref="PanelObject" /> is created if <paramref name="spmElement" /> is not null and is not listed.
 		/// </remarks>
-		public static explicit operator PanelObject?(SPMElement? spmElement) => spmElement is Panel panel 
-			? (PanelObject?) panel 
+		public static explicit operator PanelObject?(SPMElement? spmElement) => spmElement is Panel panel
+			? (PanelObject?) panel
 			: null;
+
+		/// <summary>
+		///     Get the <see cref="PanelObject" /> from <see cref="Model.Panels" /> associated to a <see cref="Solid" />.
+		/// </summary>
+		/// <remarks>
+		///     Can be null if <paramref name="solid" /> is null or doesn't correspond to a <see cref="PanelObject" />
+		/// </remarks>
+		public static explicit operator PanelObject?(Solid? solid) => solid is null
+			? null
+			: Model.Panels.GetByObjectId(solid.ObjectId);
+
+		/// <summary>
+		///     Get the <see cref="Solid" /> associated to a <see cref="PanelObject" />.
+		/// </summary>
+		/// <remarks>
+		///     Can be null if <paramref name="panelObject" /> is null or doesn't exist in drawing.
+		/// </remarks>
+		public static explicit operator Solid?(PanelObject? panelObject) => (Solid?) panelObject?.GetEntity();
+
+		#endregion
 
 	}
 }

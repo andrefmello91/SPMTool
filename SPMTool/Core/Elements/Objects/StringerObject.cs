@@ -23,12 +23,14 @@ namespace SPMTool.Core.Elements
 	/// </summary>
 	public class StringerObject : SPMObject<StringerGeometry>, IEntityCreator<Line>, IEquatable<StringerObject>
 	{
+
 		#region Fields
 
 		private UniaxialReinforcement? _reinforcement;
 		private Stringer? _stringer;
 
 		#endregion
+
 		#region Properties
 
 		/// <summary>
@@ -49,16 +51,6 @@ namespace SPMTool.Core.Elements
 			set => PropertyField = new StringerGeometry(value.InitialPoint, value.EndPoint, CrossSection);
 		}
 
-		public override Layer Layer => Layer.Stringer;
-
-		/// <inheritdoc />
-		Line IEntityCreator<Line>.CreateEntity() => (Line) CreateEntity();
-
-		/// <inheritdoc />
-		Line? IEntityCreator<Line>.GetEntity() => (Line?) base.GetEntity();
-
-		public override string Name => $"Stringer {Number}";
-
 		/// <summary>
 		///     Get the <see cref="UniaxialReinforcement" /> of this stringer.
 		/// </summary>
@@ -68,7 +60,12 @@ namespace SPMTool.Core.Elements
 			set => SetReinforcement(value);
 		}
 
+		public override Layer Layer => Layer.Stringer;
+
+		public override string Name => $"Stringer {Number}";
+
 		#endregion
+
 		#region Constructors
 
 		/// <inheritdoc cref="StringerObject(StringerGeometry)" />
@@ -98,6 +95,7 @@ namespace SPMTool.Core.Elements
 		}
 
 		#endregion
+
 		#region Methods
 
 		/// <summary>
@@ -111,7 +109,7 @@ namespace SPMTool.Core.Elements
 				line.StartPoint.ToPoint(),
 				line.EndPoint.ToPoint()
 			};
-			
+
 			// Sort list
 			pts.Sort();
 
@@ -130,12 +128,6 @@ namespace SPMTool.Core.Elements
 			stringerObjectId.GetEntity() is Line line
 				? ReadFromLine(line)
 				: null;
-
-		public override Entity CreateEntity() =>
-			new Line(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
-			{
-				Layer = $"{Layer}"
-			};
 
 		/// <summary>
 		///     Divide this <see cref="StringerObject" /> in a <paramref name="number" /> of new ones.
@@ -163,10 +155,18 @@ namespace SPMTool.Core.Elements
 		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
 		public Stringer GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
 		{
-			_stringer = Stringer.FromNodes(nodes, Geometry.InitialPoint, Geometry.EndPoint, Geometry.CrossSection, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement?.Clone(), elementModel);
+			_stringer        = Stringer.FromNodes(nodes, Geometry.InitialPoint, Geometry.EndPoint, Geometry.CrossSection, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement?.Clone(), elementModel);
 			_stringer.Number = Number;
 			return _stringer;
 		}
+
+		public override Entity CreateEntity() =>
+			new Line(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
+			{
+				Layer = $"{Layer}"
+			};
+
+		public bool Equals(StringerObject other) => base.Equals(other);
 
 		protected override bool GetProperties()
 		{
@@ -222,35 +222,62 @@ namespace SPMTool.Core.Elements
 			SetDictionary(reinforcement?.GetTypedValues(), "Reinforcement");
 		}
 
+		/// <inheritdoc />
+		Line IEntityCreator<Line>.CreateEntity() => (Line) CreateEntity();
+
+		/// <inheritdoc />
+		Line? IEntityCreator<Line>.GetEntity() => (Line?) base.GetEntity();
+
 		#endregion
 
-		public bool Equals(StringerObject other) => base.Equals(other);
-		
-		
+		#region Operators
+
 		/// <summary>
-		///		Get the <see cref="Stringer"/> element from a <see cref="StringerObject"/>.
+		///     Get the <see cref="Stringer" /> element from a <see cref="StringerObject" />.
 		/// </summary>
 		public static explicit operator Stringer?(StringerObject? stringerObject) => (Stringer?) stringerObject?.GetElement();
 
 		/// <summary>
-		///		Get the <see cref="StringerObject"/> from <see cref="Model.Stringers"/> associated to a <see cref="Stringer"/>.
+		///     Get the <see cref="StringerObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="Stringer" />.
 		/// </summary>
 		/// <remarks>
-		///		A <see cref="StringerObject"/> is created if <paramref name="stringer"/> is not null and is not listed.
+		///     A <see cref="StringerObject" /> is created if <paramref name="stringer" /> is not null and is not listed.
 		/// </remarks>
-		public static explicit operator StringerObject?(Stringer? stringer) => stringer is null 
-			? null 
-			: Model.Stringers.GetByProperty(stringer.Geometry) 
+		public static explicit operator StringerObject?(Stringer? stringer) => stringer is null
+			? null
+			: Model.Stringers.GetByProperty(stringer.Geometry)
 			  ?? new StringerObject(stringer.Geometry);
 
 		/// <summary>
-		///		Get the <see cref="StringerObject"/> from <see cref="Model.Stringers"/> associated to a <see cref="SPMElement"/>.
+		///     Get the <see cref="StringerObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="SPMElement" />
+		///     .
 		/// </summary>
 		/// <remarks>
-		///		A <see cref="StringerObject"/> is created if <paramref name="spmElement"/> is not null and is not listed.
+		///     A <see cref="StringerObject" /> is created if <paramref name="spmElement" /> is not null and is not listed.
 		/// </remarks>
-		public static explicit operator StringerObject?(SPMElement? spmElement) => spmElement is Stringer stringer 
-			? (StringerObject?) stringer 
+		public static explicit operator StringerObject?(SPMElement? spmElement) => spmElement is Stringer stringer
+			? (StringerObject?) stringer
 			: null;
+
+		/// <summary>
+		///     Get the <see cref="StringerObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="Line" />.
+		/// </summary>
+		/// <remarks>
+		///     Can be null if <paramref name="line" /> is null or doesn't correspond to a <see cref="StringerObject" />
+		/// </remarks>
+		public static explicit operator StringerObject?(Line? line) => line is null
+			? null
+			: Model.Stringers.GetByObjectId(line.ObjectId);
+
+		/// <summary>
+		///     Get the <see cref="Line" /> associated to a <see cref="StringerObject" />.
+		/// </summary>
+		/// <remarks>
+		///     Can be null if <paramref name="stringerObject" /> is null or doesn't exist in drawing.
+		/// </remarks>
+		public static explicit operator Line?(StringerObject? stringerObject) => (Line?) stringerObject?.GetEntity();
+
+		#endregion
+
 	}
 }

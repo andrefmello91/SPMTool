@@ -1,9 +1,8 @@
 ﻿using System;
-using Autodesk.AutoCAD.DatabaseServices;
 using andrefmello91.OnPlaneComponents;
+using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 using SPMTool.Extensions;
-
 #nullable enable
 
 namespace SPMTool.Core.Conditions
@@ -15,12 +14,18 @@ namespace SPMTool.Core.Conditions
 	public interface IConditionObject<out T>
 		where T : IEquatable<T>
 	{
+
 		#region Properties
 
 		/// <summary>
-		///		Get the <see cref="Enums.Block"/> of this object.
+		///     Get the <see cref="Enums.Block" /> of this object.
 		/// </summary>
 		Block Block { get; }
+
+		/// <summary>
+		///     Get the direction of this condition.
+		/// </summary>
+		ComponentDirection Direction { get; }
 
 		/// <summary>
 		///     Get the position of this condition.
@@ -32,12 +37,8 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		T Value { get; }
 
-		/// <summary>
-		///		Get the direction of this condition.
-		/// </summary>
-		ComponentDirection Direction { get; }
-
 		#endregion
+
 	}
 
 	/// <summary>
@@ -47,24 +48,25 @@ namespace SPMTool.Core.Conditions
 	public abstract class ConditionObject<T> : DictionaryCreator, IConditionObject<T>, IEntityCreator<BlockReference>, IEquatable<ConditionObject<T>>, IComparable<ConditionObject<T>>
 		where T : IEquatable<T>
 	{
+
 		#region Properties
 
-		public abstract string Name { get; }
+		/// <summary>
+		///     Get the rotation angle for block insertion.
+		/// </summary>
+		protected abstract double RotationAngle { get; }
 
 		public abstract Block Block { get; }
+
+		public abstract ComponentDirection Direction { get; }
 
 		public Point Position { get; }
 
 		public virtual T Value { get; protected set; }
 
-		public abstract ComponentDirection Direction { get; }
-
 		public abstract Layer Layer { get; }
 
-		/// <summary>
-		///		Get the rotation angle for block insertion.
-		/// </summary>
-		protected abstract double RotationAngle { get; }
+		public abstract string Name { get; }
 
 		#endregion
 
@@ -79,52 +81,60 @@ namespace SPMTool.Core.Conditions
 
 		/// <param name="position">The position.</param>
 		/// <param name="value">The value.</param>
-		/// <inheritdoc cref="ConditionObject()"/>
+		/// <inheritdoc cref="ConditionObject()" />
 		protected ConditionObject(Point position, T value)
 		{
-			Position  = position;
-			Value     = value;
+			Position = position;
+			Value    = value;
 		}
 
 		#endregion
 
-		#region  Methods
-
-		public virtual BlockReference CreateEntity() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, DataBase.Settings.Units.ScaleFactor)!;
-
-		/// <inheritdoc />
-		Entity? IEntityCreator.GetEntity() => GetEntity();
-
-		/// <inheritdoc />
-		Entity IEntityCreator.CreateEntity() => CreateEntity();
-
-		public virtual BlockReference? GetEntity() => (BlockReference?) ObjectId.GetEntity();
-
-		public virtual void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing(Model.On_ObjectErase);
-
-		public virtual void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
-
-		public virtual bool Equals(ConditionObject<T>? other) => !(other is null) && Position == other.Position;
+		#region Methods
 
 		public int CompareTo(ConditionObject<T>? other) => other is null
 			? 0
 			: Position.CompareTo(other.Position);
 
+		public virtual void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing(Model.On_ObjectErase);
+
+		public virtual void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+
+		public virtual BlockReference CreateEntity() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, DataBase.Settings.Units.ScaleFactor)!;
+
+		public virtual BlockReference? GetEntity() => (BlockReference?) ObjectId.GetEntity();
+
+		public virtual bool Equals(ConditionObject<T>? other) => !(other is null) && Position == other.Position;
+
+		/// <inheritdoc />
+		Entity IEntityCreator.CreateEntity() => CreateEntity();
+
+		/// <inheritdoc />
+		Entity? IEntityCreator.GetEntity() => GetEntity();
+
 		public override string ToString() => Value.ToString();
 
 		#endregion
-		
+
 		#region Operators
 
 		/// <summary>
 		///     Returns true if objects are equal.
 		/// </summary>
-		public static bool operator == (ConditionObject<T>? left, ConditionObject<T>? right) => !(left is null) && left.Equals(right);
+		public static bool operator ==(ConditionObject<T>? left, ConditionObject<T>? right) => !(left is null) && left.Equals(right);
 
 		/// <summary>
 		///     Returns true if objects are different.
 		/// </summary>
-		public static bool operator != (ConditionObject<T>? left, ConditionObject<T>? right) => !(left is null) && !left.Equals(right);
+		public static bool operator !=(ConditionObject<T>? left, ConditionObject<T>? right) => !(left is null) && !left.Equals(right);
+
+		/// <summary>
+		///     Get the <see cref="BlockReference" /> associated to a <see cref="ConditionObject{T}" />.
+		/// </summary>
+		/// <remarks>
+		///     Can be null if <paramref name="conditionObject" /> is null or doesn't exist in drawing.
+		/// </remarks>
+		public static explicit operator BlockReference?(ConditionObject<T>? conditionObject) => conditionObject?.GetEntity();
 
 		#endregion
 
