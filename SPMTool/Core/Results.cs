@@ -12,6 +12,7 @@ using UnitsNet;
 using static SPMTool.Core.DataBase;
 using static SPMTool.Core.Model;
 using static SPMTool.Units;
+using static SPMTool.Extensions.Extensions;
 
 namespace SPMTool.Core
 {
@@ -31,216 +32,6 @@ namespace SPMTool.Core
 		#endregion
 
 		#region Methods
-
-		/*
-		/// <summary>
-		///     Draw panel stresses.
-		/// </summary>
-		/// <inheritdoc cref="DrawResults"/>
-		public static void DrawStresses(IEnumerable<Panel> panels)
-		{
-			// Get units
-			var units = Settings.Units;
-
-			// Get tolerances
-			var sTol = StressTolerance;
-			var tol = sTol.ToUnit(units.PanelStresses).Value;
-
-			// Read the object Ids of the support blocks
-			using (var trans = StartTransaction())
-			using (var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead))
-			{
-				// Read the object Ids of the support blocks
-				ObjectId
-					shearBlock = blkTbl[$"{Block.Shear}"],
-					compStress = blkTbl[$"{Block.PureCompressiveStress}"],
-					tensStress = blkTbl[$"{Block.PureTensileStress}"];
-
-				foreach (var pnl in panels)
-				{
-					// Get panel data
-					var l      = pnl.Geometry.EdgeLengths;
-					var cntrPt = pnl.Geometry.Vertices.CenterPoint.ToPoint3d();
-
-					// Get the maximum length of the panel
-					var lMax = l.Max().ToUnit(units.Geometry).Value;
-
-					// Get the average stress
-					var tauAvg = pnl.AverageStresses.TauXY.ToUnit(units.PanelStresses).Value;
-
-					// Calculate the scale factor for the block and text
-					var scFctr = 0.001 * lMax;
-
-					// Add shear block
-					AddShearBlock();
-
-					// Add average stresses blocks
-					var stresses = pnl.AveragePrincipalStresses;
-					AddCompressiveBlock(Layer.PanelStress);
-					AddTensileBlock(Layer.ConcreteStress);
-
-					// Add concrete stresses blocks
-					stresses = pnl.ConcretePrincipalStresses;
-					AddCompressiveBlock(Layer.ConcreteCompressiveStress);
-					AddTensileBlock(Layer.ConcreteTensileStress);
-
-					// Create shear block
-					void AddShearBlock()
-					{
-						if (tauAvg.ApproxZero())
-							return;
-
-						// Insert the block into the current space
-						using (var blkRef = new BlockReference(cntrPt, shearBlock))
-						{
-							blkRef.Layer = $"{Layer.PanelForce}";
-
-							// Set the scale of the block
-							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
-
-							// If the shear is negative, mirror the block
-							if (tauAvg < 0) blkRef.TransformBy(Matrix3d.Rotation(Constants.Pi, Ucs.Yaxis, cntrPt));
-
-							blkRef.AddToDrawing(null, trans);
-						}
-
-						// Create the texts
-						using (var tauTxt = new DBText())
-						{
-							// Set the alignment point
-							var algnPt = new Point3d(cntrPt.X, cntrPt.Y, 0);
-
-							// Set the parameters
-							tauTxt.Layer = $"{Layer.PanelForce}";
-							tauTxt.Height = 30 * scFctr;
-							tauTxt.TextString = $"{Math.Abs(tauAvg):0.00}";
-							tauTxt.Position = algnPt;
-							tauTxt.HorizontalMode = TextHorizontalMode.TextCenter;
-							tauTxt.AlignmentPoint = algnPt;
-
-							// Add the text to the drawing
-							tauTxt.AddToDrawing(null, trans);
-						}
-					}
-
-					// Create compressive stress block
-					void AddCompressiveBlock(Layer layer)
-					{
-						var sig2 = stresses.Sigma2.ToUnit(units.PanelStresses).Value;
-
-						if (sig2.ApproxZero(tol))
-							return;
-
-						// Create compressive stress block
-						using (var blkRef = new BlockReference(cntrPt, compStress))
-						{
-							blkRef.Layer = $"{layer}";
-							blkRef.ColorIndex = (int) ColorCode.Blue1;
-
-							// Set the scale of the block
-							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
-
-							// Rotate the block in theta angle
-							if (!stresses.Theta2.ApproxZero())
-								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, Ucs.Zaxis,
-									cntrPt));
-
-							blkRef.AddToDrawing(null, trans);
-						}
-
-						// Create the text
-						using (var sigTxt = new DBText())
-						{
-							// Create a line and rotate to get insertion point
-							var ln = new Line
-							{
-								StartPoint = cntrPt,
-								EndPoint = new Point3d(cntrPt.X + 210 * scFctr, cntrPt.Y, 0)
-							};
-
-							ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, Ucs.Zaxis, cntrPt));
-
-							// Set the alignment point
-							var algnPt = ln.EndPoint;
-
-							// Set the parameters
-							sigTxt.Layer = $"{layer}";
-							sigTxt.Height = 30 * scFctr;
-							sigTxt.TextString = $"{sig2.Abs():0.00}";
-							sigTxt.Position = algnPt;
-							sigTxt.HorizontalMode = TextHorizontalMode.TextCenter;
-							sigTxt.AlignmentPoint = algnPt;
-
-							// Add the text to the drawing
-							sigTxt.AddToDrawing(null, trans);
-						}
-					}
-
-					// Create tensile stress block
-					void AddTensileBlock(Layer layer)
-					{
-						var sig1 = stresses.Sigma1.ToUnit(units.PanelStresses).Value;
-
-						// Verify tensile stress
-						if (sig1.ApproxZero(tol))
-							return;
-
-						// Create tensile stress block
-						using (var blkRef = new BlockReference(cntrPt, tensStress))
-						{
-							blkRef.Layer = $"{layer}";
-
-							// Set the scale of the block
-							blkRef.TransformBy(Matrix3d.Scaling(scFctr, cntrPt));
-
-							// Rotate the block in theta angle
-							if (!stresses.Theta2.ApproxZero())
-								blkRef.TransformBy(Matrix3d.Rotation(stresses.Theta2, Ucs.Zaxis,
-									cntrPt));
-
-							blkRef.AddToDrawing(null, trans);
-						}
-
-						// Create the text
-						using (var sigTxt = new DBText())
-						{
-							// Create a line and rotate to get insertion point
-							var ln = new Line
-							{
-								StartPoint = cntrPt,
-								EndPoint = new Point3d(cntrPt.X, cntrPt.Y + 210 * scFctr, 0)
-							};
-
-							ln.TransformBy(Matrix3d.Rotation(stresses.Theta2, Ucs.Zaxis, cntrPt));
-
-							// Set the alignment point
-							var algnPt = ln.EndPoint;
-
-							// Set the parameters
-							sigTxt.Layer = $"{layer}";
-							sigTxt.Height = 30 * scFctr;
-							sigTxt.TextString = $"{sig1.Abs():0.00}";
-							sigTxt.Position = algnPt;
-							sigTxt.HorizontalMode = TextHorizontalMode.TextCenter;
-							sigTxt.AlignmentPoint = algnPt;
-
-							// Add the text to the drawing
-							sigTxt.AddToDrawing(null, trans);
-						}
-					}
-				}
-
-				// Save the new objects to the database
-				trans.Commit();
-			}
-
-			// Turn the layer on
-			Layer.PanelForce.On();
-			Layer.PanelStress.Off();
-			Layer.ConcreteStress.Off();
-			Layer.Cracks.Off();
-		}
-		*/
 
 		/// <summary>
 		///     Draw panel cracks.
@@ -419,73 +210,6 @@ namespace SPMTool.Core
 				// Save the new objects to the database
 				trans.Commit();
 			}
-		}
-
-		/// <summary>
-		///     Draw displacements.
-		/// </summary>
-		/// <inheritdoc cref="DrawResults" />
-		public static void DrawDisplacements(IEnumerable<Stringer> stringers)
-		{
-			// Get units
-			var units = Settings.Units;
-
-			// Turn the layer off
-			Layer.Displacements.Off();
-
-			// Set a scale factor for displacements
-			var scFctr = units.DisplacementScaleFactor;
-
-			// Create lists of points for adding the nodes later
-			var dispNds = new List<Point3d>();
-
-			foreach (var str in stringers)
-			{
-				// Get displacements of the initial and end nodes
-				var d1 = str.Grip1.Displacement.Clone();
-				var d3 = str.Grip3.Displacement.Clone();
-				d1.ChangeUnit(units.Displacements);
-				d3.ChangeUnit(units.Displacements);
-
-				double
-					ux1 = d1.X.Value * scFctr,
-					uy1 = d1.X.Value * scFctr,
-					ux3 = d3.X.Value * scFctr,
-					uy3 = d3.X.Value * scFctr,
-					ix  = str.Geometry.InitialPoint.X.ToUnit(units.Geometry).Value,
-					iy  = str.Geometry.InitialPoint.Y.ToUnit(units.Geometry).Value,
-					ex  = str.Geometry.EndPoint.X.ToUnit(units.Geometry).Value,
-					ey  = str.Geometry.EndPoint.Y.ToUnit(units.Geometry).Value;
-
-				// Calculate the displaced nodes
-				Point3d
-					stPt  = new(ix + ux1, iy + uy1, 0),
-					enPt  = new(ex + ux3, ey + uy3, 0),
-					midPt = stPt.MidPoint(enPt);
-
-				// Draw the displaced Stringer
-				using (var newStr = new Line(stPt, enPt))
-				{
-					// Set the layer to Stringer
-					newStr.Layer = $"{Layer.Displacements}";
-
-					// Add the line to the drawing
-					newStr.AddToDrawing();
-				}
-
-				// Add the position of the nodes to the list
-				if (!dispNds.Contains(stPt))
-					dispNds.Add(stPt);
-
-				if (!dispNds.Contains(enPt))
-					dispNds.Add(enPt);
-
-				if (!dispNds.Contains(midPt))
-					dispNds.Add(midPt);
-			}
-
-			// Add the nodes
-			Nodes.AddRange(dispNds.ToPoints(units.Geometry), NodeType.Displaced, false, false);
 		}
 
 		/// <summary>
@@ -697,33 +421,48 @@ namespace SPMTool.Core
 			ResultLayers.EraseObjects();
 
 			SetDisplacements();
+			DrawPanelStresses();
+			DrawDisplacedModel();
 
-			// DrawDisplacements(stringers);
 			// DrawForces(stringers);
-			// DrawStresses(panels);
-
-			// Get panel blocks
-			var blocks = Panels.SelectMany(p => p.GetBlocks()).ToList();
-
-			// Add to drawing and set attributes
-			blocks.AddToDrawing();
-			blocks.SetAttributes();
-
-			foreach (var panel in input.Panels)
-				Model.Editor.WriteMessage
-				(
-					$"\nPanel {panel.Number}:" +
-					"\n AvgStress:" +
-					$"\n{panel.AverageStresses}" +
-					"\nPrincipals:" +
-					$"\n{panel.AveragePrincipalStresses}"
-				);
 
 			if (!drawCracks)
 				return;
 
 			DrawCracks(input.Panels);
 			DrawCracks(input.Stringers);
+		}
+
+		/// <summary>
+		///		Draw panel stresses.
+		/// </summary>
+		private static void DrawPanelStresses()
+		{
+			// Get panel blocks
+			var blocks = Panels.SelectMany(p => p.GetBlocks()).ToList();
+
+			// Add to drawing and set attributes
+			blocks.AddToDrawing();
+			blocks.SetAttributes();
+			
+			// Turn off stresses layer
+			TurnOff(Layer.PanelStress, Layer.ConcreteStress);
+			Layer.PanelForce.On();
+		}
+
+		/// <summary>
+		///		Draw the displaced model.
+		/// </summary>
+		private static void DrawDisplacedModel()
+		{
+			var mFactor   = Settings.Units.DisplacementMagnifier;
+			
+			var displaced = Stringers.Select(s => s.GetDisplaced(mFactor)).ToList();
+
+			var _ = displaced.AddToDrawing();
+
+			// Turn off displacement layer
+			Layer.Displacements.Off();
 		}
 
 		/// <summary>

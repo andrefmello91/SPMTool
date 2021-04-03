@@ -147,12 +147,13 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the displaced <see cref="Line" />.
 		/// </summary>
-		public Line GetDisplaced()
+		/// <param name="displacementMagnifier">A magnifier factor to multiply displacements.</param>
+		public Line GetDisplaced(double displacementMagnifier)
 		{
 			// Get displaced points
 			Point
-				start = Geometry.InitialPoint + (_stringer?.Grip1.Displacement ?? PlaneDisplacement.Zero),
-				end   = Geometry.EndPoint + (_stringer?.Grip3.Displacement ?? PlaneDisplacement.Zero);
+				start = Geometry.InitialPoint + (_stringer?.Grip1.Displacement ?? PlaneDisplacement.Zero) * displacementMagnifier,
+				end   = Geometry.EndPoint + (_stringer?.Grip3.Displacement ?? PlaneDisplacement.Zero) * displacementMagnifier;
 
 			return new Line(start.ToPoint3d(), end.ToPoint3d())
 			{
