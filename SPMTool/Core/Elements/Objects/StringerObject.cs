@@ -144,6 +144,22 @@ namespace SPMTool.Core.Elements
 				};
 		}
 
+		/// <summary>
+		///     Get the displaced <see cref="Line" />.
+		/// </summary>
+		public Line GetDisplaced()
+		{
+			// Get displaced points
+			Point
+				start = Geometry.InitialPoint + (_stringer?.Grip1.Displacement ?? PlaneDisplacement.Zero),
+				end   = Geometry.EndPoint + (_stringer?.Grip3.Displacement ?? PlaneDisplacement.Zero);
+
+			return new Line(start.ToPoint3d(), end.ToPoint3d())
+			{
+				Layer = $"{Layer.Displacements}"
+			};
+		}
+
 		/// <remarks>
 		///     This method returns a linear object.
 		/// </remarks>
