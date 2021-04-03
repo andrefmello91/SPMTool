@@ -28,12 +28,15 @@ namespace SPMTool.Extensions
         /// <param name="point">The <see cref="Point"/> to convert.</param>
         public static Point3d ToPoint3d(this Point point) => new (point.X.Value, point.Y.Value, 0);
 
+        /// <inheritdoc cref="ToPoints(IEnumerable{Point3d}, LengthUnit)"/>
+        public static IEnumerable<Point>? ToPoints(this IEnumerable<Point3d>? point3ds) => point3ds?.Select(p => p.ToPoint());
+        
         /// <summary>
         /// Convert a collection of <see cref="Point3d"/>'s to a collection of <see cref="Point"/>'s.
         /// </summary>
         /// <param name="point3ds">The collection of <see cref="Point3d"/>'s to convert.</param>
-        /// <inheritdoc cref="ToPoint"/>
-        public static IEnumerable<Point>? ToPoints(this IEnumerable<Point3d>? point3ds, LengthUnit unit = LengthUnit.Millimeter) => point3ds?.Select(p => p.ToPoint(unit));
+        /// <inheritdoc cref="ToPoint(Point3d)"/>
+        public static IEnumerable<Point>? ToPoints(this IEnumerable<Point3d>? point3ds, LengthUnit unit) => point3ds?.Select(p => p.ToPoint(unit));
 
         /// <summary>
         /// Convert a collection of <see cref="Point"/>'s to a collection of <see cref="Point3d"/>'s.
