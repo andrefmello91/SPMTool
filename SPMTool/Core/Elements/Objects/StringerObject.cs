@@ -8,6 +8,7 @@ using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using SPMTool.Core.Blocks;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -189,6 +190,13 @@ namespace SPMTool.Core.Elements
 				Layer = $"{Layer}"
 			};
 
+		/// <summary>
+		///		Create the stringer diagram. Can be null if the stringer is unloaded.
+		/// </summary>
+		public StringerForceCreator? CreateDiagram() => _stringer is null || _stringer.State is StringerForceState.Unloaded
+			? null
+			: new StringerForceCreator(_stringer);
+		
 		public bool Equals(StringerObject other) => base.Equals(other);
 
 		protected override bool GetProperties()

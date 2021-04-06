@@ -6,7 +6,6 @@ using andrefmello91.Extensions;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.GraphicsInterface;
 using MathNet.Numerics;
 using SPMTool.Core;
 using UnitsNet.Units;
@@ -44,7 +43,7 @@ namespace SPMTool.Extensions
 
 			// Add the object to the drawing
 			var entity = (Entity) dbObject;
-			
+
 			blkTblRec.AppendEntity(entity);
 			trans.AddNewlyCreatedDBObject(entity, true);
 
@@ -94,7 +93,7 @@ namespace SPMTool.Extensions
 			foreach (var obj in dbObjects)
 			{
 				var ent = (Entity?) obj;
-				
+
 				if (ent is not null)
 				{
 					blkTblRec.AppendEntity(ent);
@@ -112,6 +111,56 @@ namespace SPMTool.Extensions
 				trans.Commit();
 
 			return list;
+		}
+
+		/// <summary>
+		///     Create a group in the database.
+		/// </summary>
+		/// <param name="groupEntities">The collection of <see cref="Entity" />'s that form the group.</param>
+		/// <param name="group">The <see cref="Group"/>.</param>
+		/// <inheritdoc cref="AddToDrawing(DBObject, ObjectErasedEventHandler, Transaction)"/>
+		public static ObjectId AddToDrawingAsGroup(this IEnumerable<Entity>? groupEntities, Group group, Transaction? ongoingTransaction = null)
+		{
+			if (groupEntities.IsNullOrEmpty())
+				return ObjectId.Null;
+
+			using var lck   = Document.LockDocument();
+			var       trans = ongoingTransaction ?? StartTransaction();
+
+			// Open the nod
+			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForWrite);
+
+			// Open the Block table for read
+			using var blkTbl = (BlockTable) trans.GetObject(BlockTableId, OpenMode.ForRead);
+
+			// Open the Block table record Model space for write
+			using var blkTblRec = (BlockTableRecord) trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
+
+			// Create the group
+			var id = nod.SetAt(group.Name, group);
+
+			// Add to the transaction
+			trans.AddNewlyCreatedDBObject(group, true);
+
+			// Add the elements to the block
+			foreach (var ent in groupEntities)
+			{
+				blkTblRec.AppendEntity(ent);
+				trans.AddNewlyCreatedDBObject(ent, true);
+			}
+
+			// Set to group
+			var ids = new ObjectIdCollection(groupEntities.Select(e => e.ObjectId).ToArray());
+			group.InsertAt(0, ids);
+
+			// Commit changes
+			if (ongoingTransaction is null)
+			{
+				trans.Commit();
+				trans.Dispose();
+			}
+
+			return id;
 		}
 
 		/// <summary>
@@ -219,58 +268,6 @@ namespace SPMTool.Extensions
 
 			trans.Commit();
 			trans.Dispose();
-		}
-		
-		/// <summary>
-		///     Create a group in the database.
-		/// </summary>
-		/// <param name="groupEntities">The collection of <see cref="Entity" />'s that form the group.</param>
-		/// <param name="originPoint">The origin point of the block.</param>
-		/// <param name="groupName">The name to save the group in database.</param>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static ObjectId AddToDrawingAsGroup(this IEnumerable<Entity>? groupEntities, Point3d originPoint, string groupName, Transaction? ongoingTransaction = null)
-		{
-			if (groupEntities.IsNullOrEmpty())
-				return ObjectId.Null;
-
-			using var lck   = Document.LockDocument();
-			var       trans = ongoingTransaction ?? StartTransaction();
-
-			// Open the nod
-			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForWrite);
-			
-			// Open the Block table for read
-			using var blkTbl = (BlockTable) trans.GetObject(BlockTableId, OpenMode.ForRead);
-
-			// Open the Block table record Model space for write
-			using var blkTblRec = (BlockTableRecord) trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
-			
-			// Create the group
-			var group = new Group(groupName, true);
-			var id    = nod.SetAt(groupName, group);
-			
-			// Add to the transaction
-			trans.AddNewlyCreatedDBObject(group, true);
-
-			// Add the elements to the block
-			foreach (var ent in groupEntities)
-			{
-				blkTblRec.AppendEntity(ent);
-				trans.AddNewlyCreatedDBObject(ent, true);
-			}
-
-			// Set to group
-			var ids = new ObjectIdCollection(groupEntities.Select(e => e.ObjectId).ToArray());
-			group.InsertAt(0, ids);
-			
-			// Commit changes
-			if (ongoingTransaction is null)
-			{
-				trans.Commit();
-				trans.Dispose();
-			}
-
-			return id;
 		}
 
 		/// <summary>

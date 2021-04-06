@@ -100,15 +100,21 @@ namespace SPMTool.Core
 
 			using var lck = DataBase.Document.LockDocument();
 
-			var entities = objects.Select(n => n?.CreateObject()).ToList();
+			var objs2 = objects
+				.Where(o => o is not StringerForceCreator)
+				.ToList();
+			
+			var entities = objs2
+				.Select(n => n?.CreateObject())
+				.ToList();
 
 			// Add objects to drawing
 			var objIds = entities.AddToDrawing(Model.On_ObjectErase)!.ToList();
 
 			// Set object ids
-			for (var i = 0; i < objects.Count(); i++)
-				if (objects.ElementAt(i) is not null)
-					objects.ElementAt(i).ObjectId = objIds[i];
+			for (var i = 0; i < objs2.Count(); i++)
+				if (objs2.ElementAt(i) is not null)
+					objs2.ElementAt(i).ObjectId = objIds[i];
 
 			// Set attributes for blocks
 			foreach (var obj in objects)
@@ -120,15 +126,11 @@ namespace SPMTool.Core
 					case ForceObject force:
 						force.SetAttributes();
 						break;
+					
+					case StringerForceCreator stringerForceCreator:
+						stringerForceCreator.AddToDrawing();
+						break;
 				}
-
-			// Set events
-			//foreach (var entity in entities)
-			//{
-			//	entity.Unappended += Model.On_ObjectUnappended;
-			//	entity.Reappended += Model.On_ObjectReappended;
-			//	entity.Copied     += Model.On_ObjectCopied;
-			//}
 		}
 
 

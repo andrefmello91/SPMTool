@@ -436,6 +436,7 @@ namespace SPMTool.Core
 			
 			SetDisplacements();
 			DrawPanelStresses();
+			DrawStringerForces();
 			DrawDisplacedModel();
 
 			// DrawForces(stringers);
@@ -447,6 +448,11 @@ namespace SPMTool.Core
 			DrawCracks(input.Stringers);
 		}
 
+		/// <summary>
+		///		Draw stringer forces.
+		/// </summary>
+		private static void DrawStringerForces() => Stringers.Select(s => s.CreateDiagram()).AddToDrawing();
+		
 		/// <summary>
 		///		Update <see cref="ResultScaleFactor"/>.
 		/// </summary>
