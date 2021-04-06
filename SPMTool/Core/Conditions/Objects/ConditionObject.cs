@@ -64,9 +64,9 @@ namespace SPMTool.Core.Conditions
 
 		public virtual T Value { get; protected set; }
 
-		public abstract Layer Layer { get; }
+		public abstract override Layer Layer { get; }
 
-		public abstract string Name { get; }
+		public abstract override string Name { get; }
 
 		#endregion
 
@@ -98,19 +98,16 @@ namespace SPMTool.Core.Conditions
 
 		public virtual void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
 
+		/// <inheritdoc />
+		BlockReference IDBObjectCreator<BlockReference>.CreateObject() => (BlockReference) CreateObject();
+
 		public virtual void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
-		public virtual BlockReference CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, DataBase.Settings.Units.ScaleFactor)!;
-
+		public override DBObject CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, DataBase.Settings.Units.ScaleFactor)!;
+		
 		public virtual BlockReference? GetObject() => (BlockReference?) ObjectId.GetEntity();
 
 		public virtual bool Equals(ConditionObject<T>? other) => !(other is null) && Position == other.Position;
-
-		/// <inheritdoc />
-		DBObject IDBObjectCreator.CreateObject() => CreateObject();
-
-		/// <inheritdoc />
-		DBObject? IDBObjectCreator.GetObject() => GetObject();
 
 		public override string ToString() => Value.ToString();
 

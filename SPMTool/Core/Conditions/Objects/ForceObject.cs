@@ -89,7 +89,7 @@ namespace SPMTool.Core.Conditions
 			SetAttributes();
 		}
 
-		public override BlockReference CreateObject()
+		public override DBObject CreateObject()
 		{
 			var insertionPoint = Position.ToPoint3d();
 

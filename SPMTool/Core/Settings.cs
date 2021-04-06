@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using andrefmello91.Extensions;
+using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Core;
+using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet.Units;
 
@@ -78,6 +80,18 @@ namespace SPMTool.Application
 
 		#region Methods
 
+		/// <inheritdoc />
+		public override Layer Layer => default;
+
+		/// <inheritdoc />
+		public override string Name => $"{typeof(Settings)}";
+
+		/// <inheritdoc />
+		public override DBObject CreateObject() => new Xrecord
+		{
+			Data = new ResultBuffer(_analysis.GetTypedValues())
+		};
+		
 		protected override bool GetProperties()
 		{
 			_analysis = GetAnalysisSettings();

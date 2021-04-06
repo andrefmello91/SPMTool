@@ -1,5 +1,6 @@
 ﻿using andrefmello91.Material.Concrete;
 using Autodesk.AutoCAD.DatabaseServices;
+using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
 using static andrefmello91.Material.Concrete.Parameters;
@@ -59,6 +60,18 @@ namespace SPMTool.Core.Materials
 		#endregion
 
 		#region Methods
+
+		/// <inheritdoc />
+		public override Layer Layer => default;
+
+		/// <inheritdoc />
+		public override string Name => ConcreteParams;
+
+		/// <inheritdoc />
+		public override DBObject CreateObject() => new Xrecord
+		{
+			Data = new ResultBuffer(_parameters.GetTypedValues())
+		};
 
 		protected override bool GetProperties()
 		{

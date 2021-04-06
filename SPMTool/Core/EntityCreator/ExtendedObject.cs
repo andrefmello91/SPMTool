@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Autodesk.AutoCAD.DatabaseServices;
+using SPMTool.Enums;
 using SPMTool.Extensions;
 #nullable enable
 
@@ -8,7 +9,7 @@ namespace SPMTool.Core
 	/// <summary>
 	///     Base class for extended objects.
 	/// </summary>
-	public abstract class ExtendedObject
+	public abstract class ExtendedObject : IDBObjectCreator
 	{
 
 		#region Fields
@@ -24,6 +25,12 @@ namespace SPMTool.Core
 		/// </summary>
 		public ObjectId DictionaryId { get; protected set; } = ObjectId.Null;
 
+		/// <inheritdoc />
+		public abstract Layer Layer { get; }
+
+		/// <inheritdoc />
+		public abstract string Name { get; }
+
 		/// <summary>
 		///     Get/set the <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> of this object.
 		/// </summary>
@@ -33,6 +40,18 @@ namespace SPMTool.Core
 			set => AttachObject(value);
 		}
 
+		/// <inheritdoc />
+		public virtual void AddToDrawing() => CreateObject().AddToDrawing();
+
+		/// <inheritdoc />
+		public abstract DBObject CreateObject();
+
+		/// <inheritdoc />
+		public virtual DBObject? GetObject() => ObjectId.GetDBObject();
+
+		/// <inheritdoc />
+		public virtual void RemoveFromDrawing() => ObjectId.RemoveFromDrawing();
+		
 		#endregion
 
 		#region Methods

@@ -45,7 +45,7 @@ namespace SPMTool.Core.Elements
 	///     SPM object base class
 	/// </summary>
 	/// <typeparam name="T">The type that represents the main property of the object.</typeparam>
-	public abstract class SPMObject<T> : ExtendedObject, ISPMObject<T>, IDBObjectCreator, IEquatable<SPMObject<T>>, IComparable<SPMObject<T>>
+	public abstract class SPMObject<T> : ExtendedObject, ISPMObject<T>, IDBObjectCreator<Entity>, IEquatable<SPMObject<T>>, IComparable<SPMObject<T>>
 		where T : IComparable<T>, IEquatable<T>
 	{
 
@@ -59,10 +59,6 @@ namespace SPMTool.Core.Elements
 		#endregion
 
 		#region Properties
-
-		public abstract Layer Layer { get; }
-
-		public abstract string Name { get; }
 
 		public int Number { get; set; } = 0;
 
@@ -92,20 +88,15 @@ namespace SPMTool.Core.Elements
 			? 0
 			: Property.CompareTo(other.Property);
 
-		public void AddToDrawing()
-		{
-			ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
+		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
 
-			//entity.Unappended += Model.On_ObjectUnappended;
-			//entity.Reappended += Model.On_ObjectReappended;
-			//entity.Copied     += Model.On_ObjectCopied;
-		}
+		/// <inheritdoc />
+		Entity IDBObjectCreator<Entity>.CreateObject() => (Entity) CreateObject();
 
-		public abstract DBObject CreateObject();
+		/// <inheritdoc />
+		Entity? IDBObjectCreator<Entity>.GetObject() => (Entity?) GetObject();
 
-		public DBObject? GetObject() => ObjectId.GetEntity();
-
-		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+		public override void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
 		public bool Equals(SPMObject<T>? other) => !(other is null) && other.GetType() == GetType() && Property.Equals(other.Property);
 

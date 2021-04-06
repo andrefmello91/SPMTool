@@ -117,9 +117,9 @@ namespace SPMTool.Extensions
 		///     Create a group in the database.
 		/// </summary>
 		/// <param name="groupEntities">The collection of <see cref="Entity" />'s that form the group.</param>
-		/// <param name="group">The <see cref="Group"/>.</param>
+		/// <param name="groupName">The <see cref="Group"/>.</param>
 		/// <inheritdoc cref="AddToDrawing(DBObject, ObjectErasedEventHandler, Transaction)"/>
-		public static ObjectId AddToDrawingAsGroup(this IEnumerable<Entity>? groupEntities, Group group, Transaction? ongoingTransaction = null)
+		public static ObjectId AddToDrawingAsGroup(this IEnumerable<Entity>? groupEntities, string groupName, Transaction? ongoingTransaction = null)
 		{
 			if (groupEntities.IsNullOrEmpty())
 				return ObjectId.Null;
@@ -137,7 +137,8 @@ namespace SPMTool.Extensions
 			using var blkTblRec = (BlockTableRecord) trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
 
 			// Create the group
-			var id = nod.SetAt(group.Name, group);
+			using var group = new Group(groupName, true);
+			var       id    = nod.SetAt(groupName, group);
 
 			// Add to the transaction
 			trans.AddNewlyCreatedDBObject(group, true);
@@ -150,7 +151,7 @@ namespace SPMTool.Extensions
 			}
 
 			// Set to group
-			var ids = new ObjectIdCollection(groupEntities.Select(e => e.ObjectId).ToArray());
+			using var ids = new ObjectIdCollection(groupEntities.Select(e => e.ObjectId).ToArray());
 			group.InsertAt(0, ids);
 
 			// Commit changes
