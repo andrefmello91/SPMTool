@@ -61,11 +61,17 @@ namespace SPMTool.Core.Blocks
 			var maxForce = Results.MaxStringerForce;
 			var (n1, n3) = stringer.NormalForces;
 			var angle = stringer.Geometry.Angle;
+			
+			// Correct units
+			var unit = DataBase.Settings.Units.StringerForces;
+			n1 = n1.ToUnit(unit);
+			n3 = n3.ToUnit(unit);
 
 			// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
+			// Invert tension and compression axis
 			Length
-				h1 = Length.FromMillimeters(150) * n1 / maxForce,
-				h3 = Length.FromMillimeters(150) * n3 / maxForce;
+				h1 = - Length.FromMillimeters(150) * n1 / maxForce,
+				h3 = - Length.FromMillimeters(150) * n3 / maxForce;
 
 			// Calculate the point where the Stringer force will be zero
 			var x     = h1.Abs() * l / (h1.Abs() + h3.Abs());
@@ -139,11 +145,16 @@ namespace SPMTool.Core.Blocks
 			var angle       = stringer.Geometry.Angle;
 			var scaleFactor = Results.ResultScaleFactor;
 
+			// Correct units
+			var unit = DataBase.Settings.Units.StringerForces;
+			n1 = n1.ToUnit(unit);
+			n3 = n3.ToUnit(unit);
 
 			// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
+			// Invert tension and compression axis
 			Length
-				h1 = Length.FromMillimeters(150) * n1 / maxForce,
-				h3 = Length.FromMillimeters(150) * n3 / maxForce;
+				h1 = - Length.FromMillimeters(150) * n1 / maxForce,
+				h3 = - Length.FromMillimeters(150) * n3 / maxForce;
 
 			// Create attributes
 
@@ -179,7 +190,7 @@ namespace SPMTool.Core.Blocks
 				TextString          = $"{n3.Value.Abs():0.00}",
 				Height              = 30 * scaleFactor,
 				Justify             = AttachmentPoint.MiddleRight,
-				ColorIndex          = (short) n1.GetColorCode(),
+				ColorIndex          = (short) n3.GetColorCode(),
 			};
 
 			// Rotate
@@ -200,10 +211,16 @@ namespace SPMTool.Core.Blocks
 			var (n1, n3) = stringer.NormalForces;
 			var angle = stringer.Geometry.Angle;
 
+			// Correct units
+			var unit = DataBase.Settings.Units.StringerForces;
+			n1 = n1.ToUnit(unit);
+			n3 = n3.ToUnit(unit);
+
 			// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
+			// Invert tension and compression axis
 			Length
-				h1 = Length.FromMillimeters(150) * n1 / maxForce,
-				h3 = Length.FromMillimeters(150) * n3 / maxForce;
+				h1 = - Length.FromMillimeters(150) * n1 / maxForce,
+				h3 = - Length.FromMillimeters(150) * n3 / maxForce;
 
 			// Calculate the points (the solid will be rotated later)
 			var vrts = new[]
@@ -216,10 +233,14 @@ namespace SPMTool.Core.Blocks
 				.ToPoint3ds()!.ToArray();
 
 			// Create the diagram as a solid with 4 segments (4 points)
+			var nMax = n1.Abs() > n3.Abs()
+				? n1
+				: n3;
+			
 			var dgrm = new Solid(vrts[0], vrts[1], vrts[2], vrts[3])
 			{
 				Layer      = $"{Layer.StringerForce}",
-				ColorIndex = (short) UnitMath.Max(n1, n3).GetColorCode()
+				ColorIndex = (short) nMax.GetColorCode()
 			};
 
 			// Rotate the diagram
@@ -229,7 +250,7 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <inheritdoc />
-		public void AddToDrawing() => ObjectId = CreateDiagram(_stringer).AddToDrawingAsGroup(CreateObject());
+		public void AddToDrawing() => ObjectId = CreateDiagram(_stringer).ToList().AddToDrawingAsGroup(Name);
 
 		/// <inheritdoc />
 		public void RemoveFromDrawing() => ObjectId.RemoveFromDrawing();
