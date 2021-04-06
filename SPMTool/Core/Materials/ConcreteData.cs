@@ -11,7 +11,7 @@ namespace SPMTool.Core.Materials
 	/// <summary>
 	///     Concrete database class.
 	/// </summary>
-	public class ConcreteData : DictionaryCreator
+	public class ConcreteData : ExtendedObject
 	{
 
 		#region Fields

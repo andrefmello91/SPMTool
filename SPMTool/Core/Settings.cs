@@ -9,7 +9,7 @@ namespace SPMTool.Application
 	/// <summary>
 	///     Application settings class.
 	/// </summary>
-	public class Settings : DictionaryCreator
+	public class Settings : ExtendedObject
 	{
 
 		#region Fields

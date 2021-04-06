@@ -156,7 +156,7 @@
     <Compile Include="Core\EntityCreator\EntityCreatorList.cs" />
     <Compile Include="Core\EntityCreator\IDBObjectCreator.cs" />
     <Compile Include="Core\EntityCreator\TextCreator.cs" />
-    <Compile Include="Core\EntityCreator\DictionaryCreator.cs" />
+    <Compile Include="Core\EntityCreator\ExtendedObject.cs" />
     <Compile Include="Core\Materials\ConcreteData.cs" />
     <Compile Include="Core\Model.cs" />
     <Compile Include="Core\Results.cs" />

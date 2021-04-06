@@ -29,7 +29,7 @@ namespace SPMTool.Core
 		/// </summary>
 		string Name { get; }
 
-		/// <inheritdoc cref="DictionaryCreator.ObjectId" />
+		/// <inheritdoc cref="ExtendedObject.ObjectId" />
 		ObjectId ObjectId { get; set; }
 
 		#endregion

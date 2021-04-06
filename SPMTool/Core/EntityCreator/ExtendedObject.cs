@@ -6,9 +6,9 @@ using SPMTool.Extensions;
 namespace SPMTool.Core
 {
 	/// <summary>
-	///     Base class for extended dictionary creating.
+	///     Base class for extended objects.
 	/// </summary>
-	public abstract class DictionaryCreator
+	public abstract class ExtendedObject
 	{
 
 		#region Fields
