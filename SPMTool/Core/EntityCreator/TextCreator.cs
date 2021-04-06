@@ -9,7 +9,7 @@ namespace SPMTool.Core
 	/// <summary>
 	///     Text creator class.
 	/// </summary>
-	public class TextCreator : IEntityCreator<DBText>
+	public class TextCreator : IDBObjectCreator<DBText>
 	{
 
 		#region Properties
@@ -61,11 +61,11 @@ namespace SPMTool.Core
 
 		#region Methods
 
-		public void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing();
+		public void AddToDrawing() => ObjectId = CreateObject().AddToDrawing();
 
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
-		public DBText CreateEntity() => new()
+		public DBText CreateObject() => new()
 		{
 			Position       = InsertionPoint.ToPoint3d(),
 			Layer          = $"{Layer}",
@@ -74,13 +74,13 @@ namespace SPMTool.Core
 			AlignmentPoint = InsertionPoint.ToPoint3d()
 		};
 
-		public DBText? GetEntity() => (DBText?) ObjectId.GetEntity();
+		public DBText? GetObject() => (DBText?) ObjectId.GetEntity();
 
 		/// <inheritdoc />
-		Entity IEntityCreator.CreateEntity() => CreateEntity();
+		DBObject IDBObjectCreator.CreateObject() => CreateObject();
 
 		/// <inheritdoc />
-		Entity? IEntityCreator.GetEntity() => GetEntity();
+		DBObject? IDBObjectCreator.GetObject() => GetObject();
 
 		#endregion
 

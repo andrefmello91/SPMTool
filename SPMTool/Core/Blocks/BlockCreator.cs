@@ -14,7 +14,7 @@ namespace SPMTool.Core.Blocks
 	/// <summary>
 	///     Block creator class.
 	/// </summary>
-	public class BlockCreator : IEntityCreator<BlockReference>, IDisposable
+	public class BlockCreator : IDBObjectCreator<BlockReference>, IDisposable
 	{
 
 		#region Properties
@@ -115,7 +115,7 @@ namespace SPMTool.Core.Blocks
 		/// <inheritdoc />
 		public void AddToDrawing()
 		{
-			ObjectId = CreateEntity().AddToDrawing();
+			ObjectId = CreateObject().AddToDrawing();
 			SetAttributes();
 		}
 
@@ -123,16 +123,16 @@ namespace SPMTool.Core.Blocks
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
 		/// <inheritdoc />
-		public BlockReference CreateEntity() => Block.GetReference(Position.ToPoint3d(), Layer, ColorCode, RotationAngle, RotationAxis, ScaleFactor)!;
+		public virtual BlockReference CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, ColorCode, RotationAngle, RotationAxis, ScaleFactor)!;
 
 		/// <inheritdoc />
-		public BlockReference? GetEntity() => (BlockReference?) ObjectId.GetEntity();
+		public BlockReference? GetObject() => (BlockReference?) ObjectId.GetEntity();
 
 		/// <inheritdoc />
-		Entity IEntityCreator.CreateEntity() => CreateEntity();
+		DBObject IDBObjectCreator.CreateObject() => CreateObject();
 
 		/// <inheritdoc />
-		Entity? IEntityCreator.GetEntity() => GetEntity();
+		DBObject? IDBObjectCreator.GetObject() => GetObject();
 
 		#endregion
 

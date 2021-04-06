@@ -45,7 +45,7 @@ namespace SPMTool.Core.Elements
 	///     SPM object base class
 	/// </summary>
 	/// <typeparam name="T">The type that represents the main property of the object.</typeparam>
-	public abstract class SPMObject<T> : DictionaryCreator, ISPMObject<T>, IEntityCreator, IEquatable<SPMObject<T>>, IComparable<SPMObject<T>>
+	public abstract class SPMObject<T> : DictionaryCreator, ISPMObject<T>, IDBObjectCreator, IEquatable<SPMObject<T>>, IComparable<SPMObject<T>>
 		where T : IComparable<T>, IEquatable<T>
 	{
 
@@ -94,16 +94,16 @@ namespace SPMTool.Core.Elements
 
 		public void AddToDrawing()
 		{
-			ObjectId = CreateEntity().AddToDrawing(Model.On_ObjectErase);
+			ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
 
 			//entity.Unappended += Model.On_ObjectUnappended;
 			//entity.Reappended += Model.On_ObjectReappended;
 			//entity.Copied     += Model.On_ObjectCopied;
 		}
 
-		public abstract Entity CreateEntity();
+		public abstract DBObject CreateObject();
 
-		public Entity? GetEntity() => ObjectId.GetEntity();
+		public DBObject? GetObject() => ObjectId.GetEntity();
 
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 

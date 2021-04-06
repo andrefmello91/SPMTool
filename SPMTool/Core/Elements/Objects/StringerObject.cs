@@ -10,6 +10,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Enums;
 using SPMTool.Extensions;
+using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.DataBase;
 
@@ -21,7 +22,7 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Stringer object class.
 	/// </summary>
-	public class StringerObject : SPMObject<StringerGeometry>, IEntityCreator<Line>, IEquatable<StringerObject>
+	public class StringerObject : SPMObject<StringerGeometry>, IDBObjectCreator<Line>, IEquatable<StringerObject>
 	{
 
 		#region Fields
@@ -64,6 +65,11 @@ namespace SPMTool.Core.Elements
 
 		public override string Name => $"Stringer {Number}";
 
+		/// <summary>
+		///		Get the absolute maximum force at the associated <see cref="Stringer"/>.
+		/// </summary>
+		public Force MaxForce => _stringer?.MaxForce ?? Force.Zero;
+		
 		#endregion
 
 		#region Constructors
@@ -177,7 +183,7 @@ namespace SPMTool.Core.Elements
 			return _stringer;
 		}
 
-		public override Entity CreateEntity() =>
+		public override DBObject CreateObject() =>
 			new Line(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
 			{
 				Layer = $"{Layer}"
@@ -240,10 +246,10 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <inheritdoc />
-		Line IEntityCreator<Line>.CreateEntity() => (Line) CreateEntity();
+		Line IDBObjectCreator<Line>.CreateObject() => (Line) CreateObject();
 
 		/// <inheritdoc />
-		Line? IEntityCreator<Line>.GetEntity() => (Line?) base.GetEntity();
+		Line? IDBObjectCreator<Line>.GetObject() => (Line?) base.GetObject();
 
 		#endregion
 
@@ -292,7 +298,7 @@ namespace SPMTool.Core.Elements
 		/// <remarks>
 		///     Can be null if <paramref name="stringerObject" /> is null or doesn't exist in drawing.
 		/// </remarks>
-		public static explicit operator Line?(StringerObject? stringerObject) => (Line?) stringerObject?.GetEntity();
+		public static explicit operator Line?(StringerObject? stringerObject) => (Line?) stringerObject?.GetObject();
 
 		#endregion
 

@@ -6,6 +6,7 @@ using andrefmello91.Extensions;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.GraphicsInterface;
 using MathNet.Numerics;
 using SPMTool.Core;
 using UnitsNet.Units;
@@ -21,14 +22,14 @@ namespace SPMTool.Extensions
 		#region Methods
 
 		/// <summary>
-		///     Add this <paramref name="entity" /> to the drawing and return it's <see cref="ObjectId" />.
+		///     Add this <paramref name="dbObject" /> to the drawing and return it's <see cref="ObjectId" />.
 		/// </summary>
-		/// <param name="entity">The <see cref="Entity" />.</param>
-		/// <param name="erasedEvent">The event to call if <paramref name="entity" /> is erased.</param>
+		/// <param name="dbObject">The <see cref="Entity" />.</param>
+		/// <param name="erasedEvent">The event to call if <paramref name="dbObject" /> is erased.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static ObjectId AddToDrawing(this Entity? entity, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
+		public static ObjectId AddToDrawing(this DBObject? dbObject, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
 		{
-			if (entity is null)
+			if (dbObject is null)
 				return ObjectId.Null;
 
 			// Start a transaction
@@ -42,14 +43,16 @@ namespace SPMTool.Extensions
 			var blkTblRec = (BlockTableRecord) trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
 
 			// Add the object to the drawing
+			var entity = (Entity) dbObject;
+			
 			blkTblRec.AppendEntity(entity);
 			trans.AddNewlyCreatedDBObject(entity, true);
 
 			if (erasedEvent != null)
-				entity.Erased += erasedEvent;
+				dbObject.Erased += erasedEvent;
 
 			// Verify if there is attributes
-			if (entity is BlockReference blkRef && !(blkRef.AttributeCollection is null) && blkRef.AttributeCollection.Count > 0)
+			if (dbObject is BlockReference blkRef && !(blkRef.AttributeCollection is null) && blkRef.AttributeCollection.Count > 0)
 				foreach (AttributeReference attRef in blkRef.AttributeCollection)
 				{
 					blkTblRec.AppendEntity(attRef);
@@ -64,16 +67,17 @@ namespace SPMTool.Extensions
 			}
 
 			return
-				entity.ObjectId;
+				dbObject.ObjectId;
 		}
 
 		/// <summary>
-		///     Add the <paramref name="entities" /> in this collection to the drawing and return the collection of
+		///     Add the <paramref name="dbObjects" /> in this collection to the drawing and return the collection of
 		///     <see cref="ObjectId" />'s.
 		/// </summary>
-		/// <param name="erasedEvent">The event to call if <paramref name="entities" /> are erased.</param>
+		/// <param name="dbObjects">The collection of objects to add to drawing.</param>
+		/// <param name="erasedEvent">The event to call if <paramref name="dbObjects" /> are erased.</param>
 		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static IEnumerable<ObjectId> AddToDrawing([NotNull] this IEnumerable<Entity?> entities, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
+		public static IEnumerable<ObjectId> AddToDrawing([NotNull] this IEnumerable<DBObject?> dbObjects, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
 		{
 			// Start a transaction
 			using var lck   = Document.LockDocument();
@@ -87,8 +91,10 @@ namespace SPMTool.Extensions
 
 			// Add the objects to the drawing
 			var list = new List<ObjectId>();
-			foreach (var ent in entities)
+			foreach (var obj in dbObjects)
 			{
+				var ent = (Entity?) obj;
+				
 				if (ent is not null)
 				{
 					blkTblRec.AppendEntity(ent);
@@ -213,6 +219,58 @@ namespace SPMTool.Extensions
 
 			trans.Commit();
 			trans.Dispose();
+		}
+		
+		/// <summary>
+		///     Create a group in the database.
+		/// </summary>
+		/// <param name="groupEntities">The collection of <see cref="Entity" />'s that form the group.</param>
+		/// <param name="originPoint">The origin point of the block.</param>
+		/// <param name="groupName">The name to save the group in database.</param>
+		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
+		public static ObjectId AddToDrawingAsGroup(this IEnumerable<Entity>? groupEntities, Point3d originPoint, string groupName, Transaction? ongoingTransaction = null)
+		{
+			if (groupEntities.IsNullOrEmpty())
+				return ObjectId.Null;
+
+			using var lck   = Document.LockDocument();
+			var       trans = ongoingTransaction ?? StartTransaction();
+
+			// Open the nod
+			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForWrite);
+			
+			// Open the Block table for read
+			using var blkTbl = (BlockTable) trans.GetObject(BlockTableId, OpenMode.ForRead);
+
+			// Open the Block table record Model space for write
+			using var blkTblRec = (BlockTableRecord) trans.GetObject(blkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
+			
+			// Create the group
+			var group = new Group(groupName, true);
+			var id    = nod.SetAt(groupName, group);
+			
+			// Add to the transaction
+			trans.AddNewlyCreatedDBObject(group, true);
+
+			// Add the elements to the block
+			foreach (var ent in groupEntities)
+			{
+				blkTblRec.AppendEntity(ent);
+				trans.AddNewlyCreatedDBObject(ent, true);
+			}
+
+			// Set to group
+			var ids = new ObjectIdCollection(groupEntities.Select(e => e.ObjectId).ToArray());
+			group.InsertAt(0, ids);
+			
+			// Commit changes
+			if (ongoingTransaction is null)
+			{
+				trans.Commit();
+				trans.Dispose();
+			}
+
+			return id;
 		}
 
 		/// <summary>

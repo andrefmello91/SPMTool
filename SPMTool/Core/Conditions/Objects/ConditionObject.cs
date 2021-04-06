@@ -45,7 +45,7 @@ namespace SPMTool.Core.Conditions
 	///     Condition object base class.
 	/// </summary>
 	/// <inheritdoc cref="IConditionObject{T}" />
-	public abstract class ConditionObject<T> : DictionaryCreator, IConditionObject<T>, IEntityCreator<BlockReference>, IEquatable<ConditionObject<T>>, IComparable<ConditionObject<T>>
+	public abstract class ConditionObject<T> : DictionaryCreator, IConditionObject<T>, IDBObjectCreator<BlockReference>, IEquatable<ConditionObject<T>>, IComparable<ConditionObject<T>>
 		where T : IEquatable<T>
 	{
 
@@ -96,21 +96,21 @@ namespace SPMTool.Core.Conditions
 			? 0
 			: Position.CompareTo(other.Position);
 
-		public virtual void AddToDrawing() => ObjectId = CreateEntity().AddToDrawing(Model.On_ObjectErase);
+		public virtual void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
 
 		public virtual void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
-		public virtual BlockReference CreateEntity() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, DataBase.Settings.Units.ScaleFactor)!;
+		public virtual BlockReference CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, DataBase.Settings.Units.ScaleFactor)!;
 
-		public virtual BlockReference? GetEntity() => (BlockReference?) ObjectId.GetEntity();
+		public virtual BlockReference? GetObject() => (BlockReference?) ObjectId.GetEntity();
 
 		public virtual bool Equals(ConditionObject<T>? other) => !(other is null) && Position == other.Position;
 
 		/// <inheritdoc />
-		Entity IEntityCreator.CreateEntity() => CreateEntity();
+		DBObject IDBObjectCreator.CreateObject() => CreateObject();
 
 		/// <inheritdoc />
-		Entity? IEntityCreator.GetEntity() => GetEntity();
+		DBObject? IDBObjectCreator.GetObject() => GetObject();
 
 		public override string ToString() => Value.ToString();
 
@@ -134,7 +134,7 @@ namespace SPMTool.Core.Conditions
 		/// <remarks>
 		///     Can be null if <paramref name="conditionObject" /> is null or doesn't exist in drawing.
 		/// </remarks>
-		public static explicit operator BlockReference?(ConditionObject<T>? conditionObject) => conditionObject?.GetEntity();
+		public static explicit operator BlockReference?(ConditionObject<T>? conditionObject) => conditionObject?.GetObject();
 
 		#endregion
 

@@ -31,6 +31,16 @@ namespace SPMTool.Core
 
 		#endregion
 
+		/// <summary>
+		///		Get/set the absolute maximum force at stringers.
+		/// </summary>
+		public static Force MaxStringerForce { get; private set; }
+		
+		/// <summary>
+		///		Get/set the scale factor for result drawing.
+		/// </summary>
+		public static double ResultScaleFactor { get; private set; }
+		
 		#region Methods
 
 		/// <summary>
@@ -420,6 +430,10 @@ namespace SPMTool.Core
 			// Erase result objects
 			ResultLayers.EraseObjects();
 
+			// Update properties
+			GetScale();
+			GetMaxForce();
+			
 			SetDisplacements();
 			DrawPanelStresses();
 			DrawDisplacedModel();
@@ -433,6 +447,18 @@ namespace SPMTool.Core
 			DrawCracks(input.Stringers);
 		}
 
+		/// <summary>
+		///		Update <see cref="ResultScaleFactor"/>.
+		/// </summary>
+		private static void GetScale() =>
+			ResultScaleFactor = Panels.Select(p => p.BlockScaleFactor()).Min();
+		
+		/// <summary>
+		///		Update <see cref="MaxStringerForce"/>.
+		/// </summary>
+		private static void GetMaxForce() =>
+			MaxStringerForce = Stringers.Select(s => s.MaxForce).Max();
+		
 		/// <summary>
 		///		Draw panel stresses.
 		/// </summary>

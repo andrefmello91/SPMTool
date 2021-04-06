@@ -12,7 +12,7 @@ namespace SPMTool.Core.Conditions
 	/// </summary>
 	/// <typeparam name="T1">
 	///     Any type that implements <see cref="IConditionObject{T1}" /> and
-	///     <seealso cref="IEntityCreator{T}" />.
+	///     <seealso cref="IDBObjectCreator{TDbObject}" />.
 	/// </typeparam>
 	/// <typeparam name="T2">The type that represents the value of the objects in this list.</typeparam>
 	public abstract class ConditionList<T1, T2> : EntityCreatorList<T1>

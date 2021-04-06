@@ -24,7 +24,7 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Panel object class.
 	/// </summary>
-	public class PanelObject : SPMObject<PanelGeometry>, IEntityCreator<Solid>, IEquatable<PanelObject>
+	public class PanelObject : SPMObject<PanelGeometry>, IDBObjectCreator<Solid>, IEquatable<PanelObject>
 	{
 
 		#region Fields
@@ -220,7 +220,7 @@ namespace SPMTool.Core.Elements
 			SetDictionary(data, "Width");
 		}
 
-		public override Entity CreateEntity() => new Solid(Vertices.Vertex1.ToPoint3d(), Vertices.Vertex2.ToPoint3d(), Vertices.Vertex4.ToPoint3d(), Vertices.Vertex3.ToPoint3d())
+		public override DBObject CreateObject() => new Solid(Vertices.Vertex1.ToPoint3d(), Vertices.Vertex2.ToPoint3d(), Vertices.Vertex4.ToPoint3d(), Vertices.Vertex3.ToPoint3d())
 		{
 			Layer = $"{Layer}"
 		};
@@ -268,13 +268,13 @@ namespace SPMTool.Core.Elements
 		private BlockCreator? AverageStressBlock() =>
 			_panel is null || _panel.AveragePrincipalStresses.IsZero
 				? null
-				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses, BlockScaleFactor());
+				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses, Results.ResultScaleFactor);
 
 
 		/// <summary>
 		///     Calculate the scale factor for block insertion.
 		/// </summary>
-		private double BlockScaleFactor() => Geometry.EdgeLengths.Max().ToUnit(Settings.Units.Geometry).Value * 0.001;
+		public double BlockScaleFactor() => Geometry.EdgeLengths.Max().ToUnit(Settings.Units.Geometry).Value * 0.001;
 
 		/// <summary>
 		///     Get the concrete stress <see cref="BlockCreator" />.
@@ -282,7 +282,7 @@ namespace SPMTool.Core.Elements
 		private BlockCreator? ConcreteStressBlock() =>
 			_panel is null || _panel.AveragePrincipalStresses.IsZero
 				? null
-				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses, BlockScaleFactor(), Layer.ConcreteStress);
+				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses, Results.ResultScaleFactor, Layer.ConcreteStress);
 
 		/// <summary>
 		///     Get the <see cref="WebReinforcement" /> of a panel.
@@ -323,13 +323,13 @@ namespace SPMTool.Core.Elements
 		private BlockCreator? ShearBlock() =>
 			_panel is null || _panel.AverageStresses.IsXYZero
 				? null
-				: new ShearBlockCreator(Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY, 0.8 * BlockScaleFactor());
+				: new ShearBlockCreator(Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY, 0.8 * Results.ResultScaleFactor);
 
 		/// <inheritdoc />
-		Solid IEntityCreator<Solid>.CreateEntity() => (Solid) CreateEntity();
+		Solid IDBObjectCreator<Solid>.CreateObject() => (Solid) CreateObject();
 
 		/// <inheritdoc />
-		Solid? IEntityCreator<Solid>.GetEntity() => (Solid?) base.GetEntity();
+		Solid? IDBObjectCreator<Solid>.GetObject() => (Solid?) base.GetObject();
 
 		#endregion
 
@@ -377,7 +377,7 @@ namespace SPMTool.Core.Elements
 		/// <remarks>
 		///     Can be null if <paramref name="panelObject" /> is null or doesn't exist in drawing.
 		/// </remarks>
-		public static explicit operator Solid?(PanelObject? panelObject) => (Solid?) panelObject?.GetEntity();
+		public static explicit operator Solid?(PanelObject? panelObject) => (Solid?) panelObject?.GetObject();
 
 		#endregion
 

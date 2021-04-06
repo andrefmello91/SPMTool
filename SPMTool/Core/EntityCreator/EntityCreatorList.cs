@@ -12,9 +12,9 @@ namespace SPMTool.Core
 	/// <summary>
 	///     Entity list base class.
 	/// </summary>
-	/// <typeparam name="T">Any type that implements <see cref="IEntityCreator{T}" />.</typeparam>
+	/// <typeparam name="T">Any type that implements <see cref="IDBObjectCreator{TDbObject}" />.</typeparam>
 	public abstract class EntityCreatorList<T> : EList<T>
-		where T : IEntityCreator, IEquatable<T>, IComparable<T>
+		where T : IDBObjectCreator, IEquatable<T>, IComparable<T>
 	{
 
 		#region Constructors
@@ -64,7 +64,7 @@ namespace SPMTool.Core
 		/// </summary>
 		public static void On_ObjectsAdded(object? sender, RangeEventArgs<T>? e)
 		{
-			var objs = (IEnumerable<IEntityCreator>?) e.ItemCollection;
+			var objs = (IEnumerable<IDBObjectCreator>?) e.ItemCollection;
 
 			// Remove from trash
 			if (!(objs is null))
@@ -79,7 +79,7 @@ namespace SPMTool.Core
 		/// </summary>
 		public static void On_ObjectsRemoved(object? sender, RangeEventArgs<T>? e)
 		{
-			var objs = (IEnumerable<IEntityCreator>?) e.ItemCollection;
+			var objs = (IEnumerable<IDBObjectCreator>?) e.ItemCollection;
 
 			// Add to trash
 			if (!objs.IsNullOrEmpty())

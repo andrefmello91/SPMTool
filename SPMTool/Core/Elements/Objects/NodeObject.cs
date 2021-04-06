@@ -18,7 +18,7 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Node object class.
 	/// </summary>
-	public class NodeObject : SPMObject<Point>, IEntityCreator<DBPoint>, IEquatable<NodeObject>
+	public class NodeObject : SPMObject<Point>, IDBObjectCreator<DBPoint>, IEquatable<NodeObject>
 	{
 
 		#region Fields
@@ -134,7 +134,7 @@ namespace SPMTool.Core.Elements
 				Displacement = _node.Displacement;
 		}
 
-		public override Entity CreateEntity() => new DBPoint(Position.ToPoint3d())
+		public override DBObject CreateObject() => new DBPoint(Position.ToPoint3d())
 		{
 			Layer = $"{Layer}"
 		};
@@ -172,10 +172,10 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <inheritdoc />
-		DBPoint IEntityCreator<DBPoint>.CreateEntity() => (DBPoint) CreateEntity();
+		DBPoint IDBObjectCreator<DBPoint>.CreateObject() => (DBPoint) CreateObject();
 
 		/// <inheritdoc />
-		DBPoint? IEntityCreator<DBPoint>.GetEntity() => (DBPoint?) base.GetEntity();
+		DBPoint? IDBObjectCreator<DBPoint>.GetObject() => (DBPoint?) base.GetObject();
 
 		/// <inheritdoc />
 		public override string ToString() => _node?.ToString() ?? base.ToString();
@@ -216,7 +216,7 @@ namespace SPMTool.Core.Elements
 		/// <remarks>
 		///     Can be null if <paramref name="nodeObject" /> is null or doesn't exist in drawing.
 		/// </remarks>
-		public static explicit operator DBPoint?(NodeObject? nodeObject) => (DBPoint?) nodeObject?.GetEntity();
+		public static explicit operator DBPoint?(NodeObject? nodeObject) => (DBPoint?) nodeObject?.GetObject();
 
 		#endregion
 

@@ -13,7 +13,7 @@ namespace SPMTool.Core.Elements
 	/// <typeparam name="T1">Any type that implements <see cref="ISPMObject{T1}" />.</typeparam>
 	/// <typeparam name="T2">The type that represents the main property of the object.</typeparam>
 	public abstract class SPMObjectList<T1, T2> : EntityCreatorList<T1>
-		where T1 : SPMObject<T2>, IEntityCreator, IEquatable<T1>, IComparable<T1>
+		where T1 : SPMObject<T2>, IDBObjectCreator, IEquatable<T1>, IComparable<T1>
 		where T2 : IComparable<T2>, IEquatable<T2>
 	{
 

@@ -14,8 +14,7 @@ namespace SPMTool.Core
 	/// <summary>
 	///     Interface for getting and creating entities in drawing.
 	/// </summary>
-	/// <typeparam name="T">Any type based on <see cref="Entity" />.</typeparam>
-	public interface IEntityCreator
+	public interface IDBObjectCreator
 	{
 
 		#region Properties
@@ -43,14 +42,14 @@ namespace SPMTool.Core
 		void AddToDrawing();
 
 		/// <summary>
-		///     Create an <see cref="Entity" /> based in this object's properties.
+		///     Create a <see cref="DBObject" /> based in this object's properties.
 		/// </summary>
-		Entity CreateEntity();
+		DBObject CreateObject();
 
 		/// <summary>
-		///     Get the <see cref="Entity" /> in drawing associated to this object.
+		///     Get the <see cref="DBObject" /> in drawing associated to this object.
 		/// </summary>
-		Entity? GetEntity();
+		DBObject? GetObject();
 
 		/// <summary>
 		///     Remove this object from drawing.
@@ -64,25 +63,25 @@ namespace SPMTool.Core
 	/// <summary>
 	///     Generic interface for getting and creating entities in drawing.
 	/// </summary>
-	/// <typeparam name="TEntity">Any type based on <see cref="Entity" />.</typeparam>
-	public interface IEntityCreator<out TEntity> : IEntityCreator
-		where TEntity : Entity
+	/// <typeparam name="TDbObject">Any type based on <see cref="DBObject" />.</typeparam>
+	public interface IDBObjectCreator<out TDbObject> : IDBObjectCreator
+		where TDbObject : DBObject
 	{
 
 		#region Methods
 
-		/// <inheritdoc cref="IEntityCreator.CreateEntity" />
-		new TEntity CreateEntity();
+		/// <inheritdoc cref="IDBObjectCreator.CreateObject" />
+		new TDbObject CreateObject();
 
-		/// <inheritdoc cref="IEntityCreator.GetEntity" />
-		new TEntity? GetEntity();
+		/// <inheritdoc cref="IDBObjectCreator.GetObject" />
+		new TDbObject? GetObject();
 
 		#endregion
 
 	}
 
 	/// <summary>
-	///     Extensions for <see cref="IEntityCreator" />.
+	///     Extensions for <see cref="IDBObjectCreator" />.
 	/// </summary>
 	public static class EntityCreatorExtensions
 	{
@@ -93,15 +92,15 @@ namespace SPMTool.Core
 		///     Add a collection of objects to drawing and set their <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="objects">The objects to add to drawing.</param>
-		public static void AddToDrawing<TEntityCreator>(this IEnumerable<TEntityCreator?>? objects)
-			where TEntityCreator : IEntityCreator
+		public static void AddToDrawing<TDbObjectCreator>(this IEnumerable<TDbObjectCreator?>? objects)
+			where TDbObjectCreator : IDBObjectCreator
 		{
 			if (objects.IsNullOrEmpty())
 				return;
 
 			using var lck = DataBase.Document.LockDocument();
 
-			var entities = objects.Select(n => n?.CreateEntity()).ToList();
+			var entities = objects.Select(n => n?.CreateObject()).ToList();
 
 			// Add objects to drawing
 			var objIds = entities.AddToDrawing(Model.On_ObjectErase)!.ToList();
@@ -134,11 +133,11 @@ namespace SPMTool.Core
 
 
 		/// <summary>
-		///     Create a <see cref="IEntityCreator{T}" /> from this <paramref name="entity" />.
+		///     Create a <see cref="IDBObjectCreator{TDbObject}" /> from this <paramref name="dbObject" />.
 		/// </summary>
-		/// <param name="entity">The <see cref="Entity" />.</param>
-		public static IEntityCreator? CreateSPMObject(this Entity? entity) =>
-			entity switch
+		/// <param name="dbObject">The <see cref="DBObject" />.</param>
+		public static IDBObjectCreator? CreateSPMObject(this DBObject? dbObject) =>
+			dbObject switch
 			{
 				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => NodeObject.GetFromPoint(p),
 				Line l when l.Layer == $"{Layer.Stringer}"                                    => StringerObject.ReadFromLine(l),
@@ -152,20 +151,20 @@ namespace SPMTool.Core
 		///     Get a SPM object from this <paramref name="objectId" />.
 		/// </summary>
 		/// <param name="objectId">The <see cref="ObjectId" />.</param>
-		public static IEntityCreator? GetSPMObject(this ObjectId objectId) => objectId.GetEntity()?.CreateSPMObject();
+		public static IDBObjectCreator? GetSPMObject(this ObjectId objectId) => objectId.GetEntity()?.CreateSPMObject();
 
 		/// <summary>
-		///     Get a SPM object from this <paramref name="entity" />.
+		///     Get a SPM object from this <paramref name="dbObject" />.
 		/// </summary>
-		/// <param name="entity">The <see cref="Entity" />.</param>
-		public static IEntityCreator? GetSPMObject(this Entity? entity) =>
-			entity switch
+		/// <param name="dbObject">The <see cref="DBObject" />.</param>
+		public static IDBObjectCreator? GetSPMObject(this DBObject? dbObject) =>
+			dbObject switch
 			{
-				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => Model.Nodes.GetByObjectId(entity.ObjectId),
-				Line l when l.Layer == $"{Layer.Stringer}"                                    => Model.Stringers.GetByObjectId(entity.ObjectId),
-				Solid s when s.Layer == $"{Layer.Panel}"                                      => Model.Panels.GetByObjectId(entity.ObjectId),
-				BlockReference b when b.Layer == $"{Layer.Force}"                             => Model.Forces.GetByObjectId(entity.ObjectId),
-				BlockReference b when b.Layer == $"{Layer.Support}"                           => Model.Constraints.GetByObjectId(entity.ObjectId),
+				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => Model.Nodes.GetByObjectId(dbObject.ObjectId),
+				Line l when l.Layer == $"{Layer.Stringer}"                                    => Model.Stringers.GetByObjectId(dbObject.ObjectId),
+				Solid s when s.Layer == $"{Layer.Panel}"                                      => Model.Panels.GetByObjectId(dbObject.ObjectId),
+				BlockReference b when b.Layer == $"{Layer.Force}"                             => Model.Forces.GetByObjectId(dbObject.ObjectId),
+				BlockReference b when b.Layer == $"{Layer.Support}"                           => Model.Constraints.GetByObjectId(dbObject.ObjectId),
 				_                                                                             => null
 			};
 
@@ -173,15 +172,17 @@ namespace SPMTool.Core
 		///     Remove an object from drawing.
 		/// </summary>
 		/// <param name="element">The object to remove.</param>
-		public static void RemoveFromDrawing<TEntityCreator>(this TEntityCreator? element)
-			where TEntityCreator : IEntityCreator => element?.ObjectId.RemoveFromDrawing(Model.On_ObjectErase);
+		public static void RemoveFromDrawing<TDbObjectCreator>(this TDbObjectCreator? element)
+			where TDbObjectCreator : IDBObjectCreator =>
+			element?.ObjectId.RemoveFromDrawing(Model.On_ObjectErase);
 
 		/// <summary>
 		///     Remove a collection of objects from drawing.
 		/// </summary>
 		/// <param name="elements">The objects to remove.</param>
-		public static void RemoveFromDrawing<TEntityCreator>(this IEnumerable<TEntityCreator?>? elements)
-			where TEntityCreator : IEntityCreator => elements?.Where(e => e is not null).Select(e => e!.ObjectId)?.ToArray()?.RemoveFromDrawing(Model.On_ObjectErase);
+		public static void RemoveFromDrawing<TDbObjectCreator>(this IEnumerable<TDbObjectCreator?>? elements)
+			where TDbObjectCreator : IDBObjectCreator =>
+			elements?.Where(e => e is not null).Select(e => e!.ObjectId)?.ToArray()?.RemoveFromDrawing(Model.On_ObjectErase);
 
 		/// <summary>
 		///     Set attributes to blocks in this collection.

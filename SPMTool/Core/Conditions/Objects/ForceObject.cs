@@ -85,11 +85,11 @@ namespace SPMTool.Core.Conditions
 
 		public override void AddToDrawing()
 		{
-			ObjectId = CreateEntity().AddToDrawing();
+			ObjectId = CreateObject().AddToDrawing();
 			SetAttributes();
 		}
 
-		public override BlockReference CreateEntity()
+		public override BlockReference CreateObject()
 		{
 			var insertionPoint = Position.ToPoint3d();
 

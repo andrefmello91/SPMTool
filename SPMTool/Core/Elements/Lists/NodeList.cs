@@ -104,7 +104,7 @@ namespace SPMTool.Core.Elements
 					base.Add(item, raiseEvents, sort);
 
 			// Just add to drawing
-			item.CreateEntity().AddToDrawing();
+			item.CreateObject().AddToDrawing();
 			return false;
 		}
 
@@ -154,7 +154,7 @@ namespace SPMTool.Core.Elements
 				return 0;
 
 			// Get displaced nodes
-			var dispNodes = collection.Where(n => n.Type is NodeType.Displaced).Select(n => n.CreateEntity()).ToList();
+			var dispNodes = collection.Where(n => n.Type is NodeType.Displaced).Select(n => n.CreateObject()).ToList();
 
 			if (dispNodes.Any())
 				dispNodes.AddToDrawing();

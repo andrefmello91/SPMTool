@@ -130,6 +130,7 @@
     <Compile Include="Core\Blocks\ShearBlockCreator.cs" />
     <Compile Include="Core\Blocks\BlockElements.cs" />
     <Compile Include="Core\Blocks\StressBlockCreator.cs" />
+    <Compile Include="Core\Blocks\StringerForceBlockCreator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -153,7 +154,7 @@
     <Compile Include="Core\Elements\Objects\SPMObject.cs" />
     <Compile Include="Core\Elements\Objects\StringerObject.cs" />
     <Compile Include="Core\EntityCreator\EntityCreatorList.cs" />
-    <Compile Include="Core\EntityCreator\IEntityCreator.cs" />
+    <Compile Include="Core\EntityCreator\IDBObjectCreator.cs" />
     <Compile Include="Core\EntityCreator\TextCreator.cs" />
     <Compile Include="Core\EntityCreator\DictionaryCreator.cs" />
     <Compile Include="Core\Materials\ConcreteData.cs" />
