@@ -160,19 +160,24 @@ namespace SPMTool.Core.Blocks
 
 			if (!n1.Value.ApproxZero(1E-3))
 			{
-				var txt1 = new DBText
-				{
-					Position = n1.Value > 0
-						? new Point(stPt.X + Length.FromMillimeters(10) * scaleFactor, stPt.Y + h1 + Length.FromMillimeters(20) * scaleFactor).ToPoint3d()
-						: new Point(stPt.X + Length.FromMillimeters(10) * scaleFactor, stPt.Y + h1 - Length.FromMillimeters(50) * scaleFactor).ToPoint3d(),
-
-					TextString          = $"{n1.Value.Abs():0.00}",
-					Height              = 30 * scaleFactor,
-					Justify             = AttachmentPoint.MiddleLeft,
-					ColorIndex          = (short) n1.GetColorCode(),
-				};
+				var pt1 = (n1.Value > 0
+					? new Point(stPt.X + Length.FromMillimeters(10) * scaleFactor, stPt.Y + h1 - Length.FromMillimeters(30) * scaleFactor)
+					: new Point(stPt.X + Length.FromMillimeters(10) * scaleFactor, stPt.Y + h1 + Length.FromMillimeters(30) * scaleFactor))
+					.ToPoint3d();
 
 				// Rotate
+				var txt1 = new DBText
+				{
+					Position       = pt1,
+					TextString     = $"{n1.Value.Abs():0.00}",
+					Height         = 30 * scaleFactor,
+					Justify        = AttachmentPoint.MiddleLeft,
+					AlignmentPoint = pt1,
+					Layer          = $"{Layer.StringerForce}",
+					ColorIndex     = (short) n1.GetColorCode()
+				};
+
+
 				txt1.TransformBy(Matrix3d.Rotation(angle, DataBase.Ucs.Zaxis, stPt.ToPoint3d()));
 
 				yield return txt1;
@@ -181,17 +186,23 @@ namespace SPMTool.Core.Blocks
 			if (n3.Value.ApproxZero(1E-3))
 				yield break;
 
+			var pt3 = (n3.Value > 0
+					? new Point(stPt.X + l - Length.FromMillimeters(10) * scaleFactor, stPt.Y + h3 - Length.FromMillimeters(30) * scaleFactor)
+					: new Point(stPt.X + l - Length.FromMillimeters(10) * scaleFactor, stPt.Y + h3 + Length.FromMillimeters(30) * scaleFactor))
+				.ToPoint3d();
+
 			var txt3 = new DBText
 			{
-				Position = n3.Value > 0
-					? new Point(stPt.X + l - Length.FromMillimeters(10) * scaleFactor, stPt.Y + h3 + Length.FromMillimeters(20) * scaleFactor).ToPoint3d()
-					: new Point(stPt.X + l - Length.FromMillimeters(10) * scaleFactor, stPt.Y + h3 - Length.FromMillimeters(50) * scaleFactor).ToPoint3d(),
-
-				TextString          = $"{n3.Value.Abs():0.00}",
-				Height              = 30 * scaleFactor,
-				Justify             = AttachmentPoint.MiddleRight,
-				ColorIndex          = (short) n3.GetColorCode(),
+				Position       = pt3,
+				TextString     = $"{n3.Value.Abs():0.00}",
+				Height         = 30 * scaleFactor,
+				Justify        = AttachmentPoint.MiddleRight,
+				AlignmentPoint = pt3,
+				Layer          = $"{Layer.StringerForce}",
+				ColorIndex     = (short) n3.GetColorCode()
 			};
+
+			// Set alignment point
 
 			// Rotate
 			txt3.TransformBy(Matrix3d.Rotation(angle, DataBase.Ucs.Zaxis, stPt.ToPoint3d()));

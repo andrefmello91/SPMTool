@@ -34,7 +34,7 @@ namespace SPMTool.Core.Blocks
 				_shearStress = value;
 
 				// Update attribute
-				Attributes = new[] { GetAttribute(value, ScaleFactor) };
+				Attributes = new[] { GetAttribute(value, ScaleFactor, Layer) };
 			}
 		}
 
@@ -53,7 +53,7 @@ namespace SPMTool.Core.Blocks
 		{
 			_shearStress = shearStress;
 
-			Attributes = new[] { GetAttribute(shearStress, scaleFactor) };
+			Attributes = new[] { GetAttribute(shearStress, scaleFactor, Layer) };
 		}
 
 		#endregion
@@ -64,7 +64,7 @@ namespace SPMTool.Core.Blocks
 		///     Get the attribute for shear block.
 		/// </summary>
 		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double)" />
-		private static AttributeReference GetAttribute(Pressure shearStress, double scaleFactor)
+		private static AttributeReference GetAttribute(Pressure shearStress, double scaleFactor, Layer layer)
 		{
 			// Get shear stress
 			var tau = shearStress.ToUnit(DataBase.Settings.Units.PanelStresses).Value.Abs();
@@ -77,6 +77,7 @@ namespace SPMTool.Core.Blocks
 					TextString          = $"{tau:0.00}",
 					Height              = 37.5 * scaleFactor,
 					Justify             = AttachmentPoint.MiddleCenter,
+					Layer               = $"{layer}",
 					LockPositionInBlock = true,
 					Invisible           = false
 				};

@@ -37,7 +37,7 @@ namespace SPMTool.Core.Blocks
 				_stressState = value;
 
 				// Update attribute
-				Attributes = GetAttributes(value, ScaleFactor).ToArray();
+				Attributes = GetAttributes(value, ScaleFactor, Layer).ToArray();
 			}
 		}
 
@@ -57,7 +57,7 @@ namespace SPMTool.Core.Blocks
 		{
 			_stressState = stressState;
 
-			Attributes = GetAttributes(stressState, scaleFactor).ToArray();
+			Attributes = GetAttributes(stressState, scaleFactor, Layer).ToArray();
 		}
 
 		#endregion
@@ -68,7 +68,7 @@ namespace SPMTool.Core.Blocks
 		///     Get the attribute for shear block.
 		/// </summary>
 		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double)" />
-		private static IEnumerable<AttributeReference> GetAttributes(PrincipalStressState stressState, double scaleFactor)
+		private static IEnumerable<AttributeReference> GetAttributes(PrincipalStressState stressState, double scaleFactor, Layer layer)
 		{
 			if (stressState.IsZero)
 				yield break;
@@ -88,7 +88,8 @@ namespace SPMTool.Core.Blocks
 					Position            = pt1.ToPoint3d(),
 					TextString          = $"{sigma1:0.00}",
 					Height              = 30 * scaleFactor,
-					Color               = Color.FromColorIndex(ColorMethod.ByAci, (short) color1),
+					Layer               = $"{layer}",
+					ColorIndex          = (short) color1,
 					Justify             = AttachmentPoint.MiddleLeft,
 					LockPositionInBlock = true,
 					Invisible           = false
@@ -111,7 +112,8 @@ namespace SPMTool.Core.Blocks
 				Position            = pt2.ToPoint3d(),
 				TextString          = $"{sigma2:0.00}",
 				Height              = 30 * scaleFactor,
-				Color               = Color.FromColorIndex(ColorMethod.ByAci, (short) color2),
+				Layer               = $"{layer}",
+				ColorIndex          = (short) color2,
 				Justify             = AttachmentPoint.MiddleLeft,
 				LockPositionInBlock = true,
 				Invisible           = false
