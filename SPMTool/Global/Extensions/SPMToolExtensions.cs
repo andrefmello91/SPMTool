@@ -610,7 +610,7 @@ namespace SPMTool.Extensions
 			foreach (var layer in layers)
 			{
 				// Get layer name
-				var       layerName = layer.ToString();
+				var layerName = layer.ToString();
 				
 				if (!lyrTbl.Has(layerName))
 					continue;
@@ -623,7 +623,7 @@ namespace SPMTool.Extensions
 
 				// Turn it off
 				lyrTblRec.UpgradeOpen();
-				lyrTblRec.IsOff = true;
+				lyrTblRec.IsOff = false;
 			}
 
 			// Commit and dispose the transaction
