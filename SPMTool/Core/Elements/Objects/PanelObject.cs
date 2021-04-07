@@ -267,7 +267,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Calculate the scale factor for block insertion.
 		/// </summary>
-		public double BlockScaleFactor() => Geometry.EdgeLengths.Max().ToUnit(Settings.Units.Geometry).Value * 0.001;
+		public double BlockScaleFactor() => UnitMath.Min(Geometry.Dimensions.a, Geometry.Dimensions.b).ToUnit(Settings.Units.Geometry).Value * 0.001;
 
 		/// <summary>
 		///     Get the <see cref="WebReinforcement" /> of a panel.

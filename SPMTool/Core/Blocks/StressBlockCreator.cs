@@ -157,7 +157,6 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		/// <param name="stressAngle">The angle of the stress.</param>
 		/// <param name="scaleFactor"></param>
-		/// <returns></returns>
 		private static Point GetTextInsertionPoint(double stressAngle, double scaleFactor)
 		{
 			var (cos, sin) = stressAngle.DirectionCosines();
