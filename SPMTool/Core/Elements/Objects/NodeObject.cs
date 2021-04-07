@@ -103,7 +103,7 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="NodeObject" /> from a <see cref="DBPoint" />.
 		/// </summary>
 		/// <param name="dbPoint">The <see cref="DBPoint" /> object of the node.</param>
-		public static NodeObject GetFromPoint(DBPoint dbPoint) => new(dbPoint.Position, GetNodeType(dbPoint), Settings.Units.Geometry)
+		public static NodeObject GetFromPoint(DBPoint dbPoint) => new(dbPoint.Position, dbPoint.GetNodeType(), Settings.Units.Geometry)
 		{
 			ObjectId = dbPoint.ObjectId
 		};

@@ -5,6 +5,7 @@ using andrefmello91.Extensions;
 using andrefmello91.Material.Concrete;
 using andrefmello91.Material.Reinforcement;
 using andrefmello91.OnPlaneComponents;
+using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -629,6 +630,15 @@ namespace SPMTool.Extensions
 			// Commit and dispose the transaction
 			trans.Commit();
 		}
+
+		/// <summary>
+		///     Get <see cref="NodeType" />.
+		/// </summary>
+		/// <param name="nodePoint">The <see cref="DBPoint" /> object.</param>
+		public static NodeType GetNodeType(this DBPoint nodePoint) =>
+			nodePoint.Layer == $"{Layer.ExtNode}"
+				? NodeType.External
+				: NodeType.Internal;
 
 		/// <summary>
 		///     Get the origin point related to this <paramref name="block" />.

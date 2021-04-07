@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using andrefmello91.EList;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
@@ -47,7 +48,6 @@ namespace SPMTool.Core.Elements
 			{
 				NodeType.Internal  => Layer.IntNode.GetDBObjects<DBPoint>(),
 				NodeType.External  => Layer.ExtNode.GetDBObjects<DBPoint>(),
-				NodeType.Displaced => Layer.Displacements.GetDBObjects<DBPoint>(),
 				_                  => new[] { Layer.IntNode, Layer.ExtNode }.GetDBObjects<DBPoint>()
 			};
 
@@ -62,17 +62,6 @@ namespace SPMTool.Core.Elements
 				NodeType.External => Layer.ExtNode,
 				_                 => Layer.Displacements
 			};
-
-		/// <summary>
-		///     Get <see cref="NodeType" />.
-		/// </summary>
-		/// <param name="nodePoint">The <see cref="DBPoint" /> object.</param>
-		public static NodeType GetNodeType(DBPoint nodePoint) =>
-			nodePoint.Layer == $"{Layer.ExtNode}"
-				? NodeType.External
-				: nodePoint.Layer == $"{Layer.IntNode}"
-					? NodeType.Internal
-					: NodeType.Displaced;
 
 		/// <summary>
 		///     Read all <see cref="NodeObject" />'s from drawing.
@@ -92,21 +81,6 @@ namespace SPMTool.Core.Elements
 		/// <param name="position">The <see cref="Point" /> position.</param>
 		/// <param name="nodeType">The <see cref="NodeType" />.</param>
 		public bool Add(Point position, NodeType nodeType, bool raiseEvents = true, bool sort = true) => Add(new NodeObject(position, nodeType), raiseEvents, sort);
-
-		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
-		/// <remarks>
-		///     If node type is <see cref="NodeType.Displaced" />, the node is only added to drawing and false is returned.
-		/// </remarks>
-		public new bool Add(NodeObject item, bool raiseEvents = true, bool sort = true)
-		{
-			if (item.Type != NodeType.Displaced)
-				return
-					base.Add(item, raiseEvents, sort);
-
-			// Just add to drawing
-			item.CreateObject().AddToDrawing();
-			return false;
-		}
 
 		/// <summary>
 		///     Add nodes in all necessary positions, based on a collection of <seealso cref="StringerGeometry" />'s.
@@ -140,28 +114,11 @@ namespace SPMTool.Core.Elements
 				AddRange(nds, raiseEvents, sort);
 		}
 
-		/// <inheritdoc cref="AddRange(IEnumerable{NodeObject}, bool, bool)" />
+		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
 		/// <param name="positions">The collection of <see cref="Point" /> positions.</param>
 		/// <param name="nodeType">The <see cref="NodeType" />.</param>
 		public int AddRange(IEnumerable<Point>? positions, NodeType nodeType, bool raiseEvents = true, bool sort = true) =>
 			AddRange(positions?.Distinct()?.Select(p => new NodeObject(p, nodeType))?.ToList(), raiseEvents, sort);
-
-		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
-		/// <inheritdoc cref="Add(NodeObject, bool, bool)" />
-		public new int AddRange(IEnumerable<NodeObject>? collection, bool raiseEvents = true, bool sort = true)
-		{
-			if (collection.IsNullOrEmpty())
-				return 0;
-
-			// Get displaced nodes
-			var dispNodes = collection.Where(n => n.Type is NodeType.Displaced).Select(n => n.CreateObject()).ToList();
-
-			if (dispNodes.Any())
-				dispNodes.AddToDrawing();
-
-			return
-				base.AddRange(collection.Where(n => n.Type != NodeType.Displaced).ToList(), raiseEvents, sort);
-		}
 
 		/// <summary>
 		///     Get a list of nodes' <see cref="Point" /> positions.
