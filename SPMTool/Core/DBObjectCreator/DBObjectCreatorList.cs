@@ -13,15 +13,15 @@ namespace SPMTool.Core
 	///     Entity list base class.
 	/// </summary>
 	/// <typeparam name="T">Any type that implements <see cref="IDBObjectCreator{TDbObject}" />.</typeparam>
-	public abstract class EntityCreatorList<T> : EList<T>
+	public abstract class DBObjectCreatorList<T> : EList<T>
 		where T : IDBObjectCreator, IEquatable<T>, IComparable<T>
 	{
 
 		#region Constructors
 
-		protected EntityCreatorList() => SetEvents();
+		protected DBObjectCreatorList() => SetEvents();
 
-		protected EntityCreatorList(IEnumerable<T> collection)
+		protected DBObjectCreatorList(IEnumerable<T> collection)
 			: base(collection) =>
 			SetEvents();
 

@@ -15,7 +15,7 @@ namespace SPMTool.Core.Conditions
 	///     <seealso cref="IDBObjectCreator{TDbObject}" />.
 	/// </typeparam>
 	/// <typeparam name="T2">The type that represents the value of the objects in this list.</typeparam>
-	public abstract class ConditionList<T1, T2> : EntityCreatorList<T1>
+	public abstract class ConditionList<T1, T2> : DBObjectCreatorList<T1>
 		where T1 : ConditionObject<T2>, IEquatable<T1>
 		where T2 : IEquatable<T2>
 	{
