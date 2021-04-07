@@ -2,6 +2,7 @@
 using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
+using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics;
@@ -52,7 +53,7 @@ namespace SPMTool.Core.Blocks
 		/// <param name="stressState">The <see cref="PrincipalStressState" />.</param>
 		/// <param name="scaleFactor">The scale factor.</param>
 		/// <inheritdoc />
-		public StressBlockCreator(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, Layer? layer = null)
+		private StressBlockCreator(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, Layer? layer = null)
 			: base(insertionPoint, GetBlock(stressState), stressState.Theta1, scaleFactor, Axis.Z, layer)
 		{
 			_stressState = stressState;
@@ -63,6 +64,24 @@ namespace SPMTool.Core.Blocks
 		#endregion
 
 		#region Methods
+
+		/// <summary>
+		///     Get the average stress <see cref="BlockCreator" />.
+		/// </summary>
+		/// <param name="panel">The <see cref="Panel"/>.</param>
+		public static StressBlockCreator? CreateAverageBlock(Panel? panel) =>
+			panel is null || panel.AveragePrincipalStresses.IsZero
+				? null
+				: new StressBlockCreator(panel.Geometry.Vertices.CenterPoint, panel.AveragePrincipalStresses, Results.ResultScaleFactor);
+
+		/// <summary>
+		///     Get the concrete stress <see cref="BlockCreator" />.
+		/// </summary>
+		/// <inheritdoc cref="CreateAverageBlock"/>
+		public static StressBlockCreator? CreateConcreteBlock(Panel? panel) =>
+			panel is null || panel.AveragePrincipalStresses.IsZero
+				? null
+				: new StressBlockCreator(panel.Geometry.Vertices.CenterPoint, panel.ConcretePrincipalStresses, Results.ResultScaleFactor, Layer.ConcreteStress);
 
 		/// <summary>
 		///     Get the attribute for shear block.

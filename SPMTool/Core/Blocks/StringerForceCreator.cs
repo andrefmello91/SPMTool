@@ -44,11 +44,19 @@ namespace SPMTool.Core.Blocks
 		///     Stringer force creator constructor.
 		/// </summary>
 		/// <param name="stringer">The <see cref="Stringer"/>.</param>
-		public StringerForceCreator(Stringer stringer) => _stringer = stringer;
+		private StringerForceCreator(Stringer stringer) => _stringer = stringer;
 
 		#endregion
 
 		#region Methods
+
+		/// <summary>
+		///		Create the stringer diagram. Can be null if the stringer is unloaded.
+		/// </summary>
+		public static StringerForceCreator? Create(Stringer? stringer) =>
+			stringer is null || stringer.State is StringerForceState.Unloaded
+				? null
+				: new StringerForceCreator(stringer);
 
 		/// <summary>
 		///     Get the entities for combined diagram.
@@ -261,7 +269,7 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <inheritdoc />
-		public void AddToDrawing() => ObjectId = CreateDiagram(_stringer).ToList().AddToDrawingAsGroup(Name);
+		public void AddToDrawing() => ObjectId = CreateDiagram(_stringer).ToList<Entity>().AddToDrawingAsGroup(Name);
 
 		/// <inheritdoc />
 		public void RemoveFromDrawing() => ObjectId.RemoveFromDrawing();
@@ -279,6 +287,5 @@ namespace SPMTool.Core.Blocks
 		public Group? GetObject() => (Group?) ObjectId.GetDBObject();
 
 		#endregion
-
 	}
 }

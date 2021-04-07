@@ -193,10 +193,8 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///		Create the stringer diagram. Can be null if the stringer is unloaded.
 		/// </summary>
-		public StringerForceCreator? CreateDiagram() => _stringer is null || _stringer.State is StringerForceState.Unloaded
-			? null
-			: new StringerForceCreator(_stringer);
-		
+		public StringerForceCreator? CreateDiagram() => StringerForceCreator.Create(_stringer);
+
 		public bool Equals(StringerObject other) => base.Equals(other);
 
 		protected override bool GetProperties()
@@ -309,6 +307,5 @@ namespace SPMTool.Core.Elements
 		public static explicit operator Line?(StringerObject? stringerObject) => (Line?) stringerObject?.GetObject();
 
 		#endregion
-
 	}
 }

@@ -181,9 +181,11 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get panel block creators.
 		/// </summary>
-		public IEnumerable<BlockCreator?> GetBlocks() => new[]
+		public IEnumerable<BlockCreator?> GetBlocks() => new BlockCreator?[]
 		{
-			ShearBlock(), AverageStressBlock(), ConcreteStressBlock()
+			ShearBlockCreator.CreateBlock(_panel),
+			StressBlockCreator.CreateAverageBlock(_panel),
+			StressBlockCreator.CreateConcreteBlock(_panel)
 		};
 
 		/// <remarks>
@@ -263,26 +265,9 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <summary>
-		///     Get the average stress <see cref="BlockCreator" />.
-		/// </summary>
-		private BlockCreator? AverageStressBlock() =>
-			_panel is null || _panel.AveragePrincipalStresses.IsZero
-				? null
-				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses, Results.ResultScaleFactor);
-
-
-		/// <summary>
 		///     Calculate the scale factor for block insertion.
 		/// </summary>
 		public double BlockScaleFactor() => Geometry.EdgeLengths.Max().ToUnit(Settings.Units.Geometry).Value * 0.001;
-
-		/// <summary>
-		///     Get the concrete stress <see cref="BlockCreator" />.
-		/// </summary>
-		private BlockCreator? ConcreteStressBlock() =>
-			_panel is null || _panel.AveragePrincipalStresses.IsZero
-				? null
-				: new StressBlockCreator(Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses, Results.ResultScaleFactor, Layer.ConcreteStress);
 
 		/// <summary>
 		///     Get the <see cref="WebReinforcement" /> of a panel.
@@ -316,14 +301,6 @@ namespace SPMTool.Core.Elements
 
 			SetDictionary(direction.GetTypedValues(), $"Reinforcement{dir}");
 		}
-
-		/// <summary>
-		///     Get the shear <see cref="BlockCreator" />.
-		/// </summary>
-		private BlockCreator? ShearBlock() =>
-			_panel is null || _panel.AverageStresses.IsXYZero
-				? null
-				: new ShearBlockCreator(Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY, 0.8 * Results.ResultScaleFactor);
 
 		/// <inheritdoc />
 		Solid IDBObjectCreator<Solid>.CreateObject() => (Solid) CreateObject();

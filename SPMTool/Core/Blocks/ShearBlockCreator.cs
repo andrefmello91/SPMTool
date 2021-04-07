@@ -1,5 +1,6 @@
 ﻿using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
+using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
@@ -48,7 +49,7 @@ namespace SPMTool.Core.Blocks
 		/// <param name="insertionPoint">The insertion <see cref="Point" /> of block.</param>
 		/// <param name="shearStress">The shear stress.</param>
 		/// <param name="scaleFactor">The scale factor.</param>
-		public ShearBlockCreator(Point insertionPoint, Pressure shearStress, double scaleFactor)
+		private ShearBlockCreator(Point insertionPoint, Pressure shearStress, double scaleFactor)
 			: base(insertionPoint, Block.Shear, GetRotationAngle(shearStress), scaleFactor, Axis.Y)
 		{
 			_shearStress = shearStress;
@@ -59,6 +60,15 @@ namespace SPMTool.Core.Blocks
 		#endregion
 
 		#region Methods
+
+		/// <summary>
+		///     Get the shear <see cref="BlockCreator" />.
+		/// </summary>
+		/// <param name="panel">The <see cref="Panel"/>.</param>
+		public static ShearBlockCreator? CreateBlock(Panel? panel) =>
+			panel is null || panel.AverageStresses.IsXYZero
+				? null
+				: new ShearBlockCreator(panel.Geometry.Vertices.CenterPoint, panel.AverageStresses.TauXY, 0.8 * Results.ResultScaleFactor);
 
 		/// <summary>
 		///     Get the attribute for shear block.
