@@ -451,8 +451,14 @@ namespace SPMTool.Core
 		/// <summary>
 		///		Draw stringer forces.
 		/// </summary>
-		private static void DrawStringerForces() => Stringers.Select(s => s.CreateDiagram()).AddToDrawing();
-		
+		private static void DrawStringerForces()
+		{
+			Stringers.Select(s => s.CreateDiagram()).AddToDrawing();
+			
+			// Turn on stringer forces layer
+			Layer.StringerForce.On();
+		}
+
 		/// <summary>
 		///		Update <see cref="ResultScaleFactor"/>.
 		/// </summary>

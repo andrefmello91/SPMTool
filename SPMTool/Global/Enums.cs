@@ -77,16 +77,16 @@ namespace SPMTool.Enums
 		[Layer(ColorCode.Yellow)]
 		ForceText,
 
-		[Layer(ColorCode.Grey, 80)]
+		[Layer(ColorCode.Grey, 50)]
 		StringerForce,
 
 		[Layer(ColorCode.Green)]
 		PanelForce,
 
-		[Layer(ColorCode.Blue1)]
+		[Layer(ColorCode.Grey)]
 		PanelStress,
 
-		[Layer(ColorCode.Red)]
+		[Layer(ColorCode.Grey)]
 		ConcreteStress,
 
 		[Layer(ColorCode.Yellow1)]

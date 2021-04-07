@@ -29,13 +29,13 @@ namespace SPMTool.Editor.Commands
 			var unit = DataBase.Settings.Units.Geometry;
 
 			// Create a loop for creating infinite panels
-			for (;;)
+			while (true)
 			{
 				// Prompt for user select 4 vertices of the panel
 				var nds = UserInput.SelectNodes("Select four nodes to be the vertices of the panel", NodeType.External)?.ToArray();
 
 				if (nds is null)
-					return;
+					goto Finish;
 
 				// Check if there are four points
 				if (nds.Length == 4)
@@ -43,12 +43,15 @@ namespace SPMTool.Editor.Commands
 					Panels.Add(nds.Select(nd => nd.Position.ToPoint(unit)).ToArray());
 					continue;
 				}
-
+				
 				ShowAlertDialog("Please select four external nodes.");
-
-				//foreach (var id in nds.GetObjectIds().ToArray())
-				//	Model.Editor.WriteMessage($"\n{Nodes.GetByObjectId(id)}");
 			}
+			
+			Finish:
+				
+				// Move panels to bottom
+				Panels.Select(p => p.ObjectId).ToList().MoveToBottom();
+			
 		}
 
 		/// <summary>
@@ -72,15 +75,14 @@ namespace SPMTool.Editor.Commands
 			var stPt = stPtn.Value;
 
 			// Loop for creating infinite stringers (until user exits the command)
-			for (;;)
+			while (true)
 			{
 				// Prompt for the start point of Stringer
 				var endPtn = UserInput.GetPoint("Enter the end point:", stPt);
 
 				if (endPtn is null)
-
 					// Finish command
-					break;
+					goto Finish;
 
 				var endPt = endPtn.Value;
 
@@ -92,12 +94,14 @@ namespace SPMTool.Editor.Commands
 				// Set the start point of the new Stringer
 				stPt = endPt;
 			}
+			
+			Finish:
+			
+				// Set old OSMODE
+				SetSystemVariable("OSMODE", osmode);
 
-			// Set old OSMODE
-			SetSystemVariable("OSMODE", osmode);
-
-			// Update nodes
-			Nodes.Update();
+				// Update nodes
+				Nodes.Update();
 		}
 
 		#endregion

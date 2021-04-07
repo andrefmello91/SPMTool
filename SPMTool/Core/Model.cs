@@ -124,6 +124,9 @@ namespace SPMTool.Core
 			PanelReinforcements    = GetPanelReinforcements();
 			Steels                 = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList();
 
+			// Move panels to bottom
+			Panels.Select(p => p.ObjectId).ToList().MoveToBottom();
+
 			// Register events
 			RegisterEventsToEntities();
 

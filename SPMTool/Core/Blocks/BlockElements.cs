@@ -143,7 +143,7 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		/// <returns></returns>
 		public static IEnumerable<Entity> PureCompressiveStress() =>
-			new[] { StressSquare(ColorCode.Blue1) }
+			new[] { StressSquare() }
 				.Concat(CompressiveArrows())
 				.Concat(CompressiveArrows(Constants.PiOver2));
 
@@ -152,7 +152,7 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		/// <returns></returns>
 		public static IEnumerable<Entity> PureTensileStress() =>
-			new[] { StressSquare(ColorCode.Red) }
+			new[] { StressSquare() }
 				.Concat(TensileArrows())
 				.Concat(TensileArrows(Constants.PiOver2));
 
@@ -331,14 +331,14 @@ namespace SPMTool.Core.Blocks
 		///     Get the elements of uniaxial compressive stress block.
 		/// </summary>
 		public static IEnumerable<Entity> UniaxialCompressiveStress() =>
-			new[] { StressSquare(ColorCode.Blue1) }
+			new[] { StressSquare() }
 				.Concat(CompressiveArrows(Constants.Pi));
 
 		/// <summary>
 		///     Get the elements of uniaxial tensile stress block.
 		/// </summary>
 		public static IEnumerable<Entity> UniaxialTensileStress() =>
-			new[] { StressSquare(ColorCode.Red) }
+			new[] { StressSquare() }
 				.Concat(TensileArrows());
 
 		/// <summary>
@@ -404,7 +404,7 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Create the stress square.
 		/// </summary>
-		private static Solid StressSquare(ColorCode colorCode = ColorCode.DarkGrey)
+		private static Solid StressSquare()
 		{
 			// Get vertices of the solid
 			Point3d[] verts1 =
@@ -418,7 +418,7 @@ namespace SPMTool.Core.Blocks
 			// Create a solid
 			return new Solid(verts1[0], verts1[1], verts1[2], verts1[3])
 			{
-				Color = Color.FromColorIndex(ColorMethod.ByAci, (short) colorCode)
+				ColorIndex = (short) ColorCode.DarkGrey
 			};
 		}
 
