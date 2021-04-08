@@ -166,7 +166,7 @@ namespace SPMTool.Core.Blocks
 
 			// Create attributes
 
-			if (!n1.Value.ApproxZero(1E-3))
+			if (!n1.ApproxZero(Units.StringerForceTolerance))
 			{
 				var pt1 = (n1.Value > 0
 					? new Point(stPt.X + Length.FromMillimeters(10) * scaleFactor, stPt.Y + h1 - Length.FromMillimeters(30) * scaleFactor)
@@ -191,7 +191,7 @@ namespace SPMTool.Core.Blocks
 				yield return txt1;
 			}
 
-			if (n3.Value.ApproxZero(1E-3))
+			if (n3.ApproxZero(Units.StringerForceTolerance))
 				yield break;
 
 			var pt3 = (n3.Value > 0
