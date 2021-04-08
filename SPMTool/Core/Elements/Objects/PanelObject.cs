@@ -185,7 +185,8 @@ namespace SPMTool.Core.Elements
 		{
 			ShearBlockCreator.CreateBlock(_panel),
 			StressBlockCreator.CreateAverageBlock(_panel),
-			StressBlockCreator.CreateConcreteBlock(_panel)
+			StressBlockCreator.CreateConcreteBlock(_panel),
+			PanelCrackBlockCreator.CreateBlock(_panel)
 		};
 
 		/// <remarks>

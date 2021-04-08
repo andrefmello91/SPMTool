@@ -435,23 +435,23 @@ namespace SPMTool.Core
 			GetMaxForce();
 			
 			SetDisplacements();
-			DrawPanelStresses();
-			DrawStringerForces();
+			DrawPanelResults();
+			DrawStringerResults();
 			DrawDisplacedModel();
 
 			// DrawForces(stringers);
 
-			if (!drawCracks)
-				return;
-
-			DrawCracks(input.Panels);
-			DrawCracks(input.Stringers);
+			// if (!drawCracks)
+			// 	return;
+			//
+			// DrawCracks(input.Panels);
+			// DrawCracks(input.Stringers);
 		}
 
 		/// <summary>
 		///		Draw stringer forces.
 		/// </summary>
-		private static void DrawStringerForces()
+		private static void DrawStringerResults()
 		{
 			Stringers.Select(s => s.CreateDiagram()).AddToDrawing();
 			
@@ -474,7 +474,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///		Draw panel stresses.
 		/// </summary>
-		private static void DrawPanelStresses()
+		private static void DrawPanelResults()
 		{
 			// Get panel blocks
 			var blocks = Panels.SelectMany(p => p.GetBlocks()).ToList();
@@ -484,7 +484,7 @@ namespace SPMTool.Core
 			blocks.SetAttributes();
 			
 			// Turn off stresses layer
-			TurnOff(Layer.PanelStress, Layer.ConcreteStress);
+			TurnOff(Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks);
 			Layer.PanelForce.On();
 		}
 

@@ -168,7 +168,7 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Improve the angle.
 		/// </summary>
-		private static double ImproveAngle(double angle) => angle > Constants.PiOver2
+		public static double ImproveAngle(double angle) => angle > Constants.PiOver2
 			? angle - Constants.Pi
 			: angle;
 

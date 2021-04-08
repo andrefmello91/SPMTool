@@ -127,6 +127,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\Blocks\BlockCreator.cs" />
+    <Compile Include="Core\Blocks\PanelCrackBlockCreator.cs" />
     <Compile Include="Core\Blocks\ShearBlockCreator.cs" />
     <Compile Include="Core\Blocks\BlockElements.cs" />
     <Compile Include="Core\Blocks\StressBlockCreator.cs" />
