@@ -439,13 +439,9 @@ namespace SPMTool.Core
 			DrawStringerResults();
 			DrawDisplacedModel();
 
-			// DrawForces(stringers);
-
-			// if (!drawCracks)
-			// 	return;
-			//
-			// DrawCracks(input.Panels);
-			// DrawCracks(input.Stringers);
+			// Set layer states
+			TurnOff(Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks, Layer.Displacements);
+			TurnOn(Layer.PanelForce, Layer.StringerForce);
 		}
 
 		/// <summary>
@@ -454,9 +450,7 @@ namespace SPMTool.Core
 		private static void DrawStringerResults()
 		{
 			Stringers.Select(s => s.CreateDiagram()).AddToDrawing();
-			
-			// Turn on stringer forces layer
-			Layer.StringerForce.On();
+			Stringers.SelectMany(s => s.CreateCrackBlocks()).AddToDrawing();
 		}
 
 		/// <summary>
@@ -482,10 +476,6 @@ namespace SPMTool.Core
 			// Add to drawing and set attributes
 			blocks.AddToDrawing();
 			blocks.SetAttributes();
-			
-			// Turn off stresses layer
-			TurnOff(Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks);
-			Layer.PanelForce.On();
 		}
 
 		/// <summary>
@@ -498,16 +488,13 @@ namespace SPMTool.Core
 			var displaced = Stringers.Select(s => s.GetDisplaced(mFactor)).ToList();
 
 			var _ = displaced.AddToDrawing();
-
-			// Turn off displacement layer
-			Layer.Displacements.Off();
 		}
 
 		/// <summary>
 		///     Set displacement to <see cref="Model.Nodes" />.
 		/// </summary>
 		/// <inheritdoc cref="DrawResults" />
-		public static void SetDisplacements()
+		private static void SetDisplacements()
 		{
 			foreach (var node in Nodes)
 				node.SetDisplacementFromNode();

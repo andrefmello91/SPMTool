@@ -194,6 +194,11 @@ namespace SPMTool.Core.Elements
 		///		Create the stringer diagram. Can be null if the stringer is unloaded.
 		/// </summary>
 		public StringerForceCreator? CreateDiagram() => StringerForceCreator.Create(_stringer);
+		
+		/// <summary>
+		///		Create crack blocks.
+		/// </summary>
+		public IEnumerable<StringerCrackBlockCreator?> CreateCrackBlocks() => StringerCrackBlockCreator.CreateBlocks(_stringer);
 
 		public bool Equals(StringerObject other) => base.Equals(other);
 
