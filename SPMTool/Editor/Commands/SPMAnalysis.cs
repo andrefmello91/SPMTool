@@ -1,4 +1,5 @@
-﻿using andrefmello91.FEMAnalysis;
+﻿using System.Threading;
+using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
