@@ -36,7 +36,7 @@ namespace SPMTool.Editor.Commands
 			Model.Editor.WriteMessage(analysis.ToString());
 
 			// Draw results of analysis
-			DrawResults(input, false);
+			DrawResults();
 		}
 
 		[CommandMethod(CommandName.Nonlinear)]
@@ -76,7 +76,7 @@ namespace SPMTool.Editor.Commands
 			plot.UpdatePlot();
 
 			// Draw results of analysis
-			DrawResults(input, true);
+			DrawResults();
 		}
 
 		#endregion
