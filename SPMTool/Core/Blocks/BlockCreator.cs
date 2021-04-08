@@ -17,42 +17,51 @@ namespace SPMTool.Core.Blocks
 	public class BlockCreator : IDBObjectCreator<BlockReference>, IDisposable
 	{
 
+		#region Fields
+
+		/// <summary>
+		///     Get the reference point for block rotation.
+		/// </summary>
+		protected Point? RotationPoint;
+
+		#endregion
+
 		#region Properties
 
 		/// <summary>
 		///     Get/set the attribute collection for block.
 		/// </summary>
-		public AttributeReference[]? Attributes { get; set; }
+		protected AttributeReference[]? Attributes { get; set; }
 
 		/// <summary>
 		///     Get the <see cref="Enums.Block" /> of this object.
 		/// </summary>
-		public Block Block { get; }
+		protected Block Block { get; }
 
 		/// <summary>
 		///     Get/set a custom color code. Leave null to set default color from <see cref="Block" />'s layer.
 		/// </summary>
-		public ColorCode? ColorCode { get; set; }
+		protected ColorCode? ColorCode { get; set; }
 
 		/// <summary>
 		///     Get the insertion point.
 		/// </summary>
-		public Point Position { get; }
+		protected Point Position { get; }
 
 		/// <summary>
 		///     Get the rotation angle for block insertion.
 		/// </summary>
-		public double RotationAngle { get; set; }
+		protected double RotationAngle { get; set; }
 
 		/// <summary>
 		///     Get/set the rotation axis of block.
 		/// </summary>
-		public Axis RotationAxis { get; set; }
+		protected Axis RotationAxis { get; set; }
 
 		/// <summary>
 		///     Get the scale factor for block insertion.
 		/// </summary>
-		public double ScaleFactor { get; set; }
+		protected double ScaleFactor { get; set; }
 
 		/// <inheritdoc />
 		public Layer Layer { get; protected set; }
@@ -103,16 +112,6 @@ namespace SPMTool.Core.Blocks
 		public void SetAttributes() => ObjectId.SetBlockAttributes(Attributes);
 
 		/// <inheritdoc />
-		public void Dispose()
-		{
-			if (Attributes.IsNullOrEmpty())
-				return;
-
-			foreach (var att in Attributes)
-				att.Dispose();
-		}
-
-		/// <inheritdoc />
 		public void AddToDrawing()
 		{
 			ObjectId = CreateObject().AddToDrawing();
@@ -123,10 +122,20 @@ namespace SPMTool.Core.Blocks
 		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
 		/// <inheritdoc />
-		public virtual BlockReference CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, ColorCode, RotationAngle, RotationAxis, ScaleFactor)!;
+		public virtual BlockReference CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, ColorCode, RotationAngle, RotationAxis, RotationPoint?.ToPoint3d(), ScaleFactor)!;
 
 		/// <inheritdoc />
 		public BlockReference? GetObject() => (BlockReference?) ObjectId.GetEntity();
+
+		/// <inheritdoc />
+		public void Dispose()
+		{
+			if (Attributes.IsNullOrEmpty())
+				return;
+
+			foreach (var att in Attributes)
+				att.Dispose();
+		}
 
 		/// <inheritdoc />
 		DBObject IDBObjectCreator.CreateObject() => CreateObject();

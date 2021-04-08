@@ -52,11 +52,14 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		/// <param name="insertionPoint">The insertion <see cref="Point" /> of block.</param>
 		/// <param name="crackOpening">The crack opening.</param>
+		/// <param name="rotationPoint">The reference <see cref="Point"/> for block rotation.</param>
 		/// <inheritdoc />
-		private StringerCrackBlockCreator(Point insertionPoint, Length crackOpening, double rotationAngle, double scaleFactor)
+		private StringerCrackBlockCreator(Point insertionPoint, Length crackOpening, double rotationAngle, Point rotationPoint, double scaleFactor)
 			: base(insertionPoint, Block.StringerCrack, rotationAngle, scaleFactor)
 		{
 			_crackOpening = crackOpening;
+
+			RotationPoint = rotationPoint;
 
 			Attributes = new[] { GetAttribute(crackOpening, rotationAngle, scaleFactor) };
 		}
@@ -78,10 +81,11 @@ namespace SPMTool.Core.Blocks
 
 			var l  = stringer.Geometry.Length;
 			var ix = stringer.Geometry.InitialPoint.X + 0.1 * l;
+			var y  = stringer.Geometry.InitialPoint.Y;
 			
 			for (var i = 0; i < 3; i++)
 				blocks[i] = !stringer.CrackOpenings[i].ApproxZero(Units.CrackTolerance)
-					? new StringerCrackBlockCreator(new Point(ix + 0.4 * i * l, Length.Zero), stringer.CrackOpenings[i], stringer.Geometry.Angle, Results.ResultScaleFactor)
+					? new StringerCrackBlockCreator(new Point(ix + 0.4 * i * l, y), stringer.CrackOpenings[i], stringer.Geometry.Angle, stringer.Geometry.InitialPoint, Results.ResultScaleFactor)
 					: null;
 
 			return blocks;

@@ -103,7 +103,7 @@ namespace SPMTool.Core.Conditions
 
 		public virtual void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
-		public override DBObject CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, DataBase.Settings.Units.ScaleFactor)!;
+		public override DBObject CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, null, DataBase.Settings.Units.ScaleFactor)!;
 		
 		public virtual BlockReference? GetObject() => (BlockReference?) ObjectId.GetEntity();
 

@@ -316,8 +316,9 @@ namespace SPMTool.Extensions
 		///     The <see cref="Axis" /> to apply rotation. Leave null to use
 		///     <see cref="Autodesk.AutoCAD.Geometry.CoordinateSystem3d.Zaxis" />.
 		/// </param>
+		/// <param name="rotationPoint">The reference <see cref="Point3d"/> to apply rotation. Leave null to use <paramref name="insertionPoint"/>.</param>
 		/// <param name="scaleFactor">The scale factor.</param>
-		public static BlockReference? GetReference(this Block block, Point3d insertionPoint, Layer? layer = null, ColorCode? colorCode = null, double rotationAngle = 0, Axis rotationAxis = Axis.Z, double scaleFactor = 1)
+		public static BlockReference? GetReference(this Block block, Point3d insertionPoint, Layer? layer = null, ColorCode? colorCode = null, double rotationAngle = 0, Axis rotationAxis = Axis.Z, Point3d? rotationPoint = null, double scaleFactor = 1)
 		{
 			// Start a transaction
 			using var trans  = StartTransaction();
@@ -326,7 +327,7 @@ namespace SPMTool.Extensions
 
 			if (blkRec is null)
 				return null;
-
+			
 			var blockRef = new BlockReference(insertionPoint, blkRec.ObjectId)
 			{
 				Layer = $"{layer ?? block.GetAttribute<BlockAttribute>()!.Layer}"
@@ -338,7 +339,7 @@ namespace SPMTool.Extensions
 
 			// Rotate and scale the block
 			if (!rotationAngle.ApproxZero(1E-3))
-				blockRef.TransformBy(Matrix3d.Rotation(rotationAngle, rotationAxis.GetAxis(), insertionPoint));
+				blockRef.TransformBy(Matrix3d.Rotation(rotationAngle, rotationAxis.GetAxis(), rotationPoint ?? insertionPoint));
 
 			if (scaleFactor >= 0 && !scaleFactor.Approx(1, 1E-6))
 				blockRef.TransformBy(Matrix3d.Scaling(DataBase.Settings.Units.ScaleFactor, insertionPoint));
@@ -715,7 +716,7 @@ namespace SPMTool.Extensions
 
 			using var obj = trans.GetObject(blockRefId, OpenMode.ForRead);
 
-			if (!(obj is BlockReference block))
+			if (obj is not BlockReference block)
 				return;
 
 			block.UpgradeOpen();
