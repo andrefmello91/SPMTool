@@ -30,7 +30,7 @@
                 </lvc:Axis>
             </lvc:CartesianChart.AxisX>
             <lvc:CartesianChart.AxisY>
-                <lvc:Axis Name="LoadFactorAxis" Title="Load Factor" MinValue="0" MaxValue="1">
+                <lvc:Axis Name="LoadFactorAxis" Title="Load Factor" MinValue="0">
                     <lvc:Axis.Separator>
                         <lvc:Separator StrokeThickness="1" Step="0.2">
                             <lvc:Separator.Stroke>

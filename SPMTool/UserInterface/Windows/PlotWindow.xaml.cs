@@ -76,6 +76,9 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		public void UpdatePlot()
 		{
+			// Set max load factor
+			LoadFactorAxis.MaxValue = _femOutput.MonitoredDisplacements.Select(m => m.LoadFactor).Max();
+			
 			// Initiate series
 			CartesianChart.Series = new SeriesCollection
 			{

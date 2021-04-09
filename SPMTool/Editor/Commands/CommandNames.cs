@@ -42,6 +42,9 @@ namespace SPMTool.Editor.Commands
 
 		[Command(Nonlinear, "Run a nonlinear analysis of the model")]
 		Nonlinear,
+		
+		[Command(Simulation, "Run a nonlinear analysis of the model until failure")]
+		Simulation,
 
 		[Command(Forces, "View external forces")]
 		Forces,
@@ -116,6 +119,8 @@ namespace SPMTool.Editor.Commands
 		public const string Linear = nameof(Linear);
 
 		public const string Nonlinear = nameof(Nonlinear);
+		
+		public const string Simulation = nameof(Simulation);
 
 		public const string Forces = nameof(Forces);
 
