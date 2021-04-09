@@ -157,8 +157,14 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Divide this <see cref="PanelObject" /> into new ones.
 		/// </summary>
+		/// <remarks>
+		///		This must be rectangular.
+		/// </remarks>
 		/// <param name="rows">The number of rows.</param>
 		/// <param name="columns">The number of columns.</param>
+		/// <returns>
+		///		An empty collection if this object is not rectangular.
+		/// </returns>
 		public IEnumerable<PanelObject> Divide(int rows, int columns)
 		{
 			if (!Vertices.IsRectangular)
