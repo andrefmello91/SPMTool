@@ -81,15 +81,15 @@ namespace SPMTool.Editor.Commands
 				if (strEdges.IsNullOrEmpty())
 					continue;
 
-				strsToDivide.AddRange(strEdges.Where(s => !(s is null))!);
+				strsToDivide.AddRange(strEdges.Where(s => s is not null)!);
 
 				// Divide by correct number
 				for (var i = 0; i < 2; i++)
 				{
 					var j = 2 * i;
 
-					var hor = strEdges[j]?.Divide(cln)?.Where(s => !(s is null))?.ToArray();
-					var ver = strEdges[j + 1]?.Divide(row)?.Where(s => !(s is null))?.ToArray();
+					var hor = strEdges[j]?.Divide(cln)?.Where(s => s is not null)?.ToArray();
+					var ver = strEdges[j + 1]?.Divide(row)?.Where(s => s is not null)?.ToArray();
 
 					if (!hor.IsNullOrEmpty())
 						newStrs.AddRange(hor);
@@ -106,7 +106,8 @@ namespace SPMTool.Editor.Commands
 			Nodes.RemoveRange(strsToDivide.Select(s => s.Geometry.CenterPoint).ToArray());
 
 			// Erase the original elements
-			Panels.RemoveRange(pnlsToDivide);
+			var verts = pnlsToDivide.Select(p => p.Geometry.Vertices).ToList();
+			var c     = Panels.RemoveAll(p => verts.Contains(p.Vertices));
 			Stringers.RemoveRange(strsToDivide);
 
 			// Add the elements
@@ -119,11 +120,10 @@ namespace SPMTool.Editor.Commands
 			Panels.Select(p => p.ObjectId).MoveToBottom();
 
 			// Show alert if there was a non-rectangular panel
-			var message = nonRecSelected
+			var message = (nonRecSelected
 				? "Only rectangular panels were divided.\n\n"
-				: string.Empty;
-
-			message += "Set geometry to new internal stringers!";
+				: $"{c} panels divided.\n\n") + 
+			    " Set geometry to new internal stringers!";
 
 			ShowAlertDialog(message);
 		}

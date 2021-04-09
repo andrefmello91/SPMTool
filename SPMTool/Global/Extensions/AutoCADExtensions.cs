@@ -880,6 +880,14 @@ namespace SPMTool.Extensions
 		}
 
 		/// <summary>
+		///		Compare two <see cref="ObjectId"/>'s.
+		/// </summary>
+		/// <returns>
+		///		True if <paramref name="other"/> is not <see cref="ObjectId.Null"/> and is equal to this.
+		/// </returns>
+		public static bool IsNotNullAndEqualTo(this ObjectId objectId, ObjectId other) => other != ObjectId.Null && other == objectId;
+
+		/// <summary>
 		///     Remove all the objects in this collection from drawing.
 		/// </summary>
 		/// <param name="objects">The collection containing the <see cref="DBObject" />'s to erase.</param>

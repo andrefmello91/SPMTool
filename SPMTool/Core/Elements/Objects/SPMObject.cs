@@ -98,7 +98,7 @@ namespace SPMTool.Core.Elements
 
 		public override void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
-		public bool Equals(SPMObject<T>? other) => !(other is null) && other.GetType() == GetType() && Property.Equals(other.Property);
+		public bool Equals(SPMObject<T>? other) => other is not null && Property.Equals(other.Property);
 
 		public abstract INumberedElement GetElement();
 

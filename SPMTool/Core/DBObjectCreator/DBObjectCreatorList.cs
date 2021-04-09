@@ -12,16 +12,16 @@ namespace SPMTool.Core
 	/// <summary>
 	///     Entity list base class.
 	/// </summary>
-	/// <typeparam name="T">Any type that implements <see cref="IDBObjectCreator{TDbObject}" />.</typeparam>
-	public abstract class DBObjectCreatorList<T> : EList<T>
-		where T : IDBObjectCreator, IEquatable<T>, IComparable<T>
+	/// <typeparam name="TDBObjectCreator">Any type that implements <see cref="IDBObjectCreator{TDbObject}" />.</typeparam>
+	public abstract class DBObjectCreatorList<TDBObjectCreator> : EList<TDBObjectCreator>
+		where TDBObjectCreator : IDBObjectCreator, IEquatable<TDBObjectCreator>, IComparable<TDBObjectCreator>
 	{
 
 		#region Constructors
 
 		protected DBObjectCreatorList() => SetEvents();
 
-		protected DBObjectCreatorList(IEnumerable<T> collection)
+		protected DBObjectCreatorList(IEnumerable<TDBObjectCreator> collection)
 			: base(collection) =>
 			SetEvents();
 
@@ -32,7 +32,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Event to execute when an object is added to a list.
 		/// </summary>
-		public static void On_ObjectAdded(object? sender, ItemEventArgs<T>? e)
+		public static void On_ObjectAdded(object? sender, ItemEventArgs<TDBObjectCreator>? e)
 		{
 			var obj = e.Item;
 
@@ -47,7 +47,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Event to execute when an object is removed from a list.
 		/// </summary>
-		public static void On_ObjectRemoved(object? sender, ItemEventArgs<T>? e)
+		public static void On_ObjectRemoved(object? sender, ItemEventArgs<TDBObjectCreator>? e)
 		{
 			var obj = e.Item;
 
@@ -62,28 +62,28 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Event to execute when a range of objects is added to a list.
 		/// </summary>
-		public static void On_ObjectsAdded(object? sender, RangeEventArgs<T>? e)
+		public static void On_ObjectsAdded(object? sender, RangeEventArgs<TDBObjectCreator>? e)
 		{
-			var objs = (IEnumerable<IDBObjectCreator>?) e.ItemCollection;
+			var objs = e?.ItemCollection;
 
 			// Remove from trash
-			if (!(objs is null))
-				Model.Trash.RemoveAll(objs.Contains);
+			if (!objs.IsNullOrEmpty())
+				Model.Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Contains);
 
 			// Add to drawing
-			e?.ItemCollection?.AddToDrawing();
+			objs?.AddToDrawing();
 		}
 
 		/// <summary>
 		///     Event to execute when a range of objects is removed from a list.
 		/// </summary>
-		public static void On_ObjectsRemoved(object? sender, RangeEventArgs<T>? e)
+		public static void On_ObjectsRemoved(object? sender, RangeEventArgs<TDBObjectCreator>? e)
 		{
-			var objs = (IEnumerable<IDBObjectCreator>?) e.ItemCollection;
+			var objs = e?.ItemCollection;
 
 			// Add to trash
 			if (!objs.IsNullOrEmpty())
-				Model.Trash.AddRange(objs.Where(obj => !(obj is null) && !Model.Trash.Contains(obj)));
+				Model.Trash.AddRange(objs.Cast<IDBObjectCreator>().Where(obj => obj is not null && !Model.Trash.Contains(obj)));
 
 			// Remove
 			objs?.RemoveFromDrawing();
@@ -94,14 +94,14 @@ namespace SPMTool.Core
 		/// </summary>
 		/// <param name="objectId">The required <seealso cref="ObjectId" />.</param>
 		[return: MaybeNull]
-		public T GetByObjectId(ObjectId objectId) => Find(e => e.ObjectId == objectId);
+		public TDBObjectCreator GetByObjectId(ObjectId objectId) => Find(e => e.ObjectId == objectId);
 
 		/// <summary>
 		///     Get objects in this collection that matches <paramref name="objectIds" />.
 		/// </summary>
 		/// <param name="objectIds">The collection of required <seealso cref="ObjectId" />'s.</param>
 		[return: MaybeNull]
-		public IEnumerable<T> GetByObjectIds(IEnumerable<ObjectId>? objectIds) => objectIds is null
+		public IEnumerable<TDBObjectCreator> GetByObjectIds(IEnumerable<ObjectId>? objectIds) => objectIds is null
 			? null
 			: FindAll(e => objectIds.Contains(e.ObjectId));
 

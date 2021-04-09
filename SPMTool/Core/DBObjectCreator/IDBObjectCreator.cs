@@ -184,7 +184,7 @@ namespace SPMTool.Core
 		/// <param name="elements">The objects to remove.</param>
 		public static void RemoveFromDrawing<TDbObjectCreator>(this IEnumerable<TDbObjectCreator?>? elements)
 			where TDbObjectCreator : IDBObjectCreator =>
-			elements?.Where(e => e is not null).Select(e => e!.ObjectId)?.ToArray()?.RemoveFromDrawing(Model.On_ObjectErase);
+			elements?.Select(e => e?.ObjectId ?? ObjectId.Null).ToArray().RemoveFromDrawing(Model.On_ObjectErase);
 
 		/// <summary>
 		///     Set attributes to blocks in this collection.

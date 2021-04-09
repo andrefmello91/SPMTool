@@ -26,15 +26,11 @@ namespace SPMTool.Core.Elements
 
 		private PanelList()
 		{
-			ItemAdded  += On_PanelAdd;
-			RangeAdded += On_PanelAdd;
 		}
 
 		private PanelList(IEnumerable<PanelObject> panelObjects)
 			: base(panelObjects)
 		{
-			ItemAdded  += On_PanelAdd;
-			RangeAdded += On_PanelAdd;
 		}
 
 		#endregion
