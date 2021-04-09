@@ -168,10 +168,7 @@ namespace SPMTool.Core.Elements
 		public IEnumerable<PanelObject> Divide(int rows, int columns)
 		{
 			if (!Vertices.IsRectangular)
-			{
-				yield return this;
 				yield break;
-			}
 
 			var verts = Vertices.Divide(rows, columns).ToArray();
 
