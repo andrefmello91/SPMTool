@@ -71,7 +71,7 @@ namespace SPMTool.Core.Elements
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		/// <param name="vertices">The collection of four <see cref="Point" /> vertices, in any order.</param>
-		public bool Add(IEnumerable<Point>? vertices, bool raiseEvents = true, bool sort = true) => !(vertices is null) && Add(new PanelObject(vertices), raiseEvents, sort);
+		public bool Add(IEnumerable<Point>? vertices, bool raiseEvents = true, bool sort = true) => vertices is not null && Add(new PanelObject(vertices), raiseEvents, sort);
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		/// <param name="vertices">The panel <see cref="Vertices" /> object.</param>

@@ -142,7 +142,7 @@ namespace SPMTool.Core.Conditions
 			var condition = Find(c => c.Position == position);
 
 			return
-				!(condition is null) && Remove(condition, raiseEvents, sort);
+				condition is not null && Remove(condition, raiseEvents, sort);
 		}
 
 		/// <param name="positions">The position of objects to remove.</param>

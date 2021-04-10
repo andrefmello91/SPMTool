@@ -44,7 +44,7 @@ namespace SPMTool.Core.Conditions
 		public static ConstraintList ReadFromBlocks(IEnumerable<BlockReference>? blocks) =>
 			blocks.IsNullOrEmpty()
 				? new ConstraintList()
-				: new ConstraintList(blocks.Where(b => !(b is null) && b.Layer == $"{Layer.Support}").Select(ConstraintObject.ReadFromBlock)!);
+				: new ConstraintList(blocks.Where(b => b is not null && b.Layer == $"{Layer.Support}").Select(ConstraintObject.ReadFromBlock)!);
 
 		/// <summary>
 		///     Read all <see cref="ConstraintObject" />'s from drawing.

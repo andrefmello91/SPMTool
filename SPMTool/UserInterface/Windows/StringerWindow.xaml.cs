@@ -369,7 +369,7 @@ namespace SPMTool.Application.UserInterface
 			{
 				var reinforcement = _stringers[0].Reinforcement;
 
-				ReinforcementChecked = !(reinforcement is null);
+				ReinforcementChecked = reinforcement is not null;
 
 				OutputReinforcement = reinforcement;
 				OutputSteel         = reinforcement?.Steel;

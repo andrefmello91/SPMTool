@@ -17,7 +17,7 @@ namespace SPMTool.Comparers
 		/// </summary>
 		/// <param name="tolerance">The tolerance to considering points equivalent.</param>
 		public bool Equals(Line line, Line otherLine, double tolerance) =>
-			!(otherLine is null) &&
+			otherLine is not null &&
 			(line.StartPoint.Approx(otherLine.StartPoint, tolerance) && line.EndPoint.Approx(otherLine.EndPoint, tolerance) ||
 			 line.StartPoint.Approx(otherLine.EndPoint, tolerance) && line.EndPoint.Approx(otherLine.StartPoint, tolerance));
 

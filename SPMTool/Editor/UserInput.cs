@@ -357,7 +357,7 @@ namespace SPMTool.Editor
 				return null;
 
 			return
-				(from SelectedObject obj in selRes.Value select obj.ObjectId).ToArray().GetDBObjects<TDBObject>().Where(t => !(t is null))!;
+				(from SelectedObject obj in selRes.Value select obj.ObjectId).ToArray().GetDBObjects<TDBObject>().Where(t => t is not null)!;
 		}
 
 		#endregion

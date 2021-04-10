@@ -469,8 +469,8 @@ namespace SPMTool.Application.UserInterface
 			{
 				var reinforcement = _panels[0].Reinforcement;
 
-				ReinforcementXChecked = !(reinforcement?.DirectionX is null);
-				ReinforcementYChecked = !(reinforcement?.DirectionY is null);
+				ReinforcementXChecked = reinforcement?.DirectionX is not null;
+				ReinforcementYChecked = reinforcement?.DirectionY is not null;
 
 				OutputReinforcement = reinforcement;
 				OutputSteelX        = reinforcement?.DirectionX?.Steel;

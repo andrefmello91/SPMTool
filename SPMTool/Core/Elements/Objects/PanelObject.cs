@@ -242,12 +242,12 @@ namespace SPMTool.Core.Elements
 
 			var x = GetReinforcement(Axis.X);
 
-			if (!(x is null))
+			if (x is not null)
 				_x = x;
 
 			var y = GetReinforcement(Axis.Y);
 
-			if (!(y is null))
+			if (y is not null)
 				_y = y;
 
 			return

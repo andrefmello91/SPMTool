@@ -211,7 +211,7 @@ namespace SPMTool.Core.Elements
 
 			var rf = GetReinforcement();
 
-			if (!(rf is null))
+			if (rf is not null)
 				_reinforcement = GetReinforcement();
 
 			return

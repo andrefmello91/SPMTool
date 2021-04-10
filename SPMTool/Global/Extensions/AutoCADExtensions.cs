@@ -51,7 +51,7 @@ namespace SPMTool.Extensions
 				dbObject.Erased += erasedEvent;
 
 			// Verify if there is attributes
-			if (dbObject is BlockReference blkRef && !(blkRef.AttributeCollection is null) && blkRef.AttributeCollection.Count > 0)
+			if (dbObject is BlockReference blkRef && blkRef.AttributeCollection is not null && blkRef.AttributeCollection.Count > 0)
 				foreach (AttributeReference attRef in blkRef.AttributeCollection)
 				{
 					blkTblRec.AppendEntity(attRef);
@@ -830,7 +830,7 @@ namespace SPMTool.Extensions
 				ent.Erased -= erasedEvent;
 
 			// Verify if there is attributes
-			if (ent is BlockReference blkRef && !(blkRef.AttributeCollection is null) && blkRef.AttributeCollection.Count > 0)
+			if (ent is BlockReference blkRef && blkRef.AttributeCollection is not null && blkRef.AttributeCollection.Count > 0)
 				foreach (ObjectId attId in blkRef.AttributeCollection)
 				{
 					var attEnt = trans.GetObject(attId, OpenMode.ForWrite);
@@ -926,14 +926,14 @@ namespace SPMTool.Extensions
 			// Get record
 			using var obj = trans.GetObject(objectId, OpenMode.ForRead);
 
-			if (!(obj is DBDictionary dbExt) || !overwrite && dbExt.Contains(dataName))
+			if (obj is not DBDictionary dbExt || !overwrite && dbExt.Contains(dataName))
 				return false;
 
 			dbExt.UpgradeOpen();
 
 			var xRec = new Xrecord();
 
-			if (!(data is null))
+			if (data is not null)
 				xRec.Data = new ResultBuffer(data.ToArray());
 
 			// Set the data

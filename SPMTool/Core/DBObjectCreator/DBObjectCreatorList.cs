@@ -37,7 +37,7 @@ namespace SPMTool.Core
 			var obj = e.Item;
 
 			// Remove from trash
-			if (!(obj is null))
+			if (obj is not null)
 				Model.Trash.Remove(obj);
 
 			// Add to drawing
@@ -52,7 +52,7 @@ namespace SPMTool.Core
 			var obj = e.Item;
 
 			// Add to trash
-			if (!(obj is null) && !Model.Trash.Contains(obj))
+			if (obj is not null && !Model.Trash.Contains(obj))
 				Model.Trash.Add(obj);
 
 			// Remove

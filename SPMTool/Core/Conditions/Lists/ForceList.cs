@@ -54,7 +54,7 @@ namespace SPMTool.Core.Conditions
 		public static ForceList ReadFromBlocks(IEnumerable<BlockReference?>? blocks) =>
 			blocks.IsNullOrEmpty()
 				? new ForceList()
-				: new ForceList(blocks.Where(b => !(b is null) && b.Layer == $"{Layer.Force}").Select(ForceObject.ReadFromBlock)!);
+				: new ForceList(blocks.Where(b => b is not null && b.Layer == $"{Layer.Force}").Select(ForceObject.ReadFromBlock)!);
 
 		/// <summary>
 		///     Read all <see cref="ForceObject" />'s from drawing.

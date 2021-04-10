@@ -150,7 +150,7 @@ namespace SPMTool
 		///     Returns true if all units coincide.
 		/// </summary>
 		/// <param name="other">The other <see cref="Units" /> object.</param>
-		public bool Equals(Units other) => !(other is null) && Geometry == other.Geometry && Reinforcement == other.Reinforcement && Displacements == other.Displacements && AppliedForces == other.AppliedForces && StringerForces == other.StringerForces && PanelStresses == other.PanelStresses && MaterialStrength == other.MaterialStrength;
+		public bool Equals(Units other) => other is not null && Geometry == other.Geometry && Reinforcement == other.Reinforcement && Displacements == other.Displacements && AppliedForces == other.AppliedForces && StringerForces == other.StringerForces && PanelStresses == other.PanelStresses && MaterialStrength == other.MaterialStrength;
 
 		public override int GetHashCode() => base.GetHashCode();
 
@@ -161,12 +161,12 @@ namespace SPMTool
 		/// <summary>
 		///     Returns true if all units coincide.
 		/// </summary>
-		public static bool operator ==(Units left, Units right) => !(left is null) && left.Equals(right);
+		public static bool operator ==(Units left, Units right) => left is not null && left.Equals(right);
 
 		/// <summary>
 		///     Returns true if at least a unit do not coincide.
 		/// </summary>
-		public static bool operator !=(Units left, Units right) => !(left is null) && !left.Equals(right);
+		public static bool operator !=(Units left, Units right) => left is not null && !left.Equals(right);
 
 		#endregion
 

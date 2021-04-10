@@ -107,7 +107,7 @@ namespace SPMTool.Core.Conditions
 		
 		public virtual BlockReference? GetObject() => (BlockReference?) ObjectId.GetEntity();
 
-		public virtual bool Equals(ConditionObject<T>? other) => !(other is null) && Position == other.Position;
+		public virtual bool Equals(ConditionObject<T>? other) => other is not null && Position == other.Position;
 
 		public override string ToString() => Value.ToString();
 
@@ -118,12 +118,12 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Returns true if objects are equal.
 		/// </summary>
-		public static bool operator ==(ConditionObject<T>? left, ConditionObject<T>? right) => !(left is null) && left.Equals(right);
+		public static bool operator ==(ConditionObject<T>? left, ConditionObject<T>? right) => left is not null && left.Equals(right);
 
 		/// <summary>
 		///     Returns true if objects are different.
 		/// </summary>
-		public static bool operator !=(ConditionObject<T>? left, ConditionObject<T>? right) => !(left is null) && !left.Equals(right);
+		public static bool operator !=(ConditionObject<T>? left, ConditionObject<T>? right) => left is not null && !left.Equals(right);
 
 		/// <summary>
 		///     Get the <see cref="BlockReference" /> associated to a <see cref="ConditionObject{T}" />.

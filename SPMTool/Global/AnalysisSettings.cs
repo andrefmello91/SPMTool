@@ -66,12 +66,12 @@ namespace SPMTool
 		/// <summary>
 		///     Returns true if all units coincide.
 		/// </summary>
-		public static bool operator ==(AnalysisSettings left, AnalysisSettings right) => !(left is null) && left.Equals(right);
+		public static bool operator ==(AnalysisSettings left, AnalysisSettings right) => left is not null && left.Equals(right);
 
 		/// <summary>
 		///     Returns true if at least a unit do not coincide.
 		/// </summary>
-		public static bool operator !=(AnalysisSettings left, AnalysisSettings right) => !(left is null) && !left.Equals(right);
+		public static bool operator !=(AnalysisSettings left, AnalysisSettings right) => left is not null && !left.Equals(right);
 
 		#endregion
 

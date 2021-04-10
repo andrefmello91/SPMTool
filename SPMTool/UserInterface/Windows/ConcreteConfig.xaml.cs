@@ -161,7 +161,7 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void GetCustomParameters()
 		{
-			if (!(_parameters is CustomParameters cusPar))
+			if (_parameters is not CustomParameters cusPar)
 				return;
 
 			// Read parameters
