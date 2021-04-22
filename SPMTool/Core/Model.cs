@@ -210,7 +210,7 @@ namespace SPMTool.Core
 			message = string.Empty;
 
 			return
-				new SPMInput(stringers, panels, nodes);
+				SPMInput.From(stringers, panels, nodes, analysisType);
 		}
 
 		/// <summary>
