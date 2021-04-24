@@ -55,7 +55,7 @@ namespace SPMTool.Editor.Commands
 		private static void ExecuteNonlinearAnalysis(bool simulate = false)
 		{
 			// Get input data
-			var input = (NLSPMInput) Model.GenerateInput(AnalysisType.Nonlinear, out var dataOk, out var message);
+			var input = Model.GenerateInput(AnalysisType.Nonlinear, out var dataOk, out var message);
 
 			if (!dataOk)
 			{
@@ -73,7 +73,7 @@ namespace SPMTool.Editor.Commands
 			var settings = DataBase.Settings.Analysis;
 
 			// Do analysis
-			var analysis = new NonlinearAnalysis(input, NonLinearSolver.Secant, numLoadSteps: settings.NumLoadSteps, tolerance: settings.Tolerance, maxIterations: settings.MaxIterations);
+			var analysis = new NonlinearAnalysis(input, numLoadSteps: settings.NumLoadSteps, tolerance: settings.Tolerance, maxIterations: settings.MaxIterations);
 			analysis.Execute(uIndexn.Value, simulate);
 
 			// Show window
