@@ -76,7 +76,7 @@ namespace SPMTool.Core.Blocks
 		{
 			var blocks = new StringerCrackBlockCreator?[3];
 			
-			if (stringer is null or not NLStringer)
+			if (stringer.Model is ElementModel.Elastic)
 				return blocks;
 
 			var l  = stringer.Geometry.Length;

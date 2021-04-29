@@ -70,7 +70,7 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		/// <param name="panel">The <see cref="Panel"/>.</param>
 		public static PanelCrackBlockCreator? CreateBlock(Panel? panel) =>
-			panel is NLPanel && panel.CrackOpening > Length.Zero
+			panel?.Model is ElementModel.Nonlinear && panel.CrackOpening > Length.Zero
 				? new PanelCrackBlockCreator(panel.Geometry.Vertices.CenterPoint, panel.CrackOpening, StressBlockCreator.ImproveAngle(panel.ConcretePrincipalStresses.Theta2), Results.ResultScaleFactor)
 				: null;
 

@@ -73,11 +73,12 @@ namespace SPMTool.Editor.Commands
 			var settings = DataBase.Settings.Analysis;
 
 			// Do analysis
-			var analysis = new NonlinearAnalysis(input, numLoadSteps: settings.NumLoadSteps, tolerance: settings.Tolerance, maxIterations: settings.MaxIterations);
+			var analysis = new NonlinearAnalysis(input, NonLinearSolver.Secant, numLoadSteps: settings.NumLoadSteps, tolerance: settings.Tolerance, maxIterations: settings.MaxIterations);
 			analysis.Execute(uIndexn.Value, simulate);
+			var output = analysis.GenerateOutput();
 
 			// Show window
-			var plot = new PlotWindow(analysis.GenerateOutput()!);
+			var plot = new PlotWindow(output);
 			ShowModelessWindow(MainWindow.Handle, plot);
 
 			// Show a message if analysis stopped
