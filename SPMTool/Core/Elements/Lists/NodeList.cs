@@ -128,7 +128,7 @@ namespace SPMTool.Core.Elements
 		public int RemoveRange(IEnumerable<Point>? positions, bool raiseEvents = true, bool sort = true) =>
 			positions.IsNullOrEmpty()
 				? 0
-				: RemoveAll(n => positions.Contains(n.Property), raiseEvents, sort);
+				: RemoveAll(n => positions.Contains(n.Position), raiseEvents, sort);
 
 		/// <summary>
 		///     Remove unnecessary nodes from this collection based on a collection of <see cref="StringerGeometry" />'s.

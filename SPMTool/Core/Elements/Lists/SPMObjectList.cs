@@ -10,18 +10,18 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     SPMObjects base class.
 	/// </summary>
-	/// <typeparam name="T1">Any type that implements <see cref="ISPMObject{T1}" />.</typeparam>
-	/// <typeparam name="T2">The type that represents the main property of the object.</typeparam>
-	public abstract class SPMObjectList<T1, T2> : DBObjectCreatorList<T1>
-		where T1 : SPMObject<T2>, IDBObjectCreator, IEquatable<T1>, IComparable<T1>
-		where T2 : IComparable<T2>, IEquatable<T2>
+	/// <typeparam name="TSPMObject">Any type that implements <see cref="ISPMObject{T1}" />.</typeparam>
+	/// <typeparam name="TProperty">The type that represents the main property of the object.</typeparam>
+	public abstract class SPMObjectList<TSPMObject, TProperty> : DBObjectCreatorList<TSPMObject>
+		where TSPMObject : ISPMObject<TProperty>, IDBObjectCreator, IEquatable<TSPMObject>, IComparable<TSPMObject>
+		where TProperty : IComparable<TProperty>, IEquatable<TProperty>
 	{
 
 		#region Constructors
 
 		protected SPMObjectList() => SetSortEvent();
 
-		protected SPMObjectList(IEnumerable<T1> collection)
+		protected SPMObjectList(IEnumerable<TSPMObject> collection)
 			: base(collection)
 		{
 			SetSortEvent();
@@ -35,13 +35,13 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Event to execute when a list is sorted.
 		/// </summary>
-		public static void On_ListSort(object? sender, EventArgs? e) => SetNumbers((IEnumerable<T1>?) sender);
+		public static void On_ListSort(object? sender, EventArgs? e) => SetNumbers((IEnumerable<TSPMObject>?) sender);
 
 		/// <summary>
 		///     Set numbers to a collection of objects.
 		/// </summary>
 		/// <param name="objects">The objects to update numbers</param>
-		public static void SetNumbers(IEnumerable<T1>? objects)
+		public static void SetNumbers(IEnumerable<TSPMObject>? objects)
 		{
 			if (objects is null || !objects.Any())
 				return;
@@ -60,9 +60,17 @@ namespace SPMTool.Core.Elements
 			}
 		}
 
-		public IEnumerable<T1>? GetByProperties(IEnumerable<T2>? properties) => this.Where(t => properties.Contains(t.Property));
+		/// <summary>
+		///		Get the elements in this collection that match any property in a collection.
+		/// </summary>
+		/// <param name="properties">The collection of required properties.</param>
+		public IEnumerable<TSPMObject>? GetByProperties(IEnumerable<TProperty>? properties) => this.Where(t => properties.Contains(t.Property));
 
-		public T1? GetByProperty(T2 property) => Find(t => t.Property.Equals(property));
+		/// <summary>
+		///		Get an element in this collection that matches <paramref name="property"/>.
+		/// </summary>
+		/// <param name="property">The required property.</param>
+		public TSPMObject? GetByProperty(TProperty property) => Find(t => t.Property.Equals(property));
 
 		/// <summary>
 		///     Get the the list of SPM elements from objects in this collection.
@@ -73,7 +81,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the list of the main properties from objects in this collection.
 		/// </summary>
-		public List<T2> GetProperties() => this.Select(t => t.Property).ToList();
+		public List<TProperty> GetProperties() => this.Select(t => t.Property).ToList();
 
 		/// <summary>
 		///     Set sort event to this collection.

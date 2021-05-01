@@ -10,9 +10,9 @@ namespace SPMTool.Core.Conditions
 	/// <summary>
 	///     ICondition interface.
 	/// </summary>
-	/// <typeparam name="T">The type that represents the value of this object.</typeparam>
-	public interface IConditionObject<out T>
-		where T : IEquatable<T>
+	/// <typeparam name="TValue">The type that represents the value of this object.</typeparam>
+	public interface IConditionObject<out TValue>
+		where TValue : IEquatable<TValue>
 	{
 
 		#region Properties
@@ -35,7 +35,7 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the value of this condition.
 		/// </summary>
-		T Value { get; }
+		TValue Value { get; }
 
 		#endregion
 
@@ -45,8 +45,8 @@ namespace SPMTool.Core.Conditions
 	///     Condition object base class.
 	/// </summary>
 	/// <inheritdoc cref="IConditionObject{T}" />
-	public abstract class ConditionObject<T> : ExtendedObject, IConditionObject<T>, IDBObjectCreator<BlockReference>, IEquatable<ConditionObject<T>>, IComparable<ConditionObject<T>>
-		where T : IEquatable<T>
+	public abstract class ConditionObject<TValue> : ExtendedObject, IConditionObject<TValue>, IDBObjectCreator<BlockReference>, IEquatable<ConditionObject<TValue>>, IComparable<ConditionObject<TValue>>
+		where TValue : IEquatable<TValue>
 	{
 
 		#region Properties
@@ -62,7 +62,7 @@ namespace SPMTool.Core.Conditions
 
 		public Point Position { get; }
 
-		public virtual T Value { get; protected set; }
+		public virtual TValue Value { get; protected set; }
 
 		public abstract override Layer Layer { get; }
 
@@ -82,7 +82,7 @@ namespace SPMTool.Core.Conditions
 		/// <param name="position">The position.</param>
 		/// <param name="value">The value.</param>
 		/// <inheritdoc cref="ConditionObject()" />
-		protected ConditionObject(Point position, T value)
+		protected ConditionObject(Point position, TValue value)
 		{
 			Position = position;
 			Value    = value;
@@ -92,22 +92,28 @@ namespace SPMTool.Core.Conditions
 
 		#region Methods
 
-		public int CompareTo(ConditionObject<T>? other) => other is null
+		/// <inheritdoc />
+		public override bool Equals(object obj) => obj is ConditionObject<TValue> conditionObject && Equals(conditionObject);
+
+		public int CompareTo(ConditionObject<TValue>? other) => other is null
 			? 0
 			: Position.CompareTo(other.Position);
 
-		public virtual void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
+		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
+
+		public override DBObject CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, null, DataBase.Settings.Units.ScaleFactor)!;
+
+		public override void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+
+		public virtual bool Equals(ConditionObject<TValue>? other) => other is not null && Position == other.Position;
 
 		/// <inheritdoc />
 		BlockReference IDBObjectCreator<BlockReference>.CreateObject() => (BlockReference) CreateObject();
 
-		public virtual void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+		BlockReference? IDBObjectCreator<BlockReference>.GetObject() => (BlockReference?) GetObject();
 
-		public override DBObject CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, null, DataBase.Settings.Units.ScaleFactor)!;
-		
-		public virtual BlockReference? GetObject() => (BlockReference?) ObjectId.GetEntity();
-
-		public virtual bool Equals(ConditionObject<T>? other) => other is not null && Position == other.Position;
+		/// <inheritdoc />
+		public override int GetHashCode() => Value.GetHashCode();
 
 		public override string ToString() => Value.ToString();
 
@@ -118,12 +124,12 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Returns true if objects are equal.
 		/// </summary>
-		public static bool operator ==(ConditionObject<T>? left, ConditionObject<T>? right) => left is not null && left.Equals(right);
+		public static bool operator ==(ConditionObject<TValue>? left, ConditionObject<TValue>? right) => left is not null && left.Equals(right);
 
 		/// <summary>
 		///     Returns true if objects are different.
 		/// </summary>
-		public static bool operator !=(ConditionObject<T>? left, ConditionObject<T>? right) => left is not null && !left.Equals(right);
+		public static bool operator !=(ConditionObject<TValue>? left, ConditionObject<TValue>? right) => left is not null && !left.Equals(right);
 
 		/// <summary>
 		///     Get the <see cref="BlockReference" /> associated to a <see cref="ConditionObject{T}" />.
@@ -131,7 +137,7 @@ namespace SPMTool.Core.Conditions
 		/// <remarks>
 		///     Can be null if <paramref name="conditionObject" /> is null or doesn't exist in drawing.
 		/// </remarks>
-		public static explicit operator BlockReference?(ConditionObject<T>? conditionObject) => conditionObject?.GetObject();
+		public static explicit operator BlockReference?(ConditionObject<TValue>? conditionObject) => (BlockReference?) conditionObject?.GetObject();
 
 		#endregion
 

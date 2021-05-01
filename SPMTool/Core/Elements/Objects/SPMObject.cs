@@ -1,6 +1,7 @@
 ﻿using System;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
+using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 using SPMTool.Extensions;
@@ -11,9 +12,9 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     Interface for SPM objects.
 	/// </summary>
-	/// <typeparam name="T">The type that represents the main property of the object.</typeparam>
-	public interface ISPMObject<T>
-		where T : IComparable<T>, IEquatable<T>
+	/// <typeparam name="TProperty">The type that represents the main property of the object.</typeparam>
+	public interface ISPMObject<TProperty>
+		where TProperty : IComparable<TProperty>, IEquatable<TProperty>
 	{
 
 		#region Properties
@@ -26,14 +27,14 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the main property of this object.
 		/// </summary>
-		T Property { get; }
+		TProperty Property { get; }
 
 		#endregion
 
 		#region Methods
 
 		/// <summary>
-		///     Get the SPM element associated to this object.
+		///     Get the element associated to this object.
 		/// </summary>
 		INumberedElement GetElement();
 
@@ -44,9 +45,9 @@ namespace SPMTool.Core.Elements
 	/// <summary>
 	///     SPM object base class
 	/// </summary>
-	/// <typeparam name="T">The type that represents the main property of the object.</typeparam>
-	public abstract class SPMObject<T> : ExtendedObject, ISPMObject<T>, IDBObjectCreator<Entity>, IEquatable<SPMObject<T>>, IComparable<SPMObject<T>>
-		where T : IComparable<T>, IEquatable<T>
+	/// <typeparam name="TProperty">The type that represents the main property of the object.</typeparam>
+	public abstract class SPMObject<TProperty> : ExtendedObject, ISPMObject<TProperty>, IDBObjectCreator<Entity>, IEquatable<SPMObject<TProperty>>, IComparable<SPMObject<TProperty>>
+		where TProperty : IComparable<TProperty>, IEquatable<TProperty>
 	{
 
 		#region Fields
@@ -54,7 +55,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Auxiliary property field.
 		/// </summary>
-		protected T PropertyField;
+		protected TProperty PropertyField;
 
 		#endregion
 
@@ -62,11 +63,7 @@ namespace SPMTool.Core.Elements
 
 		public int Number { get; set; } = 0;
 
-		public T Property
-		{
-			get => PropertyField;
-			set => PropertyField = value;
-		}
+		TProperty ISPMObject<TProperty>.Property => PropertyField;
 
 		#endregion
 
@@ -76,17 +73,17 @@ namespace SPMTool.Core.Elements
 		{
 		}
 
-		protected SPMObject(T property) => PropertyField = property;
+		protected SPMObject(TProperty property) => PropertyField = property;
 
 		#endregion
 
 		#region Methods
 
-		public override bool Equals(object? other) => other is T obj && Equals(obj);
+		public override bool Equals(object? other) => other is TProperty obj && Equals(obj);
 
-		public int CompareTo(SPMObject<T>? other) => other is null || other.GetType() != GetType()
+		public int CompareTo(SPMObject<TProperty>? other) => other is null || other.GetType() != GetType()
 			? 0
-			: Property.CompareTo(other.Property);
+			: PropertyField.CompareTo(other.PropertyField);
 
 		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
 
@@ -98,11 +95,11 @@ namespace SPMTool.Core.Elements
 
 		public override void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
-		public bool Equals(SPMObject<T>? other) => other is not null && Property.Equals(other.Property);
+		public bool Equals(SPMObject<TProperty>? other) => other is not null && PropertyField.Equals(other.PropertyField);
 
 		public abstract INumberedElement GetElement();
 
-		public override int GetHashCode() => Property.GetHashCode();
+		public override int GetHashCode() => PropertyField.GetHashCode();
 
 		public override string ToString() => GetElement()?.ToString() ?? "Null element";
 
@@ -113,12 +110,12 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Returns true if objects are equal.
 		/// </summary>
-		public static bool operator ==(SPMObject<T>? left, SPMObject<T>? right) => left.IsEqualTo(right);
+		public static bool operator ==(SPMObject<TProperty>? left, SPMObject<TProperty>? right) => left.IsEqualTo(right);
 
 		/// <summary>
 		///     Returns true if objects are different.
 		/// </summary>
-		public static bool operator !=(SPMObject<T>? left, SPMObject<T>? right) => left.IsNotEqualTo(right);
+		public static bool operator !=(SPMObject<TProperty>? left, SPMObject<TProperty>? right) => left.IsNotEqualTo(right);
 
 		#endregion
 

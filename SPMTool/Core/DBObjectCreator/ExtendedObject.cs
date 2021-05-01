@@ -40,18 +40,6 @@ namespace SPMTool.Core
 			set => AttachObject(value);
 		}
 
-		/// <inheritdoc />
-		public virtual void AddToDrawing() => CreateObject().AddToDrawing();
-
-		/// <inheritdoc />
-		public abstract DBObject CreateObject();
-
-		/// <inheritdoc />
-		public virtual DBObject? GetObject() => ObjectId.GetDBObject();
-
-		/// <inheritdoc />
-		public virtual void RemoveFromDrawing() => ObjectId.RemoveFromDrawing();
-		
 		#endregion
 
 		#region Methods
@@ -76,6 +64,18 @@ namespace SPMTool.Core
 			else
 				GetProperties();
 		}
+
+		/// <inheritdoc />
+		public virtual void AddToDrawing() => CreateObject().AddToDrawing();
+
+		/// <inheritdoc />
+		public abstract DBObject CreateObject();
+
+		/// <inheritdoc />
+		public virtual DBObject? GetObject() => ObjectId.GetDBObject();
+
+		/// <inheritdoc />
+		public virtual void RemoveFromDrawing() => ObjectId.RemoveFromDrawing();
 
 		/// <summary>
 		///     Read the extended dictionary associated to this object.
