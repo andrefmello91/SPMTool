@@ -1,12 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using andrefmello91.Extensions;
+﻿using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
-using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using MathNet.Numerics;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -68,7 +64,7 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the average stress <see cref="BlockCreator" />.
 		/// </summary>
-		/// <param name="panel">The <see cref="Panel"/>.</param>
+		/// <param name="panel">The <see cref="Panel" />.</param>
 		public static PanelCrackBlockCreator? CreateBlock(Panel? panel) =>
 			panel?.Model is ElementModel.Nonlinear && panel.CrackOpening > Length.Zero
 				? new PanelCrackBlockCreator(panel.Geometry.Vertices.CenterPoint, panel.CrackOpening, StressBlockCreator.ImproveAngle(panel.ConcretePrincipalStresses.Theta2), Results.ResultScaleFactor)
@@ -81,7 +77,7 @@ namespace SPMTool.Core.Blocks
 		private static AttributeReference GetAttribute(Length crackOpening, double rotationAngle, double scaleFactor)
 		{
 			var w = crackOpening.ToUnit(DataBase.Settings.Units.CrackOpenings).Value.Abs();
-			
+
 			// Set the insertion point
 			var pt = new Point(0, -40 * scaleFactor);
 
@@ -102,7 +98,7 @@ namespace SPMTool.Core.Blocks
 
 			return attRef;
 		}
-		
+
 		#endregion
 
 	}

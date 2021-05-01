@@ -29,6 +29,8 @@ namespace SPMTool.Core
 		/// </summary>
 		public string Text { get; set; }
 
+		#region Interface Implementations
+
 		/// <summary>
 		///     Get/set the <see cref="Enums.Layer" /> of text.
 		/// </summary>
@@ -37,6 +39,8 @@ namespace SPMTool.Core
 		public string Name => $"Text at {InsertionPoint}";
 
 		public ObjectId ObjectId { get; set; }
+
+		#endregion
 
 		#endregion
 
@@ -61,9 +65,9 @@ namespace SPMTool.Core
 
 		#region Methods
 
-		public void AddToDrawing() => ObjectId = CreateObject().AddToDrawing();
+		#region Interface Implementations
 
-		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+		public void AddToDrawing() => ObjectId = CreateObject().AddToDrawing();
 
 		public DBText CreateObject() => new()
 		{
@@ -74,13 +78,17 @@ namespace SPMTool.Core
 			AlignmentPoint = InsertionPoint.ToPoint3d()
 		};
 
-		public DBText? GetObject() => (DBText?) ObjectId.GetEntity();
-
 		/// <inheritdoc />
 		DBObject IDBObjectCreator.CreateObject() => CreateObject();
 
+		public DBText? GetObject() => (DBText?) ObjectId.GetEntity();
+
 		/// <inheritdoc />
 		DBObject? IDBObjectCreator.GetObject() => GetObject();
+
+		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+
+		#endregion
 
 		#endregion
 

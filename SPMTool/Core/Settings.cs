@@ -57,6 +57,12 @@ namespace SPMTool.Application
 			set => SetAnalysisSettings(value);
 		}
 
+		/// <inheritdoc />
+		public override Layer Layer => default;
+
+		/// <inheritdoc />
+		public override string Name => $"{typeof(Settings)}";
+
 		/// <summary>
 		///     Get <see cref="SPMTool.Units" /> saved in database.
 		/// </summary>
@@ -81,17 +87,11 @@ namespace SPMTool.Application
 		#region Methods
 
 		/// <inheritdoc />
-		public override Layer Layer => default;
-
-		/// <inheritdoc />
-		public override string Name => $"{typeof(Settings)}";
-
-		/// <inheritdoc />
 		public override DBObject CreateObject() => new Xrecord
 		{
 			Data = new ResultBuffer(_analysis.GetTypedValues())
 		};
-		
+
 		protected override bool GetProperties()
 		{
 			_analysis = GetAnalysisSettings();

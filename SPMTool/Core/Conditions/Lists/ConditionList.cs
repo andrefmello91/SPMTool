@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.EList;
 using andrefmello91.OnPlaneComponents;
-using Autodesk.AutoCAD.DatabaseServices;
 
 namespace SPMTool.Core.Conditions
 {

@@ -25,6 +25,8 @@ namespace SPMTool.Core
 		/// </summary>
 		public ObjectId DictionaryId { get; protected set; } = ObjectId.Null;
 
+		#region Interface Implementations
+
 		/// <inheritdoc />
 		public abstract Layer Layer { get; }
 
@@ -39,6 +41,8 @@ namespace SPMTool.Core
 			get => _objectId;
 			set => AttachObject(value);
 		}
+
+		#endregion
 
 		#endregion
 
@@ -64,18 +68,6 @@ namespace SPMTool.Core
 			else
 				GetProperties();
 		}
-
-		/// <inheritdoc />
-		public virtual void AddToDrawing() => CreateObject().AddToDrawing();
-
-		/// <inheritdoc />
-		public abstract DBObject CreateObject();
-
-		/// <inheritdoc />
-		public virtual DBObject? GetObject() => ObjectId.GetDBObject();
-
-		/// <inheritdoc />
-		public virtual void RemoveFromDrawing() => ObjectId.RemoveFromDrawing();
 
 		/// <summary>
 		///     Read the extended dictionary associated to this object.
@@ -113,6 +105,22 @@ namespace SPMTool.Core
 		///     True if properties were successfully set to object dictionary.
 		/// </returns>
 		protected abstract void SetProperties();
+
+		#region Interface Implementations
+
+		/// <inheritdoc />
+		public virtual void AddToDrawing() => CreateObject().AddToDrawing();
+
+		/// <inheritdoc />
+		public abstract DBObject CreateObject();
+
+		/// <inheritdoc />
+		public virtual DBObject? GetObject() => ObjectId.GetDBObject();
+
+		/// <inheritdoc />
+		public virtual void RemoveFromDrawing() => ObjectId.RemoveFromDrawing();
+
+		#endregion
 
 		#endregion
 

@@ -201,7 +201,7 @@ namespace SPMTool.Extensions
 		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="Constraint" />.</param>
 		public static Constraint? GetConstraint(this IEnumerable<TypedValue>? values) =>
 			values.IsNullOrEmpty() || values.Count() != 1
-				? (Constraint?) null
+				? null
 				: Constraint.FromDirection((ComponentDirection) values.ElementAt(0).ToInt());
 
 		/// <summary>
@@ -210,7 +210,7 @@ namespace SPMTool.Extensions
 		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="CrossSection" />.</param>
 		public static CrossSection? GetCrossSection(this IEnumerable<TypedValue>? values) =>
 			values.IsNullOrEmpty() || values.Count() != 2
-				? (CrossSection?) null
+				? null
 				: new CrossSection(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
 
 		/// <summary>
@@ -231,7 +231,7 @@ namespace SPMTool.Extensions
 		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="PlaneDisplacement" />.</param>
 		public static PlaneDisplacement? GetDisplacement(this IEnumerable<TypedValue>? values) =>
 			values.IsNullOrEmpty() || values.Count() != 2
-				? (PlaneDisplacement?) null
+				? null
 				: new PlaneDisplacement(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
 
 		/// <summary>
@@ -252,7 +252,7 @@ namespace SPMTool.Extensions
 		/// </summary>
 		public static int? GetEnumValue(this IEnumerable<TypedValue>? values) =>
 			values.IsNullOrEmpty() || values.Count() != 1
-				? (int?) null
+				? null
 				: values.ElementAt(0).ToInt();
 
 		/// <summary>
@@ -261,8 +261,17 @@ namespace SPMTool.Extensions
 		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="PlaneForce" />.</param>
 		public static PlaneForce? GetForce(this IEnumerable<TypedValue>? values) =>
 			values.IsNullOrEmpty() || values.Count() != 2
-				? (PlaneForce?) null
+				? null
 				: new PlaneForce(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
+
+		/// <summary>
+		///     Get <see cref="NodeType" />.
+		/// </summary>
+		/// <param name="nodePoint">The <see cref="DBPoint" /> object.</param>
+		public static NodeType GetNodeType(this DBPoint nodePoint) =>
+			nodePoint.Layer == $"{Layer.ExtNode}"
+				? NodeType.External
+				: NodeType.Internal;
 
 		/// <summary>
 		///     Get a collection containing all the <see cref="ObjectId" />'s in this <see cref="Layer" />.
@@ -316,7 +325,10 @@ namespace SPMTool.Extensions
 		///     The <see cref="Axis" /> to apply rotation. Leave null to use
 		///     <see cref="Autodesk.AutoCAD.Geometry.CoordinateSystem3d.Zaxis" />.
 		/// </param>
-		/// <param name="rotationPoint">The reference <see cref="Point3d"/> to apply rotation. Leave null to use <paramref name="insertionPoint"/>.</param>
+		/// <param name="rotationPoint">
+		///     The reference <see cref="Point3d" /> to apply rotation. Leave null to use
+		///     <paramref name="insertionPoint" />.
+		/// </param>
 		/// <param name="scaleFactor">The scale factor.</param>
 		public static BlockReference? GetReference(this Block block, Point3d insertionPoint, Layer? layer = null, ColorCode? colorCode = null, double rotationAngle = 0, Axis rotationAxis = Axis.Z, Point3d? rotationPoint = null, double scaleFactor = 1)
 		{
@@ -327,7 +339,7 @@ namespace SPMTool.Extensions
 
 			if (blkRec is null)
 				return null;
-			
+
 			var blockRef = new BlockReference(insertionPoint, blkRec.ObjectId)
 			{
 				Layer = $"{layer ?? block.GetAttribute<BlockAttribute>()!.Layer}"
@@ -559,87 +571,12 @@ namespace SPMTool.Extensions
 		///     Turn off this <see cref="Layer" />.
 		/// </summary>
 		public static void Off(this Layer layer) => TurnOff(layer);
-		
-		/// <summary>
-		///     Turn off all these <see cref="Layer" />'s.
-		/// </summary>
-		public static void TurnOff(params Layer[] layers)
-		{
-			// Start a transaction
-			using var trans = StartTransaction();
-
-			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
-			
-			foreach (var layer in layers)
-			{
-				// Get layer name
-				var layerName = layer.ToString();
-				
-				if (!lyrTbl.Has(layerName))
-					continue;
-
-				using var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForRead);
-				
-				// Verify the state
-				if (lyrTblRec.IsOff)
-					continue;
-
-				// Turn it off
-				lyrTblRec.UpgradeOpen();
-				lyrTblRec.IsOff = true;
-			}
-
-			// Commit and dispose the transaction
-			trans.Commit();
-		}
 
 		/// <summary>
 		///     Turn on this <see cref="Layer" />.
 		/// </summary>
 		/// <param name="layer">The <see cref="Layer" />.</param>
 		public static void On(this Layer layer) => TurnOn(layer);
-		
-		/// <summary>
-		///     Turn on all these <see cref="Layer" />'s.
-		/// </summary>
-		public static void TurnOn(params Layer[] layers)
-		{
-			// Start a transaction
-			using var trans = StartTransaction();
-
-			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
-			
-			foreach (var layer in layers)
-			{
-				// Get layer name
-				var layerName = layer.ToString();
-				
-				if (!lyrTbl.Has(layerName))
-					continue;
-
-				using var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForRead);
-				
-				// Verify the state
-				if (!lyrTblRec.IsOff)
-					continue;
-
-				// Turn it off
-				lyrTblRec.UpgradeOpen();
-				lyrTblRec.IsOff = false;
-			}
-
-			// Commit and dispose the transaction
-			trans.Commit();
-		}
-
-		/// <summary>
-		///     Get <see cref="NodeType" />.
-		/// </summary>
-		/// <param name="nodePoint">The <see cref="DBPoint" /> object.</param>
-		public static NodeType GetNodeType(this DBPoint nodePoint) =>
-			nodePoint.Layer == $"{Layer.ExtNode}"
-				? NodeType.External
-				: NodeType.Internal;
 
 		/// <summary>
 		///     Get the origin point related to this <paramref name="block" />.
@@ -778,6 +715,72 @@ namespace SPMTool.Extensions
 		{
 			var alpha = (byte) (255 * (100 - transparency) / 100);
 			return new Transparency(alpha);
+		}
+
+		/// <summary>
+		///     Turn off all these <see cref="Layer" />'s.
+		/// </summary>
+		public static void TurnOff(params Layer[] layers)
+		{
+			// Start a transaction
+			using var trans = StartTransaction();
+
+			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
+
+			foreach (var layer in layers)
+			{
+				// Get layer name
+				var layerName = layer.ToString();
+
+				if (!lyrTbl.Has(layerName))
+					continue;
+
+				using var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForRead);
+
+				// Verify the state
+				if (lyrTblRec.IsOff)
+					continue;
+
+				// Turn it off
+				lyrTblRec.UpgradeOpen();
+				lyrTblRec.IsOff = true;
+			}
+
+			// Commit and dispose the transaction
+			trans.Commit();
+		}
+
+		/// <summary>
+		///     Turn on all these <see cref="Layer" />'s.
+		/// </summary>
+		public static void TurnOn(params Layer[] layers)
+		{
+			// Start a transaction
+			using var trans = StartTransaction();
+
+			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
+
+			foreach (var layer in layers)
+			{
+				// Get layer name
+				var layerName = layer.ToString();
+
+				if (!lyrTbl.Has(layerName))
+					continue;
+
+				using var lyrTblRec = (LayerTableRecord) trans.GetObject(lyrTbl[layerName], OpenMode.ForRead);
+
+				// Verify the state
+				if (!lyrTblRec.IsOff)
+					continue;
+
+				// Turn it off
+				lyrTblRec.UpgradeOpen();
+				lyrTblRec.IsOff = false;
+			}
+
+			// Commit and dispose the transaction
+			trans.Commit();
 		}
 
 		#endregion

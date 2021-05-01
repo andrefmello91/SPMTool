@@ -61,13 +61,13 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <summary>
-		///		Get the elements in this collection that match any property in a collection.
+		///     Get the elements in this collection that match any property in a collection.
 		/// </summary>
 		/// <param name="properties">The collection of required properties.</param>
 		public IEnumerable<TSPMObject>? GetByProperties(IEnumerable<TProperty>? properties) => this.Where(t => properties.Contains(t.Property));
 
 		/// <summary>
-		///		Get an element in this collection that matches <paramref name="property"/>.
+		///     Get an element in this collection that matches <paramref name="property" />.
 		/// </summary>
 		/// <param name="property">The required property.</param>
 		public TSPMObject? GetByProperty(TProperty property) => Find(t => t.Property.Equals(property));

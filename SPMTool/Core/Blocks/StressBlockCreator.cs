@@ -3,7 +3,6 @@ using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
-using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics;
 using SPMTool.Enums;
@@ -68,7 +67,7 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the average stress <see cref="BlockCreator" />.
 		/// </summary>
-		/// <param name="panel">The <see cref="Panel"/>.</param>
+		/// <param name="panel">The <see cref="Panel" />.</param>
 		public static StressBlockCreator? CreateAverageBlock(Panel? panel) =>
 			panel is null || panel.AveragePrincipalStresses.IsZero
 				? null
@@ -77,11 +76,18 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the concrete stress <see cref="BlockCreator" />.
 		/// </summary>
-		/// <inheritdoc cref="CreateAverageBlock"/>
+		/// <inheritdoc cref="CreateAverageBlock" />
 		public static StressBlockCreator? CreateConcreteBlock(Panel? panel) =>
 			panel is null || panel.AveragePrincipalStresses.IsZero
 				? null
 				: new StressBlockCreator(panel.Geometry.Vertices.CenterPoint, panel.ConcretePrincipalStresses, Results.ResultScaleFactor, Layer.ConcreteStress);
+
+		/// <summary>
+		///     Improve the angle.
+		/// </summary>
+		public static double ImproveAngle(double angle) => angle > Constants.PiOver2
+			? angle - Constants.Pi
+			: angle;
 
 		/// <summary>
 		///     Get the attribute for shear block.
@@ -164,13 +170,6 @@ namespace SPMTool.Core.Blocks
 			return
 				new Point(210 * cos * scaleFactor, 210 * sin * scaleFactor);
 		}
-
-		/// <summary>
-		///     Improve the angle.
-		/// </summary>
-		public static double ImproveAngle(double angle) => angle > Constants.PiOver2
-			? angle - Constants.Pi
-			: angle;
 
 		#endregion
 

@@ -43,15 +43,14 @@ namespace SPMTool.Editor.Commands
 					Panels.Add(nds.Select(nd => nd.Position.ToPoint(unit)).ToArray());
 					continue;
 				}
-				
+
 				ShowAlertDialog("Please select four external nodes.");
 			}
-			
+
 			Finish:
-				
-				// Move panels to bottom
-				Panels.Select(p => p.ObjectId).ToList().MoveToBottom();
-			
+
+			// Move panels to bottom
+			Panels.Select(p => p.ObjectId).ToList().MoveToBottom();
 		}
 
 		/// <summary>
@@ -81,6 +80,7 @@ namespace SPMTool.Editor.Commands
 				var endPtn = UserInput.GetPoint("Enter the end point:", stPt);
 
 				if (endPtn is null)
+
 					// Finish command
 					goto Finish;
 
@@ -94,14 +94,14 @@ namespace SPMTool.Editor.Commands
 				// Set the start point of the new Stringer
 				stPt = endPt;
 			}
-			
-			Finish:
-			
-				// Set old OSMODE
-				SetSystemVariable("OSMODE", osmode);
 
-				// Update nodes
-				Nodes.Update();
+			Finish:
+
+			// Set old OSMODE
+			SetSystemVariable("OSMODE", osmode);
+
+			// Update nodes
+			Nodes.Update();
 		}
 
 		#endregion

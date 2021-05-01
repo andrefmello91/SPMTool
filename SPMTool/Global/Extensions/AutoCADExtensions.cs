@@ -117,8 +117,8 @@ namespace SPMTool.Extensions
 		///     Create a group in the database.
 		/// </summary>
 		/// <param name="groupEntities">The collection of <see cref="Entity" />'s that form the group.</param>
-		/// <param name="groupName">The <see cref="Group"/>.</param>
-		/// <inheritdoc cref="AddToDrawing(DBObject, ObjectErasedEventHandler, Transaction)"/>
+		/// <param name="groupName">The <see cref="Group" />.</param>
+		/// <inheritdoc cref="AddToDrawing(DBObject, ObjectErasedEventHandler, Transaction)" />
 		public static ObjectId AddToDrawingAsGroup(this IEnumerable<Entity>? groupEntities, string groupName, Transaction? ongoingTransaction = null)
 		{
 			if (groupEntities.IsNullOrEmpty())
@@ -613,6 +613,14 @@ namespace SPMTool.Extensions
 		}
 
 		/// <summary>
+		///     Compare two <see cref="ObjectId" />'s.
+		/// </summary>
+		/// <returns>
+		///     True if <paramref name="other" /> is not <see cref="ObjectId.Null" /> and is equal to this.
+		/// </returns>
+		public static bool IsNotNullAndEqualTo(this ObjectId objectId, ObjectId other) => other != ObjectId.Null && other == objectId;
+
+		/// <summary>
 		///     Verify the state of this <see cref="ObjectId" />.
 		/// </summary>
 		/// <returns>
@@ -878,14 +886,6 @@ namespace SPMTool.Extensions
 			trans.Commit();
 			trans.Dispose();
 		}
-
-		/// <summary>
-		///		Compare two <see cref="ObjectId"/>'s.
-		/// </summary>
-		/// <returns>
-		///		True if <paramref name="other"/> is not <see cref="ObjectId.Null"/> and is equal to this.
-		/// </returns>
-		public static bool IsNotNullAndEqualTo(this ObjectId objectId, ObjectId other) => other != ObjectId.Null && other == objectId;
 
 		/// <summary>
 		///     Remove all the objects in this collection from drawing.

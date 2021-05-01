@@ -113,8 +113,6 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		public void SetAttributes() => ObjectId.SetBlockAttributes(ForceAttributeReference()?.ToList());
 
-		public bool Equals(ForceObject other) => base.Equals(other);
-
 		protected override bool GetProperties()
 		{
 			var force = GetForce();
@@ -175,6 +173,12 @@ namespace SPMTool.Core.Conditions
 				ComponentDirection.Y when Value.Y > Force.Zero => new Point(Length.FromMillimeters(25), Length.FromMillimeters(-125)),
 				_                                              => Position
 			};
+
+		#region Interface Implementations
+
+		public bool Equals(ForceObject other) => base.Equals(other);
+
+		#endregion
 
 		#endregion
 

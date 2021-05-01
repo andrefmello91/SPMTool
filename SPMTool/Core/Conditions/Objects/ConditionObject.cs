@@ -56,17 +56,21 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		protected abstract double RotationAngle { get; }
 
+		#region Interface Implementations
+
 		public abstract Block Block { get; }
 
 		public abstract ComponentDirection Direction { get; }
+
+		public abstract override Layer Layer { get; }
+
+		public abstract override string Name { get; }
 
 		public Point Position { get; }
 
 		public virtual TValue Value { get; protected set; }
 
-		public abstract override Layer Layer { get; }
-
-		public abstract override string Name { get; }
+		#endregion
 
 		#endregion
 
@@ -92,30 +96,38 @@ namespace SPMTool.Core.Conditions
 
 		#region Methods
 
-		/// <inheritdoc />
-		public override bool Equals(object obj) => obj is ConditionObject<TValue> conditionObject && Equals(conditionObject);
+		#region Interface Implementations
+
+		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
 
 		public int CompareTo(ConditionObject<TValue>? other) => other is null
 			? 0
 			: Position.CompareTo(other.Position);
 
-		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
-
 		public override DBObject CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, null, DataBase.Settings.Units.ScaleFactor)!;
-
-		public override void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
-
-		public virtual bool Equals(ConditionObject<TValue>? other) => other is not null && Position == other.Position;
 
 		/// <inheritdoc />
 		BlockReference IDBObjectCreator<BlockReference>.CreateObject() => (BlockReference) CreateObject();
 
+		public virtual bool Equals(ConditionObject<TValue>? other) => other is not null && Position == other.Position;
+
 		BlockReference? IDBObjectCreator<BlockReference>.GetObject() => (BlockReference?) GetObject();
+
+		public override void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+
+		#endregion
+
+		#region Object override
+
+		/// <inheritdoc />
+		public override bool Equals(object obj) => obj is ConditionObject<TValue> conditionObject && Equals(conditionObject);
 
 		/// <inheritdoc />
 		public override int GetHashCode() => Value.GetHashCode();
 
 		public override string ToString() => Value.ToString();
+
+		#endregion
 
 		#endregion
 

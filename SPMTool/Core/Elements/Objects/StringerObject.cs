@@ -54,6 +54,11 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <summary>
+		///     Get the absolute maximum force at the associated <see cref="Stringer" />.
+		/// </summary>
+		public Force MaxForce => _stringer?.MaxForce ?? Force.Zero;
+
+		/// <summary>
 		///     Get the <see cref="UniaxialReinforcement" /> of this stringer.
 		/// </summary>
 		public UniaxialReinforcement? Reinforcement
@@ -62,15 +67,14 @@ namespace SPMTool.Core.Elements
 			set => SetReinforcement(value);
 		}
 
+		#region Interface Implementations
+
 		public override Layer Layer => Layer.Stringer;
 
 		public override string Name => $"Stringer {Number}";
 
-		/// <summary>
-		///		Get the absolute maximum force at the associated <see cref="Stringer"/>.
-		/// </summary>
-		public Force MaxForce => _stringer?.MaxForce ?? Force.Zero;
-		
+		#endregion
+
 		#endregion
 
 		#region Constructors
@@ -137,6 +141,16 @@ namespace SPMTool.Core.Elements
 				: null;
 
 		/// <summary>
+		///     Create crack blocks.
+		/// </summary>
+		public IEnumerable<StringerCrackBlockCreator?> CreateCrackBlocks() => StringerCrackBlockCreator.CreateBlocks(_stringer);
+
+		/// <summary>
+		///     Create the stringer diagram. Can be null if the stringer is unloaded.
+		/// </summary>
+		public StringerForceCreator? CreateDiagram() => StringerForceCreator.Create(_stringer);
+
+		/// <summary>
 		///     Divide this <see cref="StringerObject" /> in a <paramref name="number" /> of new ones.
 		/// </summary>
 		/// <param name="number">The number of new <see cref="StringerObject" />'s.</param>
@@ -183,24 +197,6 @@ namespace SPMTool.Core.Elements
 			_stringer.Number = Number;
 			return _stringer;
 		}
-
-		public override DBObject CreateObject() =>
-			new Line(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
-			{
-				Layer = $"{Layer}"
-			};
-
-		/// <summary>
-		///		Create the stringer diagram. Can be null if the stringer is unloaded.
-		/// </summary>
-		public StringerForceCreator? CreateDiagram() => StringerForceCreator.Create(_stringer);
-		
-		/// <summary>
-		///		Create crack blocks.
-		/// </summary>
-		public IEnumerable<StringerCrackBlockCreator?> CreateCrackBlocks() => StringerCrackBlockCreator.CreateBlocks(_stringer);
-
-		public bool Equals(StringerObject other) => base.Equals(other);
 
 		protected override bool GetProperties()
 		{
@@ -256,11 +252,23 @@ namespace SPMTool.Core.Elements
 			SetDictionary(reinforcement?.GetTypedValues(), "Reinforcement");
 		}
 
+		#region Interface Implementations
+
+		public override DBObject CreateObject() =>
+			new Line(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
+			{
+				Layer = $"{Layer}"
+			};
+
 		/// <inheritdoc />
 		Line IDBObjectCreator<Line>.CreateObject() => (Line) CreateObject();
 
+		public bool Equals(StringerObject other) => base.Equals(other);
+
 		/// <inheritdoc />
 		Line? IDBObjectCreator<Line>.GetObject() => (Line?) base.GetObject();
+
+		#endregion
 
 		#endregion
 
@@ -283,7 +291,8 @@ namespace SPMTool.Core.Elements
 			  ?? new StringerObject(stringer.Geometry);
 
 		/// <summary>
-		///     Get the <see cref="StringerObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="SPMElement{T}" />
+		///     Get the <see cref="StringerObject" /> from <see cref="Model.Stringers" /> associated to a
+		///     <see cref="SPMElement{T}" />
 		///     .
 		/// </summary>
 		/// <remarks>
@@ -312,5 +321,6 @@ namespace SPMTool.Core.Elements
 		public static explicit operator Line?(StringerObject? stringerObject) => (Line?) stringerObject?.GetObject();
 
 		#endregion
+
 	}
 }

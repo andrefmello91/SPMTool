@@ -1,6 +1,4 @@
-﻿using System.Threading;
-using andrefmello91.FEMAnalysis;
-using andrefmello91.SPMElements;
+﻿using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
@@ -47,9 +45,9 @@ namespace SPMTool.Editor.Commands
 
 		[CommandMethod(CommandName.Simulation)]
 		public static void Simulation() => ExecuteNonlinearAnalysis(true);
-		
+
 		/// <summary>
-		///		Execute the nonlinear analysis.
+		///     Execute the nonlinear analysis.
 		/// </summary>
 		/// <param name="simulate">Execute a simulation until failure?</param>
 		private static void ExecuteNonlinearAnalysis(bool simulate = false)
@@ -73,7 +71,7 @@ namespace SPMTool.Editor.Commands
 			var settings = DataBase.Settings.Analysis;
 
 			// Do analysis
-			var analysis = new NonlinearAnalysis(input, NonLinearSolver.Secant, numLoadSteps: settings.NumLoadSteps, tolerance: settings.Tolerance, maxIterations: settings.MaxIterations);
+			var analysis = new NonlinearAnalysis(input, NonLinearSolver.Secant, settings.NumLoadSteps, settings.Tolerance, settings.MaxIterations);
 			analysis.Execute(uIndexn.Value, simulate);
 			var output = analysis.GenerateOutput();
 
@@ -87,10 +85,11 @@ namespace SPMTool.Editor.Commands
 
 			// Updated plot
 			plot.UpdatePlot();
-			
+
 			// Draw results of analysis
 			DrawResults();
 		}
+
 		#endregion
 
 	}

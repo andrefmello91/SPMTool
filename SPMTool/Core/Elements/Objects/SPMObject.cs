@@ -1,9 +1,7 @@
 ﻿using System;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
-using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
-using SPMTool.Enums;
 using SPMTool.Extensions;
 #nullable enable
 
@@ -61,9 +59,13 @@ namespace SPMTool.Core.Elements
 
 		#region Properties
 
+		#region Interface Implementations
+
 		public int Number { get; set; } = 0;
 
 		TProperty ISPMObject<TProperty>.Property => PropertyField;
+
+		#endregion
 
 		#endregion
 
@@ -79,29 +81,37 @@ namespace SPMTool.Core.Elements
 
 		#region Methods
 
-		public override bool Equals(object? other) => other is TProperty obj && Equals(obj);
+		#region Interface Implementations
+
+		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
 
 		public int CompareTo(SPMObject<TProperty>? other) => other is null || other.GetType() != GetType()
 			? 0
 			: PropertyField.CompareTo(other.PropertyField);
 
-		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
-
 		/// <inheritdoc />
 		Entity IDBObjectCreator<Entity>.CreateObject() => (Entity) CreateObject();
+
+		public bool Equals(SPMObject<TProperty>? other) => other is not null && PropertyField.Equals(other.PropertyField);
+
+		public abstract INumberedElement GetElement();
 
 		/// <inheritdoc />
 		Entity? IDBObjectCreator<Entity>.GetObject() => (Entity?) GetObject();
 
 		public override void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
-		public bool Equals(SPMObject<TProperty>? other) => other is not null && PropertyField.Equals(other.PropertyField);
+		#endregion
 
-		public abstract INumberedElement GetElement();
+		#region Object override
+
+		public override bool Equals(object? other) => other is TProperty obj && Equals(obj);
 
 		public override int GetHashCode() => PropertyField.GetHashCode();
 
 		public override string ToString() => GetElement()?.ToString() ?? "Null element";
+
+		#endregion
 
 		#endregion
 

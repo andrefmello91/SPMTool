@@ -64,7 +64,7 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the shear <see cref="BlockCreator" />.
 		/// </summary>
-		/// <param name="panel">The <see cref="Panel"/>.</param>
+		/// <param name="panel">The <see cref="Panel" />.</param>
 		public static ShearBlockCreator? CreateBlock(Panel? panel) =>
 			panel is null || panel.AverageStresses.IsXYZero
 				? null

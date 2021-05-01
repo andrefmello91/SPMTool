@@ -1,12 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
-using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using MathNet.Numerics;
 using SPMTool.Enums;
 using SPMTool.Extensions;
 using UnitsNet;
@@ -52,7 +49,7 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		/// <param name="insertionPoint">The insertion <see cref="Point" /> of block.</param>
 		/// <param name="crackOpening">The crack opening.</param>
-		/// <param name="rotationPoint">The reference <see cref="Point"/> for block rotation.</param>
+		/// <param name="rotationPoint">The reference <see cref="Point" /> for block rotation.</param>
 		/// <inheritdoc />
 		private StringerCrackBlockCreator(Point insertionPoint, Length crackOpening, double rotationAngle, Point rotationPoint, double scaleFactor)
 			: base(insertionPoint, Block.StringerCrack, rotationAngle, scaleFactor)
@@ -71,18 +68,18 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the average stress <see cref="BlockCreator" />.
 		/// </summary>
-		/// <param name="stringer">The <see cref="Stringer"/>.</param>
+		/// <param name="stringer">The <see cref="Stringer" />.</param>
 		public static IEnumerable<StringerCrackBlockCreator?> CreateBlocks(Stringer? stringer)
 		{
 			var blocks = new StringerCrackBlockCreator?[3];
-			
+
 			if (stringer.Model is ElementModel.Elastic)
 				return blocks;
 
 			var l  = stringer.Geometry.Length;
 			var ix = stringer.Geometry.InitialPoint.X + 0.1 * l;
 			var y  = stringer.Geometry.InitialPoint.Y;
-			
+
 			for (var i = 0; i < 3; i++)
 				blocks[i] = !stringer.CrackOpenings[i].ApproxZero(Units.CrackTolerance)
 					? new StringerCrackBlockCreator(new Point(ix + 0.4 * i * l, y), stringer.CrackOpenings[i], stringer.Geometry.Angle, stringer.Geometry.InitialPoint, Results.ResultScaleFactor)
@@ -98,7 +95,7 @@ namespace SPMTool.Core.Blocks
 		private static AttributeReference GetAttribute(Length crackOpening, double rotationAngle, double scaleFactor)
 		{
 			var w = crackOpening.ToUnit(DataBase.Settings.Units.CrackOpenings).Value.Abs();
-			
+
 			// Set the insertion point
 			var pt = new Point(0, -100 * scaleFactor);
 
@@ -119,7 +116,7 @@ namespace SPMTool.Core.Blocks
 
 			return attRef;
 		}
-		
+
 		#endregion
 
 	}

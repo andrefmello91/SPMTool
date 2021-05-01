@@ -49,7 +49,7 @@ namespace SPMTool
 
 		#region Methods
 
-		public override bool Equals(object obj) => obj is AnalysisSettings settings && Equals(settings);
+		#region Interface Implementations
 
 		/// <summary>
 		///     Returns true if all parameters coincide.
@@ -57,7 +57,15 @@ namespace SPMTool
 		/// <param name="other">The other <see cref="AnalysisSettings" /> object.</param>
 		public bool Equals(AnalysisSettings other) => Tolerance.Approx(other.Tolerance) && NumLoadSteps == other.NumLoadSteps && MaxIterations == other.MaxIterations;
 
+		#endregion
+
+		#region Object override
+
+		public override bool Equals(object obj) => obj is AnalysisSettings settings && Equals(settings);
+
 		public override int GetHashCode() => base.GetHashCode();
+
+		#endregion
 
 		#endregion
 

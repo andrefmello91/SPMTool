@@ -63,6 +63,8 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		protected double ScaleFactor { get; set; }
 
+		#region Interface Implementations
+
 		/// <inheritdoc />
 		public Layer Layer { get; protected set; }
 
@@ -71,6 +73,8 @@ namespace SPMTool.Core.Blocks
 
 		/// <inheritdoc />
 		public ObjectId ObjectId { get; set; }
+
+		#endregion
 
 		#endregion
 
@@ -111,6 +115,8 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		public void SetAttributes() => ObjectId.SetBlockAttributes(Attributes);
 
+		#region Interface Implementations
+
 		/// <inheritdoc />
 		public void AddToDrawing()
 		{
@@ -119,13 +125,10 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <inheritdoc />
-		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
-
-		/// <inheritdoc />
 		public virtual BlockReference CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, ColorCode, RotationAngle, RotationAxis, RotationPoint?.ToPoint3d(), ScaleFactor)!;
 
 		/// <inheritdoc />
-		public BlockReference? GetObject() => (BlockReference?) ObjectId.GetEntity();
+		DBObject IDBObjectCreator.CreateObject() => CreateObject();
 
 		/// <inheritdoc />
 		public void Dispose()
@@ -138,10 +141,15 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <inheritdoc />
-		DBObject IDBObjectCreator.CreateObject() => CreateObject();
+		public BlockReference? GetObject() => (BlockReference?) ObjectId.GetEntity();
 
 		/// <inheritdoc />
 		DBObject? IDBObjectCreator.GetObject() => GetObject();
+
+		/// <inheritdoc />
+		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+
+		#endregion
 
 		#endregion
 

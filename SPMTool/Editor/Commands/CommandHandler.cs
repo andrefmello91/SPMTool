@@ -32,6 +32,8 @@ namespace SPMTool.Editor.Commands
 			return esc;
 		}
 
+		#region Interface Implementations
+
 		public bool CanExecute(object parameter) => true;
 
 		/// <summary>
@@ -53,6 +55,8 @@ namespace SPMTool.Editor.Commands
 
 			DataBase.Document.SendStringToExecute(esc + cmdText, true, false, true);
 		}
+
+		#endregion
 
 		#endregion
 

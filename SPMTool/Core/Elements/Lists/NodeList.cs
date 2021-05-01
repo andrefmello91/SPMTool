@@ -46,9 +46,9 @@ namespace SPMTool.Core.Elements
 		public static IEnumerable<DBPoint?>? GetDBPoints(NodeType? type = null) =>
 			type switch
 			{
-				NodeType.Internal  => Layer.IntNode.GetDBObjects<DBPoint>(),
-				NodeType.External  => Layer.ExtNode.GetDBObjects<DBPoint>(),
-				_                  => new[] { Layer.IntNode, Layer.ExtNode }.GetDBObjects<DBPoint>()
+				NodeType.Internal => Layer.IntNode.GetDBObjects<DBPoint>(),
+				NodeType.External => Layer.ExtNode.GetDBObjects<DBPoint>(),
+				_                 => new[] { Layer.IntNode, Layer.ExtNode }.GetDBObjects<DBPoint>()
 			};
 
 		/// <summary>

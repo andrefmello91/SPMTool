@@ -76,8 +76,6 @@ namespace SPMTool.Core.Conditions
 		/// <param name="forceObjectId">The <see cref="ObjectId" /> of the force.</param>
 		public static ConstraintObject? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference?) forceObjectId.GetEntity());
 
-		public bool Equals(ConstraintObject other) => base.Equals(other);
-
 		protected override bool GetProperties()
 		{
 			var c = GetConstraint();
@@ -96,6 +94,12 @@ namespace SPMTool.Core.Conditions
 		///     Get the <see cref="Constraint" /> in XData.
 		/// </summary>
 		private Constraint? GetConstraint() => GetDictionary("Constraint").GetConstraint();
+
+		#region Interface Implementations
+
+		public bool Equals(ConstraintObject other) => base.Equals(other);
+
+		#endregion
 
 		#endregion
 

@@ -2,7 +2,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using andrefmello91.Extensions;
@@ -63,7 +62,7 @@ namespace SPMTool.Application.UserInterface
 
 			_displacementUnit = DataBase.Settings.Units.Displacements;
 			_femOutput        = femOutput;
-			
+
 			DataContext = this;
 		}
 
@@ -72,13 +71,28 @@ namespace SPMTool.Application.UserInterface
 		#region Methods
 
 		/// <summary>
+		///     Get the chart values from monitored displacements.
+		/// </summary>
+		/// <param name="monitoredDisplacements">The monitored displacements.</param>
+		/// <param name="displacementUnit">The <see cref="LengthUnit" /> of displacements.</param>
+		private static ChartValues<ObservablePoint> GetValues(IEnumerable<MonitoredDisplacement> monitoredDisplacements, LengthUnit displacementUnit)
+		{
+			// Add zero
+			var values = new ChartValues<ObservablePoint> { new(0, 0) };
+
+			values.AddRange(monitoredDisplacements.Select(d => new ObservablePoint(d.Displacement.ToUnit(displacementUnit).Value, d.LoadFactor)));
+
+			return values;
+		}
+
+		/// <summary>
 		///     Update the plot.
 		/// </summary>
 		public void UpdatePlot()
 		{
 			// Set max load factor
 			LoadFactorAxis.MaxValue = _femOutput.MonitoredDisplacements.Select(m => m.LoadFactor).Max();
-			
+
 			// Initiate series
 			CartesianChart.Series = new SeriesCollection
 			{
@@ -94,25 +108,10 @@ namespace SPMTool.Application.UserInterface
 					LabelPoint      = Label
 				}
 			};
-			
+
 			SetMapper();
 		}
 
-		/// <summary>
-		///		Get the chart values from monitored displacements.
-		/// </summary>
-		/// <param name="monitoredDisplacements">The monitored displacements.</param>
-		/// <param name="displacementUnit">The <see cref="LengthUnit"/> of displacements.</param>
-		private static ChartValues<ObservablePoint> GetValues(IEnumerable<MonitoredDisplacement> monitoredDisplacements, LengthUnit displacementUnit)
-		{
-			// Add zero
-			var values = new ChartValues<ObservablePoint> { new(0, 0) };
-			
-			values.AddRange(monitoredDisplacements.Select(d => new ObservablePoint(d.Displacement.ToUnit(displacementUnit).Value, d.LoadFactor)));
-
-			return values;
-		}
-		
 		private void ButtonExport_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Get location and name

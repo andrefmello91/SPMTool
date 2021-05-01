@@ -94,9 +94,13 @@ namespace SPMTool.Core.Elements
 			set => SetWidth(value);
 		}
 
+		#region Interface Implementations
+
 		public override Layer Layer => Layer.Panel;
 
 		public override string Name => $"Panel {Number}";
+
+		#endregion
 
 		#endregion
 
@@ -155,15 +159,20 @@ namespace SPMTool.Core.Elements
 		};
 
 		/// <summary>
+		///     Calculate the scale factor for block insertion.
+		/// </summary>
+		public double BlockScaleFactor() => UnitMath.Min(Geometry.Dimensions.a, Geometry.Dimensions.b).ToUnit(Settings.Units.Geometry).Value * 0.001;
+
+		/// <summary>
 		///     Divide this <see cref="PanelObject" /> into new ones.
 		/// </summary>
 		/// <remarks>
-		///		This must be rectangular.
+		///     This must be rectangular.
 		/// </remarks>
 		/// <param name="rows">The number of rows.</param>
 		/// <param name="columns">The number of columns.</param>
 		/// <returns>
-		///		An empty collection if this object is not rectangular.
+		///     An empty collection if this object is not rectangular.
 		/// </returns>
 		public IEnumerable<PanelObject> Divide(int rows, int columns)
 		{
@@ -226,13 +235,6 @@ namespace SPMTool.Core.Elements
 			SetDictionary(data, "Width");
 		}
 
-		public override DBObject CreateObject() => new Solid(Vertices.Vertex1.ToPoint3d(), Vertices.Vertex2.ToPoint3d(), Vertices.Vertex4.ToPoint3d(), Vertices.Vertex3.ToPoint3d())
-		{
-			Layer = $"{Layer}"
-		};
-
-		public bool Equals(PanelObject other) => base.Equals(other);
-
 		protected override bool GetProperties()
 		{
 			var w = GetWidth();
@@ -269,11 +271,6 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <summary>
-		///     Calculate the scale factor for block insertion.
-		/// </summary>
-		public double BlockScaleFactor() => UnitMath.Min(Geometry.Dimensions.a, Geometry.Dimensions.b).ToUnit(Settings.Units.Geometry).Value * 0.001;
-
-		/// <summary>
 		///     Get the <see cref="WebReinforcement" /> of a panel.
 		/// </summary>
 		private WebReinforcementDirection? GetReinforcement(Axis dir) => GetDictionary($"Reinforcement{dir}").GetReinforcementDirection(dir);
@@ -286,7 +283,7 @@ namespace SPMTool.Core.Elements
 			var data = GetDictionary("Width");
 
 			return data is null
-				? (Length?) null
+				? null
 				: Length.FromMillimeters(data[0].ToDouble()).ToUnit(Settings.Units.Geometry);
 		}
 
@@ -306,11 +303,22 @@ namespace SPMTool.Core.Elements
 			SetDictionary(direction.GetTypedValues(), $"Reinforcement{dir}");
 		}
 
+		#region Interface Implementations
+
+		public override DBObject CreateObject() => new Solid(Vertices.Vertex1.ToPoint3d(), Vertices.Vertex2.ToPoint3d(), Vertices.Vertex4.ToPoint3d(), Vertices.Vertex3.ToPoint3d())
+		{
+			Layer = $"{Layer}"
+		};
+
 		/// <inheritdoc />
 		Solid IDBObjectCreator<Solid>.CreateObject() => (Solid) CreateObject();
 
+		public bool Equals(PanelObject other) => base.Equals(other);
+
 		/// <inheritdoc />
 		Solid? IDBObjectCreator<Solid>.GetObject() => (Solid?) base.GetObject();
+
+		#endregion
 
 		#endregion
 
@@ -333,7 +341,8 @@ namespace SPMTool.Core.Elements
 			  ?? new PanelObject(panel.Geometry);
 
 		/// <summary>
-		///     Get the <see cref="PanelObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="SPMElement{T}" />.
+		///     Get the <see cref="PanelObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="SPMElement{T}" />
+		///     .
 		/// </summary>
 		/// <remarks>
 		///     A <see cref="PanelObject" /> is created if <paramref name="spmElement" /> is not null and is not listed.

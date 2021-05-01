@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
@@ -27,6 +26,8 @@ namespace SPMTool.Core.Blocks
 
 		#region Properties
 
+		#region Interface Implementations
+
 		/// <inheritdoc />
 		public Layer Layer => Layer.StringerForce;
 
@@ -38,12 +39,14 @@ namespace SPMTool.Core.Blocks
 
 		#endregion
 
+		#endregion
+
 		#region Constructors
 
 		/// <summary>
 		///     Stringer force creator constructor.
 		/// </summary>
-		/// <param name="stringer">The <see cref="Stringer"/>.</param>
+		/// <param name="stringer">The <see cref="Stringer" />.</param>
 		private StringerForceCreator(Stringer stringer) => _stringer = stringer;
 
 		#endregion
@@ -51,7 +54,7 @@ namespace SPMTool.Core.Blocks
 		#region Methods
 
 		/// <summary>
-		///		Create the stringer diagram. Can be null if the stringer is unloaded.
+		///     Create the stringer diagram. Can be null if the stringer is unloaded.
 		/// </summary>
 		public static StringerForceCreator? Create(Stringer? stringer) =>
 			stringer is null || stringer.State is StringerForceState.Unloaded
@@ -69,7 +72,7 @@ namespace SPMTool.Core.Blocks
 			var maxForce = Results.MaxStringerForce;
 			var (n1, n3) = stringer.NormalForces;
 			var angle = stringer.Geometry.Angle;
-			
+
 			// Correct units
 			var unit = DataBase.Settings.Units.StringerForces;
 			n1 = n1.ToUnit(unit);
@@ -78,8 +81,8 @@ namespace SPMTool.Core.Blocks
 			// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
 			// Invert tension and compression axis
 			Length
-				h1 = - Length.FromMillimeters(150) * n1 / maxForce,
-				h3 = - Length.FromMillimeters(150) * n3 / maxForce;
+				h1 = -Length.FromMillimeters(150) * n1 / maxForce,
+				h3 = -Length.FromMillimeters(150) * n3 / maxForce;
 
 			// Calculate the point where the Stringer force will be zero
 			var x     = h1.Abs() * l / (h1.Abs() + h3.Abs());
@@ -127,7 +130,7 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <summary>
-		///		Create diagram for stringer.
+		///     Create diagram for stringer.
 		/// </summary>
 		/// <param name="stringer">The <see cref="Stringer" />.</param>
 		private static IEnumerable<Entity> CreateDiagram(Stringer stringer)
@@ -161,16 +164,16 @@ namespace SPMTool.Core.Blocks
 			// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
 			// Invert tension and compression axis
 			Length
-				h1 = - Length.FromMillimeters(150) * n1 / maxForce,
-				h3 = - Length.FromMillimeters(150) * n3 / maxForce;
+				h1 = -Length.FromMillimeters(150) * n1 / maxForce,
+				h3 = -Length.FromMillimeters(150) * n3 / maxForce;
 
 			// Create attributes
 
 			if (!n1.ApproxZero(Units.StringerForceTolerance))
 			{
 				var pt1 = (n1.Value > 0
-					? new Point(stPt.X + Length.FromMillimeters(10) * scaleFactor, stPt.Y + h1 - Length.FromMillimeters(30) * scaleFactor)
-					: new Point(stPt.X + Length.FromMillimeters(10) * scaleFactor, stPt.Y + h1 + Length.FromMillimeters(30) * scaleFactor))
+						? new Point(stPt.X + Length.FromMillimeters(10) * scaleFactor, stPt.Y + h1 - Length.FromMillimeters(30) * scaleFactor)
+						: new Point(stPt.X + Length.FromMillimeters(10) * scaleFactor, stPt.Y + h1 + Length.FromMillimeters(30) * scaleFactor))
 					.ToPoint3d();
 
 				// Rotate
@@ -238,8 +241,8 @@ namespace SPMTool.Core.Blocks
 			// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
 			// Invert tension and compression axis
 			Length
-				h1 = - Length.FromMillimeters(150) * n1 / maxForce,
-				h3 = - Length.FromMillimeters(150) * n3 / maxForce;
+				h1 = -Length.FromMillimeters(150) * n1 / maxForce,
+				h3 = -Length.FromMillimeters(150) * n3 / maxForce;
 
 			// Calculate the points (the solid will be rotated later)
 			var vrts = new[]
@@ -255,7 +258,7 @@ namespace SPMTool.Core.Blocks
 			var nMax = n1.Abs() > n3.Abs()
 				? n1
 				: n3;
-			
+
 			var dgrm = new Solid(vrts[0], vrts[1], vrts[2], vrts[3])
 			{
 				Layer      = $"{Layer.StringerForce}",
@@ -268,24 +271,29 @@ namespace SPMTool.Core.Blocks
 			return dgrm;
 		}
 
-		/// <inheritdoc />
-		public void AddToDrawing() => ObjectId = CreateDiagram(_stringer).ToList<Entity>().AddToDrawingAsGroup(Name);
+		#region Interface Implementations
 
 		/// <inheritdoc />
-		public void RemoveFromDrawing() => ObjectId.RemoveFromDrawing();
-		
+		public void AddToDrawing() => ObjectId = CreateDiagram(_stringer).ToList().AddToDrawingAsGroup(Name);
+
 		/// <inheritdoc />
 		DBObject IDBObjectCreator.CreateObject() => CreateObject();
+
+		/// <inheritdoc />
+		public Group CreateObject() => new(Name, true);
 
 		/// <inheritdoc />
 		DBObject? IDBObjectCreator.GetObject() => GetObject();
 
 		/// <inheritdoc />
-		public Group CreateObject() => new (Name, true);
-
-		/// <inheritdoc />
 		public Group? GetObject() => (Group?) ObjectId.GetDBObject();
 
+		/// <inheritdoc />
+		public void RemoveFromDrawing() => ObjectId.RemoveFromDrawing();
+
 		#endregion
+
+		#endregion
+
 	}
 }

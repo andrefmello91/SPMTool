@@ -14,6 +14,19 @@ namespace SPMTool.Comparers
 
 		#region Methods
 
+		#region Interface Implementations
+
+		/// <summary>
+		///     Returns true if the vertices are approximately equal.
+		/// </summary>
+		public bool Equals(Solid solid, Solid otherSolid) => Equals(solid, otherSolid, 0.001);
+
+		public int GetHashCode(Solid obj) => obj.GetHashCode();
+
+		#endregion
+
+		#region Object override
+
 		/// <summary>
 		///     Returns true if the vertices are approximately equal.
 		/// </summary>
@@ -33,12 +46,7 @@ namespace SPMTool.Comparers
 			return true;
 		}
 
-		/// <summary>
-		///     Returns true if the vertices are approximately equal.
-		/// </summary>
-		public bool Equals(Solid solid, Solid otherSolid) => Equals(solid, otherSolid, 0.001);
-
-		public int GetHashCode(Solid obj) => obj.GetHashCode();
+		#endregion
 
 		#endregion
 

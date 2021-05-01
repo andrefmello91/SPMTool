@@ -44,7 +44,7 @@ namespace SPMTool
 		///     Default tolerance for <see cref="Force" /> comparisons.
 		/// </summary>
 		public static readonly Force ForceTolerance = Force.FromKilonewtons(1E-3);
-		
+
 		/// <summary>
 		///     Default tolerance for stringer <see cref="Force" />'s.
 		/// </summary>
@@ -144,15 +144,24 @@ namespace SPMTool
 
 		#region Methods
 
-		public override bool Equals(object obj) => obj is Units units && Equals(units);
+		#region Interface Implementations
 
 		/// <summary>
 		///     Returns true if all units coincide.
 		/// </summary>
 		/// <param name="other">The other <see cref="Units" /> object.</param>
-		public bool Equals(Units other) => other is not null && Geometry == other.Geometry && Reinforcement == other.Reinforcement && Displacements == other.Displacements && AppliedForces == other.AppliedForces && StringerForces == other.StringerForces && PanelStresses == other.PanelStresses && MaterialStrength == other.MaterialStrength;
+		public bool Equals(Units other) =>
+			other is not null && Geometry == other.Geometry && Reinforcement == other.Reinforcement && Displacements == other.Displacements && AppliedForces == other.AppliedForces && StringerForces == other.StringerForces && PanelStresses == other.PanelStresses && MaterialStrength == other.MaterialStrength;
+
+		#endregion
+
+		#region Object override
+
+		public override bool Equals(object obj) => obj is Units units && Equals(units);
 
 		public override int GetHashCode() => base.GetHashCode();
+
+		#endregion
 
 		#endregion
 

@@ -121,9 +121,9 @@ namespace SPMTool.Editor.Commands
 
 			// Show alert if there was a non-rectangular panel
 			var message = (nonRecSelected
-				? "Only rectangular panels were divided.\n\n"
-				: $"{c} panels divided.\n\n") + 
-			    " Set geometry to new internal stringers!";
+				              ? "Only rectangular panels were divided.\n\n"
+				              : $"{c} panels divided.\n\n") +
+			              " Set geometry to new internal stringers!";
 
 			ShowAlertDialog(message);
 		}

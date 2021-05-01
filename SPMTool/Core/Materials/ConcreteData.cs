@@ -38,6 +38,12 @@ namespace SPMTool.Core.Materials
 			set => SetConstitutive(value);
 		}
 
+		/// <inheritdoc />
+		public override Layer Layer => default;
+
+		/// <inheritdoc />
+		public override string Name => ConcreteParams;
+
 		/// <summary>
 		///     Get/set <see cref="Material.Concrete.Parameters" /> saved in database.
 		/// </summary>
@@ -60,12 +66,6 @@ namespace SPMTool.Core.Materials
 		#endregion
 
 		#region Methods
-
-		/// <inheritdoc />
-		public override Layer Layer => default;
-
-		/// <inheritdoc />
-		public override string Name => ConcreteParams;
 
 		/// <inheritdoc />
 		public override DBObject CreateObject() => new Xrecord

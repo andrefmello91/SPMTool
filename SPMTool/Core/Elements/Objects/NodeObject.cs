@@ -63,9 +63,13 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		public NodeType Type { get; }
 
+		#region Interface Implementations
+
 		public override Layer Layer => GetLayer(Type);
 
 		public override string Name => $"Node {Number}";
+
+		#endregion
 
 		#endregion
 
@@ -134,13 +138,6 @@ namespace SPMTool.Core.Elements
 				Displacement = _node.Displacement;
 		}
 
-		public override DBObject CreateObject() => new DBPoint(Position.ToPoint3d())
-		{
-			Layer = $"{Layer}"
-		};
-
-		public bool Equals(NodeObject other) => base.Equals(other);
-
 		protected override bool GetProperties()
 		{
 			var disp = GetDisplacement();
@@ -171,14 +168,29 @@ namespace SPMTool.Core.Elements
 			SetDictionary(Displacement.GetTypedValues(), "Displacements");
 		}
 
+		#region Interface Implementations
+
+		public override DBObject CreateObject() => new DBPoint(Position.ToPoint3d())
+		{
+			Layer = $"{Layer}"
+		};
+
 		/// <inheritdoc />
 		DBPoint IDBObjectCreator<DBPoint>.CreateObject() => (DBPoint) CreateObject();
+
+		public bool Equals(NodeObject other) => base.Equals(other);
 
 		/// <inheritdoc />
 		DBPoint? IDBObjectCreator<DBPoint>.GetObject() => (DBPoint?) base.GetObject();
 
+		#endregion
+
+		#region Object override
+
 		/// <inheritdoc />
 		public override string ToString() => _node?.ToString() ?? base.ToString();
+
+		#endregion
 
 		#endregion
 

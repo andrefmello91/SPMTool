@@ -103,7 +103,7 @@ namespace SPMTool.Core
 			var objs2 = objects
 				.Where(o => o is not StringerForceCreator)
 				.ToList();
-			
+
 			var entities = objs2
 				.Select(n => n?.CreateObject())
 				.ToList();
@@ -126,7 +126,7 @@ namespace SPMTool.Core
 					case ForceObject force:
 						force.SetAttributes();
 						break;
-					
+
 					case StringerForceCreator stringerForceCreator:
 						stringerForceCreator.AddToDrawing();
 						break;
