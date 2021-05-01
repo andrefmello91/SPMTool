@@ -283,13 +283,13 @@ namespace SPMTool.Core.Elements
 			  ?? new StringerObject(stringer.Geometry);
 
 		/// <summary>
-		///     Get the <see cref="StringerObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="SPMElement" />
+		///     Get the <see cref="StringerObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="SPMElement{T}" />
 		///     .
 		/// </summary>
 		/// <remarks>
 		///     A <see cref="StringerObject" /> is created if <paramref name="spmElement" /> is not null and is not listed.
 		/// </remarks>
-		public static explicit operator StringerObject?(SPMElement? spmElement) => spmElement is Stringer stringer
+		public static explicit operator StringerObject?(SPMElement<StringerGeometry>? spmElement) => spmElement is Stringer stringer
 			? (StringerObject?) stringer
 			: null;
 

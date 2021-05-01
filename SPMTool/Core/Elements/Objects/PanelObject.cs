@@ -333,12 +333,12 @@ namespace SPMTool.Core.Elements
 			  ?? new PanelObject(panel.Geometry);
 
 		/// <summary>
-		///     Get the <see cref="PanelObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="SPMElement" />.
+		///     Get the <see cref="PanelObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="SPMElement{T}" />.
 		/// </summary>
 		/// <remarks>
 		///     A <see cref="PanelObject" /> is created if <paramref name="spmElement" /> is not null and is not listed.
 		/// </remarks>
-		public static explicit operator PanelObject?(SPMElement? spmElement) => spmElement is Panel panel
+		public static explicit operator PanelObject?(SPMElement<PanelGeometry>? spmElement) => spmElement is Panel panel
 			? (PanelObject?) panel
 			: null;
 
