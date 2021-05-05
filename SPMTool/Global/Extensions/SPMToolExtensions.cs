@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.Extensions;
+using andrefmello91.FEMAnalysis;
 using andrefmello91.Material.Concrete;
 using andrefmello91.Material.Reinforcement;
 using andrefmello91.OnPlaneComponents;
@@ -152,14 +153,15 @@ namespace SPMTool.Extensions
 		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="AnalysisSettings" />.</param>
 		public static AnalysisSettings? GetAnalysisSettings(this IEnumerable<TypedValue>? values)
 		{
-			if (values.IsNullOrEmpty() || values.Count() != 3)
+			if (values.IsNullOrEmpty() || values.Count() != 4)
 				return null;
 
 			return new AnalysisSettings
 			{
 				Tolerance     = values.ElementAt(0).ToDouble(),
 				NumLoadSteps  = values.ElementAt(1).ToInt(),
-				MaxIterations = values.ElementAt(2).ToInt()
+				MaxIterations = values.ElementAt(2).ToInt(),
+				Solver        = (NonLinearSolver) values.ElementAt(3).ToInt()
 			};
 		}
 
@@ -521,9 +523,10 @@ namespace SPMTool.Extensions
 
 			return new[]
 			{
-				new TypedValue((int) DxfCode.Real, settings.Tolerance),
+				new TypedValue((int) DxfCode.Real,  settings.Tolerance),
 				new TypedValue((int) DxfCode.Int32, settings.NumLoadSteps),
-				new TypedValue((int) DxfCode.Int32, settings.MaxIterations)
+				new TypedValue((int) DxfCode.Int32, settings.MaxIterations),
+				new TypedValue((int) DxfCode.Int32, (int) settings.Solver)
 			};
 		}
 
