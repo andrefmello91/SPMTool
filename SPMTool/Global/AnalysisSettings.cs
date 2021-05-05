@@ -1,5 +1,6 @@
 ﻿using System;
 using andrefmello91.Extensions;
+using andrefmello91.FEMAnalysis;
 
 namespace SPMTool
 {
@@ -18,7 +19,8 @@ namespace SPMTool
 		{
 			Tolerance     = 1E-6,
 			NumLoadSteps  = 50,
-			MaxIterations = 10000
+			MaxIterations = 10000,
+			Solver        = NonLinearSolver.Secant
 		};
 
 		#endregion
@@ -30,6 +32,11 @@ namespace SPMTool
 		/// </summary>
 		public bool IsDefault => Equals(Default);
 
+		/// <summary>
+		///		Get/set the nonlinear solver.
+		/// </summary>
+		public NonLinearSolver Solver { get; set; }
+		
 		/// <summary>
 		///     Get/set the maximum number of iterations.
 		/// </summary>
