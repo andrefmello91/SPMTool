@@ -98,6 +98,8 @@ namespace SPMTool.Application.UserInterface
 			splitButton.Items.Add(Command.Linear.GetRibbonButton());
 
 			splitButton.Items.Add(Command.Nonlinear.GetRibbonButton());
+			
+			splitButton.Items.Add(Command.Simulation.GetRibbonButton());
 
 			// Add to the panel source
 			pnlSrc.Items.Add(splitButton);

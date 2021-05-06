@@ -33,6 +33,7 @@ namespace SPMTool.Application.UserInterface
 			_fcBmp,
 			_linBmp,
 			_nlinBmp,
+			_simBmp,
 			_viewNdBmp,
 			_viewStrBmp,
 			_viewPnlBmp,
@@ -180,6 +181,11 @@ namespace SPMTool.Application.UserInterface
 		///     Get UpdateElements icon.
 		/// </summary>
 		public BitmapImage UpdateElements => GetBitmap(_updtBmp);
+			
+		/// <summary>
+		///     Get Simulation icon.
+		/// </summary>
+		public BitmapImage Simulation => GetBitmap(_simBmp);
 
 		#endregion
 
@@ -227,6 +233,7 @@ namespace SPMTool.Application.UserInterface
 			_fcBmp      = GetFromResource("force_large", theme)!;
 			_linBmp     = GetFromResource("linear_large", theme)!;
 			_nlinBmp    = GetFromResource("nonlinear_large", theme)!;
+			_simBmp     = GetFromResource("simulation_large", theme)!;
 			_viewNdBmp  = GetFromResource("viewnode_large", theme)!;
 			_viewStrBmp = GetFromResource("viewstringer_large", theme)!;
 			_viewPnlBmp = GetFromResource("viewpanel_large", theme)!;
