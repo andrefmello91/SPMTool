@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Analysis settings" Height="200" Width="290">
+        Title="Analysis settings" Height="230" Width="330">
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="30" />
@@ -13,7 +13,7 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="10" />
-            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="300" />
             <ColumnDefinition Width="10" />
         </Grid.ColumnDefinitions>
 
@@ -27,40 +27,46 @@
                         <RowDefinition Height="30" />
                         <RowDefinition Height="30" />
                         <RowDefinition Height="30" />
+                        <RowDefinition Height="30" />
                         <RowDefinition Height="5" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="5" />
-                        <ColumnDefinition Width="180" />
-                        <ColumnDefinition Width="70" />
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="5" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Tolerance:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1"
                                Grid.Column="1" />
                     <TextBox Name="ToleranceBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
-                             Width="70" Height="25" Grid.Row="1" Grid.Column="2"
+                             Height="25" Grid.Row="1" Grid.Column="2"
                              PreviewTextInput="DoubleValidationTextBox" />
                     <TextBlock Text="Number of load steps:" HorizontalAlignment="Left" VerticalAlignment="Center"
                                Grid.Row="2" Grid.Column="1" />
                     <TextBox Name="LoadStepsBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
-                             Width="70" Height="25" Grid.Row="2" Grid.Column="2"
+                             Height="25" Grid.Row="2" Grid.Column="2"
                              PreviewTextInput="IntValidationTextBox" />
                     <TextBlock Text="Maximum iterations:" HorizontalAlignment="Left" VerticalAlignment="Center"
                                Grid.Row="3" Grid.Column="1" />
                     <TextBox Name="IterationsBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
-                             Width="70" Height="25" Grid.Row="3" Grid.Column="2"
+                             Height="25" Grid.Row="3" Grid.Column="2"
+                             PreviewTextInput="IntValidationTextBox" />
+                    <TextBlock Text="Nonlinear Solver:" HorizontalAlignment="Left" VerticalAlignment="Center"
+                               Grid.Row="4" Grid.Column="1" />
+                    <ComboBox Name="SolverBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                             Height="25" Grid.Row="4" Grid.Column="2"
                              PreviewTextInput="IntValidationTextBox" />
                 </Grid>
             </StackPanel>
         </Border>
 
         <Button Content="OK" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75"
-                Grid.Row="6" Grid.Column="1" Click="ButtonOK_OnClick" ToolTip="Save settings" />
+                Grid.Row="2" Grid.Column="1" Click="ButtonOK_OnClick" ToolTip="Save settings" />
         <Button Content="Cancel" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center"
-                Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonCancel_OnClick" ToolTip="Discard changes"
+                Width="75" Grid.Row="2" Grid.Column="1" Click="ButtonCancel_OnClick" ToolTip="Discard changes"
                 Margin="0,0,80,0" />
         <Button Content="Default" Background="WhiteSmoke" HorizontalAlignment="Left" VerticalAlignment="Center"
-                Width="75" Grid.Row="6" Grid.Column="1" Click="ButtonDefault_OnClick" ToolTip="Set default parameters"
+                Width="75" Grid.Row="2" Grid.Column="1" Click="ButtonDefault_OnClick" ToolTip="Set default parameters"
                 Margin="0,0,0,0" />
     </Grid>
 </Window>
