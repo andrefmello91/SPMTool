@@ -23,16 +23,28 @@ namespace SPMTool.Application.UserInterface
 		#region Fields
 
 		// Options
-		private readonly string[]
-			_aggTypeOptions = Enum.GetNames(typeof(AggregateType)),
-			_contitutiveOptions = { ConstitutiveModel.MCFT.ToString(), ConstitutiveModel.DSFM.ToString() },
-			_parameterOptions = Enum.GetNames(typeof(ParameterModel));
+		private static readonly string[]
+			AggTypeOptions = Enum.GetNames(typeof(AggregateType)),
+			ConstitutiveOptions = Enum.GetNames(typeof(ConstitutiveModel)),
+			ParameterOptions = Enum.GetNames(typeof(ParameterModel));
 
 		private readonly LengthUnit _aggUnit;
 
 		// Properties
 		private readonly PressureUnit _stressUnit;
-		private ConstitutiveModel _constitutiveModel;
+
+		private ConstitutiveModel ConstitutiveModel
+		{
+			get => (ConstitutiveModel) ConstitutiveBox.SelectedIndex;
+			set => ConstitutiveBox.SelectedIndex = (int) value;
+		}
+
+		private AggregateType AggregateType
+		{
+			get => (AggregateType) AggTypeBox.SelectedIndex;
+			set => AggTypeBox.SelectedIndex = (int) value;
+		}
+
 		private IParameters _parameters;
 
 		#endregion
@@ -52,7 +64,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Get the text boxes for custom parameters.
 		/// </summary>
-		private TextBox[] CustomParameterBoxes => new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox };
+		private IEnumerable<TextBox> CustomParameterBoxes => new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox };
 
 		/// <summary>
 		///     Verify if custom parameters text boxes are filled.
@@ -75,8 +87,7 @@ namespace SPMTool.Application.UserInterface
 			_aggUnit    = DataBase.Settings.Units.Reinforcement;
 
 			// Get settings
-			_parameters        = DataBase.ConcreteData.Parameters;
-			_constitutiveModel = DataBase.ConcreteData.ConstitutiveModel;
+			_parameters       = DataBase.ConcreteData.Parameters;
 
 			// Update units
 			_parameters.ChangeUnit(_stressUnit);
@@ -105,7 +116,7 @@ namespace SPMTool.Application.UserInterface
 			if (_parameters.Model == ParameterModel.Custom || aggBox.SelectedItem.ToString() == string.Empty)
 				return;
 
-			_parameters.Type = (AggregateType) Enum.Parse(typeof(AggregateType), aggBox.SelectedItem.ToString()!);
+			_parameters.Type = AggregateType;
 			UpdateCustomParameterBoxes();
 		}
 
@@ -137,7 +148,7 @@ namespace SPMTool.Application.UserInterface
 
 			// Save units on database
 			DataBase.ConcreteData.Parameters        = _parameters;
-			DataBase.ConcreteData.ConstitutiveModel = _constitutiveModel;
+			DataBase.ConcreteData.ConstitutiveModel = ConstitutiveModel;
 			Close();
 		}
 
@@ -145,16 +156,6 @@ namespace SPMTool.Application.UserInterface
 		///     Check if <paramref name="textBoxes" /> are filled and not zero.
 		/// </summary>
 		private bool CheckBoxes(IEnumerable<TextBox> textBoxes) => textBoxes.All(textBox => textBox.Text.ParsedAndNotZero(out _));
-
-		private void ConstitutiveBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			var constBox = (ComboBox) sender;
-
-			if (constBox.SelectedItem.ToString() == string.Empty)
-				return;
-
-			_constitutiveModel = (ConstitutiveModel) Enum.Parse(typeof(ConstitutiveModel), constBox.SelectedItem.ToString()!);
-		}
 
 		/// <summary>
 		///     Get custom parameters.
@@ -171,16 +172,6 @@ namespace SPMTool.Application.UserInterface
 			cusPar.UltimateStrain  = double.Parse(UltStrainBox.Text) * -0.001;
 
 			_parameters = cusPar;
-
-			//double
-			//	fc    = double.Parse(StrengthBox.Text),
-			//	phiAg = double.Parse(AggDiamBox.Text),
-			//	Ec    = double.Parse(ModuleBox.Text),
-			//	ft    = double.Parse(TensileBox.Text),
-			//	ec    = double.Parse(PlasticStrainBox.Text) * -0.001,
-			//	ecu   = double.Parse(UltStrainBox.Text) * -0.001;
-
-			//_parameters = new CustomParameters(fc, phiAg, ft, Ec, ec, ecu, _stressUnit, _aggUnit);
 		}
 
 		/// <summary>
@@ -188,18 +179,17 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void InitiateComboBoxes()
 		{
-			StrengthBox.Text = $"{_parameters.Strength.Value:0.00}";
+			// Get sources
+			AggTypeBox.ItemsSource      = AggTypeOptions;
+			ParameterBox.ItemsSource    = ParameterOptions;
+			ConstitutiveBox.ItemsSource = ConstitutiveOptions;
 
-			AggDiamBox.Text = $"{_parameters.AggregateDiameter.Value:0.00}";
-
-			AggTypeBox.ItemsSource  = _aggTypeOptions;
-			AggTypeBox.SelectedItem = _parameters.Type.ToString();
-
-			ParameterBox.ItemsSource  = _parameterOptions;
-			ParameterBox.SelectedItem = _parameters.Model.ToString();
-
-			ConstitutiveBox.ItemsSource  = _contitutiveOptions;
-			ConstitutiveBox.SelectedItem = _constitutiveModel.ToString();
+			// Get values
+			StrengthBox.Text           = $"{_parameters.Strength.Value:0.00}";
+			AggDiamBox.Text            = $"{_parameters.AggregateDiameter.Value:0.00}";
+			AggregateType              = _parameters.Type;
+			ParameterBox.SelectedIndex = (int) _parameters.Model;
+			ConstitutiveModel          = DataBase.ConcreteData.ConstitutiveModel;
 
 			UpdateCustomParameterBoxes();
 
@@ -220,7 +210,7 @@ namespace SPMTool.Application.UserInterface
 			if (parBox.SelectedItem.ToString() == string.Empty)
 				return;
 
-			var model = (ParameterModel) Enum.Parse(typeof(ParameterModel), parBox.SelectedItem.ToString()!);
+			var model = (ParameterModel) parBox.SelectedIndex;
 
 			// Update parameters
 			UpdateParameters(model);
@@ -229,12 +219,11 @@ namespace SPMTool.Application.UserInterface
 			{
 				UpdateCustomParameterBoxes();
 				CustomParameterBoxes.Disable();
+				return;
 			}
-			else
-			{
-				GetCustomParameters();
-				CustomParameterBoxes.Enable();
-			}
+			
+			GetCustomParameters();
+			CustomParameterBoxes.Enable();
 		}
 
 		/// <summary>
@@ -242,10 +231,9 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void SetEvents()
 		{
-			StrengthBox.TextChanged          += StrengthBox_OnTextChanged;
-			AggTypeBox.SelectionChanged      += AggTypeBox_OnSelectionChanged;
-			ConstitutiveBox.SelectionChanged += ConstitutiveBox_OnSelectionChanged;
-			ParameterBox.SelectionChanged    += ParameterBox_OnSelectionChanged;
+			StrengthBox.TextChanged       += StrengthBox_OnTextChanged;
+			AggTypeBox.SelectionChanged   += AggTypeBox_OnSelectionChanged;
+			ParameterBox.SelectionChanged += ParameterBox_OnSelectionChanged;
 		}
 
 		private void StrengthBox_OnTextChanged(object sender, TextChangedEventArgs e)
@@ -281,12 +269,12 @@ namespace SPMTool.Application.UserInterface
 			if (StrengthBox.Text == string.Empty || AggDiamBox.Text == string.Empty || AggTypeBox.SelectedItem.ToString() == string.Empty)
 				return;
 
-			var type = (AggregateType) Enum.Parse(typeof(AggregateType), AggTypeBox.SelectedItem.ToString()!);
+			var type = AggregateType;
 
 			_parameters = _parameters switch
 			{
 				CustomParameters cusPar when model != ParameterModel.Custom => cusPar.ToParameters(model, type),
-				Parameters par when model == ParameterModel.Custom          => par.ToCustomParameters(),
+				Parameters       par    when model == ParameterModel.Custom => par.ToCustomParameters(),
 				_                                                           => _parameters
 			};
 

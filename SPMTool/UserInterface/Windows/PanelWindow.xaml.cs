@@ -410,22 +410,20 @@ namespace SPMTool.Application.UserInterface
 			if (ElementWidths.Any())
 			{
 				SavedGeometries.ItemsSource   = SavedGeoOptions();
-				SavedGeometries.SelectedIndex = 0;
+				
+				SavedGeometries.SelectedIndex = _panels.Count == 1
+					? ElementWidths.IndexOf(_panels[0].Width)
+					: 0;
 
-				if (_panels.Count > 1)
-					PnlWidth = ElementWidths[0];
-			}
-			else
-			{
-				SavedGeometries.Disable();
-				PnlWidth = Length.FromMillimeters(100);
-			}
-
-			if (_panels.Count > 1)
+				PnlWidth = _panels.Count == 1
+					? _panels[0].Width
+					: ElementWidths[0];
+				
 				return;
-
-			// Only 1 stringer, get it's geometry
-			PnlWidth = _panels[0].Width;
+				
+			}
+			SavedGeometries.Disable();
+			PnlWidth = Length.FromMillimeters(100);
 		}
 
 		/// <summary>
@@ -478,9 +476,7 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			else
-			{
 				ReinforcementXChecked = ReinforcementYChecked = false;
-			}
 		}
 
 		private void ReinforcementXCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementXChecked = ((CheckBox) sender).IsChecked ?? false;

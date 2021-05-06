@@ -311,23 +311,21 @@ namespace SPMTool.Application.UserInterface
 			if (!StringerCrossSections.IsNullOrEmpty())
 			{
 				SavedGeometries.ItemsSource   = SavedGeoOptions();
-				SavedGeometries.SelectedIndex = 0;
+				
+				SavedGeometries.SelectedIndex = _stringers.Count == 1
+					? StringerCrossSections.IndexOf(_stringers[0].CrossSection)
+					: 0;
 
-				if (_stringers.Count > 1)
-					OutputCrossSection = StringerCrossSections[0];
-			}
-			else
-			{
-				SavedGeometries.Disable();
-				StrWidth  = Length.FromMillimeters(100);
-				StrHeight = Length.FromMillimeters(100);
-			}
+				OutputCrossSection = _stringers.Count == 1
+					? _stringers[0].CrossSection
+					: StringerCrossSections[0];
 
-			if (_stringers.Count > 1)
 				return;
+			}
 
-			// Only 1 stringer, get it's geometry
-			OutputCrossSection = _stringers[0].CrossSection;
+			SavedGeometries.Disable();
+			StrWidth  = Length.FromMillimeters(100);
+			StrHeight = Length.FromMillimeters(100);
 		}
 
 		/// <summary>
@@ -437,7 +435,7 @@ namespace SPMTool.Application.UserInterface
 		{
 			var crossSection = OutputCrossSection;
 
-			StringerCrossSections.Add(crossSection, false);
+			StringerCrossSections.Add(crossSection);
 
 			// Set to stringers
 			foreach (var str in _stringers)
@@ -451,7 +449,7 @@ namespace SPMTool.Application.UserInterface
 		{
 			var reinforcement = OutputReinforcement;
 
-			StringerReinforcements.Add(reinforcement, false);
+			StringerReinforcements.Add(reinforcement);
 
 			// Set to stringers
 			foreach (var str in _stringers)
