@@ -18,7 +18,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Collection of result <see cref="Layer" />'s.
 		/// </summary>
-		private static readonly Layer[] ResultLayers = { Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Displacements, Layer.Cracks };
+		internal static readonly Layer[] ResultLayers = { Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Displacements, Layer.Cracks };
 
 		#endregion
 

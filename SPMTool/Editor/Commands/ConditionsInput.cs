@@ -32,6 +32,9 @@ namespace SPMTool.Editor.Commands
 			if (nds is null)
 				return;
 
+			// Erase result objects
+			Results.ResultLayers.EraseObjects();
+
 			// Ask the user set the support conditions:
 			var defDirection = nds.Length == 1
 				? Constraints.GetConstraintByPosition(nds[0].Position.ToPoint(DataBase.Settings.Units.Geometry)).Direction
@@ -70,6 +73,9 @@ namespace SPMTool.Editor.Commands
 
 			if (nds is null)
 				return;
+
+			// Erase result objects
+			Results.ResultLayers.EraseObjects();
 
 			// Get force from user
 			var initialForce = nds.Length == 1

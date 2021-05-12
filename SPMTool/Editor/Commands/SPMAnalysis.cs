@@ -34,7 +34,7 @@ namespace SPMTool.Editor.Commands
 			var analysis = new LinearAnalysis(input);
 			analysis.Execute();
 
-			Model.Editor.WriteMessage(analysis.ToString());
+			// Model.Editor.WriteMessage(analysis.ToString());
 
 			// Draw results of analysis
 			DrawResults();

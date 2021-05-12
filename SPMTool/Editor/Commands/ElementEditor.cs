@@ -99,6 +99,9 @@ namespace SPMTool.Editor.Commands
 				}
 			}
 
+			// Erase result objects
+			Results.ResultLayers.EraseObjects();
+
 			// Add other stringers
 			newStrs.AddRange(newPanels.SelectMany(p => p.Geometry.Edges.Select(e => new StringerObject(e.InitialVertex, e.FinalVertex))).ToArray());
 
@@ -153,6 +156,9 @@ namespace SPMTool.Editor.Commands
 
 			if (toDivide.IsNullOrEmpty())
 				return;
+
+			// Erase result objects
+			Results.ResultLayers.EraseObjects();
 
 			// Remove mid nodes
 			Nodes.RemoveRange(toDivide.Select(s => s.Geometry.CenterPoint).ToArray());

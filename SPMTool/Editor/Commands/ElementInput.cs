@@ -28,6 +28,9 @@ namespace SPMTool.Editor.Commands
 		{
 			var unit = DataBase.Settings.Units.Geometry;
 
+			// Erase result objects
+			Results.ResultLayers.EraseObjects();
+
 			// Create a loop for creating infinite panels
 			while (true)
 			{
@@ -73,6 +76,9 @@ namespace SPMTool.Editor.Commands
 
 			var stPt = stPtn.Value;
 
+			// Erase result objects
+			Results.ResultLayers.EraseObjects();
+
 			// Loop for creating infinite stringers (until user exits the command)
 			while (true)
 			{
@@ -96,12 +102,13 @@ namespace SPMTool.Editor.Commands
 			}
 
 			Finish:
+			{
+				// Set old OSMODE
+				SetSystemVariable("OSMODE", osmode);
 
-			// Set old OSMODE
-			SetSystemVariable("OSMODE", osmode);
-
-			// Update nodes
-			Nodes.Update();
+				// Update nodes
+				Nodes.Update();
+			}
 		}
 
 		#endregion
