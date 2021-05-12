@@ -355,8 +355,8 @@ namespace SPMTool.Extensions
 			if (!rotationAngle.ApproxZero(1E-3))
 				blockRef.TransformBy(Matrix3d.Rotation(rotationAngle, rotationAxis.GetAxis(), rotationPoint ?? insertionPoint));
 
-			if (scaleFactor >= 0 && !scaleFactor.Approx(1, 1E-6))
-				blockRef.TransformBy(Matrix3d.Scaling(DataBase.Settings.Units.ScaleFactor, insertionPoint));
+			if (scaleFactor > 0 && !scaleFactor.Approx(1, 1E-6))
+				blockRef.TransformBy(Matrix3d.Scaling(scaleFactor, insertionPoint));
 
 			return blockRef;
 		}
