@@ -112,7 +112,7 @@ namespace SPMTool.Core.Blocks
 				{
 					Position            = pt1.ToPoint3d(),
 					TextString          = $"{sigma1:0.00}",
-					Height              = 30 * scaleFactor,
+					Height              = Results.TextHeight,
 					Layer               = $"{layer}",
 					ColorIndex          = (short) color1,
 					Justify             = AttachmentPoint.MiddleLeft,
@@ -136,7 +136,7 @@ namespace SPMTool.Core.Blocks
 			{
 				Position            = pt2.ToPoint3d(),
 				TextString          = $"{sigma2:0.00}",
-				Height              = 30 * scaleFactor,
+				Height              = Results.TextHeight,
 				Layer               = $"{layer}",
 				ColorIndex          = (short) color2,
 				Justify             = AttachmentPoint.MiddleLeft,

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using SPMTool.Enums;
 using UnitsNet;
 using static SPMTool.Core.DataBase;
@@ -34,6 +35,11 @@ namespace SPMTool.Core
 		/// </summary>
 		public static double ResultScaleFactor { get; private set; }
 
+		/// <summary>
+		///		Get/set the text height.
+		/// </summary>
+		public static double TextHeight { get; private set; }
+		
 		#endregion
 
 		#region Methods
@@ -48,6 +54,7 @@ namespace SPMTool.Core
 
 			// Update properties
 			GetScale();
+			GetTextHeight();
 			GetMaxForce();
 
 			SetDisplacements();
@@ -110,6 +117,12 @@ namespace SPMTool.Core
 		/// </summary>
 		private static void GetScale() =>
 			ResultScaleFactor = Panels.Select(p => p.BlockScaleFactor()).Min();
+
+		/// <summary>
+		///		Get the text height for results. Limited to 30.
+		/// </summary>
+		private static void GetTextHeight() =>
+			TextHeight = Math.Min(40 * ResultScaleFactor, 30 * Settings.Units.ScaleFactor);
 
 		/// <summary>
 		///     Set displacement to <see cref="Model.Nodes" />.

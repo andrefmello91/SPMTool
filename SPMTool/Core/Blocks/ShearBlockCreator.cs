@@ -68,7 +68,7 @@ namespace SPMTool.Core.Blocks
 		public static ShearBlockCreator? CreateBlock(Panel? panel) =>
 			panel is null || panel.AverageStresses.IsXYZero
 				? null
-				: new ShearBlockCreator(panel.Geometry.Vertices.CenterPoint, panel.AverageStresses.TauXY, 0.8 * Results.ResultScaleFactor);
+				: new ShearBlockCreator(panel.Geometry.Vertices.CenterPoint, panel.AverageStresses.TauXY, Results.ResultScaleFactor);
 
 		/// <summary>
 		///     Get the attribute for shear block.
@@ -85,7 +85,7 @@ namespace SPMTool.Core.Blocks
 				{
 					Position            = Point3d.Origin,
 					TextString          = $"{tau:0.00}",
-					Height              = 37.5 * scaleFactor,
+					Height              = Results.TextHeight,
 					Justify             = AttachmentPoint.MiddleCenter,
 					Layer               = $"{layer}",
 					LockPositionInBlock = true,

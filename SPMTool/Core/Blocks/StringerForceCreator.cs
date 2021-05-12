@@ -181,7 +181,7 @@ namespace SPMTool.Core.Blocks
 				{
 					Position       = pt1,
 					TextString     = $"{n1.Value.Abs():0.00}",
-					Height         = 30 * scaleFactor,
+					Height         = Results.TextHeight,
 					Justify        = AttachmentPoint.MiddleLeft,
 					AlignmentPoint = pt1,
 					Layer          = $"{Layer.StringerForce}",
@@ -206,7 +206,7 @@ namespace SPMTool.Core.Blocks
 			{
 				Position       = pt3,
 				TextString     = $"{n3.Value.Abs():0.00}",
-				Height         = 30 * scaleFactor,
+				Height         = Results.TextHeight,
 				Justify        = AttachmentPoint.MiddleRight,
 				AlignmentPoint = pt3,
 				Layer          = $"{Layer.StringerForce}",

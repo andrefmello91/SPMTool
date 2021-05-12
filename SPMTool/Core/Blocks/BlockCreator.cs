@@ -110,6 +110,7 @@ namespace SPMTool.Core.Blocks
 
 		#region Methods
 
+	
 		/// <summary>
 		///     Set attributes to block.
 		/// </summary>

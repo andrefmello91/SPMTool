@@ -161,7 +161,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Calculate the scale factor for block insertion.
 		/// </summary>
-		public double BlockScaleFactor() => UnitMath.Min(Geometry.Dimensions.a, Geometry.Dimensions.b).ToUnit(Settings.Units.Geometry).Value * 0.001;
+		public double BlockScaleFactor() => UnitMath.Min(Geometry.Dimensions.a, Geometry.Dimensions.b).As(Settings.Units.Geometry) * 0.001;
 
 		/// <summary>
 		///     Divide this <see cref="PanelObject" /> into new ones.

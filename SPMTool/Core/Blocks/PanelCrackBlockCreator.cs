@@ -1,4 +1,5 @@
-﻿using andrefmello91.Extensions;
+﻿using System;
+using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -85,7 +86,7 @@ namespace SPMTool.Core.Blocks
 			{
 				Position            = pt.ToPoint3d(),
 				TextString          = $"{w:0.00E+00}",
-				Height              = 30 * scaleFactor,
+				Height              = Results.TextHeight,
 				Layer               = $"{Layer.Cracks}",
 				Justify             = AttachmentPoint.MiddleCenter,
 				LockPositionInBlock = true,
