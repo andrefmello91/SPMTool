@@ -91,7 +91,7 @@ namespace SPMTool.Application.UserInterface
 		public void UpdatePlot()
 		{
 			// Set max load factor
-			LoadFactorAxis.MaxValue = _femOutput.MonitoredDisplacements.Select(m => m.LoadFactor).Max();
+			LoadFactorAxis.MaxValue = _femOutput.Select(m => m.LoadFactor).Max();
 
 			// Initiate series
 			CartesianChart.Series = new SeriesCollection
@@ -99,7 +99,7 @@ namespace SPMTool.Application.UserInterface
 				new LineSeries
 				{
 					Title           = "Load Factor x Displacement",
-					Values          = GetValues(_femOutput.MonitoredDisplacements, _displacementUnit),
+					Values          = GetValues(_femOutput, _displacementUnit),
 					PointGeometry   = null,
 					StrokeThickness = 3,
 					Stroke          = Brushes.LightSkyBlue,
@@ -143,7 +143,7 @@ namespace SPMTool.Application.UserInterface
 		private void SetMapper()
 		{
 			// If there is a displacement bigger than zero, nothing is done
-			if (_femOutput.MonitoredDisplacements.Any(p => !p.Displacement.ApproxZero(Units.LengthTolerance) && p.Displacement > Length.Zero))
+			if (_femOutput.Any(p => !p.Displacement.ApproxZero(Units.LengthTolerance) && p.Displacement > Length.Zero))
 			{
 				Inverted = false;
 				return;
