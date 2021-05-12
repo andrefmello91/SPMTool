@@ -1,4 +1,5 @@
 ﻿using andrefmello91.FEMAnalysis;
+using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
@@ -71,7 +72,7 @@ namespace SPMTool.Editor.Commands
 			var settings = DataBase.Settings.Analysis;
 
 			// Do analysis
-			var analysis = new NonlinearAnalysis(input, settings.Solver, settings.NumLoadSteps, settings.Tolerance, settings.MaxIterations);
+			var analysis = new SPMNonlinearAnalysis(input, settings.Solver, settings.NumLoadSteps, settings.Tolerance, settings.MaxIterations);
 			analysis.Execute(uIndexn.Value, simulate);
 			var output = analysis.GenerateOutput();
 
