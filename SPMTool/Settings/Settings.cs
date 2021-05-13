@@ -17,7 +17,7 @@ namespace SPMTool.Application
 		#region Fields
 
 		/// <summary>
-		///     <see cref="SPMTool.Units" /> save name.
+		///     <see cref="Application.Units" /> save name.
 		/// </summary>
 		private const string USaveName = "Units";
 
@@ -64,7 +64,7 @@ namespace SPMTool.Application
 		public override string Name => $"{typeof(Settings)}";
 
 		/// <summary>
-		///     Get <see cref="SPMTool.Units" /> saved in database.
+		///     Get <see cref="Application.Units" /> saved in database.
 		/// </summary>
 		public Units Units
 		{

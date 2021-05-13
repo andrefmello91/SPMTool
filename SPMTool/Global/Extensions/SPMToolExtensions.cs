@@ -14,6 +14,7 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.Windows;
 using MathNet.Numerics;
+using SPMTool.Application;
 using SPMTool.Attributes;
 using SPMTool.Core;
 using SPMTool.Editor.Commands;

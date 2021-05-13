@@ -2,7 +2,7 @@
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 
-namespace SPMTool
+namespace SPMTool.Application
 {
 	/// <summary>
 	///     Analysis settings class.

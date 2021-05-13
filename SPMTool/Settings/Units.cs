@@ -3,7 +3,7 @@ using andrefmello91.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
 
-namespace SPMTool
+namespace SPMTool.Application
 {
 	/// <summary>
 	///     Units class.

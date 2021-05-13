@@ -183,7 +183,6 @@
     <Compile Include="Core\Materials\ConcreteData.cs" />
     <Compile Include="Core\Model.cs" />
     <Compile Include="Core\Results.cs" />
-    <Compile Include="Core\Settings.cs" />
     <Compile Include="Editor\Commands\SPMAnalysis.cs" />
     <Compile Include="Editor\Commands\CommandNames.cs" />
     <Compile Include="Editor\Commands\ConditionsInput.cs" />
@@ -193,7 +192,6 @@
     <Compile Include="Editor\Commands\Settings.cs" />
     <Compile Include="Editor\Commands\View.cs" />
     <Compile Include="Editor\UserInput.cs" />
-    <Compile Include="Global\AnalysisSettings.cs" />
     <Compile Include="Global\Attributes.cs" />
     <Compile Include="Global\Comparers\LineEqualityComparer .cs" />
     <Compile Include="Global\Comparers\Point3dComparer.cs" />
@@ -204,9 +202,11 @@
     <Compile Include="Global\Extensions\SPMToolExtensions.cs" />
     <Compile Include="Global\Extensions\UIExtensions.cs" />
     <Compile Include="Global\FlowAnalysisAttributes.cs" />
-    <Compile Include="Global\Units.cs" />
     <Compile Include="Initializer.cs" />
     <Compile Include="Editor\Commands\CommandHandler.cs" />
+    <Compile Include="Settings\AnalysisSettings.cs" />
+    <Compile Include="Settings\Settings.cs" />
+    <Compile Include="Settings\Units.cs" />
     <Compile Include="UserInterface\Icons.cs" />
     <Compile Include="UserInterface\SPMToolInterface.cs" />
     <Compile Include="UserInterface\Windows\AnalysisConfig.xaml.cs">
