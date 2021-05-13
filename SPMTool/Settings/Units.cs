@@ -1,5 +1,6 @@
 ﻿using System;
 using andrefmello91.Extensions;
+using Autodesk.AutoCAD.DatabaseServices;
 using UnitsNet;
 using UnitsNet.Units;
 
@@ -179,6 +180,12 @@ namespace SPMTool.Application
 		///     Returns true if at least a unit do not coincide.
 		/// </summary>
 		public static bool operator !=(Units? left, Units? right) => left.IsNotEqualTo(right);
+
+		/// <inheritdoc cref="Extensions.GetTypedValues(Units)"/>
+		public static explicit operator TypedValue[](Units? settings) => settings.GetTypedValues();
+		
+		/// <inheritdoc cref="Extensions.GetUnits"/>
+		public static explicit operator Units?(TypedValue[]? values) => values.GetUnits();
 
 		#endregion
 

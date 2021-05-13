@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -89,8 +90,11 @@ namespace SPMTool.Application
 		/// </summary>
 		public static bool operator !=(AnalysisSettings? left, AnalysisSettings? right) => left.IsNotEqualTo(right);
 
-		/// <inheritdoc cref="Extensions.GetTypedValues(SPMTool.Application.AnalysisSettings?)"/>
+		/// <inheritdoc cref="Extensions.GetTypedValues(AnalysisSettings)"/>
 		public static explicit operator TypedValue[](AnalysisSettings? settings) => settings.GetTypedValues();
+		
+		/// <inheritdoc cref="Extensions.GetAnalysisSettings"/>
+		public static explicit operator AnalysisSettings?(TypedValue[]? values) => values.GetAnalysisSettings();
 
 		#endregion
 

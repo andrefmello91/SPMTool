@@ -1,15 +1,19 @@
 ﻿using System;
 using andrefmello91.Extensions;
+using Autodesk.AutoCAD.DatabaseServices;
 
 namespace SPMTool.Application
 {
 	/// <summary>
-	///		Display settings class.
+	///     Display settings class.
 	/// </summary>
 	public class DisplaySettings : IEquatable<DisplaySettings>
 	{
+
+		#region Properties
+
 		/// <summary>
-		///		The default values for display settings.
+		///     The default values for display settings.
 		/// </summary>
 		public static DisplaySettings Default { get; } = new()
 		{
@@ -18,26 +22,32 @@ namespace SPMTool.Application
 			ResultScale       = 1,
 			TextScale         = 1
 		};
-		
+
 		/// <summary>
-		///		Get/set the magnifier scale factor for the displaced model.
+		///     Get/set the magnifier scale factor for the displaced model.
 		/// </summary>
 		public double DisplacementScale { get; set; }
 
 		/// <summary>
-		///		Get/set the scale factor for nodes.
+		///     Get/set the scale factor for nodes.
 		/// </summary>
 		public double NodeScale { get; set; }
-		
+
 		/// <summary>
-		///		Get/set the scale factor for results. This affects panel's blocks.
+		///     Get/set the scale factor for results. This affects panel's blocks.
 		/// </summary>
 		public double ResultScale { get; set; }
 
 		/// <summary>
-		///		Get/set the scale factor for texts.
+		///     Get/set the scale factor for texts.
 		/// </summary>
 		public double TextScale { get; set; }
+
+		#endregion
+
+		#region Methods
+
+		#region Interface Implementations
 
 		/// <inheritdoc />
 		public bool Equals(DisplaySettings? other) =>
@@ -45,20 +55,35 @@ namespace SPMTool.Application
 			NodeScale.Approx(other.NodeScale) && ResultScale.Approx(other.ResultScale) &&
 			TextScale.Approx(other.TextScale);
 
+		#endregion
+
+		#endregion
+
+		#region Operators
+
 		/// <summary>
-		///		<inheritdoc cref="Equals"/>
+		///     <inheritdoc cref="Equals" />
 		/// </summary>
 		/// <returns>
-		///		True if objects are equal.
+		///     True if objects are equal.
 		/// </returns>
 		public static bool operator ==(DisplaySettings? left, DisplaySettings? right) => left.IsEqualTo(right);
 
 		/// <summary>
-		///		<inheritdoc cref="Equals"/>
+		///     <inheritdoc cref="Equals" />
 		/// </summary>
 		/// <returns>
-		///		True if objects are not equal.
+		///     True if objects are not equal.
 		/// </returns>
 		public static bool operator !=(DisplaySettings? left, DisplaySettings? right) => left.IsNotEqualTo(right);
+
+		/// <inheritdoc cref="Extensions.GetTypedValues(DisplaySettings)" />
+		public static explicit operator TypedValue[](DisplaySettings? settings) => settings.GetTypedValues();
+
+		/// <inheritdoc cref="Extensions.GetDisplaySettings" />
+		public static explicit operator DisplaySettings?(TypedValue[]? values) => values.GetDisplaySettings();
+
+		#endregion
+
 	}
 }
