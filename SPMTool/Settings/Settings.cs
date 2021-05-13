@@ -24,7 +24,7 @@ namespace SPMTool.Application
 		///     <see cref="AnalysisSettings" /> save name.
 		/// </summary>
 		private const string ASSaveName = "Analysis Settings";
-		
+
 		/// <summary>
 		///     <see cref="DisplaySettings" /> save name.
 		/// </summary>
@@ -46,8 +46,8 @@ namespace SPMTool.Application
 		public static readonly string[] StressUnits = { PressureUnit.Pascal.Abbrev(), PressureUnit.Kilopascal.Abbrev(), PressureUnit.Megapascal.Abbrev(), PressureUnit.Gigapascal.Abbrev() };
 
 		private AnalysisSettings _analysis;
+		private DisplaySettings _displaySettings;
 		private Units _units;
-		private DisplaySettings _display;
 
 		#endregion
 
@@ -60,6 +60,16 @@ namespace SPMTool.Application
 		{
 			get => _analysis;
 			set => SetAnalysisSettings(value);
+		}
+
+		/// /
+		/// <summary>
+		///     Get <see cref="Application.DisplaySettings" /> saved in database.
+		/// </summary>
+		public DisplaySettings Display
+		{
+			get => _displaySettings;
+			set => SetDisplaySettings(value);
 		}
 
 		/// <inheritdoc />
@@ -99,9 +109,9 @@ namespace SPMTool.Application
 
 		protected override void GetProperties()
 		{
-			_analysis = GetAnalysisSettings();
-			_units    = GetUnits();
-
+			_analysis        = GetAnalysisSettings();
+			_units           = GetUnits();
+			_displaySettings = GetDisplaySettings();
 		}
 
 		protected override void SetProperties()
@@ -117,6 +127,12 @@ namespace SPMTool.Application
 		private AnalysisSettings GetAnalysisSettings() => GetDictionary(ASSaveName).GetAnalysisSettings() ?? AnalysisSettings.Default;
 
 		/// <summary>
+		///     Read display settings on dictionary.
+		/// </summary>
+		[return: NotNull]
+		private DisplaySettings GetDisplaySettings() => GetDictionary(DSaveName).GetDisplaySettings() ?? DisplaySettings.Default;
+
+		/// <summary>
 		///     Read units on dictionary.
 		/// </summary>
 		[return: NotNull]
@@ -129,7 +145,17 @@ namespace SPMTool.Application
 		{
 			_analysis = settings;
 
-			SetDictionary(settings.GetTypedValues(), ASSaveName);
+			SetDictionary((TypedValue[]) settings, ASSaveName);
+		}
+
+		/// <summary>
+		///     Save this <paramref name="displaySettings" /> in database.
+		/// </summary>
+		private void SetDisplaySettings(DisplaySettings displaySettings)
+		{
+			_displaySettings = displaySettings;
+
+			SetDictionary((TypedValue[]) displaySettings, DSaveName);
 		}
 
 		/// <summary>
@@ -139,7 +165,7 @@ namespace SPMTool.Application
 		{
 			_units = units;
 
-			SetDictionary(units.GetTypedValues(), USaveName);
+			SetDictionary((TypedValue[]) units, USaveName);
 		}
 
 		#endregion
