@@ -113,17 +113,15 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		public void SetAttributes() => ObjectId.SetBlockAttributes(ForceAttributeReference()?.ToList());
 
-		protected override bool GetProperties()
+		protected override void GetProperties()
 		{
 			var force = GetForce();
 
 			if (!force.HasValue)
-				return false;
+				return;
 
 			// Get values
 			Value = force.Value;
-
-			return true;
 		}
 
 		protected override void SetProperties() => SetDictionary(Value.GetTypedValues(), "Force");

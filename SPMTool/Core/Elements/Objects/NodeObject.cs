@@ -138,17 +138,14 @@ namespace SPMTool.Core.Elements
 				Displacement = _node.Displacement;
 		}
 
-		protected override bool GetProperties()
+		protected override void GetProperties()
 		{
 			var disp = GetDisplacement();
 
 			if (!disp.HasValue)
-				return false;
+				return;
 
 			_displacement = disp.Value;
-			return true;
-
-			//_displacement = PlaneDisplacement.Zero;
 		}
 
 		protected override void SetProperties() => SetDisplacement(_displacement);

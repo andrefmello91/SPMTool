@@ -25,6 +25,11 @@ namespace SPMTool.Application
 		///     <see cref="AnalysisSettings" /> save name.
 		/// </summary>
 		private const string ASSaveName = "Analysis Settings";
+		
+		/// <summary>
+		///     <see cref="DisplaySettings" /> save name.
+		/// </summary>
+		private const string DSaveName = "Display Settings";
 
 		/// <summary>
 		///     Dimension unit options.
@@ -43,6 +48,7 @@ namespace SPMTool.Application
 
 		private AnalysisSettings _analysis;
 		private Units _units;
+		private DisplaySettings _display;
 
 		#endregion
 
@@ -92,12 +98,11 @@ namespace SPMTool.Application
 			Data = new ResultBuffer(_analysis.GetTypedValues())
 		};
 
-		protected override bool GetProperties()
+		protected override void GetProperties()
 		{
 			_analysis = GetAnalysisSettings();
 			_units    = GetUnits();
 
-			return true;
 		}
 
 		protected override void SetProperties()

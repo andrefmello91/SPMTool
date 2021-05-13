@@ -198,7 +198,7 @@ namespace SPMTool.Core.Elements
 			return _stringer;
 		}
 
-		protected override bool GetProperties()
+		protected override void GetProperties()
 		{
 			var cs = GetCrossSection();
 
@@ -209,9 +209,6 @@ namespace SPMTool.Core.Elements
 
 			if (rf is not null)
 				_reinforcement = GetReinforcement();
-
-			return
-				!cs.HasValue && rf is null;
 		}
 
 		protected override void SetProperties()

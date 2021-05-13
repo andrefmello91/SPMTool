@@ -76,16 +76,14 @@ namespace SPMTool.Core.Conditions
 		/// <param name="forceObjectId">The <see cref="ObjectId" /> of the force.</param>
 		public static ConstraintObject? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference?) forceObjectId.GetEntity());
 
-		protected override bool GetProperties()
+		protected override void GetProperties()
 		{
 			var c = GetConstraint();
 
 			if (!c.HasValue)
-				return false;
+				return;
 
 			Value = c.Value;
-
-			return true;
 		}
 
 		protected override void SetProperties() => SetDictionary(Value.GetTypedValues(), "Constraint");

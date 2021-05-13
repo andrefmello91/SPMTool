@@ -73,12 +73,10 @@ namespace SPMTool.Core.Materials
 			Data = new ResultBuffer(_parameters.GetTypedValues())
 		};
 
-		protected override bool GetProperties()
+		protected override void GetProperties()
 		{
 			_parameters = GetParameters();
 			_model      = GetModel();
-
-			return true;
 		}
 
 		protected override void SetProperties()

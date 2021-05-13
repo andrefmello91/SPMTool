@@ -235,7 +235,7 @@ namespace SPMTool.Core.Elements
 			SetDictionary(data, "Width");
 		}
 
-		protected override bool GetProperties()
+		protected override void GetProperties()
 		{
 			var w = GetWidth();
 
@@ -251,9 +251,6 @@ namespace SPMTool.Core.Elements
 
 			if (y is not null)
 				_y = y;
-
-			return
-				!w.HasValue && x is null && y is null;
 		}
 
 		protected override void SetProperties()

@@ -81,7 +81,7 @@ namespace SPMTool.Core
 		/// <returns>
 		///     True if properties were successfully read from object dictionary.
 		/// </returns>
-		protected abstract bool GetProperties();
+		protected abstract void GetProperties();
 
 		/// <summary>
 		///     Create the extended dictionary for this object.
