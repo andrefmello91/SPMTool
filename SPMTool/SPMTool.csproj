@@ -205,6 +205,7 @@
     <Compile Include="Initializer.cs" />
     <Compile Include="Editor\Commands\CommandHandler.cs" />
     <Compile Include="Settings\AnalysisSettings.cs" />
+    <Compile Include="Settings\DisplaySettings.cs" />
     <Compile Include="Settings\Settings.cs" />
     <Compile Include="Settings\Units.cs" />
     <Compile Include="UserInterface\Icons.cs" />

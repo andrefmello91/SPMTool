@@ -165,6 +165,24 @@ namespace SPMTool.Extensions
 				Solver        = (NonLinearSolver) values.ElementAt(3).ToInt()
 			};
 		}
+		
+		/// <summary>
+		///     Get a <see cref="DisplaySettings" /> from <see cref="TypedValue" />'s.
+		/// </summary>
+		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="DisplaySettings" />.</param>
+		public static DisplaySettings? GetDisplaySettings(this IEnumerable<TypedValue>? values)
+		{
+			if (values.IsNullOrEmpty() || values.Count() != 4)
+				return null;
+
+			return new DisplaySettings
+			{
+				DisplacementScale = values.ElementAt(0).ToDouble(),
+				NodeScale         = values.ElementAt(1).ToDouble(),
+				ResultScale       = values.ElementAt(2).ToDouble(),
+				TextScale         = values.ElementAt(3).ToDouble()
+			};
+		}
 
 		/// <summary>
 		///     Get the <see cref="Vector3d" /> associated to this <paramref name="axis" />.
@@ -528,6 +546,22 @@ namespace SPMTool.Extensions
 				new TypedValue((int) DxfCode.Int32, settings.NumLoadSteps),
 				new TypedValue((int) DxfCode.Int32, settings.MaxIterations),
 				new TypedValue((int) DxfCode.Int32, (int) settings.Solver)
+			};
+		}
+		
+		/// <summary>
+		///     Get an array of <see cref="TypedValue" /> from a <see cref="DisplaySettings" />.
+		/// </summary>
+		public static TypedValue[] GetTypedValues(this DisplaySettings? displaySettings)
+		{
+			displaySettings ??= DisplaySettings.Default;
+
+			return new[]
+			{
+				new TypedValue((int) DxfCode.Real,  displaySettings.DisplacementScale),
+				new TypedValue((int) DxfCode.Real,  displaySettings.NodeScale),
+				new TypedValue((int) DxfCode.Real,  displaySettings.ResultScale),
+				new TypedValue((int) DxfCode.Real,  displaySettings.TextScale),
 			};
 		}
 
