@@ -1,6 +1,7 @@
 ﻿using System;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
+using Autodesk.AutoCAD.DatabaseServices;
 
 namespace SPMTool.Application
 {
@@ -62,7 +63,7 @@ namespace SPMTool.Application
 		///     Returns true if all parameters coincide.
 		/// </summary>
 		/// <param name="other">The other <see cref="AnalysisSettings" /> object.</param>
-		public bool Equals(AnalysisSettings other) => Tolerance.Approx(other.Tolerance) && NumLoadSteps == other.NumLoadSteps && MaxIterations == other.MaxIterations;
+		public bool Equals(AnalysisSettings? other) => other is not null && Tolerance.Approx(other.Tolerance) && NumLoadSteps == other.NumLoadSteps && MaxIterations == other.MaxIterations;
 
 		#endregion
 
@@ -81,12 +82,15 @@ namespace SPMTool.Application
 		/// <summary>
 		///     Returns true if all units coincide.
 		/// </summary>
-		public static bool operator ==(AnalysisSettings left, AnalysisSettings right) => left is not null && left.Equals(right);
+		public static bool operator ==(AnalysisSettings? left, AnalysisSettings? right) => left.IsEqualTo(right);
 
 		/// <summary>
 		///     Returns true if at least a unit do not coincide.
 		/// </summary>
-		public static bool operator !=(AnalysisSettings left, AnalysisSettings right) => left is not null && !left.Equals(right);
+		public static bool operator !=(AnalysisSettings? left, AnalysisSettings? right) => left.IsNotEqualTo(right);
+
+		/// <inheritdoc cref="Extensions.GetTypedValues(SPMTool.Application.AnalysisSettings?)"/>
+		public static explicit operator TypedValue[](AnalysisSettings? settings) => settings.GetTypedValues();
 
 		#endregion
 

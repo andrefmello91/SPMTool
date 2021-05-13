@@ -6,7 +6,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Application;
 using SPMTool.Enums;
-using SPMTool.Extensions;
+
 using UnitsNet;
 #nullable enable
 

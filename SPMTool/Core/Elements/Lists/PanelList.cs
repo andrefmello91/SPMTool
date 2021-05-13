@@ -10,7 +10,7 @@ using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.PanelProperties;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
-using SPMTool.Extensions;
+
 using UnitsNet;
 #nullable enable
 

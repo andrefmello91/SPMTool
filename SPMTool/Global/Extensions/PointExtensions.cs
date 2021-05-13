@@ -6,7 +6,7 @@ using Autodesk.AutoCAD.Geometry;
 using SPMTool.Core;
 using UnitsNet.Units;
 
-namespace SPMTool.Extensions
+namespace SPMTool
 {
 	public static class PointExtensions
 	{

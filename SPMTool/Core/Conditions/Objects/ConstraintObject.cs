@@ -3,7 +3,7 @@ using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics;
 using SPMTool.Enums;
-using SPMTool.Extensions;
+
 using static SPMTool.Core.DataBase;
 
 #nullable enable

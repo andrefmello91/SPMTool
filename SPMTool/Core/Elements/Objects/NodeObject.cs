@@ -5,7 +5,7 @@ using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Enums;
-using SPMTool.Extensions;
+
 using UnitsNet.Units;
 using static SPMTool.Core.Elements.NodeList;
 using static SPMTool.Core.DataBase;

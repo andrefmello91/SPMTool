@@ -11,7 +11,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
-using SPMTool.Extensions;
+
 using UnitsNet;
 using static SPMTool.Core.DataBase;
 

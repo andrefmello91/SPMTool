@@ -13,7 +13,6 @@ using SPMTool.Application.UserInterface;
 using SPMTool.Core.Blocks;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
-using SPMTool.Extensions;
 #nullable enable
 
 namespace SPMTool.Attributes

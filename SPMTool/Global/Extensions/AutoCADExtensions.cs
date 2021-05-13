@@ -13,7 +13,7 @@ using static SPMTool.Core.DataBase;
 
 #nullable enable
 
-namespace SPMTool.Extensions
+namespace SPMTool
 {
 	public static partial class Extensions
 	{

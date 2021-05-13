@@ -9,7 +9,7 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Core;
 using SPMTool.Enums;
-using SPMTool.Extensions;
+
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.DataBase;
 

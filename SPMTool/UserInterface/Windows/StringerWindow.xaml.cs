@@ -10,7 +10,6 @@ using andrefmello91.SPMElements.StringerProperties;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
-using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.Model;

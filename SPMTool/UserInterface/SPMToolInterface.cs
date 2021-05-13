@@ -2,7 +2,6 @@
 using Autodesk.Windows;
 using SPMTool.Core;
 using SPMTool.Editor.Commands;
-using SPMTool.Extensions;
 
 namespace SPMTool.Application.UserInterface
 {

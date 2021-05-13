@@ -2,7 +2,7 @@
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
-using SPMTool.Extensions;
+
 #nullable enable
 
 namespace SPMTool.Core.Elements

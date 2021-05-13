@@ -1,7 +1,7 @@
 ﻿using andrefmello91.Material.Concrete;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
-using SPMTool.Extensions;
+
 using UnitsNet;
 using static andrefmello91.Material.Concrete.Parameters;
 

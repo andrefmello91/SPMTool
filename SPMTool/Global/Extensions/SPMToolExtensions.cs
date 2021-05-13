@@ -25,7 +25,7 @@ using static SPMTool.Core.DataBase;
 
 #nullable enable
 
-namespace SPMTool.Extensions
+namespace SPMTool
 {
 	public static partial class Extensions
 	{
@@ -515,6 +515,9 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Get an array of <see cref="TypedValue" /> from an <see cref="Units" />.
 		/// </summary>
+		/// <returns>
+		///		An array based in <see cref="Units.Default"/> if the object is null.
+		/// </returns>
 		public static TypedValue[] GetTypedValues(this Units? units)
 		{
 			units ??= Units.Default;
@@ -536,6 +539,9 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Get an array of <see cref="TypedValue" /> from an <see cref="AnalysisSettings" />.
 		/// </summary>
+		/// <returns>
+		///		An array based in <see cref="AnalysisSettings.Default"/> if the object is null.
+		/// </returns>
 		public static TypedValue[] GetTypedValues(this AnalysisSettings? settings)
 		{
 			settings ??= AnalysisSettings.Default;
@@ -552,6 +558,9 @@ namespace SPMTool.Extensions
 		/// <summary>
 		///     Get an array of <see cref="TypedValue" /> from a <see cref="DisplaySettings" />.
 		/// </summary>
+		/// <returns>
+		///		An array based in <see cref="DisplaySettings.Default"/> if the object is null.
+		/// </returns>
 		public static TypedValue[] GetTypedValues(this DisplaySettings? displaySettings)
 		{
 			displaySettings ??= DisplaySettings.Default;
@@ -564,7 +573,7 @@ namespace SPMTool.Extensions
 				new TypedValue((int) DxfCode.Real,  displaySettings.TextScale),
 			};
 		}
-
+		
 		/// <summary>
 		///     Get an array of <see cref="TypedValue" /> from an <see cref="Enum" /> value.
 		/// </summary>

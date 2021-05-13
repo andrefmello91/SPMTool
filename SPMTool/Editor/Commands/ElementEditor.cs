@@ -6,7 +6,7 @@ using SPMTool.Application.UserInterface;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Editor.Commands;
-using SPMTool.Extensions;
+
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.Model;
 

@@ -8,7 +8,7 @@ using SPMTool.Application;
 using SPMTool.Core.Blocks;
 using SPMTool.Core.Materials;
 using SPMTool.Enums;
-using SPMTool.Extensions;
+
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 #nullable enable

@@ -4,7 +4,7 @@
 //using Autodesk.AutoCAD.Geometry;
 //using andrefmello91.OnPlaneComponents;
 //using andrefmello91.SPMElements.StringerProperties;
-//using SPMTool.Extensions;
+//
 
 //namespace SPMTool.Core.Elements
 //{

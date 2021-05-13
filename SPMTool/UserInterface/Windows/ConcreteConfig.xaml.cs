@@ -8,7 +8,6 @@ using System.Windows.Input;
 using andrefmello91.Extensions;
 using andrefmello91.Material.Concrete;
 using SPMTool.Core;
-using SPMTool.Extensions;
 using UnitsNet;
 using UnitsNet.Units;
 

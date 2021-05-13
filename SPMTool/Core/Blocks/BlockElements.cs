@@ -7,7 +7,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
 using SPMTool.Enums;
-using SPMTool.Extensions;
+
 
 namespace SPMTool.Core.Blocks
 {

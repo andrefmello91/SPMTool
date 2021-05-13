@@ -5,7 +5,7 @@ using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Core;
 using SPMTool.Editor.Commands;
-using SPMTool.Extensions;
+
 using static SPMTool.Core.Model;
 
 [assembly: CommandClass(typeof(ConditionsInput))]

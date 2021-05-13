@@ -2,7 +2,7 @@
 using System.Windows;
 using andrefmello91.Extensions;
 
-namespace SPMTool.Extensions
+namespace SPMTool
 {
 	/// <summary>
 	///     Extensions for interface elements.

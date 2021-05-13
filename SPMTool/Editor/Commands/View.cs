@@ -2,7 +2,7 @@
 using SPMTool.Core;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
-using SPMTool.Extensions;
+
 [assembly: CommandClass(typeof(View))]
 
 namespace SPMTool.Editor.Commands

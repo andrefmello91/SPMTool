@@ -3,7 +3,6 @@ using andrefmello91.Extensions;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Core;
 using SPMTool.Enums;
-using SPMTool.Extensions;
 using UnitsNet.Units;
 
 namespace SPMTool.Application

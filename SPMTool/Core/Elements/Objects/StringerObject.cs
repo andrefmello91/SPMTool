@@ -10,7 +10,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Core.Blocks;
 using SPMTool.Enums;
-using SPMTool.Extensions;
+
 using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.DataBase;

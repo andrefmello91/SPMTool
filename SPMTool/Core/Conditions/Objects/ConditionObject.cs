@@ -2,7 +2,7 @@
 using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
-using SPMTool.Extensions;
+
 #nullable enable
 
 namespace SPMTool.Core.Conditions

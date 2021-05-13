@@ -4,7 +4,7 @@ using SPMTool.Enums;
 using UnitsNet;
 using static SPMTool.Core.DataBase;
 using static SPMTool.Core.Model;
-using static SPMTool.Extensions.Extensions;
+using static SPMTool.Extensions;
 
 namespace SPMTool.Core
 {
