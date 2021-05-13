@@ -15,7 +15,7 @@ namespace SPMTool.Application
 		/// <summary>
 		///     Default <see cref="AnalysisSettings" /> object.
 		/// </summary>
-		public static readonly AnalysisSettings Default = new()
+		public static AnalysisSettings Default { get; } = new()
 		{
 			Tolerance     = 1E-3,
 			NumLoadSteps  = 50,

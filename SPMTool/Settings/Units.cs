@@ -17,7 +17,7 @@ namespace SPMTool.Application
 		///     Default units object.
 		///     <para>Default units: mm, kN, MPa.</para>
 		/// </summary>
-		public static readonly Units Default = new()
+		public static Units Default { get; } = new()
 		{
 			Geometry              = LengthUnit.Millimeter,
 			Reinforcement         = LengthUnit.Millimeter,
