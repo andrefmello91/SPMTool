@@ -17,7 +17,7 @@ namespace SPMTool.Application
 		/// </summary>
 		public static readonly AnalysisSettings Default = new()
 		{
-			Tolerance     = 1E-6,
+			Tolerance     = 1E-3,
 			NumLoadSteps  = 50,
 			MaxIterations = 10000,
 			Solver        = NonLinearSolver.Secant
