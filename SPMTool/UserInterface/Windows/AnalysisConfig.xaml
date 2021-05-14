@@ -1,8 +1,9 @@
-﻿<Window x:Class="SPMTool.Application.UserInterface.AnalysisConfig"
+﻿<userInterface:BaseWindow x:Class="SPMTool.Application.UserInterface.AnalysisConfig"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:userInterface="clr-namespace:SPMTool.Application.UserInterface"
         mc:Ignorable="d"
         Title="Analysis settings" Height="230" Width="320">
     <Grid Background="WhiteSmoke">
@@ -41,22 +42,22 @@
                                Grid.Column="1" />
                     <TextBox Name="ToleranceBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
                              Height="25" Grid.Row="1" Grid.Column="3"
-                             PreviewTextInput="DoubleValidationTextBox" />
+                             PreviewTextInput="DoubleValidation" />
                     <TextBlock Text="Number of load steps:" HorizontalAlignment="Left" VerticalAlignment="Center"
                                Grid.Row="2" Grid.Column="1" />
                     <TextBox Name="LoadStepsBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
                              Height="25" Grid.Row="2" Grid.Column="3"
-                             PreviewTextInput="IntValidationTextBox" />
+                             PreviewTextInput="IntValidation" />
                     <TextBlock Text="Maximum iterations:" HorizontalAlignment="Left" VerticalAlignment="Center"
                                Grid.Row="3" Grid.Column="1" />
                     <TextBox Name="IterationsBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
                              Height="25" Grid.Row="3" Grid.Column="3"
-                             PreviewTextInput="IntValidationTextBox" />
+                             PreviewTextInput="IntValidation" />
                     <TextBlock Text="Nonlinear Solver:" HorizontalAlignment="Left" VerticalAlignment="Center"
                                Grid.Row="4" Grid.Column="1" />
                     <ComboBox Name="SolverBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
                              Height="25" Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2"
-                             PreviewTextInput="IntValidationTextBox" />
+                             PreviewTextInput="IntValidation" />
                 </Grid>
             </StackPanel>
         </Border>
@@ -70,4 +71,4 @@
                 Width="75" Grid.Row="2" Grid.Column="1" Click="ButtonDefault_OnClick" ToolTip="Set default parameters"
                 Margin="0,0,0,0" />
     </Grid>
-</Window>
+</userInterface:BaseWindow>

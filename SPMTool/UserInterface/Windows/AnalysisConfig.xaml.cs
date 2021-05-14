@@ -13,7 +13,7 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para AnalysisConfig.xaml
 	/// </summary>
-	public partial class AnalysisConfig : Window
+	public partial class AnalysisConfig : BaseWindow
 	{
 		/// <summary>
 		///		The solver names to show in <see cref="SolverBox"/>.
@@ -67,11 +67,6 @@ namespace SPMTool.Application.UserInterface
 		#endregion
 
 		#region Methods
-
-		/// <summary>
-		///     Close window if cancel button is clicked.
-		/// </summary>
-		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
 
 		/// <summary>
 		///     Set default analysis settings.
