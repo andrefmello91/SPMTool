@@ -28,7 +28,6 @@ namespace SPMTool.Application
 			StringerForces        = ForceUnit.Kilonewton,
 			PanelStresses         = PressureUnit.Megapascal,
 			MaterialStrength      = PressureUnit.Megapascal,
-			DisplacementMagnifier = 200
 		};
 
 		/// <summary>
@@ -76,19 +75,9 @@ namespace SPMTool.Application
 		public LengthUnit CrackOpenings { get; set; }
 
 		/// <summary>
-		///     Get/set the displacement magnifier factor.
-		/// </summary>
-		public int DisplacementMagnifier { get; set; }
-
-		/// <summary>
 		///     Get/set the <see cref="LengthUnit" /> for displacements.
 		/// </summary>
 		public LengthUnit Displacements { get; set; }
-
-		/// <summary>
-		///     Get the displacement scale factor.
-		/// </summary>
-		public double DisplacementScaleFactor => DisplacementMagnifier > 0 ? DisplacementMagnifier * ScaleFactor : 200 * ScaleFactor;
 
 		/// <summary>
 		///     Get/set the <see cref="LengthUnit" /> for geometry.

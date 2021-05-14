@@ -101,6 +101,11 @@ namespace SPMTool.Core
 		/// </summary>
 		public static Autodesk.AutoCAD.EditorInput.Editor Editor => DataBase.Document.Editor;
 
+		/// <summary>
+		///		Get the text height for model objects.
+		/// </summary>
+		public static double TextHeight => 30 * Settings.Display.TextScale * Settings.Units.ScaleFactor;
+		
 		#endregion
 
 		#region Constructors

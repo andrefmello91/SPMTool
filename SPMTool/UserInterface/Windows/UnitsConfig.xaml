@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Units" Height="470" Width="290" d:DataContext="{d:DesignData }">
+        Title="Units" Height="440" Width="290" d:DataContext="{d:DesignData }">
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="30" />
@@ -28,7 +28,6 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="5" />
-                        <RowDefinition Height="30" />
                         <RowDefinition Height="30" />
                         <RowDefinition Height="30" />
                         <RowDefinition Height="30" />
@@ -57,10 +56,6 @@
                                Grid.Column="1" />
                     <ComboBox Name="DisplacementsBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
                               Width="70" Height="25" Grid.Row="4" Grid.Column="2" />
-                    <TextBlock Text="Displacement magnifier factor:" HorizontalAlignment="Left"
-                               VerticalAlignment="Center" Grid.Row="5" Grid.Column="1" />
-                    <TextBox Name="FactorBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70"
-                             Height="25" Grid.Row="5" Grid.Column="2" PreviewTextInput="IntValidationTextBox" />
                 </Grid>
             </StackPanel>
         </Border>

@@ -18,11 +18,6 @@ namespace SPMTool.Application.UserInterface
 		#region Properties
 
 		/// <summary>
-		///     Verify if factor box is filled.
-		/// </summary>
-		private bool FactorBoxFilled => FactorBox.Text.ParsedAndNotZero(out _);
-
-		/// <summary>
 		///     Get/set units.
 		/// </summary>
 		private Units Units
@@ -37,7 +32,6 @@ namespace SPMTool.Application.UserInterface
 				StringerForces        = UnitParser.Default.Parse<ForceUnit>((string) StringerForcesBox.SelectedItem),
 				PanelStresses         = UnitParser.Default.Parse<PressureUnit>((string) PanelStressesBox.SelectedItem),
 				MaterialStrength      = UnitParser.Default.Parse<PressureUnit>((string) MaterialBox.SelectedItem),
-				DisplacementMagnifier = int.Parse(FactorBox.Text)
 			};
 
 			set
@@ -50,7 +44,6 @@ namespace SPMTool.Application.UserInterface
 				StringerForcesBox.SelectedItem = value.StringerForces.Abbrev();
 				PanelStressesBox.SelectedItem  = value.PanelStresses.Abbrev();
 				MaterialBox.SelectedItem       = value.MaterialStrength.Abbrev();
-				FactorBox.Text                 = $"{value.DisplacementMagnifier:0}";
 			}
 		}
 
@@ -90,15 +83,6 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
-			if (!FactorBoxFilled)
-			{
-				MessageBox.Show("Please set valid displacement magnifier factor.");
-				return;
-			}
-
-			// Set displacement factor
-			Units.DisplacementMagnifier = int.Parse(FactorBox.Text);
-
 			// Save units on database
 			DataBase.Settings.Units = Units;
 

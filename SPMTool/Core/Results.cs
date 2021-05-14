@@ -72,7 +72,7 @@ namespace SPMTool.Core
 		/// </summary>
 		private static void DrawDisplacedModel()
 		{
-			var mFactor = Settings.Units.DisplacementMagnifier;
+			var mFactor = Settings.Display.DisplacementMagnifier;
 
 			var displaced = Stringers.Select(s => s.GetDisplaced(mFactor)).ToList();
 
@@ -116,13 +116,13 @@ namespace SPMTool.Core
 		///     Update <see cref="ResultScaleFactor" />.
 		/// </summary>
 		private static void GetScale() =>
-			ResultScaleFactor = Panels.Select(p => p.BlockScaleFactor()).Min();
+			ResultScaleFactor = Settings.Display.ResultScale * Panels.Select(p => p.BlockScaleFactor()).Min();
 
 		/// <summary>
 		///		Get the text height for results. Limited to 30.
 		/// </summary>
 		private static void GetTextHeight() =>
-			TextHeight = Math.Min(40 * ResultScaleFactor, 30 * Settings.Units.ScaleFactor);
+			TextHeight = Math.Min(40 * ResultScaleFactor * Settings.Display.TextScale, Model.TextHeight);
 
 		/// <summary>
 		///     Set displacement to <see cref="Model.Nodes" />.

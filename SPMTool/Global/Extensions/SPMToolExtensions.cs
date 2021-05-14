@@ -172,15 +172,16 @@ namespace SPMTool
 		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="DisplaySettings" />.</param>
 		public static DisplaySettings? GetDisplaySettings(this IEnumerable<TypedValue>? values)
 		{
-			if (values.IsNullOrEmpty() || values.Count() != 4)
+			if (values.IsNullOrEmpty() || values.Count() != 5)
 				return null;
 
 			return new DisplaySettings
 			{
-				DisplacementScale = values.ElementAt(0).ToDouble(),
-				NodeScale         = values.ElementAt(1).ToDouble(),
-				ResultScale       = values.ElementAt(2).ToDouble(),
-				TextScale         = values.ElementAt(3).ToDouble()
+				NodeScale             = values.ElementAt(0).ToDouble(),
+				ConditionScale        = values.ElementAt(1).ToDouble(),
+				ResultScale           = values.ElementAt(2).ToDouble(),
+				TextScale             = values.ElementAt(3).ToDouble(),
+				DisplacementMagnifier = values.ElementAt(4).ToInt(),
 			};
 		}
 
@@ -532,7 +533,6 @@ namespace SPMTool
 				new TypedValue((int) DxfCode.Int32, (int) units.StringerForces),
 				new TypedValue((int) DxfCode.Int32, (int) units.PanelStresses),
 				new TypedValue((int) DxfCode.Int32, (int) units.MaterialStrength),
-				new TypedValue((int) DxfCode.Int32, units.DisplacementMagnifier)
 			};
 		}
 
@@ -567,10 +567,11 @@ namespace SPMTool
 
 			return new[]
 			{
-				new TypedValue((int) DxfCode.Real,  displaySettings.DisplacementScale),
 				new TypedValue((int) DxfCode.Real,  displaySettings.NodeScale),
+				new TypedValue((int) DxfCode.Real,  displaySettings.ConditionScale),
 				new TypedValue((int) DxfCode.Real,  displaySettings.ResultScale),
 				new TypedValue((int) DxfCode.Real,  displaySettings.TextScale),
+				new TypedValue((int) DxfCode.Int32, displaySettings.DisplacementMagnifier),
 			};
 		}
 		
@@ -587,7 +588,7 @@ namespace SPMTool
 		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="Units" />.</param>
 		public static Units? GetUnits(this IEnumerable<TypedValue>? values)
 		{
-			if (values.IsNullOrEmpty() || values.Count() != 9)
+			if (values.IsNullOrEmpty() || values.Count() != 8)
 				return null;
 
 			return new Units
@@ -600,7 +601,6 @@ namespace SPMTool
 				StringerForces        = (ForceUnit) values.ElementAt(5).ToInt(),
 				PanelStresses         = (PressureUnit) values.ElementAt(6).ToInt(),
 				MaterialStrength      = (PressureUnit) values.ElementAt(7).ToInt(),
-				DisplacementMagnifier = values.ElementAt(8).ToInt()
 			};
 		}
 

@@ -213,8 +213,12 @@
     <Compile Include="UserInterface\Windows\AnalysisConfig.xaml.cs">
       <DependentUpon>AnalysisConfig.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UserInterface\Windows\BaseWindow.cs" />
     <Compile Include="UserInterface\Windows\ConcreteConfig.xaml.cs">
       <DependentUpon>ConcreteConfig.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserInterface\Windows\DisplayConfig.xaml.cs">
+      <DependentUpon>DisplayConfig.xaml</DependentUpon>
     </Compile>
     <Compile Include="UserInterface\Windows\PlotWindow.xaml.cs">
       <DependentUpon>PlotWindow.xaml</DependentUpon>
@@ -235,6 +239,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="UserInterface\Windows\ConcreteConfig.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserInterface\Windows\DisplayConfig.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

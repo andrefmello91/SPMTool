@@ -131,12 +131,14 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		private IEnumerable<AttributeReference?>? ForceAttributeReference()
 		{
+			var txtH = Model.TextHeight;
+			
 			if (!Value.IsXZero)
 				yield return new AttributeReference
 				{
 					Position            = TextInsertionPoint(ComponentDirection.X).ToPoint3d(),
 					TextString          = $"{Value.X.Value.Abs():0.00}",
-					Height              = 30 * Settings.Units.ScaleFactor,
+					Height              = txtH,
 					Justify             = AttachmentPoint.MiddleLeft,
 					LockPositionInBlock = true,
 					Invisible           = false
@@ -147,7 +149,7 @@ namespace SPMTool.Core.Conditions
 				{
 					Position            = TextInsertionPoint(ComponentDirection.Y).ToPoint3d(),
 					TextString          = $"{Value.Y.Value.Abs():0.00}",
-					Height              = 30 * Settings.Units.ScaleFactor,
+					Height              = txtH,
 					Justify             = AttachmentPoint.MiddleLeft,
 					LockPositionInBlock = true,
 					Invisible           = false
