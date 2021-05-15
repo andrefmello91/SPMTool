@@ -394,7 +394,7 @@ namespace SPMTool.Core
 		/// </summary>
 		public static void SetAppParameters()
 		{
-			SetPointSize();
+			UpdatePointSize();
 			SetLineWeightDisplay();
 		}
 
@@ -409,13 +409,14 @@ namespace SPMTool.Core
 		public static void SetLineWeightDisplay() => DataBase.Database.LineWeightDisplay = true;
 
 		/// <summary>
-		///     Set size to points in the drawing.
+		///     Update size of points in the drawing.
 		/// </summary>
-		public static void SetPointSize()
+		public static void UpdatePointSize()
 		{
 			// Set the style for all point objects in the drawing
 			DataBase.Database.Pdmode = 32;
-			DataBase.Database.Pdsize = 40 * Settings.Units.ScaleFactor;
+			DataBase.Database.Pdsize = 40 * Settings.Units.ScaleFactor * Settings.Display.NodeScale;
+			Editor.Regen();
 		}
 
 		/// <summary>
