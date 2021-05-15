@@ -182,7 +182,7 @@ namespace SPMTool.Core.Elements
 				RemoveUnnecessary(geometries);
 
 			// Set the style for all point objects in the drawing
-			SetPointSize();
+			UpdatePointSize();
 		}
 
 		#endregion
