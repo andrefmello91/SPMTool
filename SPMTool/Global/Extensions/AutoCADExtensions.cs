@@ -70,6 +70,56 @@ namespace SPMTool
 		}
 
 		/// <summary>
+		///		Update scale of a collection of blocks.
+		/// </summary>
+		/// <param name="blockIds">The blocks' <see cref="ObjectId"/>'s.</param>
+		/// <param name="oldScale">The old scale factor.</param>
+		/// <param name="newScale">The new scale factor.</param>
+		/// <param name="setToAttributes">Set scale to attribute text heights?</param>
+		public static void UpdateScale(this IEnumerable<ObjectId> blockIds, double oldScale, double newScale, bool setToAttributes = false)
+		{
+			var ratio = newScale / oldScale;
+
+			var objIds = blockIds.ToList();
+			
+			if (objIds.IsNullOrEmpty() || !ratio.IsFinite() || ratio.Approx(1, 1E-3))
+				return;
+
+			using var trans = StartTransaction();
+
+			foreach (var id in objIds)
+			{
+				if (id == ObjectId.Null || trans.GetObject(id, OpenMode.ForRead) is not BlockReference block)
+					continue;
+
+				// Get attributes
+				var atts = block.AttributeCollection?.Cast<ObjectId>()
+					.Select(o => (AttributeReference) trans.GetObject(o, OpenMode.ForRead))
+					.ToList();
+
+				// Get old attribute heights
+				var attHeights = atts?.Select(a => a.Height).ToList();
+
+				// Set scale
+				block.UpgradeOpen();
+				block.TransformBy(Matrix3d.Scaling(ratio, block.Position));
+
+				if (setToAttributes || atts is null || atts.Count == 0)
+					continue;
+
+				// Set old attribute heights
+				for (var i = 0; i < atts.Count; i++)
+				{
+					atts[i].UpgradeOpen();
+					atts[i].Height = attHeights![i];
+				}
+			}
+
+			trans.Commit();
+
+		}
+
+		/// <summary>
 		///     Add the <paramref name="dbObjects" /> in this collection to the drawing and return the collection of
 		///     <see cref="ObjectId" />'s.
 		/// </summary>

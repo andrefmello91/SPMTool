@@ -1,9 +1,12 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using andrefmello91.Extensions;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Core;
 using SPMTool.Enums;
 using UnitsNet.Units;
+
+#nullable enable
 
 namespace SPMTool.Application
 {
@@ -46,7 +49,6 @@ namespace SPMTool.Application
 		public static readonly string[] StressUnits = { PressureUnit.Pascal.Abbrev(), PressureUnit.Kilopascal.Abbrev(), PressureUnit.Megapascal.Abbrev(), PressureUnit.Gigapascal.Abbrev() };
 
 		private AnalysisSettings _analysis;
-		private DisplaySettings _displaySettings;
 		private Units _units;
 
 		#endregion
@@ -66,11 +68,7 @@ namespace SPMTool.Application
 		/// <summary>
 		///     Get <see cref="Application.DisplaySettings" /> saved in database.
 		/// </summary>
-		public DisplaySettings Display
-		{
-			get => _displaySettings;
-			set => SetDisplaySettings(value);
-		}
+		public DisplaySettings Display { get; private set; }
 
 		/// <inheritdoc />
 		public override Layer Layer => default;
@@ -95,6 +93,8 @@ namespace SPMTool.Application
 		{
 			DictionaryId = DataBase.NodId;
 			GetProperties();
+			Display!.NodeScaleChanged      += On_NodeScaleChange;
+			Display!.ConditionScaleChanged += On_ConditionScaleChange;
 		}
 
 		#endregion
@@ -109,9 +109,9 @@ namespace SPMTool.Application
 
 		protected override void GetProperties()
 		{
-			_analysis        = GetAnalysisSettings();
-			_units           = GetUnits();
-			_displaySettings = GetDisplaySettings();
+			_analysis = GetAnalysisSettings();
+			_units    = GetUnits();
+			Display   = GetDisplaySettings();
 		}
 
 		protected override void SetProperties()
@@ -149,16 +149,6 @@ namespace SPMTool.Application
 		}
 
 		/// <summary>
-		///     Save this <paramref name="displaySettings" /> in database.
-		/// </summary>
-		private void SetDisplaySettings(DisplaySettings displaySettings)
-		{
-			_displaySettings = displaySettings;
-
-			SetDictionary((TypedValue[]) displaySettings, DSaveName);
-		}
-
-		/// <summary>
 		///     Save this <paramref name="units" /> in database.
 		/// </summary>
 		private void SetUnits(Units units)
@@ -167,6 +157,10 @@ namespace SPMTool.Application
 
 			SetDictionary((TypedValue[]) units, USaveName);
 		}
+
+		private static void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => Model.UpdatePointSize();
+
+		private static void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => Model.UpdateConditionsScale(e.OldScale, e.NewScale);
 
 		#endregion
 

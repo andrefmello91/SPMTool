@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.EList;
+using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using andrefmello91.Material.Reinforcement;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Geometry;
+using MathNet.Numerics;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
@@ -418,6 +421,16 @@ namespace SPMTool.Core
 			DataBase.Database.Pdsize = 40 * Settings.Units.ScaleFactor * Settings.Display.NodeScale;
 			Editor.Regen();
 		}
+
+		/// <summary>
+		///		Update scale of forces and supports.
+		/// </summary>
+		/// <param name="oldScale">The old scale factor.</param>
+		/// <param name="newScale">The new scale factor.</param>
+		public static void UpdateConditionsScale(double oldScale, double newScale) =>
+			Constraints.Select(c => c.ObjectId)
+				.Concat(Forces.Select(f => f.ObjectId))
+				.UpdateScale(oldScale, newScale);
 
 		/// <summary>
 		///     Update all the elements in the drawing.
