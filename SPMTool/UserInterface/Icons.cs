@@ -46,7 +46,8 @@ namespace SPMTool.Application.UserInterface
 			_dispBmp,
 			_crackBmp,
 			_unitsBmp,
-			_anSetBmp;
+			_anSetBmp,
+			_dpSetBmp;
 
 		#endregion
 
@@ -186,6 +187,11 @@ namespace SPMTool.Application.UserInterface
 		///     Get Simulation icon.
 		/// </summary>
 		public BitmapImage Simulation => GetBitmap(_simBmp);
+		
+		/// <summary>
+		///     Get Display Settings icon.
+		/// </summary>
+		public BitmapImage Display => GetBitmap(_dpSetBmp);
 
 		#endregion
 
@@ -247,6 +253,7 @@ namespace SPMTool.Application.UserInterface
 			_crackBmp   = GetFromResource("crack_large", theme)!;
 			_unitsBmp   = GetFromResource("units", theme)!;
 			_anSetBmp   = GetFromResource("analysissettings", theme)!;
+			_dpSetBmp   = GetFromResource("display_large", theme)!;
 		}
 
 		#endregion

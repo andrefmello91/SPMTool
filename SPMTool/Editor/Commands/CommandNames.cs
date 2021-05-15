@@ -83,7 +83,10 @@ namespace SPMTool.Editor.Commands
 		UpdateElements,
 
 		[Command(Units, "Set units")]
-		Units
+		Units,
+		
+		[Command(Display, "Set display settings")]
+		Display
 	}
 
 	/// <summary>
@@ -147,6 +150,8 @@ namespace SPMTool.Editor.Commands
 		public const string UpdateElements = nameof(UpdateElements);
 
 		public const string Units = nameof(Units);
+		
+		public const string Display = nameof(Display);
 
 		#endregion
 

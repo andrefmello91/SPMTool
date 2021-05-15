@@ -1,7 +1,9 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
+﻿using System.Windows;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
 using SPMTool.Core;
 using SPMTool.Editor.Commands;
+using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Application.UserInterface
 {
@@ -267,6 +269,8 @@ namespace SPMTool.Application.UserInterface
 			pnlSrc.Items.Add(Command.Units.GetRibbonButton());
 
 			pnlSrc.Items.Add(Command.Analysis.GetRibbonButton());
+			
+			pnlSrc.Items.Add(Command.Display.GetRibbonButton());
 		}
 
 		/// <summary>
