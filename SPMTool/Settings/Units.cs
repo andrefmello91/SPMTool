@@ -116,9 +116,11 @@ namespace SPMTool.Application
 		public AreaUnit ReinforcementArea => Reinforcement.GetAreaUnit();
 
 		/// <summary>
-		///     Get the drawing scale factor.
+		///     Get the drawing scale factor related to <see cref="LengthUnit.Millimeter"/>.
 		/// </summary>
-		public double ScaleFactor => Geometry is LengthUnit.Millimeter ? 1 : 1.ConvertFromMillimeter(Geometry);
+		public double ScaleFactor => Geometry is LengthUnit.Millimeter 
+			? 1 
+			: 1.ConvertFromMillimeter(Geometry);
 
 		/// <summary>
 		///     Get/set the <see cref="ForceUnit" /> for stringer forces.
