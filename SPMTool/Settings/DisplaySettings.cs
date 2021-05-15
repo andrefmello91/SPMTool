@@ -10,6 +10,45 @@ namespace SPMTool.Application
 	public class DisplaySettings : IEquatable<DisplaySettings>
 	{
 
+		#region Fields
+
+		private double _nodeScale;
+		private double _conditionScale;
+		private double _resultScale;
+		private int _displacementMagnifier;
+		private double _textScale;
+
+		#endregion
+
+		#region Events
+
+		/// <summary>
+		///		Event to run when <see cref="NodeScale"/> changes.
+		/// </summary>
+		public event EventHandler? NodeScaleChanged;
+		
+		/// <summary>
+		///		Event to run when <see cref="ConditionScale"/> changes.
+		/// </summary>
+		public event EventHandler? ConditionScaleChanged;
+		
+		/// <summary>
+		///		Event to run when <see cref="ResultScale"/> changes.
+		/// </summary>
+		public event EventHandler? ResultScaleChanged;
+		
+		/// <summary>
+		///		Event to run when <see cref="TextScale"/> changes.
+		/// </summary>
+		public event EventHandler? TextScaleChanged;
+		
+		/// <summary>
+		///		Event to run when <see cref="DisplacementMagnifier"/> changes.
+		/// </summary>
+		public event EventHandler? DisplacementMagnifierChanged;
+
+		#endregion
+
 		#region Properties
 
 		/// <summary>
@@ -25,29 +64,89 @@ namespace SPMTool.Application
 		};
 
 		/// <summary>
-		///     Get/set the scale factor for nodes.
-		/// </summary>
-		public double NodeScale { get; set; }
-
-		/// <summary>
 		///     Get/set the scale factor for conditions (forces and supports).
 		/// </summary>
-		public double ConditionScale { get; set; }
-		
+		public double ConditionScale
+		{
+			get => _conditionScale;
+			set
+			{
+				if (_conditionScale.Approx(value, 1E-3))
+					return;
+				
+				_conditionScale = value;
+				
+				ConditionScaleChanged?.Invoke(this, new EventArgs());
+			}
+		}
+
+		/// <summary>
+		///     Get/set the magnifier scale factor for the displaced model.
+		/// </summary>
+		public int DisplacementMagnifier
+		{
+			get => _displacementMagnifier;
+			set
+			{
+				if (_displacementMagnifier == value)
+					return;
+				
+				_displacementMagnifier = value;
+				
+				DisplacementMagnifierChanged?.Invoke(this, new EventArgs());
+			}
+		}
+
+		/// <summary>
+		///     Get/set the scale factor for nodes.
+		/// </summary>
+		public double NodeScale
+		{
+			get => _nodeScale;
+			set
+			{
+				if (_nodeScale.Approx(value, 1E-3))
+					return;
+
+				_nodeScale = value;
+
+				NodeScaleChanged?.Invoke(this, new EventArgs());
+			}
+		}
+
 		/// <summary>
 		///     Get/set the scale factor for results. This affects panel's blocks.
 		/// </summary>
-		public double ResultScale { get; set; }
+		public double ResultScale
+		{
+			get => _resultScale;
+			set
+			{
+				if (_resultScale.Approx(value, 1E-3))
+					return;
+				
+				_resultScale = value;
+				
+				ResultScaleChanged?.Invoke(this, new EventArgs());
+			}
+		}
 
 		/// <summary>
 		///     Get/set the scale factor for texts.
 		/// </summary>
-		public double TextScale { get; set; }
-		
-		/// <summary>
-		///     Get/set the magnifier scale factor for the displaced model.
-		/// </summary>
-		public int DisplacementMagnifier { get; set; }
+		public double TextScale
+		{
+			get => _textScale;
+			set
+			{
+				if (_textScale.Approx(value, 1E-3))
+					return;
+				
+				_textScale = value;
+				
+				TextScaleChanged?.Invoke(this, new EventArgs());
+			}
+		}
 
 		#endregion
 
