@@ -18,30 +18,6 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private bool BoxesFilled => CheckBoxes(NodeBox, ConditionBox, ResultBox, TextScaleBox, DisplacementBox);
 
-		/// <summary>
-		///     Get/set display settings.
-		/// </summary>
-		private DisplaySettings Display
-		{
-			get => new()
-			{
-				NodeScale             = double.Parse(NodeBox.Text),
-				ConditionScale        = double.Parse(ConditionBox.Text),
-				ResultScale           = double.Parse(ResultBox.Text),
-				TextScale             = double.Parse(TextScaleBox.Text),
-				DisplacementMagnifier = int.Parse(DisplacementBox.Text)
-			};
-
-			set
-			{
-				NodeBox.Text         = $"{value.NodeScale:0.00}";
-				ConditionBox.Text    = $"{value.ConditionScale:0.00}";
-				ResultBox.Text       = $"{value.ResultScale:0.00}";
-				TextScaleBox.Text    = $"{value.TextScale:0.00}";
-				DisplacementBox.Text = $"{value.DisplacementMagnifier}";
-			}
-		}
-
 		#endregion
 
 		#region Constructors
@@ -52,8 +28,8 @@ namespace SPMTool.Application.UserInterface
 
 			InitializeComponent();
 
-			// Read units
-			Display = DataBase.Settings.Display;
+			// Read values
+			GetValues(DataBase.Settings.Display);
 		}
 
 		#endregion
@@ -61,9 +37,33 @@ namespace SPMTool.Application.UserInterface
 		#region Methods
 
 		/// <summary>
+		///		Get initial values for text boxes.
+		/// </summary>
+		private void GetValues(DisplaySettings displaySettings)
+		{
+			NodeBox.Text         = $"{displaySettings.NodeScale:0.0}";
+			ConditionBox.Text    = $"{displaySettings.ConditionScale:0.0}";
+			ResultBox.Text       = $"{displaySettings.ResultScale:0.0}";
+			TextScaleBox.Text    = $"{displaySettings.TextScale:0.0}";
+			DisplacementBox.Text = $"{displaySettings.DisplacementMagnifier}";
+		}
+
+		/// <summary>
+		///		Set values on <paramref name="displaySettings"/>.
+		/// </summary>
+		private void SetValues(DisplaySettings displaySettings)
+		{
+			displaySettings.NodeScale             = double.Parse(NodeBox.Text);
+			displaySettings.ConditionScale        = double.Parse(ConditionBox.Text);
+			displaySettings.ResultScale           = double.Parse(ResultBox.Text);
+			displaySettings.TextScale             = double.Parse(TextScaleBox.Text);
+			displaySettings.DisplacementMagnifier = int.Parse(DisplacementBox.Text);
+		}
+		
+		/// <summary>
 		///     Set default units.
 		/// </summary>
-		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => Display = DisplaySettings.Default;
+		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => GetValues(DisplaySettings.Default);
 
 		/// <summary>
 		///     Save units if OK button is clicked.
@@ -76,8 +76,8 @@ namespace SPMTool.Application.UserInterface
 				return;
 			}
 
-			// Save units on database
-			DataBase.Settings.Display = Display;
+			// Set values
+			SetValues(DataBase.Settings.Display);
 
 			Close();
 		}
