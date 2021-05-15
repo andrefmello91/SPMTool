@@ -25,27 +25,27 @@ namespace SPMTool.Application
 		/// <summary>
 		///		Event to run when <see cref="NodeScale"/> changes.
 		/// </summary>
-		public event EventHandler? NodeScaleChanged;
+		public event EventHandler<ScaleChangedEventArgs>? NodeScaleChanged;
 		
 		/// <summary>
 		///		Event to run when <see cref="ConditionScale"/> changes.
 		/// </summary>
-		public event EventHandler? ConditionScaleChanged;
+		public event EventHandler<ScaleChangedEventArgs>? ConditionScaleChanged;
 		
 		/// <summary>
 		///		Event to run when <see cref="ResultScale"/> changes.
 		/// </summary>
-		public event EventHandler? ResultScaleChanged;
+		public event EventHandler<ScaleChangedEventArgs>? ResultScaleChanged;
 		
 		/// <summary>
 		///		Event to run when <see cref="TextScale"/> changes.
 		/// </summary>
-		public event EventHandler? TextScaleChanged;
+		public event EventHandler<ScaleChangedEventArgs>? TextScaleChanged;
 		
 		/// <summary>
 		///		Event to run when <see cref="DisplacementMagnifier"/> changes.
 		/// </summary>
-		public event EventHandler? DisplacementMagnifierChanged;
+		public event EventHandler<ScaleChangedEventArgs>? DisplacementMagnifierChanged;
 
 		#endregion
 
@@ -73,10 +73,12 @@ namespace SPMTool.Application
 			{
 				if (_conditionScale.Approx(value, 1E-3))
 					return;
+
+				var old = _conditionScale;
 				
 				_conditionScale = value;
 				
-				ConditionScaleChanged?.Invoke(this, new EventArgs());
+				ConditionScaleChanged?.Invoke(this, new ScaleChangedEventArgs(old, value));
 			}
 		}
 
@@ -90,10 +92,12 @@ namespace SPMTool.Application
 			{
 				if (_displacementMagnifier == value)
 					return;
+
+				var old = _displacementMagnifier;
 				
 				_displacementMagnifier = value;
 				
-				DisplacementMagnifierChanged?.Invoke(this, new EventArgs());
+				DisplacementMagnifierChanged?.Invoke(this, new ScaleChangedEventArgs(old, value));
 			}
 		}
 
@@ -108,9 +112,11 @@ namespace SPMTool.Application
 				if (_nodeScale.Approx(value, 1E-3))
 					return;
 
+				var old = _nodeScale;
+				
 				_nodeScale = value;
-
-				NodeScaleChanged?.Invoke(this, new EventArgs());
+				
+				NodeScaleChanged?.Invoke(this, new ScaleChangedEventArgs(old, value));
 			}
 		}
 
@@ -124,10 +130,12 @@ namespace SPMTool.Application
 			{
 				if (_resultScale.Approx(value, 1E-3))
 					return;
+
+				var old = _resultScale;
 				
 				_resultScale = value;
 				
-				ResultScaleChanged?.Invoke(this, new EventArgs());
+				ResultScaleChanged?.Invoke(this, new ScaleChangedEventArgs(old, value));
 			}
 		}
 
@@ -141,10 +149,12 @@ namespace SPMTool.Application
 			{
 				if (_textScale.Approx(value, 1E-3))
 					return;
+
+				var old = _textScale;
 				
 				_textScale = value;
 				
-				TextScaleChanged?.Invoke(this, new EventArgs());
+				TextScaleChanged?.Invoke(this, new ScaleChangedEventArgs(old, value));
 			}
 		}
 
@@ -190,5 +200,17 @@ namespace SPMTool.Application
 
 		#endregion
 
+	}
+
+	public class ScaleChangedEventArgs : EventArgs
+	{
+		public double OldScale { get; }
+		public double NewScale { get; }
+
+		public ScaleChangedEventArgs(double oldScale, double newScaleScale)
+		{
+			OldScale = oldScale;
+			NewScale = newScaleScale;
+		}
 	}
 }
