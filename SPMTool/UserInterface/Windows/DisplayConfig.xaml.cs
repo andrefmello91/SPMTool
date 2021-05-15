@@ -16,7 +16,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Verify if boxes are filled.
 		/// </summary>
-		private bool BoxesFilled => new[] { NodeBox, ConditionBox, ResultBox, TextScaleBox, DisplacementBox }.All(b => b.Text.ParsedAndNotZero(out var number) && number > 0);
+		private bool BoxesFilled => CheckBoxes(new[] { NodeBox, ConditionBox, ResultBox, TextScaleBox, DisplacementBox });
 
 		/// <summary>
 		///     Get/set display settings.
@@ -72,7 +72,7 @@ namespace SPMTool.Application.UserInterface
 		{
 			if (!BoxesFilled)
 			{
-				MessageBox.Show("Please set positive and non zero parameters.");
+				MessageBox.Show("Please set positive and non zero values.");
 				return;
 			}
 

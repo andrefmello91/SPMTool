@@ -78,19 +78,12 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
-			// Check if tolerance is positive
-			if (double.TryParse(ToleranceBox.Text, out var t) && t <= 0)
-			{
-				MessageBox.Show("Please set tolerance greater than zero.");
-				return;
-			}
-
 			var boxes = new[] { ToleranceBox, LoadStepsBox, IterationsBox };
 
 			// Check if parameters parse
-			if (!boxes.All(d => d.Text.ParsedAndNotZero(out _)))
+			if (!boxes.All(d => d.Text.ParsedAndNotZero(out var n) && n > 0))
 			{
-				MessageBox.Show("Please set valid parameters.");
+				MessageBox.Show("Please set positive and non zero values.");
 				return;
 			}
 
@@ -100,18 +93,6 @@ namespace SPMTool.Application.UserInterface
 			Close();
 		}
 
-		private void DoubleValidationTextBox(object sender, TextCompositionEventArgs e)
-		{
-			var regex = new Regex("[^0-9.]+e");
-			e.Handled = regex.IsMatch(e.Text);
-		}
-
-		private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
-		{
-			var regex = new Regex("[^0-9]+");
-			e.Handled = regex.IsMatch(e.Text);
-		}
-		
 		#endregion
 
 	}

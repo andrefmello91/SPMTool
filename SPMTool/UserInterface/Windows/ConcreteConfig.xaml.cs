@@ -16,7 +16,7 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para ConcreteConfig.xaml
 	/// </summary>
-	public partial class ConcreteConfig : Window
+	public partial class ConcreteConfig : BaseWindow
 	{
 
 		#region Fields
@@ -119,14 +119,12 @@ namespace SPMTool.Application.UserInterface
 			UpdateCustomParameterBoxes();
 		}
 
-		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
-
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Verify if text boxes are filled
 			if (!ParametersSet)
 			{
-				MessageBox.Show("Please set concrete strength and aggregate diameter.", "Alert");
+				MessageBox.Show("Please set positive and non zero values for concrete strength and aggregate diameter.", "Alert");
 				return;
 			}
 
@@ -138,7 +136,7 @@ namespace SPMTool.Application.UserInterface
 			{
 				if (!CustomParametersSet)
 				{
-					MessageBox.Show("Please set concrete custom parameters.", "Alert");
+					MessageBox.Show("Please set positive and non zero values for concrete custom parameters.", "Alert");
 					return;
 				}
 
@@ -150,11 +148,6 @@ namespace SPMTool.Application.UserInterface
 			DataBase.ConcreteData.ConstitutiveModel = ConstitutiveModel;
 			Close();
 		}
-
-		/// <summary>
-		///     Check if <paramref name="textBoxes" /> are filled and not zero.
-		/// </summary>
-		private bool CheckBoxes(IEnumerable<TextBox> textBoxes) => textBoxes.All(textBox => textBox.Text.ParsedAndNotZero(out _));
 
 		/// <summary>
 		///     Get custom parameters.
@@ -194,12 +187,6 @@ namespace SPMTool.Application.UserInterface
 
 			if (_parameters.Model != ParameterModel.Custom)
 				CustomParameterBoxes.Disable();
-		}
-
-		private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
-		{
-			var regex = new Regex("[^0-9.]+");
-			e.Handled = regex.IsMatch(e.Text);
 		}
 
 		private void ParameterBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)

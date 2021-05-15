@@ -1,6 +1,10 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using andrefmello91.Extensions;
 using SPMTool.Core;
 
 namespace SPMTool.Application.UserInterface
@@ -8,14 +12,9 @@ namespace SPMTool.Application.UserInterface
 	public abstract class BaseWindow : Window
 	{
 		/// <summary>
-		///		The regex digits of an int.
+		///     Check if <paramref name="textBoxes" /> are filled and not zero.
 		/// </summary>
-		internal static readonly Regex IntRegex  = new ("[^0-9]+");
-		
-		/// <summary>
-		///		The regex digits of a double.
-		/// </summary>
-		internal static readonly Regex DoubleRegex  = new ("[^0-9.]+");
+		protected static bool CheckBoxes(IEnumerable<TextBox> textBoxes) => textBoxes.All(textBox => textBox.Text.ParsedAndNotZero(out var n) && n > 0);
 
 		/// <summary>
 		///     Close window if cancel button is clicked.
@@ -25,11 +24,11 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///		Verify if the pressed button correspond to a digit of an int.
 		/// </summary>
-		protected void IntValidation(object sender, TextCompositionEventArgs e) => e.Handled = IntRegex.IsMatch(e.Text);
+		protected void IntValidation(object sender, TextCompositionEventArgs e) => e.Handled = !e.Text.ToCharArray().All(c => c.IsValidForInt());
 
 		/// <summary>
 		///		Verify if the pressed button correspond to a digit of a double.
 		/// </summary>
-		protected void DoubleValidation(object sender, TextCompositionEventArgs e) => e.Handled = DoubleRegex.IsMatch(e.Text);
+		protected void DoubleValidation(object sender, TextCompositionEventArgs e) => e.Handled = !e.Text.ToCharArray().All(c => c.IsValidForDouble());
 	}
 }

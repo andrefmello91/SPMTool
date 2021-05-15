@@ -19,7 +19,7 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para StringerGeometryWindow.xaml
 	/// </summary>
-	public partial class StringerWindow : Window
+	public partial class StringerWindow
 	{
 
 		#region Fields
@@ -223,6 +223,8 @@ namespace SPMTool.Application.UserInterface
 			_stressUnit        = DataBase.Settings.Units.MaterialStrength;
 			_geometryUnit      = DataBase.Settings.Units.Geometry;
 			_reinforcementUnit = DataBase.Settings.Units.Reinforcement;
+			
+			DataContext        = this;
 
 			InitializeComponent();
 
@@ -232,8 +234,6 @@ namespace SPMTool.Application.UserInterface
 			GetInitialGeometry();
 
 			GetInitialReinforcement();
-
-			DataContext = this;
 		}
 
 		#endregion
@@ -258,8 +258,6 @@ namespace SPMTool.Application.UserInterface
 		/// <returns></returns>
 		private static IEnumerable<string> SavedRefOptions() => StringerReinforcements.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.Value:0.00}");
 
-		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
-
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Check geometry
@@ -267,7 +265,7 @@ namespace SPMTool.Application.UserInterface
 			{
 				if (!GeometryFilled)
 				{
-					MessageBox.Show("Please set stringer geometry.", "Alert");
+					MessageBox.Show("Please set positive and non zero values for stringer geometry.", "Alert");
 					return;
 				}
 
@@ -279,7 +277,7 @@ namespace SPMTool.Application.UserInterface
 			{
 				if (ReinforcementChecked && !ReinforcementFilled)
 				{
-					MessageBox.Show("Please set all reinforcement properties or uncheck reinforcement checkbox.", "Alert");
+					MessageBox.Show("Please set positive and non zero values for reinforcement properties or uncheck reinforcement checkbox.", "Alert");
 					return;
 				}
 
@@ -287,17 +285,6 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			Close();
-		}
-
-		/// <summary>
-		///     Check if <paramref name="textBoxes" /> are filled and not zero.
-		/// </summary>
-		private bool CheckBoxes(IEnumerable<TextBox> textBoxes) => textBoxes.All(textBox => textBox.Text.ParsedAndNotZero(out _));
-
-		private void DoubleValidationTextBox(object sender, TextCompositionEventArgs e)
-		{
-			var regex = new Regex("[^0-9.]+");
-			e.Handled = regex.IsMatch(e.Text);
 		}
 
 		/// <summary>
@@ -375,12 +362,6 @@ namespace SPMTool.Application.UserInterface
 			{
 				ReinforcementChecked = false;
 			}
-		}
-
-		private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
-		{
-			var regex = new Regex("[^0-9]+");
-			e.Handled = regex.IsMatch(e.Text);
 		}
 
 		private void ReinforcementCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementChecked = ((CheckBox) sender).IsChecked ?? false;

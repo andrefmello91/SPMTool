@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using andrefmello91.Extensions;
 using andrefmello91.Material.Reinforcement;
 using MathNet.Numerics;
@@ -13,7 +11,6 @@ using SPMTool.Enums;
 using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.Model;
-using Window = System.Windows.Window;
 
 #nullable enable
 
@@ -22,7 +19,7 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para StringerGeometryWindow.xaml
 	/// </summary>
-	public partial class PanelWindow : Window
+	public partial class PanelWindow
 	{
 
 		#region Fields
@@ -316,6 +313,8 @@ namespace SPMTool.Application.UserInterface
 			_geometryUnit      = DataBase.Settings.Units.Geometry;
 			_reinforcementUnit = DataBase.Settings.Units.Reinforcement;
 			_stressUnit        = DataBase.Settings.Units.MaterialStrength;
+			
+			DataContext        = this;
 
 			InitializeComponent();
 
@@ -326,7 +325,6 @@ namespace SPMTool.Application.UserInterface
 
 			GetInitialReinforcement();
 
-			DataContext = this;
 		}
 
 		#endregion
@@ -351,8 +349,6 @@ namespace SPMTool.Application.UserInterface
 		/// <returns></returns>
 		private static IEnumerable<string> SavedSteelOptions() => StringerWindow.SavedSteelOptions();
 
-		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
-
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Check geometry
@@ -360,7 +356,7 @@ namespace SPMTool.Application.UserInterface
 			{
 				if (!WidthFilled)
 				{
-					MessageBox.Show("Please set stringer geometry.", "Alert");
+					MessageBox.Show("Please set  positive and non zero values for panel geometry.", "Alert");
 					return;
 				}
 
@@ -372,13 +368,13 @@ namespace SPMTool.Application.UserInterface
 			{
 				if (ReinforcementXChecked && !ReinforcementXFilled)
 				{
-					MessageBox.Show("Please set all reinforcement properties or uncheck X reinforcement checkbox.", "Alert");
+					MessageBox.Show("Please set positive and non zero values for reinforcement properties or uncheck X reinforcement checkbox.", "Alert");
 					return;
 				}
 
 				if (ReinforcementYChecked && !ReinforcementYFilled)
 				{
-					MessageBox.Show("Please set all reinforcement properties or uncheck Y reinforcement checkbox.", "Alert");
+					MessageBox.Show("Please set positive and non zero values for reinforcement properties or uncheck Y reinforcement checkbox.", "Alert");
 					return;
 				}
 
@@ -386,17 +382,6 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			Close();
-		}
-
-		/// <summary>
-		///     Check if <paramref name="textBoxes" /> are filled and not zero.
-		/// </summary>
-		private bool CheckBoxes(IEnumerable<TextBox> textBoxes) => textBoxes.All(textBox => textBox.Text.ParsedAndNotZero(out _));
-
-		private void DoubleValidationTextBox(object sender, TextCompositionEventArgs e)
-		{
-			var regex = new Regex("[^0-9.]+");
-			e.Handled = regex.IsMatch(e.Text);
 		}
 
 		/// <summary>

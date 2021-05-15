@@ -1,8 +1,9 @@
-﻿<Window x:Class="SPMTool.Application.UserInterface.PanelWindow"
+﻿<userInterface:BaseWindow x:Class="SPMTool.Application.UserInterface.PanelWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:userInterface="clr-namespace:SPMTool.Application.UserInterface"
         mc:Ignorable="d"
         Title="Set width and reinforcement to selected panels" Height="350" Width="770">
     <Grid Background="WhiteSmoke">
@@ -59,7 +60,7 @@
                         <TextBlock Text="Width (b):" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1"
                                    Grid.Column="0" Margin="5,0,0,0" />
                         <TextBox Name="WBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="65"
-                                 Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox"
+                                 Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidation"
                                  Grid.Column="1" Grid.Row="1" />
                         <TextBlock Text="{Binding GeometryUnit}" HorizontalAlignment="Center"
                                    VerticalAlignment="Center" Grid.Column="2" Grid.Row="1" Width="20" />
@@ -116,16 +117,16 @@
                                    Grid.Row="7" Margin="5,0,0,0" />
                         <TextBox Name="PhiXBox" HorizontalAlignment="Center" Width="65" Height="23"
                                  VerticalContentAlignment="Center" TextWrapping="NoWrap"
-                                 PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="1" />
+                                 PreviewTextInput="DoubleValidation" Grid.Column="1" Grid.Row="1" />
                         <TextBox Name="SxBox" HorizontalAlignment="Center" Width="65" Height="23"
                                  VerticalContentAlignment="Center" TextWrapping="NoWrap"
-                                 PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="2" />
+                                 PreviewTextInput="DoubleValidation" Grid.Column="1" Grid.Row="2" />
                         <TextBox Name="FxBox" HorizontalAlignment="Center" Width="65" Height="23"
                                  VerticalContentAlignment="Center" TextWrapping="NoWrap"
-                                 PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="6" />
+                                 PreviewTextInput="DoubleValidation" Grid.Column="1" Grid.Row="6" />
                         <TextBox Name="ExBox" HorizontalAlignment="Center" Width="65" Height="23"
                                  VerticalContentAlignment="Center" TextWrapping="NoWrap"
-                                 PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="7" />
+                                 PreviewTextInput="DoubleValidation" Grid.Column="1" Grid.Row="7" />
                         <ComboBox Name="SavedSteelX" HorizontalAlignment="left" VerticalContentAlignment="Center"
                                   Grid.Column="1" Grid.Row="4" Grid.ColumnSpan="2" Width="105" Height="23"
                                   SelectionChanged="SavedSteelX_OnSelectionChanged" />
@@ -190,15 +191,15 @@
                                    Grid.Row="7" Margin="5,0,0,0" />
                         <TextBox Name="PhiYBox" HorizontalAlignment="Center" VerticalContentAlignment="Center"
                                  Width="65" Height="23" TextWrapping="NoWrap"
-                                 PreviewTextInput="DoubleValidationTextBox" Grid.Column="1" Grid.Row="1" />
+                                 PreviewTextInput="DoubleValidation" Grid.Column="1" Grid.Row="1" />
                         <TextBox Name="SyBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="65"
-                                 Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox"
+                                 Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidation"
                                  Grid.Column="1" Grid.Row="2" />
                         <TextBox Name="FyBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="65"
-                                 Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox"
+                                 Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidation"
                                  Grid.Column="1" Grid.Row="6" />
                         <TextBox Name="EyBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" Width="65"
-                                 Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidationTextBox"
+                                 Height="23" TextWrapping="NoWrap" PreviewTextInput="DoubleValidation"
                                  Grid.Column="1" Grid.Row="7" />
                         <ComboBox Name="SavedSteelY" VerticalContentAlignment="Center" HorizontalAlignment="left"
                                   Grid.Column="1" Grid.Row="4" Grid.ColumnSpan="2" Width="105" Height="23"
@@ -232,4 +233,4 @@
                 Width="75" Click="ButtonCancel_OnClick" ToolTip="Discard changes" Grid.Row="6" Grid.Column="5"
                 Height="20" Margin="0,6,85,5" />
     </Grid>
-</Window>
+</userInterface:BaseWindow>

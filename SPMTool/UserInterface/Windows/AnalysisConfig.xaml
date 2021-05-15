@@ -56,8 +56,7 @@
                     <TextBlock Text="Nonlinear Solver:" HorizontalAlignment="Left" VerticalAlignment="Center"
                                Grid.Row="4" Grid.Column="1" />
                     <ComboBox Name="SolverBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
-                             Height="25" Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2"
-                             PreviewTextInput="IntValidation" />
+                             Height="25" Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2"/>
                 </Grid>
             </StackPanel>
         </Border>
