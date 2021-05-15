@@ -187,10 +187,12 @@ namespace SPMTool.Editor.Commands
 
 			if (pnls.IsNullOrEmpty())
 				return;
-
+			
+			// Get the elements
+			var panels = Panels.GetByObjectIds(pnls.GetObjectIds())!.ToList();
+			
 			// Start the config window
-			var geoWindow = new PanelWindow(Panels.GetByObjectIds(pnls.GetObjectIds())!);
-			ShowModalWindow(MainWindow.Handle, geoWindow, false);
+			SPMToolInterface.ShowWindow(new PanelWindow(panels));
 		}
 
 		/// <summary>
@@ -205,9 +207,11 @@ namespace SPMTool.Editor.Commands
 			if (strs.IsNullOrEmpty())
 				return;
 
+			// Get the elements
+			var stringers = Stringers.GetByObjectIds(strs.GetObjectIds())!.ToList();
+			
 			// Start the config window
-			var geoWindow = new StringerWindow(Stringers.GetByObjectIds(strs.GetObjectIds())!);
-			ShowModalWindow(MainWindow.Handle, geoWindow, false);
+			SPMToolInterface.ShowWindow(new StringerWindow(stringers));
 		}
 
 		/// <summary>

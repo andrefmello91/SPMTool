@@ -1,4 +1,5 @@
-﻿using Autodesk.AutoCAD.Runtime;
+﻿using System.Windows;
+using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Editor.Commands;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
@@ -19,25 +20,26 @@ namespace SPMTool.Editor.Commands
 		///     Set analysis settings.
 		/// </summary>
 		[CommandMethod(CommandName.Analysis)]
-		public static void SetAnalysisSettings()
-		{
-			// Start the window of units configuration
-			var analysisConfig = new AnalysisConfig();
-			ShowModalWindow(MainWindow.Handle, analysisConfig, false);
-		}
+		public static void SetAnalysisSettings() => SPMToolInterface.ShowWindow(new AnalysisConfig());
 
 		/// <summary>
 		///     Set units.
 		/// </summary>
 		[CommandMethod(CommandName.Units)]
-		public static void SetUnits()
-		{
-			// Start the window of units configuration
-			var unitConfig = new UnitsConfig();
-			ShowModalWindow(MainWindow.Handle, unitConfig, false);
-		}
+		public static void SetUnits() => SPMToolInterface.ShowWindow(new UnitsConfig());
+		
+		/// <summary>
+		///     Set display settings.
+		/// </summary>
+		[CommandMethod(CommandName.Display)]
+		public static void SetDisplaySettings() => SPMToolInterface.ShowWindow(new DisplayConfig());
 
 		#endregion
 
+		/// <summary>
+		///     Set concrete parameters to model.
+		/// </summary>
+		[CommandMethod(CommandName.Parameters)]
+		public static void ConcreteParameters() => SPMToolInterface.ShowWindow(new ConcreteConfig());
 	}
 }

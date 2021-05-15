@@ -306,5 +306,20 @@ namespace SPMTool.Application.UserInterface
 
 		#endregion
 
+		///  <summary>
+		/// 		Show a modal window in AutoCAD interface.
+		///  </summary>
+		///  <param name="window">The <see cref="Window"/> to show.</param>
+		///  <param name="modeless">Show as a modeless window?</param>
+		public static void ShowWindow(Window window, bool modeless = false)
+		{
+			if (modeless)
+			{
+				ShowModelessWindow(MainWindow.Handle, window, false);
+				return;
+			}
+
+			ShowModalWindow(MainWindow.Handle, window, false);
+		}
 	}
 }
