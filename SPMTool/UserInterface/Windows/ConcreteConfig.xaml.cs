@@ -73,7 +73,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Verify if strength and aggregate diameter text boxes are filled.
 		/// </summary>
-		private bool ParametersSet => CheckBoxes(new[] { StrengthBox, AggDiamBox });
+		private bool ParametersSet => CheckBoxes(StrengthBox, AggDiamBox);
 
 		#endregion
 

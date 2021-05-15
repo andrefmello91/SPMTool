@@ -16,7 +16,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Verify if boxes are filled.
 		/// </summary>
-		private bool BoxesFilled => CheckBoxes(new[] { NodeBox, ConditionBox, ResultBox, TextScaleBox, DisplacementBox });
+		private bool BoxesFilled => CheckBoxes(NodeBox, ConditionBox, ResultBox, TextScaleBox, DisplacementBox);
 
 		/// <summary>
 		///     Get/set display settings.

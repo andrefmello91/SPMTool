@@ -78,10 +78,8 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
-			var boxes = new[] { ToleranceBox, LoadStepsBox, IterationsBox };
-
 			// Check if parameters parse
-			if (!boxes.All(d => d.Text.ParsedAndNotZero(out var n) && n > 0))
+			if (!CheckBoxes(ToleranceBox, LoadStepsBox, IterationsBox))
 			{
 				MessageBox.Show("Please set positive and non zero values.");
 				return;

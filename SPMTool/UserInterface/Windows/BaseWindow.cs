@@ -15,6 +15,11 @@ namespace SPMTool.Application.UserInterface
 		///     Check if <paramref name="textBoxes" /> are filled and not zero.
 		/// </summary>
 		protected static bool CheckBoxes(IEnumerable<TextBox> textBoxes) => textBoxes.All(textBox => textBox.Text.ParsedAndNotZero(out var n) && n > 0);
+		
+		/// <summary>
+		///     Check if <paramref name="textBoxes" /> are filled and not zero.
+		/// </summary>
+		protected static bool CheckBoxes(params TextBox[] textBoxes) => CheckBoxes((IEnumerable<TextBox>) textBoxes);
 
 		/// <summary>
 		///     Close window if cancel button is clicked.
