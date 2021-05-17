@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using andrefmello91.Extensions;
 using SPMTool.Enums;
 using UnitsNet;
 using static SPMTool.Core.DataBase;
@@ -65,6 +66,21 @@ namespace SPMTool.Core
 			// Set layer states
 			TurnOff(Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks, Layer.Displacements);
 			TurnOn(Layer.PanelForce, Layer.StringerForce);
+		}
+
+		/// <summary>
+		///		Update text height for results.
+		/// </summary>
+		public static void UpdateTextHeight()
+		{
+			GetTextHeight();
+			
+			var results = new[] { Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks }.GetObjectIds()?.ToList();
+			
+			if (results.IsNullOrEmpty())
+				return;
+			
+			results.UpdateTextHeight(TextHeight);
 		}
 
 		/// <summary>

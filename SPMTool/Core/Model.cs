@@ -457,6 +457,20 @@ namespace SPMTool.Core
 			Panels      = PanelList.ReadFromDrawing();
 		}
 
+		/// <summary>
+		///		Update text height in the model.
+		/// </summary>
+		public static void UpdateTextHeight()
+		{
+			var objs    = Forces.Select(f => f.ObjectId).ToList();
+			var results = new[] { Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks }.GetObjectIds()?.ToList();
+			
+			if (!results.IsNullOrEmpty())
+				objs.AddRange(results);
+			
+			objs.UpdateTextHeight(TextHeight);
+		}
+		
 		/// <inheritdoc cref="StringerCrossSections" />
 		private static EList<CrossSection> GetCrossSections()
 		{

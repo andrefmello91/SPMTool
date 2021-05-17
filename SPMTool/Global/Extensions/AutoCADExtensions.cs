@@ -1177,6 +1177,44 @@ namespace SPMTool
 			trans.Dispose();
 		}
 
+		/// <summary>
+		///		Update text heights.
+		/// </summary>
+		/// <param name="ids">The collection of objects.</param>
+		/// <param name="height">The height to set to texts.</param>
+		public static void UpdateTextHeight(this IEnumerable<ObjectId> ids, double height)
+		{
+			// Start a transaction
+			using var lck   = Document.LockDocument();
+			using var trans = StartTransaction();
+
+			foreach (var id in ids)
+				switch (trans.GetObject(id, OpenMode.ForRead))
+				{
+					case DBText text:
+						text.UpgradeOpen();
+						text.Height = height;
+						continue;
+					
+					case BlockReference blockReference:
+						var atts = blockReference.AttributeCollection;
+						foreach (ObjectId attId in atts)
+						{
+							if (trans.GetObject(attId, OpenMode.ForRead) is not DBText txt)
+								continue;
+							
+							txt.UpgradeOpen();
+							txt.Height = height;
+						}
+						continue;
+				
+					default:
+						continue;
+				}
+			
+			trans.Commit();
+		}
+
 		#endregion
 
 	}

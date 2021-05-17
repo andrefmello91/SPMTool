@@ -49,7 +49,7 @@
                     <TextBlock Text="Result scale:" HorizontalAlignment="Left" VerticalAlignment="Center"
                                Grid.Row="3" Grid.Column="1" />
                     <TextBox Name="ResultBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70"
-                             Height="25" Grid.Row="3" Grid.Column="2" PreviewTextInput="DoubleValidation" ToolTip="Affects the scale of results representation"/>
+                             Height="25" Grid.Row="3" Grid.Column="2" PreviewTextInput="DoubleValidation" ToolTip="Affects the scale of results representation. Changes after executing a new analysis."/>
                     <TextBlock Text="Text scale:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="4"
                                Grid.Column="1" />
                     <TextBox Name="TextScaleBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
@@ -57,7 +57,7 @@
                     <TextBlock Text="Displacement magnifier factor:" HorizontalAlignment="Left"
                                VerticalAlignment="Center" Grid.Row="5" Grid.Column="1" />
                     <TextBox Name="DisplacementBox" VerticalAlignment="Center" VerticalContentAlignment="Center" Width="70"
-                             Height="25" Grid.Row="5" Grid.Column="2" PreviewTextInput="IntValidation" ToolTip="Affects the displaced model representation" />
+                             Height="25" Grid.Row="5" Grid.Column="2" PreviewTextInput="IntValidation" ToolTip="Affects the displaced model representation. Changes after executing a new analysis." />
                 </Grid>
             </StackPanel>
         </Border>

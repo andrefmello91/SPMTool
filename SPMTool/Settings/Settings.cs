@@ -93,14 +93,20 @@ namespace SPMTool.Application
 		{
 			DictionaryId = DataBase.NodId;
 			GetProperties();
-			Display!.NodeScaleChanged      += On_NodeScaleChange;
-			Display!.ConditionScaleChanged += On_ConditionScaleChange;
+			SetEvents(Display!);
 		}
 
 		#endregion
 
 		#region Methods
 
+		private static void SetEvents(DisplaySettings displaySettings)
+		{
+			displaySettings.NodeScaleChanged      += On_NodeScaleChange;
+			displaySettings.ConditionScaleChanged += On_ConditionScaleChange;
+			displaySettings.TextScaleChanged      += On_TextScaleChange;
+		}
+		
 		/// <inheritdoc />
 		public override DBObject CreateObject() => new Xrecord
 		{
@@ -161,6 +167,12 @@ namespace SPMTool.Application
 		private static void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => Model.UpdatePointSize();
 
 		private static void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => Model.UpdateConditionsScale(e.OldScale, e.NewScale);
+
+		private static void On_TextScaleChange(object sender, ScaleChangedEventArgs e)
+		{
+			Model.UpdateTextHeight();
+			Results.UpdateTextHeight();
+		}
 
 		#endregion
 
