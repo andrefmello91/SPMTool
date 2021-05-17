@@ -53,7 +53,7 @@ namespace SPMTool.Editor.Commands
 			if (!cmdText.EndsWith(";"))
 				cmdText += " ";
 
-			DataBase.Document.SendStringToExecute(esc + cmdText, true, false, true);
+			DataBase.ActiveDocument.SendStringToExecute(esc + cmdText, true, false, true);
 		}
 
 		#endregion

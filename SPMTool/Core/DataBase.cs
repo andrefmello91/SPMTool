@@ -43,39 +43,29 @@ namespace SPMTool.Core
 		#region Properties
 
 		/// <summary>
-		///     Get BlockTable for read.
-		/// </summary>
-		public static BlockTable BlockTable => (BlockTable) StartTransaction().GetObject(BlockTableId, OpenMode.ForRead);
-
-		/// <summary>
 		///     Get the Block Table <see cref="ObjectId" />.
 		/// </summary>
-		public static ObjectId BlockTableId => Database.BlockTableId;
+		public static ObjectId BlockTableId => ActiveDatabase.BlockTableId;
 
 		/// <summary>
 		///     Get current <see cref="Autodesk.AutoCAD.DatabaseServices.Database" />.
 		/// </summary>
-		public static Database Database => Document.Database;
+		public static Database ActiveDatabase => ActiveDocument.Database;
 
 		/// <summary>
 		///     Get current active <see cref="Autodesk.AutoCAD.ApplicationServices.Document" />.
 		/// </summary>
-		public static Document Document => DocumentManager.MdiActiveDocument;
+		public static Document ActiveDocument => DocumentManager.MdiActiveDocument;
 
 		/// <summary>
 		///     Get the Layer Table <see cref="ObjectId" />.
 		/// </summary>
-		public static ObjectId LayerTableId => Database.LayerTableId;
-
-		/// <summary>
-		///     Get Named Objects Dictionary for read.
-		/// </summary>
-		public static DBDictionary Nod => (DBDictionary) StartTransaction().GetObject(NodId, OpenMode.ForRead);
+		public static ObjectId LayerTableId => ActiveDatabase.LayerTableId;
 
 		/// <summary>
 		///     Get Named Objects <see cref="ObjectId" />.
 		/// </summary>
-		public static ObjectId NodId => Database.NamedObjectsDictionaryId;
+		public static ObjectId NodId => ActiveDatabase.NamedObjectsDictionaryId;
 
 		/// <summary>
 		///     Get coordinate system.
@@ -199,11 +189,11 @@ namespace SPMTool.Core
 		public static void RegisterApp()
 		{
 			// Start a transaction
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			using var trans = StartTransaction();
 
 			// Open the Registered Applications table for read
-			var regAppTbl = (RegAppTable) trans.GetObject(Database.RegAppTableId, OpenMode.ForRead);
+			var regAppTbl = (RegAppTable) trans.GetObject(ActiveDatabase.RegAppTableId, OpenMode.ForRead);
 
 			if (regAppTbl.Has(AppName))
 				return;
@@ -249,9 +239,9 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Start a new transaction in <see cref="Database" />.
+		///     Start a new transaction in <see cref="ActiveDatabase" />.
 		/// </summary>
-		public static Transaction StartTransaction() => Database.TransactionManager.StartTransaction();
+		public static Transaction StartTransaction() => ActiveDatabase.TransactionManager.StartTransaction();
 
 		#endregion
 

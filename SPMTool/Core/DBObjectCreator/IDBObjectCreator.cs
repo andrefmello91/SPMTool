@@ -98,7 +98,7 @@ namespace SPMTool.Core
 			if (objects.IsNullOrEmpty())
 				return;
 
-			using var lck = DataBase.Document.LockDocument();
+			using var lck = DataBase.ActiveDocument.LockDocument();
 
 			var objs2 = objects
 				.Where(o => o is not StringerForceCreator)

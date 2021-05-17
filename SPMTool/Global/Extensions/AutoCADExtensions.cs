@@ -32,7 +32,7 @@ namespace SPMTool
 				return ObjectId.Null;
 
 			// Start a transaction
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			var       trans = ongoingTransaction ?? StartTransaction();
 
 			// Open the Block table for read
@@ -129,7 +129,7 @@ namespace SPMTool
 		public static IEnumerable<ObjectId> AddToDrawing([NotNull] this IEnumerable<DBObject?> dbObjects, ObjectErasedEventHandler? erasedEvent = null, Transaction? ongoingTransaction = null)
 		{
 			// Start a transaction
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			using var trans = ongoingTransaction ?? StartTransaction();
 
 			// Open the Block table for read
@@ -174,7 +174,7 @@ namespace SPMTool
 			if (groupEntities.IsNullOrEmpty())
 				return ObjectId.Null;
 
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			var       trans = ongoingTransaction ?? StartTransaction();
 
 			// Open the nod
@@ -282,7 +282,7 @@ namespace SPMTool
 			if (blockEntities.IsNullOrEmpty())
 				return;
 
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			var       trans = ongoingTransaction ?? StartTransaction();
 
 			// Open the Block table for read
@@ -614,7 +614,7 @@ namespace SPMTool
 		/// <summary>
 		///     Get the <see cref="ObjectId" /> related to this <paramref name="handle" />.
 		/// </summary>
-		public static ObjectId GetObjectId(this Handle handle) => DataBase.Database.TryGetObjectId(handle, out var obj) ? obj : ObjectId.Null;
+		public static ObjectId GetObjectId(this Handle handle) => DataBase.ActiveDatabase.TryGetObjectId(handle, out var obj) ? obj : ObjectId.Null;
 
 		/// <summary>
 		///     Get the collection of <see cref="ObjectId" />'s of <paramref name="objects" />.
@@ -727,7 +727,7 @@ namespace SPMTool
 			if (objectIds.IsNullOrEmpty())
 				return;
 
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			var       trans = ongoingTransaction ?? StartTransaction();
 
 			var blkTbl = (BlockTable) trans.GetObject(BlockTableId, OpenMode.ForRead);
@@ -764,7 +764,7 @@ namespace SPMTool
 			if (objectIds.IsNullOrEmpty())
 				return;
 
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			var       trans = ongoingTransaction ?? StartTransaction();
 
 			var blkTbl = (BlockTable) trans.GetObject(BlockTableId, OpenMode.ForRead);
@@ -824,7 +824,7 @@ namespace SPMTool
 				return;
 
 			// Start a transaction
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			var       trans = ongoingTransaction ?? StartTransaction();
 
 			using (var ent = (Entity) trans.GetObject(objectId, OpenMode.ForWrite))
@@ -851,7 +851,7 @@ namespace SPMTool
 				return;
 
 			// Start a transaction
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			var       trans = ongoingTransaction ?? StartTransaction();
 
 			foreach (var obj in objectIds)
@@ -879,7 +879,7 @@ namespace SPMTool
 				return;
 
 			// Start a transaction
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			var       trans = ongoingTransaction ?? StartTransaction();
 
 			using var ent = (Entity) trans.GetObject(obj, OpenMode.ForWrite);
@@ -923,7 +923,7 @@ namespace SPMTool
 				return;
 
 			// Start a transaction
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			var       trans = ongoingTransaction ?? StartTransaction();
 
 			foreach (var obj in objects)
@@ -1013,7 +1013,7 @@ namespace SPMTool
 				return ObjectId.Null;
 
 			// Start a transaction
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			using var trans = ongoingTransaction ?? StartTransaction();
 
 			using var obj = trans.GetObject(objectId, OpenMode.ForRead);
@@ -1135,7 +1135,7 @@ namespace SPMTool
 				return;
 
 			// Start a transaction
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			var       trans = ongoingTransaction ?? StartTransaction();
 
 			using var ent = (Entity) trans.GetObject(objectId, OpenMode.ForWrite);
@@ -1160,7 +1160,7 @@ namespace SPMTool
 				return;
 
 			// Start a transaction
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			var       trans = ongoingTransaction ?? StartTransaction();
 
 			foreach (var obj in objectIds)
@@ -1185,7 +1185,7 @@ namespace SPMTool
 		public static void UpdateTextHeight(this IEnumerable<ObjectId> ids, double height)
 		{
 			// Start a transaction
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			using var trans = StartTransaction();
 
 			foreach (var id in ids)

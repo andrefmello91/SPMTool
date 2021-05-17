@@ -41,7 +41,7 @@ namespace SPMTool
 			var layerName = $"{layer}";
 
 			// Start a transaction
-			using var lck   = Document.LockDocument();
+			using var lck   = ActiveDocument.LockDocument();
 			using var trans = StartTransaction();
 
 			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
@@ -78,7 +78,7 @@ namespace SPMTool
 		public static void Create(this IEnumerable<Layer> layers)
 		{
 			// Start a transaction
-			using var lck = Document.LockDocument();
+			using var lck = ActiveDocument.LockDocument();
 
 			using var trans = StartTransaction();
 
@@ -127,7 +127,7 @@ namespace SPMTool
 		/// </summary>
 		public static void Create(this IEnumerable<Block> blocks)
 		{
-			using var lck = Document.LockDocument();
+			using var lck = ActiveDocument.LockDocument();
 
 			using var trans = StartTransaction();
 
@@ -356,7 +356,7 @@ namespace SPMTool
 		{
 			// Start a transaction
 			using var trans  = StartTransaction();
-			using var blkTbl = (BlockTable) trans.GetObject(DataBase.Database.BlockTableId, OpenMode.ForRead);
+			using var blkTbl = (BlockTable) trans.GetObject(DataBase.ActiveDatabase.BlockTableId, OpenMode.ForRead);
 			using var blkRec = (BlockTableRecord) trans.GetObject(blkTbl[$"{block}"], OpenMode.ForRead);
 
 			if (blkRec is null)

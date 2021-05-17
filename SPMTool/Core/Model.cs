@@ -95,7 +95,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get application <see cref="Autodesk.AutoCAD.EditorInput.Editor" />.
 		/// </summary>
-		public static Autodesk.AutoCAD.EditorInput.Editor Editor => DataBase.Document.Editor;
+		public static Autodesk.AutoCAD.EditorInput.Editor Editor => DataBase.ActiveDocument.Editor;
 
 		/// <summary>
 		///		Get the text height for model objects.
@@ -388,12 +388,12 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Turn off fillmode setting.
 		/// </summary>
-		public static void SetFillMode() => DataBase.Database.Fillmode = false;
+		public static void SetFillMode() => DataBase.ActiveDatabase.Fillmode = false;
 
 		/// <summary>
 		///     Turn on line weight display.
 		/// </summary>
-		public static void SetLineWeightDisplay() => DataBase.Database.LineWeightDisplay = true;
+		public static void SetLineWeightDisplay() => DataBase.ActiveDatabase.LineWeightDisplay = true;
 
 		/// <summary>
 		///     Update size of points in the drawing.
@@ -401,8 +401,8 @@ namespace SPMTool.Core
 		public static void UpdatePointSize()
 		{
 			// Set the style for all point objects in the drawing
-			DataBase.Database.Pdmode = 32;
-			DataBase.Database.Pdsize = 40 * Settings.Units.ScaleFactor * Settings.Display.NodeScale;
+			DataBase.ActiveDatabase.Pdmode = 32;
+			DataBase.ActiveDatabase.Pdsize = 40 * Settings.Units.ScaleFactor * Settings.Display.NodeScale;
 			Editor.Regen();
 		}
 

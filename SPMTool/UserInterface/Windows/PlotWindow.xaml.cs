@@ -117,7 +117,7 @@ namespace SPMTool.Application.UserInterface
 			// Get location and name
 			string
 				path = DataBase.GetFilePath(),
-				name = $"{Path.GetFileNameWithoutExtension(DataBase.Document.Name)}_SPMResult";
+				name = $"{Path.GetFileNameWithoutExtension(DataBase.ActiveDocument.Name)}_SPMResult";
 
 			// Export
 			_femOutput.Export(path, name, _displacementUnit);
