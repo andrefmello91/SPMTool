@@ -9,8 +9,6 @@ using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
-using MathNet.Numerics;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
@@ -34,11 +32,6 @@ namespace SPMTool.Core
 		///     Collection of element <see cref="Layer" />'s.
 		/// </summary>
 		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
-
-		/// <summary>
-		///     Command names for undo and redo.
-		/// </summary>
-		private static readonly string[] CmdNames = { "UNDO", "REDO", "_U", "_R", "_.U", "_.R" };
 
 		/// <summary>
 		///     Collection of removed elements.
@@ -326,15 +319,6 @@ namespace SPMTool.Core
 		///     Event to run when an item is added to <see cref="StringerReinforcements" />.
 		/// </summary>
 		public static void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e) => Steels.Add(e.Item?.Steel);
-
-		/// <summary>
-		///     Event to run after undo or redo commands.
-		/// </summary>
-		public static void On_UndoOrRedo(object sender, CommandEventArgs e)
-		{
-			if (CmdNames.Any(cmd => cmd.Contains(e.GlobalCommandName.ToUpper())))
-				UpdateElements(false);
-		}
 
 		/// <summary>
 		///     Register events for AutoCAD entities.
