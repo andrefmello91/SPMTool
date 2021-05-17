@@ -98,7 +98,7 @@ namespace SPMTool.Core
 			if (objects.IsNullOrEmpty())
 				return;
 
-			using var lck = DataBase.ActiveDocument.LockDocument();
+			using var lck = SPMDatabase.ActiveDocument.LockDocument();
 
 			var objs2 = objects
 				.Where(o => o is not StringerForceCreator)
@@ -109,7 +109,7 @@ namespace SPMTool.Core
 				.ToList();
 
 			// Add objects to drawing
-			var objIds = entities.AddToDrawing(Model.On_ObjectErase)!.ToList();
+			var objIds = entities.AddToDrawing(SPMModel.On_ObjectErase)!.ToList();
 
 			// Set object ids
 			for (var i = 0; i < objs2.Count(); i++)
@@ -162,11 +162,11 @@ namespace SPMTool.Core
 		public static IDBObjectCreator? GetSPMObject(this DBObject? dbObject) =>
 			dbObject switch
 			{
-				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => Model.Nodes.GetByObjectId(dbObject.ObjectId),
-				Line l when l.Layer == $"{Layer.Stringer}"                                    => Model.Stringers.GetByObjectId(dbObject.ObjectId),
-				Solid s when s.Layer == $"{Layer.Panel}"                                      => Model.Panels.GetByObjectId(dbObject.ObjectId),
-				BlockReference b when b.Layer == $"{Layer.Force}"                             => Model.Forces.GetByObjectId(dbObject.ObjectId),
-				BlockReference b when b.Layer == $"{Layer.Support}"                           => Model.Constraints.GetByObjectId(dbObject.ObjectId),
+				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => SPMModel.Nodes.GetByObjectId(dbObject.ObjectId),
+				Line l when l.Layer == $"{Layer.Stringer}"                                    => SPMModel.Stringers.GetByObjectId(dbObject.ObjectId),
+				Solid s when s.Layer == $"{Layer.Panel}"                                      => SPMModel.Panels.GetByObjectId(dbObject.ObjectId),
+				BlockReference b when b.Layer == $"{Layer.Force}"                             => SPMModel.Forces.GetByObjectId(dbObject.ObjectId),
+				BlockReference b when b.Layer == $"{Layer.Support}"                           => SPMModel.Constraints.GetByObjectId(dbObject.ObjectId),
 				_                                                                             => null
 			};
 
@@ -176,7 +176,7 @@ namespace SPMTool.Core
 		/// <param name="element">The object to remove.</param>
 		public static void RemoveFromDrawing<TDbObjectCreator>(this TDbObjectCreator? element)
 			where TDbObjectCreator : IDBObjectCreator =>
-			element?.ObjectId.RemoveFromDrawing(Model.On_ObjectErase);
+			element?.ObjectId.RemoveFromDrawing(SPMModel.On_ObjectErase);
 
 		/// <summary>
 		///     Remove a collection of objects from drawing.
@@ -184,7 +184,7 @@ namespace SPMTool.Core
 		/// <param name="elements">The objects to remove.</param>
 		public static void RemoveFromDrawing<TDbObjectCreator>(this IEnumerable<TDbObjectCreator?>? elements)
 			where TDbObjectCreator : IDBObjectCreator =>
-			elements?.Select(e => e?.ObjectId ?? ObjectId.Null).ToArray().RemoveFromDrawing(Model.On_ObjectErase);
+			elements?.Select(e => e?.ObjectId ?? ObjectId.Null).ToArray().RemoveFromDrawing(SPMModel.On_ObjectErase);
 
 		/// <summary>
 		///     Set attributes to blocks in this collection.

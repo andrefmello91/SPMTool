@@ -8,7 +8,7 @@ using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 
-using static SPMTool.Core.Model;
+using static SPMTool.Core.SPMModel;
 
 #nullable enable
 

@@ -76,7 +76,7 @@ namespace SPMTool.Core.Blocks
 			var scale = Results.ResultScaleFactor;
 
 			// Correct units
-			var unit = DataBase.Settings.Units.StringerForces;
+			var unit = SPMDatabase.Settings.Units.StringerForces;
 			n1 = n1.ToUnit(unit);
 			n3 = n3.ToUnit(unit);
 
@@ -116,7 +116,7 @@ namespace SPMTool.Core.Blocks
 			};
 
 			// Rotate the diagram
-			dgrm1.TransformBy(Matrix3d.Rotation(angle, DataBase.Ucs.Zaxis, stPt.ToPoint3d()));
+			dgrm1.TransformBy(Matrix3d.Rotation(angle, SPMDatabase.Ucs.Zaxis, stPt.ToPoint3d()));
 
 			var dgrm3 = new Solid(vrts3[0], vrts3[1], vrts3[2])
 			{
@@ -125,7 +125,7 @@ namespace SPMTool.Core.Blocks
 			};
 
 			// Rotate the diagram
-			dgrm3.TransformBy(Matrix3d.Rotation(angle, DataBase.Ucs.Zaxis, stPt.ToPoint3d()));
+			dgrm3.TransformBy(Matrix3d.Rotation(angle, SPMDatabase.Ucs.Zaxis, stPt.ToPoint3d()));
 
 			return
 				new[] { dgrm1, dgrm3 };
@@ -159,7 +159,7 @@ namespace SPMTool.Core.Blocks
 			var scaleFactor = Results.ResultScaleFactor;
 
 			// Correct units
-			var unit = DataBase.Settings.Units.StringerForces;
+			var unit = SPMDatabase.Settings.Units.StringerForces;
 			n1 = n1.ToUnit(unit);
 			n3 = n3.ToUnit(unit);
 
@@ -191,7 +191,7 @@ namespace SPMTool.Core.Blocks
 				};
 
 
-				txt1.TransformBy(Matrix3d.Rotation(angle, DataBase.Ucs.Zaxis, stPt.ToPoint3d()));
+				txt1.TransformBy(Matrix3d.Rotation(angle, SPMDatabase.Ucs.Zaxis, stPt.ToPoint3d()));
 
 				yield return txt1;
 			}
@@ -218,7 +218,7 @@ namespace SPMTool.Core.Blocks
 			// Set alignment point
 
 			// Rotate
-			txt3.TransformBy(Matrix3d.Rotation(angle, DataBase.Ucs.Zaxis, stPt.ToPoint3d()));
+			txt3.TransformBy(Matrix3d.Rotation(angle, SPMDatabase.Ucs.Zaxis, stPt.ToPoint3d()));
 
 			yield return txt3;
 		}
@@ -234,10 +234,10 @@ namespace SPMTool.Core.Blocks
 			var maxForce = Results.MaxStringerForce;
 			var (n1, n3) = stringer.NormalForces;
 			var angle = stringer.Geometry.Angle;
-			var scale = DataBase.Settings.Display.ResultScale;
+			var scale = SPMDatabase.Settings.Display.ResultScale;
 
 			// Correct units
-			var unit = DataBase.Settings.Units.StringerForces;
+			var unit = SPMDatabase.Settings.Units.StringerForces;
 			n1 = n1.ToUnit(unit);
 			n3 = n3.ToUnit(unit);
 
@@ -269,7 +269,7 @@ namespace SPMTool.Core.Blocks
 			};
 
 			// Rotate the diagram
-			dgrm.TransformBy(Matrix3d.Rotation(angle, DataBase.Ucs.Zaxis, stPt.ToPoint3d()));
+			dgrm.TransformBy(Matrix3d.Rotation(angle, SPMDatabase.Ucs.Zaxis, stPt.ToPoint3d()));
 
 			return dgrm;
 		}

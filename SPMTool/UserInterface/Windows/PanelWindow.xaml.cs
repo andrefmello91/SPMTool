@@ -10,7 +10,7 @@ using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Core.Model;
+using static SPMTool.Core.SPMModel;
 
 #nullable enable
 
@@ -310,9 +310,9 @@ namespace SPMTool.Application.UserInterface
 		{
 			_panels = panels.ToList();
 
-			_geometryUnit      = DataBase.Settings.Units.Geometry;
-			_reinforcementUnit = DataBase.Settings.Units.Reinforcement;
-			_stressUnit        = DataBase.Settings.Units.MaterialStrength;
+			_geometryUnit      = SPMDatabase.Settings.Units.Geometry;
+			_reinforcementUnit = SPMDatabase.Settings.Units.Reinforcement;
+			_stressUnit        = SPMDatabase.Settings.Units.MaterialStrength;
 			
 			DataContext        = this;
 

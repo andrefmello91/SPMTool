@@ -91,7 +91,7 @@ namespace SPMTool.Application
 
 		public Settings()
 		{
-			DictionaryId = DataBase.NodId;
+			DictionaryId = SPMDatabase.NodId;
 			GetProperties();
 			SetEvents(Display!);
 		}
@@ -164,13 +164,13 @@ namespace SPMTool.Application
 			SetDictionary((TypedValue[]) units, USaveName);
 		}
 
-		private static void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => Model.UpdatePointSize();
+		private static void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.UpdatePointSize();
 
-		private static void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => Model.UpdateConditionsScale(e.OldScale, e.NewScale);
+		private static void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.UpdateConditionsScale(e.OldScale, e.NewScale);
 
 		private static void On_TextScaleChange(object sender, ScaleChangedEventArgs e)
 		{
-			Model.UpdateTextHeight();
+			SPMModel.UpdateTextHeight();
 			Results.UpdateTextHeight();
 		}
 

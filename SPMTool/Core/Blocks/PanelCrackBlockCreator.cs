@@ -77,7 +77,7 @@ namespace SPMTool.Core.Blocks
 		/// <inheritdoc cref="PanelCrackBlockCreator(Point, Length, double, double)" />
 		private static AttributeReference GetAttribute(Length crackOpening, double rotationAngle, double scaleFactor)
 		{
-			var w = crackOpening.ToUnit(DataBase.Settings.Units.CrackOpenings).Value.Abs();
+			var w = crackOpening.ToUnit(SPMDatabase.Settings.Units.CrackOpenings).Value.Abs();
 
 			// Set the insertion point
 			var pt = new Point(0, -40 * scaleFactor);
@@ -95,7 +95,7 @@ namespace SPMTool.Core.Blocks
 
 			// Rotate text
 			if (!rotationAngle.ApproxZero(1E-3))
-				attRef.TransformBy(Matrix3d.Rotation(rotationAngle, DataBase.Ucs.Zaxis, new Point3d(0, 0, 0)));
+				attRef.TransformBy(Matrix3d.Rotation(rotationAngle, SPMDatabase.Ucs.Zaxis, new Point3d(0, 0, 0)));
 
 			return attRef;
 		}

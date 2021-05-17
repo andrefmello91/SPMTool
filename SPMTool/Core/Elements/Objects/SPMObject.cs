@@ -83,7 +83,7 @@ namespace SPMTool.Core.Elements
 
 		#region Interface Implementations
 
-		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
+		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(SPMModel.On_ObjectErase);
 
 		public int CompareTo(SPMObject<TProperty>? other) => other is null || other.GetType() != GetType()
 			? 0

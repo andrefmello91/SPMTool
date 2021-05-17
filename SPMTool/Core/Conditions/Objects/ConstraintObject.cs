@@ -4,7 +4,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics;
 using SPMTool.Enums;
 
-using static SPMTool.Core.DataBase;
+using static SPMTool.Core.SPMDatabase;
 
 #nullable enable
 
@@ -121,7 +121,7 @@ namespace SPMTool.Core.Conditions
 		/// </remarks>
 		public static explicit operator ConstraintObject?(BlockReference? blockReference) => blockReference is null
 			? null
-			: Model.Constraints.GetByObjectId(blockReference.ObjectId);
+			: SPMModel.Constraints.GetByObjectId(blockReference.ObjectId);
 
 		#endregion
 

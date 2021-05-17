@@ -9,7 +9,7 @@ using MathNet.Numerics;
 using SPMTool.Enums;
 
 using UnitsNet;
-using static SPMTool.Core.DataBase;
+using static SPMTool.Core.SPMDatabase;
 
 #nullable enable
 
@@ -131,7 +131,7 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		private IEnumerable<AttributeReference?>? ForceAttributeReference()
 		{
-			var txtH = Model.TextHeight;
+			var txtH = SPMModel.TextHeight;
 			
 			if (!Value.IsXZero)
 				yield return new AttributeReference
@@ -200,7 +200,7 @@ namespace SPMTool.Core.Conditions
 		/// </remarks>
 		public static explicit operator ForceObject?(BlockReference? blockReference) => blockReference is null
 			? null
-			: Model.Forces.GetByObjectId(blockReference.ObjectId);
+			: SPMModel.Forces.GetByObjectId(blockReference.ObjectId);
 
 		#endregion
 

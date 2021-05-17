@@ -18,7 +18,7 @@ namespace SPMTool.Core
 	/// <summary>
 	///     DataBase class.
 	/// </summary>
-	public static class DataBase
+	public static class SPMDatabase
 	{
 
 		#region Fields
@@ -75,13 +75,13 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get current user coordinate system.
 		/// </summary>
-		public static Matrix3d UcsMatrix => Model.Editor.CurrentUserCoordinateSystem;
+		public static Matrix3d UcsMatrix => SPMModel.Editor.CurrentUserCoordinateSystem;
 
 		#endregion
 
 		#region Constructors
 
-		static DataBase()
+		static SPMDatabase()
 		{
 			// Register app in AutoCAD
 			RegisterApp();

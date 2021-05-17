@@ -82,11 +82,11 @@ namespace SPMTool.Application.UserInterface
 		public ConcreteConfig()
 		{
 			// Read units
-			_stressUnit = DataBase.Settings.Units.MaterialStrength;
-			_aggUnit    = DataBase.Settings.Units.Reinforcement;
+			_stressUnit = SPMDatabase.Settings.Units.MaterialStrength;
+			_aggUnit    = SPMDatabase.Settings.Units.Reinforcement;
 
 			// Get settings
-			_parameters       = DataBase.ConcreteData.Parameters;
+			_parameters       = SPMDatabase.ConcreteData.Parameters;
 
 			// Update units
 			_parameters.ChangeUnit(_stressUnit);
@@ -144,8 +144,8 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			// Save units on database
-			DataBase.ConcreteData.Parameters        = _parameters;
-			DataBase.ConcreteData.ConstitutiveModel = ConstitutiveModel;
+			SPMDatabase.ConcreteData.Parameters        = _parameters;
+			SPMDatabase.ConcreteData.ConstitutiveModel = ConstitutiveModel;
 			Close();
 		}
 
@@ -181,7 +181,7 @@ namespace SPMTool.Application.UserInterface
 			AggDiamBox.Text            = $"{_parameters.AggregateDiameter.Value:0.00}";
 			AggregateType              = _parameters.Type;
 			ParameterBox.SelectedIndex = (int) _parameters.Model;
-			ConstitutiveModel          = DataBase.ConcreteData.ConstitutiveModel;
+			ConstitutiveModel          = SPMDatabase.ConcreteData.ConstitutiveModel;
 
 			UpdateCustomParameterBoxes();
 

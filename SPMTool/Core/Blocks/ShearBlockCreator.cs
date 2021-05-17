@@ -77,7 +77,7 @@ namespace SPMTool.Core.Blocks
 		private static AttributeReference GetAttribute(Pressure shearStress, double scaleFactor, Layer layer)
 		{
 			// Get shear stress
-			var tau = shearStress.ToUnit(DataBase.Settings.Units.PanelStresses).Value.Abs();
+			var tau = shearStress.ToUnit(SPMDatabase.Settings.Units.PanelStresses).Value.Abs();
 
 			// Create attribute
 			return

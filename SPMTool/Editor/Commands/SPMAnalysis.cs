@@ -22,7 +22,7 @@ namespace SPMTool.Editor.Commands
 		public static void LinearAnalysis()
 		{
 			// Get input data
-			var input = Model.GenerateInput(AnalysisType.Linear, out var dataOk, out var message);
+			var input = SPMModel.GenerateInput(AnalysisType.Linear, out var dataOk, out var message);
 
 			if (!dataOk)
 			{
@@ -54,7 +54,7 @@ namespace SPMTool.Editor.Commands
 		private static void ExecuteNonlinearAnalysis(bool simulate = false)
 		{
 			// Get input data
-			var input = Model.GenerateInput(AnalysisType.Nonlinear, out var dataOk, out var message);
+			var input = SPMModel.GenerateInput(AnalysisType.Nonlinear, out var dataOk, out var message);
 
 			if (!dataOk)
 			{
@@ -69,7 +69,7 @@ namespace SPMTool.Editor.Commands
 				return;
 
 			// Get analysis settings
-			var settings = DataBase.Settings.Analysis;
+			var settings = SPMDatabase.Settings.Analysis;
 
 			// Do analysis
 			var analysis = new SPMNonlinearAnalysis(input, settings.Solver, settings.NumLoadSteps, settings.Tolerance, settings.MaxIterations);

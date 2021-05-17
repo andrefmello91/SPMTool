@@ -98,13 +98,13 @@ namespace SPMTool.Core.Conditions
 
 		#region Interface Implementations
 
-		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(Model.On_ObjectErase);
+		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(SPMModel.On_ObjectErase);
 
 		public int CompareTo(ConditionObject<TValue>? other) => other is null
 			? 0
 			: Position.CompareTo(other.Position);
 
-		public override DBObject CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, null, DataBase.Settings.Units.ScaleFactor)!;
+		public override DBObject CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, null, SPMDatabase.Settings.Units.ScaleFactor)!;
 
 		/// <inheritdoc />
 		BlockReference IDBObjectCreator<BlockReference>.CreateObject() => (BlockReference) CreateObject();

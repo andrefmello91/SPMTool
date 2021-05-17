@@ -8,7 +8,7 @@ using SPMTool.Enums;
 
 using UnitsNet.Units;
 using static SPMTool.Core.Elements.NodeList;
-using static SPMTool.Core.DataBase;
+using static SPMTool.Core.SPMDatabase;
 
 #nullable enable
 
@@ -33,7 +33,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="andrefmello91.OnPlaneComponents.Constraint" /> in this object.
 		/// </summary>
-		public Constraint Constraint => Model.Constraints.GetConstraintByPosition(Position);
+		public Constraint Constraint => SPMModel.Constraints.GetConstraintByPosition(Position);
 
 		/// <summary>
 		///     Get the <see cref="PlaneDisplacement" /> of this node object.
@@ -47,7 +47,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="Force" /> in this object.
 		/// </summary>
-		public PlaneForce Force => Model.Forces.GetForceByPosition(Position);
+		public PlaneForce Force => SPMModel.Forces.GetForceByPosition(Position);
 
 		/// <summary>
 		///     Get the position.
@@ -206,7 +206,7 @@ namespace SPMTool.Core.Elements
 		/// </remarks>
 		public static explicit operator NodeObject?(Node? node) => node is null
 			? null
-			: Model.Nodes.GetByProperty(node.Position)
+			: SPMModel.Nodes.GetByProperty(node.Position)
 			  ?? new NodeObject(node.Position, node.Type);
 
 		/// <summary>
@@ -217,7 +217,7 @@ namespace SPMTool.Core.Elements
 		/// </remarks>
 		public static explicit operator NodeObject?(DBPoint? dbPoint) => dbPoint is null
 			? null
-			: Model.Nodes.GetByObjectId(dbPoint.ObjectId);
+			: SPMModel.Nodes.GetByObjectId(dbPoint.ObjectId);
 
 		/// <summary>
 		///     Get the <see cref="DBPoint" /> associated to a <see cref="NodeObject" />.

@@ -123,7 +123,7 @@ namespace SPMTool.Editor.Commands
 			for (;;)
 			{
 				// Get the entity for read
-				var ent = UserInput.SelectEntity("Select an element to view data:", Model.ElementLayers);
+				var ent = UserInput.SelectEntity("Select an element to view data:", SPMModel.ElementLayers);
 
 				if (ent is null)
 					return;
@@ -135,7 +135,7 @@ namespace SPMTool.Editor.Commands
 					? "Not a SPM element."
 					: element.ToString();
 
-				Model.Editor.WriteMessage($"\n{message}");
+				SPMModel.Editor.WriteMessage($"\n{message}");
 			}
 		}
 

@@ -9,7 +9,7 @@ using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
 using SPMTool.Core;
 using UnitsNet.Units;
-using static SPMTool.Core.DataBase;
+using static SPMTool.Core.SPMDatabase;
 
 #nullable enable
 
@@ -614,7 +614,7 @@ namespace SPMTool
 		/// <summary>
 		///     Get the <see cref="ObjectId" /> related to this <paramref name="handle" />.
 		/// </summary>
-		public static ObjectId GetObjectId(this Handle handle) => DataBase.ActiveDatabase.TryGetObjectId(handle, out var obj) ? obj : ObjectId.Null;
+		public static ObjectId GetObjectId(this Handle handle) => SPMDatabase.ActiveDatabase.TryGetObjectId(handle, out var obj) ? obj : ObjectId.Null;
 
 		/// <summary>
 		///     Get the collection of <see cref="ObjectId" />'s of <paramref name="objects" />.
@@ -627,7 +627,7 @@ namespace SPMTool
 		public static IEnumerable<ObjectId> GetObjectIds(this string layerName)
 		{
 			// Get the entities on the layername
-			var selRes = Model.Editor.SelectAll(layerName.LayerFilter());
+			var selRes = SPMModel.Editor.SelectAll(layerName.LayerFilter());
 
 			return
 				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0
@@ -644,7 +644,7 @@ namespace SPMTool
 				return null;
 
 			// Get the entities on the layername
-			var selRes = Model.Editor.SelectAll(layerNames.LayerFilter());
+			var selRes = SPMModel.Editor.SelectAll(layerNames.LayerFilter());
 
 			return
 				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0

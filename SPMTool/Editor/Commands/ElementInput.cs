@@ -5,7 +5,7 @@ using SPMTool.Core;
 using SPMTool.Editor.Commands;
 
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
-using static SPMTool.Core.Model;
+using static SPMTool.Core.SPMModel;
 
 
 [assembly: CommandClass(typeof(ElementInput))]
@@ -26,7 +26,7 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.AddPanel)]
 		public static void AddPanel()
 		{
-			var unit = DataBase.Settings.Units.Geometry;
+			var unit = SPMDatabase.Settings.Units.Geometry;
 
 			// Erase result objects
 			Results.ResultLayers.EraseObjects();

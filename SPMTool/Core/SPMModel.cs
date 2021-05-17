@@ -7,14 +7,13 @@ using andrefmello91.FEMAnalysis;
 using andrefmello91.Material.Reinforcement;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
 
 using UnitsNet;
-using static SPMTool.Core.DataBase;
+using static SPMTool.Core.SPMDatabase;
 
 #nullable disable
 
@@ -23,7 +22,7 @@ namespace SPMTool.Core
 	/// <summary>
 	///     Model class
 	/// </summary>
-	public static class Model
+	public static class SPMModel
 	{
 
 		#region Fields
@@ -95,7 +94,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get application <see cref="Autodesk.AutoCAD.EditorInput.Editor" />.
 		/// </summary>
-		public static Autodesk.AutoCAD.EditorInput.Editor Editor => DataBase.ActiveDocument.Editor;
+		public static Autodesk.AutoCAD.EditorInput.Editor Editor => SPMDatabase.ActiveDocument.Editor;
 
 		/// <summary>
 		///		Get the text height for model objects.
@@ -106,7 +105,7 @@ namespace SPMTool.Core
 
 		#region Constructors
 
-		static Model()
+		static SPMModel()
 		{
 			// Initiate trash
 			Trash = new List<IDBObjectCreator>();
@@ -388,12 +387,12 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Turn off fillmode setting.
 		/// </summary>
-		public static void SetFillMode() => DataBase.ActiveDatabase.Fillmode = false;
+		public static void SetFillMode() => SPMDatabase.ActiveDatabase.Fillmode = false;
 
 		/// <summary>
 		///     Turn on line weight display.
 		/// </summary>
-		public static void SetLineWeightDisplay() => DataBase.ActiveDatabase.LineWeightDisplay = true;
+		public static void SetLineWeightDisplay() => SPMDatabase.ActiveDatabase.LineWeightDisplay = true;
 
 		/// <summary>
 		///     Update size of points in the drawing.
@@ -401,8 +400,8 @@ namespace SPMTool.Core
 		public static void UpdatePointSize()
 		{
 			// Set the style for all point objects in the drawing
-			DataBase.ActiveDatabase.Pdmode = 32;
-			DataBase.ActiveDatabase.Pdsize = 40 * Settings.Units.ScaleFactor * Settings.Display.NodeScale;
+			SPMDatabase.ActiveDatabase.Pdmode = 32;
+			SPMDatabase.ActiveDatabase.Pdsize = 40 * Settings.Units.ScaleFactor * Settings.Display.NodeScale;
 			Editor.Regen();
 		}
 

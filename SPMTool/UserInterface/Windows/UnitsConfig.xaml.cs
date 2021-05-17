@@ -56,7 +56,7 @@ namespace SPMTool.Application.UserInterface
 			InitializeComponent();
 
 			// Read units
-			Units = DataBase.Settings.Units;
+			Units = SPMDatabase.Settings.Units;
 
 			// Get sources
 			GetSources();
@@ -84,7 +84,7 @@ namespace SPMTool.Application.UserInterface
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Save units on database
-			DataBase.Settings.Units = Units;
+			SPMDatabase.Settings.Units = Units;
 
 			Close();
 		}

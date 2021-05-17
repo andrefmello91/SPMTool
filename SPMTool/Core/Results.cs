@@ -3,8 +3,8 @@ using System.Linq;
 using andrefmello91.Extensions;
 using SPMTool.Enums;
 using UnitsNet;
-using static SPMTool.Core.DataBase;
-using static SPMTool.Core.Model;
+using static SPMTool.Core.SPMDatabase;
+using static SPMTool.Core.SPMModel;
 using static SPMTool.Extensions;
 
 namespace SPMTool.Core
@@ -138,10 +138,10 @@ namespace SPMTool.Core
 		///		Get the text height for results. Limited to 30.
 		/// </summary>
 		private static void GetTextHeight() =>
-			TextHeight = Math.Min(40 * ResultScaleFactor * Settings.Display.TextScale, Model.TextHeight);
+			TextHeight = Math.Min(40 * ResultScaleFactor * Settings.Display.TextScale, SPMModel.TextHeight);
 
 		/// <summary>
-		///     Set displacement to <see cref="Model.Nodes" />.
+		///     Set displacement to <see cref="SPMModel.Nodes" />.
 		/// </summary>
 		/// <inheritdoc cref="DrawResults" />
 		private static void SetDisplacements()

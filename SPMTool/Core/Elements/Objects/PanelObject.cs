@@ -13,7 +13,7 @@ using SPMTool.Enums;
 
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Core.DataBase;
+using static SPMTool.Core.SPMDatabase;
 
 
 #nullable enable
@@ -205,7 +205,7 @@ namespace SPMTool.Core.Elements
 		///     This method a linear object.
 		/// </remarks>
 		/// <inheritdoc />
-		public override INumberedElement GetElement() => GetElement(Model.Nodes.GetElements().Cast<Node>().ToArray());
+		public override INumberedElement GetElement() => GetElement(SPMModel.Nodes.GetElements().Cast<Node>().ToArray());
 
 		/// <inheritdoc cref="GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
@@ -327,18 +327,18 @@ namespace SPMTool.Core.Elements
 		public static explicit operator Panel?(PanelObject? panelObject) => (Panel?) panelObject?.GetElement();
 
 		/// <summary>
-		///     Get the <see cref="PanelObject" /> from <see cref="Model.Panels" /> associated to a <see cref="Panel" />.
+		///     Get the <see cref="PanelObject" /> from <see cref="SPMModel.Panels" /> associated to a <see cref="Panel" />.
 		/// </summary>
 		/// <remarks>
 		///     A <see cref="PanelObject" /> is created if <paramref name="panel" /> is not null and is not listed.
 		/// </remarks>
 		public static explicit operator PanelObject?(Panel? panel) => panel is null
 			? null
-			: Model.Panels.GetByProperty(panel.Geometry)
+			: SPMModel.Panels.GetByProperty(panel.Geometry)
 			  ?? new PanelObject(panel.Geometry);
 
 		/// <summary>
-		///     Get the <see cref="PanelObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="SPMElement{T}" />
+		///     Get the <see cref="PanelObject" /> from <see cref="SPMModel.Stringers" /> associated to a <see cref="SPMElement{T}" />
 		///     .
 		/// </summary>
 		/// <remarks>
@@ -349,14 +349,14 @@ namespace SPMTool.Core.Elements
 			: null;
 
 		/// <summary>
-		///     Get the <see cref="PanelObject" /> from <see cref="Model.Panels" /> associated to a <see cref="Solid" />.
+		///     Get the <see cref="PanelObject" /> from <see cref="SPMModel.Panels" /> associated to a <see cref="Solid" />.
 		/// </summary>
 		/// <remarks>
 		///     Can be null if <paramref name="solid" /> is null or doesn't correspond to a <see cref="PanelObject" />
 		/// </remarks>
 		public static explicit operator PanelObject?(Solid? solid) => solid is null
 			? null
-			: Model.Panels.GetByObjectId(solid.ObjectId);
+			: SPMModel.Panels.GetByObjectId(solid.ObjectId);
 
 		/// <summary>
 		///     Get the <see cref="Solid" /> associated to a <see cref="PanelObject" />.

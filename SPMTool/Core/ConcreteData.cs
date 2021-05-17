@@ -59,7 +59,7 @@ namespace SPMTool.Core.Materials
 
 		public ConcreteData()
 		{
-			DictionaryId = DataBase.NodId;
+			DictionaryId = SPMDatabase.NodId;
 			GetProperties();
 		}
 

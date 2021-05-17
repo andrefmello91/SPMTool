@@ -8,7 +8,7 @@ using SPMTool.Core.Elements;
 using SPMTool.Editor.Commands;
 
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
-using static SPMTool.Core.Model;
+using static SPMTool.Core.SPMModel;
 
 [assembly: CommandClass(typeof(ElementEditor))]
 
@@ -220,10 +220,10 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.UpdateElements)]
 		public static void UpdateElements()
 		{
-			Model.UpdateElements();
+			SPMModel.UpdateElements();
 
 			// Display the number of updated elements
-			Model.Editor.WriteMessage($"\n{Nodes.Count} nodes, {Stringers.Count} stringers and {Panels.Count} panels updated.");
+			SPMModel.Editor.WriteMessage($"\n{Nodes.Count} nodes, {Stringers.Count} stringers and {Panels.Count} panels updated.");
 		}
 
 		#endregion

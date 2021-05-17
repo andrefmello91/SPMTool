@@ -6,7 +6,7 @@ using Autodesk.AutoCAD.Runtime;
 using SPMTool.Core;
 using SPMTool.Editor.Commands;
 
-using static SPMTool.Core.Model;
+using static SPMTool.Core.SPMModel;
 
 [assembly: CommandClass(typeof(ConditionsInput))]
 
@@ -37,7 +37,7 @@ namespace SPMTool.Editor.Commands
 
 			// Ask the user set the support conditions:
 			var defDirection = nds.Length == 1
-				? Constraints.GetConstraintByPosition(nds[0].Position.ToPoint(DataBase.Settings.Units.Geometry)).Direction
+				? Constraints.GetConstraintByPosition(nds[0].Position.ToPoint(SPMDatabase.Settings.Units.Geometry)).Direction
 				: ComponentDirection.None;
 
 			var options = Enum.GetNames(typeof(ComponentDirection));
@@ -52,7 +52,7 @@ namespace SPMTool.Editor.Commands
 			var constraint = Constraint.FromDirection(direction);
 
 			// Get positions
-			var unit      = DataBase.Settings.Units.Geometry;
+			var unit      = SPMDatabase.Settings.Units.Geometry;
 			var positions = nds.Select(nd => nd.Position.ToPoint(unit)).ToArray();
 
 			// Erase blocks
@@ -66,7 +66,7 @@ namespace SPMTool.Editor.Commands
 		public static void AddForce()
 		{
 			// Read units
-			var units = DataBase.Settings.Units;
+			var units = SPMDatabase.Settings.Units;
 
 			// Request objects to be selected in the drawing area
 			var nds = UserInput.SelectNodes("Select nodes to add load:", NodeType.External)?.ToArray();
@@ -79,7 +79,7 @@ namespace SPMTool.Editor.Commands
 
 			// Get force from user
 			var initialForce = nds.Length == 1
-				? Forces.GetForceByPosition(nds[0].Position.ToPoint(DataBase.Settings.Units.Geometry))
+				? Forces.GetForceByPosition(nds[0].Position.ToPoint(SPMDatabase.Settings.Units.Geometry))
 				: (PlaneForce?) null;
 
 			var force = UserInput.GetForceValue(initialForce);

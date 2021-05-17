@@ -101,7 +101,7 @@ namespace SPMTool.Core.Blocks
 			// Text for sigma 1
 			if (!stressState.Is1Zero)
 			{
-				var sigma1 = stressState.Sigma1.ToUnit(DataBase.Settings.Units.PanelStresses).Value.Abs();
+				var sigma1 = stressState.Sigma1.ToUnit(SPMDatabase.Settings.Units.PanelStresses).Value.Abs();
 
 				// Improve angle
 				var angle1 = ImproveAngle(stressState.Theta1);
@@ -125,7 +125,7 @@ namespace SPMTool.Core.Blocks
 			if (stressState.Is2Zero)
 				yield break;
 
-			var sigma2 = stressState.Sigma2.ToUnit(DataBase.Settings.Units.PanelStresses).Value.Abs();
+			var sigma2 = stressState.Sigma2.ToUnit(SPMDatabase.Settings.Units.PanelStresses).Value.Abs();
 
 			// Improve angle
 			var angle2 = ImproveAngle(stressState.Theta2);

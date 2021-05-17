@@ -167,7 +167,7 @@
     <Compile Include="Core\Conditions\Objects\ConditionObject.cs" />
     <Compile Include="Core\Conditions\Objects\ConstraintObject.cs" />
     <Compile Include="Core\Conditions\Objects\ForceObject.cs" />
-    <Compile Include="Core\DataBase.cs" />
+    <Compile Include="Core\SPMDatabase.cs" />
     <Compile Include="Core\Elements\ElementData.cs" />
     <Compile Include="Core\Elements\Lists\NodeList.cs" />
     <Compile Include="Core\Elements\Lists\PanelList.cs" />
@@ -181,7 +181,7 @@
     <Compile Include="Core\DBObjectCreator\IDBObjectCreator.cs" />
     <Compile Include="Core\DBObjectCreator\TextCreator.cs" />
     <Compile Include="Core\DBObjectCreator\ExtendedObject.cs" />
-    <Compile Include="Core\Model.cs" />
+    <Compile Include="Core\SPMModel.cs" />
     <Compile Include="Core\Results.cs" />
     <Compile Include="Editor\Commands\SPMAnalysis.cs" />
     <Compile Include="Editor\Commands\CommandNames.cs" />

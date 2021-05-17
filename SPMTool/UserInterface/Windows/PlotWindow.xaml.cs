@@ -60,7 +60,7 @@ namespace SPMTool.Application.UserInterface
 		{
 			InitializeComponent();
 
-			_displacementUnit = DataBase.Settings.Units.Displacements;
+			_displacementUnit = SPMDatabase.Settings.Units.Displacements;
 			_femOutput        = femOutput;
 
 			DataContext = this;
@@ -116,8 +116,8 @@ namespace SPMTool.Application.UserInterface
 		{
 			// Get location and name
 			string
-				path = DataBase.GetFilePath(),
-				name = $"{Path.GetFileNameWithoutExtension(DataBase.ActiveDocument.Name)}_SPMResult";
+				path = SPMDatabase.GetFilePath(),
+				name = $"{Path.GetFileNameWithoutExtension(SPMDatabase.ActiveDocument.Name)}_SPMResult";
 
 			// Export
 			_femOutput.Export(path, name, _displacementUnit);

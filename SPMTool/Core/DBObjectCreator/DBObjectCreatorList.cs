@@ -38,7 +38,7 @@ namespace SPMTool.Core
 
 			// Remove from trash
 			if (obj is not null)
-				Model.Trash.Remove(obj);
+				SPMModel.Trash.Remove(obj);
 
 			// Add to drawing
 			e?.Item?.AddToDrawing();
@@ -52,8 +52,8 @@ namespace SPMTool.Core
 			var obj = e.Item;
 
 			// Add to trash
-			if (obj is not null && !Model.Trash.Contains(obj))
-				Model.Trash.Add(obj);
+			if (obj is not null && !SPMModel.Trash.Contains(obj))
+				SPMModel.Trash.Add(obj);
 
 			// Remove
 			obj?.RemoveFromDrawing();
@@ -68,7 +68,7 @@ namespace SPMTool.Core
 
 			// Remove from trash
 			if (!objs.IsNullOrEmpty())
-				Model.Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Contains);
+				SPMModel.Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Contains);
 
 			// Add to drawing
 			objs?.AddToDrawing();
@@ -83,7 +83,7 @@ namespace SPMTool.Core
 
 			// Add to trash
 			if (!objs.IsNullOrEmpty())
-				Model.Trash.AddRange(objs.Cast<IDBObjectCreator>().Where(obj => obj is not null && !Model.Trash.Contains(obj)));
+				SPMModel.Trash.AddRange(objs.Cast<IDBObjectCreator>().Where(obj => obj is not null && !SPMModel.Trash.Contains(obj)));
 
 			// Remove
 			objs?.RemoveFromDrawing();

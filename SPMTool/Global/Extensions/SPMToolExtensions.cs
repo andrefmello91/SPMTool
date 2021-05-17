@@ -21,7 +21,7 @@ using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Core.DataBase;
+using static SPMTool.Core.SPMDatabase;
 
 #nullable enable
 
@@ -356,7 +356,7 @@ namespace SPMTool
 		{
 			// Start a transaction
 			using var trans  = StartTransaction();
-			using var blkTbl = (BlockTable) trans.GetObject(DataBase.ActiveDatabase.BlockTableId, OpenMode.ForRead);
+			using var blkTbl = (BlockTable) trans.GetObject(SPMDatabase.ActiveDatabase.BlockTableId, OpenMode.ForRead);
 			using var blkRec = (BlockTableRecord) trans.GetObject(blkTbl[$"{block}"], OpenMode.ForRead);
 
 			if (blkRec is null)

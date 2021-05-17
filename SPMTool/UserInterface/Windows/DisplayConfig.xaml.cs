@@ -29,7 +29,7 @@ namespace SPMTool.Application.UserInterface
 			InitializeComponent();
 
 			// Read values
-			GetValues(DataBase.Settings.Display);
+			GetValues(SPMDatabase.Settings.Display);
 		}
 
 		#endregion
@@ -77,7 +77,7 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			// Set values
-			SetValues(DataBase.Settings.Display);
+			SetValues(SPMDatabase.Settings.Display);
 
 			Close();
 		}

@@ -61,7 +61,7 @@ namespace SPMTool.Application.UserInterface
 			SolverBox.ItemsSource = SolverNames;
 
 			// Read saved settings
-			AnalysisSettings = DataBase.Settings.Analysis;
+			AnalysisSettings = SPMDatabase.Settings.Analysis;
 		}
 
 		#endregion
@@ -86,7 +86,7 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			// Save units on database
-			DataBase.Settings.Analysis = AnalysisSettings;
+			SPMDatabase.Settings.Analysis = AnalysisSettings;
 
 			Close();
 		}

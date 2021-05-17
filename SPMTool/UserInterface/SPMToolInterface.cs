@@ -25,8 +25,8 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private readonly RibbonTab _tab = new()
 		{
-			Title = DataBase.AppName,
-			Id    = DataBase.AppName
+			Title = SPMDatabase.AppName,
+			Id    = SPMDatabase.AppName
 		};
 
 		#endregion
@@ -50,7 +50,7 @@ namespace SPMTool.Application.UserInterface
 			var spmInt = new SPMToolInterface();
 
 			// Check if the tab already exists
-			var tab = Ribbon.FindTab(DataBase.AppName);
+			var tab = Ribbon.FindTab(SPMDatabase.AppName);
 
 			if (tab != null)
 				Ribbon.Tabs.Remove(tab);

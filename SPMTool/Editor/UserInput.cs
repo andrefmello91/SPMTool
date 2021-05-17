@@ -7,11 +7,12 @@ using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.GraphicsSystem;
 using SPMTool.Core;
 using SPMTool.Enums;
 
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
-using static SPMTool.Core.DataBase;
+using static SPMTool.Core.SPMDatabase;
 
 #nullable enable
 
@@ -43,7 +44,7 @@ namespace SPMTool.Editor
 			};
 
 			// Get the result
-			var dbRes = Model.Editor.GetDouble(dbOp);
+			var dbRes = SPMModel.Editor.GetDouble(dbOp);
 
 			if (dbRes.Status == PromptStatus.OK)
 				return dbRes.Value;
@@ -98,7 +99,7 @@ namespace SPMTool.Editor
 			};
 
 			// Get the number
-			var intRes = Model.Editor.GetInteger(intOp);
+			var intRes = SPMModel.Editor.GetInteger(intOp);
 
 			if (intRes.Status == PromptStatus.OK)
 				return intRes.Value;
@@ -128,7 +129,7 @@ namespace SPMTool.Editor
 				ptOp.BasePoint    = basePoint.Value;
 			}
 
-			var ptRes = Model.Editor.GetPoint(ptOp);
+			var ptRes = SPMModel.Editor.GetPoint(ptOp);
 
 			if (ptRes.Status == PromptStatus.OK)
 				return ptRes.Value;
@@ -160,7 +161,7 @@ namespace SPMTool.Editor
 				return null;
 
 			// Get the node global indexes
-			var node  = Model.Nodes.GetByObjectId(nd.ObjectId)?.GetElement();
+			var node  = SPMModel.Nodes.GetByObjectId(nd.ObjectId)?.GetElement();
 			var index = node?.DoFIndex;
 
 			return
@@ -179,7 +180,7 @@ namespace SPMTool.Editor
 			{
 				// Request the object to be selected in the drawing area
 				var entOp  = new PromptEntityOptions($"\n{message}");
-				var entRes = Model.Editor.GetEntity(entOp);
+				var entRes = SPMModel.Editor.GetEntity(entOp);
 
 				if (entRes.Status == PromptStatus.Cancel)
 					return null;
@@ -243,7 +244,7 @@ namespace SPMTool.Editor
 			if (defaultKeyword != null)
 				keyOp.Keywords.Default = defaultKeyword;
 
-			var result = Model.Editor.GetKeywords(keyOp);
+			var result = SPMModel.Editor.GetKeywords(keyOp);
 
 			if (result.Status == PromptStatus.Cancel)
 				return null;
@@ -350,8 +351,8 @@ namespace SPMTool.Editor
 			var filter = layers?.LayerFilter();
 
 			var selRes = filter is null
-				? Model.Editor.GetSelection(selOp)
-				: Model.Editor.GetSelection(selOp, filter);
+				? SPMModel.Editor.GetSelection(selOp)
+				: SPMModel.Editor.GetSelection(selOp, filter);
 
 			if (selRes.Status == PromptStatus.Cancel || selRes.Value is null)
 				return null;

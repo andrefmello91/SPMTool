@@ -13,7 +13,7 @@ using SPMTool.Enums;
 
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Core.DataBase;
+using static SPMTool.Core.SPMDatabase;
 
 #nullable enable
 
@@ -186,7 +186,7 @@ namespace SPMTool.Core.Elements
 		///     This method returns a linear object.
 		/// </remarks>
 		/// <inheritdoc />
-		public override INumberedElement GetElement() => GetElement(Model.Nodes.GetElements().Cast<Node>().ToArray());
+		public override INumberedElement GetElement() => GetElement(SPMModel.Nodes.GetElements().Cast<Node>().ToArray());
 
 		/// <inheritdoc cref="SPMObject{T}.GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
@@ -277,18 +277,18 @@ namespace SPMTool.Core.Elements
 		public static explicit operator Stringer?(StringerObject? stringerObject) => (Stringer?) stringerObject?.GetElement();
 
 		/// <summary>
-		///     Get the <see cref="StringerObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="Stringer" />.
+		///     Get the <see cref="StringerObject" /> from <see cref="SPMModel.Stringers" /> associated to a <see cref="Stringer" />.
 		/// </summary>
 		/// <remarks>
 		///     A <see cref="StringerObject" /> is created if <paramref name="stringer" /> is not null and is not listed.
 		/// </remarks>
 		public static explicit operator StringerObject?(Stringer? stringer) => stringer is null
 			? null
-			: Model.Stringers.GetByProperty(stringer.Geometry)
+			: SPMModel.Stringers.GetByProperty(stringer.Geometry)
 			  ?? new StringerObject(stringer.Geometry);
 
 		/// <summary>
-		///     Get the <see cref="StringerObject" /> from <see cref="Model.Stringers" /> associated to a
+		///     Get the <see cref="StringerObject" /> from <see cref="SPMModel.Stringers" /> associated to a
 		///     <see cref="SPMElement{T}" />
 		///     .
 		/// </summary>
@@ -300,14 +300,14 @@ namespace SPMTool.Core.Elements
 			: null;
 
 		/// <summary>
-		///     Get the <see cref="StringerObject" /> from <see cref="Model.Stringers" /> associated to a <see cref="Line" />.
+		///     Get the <see cref="StringerObject" /> from <see cref="SPMModel.Stringers" /> associated to a <see cref="Line" />.
 		/// </summary>
 		/// <remarks>
 		///     Can be null if <paramref name="line" /> is null or doesn't correspond to a <see cref="StringerObject" />
 		/// </remarks>
 		public static explicit operator StringerObject?(Line? line) => line is null
 			? null
-			: Model.Stringers.GetByObjectId(line.ObjectId);
+			: SPMModel.Stringers.GetByObjectId(line.ObjectId);
 
 		/// <summary>
 		///     Get the <see cref="Line" /> associated to a <see cref="StringerObject" />.
