@@ -1,0 +1,480 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{25CFFFC7-0EA2-4774-8125-F594D5E51E2A}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SPMTool</RootNamespace>
+    <AssemblyName>SPMTool</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <Usewpf>true</Usewpf>
+    <Version>0.1</Version>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="accoremgd, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.Core.24.1.51000\lib\net47\AcCoreMgd.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AcCui, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcCui.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Acdbmgd, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.Model.24.1.51000\lib\net47\AcDbMgd.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="acdbmgdbrep, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.Model.24.1.51000\lib\net47\acdbmgdbrep.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AcDx, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcDx.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="acmgd, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcMgd.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AcMr, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcMr.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AcSeamless, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcSeamless.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AcTcMgd, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcTcMgd.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AcWindows, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcWindows.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AdUIMgd, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AdUIMgd.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AdUiPalettes, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AdUiPalettes.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AdWindows, Version=3.1.4.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AdWindows.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="IndexRange, Version=1.0.0.0, Culture=neutral, PublicKeyToken=35e6a3c4212514c6">
+      <HintPath>..\packages\IndexRange.1.0.0\lib\net471\IndexRange.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="LiveCharts, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
+      <HintPath>packages\LiveCharts.0.9.7\lib\net45\LiveCharts.dll</HintPath>
+    </Reference>
+    <Reference Include="LiveCharts.Wpf, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
+      <HintPath>packages\LiveCharts.Wpf.0.9.7\lib\net45\LiveCharts.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="MathNet.Numerics, Version=4.15.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\MathNet.Numerics.4.15.0\lib\net461\MathNet.Numerics.dll</HintPath>
+    </Reference>
+    <Reference Include="MathNet.Numerics.Data.Text, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\MathNet.Numerics.Data.Text.4.1.0\lib\net461\MathNet.Numerics.Data.Text.dll</HintPath>
+    </Reference>
+    <Reference Include="mscorlib" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
+      <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Memory, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
+      <HintPath>..\packages\System.Memory.4.5.4\lib\net461\System.Memory.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.5.3\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Windows.Presentation" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="UnitsNet, Version=4.0.0.0, Culture=neutral, PublicKeyToken=f8601875a1f041da">
+      <HintPath>..\packages\UnitsNet.4.89.1\lib\net40\UnitsNet.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Core\Blocks\BlockCreator.cs" />
+    <Compile Include="Core\Blocks\PanelCrackBlockCreator.cs" />
+    <Compile Include="Core\Blocks\ShearBlockCreator.cs" />
+    <Compile Include="Core\Blocks\BlockElements.cs" />
+    <Compile Include="Core\Blocks\StressBlockCreator.cs" />
+    <Compile Include="Core\Blocks\StringerCrackBlockCreator.cs" />
+    <Compile Include="Core\Blocks\StringerForceCreator.cs" />
+    <Compile Include="Core\ConcreteData.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Core\Conditions\Lists\ConditionList.cs" />
+    <Compile Include="Core\Conditions\Lists\ConstraintList.cs" />
+    <Compile Include="Core\Conditions\Lists\ForceList.cs" />
+    <Compile Include="Core\Conditions\Objects\ConditionObject.cs" />
+    <Compile Include="Core\Conditions\Objects\ConstraintObject.cs" />
+    <Compile Include="Core\Conditions\Objects\ForceObject.cs" />
+    <Compile Include="Core\SPMDatabase.cs" />
+    <Compile Include="Core\Elements\ElementData.cs" />
+    <Compile Include="Core\Elements\Lists\NodeList.cs" />
+    <Compile Include="Core\Elements\Lists\PanelList.cs" />
+    <Compile Include="Core\Elements\Lists\SPMObjectList.cs" />
+    <Compile Include="Core\Elements\Lists\StringerList.cs" />
+    <Compile Include="Core\Elements\Objects\NodeObject.cs" />
+    <Compile Include="Core\Elements\Objects\PanelObject.cs" />
+    <Compile Include="Core\Elements\Objects\SPMObject.cs" />
+    <Compile Include="Core\Elements\Objects\StringerObject.cs" />
+    <Compile Include="Core\DBObjectCreator\DBObjectCreatorList.cs" />
+    <Compile Include="Core\DBObjectCreator\IDBObjectCreator.cs" />
+    <Compile Include="Core\DBObjectCreator\TextCreator.cs" />
+    <Compile Include="Core\DBObjectCreator\ExtendedObject.cs" />
+    <Compile Include="Core\SPMModel.cs" />
+    <Compile Include="Core\Results.cs" />
+    <Compile Include="Editor\Commands\SPMAnalysis.cs" />
+    <Compile Include="Editor\Commands\CommandNames.cs" />
+    <Compile Include="Editor\Commands\ConditionsInput.cs" />
+    <Compile Include="Editor\Commands\ElementEditor.cs" />
+    <Compile Include="Editor\Commands\ElementInput.cs" />
+    <Compile Include="Editor\Commands\Settings.cs" />
+    <Compile Include="Editor\Commands\View.cs" />
+    <Compile Include="Editor\UserInput.cs" />
+    <Compile Include="Global\Attributes.cs" />
+    <Compile Include="Global\Comparers\LineEqualityComparer .cs" />
+    <Compile Include="Global\Comparers\Point3dComparer.cs" />
+    <Compile Include="Global\Comparers\SolidEqualityComparer.cs" />
+    <Compile Include="Global\Enums.cs" />
+    <Compile Include="Global\Extensions\AutoCADExtensions.cs" />
+    <Compile Include="Global\Extensions\PointExtensions.cs" />
+    <Compile Include="Global\Extensions\SPMToolExtensions.cs" />
+    <Compile Include="Global\Extensions\UIExtensions.cs" />
+    <Compile Include="Global\FlowAnalysisAttributes.cs" />
+    <Compile Include="Initializer.cs" />
+    <Compile Include="Editor\Commands\CommandHandler.cs" />
+    <Compile Include="Settings\AnalysisSettings.cs" />
+    <Compile Include="Settings\DisplaySettings.cs" />
+    <Compile Include="Settings\Settings.cs" />
+    <Compile Include="Settings\Units.cs" />
+    <Compile Include="UserInterface\Icons.cs" />
+    <Compile Include="UserInterface\SPMToolInterface.cs" />
+    <Compile Include="UserInterface\Windows\AnalysisConfig.xaml.cs">
+      <DependentUpon>AnalysisConfig.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserInterface\Windows\BaseWindow.cs" />
+    <Compile Include="UserInterface\Windows\ConcreteConfig.xaml.cs">
+      <DependentUpon>ConcreteConfig.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserInterface\Windows\DisplayConfig.xaml.cs">
+      <DependentUpon>DisplayConfig.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserInterface\Windows\PlotWindow.xaml.cs">
+      <DependentUpon>PlotWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserInterface\Windows\PanelWindow.xaml.cs">
+      <DependentUpon>PanelWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserInterface\Windows\StringerWindow.xaml.cs">
+      <DependentUpon>StringerWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserInterface\Windows\UnitsConfig.xaml.cs">
+      <DependentUpon>UnitsConfig.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="UserInterface\Windows\AnalysisConfig.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserInterface\Windows\ConcreteConfig.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserInterface\Windows\DisplayConfig.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserInterface\Windows\PlotWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserInterface\Windows\PanelWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserInterface\Windows\StringerWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserInterface\Windows\UnitsConfig.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="Resources\viewsupport_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewsupport_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\analysissettings.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\analysissettings_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\concrete_constitutive.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\concrete_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\concrete_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\concretestresses_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\concretestresses_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\crack_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\crack_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\displacements_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\displacements_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\divpnl_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\divpnl_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\divstr_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\divstr_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\elementdata_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\elementdata_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\force_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\force_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\linear_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\linear_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\nonlinear_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\nonlinear_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panel_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panel_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelforces_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelforces_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panel-geometry.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelreinforcement_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelreinforcement_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelstresses_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\panelstresses_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\set_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\set_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\steel_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\steel_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringer_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringer_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringer-cross-section.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringerforces_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringerforces_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringerreinforcement_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stringerreinforcement_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\support_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\support_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\units.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\units_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\update_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\update_small_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewforce_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewforce_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewnode_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewnode_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewpanel_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewpanel_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewstringer_large.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\viewstringer_large_light.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\EList\andrefmello91.EList\andrefmello91.EList.csproj">
+      <Project>{0b69ed8e-7933-4d5d-984c-43f585694ad1}</Project>
+      <Name>andrefmello91.EList</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Extensions\andrefmello91.Extensions\andrefmello91.Extensions.csproj">
+      <Project>{f853ef6c-0b69-449d-96af-e74bb0d66b6f}</Project>
+      <Name>andrefmello91.Extensions</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\FEMAnalysis\andrefmello91.FEMAnalysis\andrefmello91.FEMAnalysis.csproj">
+      <Project>{11ff8a9f-3315-47ff-a437-44fa658492e8}</Project>
+      <Name>andrefmello91.FEMAnalysis</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Material\andrefmello91.Material\andrefmello91.Material.csproj">
+      <Project>{f0b8f7d7-72b6-48f5-9a31-0de7c73c2ccb}</Project>
+      <Name>andrefmello91.Material</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\OnPlaneComponents\andrefmello91.OnPlaneComponents\andrefmello91.OnPlaneComponents.csproj">
+      <Project>{a1516fa1-cbf1-4297-8846-ebb8e3d39670}</Project>
+      <Name>andrefmello91.OnPlaneComponents</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ReinforcedConcreteMembrane\andrefmello91.ReinforcedConcreteMembrane\andrefmello91.ReinforcedConcreteMembrane.csproj">
+      <Project>{50c9f779-81ba-4c52-9876-da52aac4325d}</Project>
+      <Name>andrefmello91.ReinforcedConcreteMembrane</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SPMElements\andrefmello91.SPMElements\andrefmello91.SPMElements.csproj">
+      <Project>{47286cce-9482-4c49-ba2f-279f42ca3fac}</Project>
+      <Name>andrefmello91.SPMElements</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
