@@ -1,6 +1,7 @@
-﻿using andrefmello91.OnPlaneComponents;
+﻿/*using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
+using Extensions = SPMTool.Extensions;
 
 #nullable enable
 
@@ -67,7 +68,7 @@ namespace SPMTool.Core
 
 		#region Interface Implementations
 
-		public void AddToDrawing() => ObjectId = CreateObject().AddToDrawing();
+		public void AddToDrawing() => ObjectId = CreateObject().AddObject();
 
 		public DBText CreateObject() => new()
 		{
@@ -86,11 +87,11 @@ namespace SPMTool.Core
 		/// <inheritdoc />
 		DBObject? IDBObjectCreator.GetObject() => GetObject();
 
-		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+		public void RemoveFromDrawing() => Extensions.EraseObjects(this);
 
 		#endregion
 
 		#endregion
 
 	}
-}
+}*/

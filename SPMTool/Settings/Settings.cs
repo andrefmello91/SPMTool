@@ -90,6 +90,7 @@ namespace SPMTool.Application
 		#region Constructors
 
 		public Settings(Database database)
+			: base(database.GetDocument().Name)
 		{
 			DictionaryId = database.NamedObjectsDictionaryId;
 			GetProperties();
@@ -100,7 +101,7 @@ namespace SPMTool.Application
 
 		#region Methods
 
-		private static void SetEvents(DisplaySettings displaySettings)
+		private void SetEvents(DisplaySettings displaySettings)
 		{
 			displaySettings.NodeScaleChanged      += On_NodeScaleChange;
 			displaySettings.ConditionScaleChanged += On_ConditionScaleChange;
@@ -164,15 +165,11 @@ namespace SPMTool.Application
 			SetDictionary((TypedValue[]) units, USaveName);
 		}
 
-		private static void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.ActiveModel.UpdatePointSize();
+		private void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.GetOpenedModel(DictionaryId.Database).UpdatePointSize();
 
-		private static void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.ActiveModel.UpdateConditionsScale(e.OldScale, e.NewScale);
+		private void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.GetOpenedModel(DictionaryId.Database).UpdateConditionsScale(e.OldScale, e.NewScale);
 
-		private static void On_TextScaleChange(object sender, ScaleChangedEventArgs e)
-		{
-			SPMModel.ActiveModel.UpdateTextHeight();
-			Results.UpdateTextHeight();
-		}
+		private void On_TextScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.GetOpenedModel(DictionaryId.Database).UpdateTextHeight();
 
 		#endregion
 

@@ -18,8 +18,10 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.Linear)]
 		public static void LinearAnalysis()
 		{
+			var model = SPMModel.ActiveModel;
+			
 			// Get input data
-			var input = SPMModel.ActiveModel.GenerateInput(AnalysisType.Linear, out var dataOk, out var message);
+			var input = model.GenerateInput(AnalysisType.Linear, out var dataOk, out var message);
 
 			if (!dataOk)
 			{
@@ -34,7 +36,8 @@ namespace SPMTool.Editor.Commands
 			// Model.Editor.WriteMessage(analysis.ToString());
 
 			// Draw results of analysis
-			DrawResults();
+			var results = new Results(model);
+			results.DrawResults();
 		}
 
 		[CommandMethod(CommandName.Nonlinear)]
@@ -50,8 +53,10 @@ namespace SPMTool.Editor.Commands
 		/// <param name="simulate">Execute a simulation until failure?</param>
 		private static void ExecuteNonlinearAnalysis(bool simulate = false)
 		{
+			var model = SPMModel.ActiveModel;
+
 			// Get input data
-			var input = SPMModel.ActiveModel.GenerateInput(AnalysisType.Nonlinear, out var dataOk, out var message);
+			var input = model.GenerateInput(AnalysisType.Nonlinear, out var dataOk, out var message);
 
 			if (!dataOk)
 			{
@@ -84,8 +89,8 @@ namespace SPMTool.Editor.Commands
 			// Updated plot
 			plot.UpdatePlot();
 
-			// Draw results of analysis
-			DrawResults();
+			var results = new Results(model);
+			results.DrawResults();
 		}
 
 		#endregion

@@ -8,6 +8,10 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
+using SPMTool.Core;
+using SPMTool.Core.Conditions;
+using SPMTool.Core.Elements;
+using SPMTool.Enums;
 using UnitsNet.Units;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
@@ -123,10 +127,10 @@ namespace SPMTool
 
 			// Create the group
 			using var group = new Group(groupName, true);
-			var       id    = nod.SetAt(groupName, group);
+			var       id    = nod.SetAt(groupName, @group);
 
 			// Add to the transaction
-			trans.AddNewlyCreatedDBObject(group, true);
+			trans.AddNewlyCreatedDBObject(@group, true);
 
 			// Add the elements to the block
 			foreach (var ent in groupEntities)
@@ -137,7 +141,7 @@ namespace SPMTool
 
 			// Set to group
 			using var ids = new ObjectIdCollection(groupEntities.Select(e => e.ObjectId).ToArray());
-			group.InsertAt(0, ids);
+			@group.InsertAt(0, ids);
 
 			// Commit changes
 			trans.Commit();
@@ -520,27 +524,11 @@ namespace SPMTool
 		public static IEnumerable<ObjectId>? GetObjectIds(this IEnumerable<DBObject>? objects) => objects?.Select(obj => obj.ObjectId);
 
 		/// <summary>
-		///     Get a collection containing all the <see cref="ObjectId" />'s in this <see cref="layerName" />.
-		/// </summary>
-		/// <param name="document">The AutoCAD document.</param>
-		/// <param name="layerName">The layer name.</param>
-		public static IEnumerable<ObjectId> GetObjectIds(this Document document, string layerName)
-		{
-			// Get the entities on the layername
-			var selRes = document.Editor.SelectAll(layerName.LayerFilter());
-
-			return
-				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0
-					? selRes.Value.GetObjectIds()
-					: new ObjectId[0];
-		}
-
-		/// <summary>
 		///     Get a collection containing all the <see cref="ObjectId" />'s in those <paramref name="layerNames" />.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="layerNames">The layer names.</param>
-		public static IEnumerable<ObjectId>? GetObjectIds(this Document document, IEnumerable<string>? layerNames)
+		public static IEnumerable<ObjectId>? GetObjectIds(this Document document, params string[] layerNames)
 		{
 			if (layerNames.IsNullOrEmpty())
 				return null;
@@ -848,7 +836,7 @@ namespace SPMTool
 		///     Erase all the objects in these <paramref name="layerNames" />.
 		/// </summary>
 		public static void EraseObjects(this Document document, IEnumerable<string> layerNames, ObjectErasedEventHandler? erasedEvent = null) =>
-			document.GetObjectIds(layerNames)?.EraseObjects(erasedEvent);
+			document.GetObjectIds(layerNames.ToArray())?.EraseObjects(erasedEvent);
 
 		/// <summary>
 		///     Set a collection of <see cref="TypedValue" /> from a <see cref="DBDictionary" />'s <see cref="ObjectId" />.
@@ -1064,6 +1052,5 @@ namespace SPMTool
 		}
 
 		#endregion
-
 	}
 }

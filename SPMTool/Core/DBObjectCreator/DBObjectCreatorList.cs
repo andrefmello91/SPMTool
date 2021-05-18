@@ -16,14 +16,25 @@ namespace SPMTool.Core
 	public abstract class DBObjectCreatorList<TDBObjectCreator> : EList<TDBObjectCreator>
 		where TDBObjectCreator : IDBObjectCreator, IEquatable<TDBObjectCreator>, IComparable<TDBObjectCreator>
 	{
+		/// <summary>
+		///		Get the name of the document associated to this collection.
+		/// </summary>
+		public string DocName { get; set; }
 
 		#region Constructors
 
-		protected DBObjectCreatorList() => SetEvents();
-
-		protected DBObjectCreatorList(IEnumerable<TDBObjectCreator> collection)
-			: base(collection) =>
+		protected DBObjectCreatorList(string docName)
+		{
+			DocName = docName;
 			SetEvents();
+		}
+
+		protected DBObjectCreatorList(IEnumerable<TDBObjectCreator> collection, string docName)
+			: base(collection)
+		{
+			DocName = docName;
+			SetEvents();
+		}
 
 		#endregion
 
@@ -32,61 +43,76 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Event to execute when an object is added to a list.
 		/// </summary>
-		public static void On_ObjectAdded(object? sender, ItemEventArgs<TDBObjectCreator>? e)
+		private void On_ObjectAdded(object? sender, ItemEventArgs<TDBObjectCreator> e)
 		{
-			var obj = e.Item;
+			if (e.Item is not { } obj )
+				return;
 
 			// Remove from trash
-			if (obj is not null)
-				SPMModel.Trash.Remove(obj);
+			obj.DocName = DocName;
+			SPMModel.GetOpenedModel(DocName)?.Trash.Remove(obj);
 
 			// Add to drawing
-			e?.Item?.AddToDrawing();
+			obj.AddToDrawing();
 		}
 
 		/// <summary>
 		///     Event to execute when an object is removed from a list.
 		/// </summary>
-		public static void On_ObjectRemoved(object? sender, ItemEventArgs<TDBObjectCreator>? e)
+		private void On_ObjectRemoved(object? sender, ItemEventArgs<TDBObjectCreator> e)
 		{
-			var obj = e.Item;
+			if (e.Item is not { } obj )
+				return;
 
 			// Add to trash
-			if (obj is not null && !SPMModel.Trash.Contains(obj))
-				SPMModel.Trash.Add(obj);
+			obj.DocName = DocName;
+			var model = SPMModel.GetOpenedModel(DocName);
+
+			if (model is not null && !model.Trash.Contains(obj))
+				model.Trash.Add(obj);
 
 			// Remove
-			obj?.RemoveFromDrawing();
+			obj.RemoveFromDrawing();
 		}
 
 		/// <summary>
 		///     Event to execute when a range of objects is added to a list.
 		/// </summary>
-		public static void On_ObjectsAdded(object? sender, RangeEventArgs<TDBObjectCreator>? e)
+		private void On_ObjectsAdded(object? sender, RangeEventArgs<TDBObjectCreator> e)
 		{
-			var objs = e?.ItemCollection;
+			var objs = e.ItemCollection;
+			
+			if (objs.IsNullOrEmpty())
+				return;
+			
+			foreach (var obj in objs.Where(obj => obj is not null))
+				obj.DocName = DocName;
 
-			// Remove from trash
-			if (!objs.IsNullOrEmpty())
-				SPMModel.Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Contains);
+			var model = SPMModel.GetOpenedModel(DocName);
+			
+			model?.Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Contains);
 
 			// Add to drawing
-			objs?.AddToDrawing();
+			objs.AddToDrawing();
 		}
 
 		/// <summary>
 		///     Event to execute when a range of objects is removed from a list.
 		/// </summary>
-		public static void On_ObjectsRemoved(object? sender, RangeEventArgs<TDBObjectCreator>? e)
+		private void On_ObjectsRemoved(object? sender, RangeEventArgs<TDBObjectCreator> e)
 		{
-			var objs = e?.ItemCollection;
+			var objs = e.ItemCollection;
+			
+			if (objs.IsNullOrEmpty())
+				return;
 
 			// Add to trash
-			if (!objs.IsNullOrEmpty())
-				SPMModel.Trash.AddRange(objs.Cast<IDBObjectCreator>().Where(obj => obj is not null && !SPMModel.Trash.Contains(obj)));
+			var model = SPMModel.GetOpenedModel(DocName);
+			
+			model?.Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Where(obj => obj is not null).Contains);
 
 			// Remove
-			objs?.RemoveFromDrawing();
+			objs.EraseObjects();
 		}
 
 		/// <summary>
@@ -108,7 +134,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Set events on this collection.
 		/// </summary>
-		protected void SetEvents()
+		private void SetEvents()
 		{
 			ItemAdded    += On_ObjectAdded;
 			ItemRemoved  += On_ObjectRemoved;

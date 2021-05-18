@@ -10,7 +10,7 @@ namespace SPMTool.Core
 	/// </summary>
 	public abstract class ExtendedObject : IDBObjectCreator
 	{
-
+		
 		#region Fields
 
 		protected ObjectId _objectId = ObjectId.Null;
@@ -24,7 +24,12 @@ namespace SPMTool.Core
 		/// </summary>
 		public ObjectId DictionaryId { get; protected set; } = ObjectId.Null;
 
+		
+		
 		#region Interface Implementations
+
+		/// <inheritdoc />
+		public string DocName { get; set; }
 
 		/// <inheritdoc />
 		public abstract Layer Layer { get; }
@@ -45,6 +50,12 @@ namespace SPMTool.Core
 
 		#endregion
 
+		/// <summary>
+		///		Base constructor.
+		/// </summary>
+		/// <param name="docName">The name of the associated document.</param>
+		protected ExtendedObject(string docName) => DocName = docName;
+		
 		#region Methods
 
 		/// <summary>
@@ -108,7 +119,8 @@ namespace SPMTool.Core
 		#region Interface Implementations
 
 		/// <inheritdoc />
-		public virtual void AddToDrawing() => CreateObject().AddToDrawing();
+		public virtual void AddToDrawing() => 
+			SPMModel.GetOpenedModel(DocName)?.AcadDocument.AddObject(CreateObject());
 
 		/// <inheritdoc />
 		public abstract DBObject CreateObject();
@@ -117,7 +129,7 @@ namespace SPMTool.Core
 		public virtual DBObject? GetObject() => ObjectId.GetDBObject();
 
 		/// <inheritdoc />
-		public virtual void RemoveFromDrawing() => ObjectId.RemoveFromDrawing();
+		public virtual void RemoveFromDrawing() => ObjectId.EraseObjects();
 
 		#endregion
 

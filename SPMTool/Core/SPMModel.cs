@@ -55,7 +55,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the active model.
 		/// </summary>
-		public static SPMModel ActiveModel => GetOpenedModel(DocumentManager.MdiActiveDocument);
+		public static SPMModel ActiveModel => GetOpenedModel(DocumentManager.MdiActiveDocument)!;
 
 		/// <summary>
 		///     Get the related document.
@@ -213,10 +213,30 @@ namespace SPMTool.Core
 		public static string GetFilePath() => GetSystemVariable("DWGPREFIX").ToString()!;
 
 		/// <summary>
-		///     Get an opened document.
+		///     Get an opened SPM model that contains an <see cref="ObjectId"/>.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId"/> of an existing object.</param>
+		public static SPMModel? GetOpenedModel(ObjectId objectId) => !objectId.IsNull
+			? GetOpenedModel(objectId.Database)
+			: null;
+		
+		/// <summary>
+		///     Get an opened SPM model.
+		/// </summary>
+		/// <param name="documentName">The opened document name.</param>
+		public static SPMModel? GetOpenedModel(string documentName) => OpenedModels.Find(d => d.Name == documentName);
+		
+		/// <summary>
+		///     Get an opened SPM model.
 		/// </summary>
 		/// <param name="document">The opened document.</param>
-		public static SPMModel GetOpenedModel(Document document) => OpenedModels.Find(d => d.Name == document.Name);
+		public static SPMModel GetOpenedModel(Document document) => GetOpenedModel(document.Name)!;
+
+		/// <summary>
+		///     <inheritdoc cref="GetOpenedModel(Document)"/>
+		/// </summary>
+		/// <param name="database">The opened database.</param>
+		public static SPMModel GetOpenedModel(Database database) => GetOpenedModel(database.GetDocument());
 
 		/// <summary>
 		///     Add the app to the Registered Applications Record.
@@ -254,7 +274,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Add a SPM object to the active model.
 		/// </summary>
-		public bool Add(IDBObjectCreator obj, bool raiseEvents = false)
+		public bool Add(IDBObjectCreator? obj, bool raiseEvents = false)
 		{
 			if (obj is null)
 				return false;
@@ -346,44 +366,34 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Event to execute when an object is erased or unerased.
 		/// </summary>
-		public void On_ObjectErase(object sender, ObjectErasedEventArgs e)
+		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
 		{
-			var entity = (Entity) sender;
-
-			if (entity is null)
+			if (sender is not Entity entity || GetOpenedModel(entity.ObjectId) is not { } model)
 				return;
 
-			if (e.Erased)
+			switch (e.Erased)
 			{
-				var obj = entity.GetSPMObject();
+				case true when entity.GetSPMObject() is { } obj && model.Remove(obj):
 
-				if (!Remove(obj))
+					model.Trash.Add(obj);
+
+					model.Editor.WriteMessage($"\n{obj.Name} removed");
+
 					return;
 
-				Trash.Add(obj);
+				case false:
 
-				// SPMDocument.Editor.WriteMessage($"\n{obj.Name} removed");
+					var obj1 = model.Trash.Find(t => t.ObjectId == entity.ObjectId) ?? entity.CreateSPMObject();
+					
+					if (!model.Add(obj1))
+						return;
 
-				return;
+					model.Trash.Remove(obj1);
+
+					model.Editor.WriteMessage($"\n{obj1.Name} re-added");
+					
+					return;
 			}
-
-			IDBObjectCreator obj1;
-			try
-			{
-				obj1 = Trash.Find(t => t.ObjectId == entity.ObjectId);
-			}
-			catch
-			{
-				// SPMDocument.Editor.WriteMessage("\nNot found in trash.");
-				obj1 = entity.CreateSPMObject();
-			}
-
-			if (!Add(obj1))
-				return;
-
-			Trash.Remove(obj1);
-
-			// SPMDocument.Editor.WriteMessage($"\n{obj1.Name} re-added");
 		}
 
 		/// <summary>

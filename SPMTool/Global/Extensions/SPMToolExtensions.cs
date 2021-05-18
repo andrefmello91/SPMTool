@@ -17,6 +17,10 @@ using Autodesk.Windows;
 using MathNet.Numerics;
 using SPMTool.Application;
 using SPMTool.Attributes;
+using SPMTool.Core;
+using SPMTool.Core.Blocks;
+using SPMTool.Core.Conditions;
+using SPMTool.Core.Elements;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using UnitsNet;
@@ -29,7 +33,7 @@ namespace SPMTool
 	{
 
 		#region Methods
-
+		
 		/// <summary>
 		///     Create a <paramref name="layer" /> given its name.
 		/// </summary>
@@ -806,5 +810,115 @@ namespace SPMTool
 
 		#endregion
 
+		/// <summary>
+		///     Add a collection of objects to drawing and set their <see cref="ObjectId" />.
+		/// </summary>
+		/// <param name="objects">The objects to add to drawing.</param>
+		public static void AddToDrawing<TDbObjectCreator>(this IEnumerable<TDbObjectCreator?>? objects)
+			where TDbObjectCreator : IDBObjectCreator
+		{
+			if (objects.IsNullOrEmpty() || SPMModel.GetOpenedModel(objects.First().DocName)?.AcadDocument is not { } doc)
+				return;
+			
+			using var lck = doc.LockDocument();
+		
+			var objs2 = objects
+				.Where(o => o is not StringerForceCreator)
+				.ToList();
+		
+			var entities = objs2
+				.Select(n => n?.CreateObject())
+				.ToList();
+		
+			// Add objects to drawing
+			var objIds = doc.AddObjects(entities, SPMModel.On_ObjectErase)!.ToList();
+		
+			// Set object ids
+			for (var i = 0; i < objs2.Count; i++)
+				if (objs2[i] is not null)
+					objs2[i].ObjectId = objIds[i];
+		
+			// Set attributes for blocks
+			foreach (var obj in objects)
+				switch (obj)
+				{
+					case null:
+						break;
+		
+					case ForceObject force:
+						force.SetAttributes();
+						break;
+		
+					case StringerForceCreator stringerForceCreator:
+						stringerForceCreator.AddToDrawing();
+						break;
+				}
+		}
+
+				/// <summary>
+		///     Create a <see cref="IDBObjectCreator{TDbObject}" /> from this <paramref name="dbObject" />.
+		/// </summary>
+		/// <param name="dbObject">The <see cref="DBObject" />.</param>
+		public static IDBObjectCreator? CreateSPMObject(this DBObject? dbObject) =>
+			dbObject switch
+			{
+				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => NodeObject.From(p),
+				Line l when l.Layer == $"{Layer.Stringer}"                                    => StringerObject.From(l),
+				Solid s when s.Layer == $"{Layer.Panel}"                                      => PanelObject.From(s),
+				BlockReference b when b.Layer == $"{Layer.Force}"                             => ForceObject.From(b),
+				BlockReference b when b.Layer == $"{Layer.Support}"                           => ConstraintObject.From(b),
+				_                                                                             => null
+			};
+
+		/// <summary>
+		///     Get a SPM object from this <paramref name="dbObject" />.
+		/// </summary>
+		/// <param name="dbObject">The <see cref="DBObject" />.</param>
+		public static IDBObjectCreator? GetSPMObject(this DBObject? dbObject) =>
+			SPMModel.GetOpenedModel(dbObject?.ObjectId ?? ObjectId.Null) is { } model 
+				? dbObject switch
+				{
+					DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => model.Nodes.GetByObjectId(dbObject.ObjectId),
+					Line l when l.Layer == $"{Layer.Stringer}"                                    => model.Stringers.GetByObjectId(dbObject.ObjectId),
+					Solid s when s.Layer == $"{Layer.Panel}"                                      => model.Panels.GetByObjectId(dbObject.ObjectId),
+					BlockReference b when b.Layer == $"{Layer.Force}"                             => model.Forces.GetByObjectId(dbObject.ObjectId),
+					BlockReference b when b.Layer == $"{Layer.Support}"                           => model.Constraints.GetByObjectId(dbObject.ObjectId),
+					_                                                                             => null
+				}
+				: null;
+
+		/// <summary>
+		///     Remove a collection of objects from drawing.
+		/// </summary>
+		/// <param name="elements">The objects to remove.</param>
+		public static void EraseObjects<TDbObjectCreator>(this IEnumerable<TDbObjectCreator?>? elements)
+			where TDbObjectCreator : IDBObjectCreator =>
+			elements?.Select(e => e?.ObjectId ?? ObjectId.Null).ToArray().EraseObjects(SPMModel.On_ObjectErase);
+
+		/// <summary>
+		///     Get a SPM object from this <paramref name="objectId" />.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId" />.</param>
+		public static IDBObjectCreator? GetSPMObject(this ObjectId objectId) => objectId.GetEntity()?.CreateSPMObject();
+
+		/// <summary>
+		///     Remove an object from drawing.
+		/// </summary>
+		/// <param name="element">The object to remove.</param>
+		public static void EraseObjects<TDbObjectCreator>(this TDbObjectCreator? element)
+			where TDbObjectCreator : IDBObjectCreator =>
+			element?.ObjectId.EraseObjects(SPMModel.On_ObjectErase);
+
+		/// <summary>
+		///     Set attributes to blocks in this collection.
+		/// </summary>
+		public static void SetAttributes(this IEnumerable<BlockCreator?>? blockCreators)
+		{
+			if (blockCreators.IsNullOrEmpty())
+				return;
+
+			foreach (var block in blockCreators)
+				block?.SetAttributes();
+		}
 	}
 }
