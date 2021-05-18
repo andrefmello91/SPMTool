@@ -510,8 +510,9 @@ namespace SPMTool.Core
 		public void UpdateTextHeight()
 		{
 			var objs    = Forces.Select(f => f.ObjectId).ToList();
-			var rLayers = new[] { Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks }.Select(l => $"{l}").ToList();
-			var results = Database.AcadDatabase.GetDocument().GetObjectIds(rLayers)?.ToList();
+			var results = Database.AcadDatabase.GetDocument()
+				.GetObjectIds(Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks)?
+				.ToList();
 
 			if (!results.IsNullOrEmpty())
 				objs.AddRange(results);

@@ -133,13 +133,21 @@ namespace SPMTool
 		///     Erase all the objects in this <paramref name="layer" />.
 		/// </summary>
 		public static void EraseObjects(this Document document, Layer layer, ObjectErasedEventHandler? erasedEvent = null) =>
-			document.GetObjectIds($"{layer}")?.EraseObjects(erasedEvent);
+			document.GetObjectIds(layer)?.EraseObjects(erasedEvent);
 
 		/// <summary>
 		///     Erase all the objects in these <paramref name="layers" />.
 		/// </summary>
 		public static void EraseObjects(this Document document, IEnumerable<Layer> layers, ObjectErasedEventHandler? erasedEvent = null) =>
-			document.GetObjectIds(layers.Select(l => $"{l}").ToArray())?.EraseObjects(erasedEvent);
+			document.GetObjectIds(layers.ToArray())?.EraseObjects(erasedEvent);
+
+		/// <summary>
+		///     Get a collection containing all the <see cref="ObjectId" />'s in those <paramref name="layers" />.
+		/// </summary>
+		/// <param name="document">The AutoCAD document.</param>
+		/// <param name="layers">The layers.</param>
+		public static IEnumerable<ObjectId>? GetObjectIds(this Document document, params Layer[] layers) =>
+			document.GetObjectIds(layers.Select(l => $"{l}").ToArray());
 
 		/// <summary>
 		///     Get an <see cref="AnalysisSettings" /> from <see cref="TypedValue" />'s.
