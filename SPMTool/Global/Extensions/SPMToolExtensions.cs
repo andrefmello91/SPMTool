@@ -8,6 +8,7 @@ using andrefmello91.Material.Reinforcement;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
@@ -16,13 +17,10 @@ using Autodesk.Windows;
 using MathNet.Numerics;
 using SPMTool.Application;
 using SPMTool.Attributes;
-using SPMTool.Core;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Core.SPMDatabase;
-
 #nullable enable
 
 namespace SPMTool
@@ -35,16 +33,16 @@ namespace SPMTool
 		/// <summary>
 		///     Create a <paramref name="layer" /> given its name.
 		/// </summary>
-		public static void Create(this Layer layer)
+		public static void Create(this Document document, Layer layer)
 		{
 			// Get layer name
 			var layerName = $"{layer}";
 
 			// Start a transaction
-			using var lck   = ActiveDocument.LockDocument();
-			using var trans = StartTransaction();
+			using var lck   = document.LockDocument();
+			using var trans = document.Database.TransactionManager.StartTransaction();
 
-			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
+			using var lyrTbl = (LayerTable) trans.GetObject(document.Database.LayerTableId, OpenMode.ForRead);
 
 			if (lyrTbl.Has(layerName))
 				return;
@@ -75,14 +73,14 @@ namespace SPMTool
 		/// <summary>
 		///     Create those <paramref name="layers" /> given their names.
 		/// </summary>
-		public static void Create(this IEnumerable<Layer> layers)
+		public static void Create(this Document document, IEnumerable<Layer> layers)
 		{
 			// Start a transaction
-			using var lck = ActiveDocument.LockDocument();
+			using var lck = document.LockDocument();
 
-			using var trans = StartTransaction();
+			using var trans = document.Database.TransactionManager.StartTransaction();
 
-			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
+			using var lyrTbl = (LayerTable) trans.GetObject(document.Database.LayerTableId, OpenMode.ForRead);
 
 			foreach (var layer in layers)
 			{
@@ -120,33 +118,16 @@ namespace SPMTool
 		///     Create a <paramref name="block" /> given its name.
 		/// </summary>
 		/// <param name="block">The <see cref="Block" />.</param>
-		public static void Create(this Block block) => block.GetElements()?.CreateBlock(block.OriginPoint(), block.ToString());
+		public static void Create(this Document document, Block block) => document.CreateBlock(block.GetElements()!, block.OriginPoint(), block.ToString());
 
 		/// <summary>
 		///     Create those <paramref name="blocks" /> given their names.
 		/// </summary>
-		public static void Create(this IEnumerable<Block> blocks)
+		public static void Create(this IEnumerable<Block> blocks, Document document)
 		{
-			using var lck = ActiveDocument.LockDocument();
-
-			using var trans = StartTransaction();
-
 			foreach (var block in blocks)
-				block.GetElements()?.CreateBlock(block.OriginPoint(), block.ToString(), trans);
-
-			// Commit and dispose the transaction
-			trans.Commit();
+				document.Create(block);
 		}
-
-		/// <summary>
-		///     Erase all the objects in this <paramref name="layer" />.
-		/// </summary>
-		public static void EraseObjects(this Layer layer) => layer.GetObjectIds()?.RemoveFromDrawing();
-
-		/// <summary>
-		///     Erase all the objects in those <paramref name="layers" />.
-		/// </summary>
-		public static void EraseObjects(this IEnumerable<Layer> layers) => layers.GetObjectIds()?.RemoveFromDrawing();
 
 		/// <summary>
 		///     Get an <see cref="AnalysisSettings" /> from <see cref="TypedValue" />'s.
@@ -163,25 +144,6 @@ namespace SPMTool
 				NumLoadSteps  = values.ElementAt(1).ToInt(),
 				MaxIterations = values.ElementAt(2).ToInt(),
 				Solver        = (NonLinearSolver) values.ElementAt(3).ToInt()
-			};
-		}
-		
-		/// <summary>
-		///     Get a <see cref="DisplaySettings" /> from <see cref="TypedValue" />'s.
-		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="DisplaySettings" />.</param>
-		public static DisplaySettings? GetDisplaySettings(this IEnumerable<TypedValue>? values)
-		{
-			if (values.IsNullOrEmpty() || values.Count() != 5)
-				return null;
-
-			return new DisplaySettings
-			{
-				NodeScale             = values.ElementAt(0).ToDouble(),
-				ConditionScale        = values.ElementAt(1).ToDouble(),
-				ResultScale           = values.ElementAt(2).ToDouble(),
-				TextScale             = values.ElementAt(3).ToDouble(),
-				DisplacementMagnifier = values.ElementAt(4).ToInt(),
 			};
 		}
 
@@ -236,18 +198,6 @@ namespace SPMTool
 				: new CrossSection(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
 
 		/// <summary>
-		///     Get a collection containing all the <see cref="DBObject" />'s in this <see cref="Layer" />.
-		/// </summary>
-		public static IEnumerable<TDBObject?>? GetDBObjects<TDBObject>(this Layer layer) where TDBObject : DBObject =>
-			layer.GetObjectIds()?.GetDBObjects<TDBObject>();
-
-		/// <summary>
-		///     Get a collection containing all the <see cref="DBObject" />'s in those <paramref name="layers" />.
-		/// </summary>
-		public static IEnumerable<TDBObject?>? GetDBObjects<TDBObject>(this IEnumerable<Layer> layers) where TDBObject : DBObject =>
-			layers.GetObjectIds()?.GetDBObjects<TDBObject>();
-
-		/// <summary>
 		///     Get a <see cref="PlaneDisplacement" /> from <see cref="TypedValue" />'s.
 		/// </summary>
 		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="PlaneDisplacement" />.</param>
@@ -255,6 +205,25 @@ namespace SPMTool
 			values.IsNullOrEmpty() || values.Count() != 2
 				? null
 				: new PlaneDisplacement(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
+
+		/// <summary>
+		///     Get a <see cref="DisplaySettings" /> from <see cref="TypedValue" />'s.
+		/// </summary>
+		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="DisplaySettings" />.</param>
+		public static DisplaySettings? GetDisplaySettings(this IEnumerable<TypedValue>? values)
+		{
+			if (values.IsNullOrEmpty() || values.Count() != 5)
+				return null;
+
+			return new DisplaySettings
+			{
+				NodeScale             = values.ElementAt(0).ToDouble(),
+				ConditionScale        = values.ElementAt(1).ToDouble(),
+				ResultScale           = values.ElementAt(2).ToDouble(),
+				TextScale             = values.ElementAt(3).ToDouble(),
+				DisplacementMagnifier = values.ElementAt(4).ToInt()
+			};
+		}
 
 		/// <summary>
 		///     Get the collection of entities that forms <paramref name="block" />
@@ -294,16 +263,6 @@ namespace SPMTool
 			nodePoint.Layer == $"{Layer.ExtNode}"
 				? NodeType.External
 				: NodeType.Internal;
-
-		/// <summary>
-		///     Get a collection containing all the <see cref="ObjectId" />'s in this <see cref="Layer" />.
-		/// </summary>
-		public static IEnumerable<ObjectId> GetObjectIds(this Layer layer) => layer.ToString().GetObjectIds();
-
-		/// <summary>
-		///     Get a collection containing all the <see cref="ObjectId" />'s in those <paramref name="layers" />.
-		/// </summary>
-		public static IEnumerable<ObjectId>? GetObjectIds(this IEnumerable<Layer> layers) => layers?.Select(l => $"{l}").GetObjectIds();
 
 		/// <summary>
 		///     Get a <see cref="IParameters" /> from <see cref="TypedValue" />'s.
@@ -352,15 +311,12 @@ namespace SPMTool
 		///     <paramref name="insertionPoint" />.
 		/// </param>
 		/// <param name="scaleFactor">The scale factor.</param>
-		public static BlockReference? GetReference(this Block block, Point3d insertionPoint, Layer? layer = null, ColorCode? colorCode = null, double rotationAngle = 0, Axis rotationAxis = Axis.Z, Point3d? rotationPoint = null, double scaleFactor = 1)
+		public static BlockReference? GetReference(this Database database, Block block, Point3d insertionPoint, Layer? layer = null, ColorCode? colorCode = null, double rotationAngle = 0, Axis rotationAxis = Axis.Z, Point3d? rotationPoint = null, double scaleFactor = 1)
 		{
 			// Start a transaction
-			using var trans  = StartTransaction();
-			using var blkTbl = (BlockTable) trans.GetObject(SPMDatabase.ActiveDatabase.BlockTableId, OpenMode.ForRead);
+			using var trans  = database.TransactionManager.StartTransaction();
+			using var blkTbl = (BlockTable) trans.GetObject(database.BlockTableId, OpenMode.ForRead);
 			using var blkRec = (BlockTableRecord) trans.GetObject(blkTbl[$"{block}"], OpenMode.ForRead);
-
-			if (blkRec is null)
-				return null;
 
 			var blockRef = new BlockReference(insertionPoint, blkRec.ObjectId)
 			{
@@ -517,7 +473,7 @@ namespace SPMTool
 		///     Get an array of <see cref="TypedValue" /> from an <see cref="Units" />.
 		/// </summary>
 		/// <returns>
-		///		An array based in <see cref="Units.Default"/> if the object is null.
+		///     An array based in <see cref="Units.Default" /> if the object is null.
 		/// </returns>
 		public static TypedValue[] GetTypedValues(this Units? units)
 		{
@@ -532,7 +488,7 @@ namespace SPMTool
 				new TypedValue((int) DxfCode.Int32, (int) units.AppliedForces),
 				new TypedValue((int) DxfCode.Int32, (int) units.StringerForces),
 				new TypedValue((int) DxfCode.Int32, (int) units.PanelStresses),
-				new TypedValue((int) DxfCode.Int32, (int) units.MaterialStrength),
+				new TypedValue((int) DxfCode.Int32, (int) units.MaterialStrength)
 			};
 		}
 
@@ -540,7 +496,7 @@ namespace SPMTool
 		///     Get an array of <see cref="TypedValue" /> from an <see cref="AnalysisSettings" />.
 		/// </summary>
 		/// <returns>
-		///		An array based in <see cref="AnalysisSettings.Default"/> if the object is null.
+		///     An array based in <see cref="AnalysisSettings.Default" /> if the object is null.
 		/// </returns>
 		public static TypedValue[] GetTypedValues(this AnalysisSettings? settings)
 		{
@@ -548,18 +504,18 @@ namespace SPMTool
 
 			return new[]
 			{
-				new TypedValue((int) DxfCode.Real,  settings.Tolerance),
+				new TypedValue((int) DxfCode.Real, settings.Tolerance),
 				new TypedValue((int) DxfCode.Int32, settings.NumLoadSteps),
 				new TypedValue((int) DxfCode.Int32, settings.MaxIterations),
 				new TypedValue((int) DxfCode.Int32, (int) settings.Solver)
 			};
 		}
-		
+
 		/// <summary>
 		///     Get an array of <see cref="TypedValue" /> from a <see cref="DisplaySettings" />.
 		/// </summary>
 		/// <returns>
-		///		An array based in <see cref="DisplaySettings.Default"/> if the object is null.
+		///     An array based in <see cref="DisplaySettings.Default" /> if the object is null.
 		/// </returns>
 		public static TypedValue[] GetTypedValues(this DisplaySettings? displaySettings)
 		{
@@ -567,14 +523,14 @@ namespace SPMTool
 
 			return new[]
 			{
-				new TypedValue((int) DxfCode.Real,  displaySettings.NodeScale),
-				new TypedValue((int) DxfCode.Real,  displaySettings.ConditionScale),
-				new TypedValue((int) DxfCode.Real,  displaySettings.ResultScale),
-				new TypedValue((int) DxfCode.Real,  displaySettings.TextScale),
-				new TypedValue((int) DxfCode.Int32, displaySettings.DisplacementMagnifier),
+				new TypedValue((int) DxfCode.Real, displaySettings.NodeScale),
+				new TypedValue((int) DxfCode.Real, displaySettings.ConditionScale),
+				new TypedValue((int) DxfCode.Real, displaySettings.ResultScale),
+				new TypedValue((int) DxfCode.Real, displaySettings.TextScale),
+				new TypedValue((int) DxfCode.Int32, displaySettings.DisplacementMagnifier)
 			};
 		}
-		
+
 		/// <summary>
 		///     Get an array of <see cref="TypedValue" /> from an <see cref="Enum" /> value.
 		/// </summary>
@@ -593,14 +549,14 @@ namespace SPMTool
 
 			return new Units
 			{
-				Geometry              = (LengthUnit) values.ElementAt(0).ToInt(),
-				Reinforcement         = (LengthUnit) values.ElementAt(1).ToInt(),
-				Displacements         = (LengthUnit) values.ElementAt(2).ToInt(),
-				CrackOpenings         = (LengthUnit) values.ElementAt(3).ToInt(),
-				AppliedForces         = (ForceUnit) values.ElementAt(4).ToInt(),
-				StringerForces        = (ForceUnit) values.ElementAt(5).ToInt(),
-				PanelStresses         = (PressureUnit) values.ElementAt(6).ToInt(),
-				MaterialStrength      = (PressureUnit) values.ElementAt(7).ToInt(),
+				Geometry         = (LengthUnit) values.ElementAt(0).ToInt(),
+				Reinforcement    = (LengthUnit) values.ElementAt(1).ToInt(),
+				Displacements    = (LengthUnit) values.ElementAt(2).ToInt(),
+				CrackOpenings    = (LengthUnit) values.ElementAt(3).ToInt(),
+				AppliedForces    = (ForceUnit) values.ElementAt(4).ToInt(),
+				StringerForces   = (ForceUnit) values.ElementAt(5).ToInt(),
+				PanelStresses    = (PressureUnit) values.ElementAt(6).ToInt(),
+				MaterialStrength = (PressureUnit) values.ElementAt(7).ToInt()
 			};
 		}
 
@@ -613,17 +569,6 @@ namespace SPMTool
 		///     Returns a <see cref="SelectionFilter" /> for objects in these <paramref name="layers" />.
 		/// </summary>
 		public static SelectionFilter LayerFilter(this IEnumerable<Layer> layers) => layers.Select(l => l.ToString()).LayerFilter();
-
-		/// <summary>
-		///     Turn off this <see cref="Layer" />.
-		/// </summary>
-		public static void Off(this Layer layer) => TurnOff(layer);
-
-		/// <summary>
-		///     Turn on this <see cref="Layer" />.
-		/// </summary>
-		/// <param name="layer">The <see cref="Layer" />.</param>
-		public static void On(this Layer layer) => TurnOn(layer);
 
 		/// <summary>
 		///     Get the origin point related to this <paramref name="block" />.
@@ -645,7 +590,7 @@ namespace SPMTool
 		public static Layer ReadLayer(this ObjectId objectId)
 		{
 			// Start a transaction
-			using var trans = StartTransaction();
+			using var trans = objectId.Database.TransactionManager.StartTransaction();
 
 			using var entity = (Entity) trans.GetObject(objectId, OpenMode.ForRead);
 
@@ -696,7 +641,7 @@ namespace SPMTool
 				return;
 
 			// Start a transaction
-			using var trans = StartTransaction();
+			using var trans = blockRefId.Database.TransactionManager.StartTransaction();
 
 			using var obj = trans.GetObject(blockRefId, OpenMode.ForRead);
 
@@ -729,15 +674,15 @@ namespace SPMTool
 		/// <returns>
 		///     True if layer is on, else false.
 		/// </returns>
-		public static bool Toggle(this Layer layer)
+		public static bool Toggle(this Database database, Layer layer)
 		{
 			// Get layer name
 			var layerName = layer.ToString();
 
 			// Start a transaction
-			using var trans = StartTransaction();
+			using var trans = database.TransactionManager.StartTransaction();
 
-			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
+			using var lyrTbl = (LayerTable) trans.GetObject(database.LayerTableId, OpenMode.ForRead);
 
 			if (!lyrTbl.Has(layerName))
 				return false;
@@ -767,12 +712,12 @@ namespace SPMTool
 		/// <summary>
 		///     Turn off all these <see cref="Layer" />'s.
 		/// </summary>
-		public static void TurnOff(params Layer[] layers)
+		public static void TurnOff(this Database database, params Layer[] layers)
 		{
 			// Start a transaction
-			using var trans = StartTransaction();
+			using var trans = database.TransactionManager.StartTransaction();
 
-			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
+			using var lyrTbl = (LayerTable) trans.GetObject(database.LayerTableId, OpenMode.ForRead);
 
 			foreach (var layer in layers)
 			{
@@ -800,12 +745,12 @@ namespace SPMTool
 		/// <summary>
 		///     Turn on all these <see cref="Layer" />'s.
 		/// </summary>
-		public static void TurnOn(params Layer[] layers)
+		public static void TurnOn(this Database database, params Layer[] layers)
 		{
 			// Start a transaction
-			using var trans = StartTransaction();
+			using var trans = database.TransactionManager.StartTransaction();
 
-			using var lyrTbl = (LayerTable) trans.GetObject(LayerTableId, OpenMode.ForRead);
+			using var lyrTbl = (LayerTable) trans.GetObject(database.LayerTableId, OpenMode.ForRead);
 
 			foreach (var layer in layers)
 			{
