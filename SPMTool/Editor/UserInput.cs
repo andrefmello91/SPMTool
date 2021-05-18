@@ -7,11 +7,10 @@ using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.GraphicsSystem;
-using SPMTool.Core;
 using SPMTool.Enums;
 
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
+using static SPMTool.Core.SPMModel;
 using static SPMTool.Core.SPMDatabase;
 
 #nullable enable
@@ -44,7 +43,7 @@ namespace SPMTool.Editor
 			};
 
 			// Get the result
-			var dbRes = SPMModel.Editor.GetDouble(dbOp);
+			var dbRes = ActiveModel.Editor.GetDouble(dbOp);
 
 			if (dbRes.Status == PromptStatus.OK)
 				return dbRes.Value;
@@ -58,7 +57,7 @@ namespace SPMTool.Editor
 		/// <param name="initialForce">The initial value to display.</param>
 		public static PlaneForce? GetForceValue(PlaneForce? initialForce = null)
 		{
-			var forceUnit = Settings.Units.AppliedForces;
+			var forceUnit = ActiveDatabase.Settings.Units.AppliedForces;
 			var fAbrev    = forceUnit.Abbrev();
 
 			var force = initialForce ?? PlaneForce.Zero;
@@ -99,7 +98,7 @@ namespace SPMTool.Editor
 			};
 
 			// Get the number
-			var intRes = SPMModel.Editor.GetInteger(intOp);
+			var intRes = ActiveModel.Editor.GetInteger(intOp);
 
 			if (intRes.Status == PromptStatus.OK)
 				return intRes.Value;
@@ -111,7 +110,7 @@ namespace SPMTool.Editor
 		///     Get a <see cref="Point" /> from user.
 		/// </summary>
 		/// <inheritdoc cref="GetPoint3d" />
-		public static Point? GetPoint(string message, Point? basePoint = null) => GetPoint3d(message, basePoint?.ToPoint3d())?.ToPoint(Settings.Units.Geometry);
+		public static Point? GetPoint(string message, Point? basePoint = null) => GetPoint3d(message, basePoint?.ToPoint3d())?.ToPoint(ActiveDatabase.Settings.Units.Geometry);
 
 		/// <summary>
 		///     Get a <see cref="Point3d" /> from user.
@@ -129,7 +128,7 @@ namespace SPMTool.Editor
 				ptOp.BasePoint    = basePoint.Value;
 			}
 
-			var ptRes = SPMModel.Editor.GetPoint(ptOp);
+			var ptRes = ActiveModel.Editor.GetPoint(ptOp);
 
 			if (ptRes.Status == PromptStatus.OK)
 				return ptRes.Value;
@@ -161,7 +160,7 @@ namespace SPMTool.Editor
 				return null;
 
 			// Get the node global indexes
-			var node  = SPMModel.Nodes.GetByObjectId(nd.ObjectId)?.GetElement();
+			var node  = ActiveModel.Nodes.GetByObjectId(nd.ObjectId)?.GetElement();
 			var index = node?.DoFIndex;
 
 			return
@@ -176,17 +175,17 @@ namespace SPMTool.Editor
 		public static Entity? SelectEntity(string message, IEnumerable<Layer>? layers = null)
 		{
 			// Get element
-			for (;;)
+			while (true)
 			{
 				// Request the object to be selected in the drawing area
 				var entOp  = new PromptEntityOptions($"\n{message}");
-				var entRes = SPMModel.Editor.GetEntity(entOp);
+				var entRes = ActiveModel.Editor.GetEntity(entOp);
 
 				if (entRes.Status == PromptStatus.Cancel)
 					return null;
 
 				// Start a transaction
-				using var trans = StartTransaction();
+				using var trans = ActiveDatabase.StartTransaction();
 
 				var ent = (Entity) trans.GetObject(entRes.ObjectId, OpenMode.ForRead);
 
@@ -244,7 +243,7 @@ namespace SPMTool.Editor
 			if (defaultKeyword != null)
 				keyOp.Keywords.Default = defaultKeyword;
 
-			var result = SPMModel.Editor.GetKeywords(keyOp);
+			var result = ActiveModel.Editor.GetKeywords(keyOp);
 
 			if (result.Status == PromptStatus.Cancel)
 				return null;
@@ -266,14 +265,14 @@ namespace SPMTool.Editor
 		{
 			var layers = new List<Layer>();
 
-			if (nodeType is null || nodeType == NodeType.External)
+			if (nodeType is null or NodeType.External)
 				layers.Add(Layer.ExtNode);
 
-			if (nodeType is null || nodeType == NodeType.Internal)
+			if (nodeType is null or NodeType.Internal)
 				layers.Add(Layer.IntNode);
 
 			// Create an infinite loop for selecting elements
-			for (;;)
+			while (true)
 			{
 				var nds = SelectObjects<DBPoint>(message, layers)?.ToArray();
 
@@ -297,7 +296,7 @@ namespace SPMTool.Editor
 			var layers = new[] { Layer.Panel };
 
 			// Create an infinite loop for selecting elements
-			for (;;)
+			while (true)
 			{
 				var pnls = SelectObjects<Solid>(message, layers)?.ToArray();
 
@@ -320,7 +319,7 @@ namespace SPMTool.Editor
 			var layers = new[] { Layer.Stringer };
 
 			// Create an infinite loop for selecting elements
-			for (;;)
+			while (true)
 			{
 				var strs = SelectObjects<Line>(message, layers)?.ToArray();
 
@@ -351,14 +350,14 @@ namespace SPMTool.Editor
 			var filter = layers?.LayerFilter();
 
 			var selRes = filter is null
-				? SPMModel.Editor.GetSelection(selOp)
-				: SPMModel.Editor.GetSelection(selOp, filter);
+				? ActiveModel.Editor.GetSelection(selOp)
+				: ActiveModel.Editor.GetSelection(selOp, filter);
 
 			if (selRes.Status == PromptStatus.Cancel || selRes.Value is null)
 				return null;
 
 			return
-				(from SelectedObject obj in selRes.Value select obj.ObjectId).ToArray().GetDBObjects<TDBObject>().Where(t => t is not null)!;
+				(from SelectedObject obj in selRes.Value select obj.ObjectId).ToArray().GetDBObjects<TDBObject>()?.Where(t => t is not null)!;
 		}
 
 		#endregion

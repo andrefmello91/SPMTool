@@ -50,7 +50,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get current <see cref="Autodesk.AutoCAD.DatabaseServices.Database" />.
 		/// </summary>
-		public static SPMDatabase ActiveDatabase => SPMDocument.ActiveDocument.Database;
+		public static SPMDatabase ActiveDatabase => SPMModel.ActiveModel.Database;
 
 		/// <summary>
 		///     Get the Layer Table <see cref="ObjectId" />.

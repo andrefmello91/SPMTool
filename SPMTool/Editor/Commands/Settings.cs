@@ -4,14 +4,12 @@ using SPMTool.Application.UserInterface;
 using SPMTool.Editor.Commands;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
-[assembly: CommandClass(typeof(Settings))]
-
 namespace SPMTool.Editor.Commands
 {
 	/// <summary>
 	///     Settings command class.
 	/// </summary>
-	public static class Settings
+	public static partial class AcadCommands
 	{
 
 		#region Methods

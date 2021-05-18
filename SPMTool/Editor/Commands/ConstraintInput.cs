@@ -7,15 +7,17 @@ using SPMTool.Core;
 using SPMTool.Editor.Commands;
 
 using static SPMTool.Core.SPMModel;
+using static SPMTool.Core.SPMDatabase;
+using static SPMTool.Core.SPMModel;
 
-[assembly: CommandClass(typeof(ConditionsInput))]
+[assembly: CommandClass(typeof(AcadCommands))]
 
 namespace SPMTool.Editor.Commands
 {
 	/// <summary>
 	///     Conditions input class.
 	/// </summary>
-	public static class ConditionsInput
+	public static partial class AcadCommands
 	{
 
 		#region Methods
@@ -31,13 +33,17 @@ namespace SPMTool.Editor.Commands
 
 			if (nds is null)
 				return;
+			
+			var unit = ActiveDatabase.Settings.Units.Geometry;
 
+			var model = ActiveModel;
+			
 			// Erase result objects
-			Results.ResultLayers.EraseObjects();
+			model.AcadDocument.EraseObjects(Results.ResultLayers);
 
 			// Ask the user set the support conditions:
 			var defDirection = nds.Length == 1
-				? Constraints.GetConstraintByPosition(nds[0].Position.ToPoint(SPMDatabase.Settings.Units.Geometry)).Direction
+				? ActiveModel.Constraints.GetConstraintByPosition(nds[0].Position.ToPoint(unit)).Direction
 				: ComponentDirection.None;
 
 			var options = Enum.GetNames(typeof(ComponentDirection));
@@ -52,11 +58,10 @@ namespace SPMTool.Editor.Commands
 			var constraint = Constraint.FromDirection(direction);
 
 			// Get positions
-			var unit      = SPMDatabase.Settings.Units.Geometry;
 			var positions = nds.Select(nd => nd.Position.ToPoint(unit)).ToArray();
 
 			// Erase blocks
-			Constraints.ChangeConditions(positions, constraint);
+			model.Constraints.ChangeConditions(positions, constraint);
 		}
 
 		/// <summary>
@@ -66,7 +71,7 @@ namespace SPMTool.Editor.Commands
 		public static void AddForce()
 		{
 			// Read units
-			var units = SPMDatabase.Settings.Units;
+			var unit = ActiveDatabase.Settings.Units.Geometry;
 
 			// Request objects to be selected in the drawing area
 			var nds = UserInput.SelectNodes("Select nodes to add load:", NodeType.External)?.ToArray();
@@ -74,12 +79,14 @@ namespace SPMTool.Editor.Commands
 			if (nds is null)
 				return;
 
+			var model = ActiveModel;
+
 			// Erase result objects
-			Results.ResultLayers.EraseObjects();
+			model.AcadDocument.EraseObjects(Results.ResultLayers.Select(l => $"{l}").ToArray());
 
 			// Get force from user
 			var initialForce = nds.Length == 1
-				? Forces.GetForceByPosition(nds[0].Position.ToPoint(SPMDatabase.Settings.Units.Geometry))
+				? ActiveModel.Forces.GetForceByPosition(nds[0].Position.ToPoint(unit))
 				: (PlaneForce?) null;
 
 			var force = UserInput.GetForceValue(initialForce);
@@ -88,10 +95,10 @@ namespace SPMTool.Editor.Commands
 				return;
 
 			// Get node positions
-			var positions = nds.Select(nd => nd.Position.ToPoint(units.Geometry)).ToArray();
+			var positions = nds.Select(nd => nd.Position.ToPoint(unit)).ToArray();
 
 			// Erase blocks
-			Forces.ChangeConditions(positions, force.Value);
+			model.Forces.ChangeConditions(positions, force.Value);
 		}
 
 		#endregion

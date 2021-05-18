@@ -185,7 +185,7 @@
     <Compile Include="Core\Results.cs" />
     <Compile Include="Editor\Commands\SPMAnalysis.cs" />
     <Compile Include="Editor\Commands\CommandNames.cs" />
-    <Compile Include="Editor\Commands\ConditionsInput.cs" />
+    <Compile Include="Editor\Commands\ConstraintInput.cs" />
     <Compile Include="Editor\Commands\ElementEditor.cs" />
     <Compile Include="Editor\Commands\ElementInput.cs" />
     <Compile Include="Editor\Commands\Settings.cs" />

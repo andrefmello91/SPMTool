@@ -10,14 +10,12 @@ using SPMTool.Editor.Commands;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.SPMModel;
 
-[assembly: CommandClass(typeof(ElementEditor))]
-
 namespace SPMTool.Editor.Commands
 {
 	/// <summary>
 	///     Element editor command class.
 	/// </summary>
-	public static class ElementEditor
+	public static partial class AcadCommands
 	{
 
 		#region Methods
@@ -43,13 +41,19 @@ namespace SPMTool.Editor.Commands
 			if (!clnn.HasValue)
 				return;
 
+			// Get elements
+			var model     = ActiveModel;
+			var stringers = model.Stringers;
+			var nodes     = model.Nodes;
+			var panels    = model.Panels;
+			
 			// Get values
 			int
 				row = rown.Value,
 				cln = clnn.Value;
 
 			// Get the panels and stringers to divide
-			var pnlsToDivide = Panels.GetByObjectIds(pnls.GetObjectIds())?.ToArray();
+			var pnlsToDivide = panels.GetByObjectIds(pnls.GetObjectIds())?.ToArray();
 
 			if (pnlsToDivide.IsNullOrEmpty())
 				return;
@@ -76,7 +80,7 @@ namespace SPMTool.Editor.Commands
 
 			foreach (var pnl in pnlsToDivide)
 			{
-				var strEdges = Stringers.GetFromPanelGeometry(pnl.Geometry).ToArray();
+				var strEdges = stringers.GetFromPanelGeometry(pnl.Geometry).ToArray();
 
 				if (strEdges.IsNullOrEmpty())
 					continue;
@@ -100,27 +104,27 @@ namespace SPMTool.Editor.Commands
 			}
 
 			// Erase result objects
-			Results.ResultLayers.EraseObjects();
+			model.AcadDocument.EraseObjects(Results.ResultLayers);
 
 			// Add other stringers
 			newStrs.AddRange(newPanels.SelectMany(p => p.Geometry.Edges.Select(e => new StringerObject(e.InitialVertex, e.FinalVertex))).ToArray());
 
 			// Remove mid nodes
-			Nodes.RemoveRange(strsToDivide.Select(s => s.Geometry.CenterPoint).ToArray());
+			nodes.RemoveRange(strsToDivide.Select(s => s.Geometry.CenterPoint).ToArray());
 
 			// Erase the original elements
 			var verts = pnlsToDivide.Select(p => p.Geometry.Vertices).ToList();
-			var c     = Panels.RemoveAll(p => verts.Contains(p.Vertices));
-			Stringers.RemoveRange(strsToDivide);
+			var c     = panels.RemoveAll(p => verts.Contains(p.Vertices));
+			stringers.RemoveRange(strsToDivide);
 
 			// Add the elements
-			Panels.AddRange(newPanels);
-			Stringers.AddRange(newStrs);
+			panels.AddRange(newPanels);
+			stringers.AddRange(newStrs);
 
 			// Update nodes
-			Nodes.Update();
+			nodes.Update();
 
-			Panels.Select(p => p.ObjectId).MoveToBottom();
+			panels.Select(p => p.ObjectId).MoveToBottom();
 
 			// Show alert if there was a non-rectangular panel
 			var message = (nonRecSelected
@@ -149,31 +153,36 @@ namespace SPMTool.Editor.Commands
 			if (!numn.HasValue)
 				return;
 
+			// Get elements
+			var model     = ActiveModel;
+			var stringers = model.Stringers;
+			var nodes     = model.Nodes;
+
 			var num = numn.Value;
 
 			// Get stringers from list
-			var toDivide = Stringers.GetByObjectIds(strs.GetObjectIds().ToArray())?.ToArray();
+			var toDivide = stringers.GetByObjectIds(strs.GetObjectIds().ToArray())?.ToArray();
 
 			if (toDivide.IsNullOrEmpty())
 				return;
 
 			// Erase result objects
-			Results.ResultLayers.EraseObjects();
+			model.AcadDocument.EraseObjects(Results.ResultLayers);
 
 			// Remove mid nodes
-			Nodes.RemoveRange(toDivide.Select(s => s.Geometry.CenterPoint).ToArray());
+			nodes.RemoveRange(toDivide.Select(s => s.Geometry.CenterPoint).ToArray());
 
 			// Divide the stringers
 			var newStrs = toDivide.SelectMany(s => s.Divide(num)).ToArray();
 
 			// Erase the original stringers
-			Stringers.RemoveRange(toDivide);
+			stringers.RemoveRange(toDivide);
 
 			// Add the stringers
-			Stringers.AddRange(newStrs);
+			stringers.AddRange(newStrs);
 
 			// Update nodes
-			Nodes.Update();
+			nodes.Update();
 		}
 
 		/// <summary>
@@ -189,7 +198,7 @@ namespace SPMTool.Editor.Commands
 				return;
 			
 			// Get the elements
-			var panels = Panels.GetByObjectIds(pnls.GetObjectIds())!.ToList();
+			var panels = ActiveModel.Panels.GetByObjectIds(pnls.GetObjectIds())!.ToList();
 			
 			// Start the config window
 			SPMToolInterface.ShowWindow(new PanelWindow(panels));
@@ -208,7 +217,7 @@ namespace SPMTool.Editor.Commands
 				return;
 
 			// Get the elements
-			var stringers = Stringers.GetByObjectIds(strs.GetObjectIds())!.ToList();
+			var stringers = ActiveModel.Stringers.GetByObjectIds(strs.GetObjectIds())!.ToList();
 			
 			// Start the config window
 			SPMToolInterface.ShowWindow(new StringerWindow(stringers));
@@ -220,10 +229,12 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.UpdateElements)]
 		public static void UpdateElements()
 		{
-			SPMModel.UpdateElements();
+			var model = ActiveModel;
+			
+			model.UpdateElements();
 
 			// Display the number of updated elements
-			SPMModel.Editor.WriteMessage($"\n{Nodes.Count} nodes, {Stringers.Count} stringers and {Panels.Count} panels updated.");
+			model.Editor.WriteMessage($"\n{model.Nodes.Count} nodes, {model.Stringers.Count} stringers and {model.Panels.Count} panels updated.");
 		}
 
 		#endregion

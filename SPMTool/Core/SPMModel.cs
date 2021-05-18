@@ -7,15 +7,17 @@ using andrefmello91.FEMAnalysis;
 using andrefmello91.Material.Reinforcement;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Geometry;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
-
 using UnitsNet;
-using static SPMTool.Core.SPMDatabase;
 
-#nullable disable
+using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
+
+#nullable enable
 
 namespace SPMTool.Core
 {
@@ -28,44 +30,37 @@ namespace SPMTool.Core
 		#region Fields
 
 		/// <summary>
+		///     Get the application name.
+		/// </summary>
+		public const string AppName = "SPMTool";
+
+		/// <summary>
 		///     Collection of element <see cref="Layer" />'s.
 		/// </summary>
 		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
-
 		/// <summary>
-		///		Get the active model.
+		///     The list of opened documents.
 		/// </summary>
-		public static SPMModel ActiveModel => SPMDocument.ActiveDocument.Model;
-		
+		public static readonly List<SPMModel> OpenedModels;
+
 		/// <summary>
 		///     Collection of removed elements.
 		/// </summary>
 		public readonly List<IDBObjectCreator> Trash;
 
-		/// <summary>
-		///		Get the database of the model.
-		/// </summary>
-		public SPMDatabase Database { get; }
-		
-		/// <summary>
-		///     The collection of <see cref="NodeObject" />'s in the model.
-		/// </summary>
-		public NodeList Nodes { get; }
+		#endregion
+
+		#region Properties
 
 		/// <summary>
-		///     The collection of <see cref="StringerObject" />'s in the model.
+		///     Get the active model.
 		/// </summary>
-		public StringerList Stringers { get; }
+		public static SPMModel ActiveModel => GetOpenedModel(DocumentManager.MdiActiveDocument);
 
 		/// <summary>
-		///     The collection of <see cref="PanelObject" />'s in the model.
+		///     Get the related document.
 		/// </summary>
-		public PanelList Panels { get; }
-
-		/// <summary>
-		///     The collection of <see cref="ForceObject" />'s in the model.
-		/// </summary>
-		public ForceList Forces { get; }
+		public Document AcadDocument { get; }
 
 		/// <summary>
 		///     The collection of <see cref="ConstraintObject" />'s in the model.
@@ -73,9 +68,49 @@ namespace SPMTool.Core
 		public ConstraintList Constraints { get; }
 
 		/// <summary>
+		///     Get the database of the model.
+		/// </summary>
+		public SPMDatabase Database { get; }
+
+		/// <summary>
+		///     Get the editor of current document.
+		/// </summary>
+		public Autodesk.AutoCAD.EditorInput.Editor Editor => AcadDocument.Editor;
+
+		/// <summary>
 		///     List of distinct widths from objects in the model.
 		/// </summary>
 		public EList<Length> ElementWidths { get; }
+
+		/// <summary>
+		///     The collection of <see cref="ForceObject" />'s in the model.
+		/// </summary>
+		public ForceList Forces { get; }
+
+		/// <summary>
+		///     Get the document name.
+		/// </summary>
+		public string Name => AcadDocument.Name;
+
+		/// <summary>
+		///     The collection of <see cref="NodeObject" />'s in the model.
+		/// </summary>
+		public NodeList Nodes { get; }
+
+		/// <summary>
+		///     List of distinct reinforcements of panels in the model.
+		/// </summary>
+		public EList<WebReinforcementDirection> PanelReinforcements { get; }
+
+		/// <summary>
+		///     The collection of <see cref="PanelObject" />'s in the model.
+		/// </summary>
+		public PanelList Panels { get; }
+
+		/// <summary>
+		///     List of distinct steels of elements in the model.
+		/// </summary>
+		public EList<Steel> Steels { get; }
 
 		/// <summary>
 		///     List of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
@@ -88,36 +123,57 @@ namespace SPMTool.Core
 		public EList<UniaxialReinforcement> StringerReinforcements { get; }
 
 		/// <summary>
-		///     List of distinct reinforcements of panels in the model.
+		///     The collection of <see cref="StringerObject" />'s in the model.
 		/// </summary>
-		public EList<WebReinforcementDirection> PanelReinforcements { get; }
+		public StringerList Stringers { get; }
 
 		/// <summary>
-		///     List of distinct steels of elements in the model.
-		/// </summary>
-		public EList<Steel> Steels { get; }
-
-		#endregion
-
-		#region Properties
-
-		/// <summary>
-		///		Get the text height for model objects.
+		///     Get the text height for model objects.
 		/// </summary>
 		public double TextHeight => 30 * Database.Settings.Display.TextScale * Database.Settings.Units.ScaleFactor;
-		
+
+		/// <summary>
+		///     Get coordinate system.
+		/// </summary>
+		public CoordinateSystem3d Ucs => UcsMatrix.CoordinateSystem3d;
+
+		/// <summary>
+		///     Get current user coordinate system.
+		/// </summary>
+		public Matrix3d UcsMatrix => Editor.CurrentUserCoordinateSystem;
+
 		#endregion
 
 		#region Constructors
 
 		/// <summary>
-		///		Create a SPM Model.
+		///     Get the opened documents and set app events.
 		/// </summary>
-		/// <param name="database">The autocad database.</param>
-		public SPMModel(Database database)
+		static SPMModel()
 		{
-			Database = new SPMDatabase(database);
+			OpenedModels = new List<SPMModel>();
+
+			foreach (Document doc in DocumentManager)
+				OpenedModels.Add(new SPMModel(doc));
+
+			DocumentManager.DocumentCreated       += On_DocumentCreated;
+			DocumentManager.DocumentToBeDestroyed += On_DocumentClosed;
+		}
+
+		/// <summary>
+		///     Create a SPM model.
+		/// </summary>
+		/// <param name="acadDocument">The AutoCAD document.</param>
+		public SPMModel(Document acadDocument)
+		{
+			AcadDocument = acadDocument;
+			Database = new SPMDatabase(acadDocument.Database);
 			
+			RegisterApp(acadDocument);
+			CreateLayers(acadDocument);
+			SetAppParameters();
+			
+
 			// Initiate trash
 			Trash = new List<IDBObjectCreator>();
 
@@ -130,10 +186,10 @@ namespace SPMTool.Core
 
 			// Get properties
 			StringerCrossSections  = GetCrossSections();
-			ElementWidths          = Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToEList();
+			ElementWidths          = Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToEList() ?? new EList<Length>();
 			StringerReinforcements = GetStringerReinforcements();
 			PanelReinforcements    = GetPanelReinforcements();
-			Steels                 = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList();
+			Steels                 = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList() ?? new EList<Steel>();
 
 			// Move panels to bottom
 			Panels.Select(p => p.ObjectId).ToList().MoveToBottom();
@@ -145,6 +201,50 @@ namespace SPMTool.Core
 		#endregion
 
 		#region Methods
+
+		/// <summary>
+		///     Create layers for use with SPMTool.
+		/// </summary>
+		public static void CreateLayers(Document document) => document.Create(Enum.GetValues(typeof(Layer)).Cast<Layer>().ToArray());
+
+		/// <summary>
+		///     Get folder path of current file.
+		/// </summary>
+		public static string GetFilePath() => GetSystemVariable("DWGPREFIX").ToString()!;
+
+		/// <summary>
+		///     Get an opened document.
+		/// </summary>
+		/// <param name="document">The opened document.</param>
+		public static SPMModel GetOpenedModel(Document document) => OpenedModels.Find(d => d.Name == document.Name);
+
+		/// <summary>
+		///     Add the app to the Registered Applications Record.
+		/// </summary>
+		public static void RegisterApp(Document document)
+		{
+			// Start a transaction
+			using var lck   = document.LockDocument();
+			using var trans = document.Database.TransactionManager.StartTransaction();
+
+			// Open the Registered Applications table for read
+			var regAppTbl = (RegAppTable) trans.GetObject(document.Database.RegAppTableId, OpenMode.ForRead);
+
+			if (regAppTbl.Has(AppName))
+				return;
+
+			var regAppTblRec = new RegAppTableRecord { Name = AppName };
+			regAppTbl.UpgradeOpen();
+			regAppTbl.Add(regAppTblRec);
+			trans.AddNewlyCreatedDBObject(regAppTblRec, true);
+
+			// Commit and dispose the transaction
+			trans.Commit();
+		}
+
+		private static void On_DocumentClosed(object sender, DocumentCollectionEventArgs e) => OpenedModels.RemoveAll(d => d.Name == e.Document.Name);
+
+		private static void On_DocumentCreated(object sender, DocumentCollectionEventArgs e) => OpenedModels.Add(new SPMModel(e.Document));
 
 		/// <summary>
 		///     Create an SPM object associated to an <see cref="Entity" /> and add to the active model;
@@ -239,6 +339,7 @@ namespace SPMTool.Core
 			var obj = entity.CreateSPMObject();
 
 			Add(obj);
+
 			// SPMDocument.Editor.WriteMessage($"\n{obj.GetType()} copied.");
 		}
 
@@ -320,7 +421,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Remove a SPM object from its list.
 		/// </summary>
-		public bool Remove(IDBObjectCreator obj, bool raiseEvents = false)
+		public bool Remove(IDBObjectCreator? obj, bool raiseEvents = false)
 		{
 			if (obj is null)
 				return false;
@@ -352,7 +453,26 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///		Update scale of forces and supports.
+		///     Set application parameters for drawing.
+		/// </summary>
+		public void SetAppParameters()
+		{
+			UpdatePointSize();
+			SetLineWeightDisplay();
+		}
+
+		/// <summary>
+		///     Turn off fillmode setting.
+		/// </summary>
+		public void SetFillMode() => Database.AcadDatabase.Fillmode = false;
+
+		/// <summary>
+		///     Turn on line weight display.
+		/// </summary>
+		public void SetLineWeightDisplay() => Database.AcadDatabase.LineWeightDisplay = true;
+
+		/// <summary>
+		///     Update scale of forces and supports.
 		/// </summary>
 		/// <param name="oldScale">The old scale factor.</param>
 		/// <param name="newScale">The new scale factor.</param>
@@ -374,20 +494,31 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///		Update text height in the model.
+		///     Update size of points in the drawing.
+		/// </summary>
+		public void UpdatePointSize()
+		{
+			// Set the style for all point objects in the drawing
+			Database.AcadDatabase.Pdmode = 32;
+			Database.AcadDatabase.Pdsize = 40 * Database.Settings.Units.ScaleFactor * Database.Settings.Display.NodeScale;
+			Editor.Regen();
+		}
+
+		/// <summary>
+		///     Update text height in the model.
 		/// </summary>
 		public void UpdateTextHeight()
 		{
 			var objs    = Forces.Select(f => f.ObjectId).ToList();
 			var rLayers = new[] { Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks }.Select(l => $"{l}").ToList();
 			var results = Database.AcadDatabase.GetDocument().GetObjectIds(rLayers)?.ToList();
-			
+
 			if (!results.IsNullOrEmpty())
 				objs.AddRange(results);
-			
+
 			objs.UpdateTextHeight(TextHeight);
 		}
-		
+
 		/// <inheritdoc cref="StringerCrossSections" />
 		private EList<CrossSection> GetCrossSections()
 		{

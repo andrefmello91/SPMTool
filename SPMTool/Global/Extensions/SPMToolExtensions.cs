@@ -130,6 +130,18 @@ namespace SPMTool
 		}
 
 		/// <summary>
+		///     Erase all the objects in this <paramref name="layer" />.
+		/// </summary>
+		public static void EraseObjects(this Document document, Layer layer, ObjectErasedEventHandler? erasedEvent = null) =>
+			document.GetObjectIds($"{layer}")?.EraseObjects(erasedEvent);
+
+		/// <summary>
+		///     Erase all the objects in these <paramref name="layers" />.
+		/// </summary>
+		public static void EraseObjects(this Document document, IEnumerable<Layer> layers, ObjectErasedEventHandler? erasedEvent = null) =>
+			document.GetObjectIds(layers.Select(l => $"{l}").ToArray())?.EraseObjects(erasedEvent);
+
+		/// <summary>
 		///     Get an <see cref="AnalysisSettings" /> from <see cref="TypedValue" />'s.
 		/// </summary>
 		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="AnalysisSettings" />.</param>
@@ -697,6 +709,15 @@ namespace SPMTool
 			trans.Commit();
 
 			return !lyrTblRec.IsOff;
+		}
+		
+		/// <summary>
+		///     Toogle view of these <see cref="Layer" />'s.
+		/// </summary>
+		public static void Toggle(this Database database, params Layer[] layers)
+		{
+			foreach (var layer in layers)
+				database.Toggle(layer);
 		}
 
 		/// <summary>

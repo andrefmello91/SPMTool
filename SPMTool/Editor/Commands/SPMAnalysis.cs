@@ -3,17 +3,14 @@ using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
-using SPMTool.Editor.Commands;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.Results;
 
 #nullable enable
 
-[assembly: CommandClass(typeof(SPMAnalysis))]
-
 namespace SPMTool.Editor.Commands
 {
-	public static class SPMAnalysis
+	public static partial class AcadCommands
 	{
 
 		#region Methods
@@ -22,7 +19,7 @@ namespace SPMTool.Editor.Commands
 		public static void LinearAnalysis()
 		{
 			// Get input data
-			var input = SPMModel.GenerateInput(AnalysisType.Linear, out var dataOk, out var message);
+			var input = SPMModel.ActiveModel.GenerateInput(AnalysisType.Linear, out var dataOk, out var message);
 
 			if (!dataOk)
 			{
@@ -54,7 +51,7 @@ namespace SPMTool.Editor.Commands
 		private static void ExecuteNonlinearAnalysis(bool simulate = false)
 		{
 			// Get input data
-			var input = SPMModel.GenerateInput(AnalysisType.Nonlinear, out var dataOk, out var message);
+			var input = SPMModel.ActiveModel.GenerateInput(AnalysisType.Nonlinear, out var dataOk, out var message);
 
 			if (!dataOk)
 			{
@@ -69,7 +66,7 @@ namespace SPMTool.Editor.Commands
 				return;
 
 			// Get analysis settings
-			var settings = SPMDatabase.Settings.Analysis;
+			var settings = SPMDatabase.ActiveDatabase.Settings.Analysis;
 
 			// Do analysis
 			var analysis = new SPMNonlinearAnalysis(input, settings.Solver, settings.NumLoadSteps, settings.Tolerance, settings.MaxIterations);

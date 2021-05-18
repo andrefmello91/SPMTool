@@ -6,16 +6,15 @@ using SPMTool.Editor.Commands;
 
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.SPMModel;
-
-
-[assembly: CommandClass(typeof(ElementInput))]
+using static SPMTool.Core.SPMDatabase;
+using static SPMTool.Core.SPMModel;
 
 namespace SPMTool.Editor.Commands
 {
 	/// <summary>
 	///     Element input command class
 	/// </summary>
-	public static class ElementInput
+	public static partial class AcadCommands
 	{
 
 		#region Methods
@@ -26,10 +25,13 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.AddPanel)]
 		public static void AddPanel()
 		{
-			var unit = SPMDatabase.Settings.Units.Geometry;
+			var unit = ActiveDatabase.Settings.Units.Geometry;
+
+			var model  = ActiveModel;
+			var panels = model.Panels;
 
 			// Erase result objects
-			Results.ResultLayers.EraseObjects();
+			model.AcadDocument.EraseObjects(Results.ResultLayers);
 
 			// Create a loop for creating infinite panels
 			while (true)
@@ -43,7 +45,7 @@ namespace SPMTool.Editor.Commands
 				// Check if there are four points
 				if (nds.Length == 4)
 				{
-					Panels.Add(nds.Select(nd => nd.Position.ToPoint(unit)).ToArray());
+					panels.Add(nds.Select(nd => nd.Position.ToPoint(unit)).ToArray());
 					continue;
 				}
 
@@ -53,7 +55,7 @@ namespace SPMTool.Editor.Commands
 			Finish:
 
 			// Move panels to bottom
-			Panels.Select(p => p.ObjectId).ToList().MoveToBottom();
+			panels.Select(p => p.ObjectId).ToList().MoveToBottom();
 		}
 
 		/// <summary>
@@ -74,10 +76,15 @@ namespace SPMTool.Editor.Commands
 			if (stPtn is null)
 				return;
 
+			// Get elements
+			var model     = ActiveModel;
+			var stringers = model.Stringers;
+			var nodes     = model.Nodes;
+
 			var stPt = stPtn.Value;
 
 			// Erase result objects
-			Results.ResultLayers.EraseObjects();
+			model.AcadDocument.EraseObjects(Results.ResultLayers);
 
 			// Loop for creating infinite stringers (until user exits the command)
 			while (true)
@@ -95,7 +102,7 @@ namespace SPMTool.Editor.Commands
 				var pts = new[] { stPt, endPt }.OrderBy(p => p).ToArray();
 
 				// Create the Stringer and add to drawing
-				Stringers.Add(pts[0], pts[1]);
+				stringers.Add(pts[0], pts[1]);
 
 				// Set the start point of the new Stringer
 				stPt = endPt;
@@ -107,7 +114,7 @@ namespace SPMTool.Editor.Commands
 				SetSystemVariable("OSMODE", osmode);
 
 				// Update nodes
-				Nodes.Update();
+				nodes.Update();
 			}
 		}
 

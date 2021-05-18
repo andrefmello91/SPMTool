@@ -164,7 +164,7 @@ namespace SPMTool.Application
 			SetDictionary((TypedValue[]) units, USaveName);
 		}
 
-		private static void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => SPMDocument.ActiveDocument.UpdatePointSize();
+		private static void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.ActiveModel.UpdatePointSize();
 
 		private static void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.ActiveModel.UpdateConditionsScale(e.OldScale, e.NewScale);
 
