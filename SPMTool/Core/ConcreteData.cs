@@ -58,8 +58,8 @@ namespace SPMTool.Core.Materials
 		#region Constructors
 
 		public ConcreteData(Database database)
-			: base(database.GetDocument().Name)
 		{
+			DocName      = database.GetDocument().Name;
 			DictionaryId = database.NamedObjectsDictionaryId;
 			GetProperties();
 		}

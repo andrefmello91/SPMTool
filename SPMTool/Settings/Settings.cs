@@ -90,8 +90,8 @@ namespace SPMTool.Application
 		#region Constructors
 
 		public Settings(Database database)
-			: base(database.GetDocument().Name)
 		{
+			DocName      = database.GetDocument().Name;
 			DictionaryId = database.NamedObjectsDictionaryId;
 			GetProperties();
 			SetEvents(Display!);
