@@ -18,25 +18,20 @@ namespace SPMTool.Core
 	/// <summary>
 	///     DataBase class.
 	/// </summary>
-	public static class SPMDatabase
+	public class SPMDatabase
 	{
 
 		#region Fields
 
 		/// <summary>
-		///     Get the application name.
-		/// </summary>
-		public const string AppName = "SPMTool";
-
-		/// <summary>
 		///     Application settings.
 		/// </summary>
-		public static readonly Settings Settings;
+		public Settings Settings { get; }
 
 		/// <summary>
 		///     Concrete parameters and constitutive model.
 		/// </summary>
-		public static readonly ConcreteData ConcreteData;
+		public ConcreteData ConcreteData { get; }
 
 		#endregion
 
@@ -45,54 +40,42 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the Block Table <see cref="ObjectId" />.
 		/// </summary>
-		public static ObjectId BlockTableId => ActiveDatabase.BlockTableId;
+		public ObjectId BlockTableId => AcadDatabase.BlockTableId;
 
+		/// <summary>
+		///		Get the AutoCAD database related to this.
+		/// </summary>
+		public Database AcadDatabase { get; }
+		
 		/// <summary>
 		///     Get current <see cref="Autodesk.AutoCAD.DatabaseServices.Database" />.
 		/// </summary>
-		public static Database ActiveDatabase => ActiveDocument.Database;
-
-		/// <summary>
-		///     Get current active <see cref="Autodesk.AutoCAD.ApplicationServices.Document" />.
-		/// </summary>
-		public static Document ActiveDocument => DocumentManager.MdiActiveDocument;
+		public static SPMDatabase ActiveDatabase => SPMDocument.ActiveDocument.Database;
 
 		/// <summary>
 		///     Get the Layer Table <see cref="ObjectId" />.
 		/// </summary>
-		public static ObjectId LayerTableId => ActiveDatabase.LayerTableId;
+		public ObjectId LayerTableId => AcadDatabase.LayerTableId;
 
 		/// <summary>
 		///     Get Named Objects <see cref="ObjectId" />.
 		/// </summary>
-		public static ObjectId NodId => ActiveDatabase.NamedObjectsDictionaryId;
-
-		/// <summary>
-		///     Get coordinate system.
-		/// </summary>
-		public static CoordinateSystem3d Ucs => UcsMatrix.CoordinateSystem3d;
-
-		/// <summary>
-		///     Get current user coordinate system.
-		/// </summary>
-		public static Matrix3d UcsMatrix => SPMModel.Editor.CurrentUserCoordinateSystem;
+		public ObjectId NodId => AcadDatabase.NamedObjectsDictionaryId;
 
 		#endregion
 
 		#region Constructors
 
-		static SPMDatabase()
+		/// <summary>
+		///		Create a SPM database.
+		/// </summary>
+		/// <param name="acadDatabase">The AutoCAD database.</param>
+		public SPMDatabase(Database acadDatabase)
 		{
-			// Register app in AutoCAD
-			RegisterApp();
-
-			// Create layers and blocks
-			CreateLayers();
-			BlockElements.CreateBlocks();
-
+			AcadDatabase = acadDatabase;
 			// Get app settings
-			Settings     = new Settings();
-			ConcreteData = new ConcreteData();
+			Settings     = new Settings(acadDatabase);
+			ConcreteData = new ConcreteData(acadDatabase);
 		}
 
 		#endregion
@@ -100,27 +83,10 @@ namespace SPMTool.Core
 		#region Methods
 
 		/// <summary>
-		///     Create layers for use with SPMTool.
-		/// </summary>
-		public static void CreateLayers()
-		{
-			// Get the layer enum as an array
-			var layers = Enum.GetValues(typeof(Layer)).Cast<Layer>().ToArray();
-
-			// Create layers
-			layers.Create();
-		}
-
-		/// <summary>
-		///     Get folder path of current file.
-		/// </summary>
-		public static string GetFilePath() => GetSystemVariable("DWGPREFIX").ToString()!;
-
-		/// <summary>
 		///     Read dictionary entries that contains <paramref name="name" />.
 		/// </summary>
 		/// <param name="name">The name of entry.</param>
-		public static IEnumerable<ResultBuffer> ReadDictionaryEntries(string name)
+		public IEnumerable<ResultBuffer> ReadDictionaryEntries(string name)
 		{
 			// Start a transaction
 			using var trans = StartTransaction();
@@ -149,7 +115,7 @@ namespace SPMTool.Core
 		/// </summary>
 		/// <param name="name">The name of entry.</param>
 		/// <param name="fullName">Return only data corresponding to full name?</param>
-		public static TypedValue[]? ReadDictionaryEntry(string name, bool fullName = true)
+		public TypedValue[]? ReadDictionaryEntry(string name, bool fullName = true)
 		{
 			// Start a transaction
 			using var trans = StartTransaction();
@@ -184,36 +150,12 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Add the app to the Registered Applications Record.
-		/// </summary>
-		public static void RegisterApp()
-		{
-			// Start a transaction
-			using var lck   = ActiveDocument.LockDocument();
-			using var trans = StartTransaction();
-
-			// Open the Registered Applications table for read
-			var regAppTbl = (RegAppTable) trans.GetObject(ActiveDatabase.RegAppTableId, OpenMode.ForRead);
-
-			if (regAppTbl.Has(AppName))
-				return;
-
-			var regAppTblRec = new RegAppTableRecord { Name = AppName };
-			regAppTbl.UpgradeOpen();
-			regAppTbl.Add(regAppTblRec);
-			trans.AddNewlyCreatedDBObject(regAppTblRec, true);
-
-			// Commit and dispose the transaction
-			trans.Commit();
-		}
-
-		/// <summary>
 		///     Save <paramref name="data" /> in <see cref="DBDictionary" />.
 		/// </summary>
 		/// <param name="data">The <see cref="ResultBuffer" /> to save.</param>
 		/// <param name="name">The name to save.</param>
 		/// <param name="overwrite">Overwrite data with the same <paramref name="name" />?</param>
-		public static void SaveDictionary(ResultBuffer data, string name, bool overwrite = true)
+		public void SaveDictionary(ResultBuffer data, string name, bool overwrite = true)
 		{
 			// Start a transaction
 			using var trans = StartTransaction();
@@ -239,9 +181,9 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Start a new transaction in <see cref="ActiveDatabase" />.
+		///     Start a new transaction in <see cref="AcadDatabase" />.
 		/// </summary>
-		public static Transaction StartTransaction() => ActiveDatabase.TransactionManager.StartTransaction();
+		public Transaction StartTransaction() => AcadDatabase.TransactionManager.StartTransaction();
 
 		#endregion
 

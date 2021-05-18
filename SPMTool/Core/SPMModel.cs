@@ -22,7 +22,7 @@ namespace SPMTool.Core
 	/// <summary>
 	///     Model class
 	/// </summary>
-	public static class SPMModel
+	public class SPMModel
 	{
 
 		#region Fields
@@ -33,80 +33,91 @@ namespace SPMTool.Core
 		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
 
 		/// <summary>
+		///		Get the active model.
+		/// </summary>
+		public static SPMModel ActiveModel => SPMDocument.ActiveDocument.Model;
+		
+		/// <summary>
 		///     Collection of removed elements.
 		/// </summary>
-		public static readonly List<IDBObjectCreator> Trash;
+		public readonly List<IDBObjectCreator> Trash;
 
+		/// <summary>
+		///		Get the database of the model.
+		/// </summary>
+		public SPMDatabase Database { get; }
+		
 		/// <summary>
 		///     The collection of <see cref="NodeObject" />'s in the model.
 		/// </summary>
-		public static NodeList Nodes;
+		public NodeList Nodes { get; }
 
 		/// <summary>
 		///     The collection of <see cref="StringerObject" />'s in the model.
 		/// </summary>
-		public static StringerList Stringers;
+		public StringerList Stringers { get; }
 
 		/// <summary>
 		///     The collection of <see cref="PanelObject" />'s in the model.
 		/// </summary>
-		public static PanelList Panels;
+		public PanelList Panels { get; }
 
 		/// <summary>
 		///     The collection of <see cref="ForceObject" />'s in the model.
 		/// </summary>
-		public static ForceList Forces;
+		public ForceList Forces { get; }
 
 		/// <summary>
 		///     The collection of <see cref="ConstraintObject" />'s in the model.
 		/// </summary>
-		public static ConstraintList Constraints;
+		public ConstraintList Constraints { get; }
 
 		/// <summary>
 		///     List of distinct widths from objects in the model.
 		/// </summary>
-		public static EList<Length> ElementWidths;
+		public EList<Length> ElementWidths { get; }
 
 		/// <summary>
 		///     List of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
 		/// </summary>
-		public static EList<CrossSection> StringerCrossSections;
+		public EList<CrossSection> StringerCrossSections { get; }
 
 		/// <summary>
 		///     List of distinct reinforcements of stringers in the model.
 		/// </summary>
-		public static EList<UniaxialReinforcement> StringerReinforcements;
+		public EList<UniaxialReinforcement> StringerReinforcements { get; }
 
 		/// <summary>
 		///     List of distinct reinforcements of panels in the model.
 		/// </summary>
-		public static EList<WebReinforcementDirection> PanelReinforcements;
+		public EList<WebReinforcementDirection> PanelReinforcements { get; }
 
 		/// <summary>
 		///     List of distinct steels of elements in the model.
 		/// </summary>
-		public static EList<Steel> Steels;
+		public EList<Steel> Steels { get; }
 
 		#endregion
 
 		#region Properties
 
 		/// <summary>
-		///     Get application <see cref="Autodesk.AutoCAD.EditorInput.Editor" />.
-		/// </summary>
-		public static Autodesk.AutoCAD.EditorInput.Editor Editor => SPMDatabase.ActiveDocument.Editor;
-
-		/// <summary>
 		///		Get the text height for model objects.
 		/// </summary>
-		public static double TextHeight => 30 * Settings.Display.TextScale * Settings.Units.ScaleFactor;
+		public double TextHeight => 30 * Database.Settings.Display.TextScale * Database.Settings.Units.ScaleFactor;
 		
 		#endregion
 
 		#region Constructors
 
-		static SPMModel()
+		/// <summary>
+		///		Create a SPM Model.
+		/// </summary>
+		/// <param name="database">The autocad database.</param>
+		public SPMModel(Database database)
 		{
+			Database = new SPMDatabase(database);
+			
 			// Initiate trash
 			Trash = new List<IDBObjectCreator>();
 
@@ -129,9 +140,6 @@ namespace SPMTool.Core
 
 			// Register events
 			RegisterEventsToEntities();
-
-			// Set parameters
-			SetAppParameters();
 		}
 
 		#endregion
@@ -139,14 +147,14 @@ namespace SPMTool.Core
 		#region Methods
 
 		/// <summary>
-		///     Create an SPM object associated to an <see cref="Entity" /> and add to its list.
+		///     Create an SPM object associated to an <see cref="Entity" /> and add to the active model;
 		/// </summary>
-		public static bool Add(Entity entity, bool raiseEvents = false) => Add(entity.CreateSPMObject(), raiseEvents);
+		public bool Add(Entity entity, bool raiseEvents = false) => Add(entity.CreateSPMObject(), raiseEvents);
 
 		/// <summary>
-		///     Add a SPM object to its list.
+		///     Add a SPM object to the active model.
 		/// </summary>
-		public static bool Add(IDBObjectCreator obj, bool raiseEvents = false)
+		public bool Add(IDBObjectCreator obj, bool raiseEvents = false)
 		{
 			if (obj is null)
 				return false;
@@ -183,7 +191,7 @@ namespace SPMTool.Core
 		/// <param name="dataOk">Returns true if data is consistent to start analysis.</param>
 		/// <param name="message">Message to show if data is inconsistent.</param>
 		/// <param name="analysisType">The type of analysis to perform.</param>
-		public static SPMInput GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
+		public SPMInput GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
 		{
 			// Get the element model
 			var elementModel = analysisType switch
@@ -216,12 +224,12 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Event to run when an item is added to <see cref="StringerCrossSections" />.
 		/// </summary>
-		public static void On_CrossSection_Add(object sender, ItemEventArgs<CrossSection> e) => ElementWidths.Add(e.Item.Width);
+		public void On_CrossSection_Add(object sender, ItemEventArgs<CrossSection> e) => ElementWidths.Add(e.Item.Width);
 
 		/// <summary>
 		///     Event to execute when an object is copied.
 		/// </summary>
-		public static void On_ObjectCopied(object sender, ObjectEventArgs e)
+		public void On_ObjectCopied(object sender, ObjectEventArgs e)
 		{
 			var entity = (Entity) e.DBObject;
 
@@ -231,13 +239,13 @@ namespace SPMTool.Core
 			var obj = entity.CreateSPMObject();
 
 			Add(obj);
-			Editor.WriteMessage($"\n{obj.GetType()} copied.");
+			// SPMDocument.Editor.WriteMessage($"\n{obj.GetType()} copied.");
 		}
 
 		/// <summary>
 		///     Event to execute when an object is erased or unerased.
 		/// </summary>
-		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
+		public void On_ObjectErase(object sender, ObjectErasedEventArgs e)
 		{
 			var entity = (Entity) sender;
 
@@ -253,7 +261,7 @@ namespace SPMTool.Core
 
 				Trash.Add(obj);
 
-				Editor.WriteMessage($"\n{obj.Name} removed");
+				// SPMDocument.Editor.WriteMessage($"\n{obj.Name} removed");
 
 				return;
 			}
@@ -265,7 +273,7 @@ namespace SPMTool.Core
 			}
 			catch
 			{
-				Editor.WriteMessage("\nNot found in trash.");
+				// SPMDocument.Editor.WriteMessage("\nNot found in trash.");
 				obj1 = entity.CreateSPMObject();
 			}
 
@@ -274,55 +282,23 @@ namespace SPMTool.Core
 
 			Trash.Remove(obj1);
 
-			Editor.WriteMessage($"\n{obj1.Name} re-added");
-		}
-
-		/// <summary>
-		///     Event to execute when an object is reappended to database.
-		/// </summary>
-		public static void On_ObjectReappended(object sender, EventArgs e)
-		{
-			var entity = (Entity) sender;
-
-			if (entity is null)
-				return;
-
-			var obj = entity.CreateSPMObject();
-
-			Add(obj);
-			Editor.WriteMessage($"\n{obj.GetType()} added");
-		}
-
-		/// <summary>
-		///     Event to execute when an object is unappended from database.
-		/// </summary>
-		public static void On_ObjectUnappended(object sender, EventArgs e)
-		{
-			var entity = (Entity) sender;
-
-			if (entity is null)
-				return;
-
-			var obj = entity.GetSPMObject();
-
-			Remove(obj);
-			Editor.WriteMessage($"\n{obj.GetType()} removed");
+			// SPMDocument.Editor.WriteMessage($"\n{obj1.Name} re-added");
 		}
 
 		/// <summary>
 		///     Event to run when an item is added to <see cref="PanelReinforcements" />.
 		/// </summary>
-		public static void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e) => Steels.Add(e.Item?.Steel);
+		public void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e) => Steels.Add(e.Item?.Steel);
 
 		/// <summary>
 		///     Event to run when an item is added to <see cref="StringerReinforcements" />.
 		/// </summary>
-		public static void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e) => Steels.Add(e.Item?.Steel);
+		public void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e) => Steels.Add(e.Item?.Steel);
 
 		/// <summary>
 		///     Register events for AutoCAD entities.
 		/// </summary>
-		public static void RegisterEventsToEntities()
+		public void RegisterEventsToEntities()
 		{
 			// Get object ids
 			var ids = Nodes.Select(n => n.ObjectId)
@@ -339,12 +315,12 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the SPM object associated to an <see cref="Entity" /> and remove from its list.
 		/// </summary>
-		public static bool Remove(Entity entity, bool raiseEvents = false) => Remove(entity.GetSPMObject(), raiseEvents);
+		public bool Remove(Entity entity, bool raiseEvents = false) => Remove(entity.GetSPMObject(), raiseEvents);
 
 		/// <summary>
 		///     Remove a SPM object from its list.
 		/// </summary>
-		public static bool Remove(IDBObjectCreator obj, bool raiseEvents = false)
+		public bool Remove(IDBObjectCreator obj, bool raiseEvents = false)
 		{
 			if (obj is null)
 				return false;
@@ -376,41 +352,11 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Set application parameters for drawing.
-		/// </summary>
-		public static void SetAppParameters()
-		{
-			UpdatePointSize();
-			SetLineWeightDisplay();
-		}
-
-		/// <summary>
-		///     Turn off fillmode setting.
-		/// </summary>
-		public static void SetFillMode() => SPMDatabase.ActiveDatabase.Fillmode = false;
-
-		/// <summary>
-		///     Turn on line weight display.
-		/// </summary>
-		public static void SetLineWeightDisplay() => SPMDatabase.ActiveDatabase.LineWeightDisplay = true;
-
-		/// <summary>
-		///     Update size of points in the drawing.
-		/// </summary>
-		public static void UpdatePointSize()
-		{
-			// Set the style for all point objects in the drawing
-			SPMDatabase.ActiveDatabase.Pdmode = 32;
-			SPMDatabase.ActiveDatabase.Pdsize = 40 * Settings.Units.ScaleFactor * Settings.Display.NodeScale;
-			Editor.Regen();
-		}
-
-		/// <summary>
 		///		Update scale of forces and supports.
 		/// </summary>
 		/// <param name="oldScale">The old scale factor.</param>
 		/// <param name="newScale">The new scale factor.</param>
-		public static void UpdateConditionsScale(double oldScale, double newScale) =>
+		public void UpdateConditionsScale(double oldScale, double newScale) =>
 			Constraints.Select(c => c.ObjectId)
 				.Concat(Forces.Select(f => f.ObjectId))
 				.UpdateScale(oldScale, newScale);
@@ -420,7 +366,7 @@ namespace SPMTool.Core
 		/// </summary>
 		/// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
 		/// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
-		public static void UpdateElements(bool addNodes = true, bool removeNodes = true)
+		public void UpdateElements(bool addNodes = true, bool removeNodes = true)
 		{
 			Stringers.Update();
 			Panels.Update();
@@ -428,25 +374,13 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Update collections from objects in drawing.
-		/// </summary>
-		public static void UpdateObjects()
-		{
-			// Get elements
-			Nodes       = NodeList.ReadFromDrawing();
-			Forces      = ForceList.ReadFromDrawing();
-			Constraints = ConstraintList.ReadFromDrawing();
-			Stringers   = StringerList.ReadFromDrawing();
-			Panels      = PanelList.ReadFromDrawing();
-		}
-
-		/// <summary>
 		///		Update text height in the model.
 		/// </summary>
-		public static void UpdateTextHeight()
+		public void UpdateTextHeight()
 		{
 			var objs    = Forces.Select(f => f.ObjectId).ToList();
-			var results = new[] { Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks }.GetObjectIds()?.ToList();
+			var rLayers = new[] { Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks }.Select(l => $"{l}").ToList();
+			var results = Database.AcadDatabase.GetDocument().GetObjectIds(rLayers)?.ToList();
 			
 			if (!results.IsNullOrEmpty())
 				objs.AddRange(results);
@@ -455,7 +389,7 @@ namespace SPMTool.Core
 		}
 		
 		/// <inheritdoc cref="StringerCrossSections" />
-		private static EList<CrossSection> GetCrossSections()
+		private EList<CrossSection> GetCrossSections()
 		{
 			var list = Stringers.GetCrossSections().ToEList() ?? new EList<CrossSection>();
 
@@ -465,7 +399,7 @@ namespace SPMTool.Core
 		}
 
 		/// <inheritdoc cref="PanelReinforcements" />
-		private static EList<WebReinforcementDirection> GetPanelReinforcements()
+		private EList<WebReinforcementDirection> GetPanelReinforcements()
 		{
 			var list = Panels.GetReinforcementDirections().ToEList() ?? new EList<WebReinforcementDirection>();
 
@@ -475,7 +409,7 @@ namespace SPMTool.Core
 		}
 
 		/// <inheritdoc cref="StringerReinforcements" />
-		private static EList<UniaxialReinforcement> GetStringerReinforcements()
+		private EList<UniaxialReinforcement> GetStringerReinforcements()
 		{
 			var list = Stringers.GetReinforcements().ToEList() ?? new EList<UniaxialReinforcement>();
 

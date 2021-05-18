@@ -57,9 +57,9 @@ namespace SPMTool.Core.Materials
 
 		#region Constructors
 
-		public ConcreteData()
+		public ConcreteData(Database database)
 		{
-			DictionaryId = SPMDatabase.NodId;
+			DictionaryId = database.NamedObjectsDictionaryId;
 			GetProperties();
 		}
 
