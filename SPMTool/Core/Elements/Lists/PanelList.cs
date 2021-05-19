@@ -8,6 +8,7 @@ using andrefmello91.Material.Reinforcement;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.PanelProperties;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 
@@ -40,23 +41,27 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the collection of panels in the drawing.
 		/// </summary>
-		public static IEnumerable<Solid>? GetObjects() => Layer.Panel.GetDBObjects<Solid>();
+		/// <param name="document">The AutoCAD document.</param>
+		private static IEnumerable<Solid?>? GetObjects(Document document) => document.GetObjectIds(Layer.Panel).GetDBObjects<Solid>();
 
 		/// <summary>
 		///     Read all the <see cref="PanelObject" />'s in the drawing.
 		/// </summary>
+		/// <param name="document">The AutoCAD document.</param>
 		[return: NotNull]
-		public static PanelList ReadFromDrawing() => ReadFromSolids(GetObjects());
+		public static PanelList From(Document document)
+		{
+			var solids = GetObjects(document)?.ToArray();
 
-		/// <summary>
-		///     Read <see cref="PanelObject" />'s from a collection of <see cref="Solid" />'s.
-		/// </summary>
-		/// <param name="panelSolids">The collection containing the <see cref="Solid" />'s of drawing.</param>
-		[return: NotNull]
-		public static PanelList ReadFromSolids(IEnumerable<Solid>? panelSolids) =>
-			panelSolids.IsNullOrEmpty()
+			var list = solids.IsNullOrEmpty() 
 				? new PanelList()
-				: new PanelList(panelSolids.Select(PanelObject.GetFromSolid));
+				: new PanelList(solids.Where(p => p is not null).Select(PanelObject.From!));
+			
+			// Set doc name
+			list.DocName = document.Name;
+			
+			return list;
+		}
 
 		/// <summary>
 		///     Move panel objects to bottom after adding to list.
@@ -146,7 +151,7 @@ namespace SPMTool.Core.Elements
 		{
 			Clear(false);
 
-			AddRange(ReadFromDrawing(), false);
+			AddRange(From(SPMModel.GetOpenedModel(DocName)!.AcadDocument), false);
 		}
 
 		#endregion

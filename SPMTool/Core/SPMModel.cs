@@ -178,11 +178,11 @@ namespace SPMTool.Core
 			Trash = new List<IDBObjectCreator>();
 
 			// Get elements
-			Nodes       = NodeList.ReadFromDrawing();
+			Nodes       = NodeList.From(acadDocument);
 			Forces      = ForceList.ReadFromDrawing();
 			Constraints = ConstraintList.ReadFromDrawing();
-			Stringers   = StringerList.ReadFromDrawing();
-			Panels      = PanelList.ReadFromDrawing();
+			Stringers   = StringerList.From(acadDocument);
+			Panels      = PanelList.From(acadDocument);
 
 			// Get properties
 			StringerCrossSections  = GetCrossSections();

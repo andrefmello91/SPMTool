@@ -37,6 +37,8 @@ namespace SPMTool.Core
 
 		#region Properties
 
+		public static List<SPMDatabase> OpenedDatabases => SPMModel.OpenedModels.Select(m => m.Database).ToList();
+		
 		/// <summary>
 		///     Get the Block Table <see cref="ObjectId" />.
 		/// </summary>
@@ -46,6 +48,11 @@ namespace SPMTool.Core
 		///		Get the AutoCAD database related to this.
 		/// </summary>
 		public Database AcadDatabase { get; }
+		
+		/// <summary>
+		///		Get the document name associated to this database.
+		/// </summary>
+		public string DocName { get; }
 		
 		/// <summary>
 		///     Get current <see cref="Autodesk.AutoCAD.DatabaseServices.Database" />.
@@ -73,6 +80,8 @@ namespace SPMTool.Core
 		public SPMDatabase(Database acadDatabase)
 		{
 			AcadDatabase = acadDatabase;
+			DocName      = acadDatabase.GetDocument().Name;
+			
 			// Get app settings
 			Settings     = new Settings(acadDatabase);
 			ConcreteData = new ConcreteData(acadDatabase);
@@ -82,6 +91,26 @@ namespace SPMTool.Core
 
 		#region Methods
 
+		/// <summary>
+		///		Get an opened database from a document name.
+		/// </summary>
+		/// <param name="documentName">The document name.</param>
+		public static SPMDatabase? GetOpenedDatabase(string documentName) => OpenedDatabases.Find(d => d.DocName == documentName);
+
+		/// <summary>
+		///		Get an opened database from an AutoCAD database.
+		/// </summary>
+		/// <param name="database">The AutoCAD database.</param>
+		public static SPMDatabase GetOpenedDatabase(Database database) => GetOpenedDatabase(database.GetDocument().Name)!;
+
+		/// <summary>
+		///		Get an opened database from an <see cref="ObjectId"/>.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId"/>.</param>
+		public static SPMDatabase? GetOpenedDatabase(ObjectId objectId) => !objectId.IsNull
+			? GetOpenedDatabase(objectId.Database)
+			: null;
+		
 		/// <summary>
 		///     Read dictionary entries that contains <paramref name="name" />.
 		/// </summary>

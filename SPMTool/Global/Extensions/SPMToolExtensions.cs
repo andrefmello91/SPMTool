@@ -814,7 +814,7 @@ namespace SPMTool
 		///     Add a collection of objects to drawing and set their <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="objects">The objects to add to drawing.</param>
-		public static void AddToDrawing<TDbObjectCreator>(this IEnumerable<TDbObjectCreator?>? objects)
+		public static void AddObject<TDbObjectCreator>(this IEnumerable<TDbObjectCreator?>? objects)
 			where TDbObjectCreator : IDBObjectCreator
 		{
 			if (objects.IsNullOrEmpty() || SPMModel.GetOpenedModel(objects.First().DocName)?.AcadDocument is not { } doc)

@@ -23,16 +23,14 @@ namespace SPMTool.Core
 
 		#region Constructors
 
-		protected DBObjectCreatorList(string docName)
+		protected DBObjectCreatorList()
 		{
-			DocName = docName;
 			SetEvents();
 		}
 
-		protected DBObjectCreatorList(IEnumerable<TDBObjectCreator> collection, string docName)
+		protected DBObjectCreatorList(IEnumerable<TDBObjectCreator> collection)
 			: base(collection)
 		{
-			DocName = docName;
 			SetEvents();
 		}
 
@@ -93,7 +91,7 @@ namespace SPMTool.Core
 			model?.Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Contains);
 
 			// Add to drawing
-			objs.AddToDrawing();
+			objs.AddObject();
 		}
 
 		/// <summary>

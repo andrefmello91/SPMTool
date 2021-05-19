@@ -33,7 +33,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="andrefmello91.OnPlaneComponents.Constraint" /> in this object.
 		/// </summary>
-		public Constraint Constraint => SPMModel.Constraints.GetConstraintByPosition(Position);
+		public Constraint Constraint => SPMModel.GetOpenedModel(DocName)?.Constraints.GetConstraintByPosition(Position) ?? Constraint.Free;
 
 		/// <summary>
 		///     Get the <see cref="PlaneDisplacement" /> of this node object.
@@ -47,7 +47,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="Force" /> in this object.
 		/// </summary>
-		public PlaneForce Force => SPMModel.Forces.GetForceByPosition(Position);
+		public PlaneForce Force => SPMModel.GetOpenedModel(DocName)?.Forces.GetForceByPosition(Position) ?? PlaneForce.Zero;
 
 		/// <summary>
 		///     Get the position.
@@ -99,15 +99,15 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="NodeObject" /> from an <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="nodeObjectId">The <see cref="ObjectId" /> of the node.</param>
-		public static NodeObject? GetFromObjectId(ObjectId nodeObjectId) => nodeObjectId.GetEntity() is DBPoint point
-			? GetFromPoint(point)
+		public static NodeObject? From(ObjectId nodeObjectId) => nodeObjectId.GetEntity() is DBPoint point
+			? From(point)
 			: null;
 
 		/// <summary>
 		///     Read a <see cref="NodeObject" /> from a <see cref="DBPoint" />.
 		/// </summary>
 		/// <param name="dbPoint">The <see cref="DBPoint" /> object of the node.</param>
-		public static NodeObject GetFromPoint(DBPoint dbPoint) => new(dbPoint.Position, dbPoint.GetNodeType(), Settings.Units.Geometry)
+		public static NodeObject From(DBPoint dbPoint) => new(dbPoint.Position, dbPoint.GetNodeType(), GetOpenedDatabase(dbPoint.ObjectId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter)
 		{
 			ObjectId = dbPoint.ObjectId
 		};
@@ -117,7 +117,7 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		public override INumberedElement GetElement()
 		{
-			_node = new Node(Position, Type, Settings.Units.Displacements)
+			_node = new Node(Position, Type, GetOpenedDatabase(DocName)?.Settings.Units.Displacements ?? LengthUnit.Millimeter)
 			{
 				Number = Number,
 
@@ -199,25 +199,23 @@ namespace SPMTool.Core.Elements
 		public static explicit operator Node?(NodeObject? nodeObject) => (Node?) nodeObject?.GetElement();
 
 		/// <summary>
-		///     Get the <see cref="NodeObject" /> from <see cref="Model.Nodes" /> associated to a <see cref="Node" />.
+		///     Get the <see cref="NodeObject" /> from active model associated to a <see cref="Node" />.
 		/// </summary>
 		/// <remarks>
 		///     A <see cref="NodeObject" /> is created if <paramref name="node" /> is not null and is not listed.
 		/// </remarks>
 		public static explicit operator NodeObject?(Node? node) => node is null
 			? null
-			: SPMModel.Nodes.GetByProperty(node.Position)
+			: SPMModel.ActiveModel.Nodes.GetByProperty(node.Position)
 			  ?? new NodeObject(node.Position, node.Type);
 
 		/// <summary>
-		///     Get the <see cref="NodeObject" /> from <see cref="Model.Nodes" /> associated to a <see cref="DBPoint" />.
+		///     Get the <see cref="NodeObject" /> from the active model associated to a <see cref="DBPoint" />.
 		/// </summary>
 		/// <remarks>
 		///     Can be null if <paramref name="dbPoint" /> is null or doesn't correspond to a <see cref="NodeObject" />
 		/// </remarks>
-		public static explicit operator NodeObject?(DBPoint? dbPoint) => dbPoint is null
-			? null
-			: SPMModel.Nodes.GetByObjectId(dbPoint.ObjectId);
+		public static explicit operator NodeObject?(DBPoint? dbPoint) => (NodeObject?) dbPoint.GetSPMObject();
 
 		/// <summary>
 		///     Get the <see cref="DBPoint" /> associated to a <see cref="NodeObject" />.

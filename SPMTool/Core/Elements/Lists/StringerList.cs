@@ -1,12 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using andrefmello91.EList;
 using andrefmello91.Extensions;
 using andrefmello91.Material.Reinforcement;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.PanelProperties;
 using andrefmello91.SPMElements.StringerProperties;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 
@@ -39,21 +41,26 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the collection of stringers in the drawing.
 		/// </summary>
-		public static IEnumerable<Line>? GetObjects() => Layer.Stringer.GetDBObjects<Line>();
+		/// <param name="document">The AutoCAD document.</param>
+		private static IEnumerable<Line?>? GetObjects(Document document) => document.GetObjectIds(Layer.Stringer).GetDBObjects<Line>();
 
 		/// <summary>
 		///     Read all the <see cref="StringerObject" />'s in the drawing.
 		/// </summary>
-		public static StringerList ReadFromDrawing() => ReadFromLines(GetObjects());
+		/// <param name="document">The AutoCAD document.</param>
+		public static StringerList From(Document document)
+		{
+			var lines = GetObjects(document)?.ToArray();
 
-		/// <summary>
-		///     Read <see cref="StringerObject" />'s from a collection of <see cref="Line" />'s.
-		/// </summary>
-		/// <param name="stringerLines">The collection containing the <see cref="Line" />'s of drawing.</param>
-		public static StringerList ReadFromLines(IEnumerable<Line>? stringerLines) =>
-			stringerLines.IsNullOrEmpty()
+			var list = lines.IsNullOrEmpty() 
 				? new StringerList()
-				: new StringerList(stringerLines.Select(StringerObject.ReadFromLine));
+				: new StringerList(lines.Where(p => p is not null).Select(StringerObject.From!));
+			
+			// Set doc name
+			list.DocName = document.Name;
+			
+			return list;
+		}
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		/// <param name="startPoint">The start <see cref="Point" />.</param>
@@ -143,7 +150,7 @@ namespace SPMTool.Core.Elements
 		{
 			Clear(false);
 
-			AddRange(ReadFromDrawing(), false);
+			AddRange(From(SPMModel.GetOpenedModel(DocName)!.AcadDocument), false);
 		}
 
 		#endregion

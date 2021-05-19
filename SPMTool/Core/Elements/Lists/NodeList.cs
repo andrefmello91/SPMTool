@@ -5,6 +5,7 @@ using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 
@@ -36,19 +37,20 @@ namespace SPMTool.Core.Elements
 		#region Methods
 
 		/// <summary>
-		///     Get the collection of <see cref="DBPoint" />'s in the drawing, based in the <see cref="NodeType" />.
+		///     Get the collection of <see cref="DBPoint" />'s in the active drawing, based in the <see cref="NodeType" />.
 		/// </summary>
 		/// <remarks>
 		///     Leave <paramref name="type" /> null to get all <see cref="NodeType.Internal" /> and
 		///     <see cref="NodeType.External" /> nodes.
 		/// </remarks>
+		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="type">The <see cref="NodeType" />.</param>
-		public static IEnumerable<DBPoint?>? GetDBPoints(NodeType? type = null) =>
+		private static IEnumerable<DBPoint?>? GetObjects(Document document, NodeType? type = null) =>
 			type switch
 			{
-				NodeType.Internal => Layer.IntNode.GetDBObjects<DBPoint>(),
-				NodeType.External => Layer.ExtNode.GetDBObjects<DBPoint>(),
-				_                 => new[] { Layer.IntNode, Layer.ExtNode }.GetDBObjects<DBPoint>()
+				NodeType.Internal => document.GetObjectIds(Layer.IntNode).GetDBObjects<DBPoint>(),
+				NodeType.External => document.GetObjectIds(Layer.ExtNode).GetDBObjects<DBPoint>(),
+				_                 => document.GetObjectIds(Layer.IntNode, Layer.ExtNode).GetDBObjects<DBPoint>()
 			};
 
 		/// <summary>
@@ -59,23 +61,26 @@ namespace SPMTool.Core.Elements
 			nodeType switch
 			{
 				NodeType.Internal => Layer.IntNode,
-				NodeType.External => Layer.ExtNode,
-				_                 => Layer.Displacements
+				_                 => Layer.ExtNode
 			};
 
 		/// <summary>
-		///     Read all <see cref="NodeObject" />'s from drawing.
+		///     Read all <see cref="NodeObject" />'s from a document.
 		/// </summary>
-		public static NodeList ReadFromDrawing() => ReadFromPoints(GetDBPoints()?.ToArray());
+		/// <param name="document">The AutoCAD document.</param>
+		public static NodeList From(Document document)
+		{
+			var points = GetObjects(document)?.ToArray();
 
-		/// <summary>
-		///     Read <see cref="NodeObject" />'s from a collection of <see cref="DBPoint" />'s.
-		/// </summary>
-		/// <param name="nodePoints">The collection containing the <see cref="DBPoint" />'s of drawing.</param>
-		public static NodeList ReadFromPoints(IEnumerable<DBPoint>? nodePoints) =>
-			nodePoints.IsNullOrEmpty()
+			var list = points.IsNullOrEmpty() 
 				? new NodeList()
-				: new NodeList(nodePoints.Select(NodeObject.GetFromPoint));
+				: new NodeList(points.Where(p => p is not null).Select(NodeObject.From!));
+			
+			// Set doc name
+			list.DocName = document.Name;
+			
+			return list;
+		}
 
 		/// <inheritdoc cref="Add(NodeObject, bool, bool)" />
 		/// <param name="position">The <see cref="Point" /> position.</param>
@@ -171,7 +176,8 @@ namespace SPMTool.Core.Elements
 		/// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
 		public void Update(bool addNodes = true, bool removeNodes = true)
 		{
-			var geometries = Stringers.GetGeometries();
+			var model      = GetOpenedModel(DocName)!;
+			var geometries = model.Stringers.GetGeometries();
 
 			// Add nodes to all needed positions
 			if (addNodes)
@@ -182,7 +188,7 @@ namespace SPMTool.Core.Elements
 				RemoveUnnecessary(geometries);
 
 			// Set the style for all point objects in the drawing
-			UpdatePointSize();
+			model.UpdatePointSize();
 		}
 
 		#endregion

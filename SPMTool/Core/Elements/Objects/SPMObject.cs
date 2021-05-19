@@ -2,6 +2,7 @@
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
+using Extensions = SPMTool.Extensions;
 
 #nullable enable
 
@@ -83,7 +84,8 @@ namespace SPMTool.Core.Elements
 
 		#region Interface Implementations
 
-		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(SPMModel.On_ObjectErase);
+		public override void AddToDrawing() => 
+			ObjectId = SPMModel.GetOpenedModel(DocName)?.AcadDocument?.AddObject(CreateObject(), SPMModel.On_ObjectErase) ?? ObjectId.Null;
 
 		public int CompareTo(SPMObject<TProperty>? other) => other is null || other.GetType() != GetType()
 			? 0
@@ -99,7 +101,7 @@ namespace SPMTool.Core.Elements
 		/// <inheritdoc />
 		Entity? IDBObjectCreator<Entity>.GetObject() => (Entity?) GetObject();
 
-		public override void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+		public override void RemoveFromDrawing() => Extensions.EraseObjects(this);
 
 		#endregion
 

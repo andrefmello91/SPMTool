@@ -113,12 +113,14 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="StringerObject" /> in the drawing.
 		/// </summary>
 		/// <param name="line">The <see cref="Line" /> object of the stringer.</param>
-		public static StringerObject ReadFromLine(Line line)
+		public static StringerObject From(Line line)
 		{
+			var unit = SPMModel.GetOpenedModel(line.ObjectId)?.Database.Settings.Units.Geometry ?? LengthUnit.Millimeter;
+			
 			var pts = new List<Point>
 			{
-				line.StartPoint.ToPoint(),
-				line.EndPoint.ToPoint()
+				line.StartPoint.ToPoint(unit),
+				line.EndPoint.ToPoint(unit)
 			};
 
 			// Sort list
@@ -135,9 +137,9 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="StringerObject" /> in the drawing.
 		/// </summary>
 		/// <param name="stringerObjectId">The <see cref="ObjectId" /> of the stringer.</param>
-		public static StringerObject? ReadFromObjectId(ObjectId stringerObjectId) =>
+		public static StringerObject? From(ObjectId stringerObjectId) =>
 			stringerObjectId.GetEntity() is Line line
-				? ReadFromLine(line)
+				? From(line)
 				: null;
 
 		/// <summary>
@@ -186,14 +188,15 @@ namespace SPMTool.Core.Elements
 		///     This method returns a linear object.
 		/// </remarks>
 		/// <inheritdoc />
-		public override INumberedElement GetElement() => GetElement(SPMModel.Nodes.GetElements().Cast<Node>().ToArray());
+		public override INumberedElement GetElement() => GetElement(SPMModel.GetOpenedModel(DocName)!.Nodes.GetElements().Cast<Node>().ToArray()!);
 
 		/// <inheritdoc cref="SPMObject{T}.GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
 		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
 		public Stringer GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
 		{
-			_stringer        = Stringer.FromNodes(nodes, Geometry.InitialPoint, Geometry.EndPoint, Geometry.CrossSection, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement?.Clone(), elementModel);
+			var dat = SPMModel.GetOpenedModel(DocName)!.Database;
+			_stringer        = Stringer.FromNodes(nodes, Geometry.InitialPoint, Geometry.EndPoint, Geometry.CrossSection, dat.ConcreteData.Parameters, dat.ConcreteData.ConstitutiveModel, Reinforcement?.Clone(), elementModel);
 			_stringer.Number = Number;
 			return _stringer;
 		}
@@ -284,7 +287,7 @@ namespace SPMTool.Core.Elements
 		/// </remarks>
 		public static explicit operator StringerObject?(Stringer? stringer) => stringer is null
 			? null
-			: SPMModel.Stringers.GetByProperty(stringer.Geometry)
+			: SPMModel.ActiveModel.Stringers.GetByProperty(stringer.Geometry)
 			  ?? new StringerObject(stringer.Geometry);
 
 		/// <summary>
@@ -305,9 +308,7 @@ namespace SPMTool.Core.Elements
 		/// <remarks>
 		///     Can be null if <paramref name="line" /> is null or doesn't correspond to a <see cref="StringerObject" />
 		/// </remarks>
-		public static explicit operator StringerObject?(Line? line) => line is null
-			? null
-			: SPMModel.Stringers.GetByObjectId(line.ObjectId);
+		public static explicit operator StringerObject?(Line? line) => (StringerObject?) line.GetSPMObject();
 
 		/// <summary>
 		///     Get the <see cref="Line" /> associated to a <see cref="StringerObject" />.

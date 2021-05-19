@@ -49,12 +49,6 @@ namespace SPMTool.Core
 		#endregion
 
 		#endregion
-
-		/// <summary>
-		///		Base constructor.
-		/// </summary>
-		/// <param name="docName">The name of the associated document.</param>
-		protected ExtendedObject(string docName) => DocName = docName;
 		
 		#region Methods
 
