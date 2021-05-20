@@ -144,14 +144,6 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Read a <see cref="PanelObject" /> in the drawing.
 		/// </summary>
-		/// <param name="panelObjectId">The <see cref="ObjectId" /> of the node.</param>
-		public static PanelObject? From(ObjectId panelObjectId) => panelObjectId.GetEntity() is Solid solid
-			? From(solid)
-			: null;
-
-		/// <summary>
-		///     Read a <see cref="PanelObject" /> in the drawing.
-		/// </summary>
 		/// <param name="solid">The <see cref="Solid" /> object of the stringer.</param>
 		public static PanelObject From(Solid solid) => new(solid.GetVertices().ToArray(), GetOpenedDatabase(solid.ObjectId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter)
 		{

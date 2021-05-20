@@ -113,17 +113,10 @@ namespace SPMTool.Core
 		#region Interface Implementations
 
 		/// <inheritdoc />
-		public virtual void AddToDrawing() => 
-			SPMModel.GetOpenedModel(DocName)?.AcadDocument.AddObject(CreateObject());
-
-		/// <inheritdoc />
 		public abstract DBObject CreateObject();
 
 		/// <inheritdoc />
-		public virtual DBObject? GetObject() => ObjectId.GetDBObject();
-
-		/// <inheritdoc />
-		public virtual void RemoveFromDrawing() => ObjectId.EraseObjects();
+		public virtual DBObject? GetObject() => SPMDatabase.GetOpenedDatabase(DocName)?.AcadDatabase.GetObject(ObjectId);
 
 		#endregion
 

@@ -45,12 +45,12 @@ namespace SPMTool.Core.Elements
 		/// </remarks>
 		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="type">The <see cref="NodeType" />.</param>
-		private static IEnumerable<DBPoint?>? GetObjects(Document document, NodeType? type = null) =>
+		private static IEnumerable<DBPoint?> GetObjects(Document document, NodeType? type = null) =>
 			type switch
 			{
-				NodeType.Internal => document.GetObjectIds(Layer.IntNode).GetDBObjects<DBPoint>(),
-				NodeType.External => document.GetObjectIds(Layer.ExtNode).GetDBObjects<DBPoint>(),
-				_                 => document.GetObjectIds(Layer.IntNode, Layer.ExtNode).GetDBObjects<DBPoint>()
+				NodeType.Internal => document.GetObjects(Layer.IntNode).Cast<DBPoint?>(),
+				NodeType.External => document.GetObjects(Layer.ExtNode).Cast<DBPoint?>(),
+				_                 => document.GetObjects(Layer.IntNode, Layer.ExtNode).Cast<DBPoint>()
 			};
 
 		/// <summary>

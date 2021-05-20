@@ -8,11 +8,6 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
-using SPMTool.Core;
-using SPMTool.Core.Conditions;
-using SPMTool.Core.Elements;
-using SPMTool.Enums;
-using UnitsNet.Units;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 #nullable enable
@@ -127,10 +122,10 @@ namespace SPMTool
 
 			// Create the group
 			using var group = new Group(groupName, true);
-			var       id    = nod.SetAt(groupName, @group);
+			var       id    = nod.SetAt(groupName, group);
 
 			// Add to the transaction
-			trans.AddNewlyCreatedDBObject(@group, true);
+			trans.AddNewlyCreatedDBObject(group, true);
 
 			// Add the elements to the block
 			foreach (var ent in groupEntities)
@@ -141,45 +136,13 @@ namespace SPMTool
 
 			// Set to group
 			using var ids = new ObjectIdCollection(groupEntities.Select(e => e.ObjectId).ToArray());
-			@group.InsertAt(0, ids);
+			group.InsertAt(0, ids);
 
 			// Commit changes
 			trans.Commit();
 
 			return id;
 		}
-
-		/// <summary>
-		///     Return the angle (in radians), related to horizontal axis, of a line that connects this to
-		///     <paramref name="otherPoint" /> .
-		/// </summary>
-		/// <inheritdoc cref="DistanceInX" />
-		/// <param name="tolerance">The tolerance to consider being zero.</param>
-		public static double AngleTo(this Point3d point, Point3d otherPoint, double tolerance = 1E-6)
-		{
-			double
-				x = otherPoint.X - point.X,
-				y = otherPoint.Y - point.Y;
-
-			if (x.Abs() < tolerance && y.Abs() < tolerance)
-				return 0;
-
-			if (y.Abs() < tolerance)
-				return x > 0 ? 0 : Constants.Pi;
-
-			if (x.Abs() < tolerance)
-				return y > 0 ? Constants.PiOver2 : Constants.Pi3Over2;
-
-			return
-				(y / x).Atan();
-		}
-
-		/// <summary>
-		///     Returns true if this <paramref name="point" /> is approximately equal to <paramref name="otherPoint" />.
-		/// </summary>
-		/// <param name="otherPoint">The other <see cref="Point3d" /> to compare.</param>
-		/// <param name="tolerance">The tolerance to considering equivalent.</param>
-		public static bool Approx(this Point3d point, Point3d otherPoint, double tolerance = 1E-3) => point.X.Approx(otherPoint.X, tolerance) && point.Y.Approx(otherPoint.Y, tolerance) && point.Z.Approx(otherPoint.Z, tolerance);
 
 		/// <summary>
 		///     Get the approximated center <see cref="Point3d" /> of a rectangular <paramref name="solid" />.
@@ -196,14 +159,6 @@ namespace SPMTool
 
 			return mid1.MidPoint(mid2);
 		}
-
-		/// <summary>
-		///     Return a <see cref="Point3d" /> with coordinates converted.
-		/// </summary>
-		/// <param name="fromUnit">The <see cref="LengthUnit" /> of origin.</param>
-		/// <param name="toUnit">The <seealso cref="LengthUnit" /> to convert.</param>
-		/// <returns></returns>
-		public static Point3d Convert(this Point3d point, LengthUnit fromUnit, LengthUnit toUnit = LengthUnit.Millimeter) => fromUnit == toUnit ? point : new Point3d(point.X.Convert(fromUnit, toUnit), point.Y.Convert(fromUnit, toUnit), point.Z.Convert(fromUnit, toUnit));
 
 		/// <summary>
 		///     Create a block in the database.
@@ -250,18 +205,6 @@ namespace SPMTool
 		}
 
 		/// <summary>
-		///     Return the horizontal distance from this <paramref name="point" /> to <paramref name="otherPoint" /> .
-		/// </summary>
-		/// <param name="otherPoint">The other <see cref="Point3d" />.</param>
-		public static double DistanceInX(this Point3d point, Point3d otherPoint) => (otherPoint.X - point.X).Abs();
-
-		/// <summary>
-		///     Return the vertical distance from this <paramref name="point" /> to <paramref name="otherPoint" /> .
-		/// </summary>
-		/// <inheritdoc cref="DistanceInX" />
-		public static double DistanceInY(this Point3d point, Point3d otherPoint) => (otherPoint.Y - point.Y).Abs();
-
-		/// <summary>
 		///     Divide a <paramref name="line" /> in a <paramref name="number" /> of new ones.
 		/// </summary>
 		/// <param name="number">The number of lines to return.</param>
@@ -305,10 +248,10 @@ namespace SPMTool
 			// Verify if the solid is rectangular
 			return
 				solid.IsRectangular()
-					? Divide()
+					? SolidDivide()
 					: null;
 
-			IEnumerable<Solid> Divide()
+			IEnumerable<Solid> SolidDivide()
 			{
 				// Get vertices
 				var verts = solid.GetVertices().ToArray();
@@ -345,10 +288,97 @@ namespace SPMTool
 		}
 
 		/// <summary>
+		///     Remove this object from drawing.
+		/// </summary>
+		/// <param name="erasedEvent">The event to remove from object.</param>
+		public static void EraseObject(this Document document, ObjectId objectId, ObjectErasedEventHandler? erasedEvent = null)
+		{
+			if (!objectId.IsOk())
+				return;
+
+			var database = document.Database;
+
+			using var lck = document.LockDocument();
+
+			using var trans = database.TransactionManager.StartTransaction();
+
+			using var dbObject = trans.GetObject(objectId, OpenMode.ForWrite);
+
+			if (dbObject is null)
+				return;
+
+			if (erasedEvent != null)
+				dbObject.Erased -= erasedEvent;
+
+			// Verify if there is attributes
+			// if (ent is BlockReference blkRef && blkRef.AttributeCollection is not null && blkRef.AttributeCollection.Count > 0)
+			// 	foreach (ObjectId attId in blkRef.AttributeCollection)
+			// 	{
+			// 		var attEnt = trans.GetObject(attId, OpenMode.ForWrite);
+			// 		attEnt.Erase();
+			// 	}
+
+			dbObject.Erase();
+
+			trans.Commit();
+		}
+
+		/// <summary>
+		///     Remove all the objects in this collection from drawing.
+		/// </summary>
+		/// <param name="objects">The collection containing the <see cref="ObjectId" />'s to erase.</param>
+		public static void EraseObjects(this Document document, IEnumerable<ObjectId>? objects, ObjectErasedEventHandler? erasedEvent = null)
+		{
+			if (objects.IsNullOrEmpty())
+				return;
+
+			var database = document.Database;
+
+			using var lck = document.LockDocument();
+
+			using var trans = database.TransactionManager.StartTransaction();
+
+			foreach (var obj in objects)
+			{
+				using var dbObject = trans.GetObject(obj, OpenMode.ForWrite);
+
+				if (dbObject is null)
+					continue;
+
+				if (erasedEvent != null)
+					dbObject.Erased -= erasedEvent;
+
+				dbObject.Erase();
+			}
+
+			trans.Commit();
+		}
+
+		/// <summary>
+		///     Erase all the objects in this <paramref name="layerName" />.
+		/// </summary>
+		public static void EraseObjects(this Document document, string layerName, ObjectErasedEventHandler? erasedEvent = null)
+		{
+			var objs = document.GetObjectIds(layerName);
+
+			document.EraseObjects(objs, erasedEvent);
+		}
+
+		/// <summary>
+		///     Erase all the objects in these <paramref name="layerNames" />.
+		/// </summary>
+		public static void EraseObjects(this Document document, IEnumerable<string> layerNames, ObjectErasedEventHandler? erasedEvent = null)
+		{
+			var objs = document.GetObjectIds(layerNames.ToArray());
+
+			document.EraseObjects(objs, erasedEvent);
+		}
+
+		/// <summary>
 		///     Read a collection of <see cref="TypedValue" /> from a <see cref="DBDictionary" />.
 		/// </summary>
 		/// <param name="dbDictionary">The <see cref="DBDictionary" />.</param>
-		/// <inheritdoc cref="GetExtendedDictionary(ObjectId, string, Transaction)" />
+		/// <inheritdoc cref="GetExtendedDictionary(ObjectId, string)" />
 		public static TypedValue[]? GetData(this DBDictionary? dbDictionary, string dataName)
 		{
 			if (dbDictionary is null)
@@ -368,7 +398,7 @@ namespace SPMTool
 		///     Read a collection of <see cref="TypedValue" /> from a <see cref="DBDictionary" />'s <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="objectId">The <see cref="ObjectId" /> of a <see cref="DBDictionary" />.</param>
-		/// <inheritdoc cref="GetExtendedDictionary(ObjectId, string, Transaction)" />
+		/// <inheritdoc cref="GetExtendedDictionary(ObjectId, string)" />
 		public static TypedValue[]? GetDataFromDictionary(this ObjectId objectId, string dataName)
 		{
 			if (!objectId.IsOk())
@@ -379,52 +409,11 @@ namespace SPMTool
 
 			// Get record
 			using var obj = trans.GetObject(objectId, OpenMode.ForRead);
-			var data = obj is DBDictionary dict
-				? dict.GetData(dataName)
-				: null;
-
-			return data;
-		}
-
-		/// <summary>
-		///     Read a <see cref="DBObject" /> in the drawing from this <see cref="ObjectId" />.
-		/// </summary>
-		/// <param name="ongoingTransaction">The ongoing <see cref="Transaction" />. Commit latter if not null.</param>
-		public static DBObject? GetDBObject(this ObjectId objectId, Transaction? ongoingTransaction = null)
-		{
-			if (!objectId.IsOk())
-				return null;
-
-			// Start a transaction
-			using var trans = objectId.Database.TransactionManager.StartTransaction();
-
-			// Read the object
-			var obj = trans.GetObject(objectId, OpenMode.ForRead);
-
-			if (ongoingTransaction is null)
-				trans.Dispose();
-
-			return obj;
-		}
-
-		/// <summary>
-		///     Get the collection of <see cref="DBObject" />'s of <paramref name="objectIds" />.
-		/// </summary>
-		/// <inheritdoc cref="GetDBObject" />
-		public static IEnumerable<TDBObject?>? GetDBObjects<TDBObject>(this IEnumerable<ObjectId>? objectIds)
-			where TDBObject : DBObject
-		{
-			if (objectIds.IsNullOrEmpty())
-				return null;
-
-			var ids = objectIds.ToArray();
-
-			// Start a transaction
-			using var trans = ids[0].Database.TransactionManager.StartTransaction();
-
-			var objs = objectIds.Select(obj => trans.GetObject(obj, OpenMode.ForRead)).Cast<TDBObject?>().ToArray();
-
-			return objs;
+			
+			return 
+				obj is DBDictionary dict
+					? dict.GetData(dataName)
+					: null;
 		}
 
 		/// <summary>
@@ -457,16 +446,10 @@ namespace SPMTool
 		}
 
 		/// <summary>
-		///     Read a <see cref="Entity" /> in the drawing from this <see cref="ObjectId" />.
-		/// </summary>
-		/// <inheritdoc cref="GetDBObject" />
-		public static Entity? GetEntity(this ObjectId objectId, Transaction? ongoingTransaction = null) => (Entity?) objectId.GetDBObject(ongoingTransaction);
-
-		/// <summary>
 		///     Read this <see cref="DBObject" />'s extended dictionary as an <see cref="Array" /> of <see cref="TypedValue" />.
 		/// </summary>
-		/// <inheritdoc cref="GetExtendedDictionary(ObjectId, string, Transaction)" />
-		public static TypedValue[]? GetExtendedDictionary(this DBObject? dbObject, string dataName, Transaction? ongoingTransaction = null) =>
+		/// <inheritdoc cref="GetExtendedDictionary(ObjectId, string)" />
+		public static TypedValue[]? GetExtendedDictionary(this DBObject? dbObject, string dataName) =>
 			dbObject?.ObjectId.GetExtendedDictionary(dataName);
 
 		/// <summary>
@@ -474,7 +457,7 @@ namespace SPMTool
 		///     <see cref="TypedValue" />.
 		/// </summary>
 		/// <param name="dataName">The name of the required record.</param>
-		/// <inheritdoc cref="GetDBObject" />
+		/// <inheritdoc cref="GetObject" />
 		public static TypedValue[]? GetExtendedDictionary(this ObjectId objectId, string dataName)
 		{
 			if (!objectId.IsOk())
@@ -495,7 +478,7 @@ namespace SPMTool
 		/// <summary>
 		///     Get the <see cref="ObjectId" /> of the extended dictionary associated to an object's <see cref="ObjectId" />.
 		/// </summary>
-		/// <inheritdoc cref="GetDBObject" />
+		/// <inheritdoc cref="GetObject" />
 		public static ObjectId GetExtendedDictionaryId(this ObjectId objectId)
 		{
 			if (!objectId.IsOk())
@@ -512,11 +495,21 @@ namespace SPMTool
 		}
 
 		/// <summary>
-		///     Get the <see cref="ObjectId" /> of the extended dictionary associated to a <see cref="DBObject" />.
+		///     Read a <see cref="DBObject" /> in the drawing from this <see cref="ObjectId" />.
 		/// </summary>
-		/// <inheritdoc cref="GetDBObject" />
-		public static ObjectId GetExtendedDictionaryId(this DBObject? dbObject) =>
-			dbObject?.ObjectId.GetExtendedDictionaryId() ?? ObjectId.Null;
+		public static DBObject? GetObject(this Database database, ObjectId objectId)
+		{
+			if (objectId == ObjectId.Null)
+				return null;
+
+			// Start a transaction
+			using var trans = database.TransactionManager.StartTransaction();
+
+			// Read the object
+			var obj = trans.GetObject(objectId, OpenMode.ForRead);
+
+			return obj;
+		}
 
 		/// <summary>
 		///     Get the collection of <see cref="ObjectId" />'s of <paramref name="objects" />.
@@ -528,11 +521,8 @@ namespace SPMTool
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="layerNames">The layer names.</param>
-		public static IEnumerable<ObjectId>? GetObjectIds(this Document document, params string[] layerNames)
+		public static IEnumerable<ObjectId> GetObjectIds(this Document document, params string[] layerNames)
 		{
-			if (layerNames.IsNullOrEmpty())
-				return null;
-
 			// Get the entities on the layername
 			var selRes = document.Editor.SelectAll(layerNames.LayerFilter());
 
@@ -540,6 +530,33 @@ namespace SPMTool
 				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0
 					? selRes.Value.GetObjectIds()
 					: new ObjectId[0];
+		}
+		
+		/// <summary>
+		///     Get a collection containing all the <see cref="ObjectId" />'s in those <paramref name="layerNames" />.
+		/// </summary>
+		/// <param name="document">The AutoCAD document.</param>
+		/// <param name="layerNames">The layer names.</param>
+		public static IEnumerable<DBObject?> GetObjects(this Document document, params string[] layerNames)
+		{
+			// Get the ids
+			var ids = document.GetObjectIds(layerNames);
+
+			return document.Database.GetObjects(ids);
+		}
+
+		/// <summary>
+		///     Get the collection of <see cref="DBObject" />'s of <paramref name="objectIds" />.
+		/// </summary>
+		/// <inheritdoc cref="GetObject" />
+		public static IEnumerable<DBObject?> GetObjects(this Database database, IEnumerable<ObjectId> objectIds)
+		{
+			// Start a transaction
+			using var trans = database.TransactionManager.StartTransaction();
+
+			var objs = objectIds.Select(obj => trans.GetObject(obj, OpenMode.ForRead)).ToArray();
+
+			return objs;
 		}
 
 		/// <summary>
@@ -566,7 +583,7 @@ namespace SPMTool
 		/// <returns>
 		///     True if <paramref name="objectId" /> is valid, not null and not erased.
 		/// </returns>
-		public static bool IsOk(this ObjectId objectId) => objectId.IsValid && !objectId.IsNull && !objectId.IsErased;
+		public static bool IsOk(this ObjectId objectId) => objectId != ObjectId.Null || !objectId.IsValid || objectId.IsErased;
 
 		/// <summary>
 		///     Returns true if this <paramref name="solid" /> is rectangular.
@@ -598,29 +615,16 @@ namespace SPMTool
 		public static SelectionFilter LayerFilter(this IEnumerable<string> layerNames) => new(new[] { new TypedValue((int) DxfCode.LayerName, layerNames.Aggregate(string.Empty, (current, layer) => current + $"{layer},")) });
 
 		/// <summary>
-		///     Return the mid <see cref="Point3d" /> between this and <paramref name="otherPoint" />.
-		/// </summary>
-		/// <inheritdoc cref="DistanceInX" />
-		public static Point3d MidPoint(this Point3d point, Point3d otherPoint) => point == otherPoint ? point : new Point3d(0.5 * (point.X + otherPoint.X), 0.5 * (point.Y + otherPoint.Y), 0.5 * (point.Z + otherPoint.Z));
-
-		/// <summary>
-		///     Get the mid <see cref="Point3d" /> of a <paramref name="line" />.
-		/// </summary>
-		public static Point3d MidPoint(this Line line) => line.StartPoint.MidPoint(line.EndPoint);
-
-		/// <summary>
 		///     Move the objects in this collection to drawing bottom.
 		/// </summary>
-		public static void MoveToBottom(this IEnumerable<ObjectId>? objectIds)
+		public static void MoveToBottom(this Document document, IEnumerable<ObjectId>? objectIds)
 		{
 			if (objectIds.IsNullOrEmpty())
 				return;
 
-			var database = objectIds.First().Database;
+			var database = document.Database;
 
-			var doc = database.GetDocument();
-
-			using var lck   = doc.LockDocument();
+			using var lck   = document.LockDocument();
 			using var trans = database.TransactionManager.StartTransaction();
 
 			var blkTbl = (BlockTable) trans.GetObject(database.BlockTableId, OpenMode.ForRead);
@@ -638,23 +642,16 @@ namespace SPMTool
 		}
 
 		/// <summary>
-		///     Move the objects in this collection to drawing bottom.
-		/// </summary>
-		public static void MoveToBottom(this IEnumerable<DBObject>? objects) => objects?.GetObjectIds()?.MoveToBottom();
-
-		/// <summary>
 		///     Move the objects in this collection to drawing top.
 		/// </summary>
-		public static void MoveToTop(this IEnumerable<ObjectId>? objectIds)
+		public static void MoveToTop(this Document document, IEnumerable<ObjectId>? objectIds)
 		{
 			if (objectIds.IsNullOrEmpty())
 				return;
 
-			var database = objectIds.First().Database;
+			var database = document.Database;
 
-			var doc = database.GetDocument();
-
-			using var lck   = doc.LockDocument();
+			using var lck   = document.LockDocument();
 			using var trans = database.TransactionManager.StartTransaction();
 
 			var blkTbl = (BlockTable) trans.GetObject(database.BlockTableId, OpenMode.ForRead);
@@ -673,16 +670,6 @@ namespace SPMTool
 		}
 
 		/// <summary>
-		///     Move the objects in this collection to drawing top.
-		/// </summary>
-		public static void MoveToTop(this IEnumerable<DBObject>? objects) => objects?.GetObjectIds()?.MoveToTop();
-
-		/// <summary>
-		///     Return this collection of <see cref="Point3d" />'s ordered in ascending Y then ascending X.
-		/// </summary>
-		public static IEnumerable<Point3d> Order(this IEnumerable<Point3d> points) => points.OrderBy(p => p.Y).ThenBy(p => p.X);
-
-		/// <summary>
 		///     Return this collection of <see cref="DBPoint" />'s ordered in ascending Y then ascending X coordinates.
 		/// </summary>
 		public static IEnumerable<DBPoint> Order(this IEnumerable<DBPoint> points) => points.OrderBy(p => p.Position.Y).ThenBy(p => p.Position.X);
@@ -698,145 +685,32 @@ namespace SPMTool
 		public static IEnumerable<Solid> Order(this IEnumerable<Solid> solids) => solids.OrderBy(s => s.CenterPoint().Y).ThenBy(s => s.CenterPoint().X);
 
 		/// <summary>
-		///     Register a <see cref="ObjectErasedEventHandler" /> to this <paramref name="objectId" />
-		/// </summary>
-		/// <param name="handler"> The <see cref="ObjectErasedEventHandler" /> to add.</param>
-		public static void RegisterErasedEvent(this ObjectId objectId, ObjectErasedEventHandler handler)
-		{
-			if (!objectId.IsOk())
-				return;
-
-			var database = objectId.Database;
-
-			var doc = database.GetDocument();
-
-			using var lck = doc.LockDocument();
-
-			using var trans = database.TransactionManager.StartTransaction();
-
-			using (var ent = (Entity) trans.GetObject(objectId, OpenMode.ForWrite))
-			{
-				ent.Erased += handler;
-			}
-
-			trans.Commit();
-		}
-
-		/// <summary>
 		///     Register a <see cref="ObjectErasedEventHandler" /> to these <paramref name="objectIds" />
 		/// </summary>
 		/// <param name="handler"> The <see cref="ObjectErasedEventHandler" /> to add.</param>
-		public static void RegisterErasedEvent(this IEnumerable<ObjectId>? objectIds, ObjectErasedEventHandler handler)
+		public static void RegisterErasedEvent(this Document document, IEnumerable<ObjectId> objectIds, ObjectErasedEventHandler handler)
 		{
 			if (objectIds.IsNullOrEmpty())
 				return;
 
-			var database = objectIds.First().Database;
+			var database = document.Database;
 
-			var doc = database.GetDocument();
-
-			using var lck = doc.LockDocument();
+			using var lck = document.LockDocument();
 
 			using var trans = database.TransactionManager.StartTransaction();
 
-			foreach (var obj in objectIds)
+			foreach (var obj in objectIds.Where(o => o.IsOk()))
 			{
-				using var ent = (Entity) trans.GetObject(obj, OpenMode.ForWrite);
+				using var ent = (Entity?) trans.GetObject(obj, OpenMode.ForWrite);
+
+				if (ent is null)
+					continue;
+
 				ent.Erased += handler;
 			}
 
 			trans.Commit();
 		}
-
-		/// <summary>
-		///     Remove this object from drawing.
-		/// </summary>
-		/// <param name="erasedEvent">The event to remove from object.</param>
-		public static void EraseObjects(this ObjectId objectId, ObjectErasedEventHandler? erasedEvent = null)
-		{
-			if (!objectId.IsOk())
-				return;
-
-			var database = objectId.Database;
-
-			var doc = database.GetDocument();
-
-			using var lck = doc.LockDocument();
-
-			using var trans = database.TransactionManager.StartTransaction();
-
-			using var ent = (Entity) trans.GetObject(objectId, OpenMode.ForWrite);
-
-			if (erasedEvent != null)
-				ent.Erased -= erasedEvent;
-
-			// Verify if there is attributes
-			// if (ent is BlockReference blkRef && blkRef.AttributeCollection is not null && blkRef.AttributeCollection.Count > 0)
-			// 	foreach (ObjectId attId in blkRef.AttributeCollection)
-			// 	{
-			// 		var attEnt = trans.GetObject(attId, OpenMode.ForWrite);
-			// 		attEnt.Erase();
-			// 	}
-
-			ent.Erase();
-
-			trans.Commit();
-		}
-
-		/// <summary>
-		///     Remove this object from drawing.
-		/// </summary>
-		public static void EraseObject(this DBObject? obj, ObjectErasedEventHandler? erasedEvent = null) =>
-			obj?.ObjectId.EraseObjects(erasedEvent);
-
-		/// <summary>
-		///     Remove all the objects in this collection from drawing.
-		/// </summary>
-		/// <param name="objects">The collection containing the <see cref="ObjectId" />'s to erase.</param>
-		public static void EraseObjects(this IEnumerable<ObjectId>? objects, ObjectErasedEventHandler? erasedEvent = null)
-		{
-			if (objects.IsNullOrEmpty())
-				return;
-
-			var database = objects.First().Database;
-
-			var doc = database.GetDocument();
-
-			using var lck = doc.LockDocument();
-
-			using var trans = database.TransactionManager.StartTransaction();
-
-			foreach (var obj in objects)
-			{
-				using var ent = (Entity) trans.GetObject(obj, OpenMode.ForWrite);
-
-				if (erasedEvent != null)
-					ent.Erased -= erasedEvent;
-
-				ent.Erase();
-			}
-
-			trans.Commit();
-		}
-
-		/// <summary>
-		///     Remove all the objects in this collection from drawing.
-		/// </summary>
-		/// <param name="objects">The collection containing the <see cref="DBObject" />'s to erase.</param>
-		public static void EraseObjects(this IEnumerable<DBObject>? objects, ObjectErasedEventHandler? erasedEvent = null) =>
-			objects?.GetObjectIds()?.EraseObjects(erasedEvent);
-
-		/// <summary>
-		///     Erase all the objects in this <paramref name="layerName" />.
-		/// </summary>
-		public static void EraseObjects(this Document document, string layerName, ObjectErasedEventHandler? erasedEvent = null) =>
-			document.GetObjectIds(layerName)?.EraseObjects(erasedEvent);
-
-		/// <summary>
-		///     Erase all the objects in these <paramref name="layerNames" />.
-		/// </summary>
-		public static void EraseObjects(this Document document, IEnumerable<string> layerNames, ObjectErasedEventHandler? erasedEvent = null) =>
-			document.GetObjectIds(layerNames.ToArray())?.EraseObjects(erasedEvent);
 
 		/// <summary>
 		///     Set a collection of <see cref="TypedValue" /> from a <see cref="DBDictionary" />'s <see cref="ObjectId" />.
@@ -844,19 +718,19 @@ namespace SPMTool
 		/// <param name="objectId">The <see cref="ObjectId" /> of a <see cref="DBDictionary" />.</param>
 		/// <param name="dataName">The name to set to the record.</param>
 		/// <inheritdoc cref="SetExtendedDictionary(ObjectId, IEnumerable{TypedValue}, string, bool)" />
-		public static bool SetDataOnDictionary(this ObjectId objectId, IEnumerable<TypedValue>? data, string dataName, bool overwrite = true)
+		public static void SetDataOnDictionary(this ObjectId objectId, IEnumerable<TypedValue>? data, string dataName, bool overwrite = true)
 		{
 			if (!objectId.IsOk())
-				return false;
+				return;
 
 			// Start a transaction
-			var trans = objectId.Database.TransactionManager.StartTransaction();
+			using var trans = objectId.Database.TransactionManager.StartTransaction();
 
 			// Get record
 			using var obj = trans.GetObject(objectId, OpenMode.ForRead);
 
 			if (obj is not DBDictionary dbExt || !overwrite && dbExt.Contains(dataName))
-				return false;
+				return;
 
 			dbExt.UpgradeOpen();
 
@@ -870,9 +744,6 @@ namespace SPMTool
 			trans.AddNewlyCreatedDBObject(xRec, true);
 
 			trans.Commit();
-			trans.Dispose();
-
-			return true;
 		}
 
 		/// <summary>
@@ -882,7 +753,7 @@ namespace SPMTool
 		/// <param name="data">The collection of <see cref="TypedValue" /> to set at <paramref name="dataName" />.</param>
 		/// <param name="dataName">The name to set to the record.</param>
 		/// <param name="overwrite">Overwrite record if it already exists?</param>
-		/// <inheritdoc cref="GetDBObject" />
+		/// <inheritdoc cref="GetObject" />
 		public static ObjectId SetExtendedDictionary(this ObjectId objectId, IEnumerable<TypedValue>? data, string dataName, bool overwrite = true)
 		{
 			if (!objectId.IsOk())
@@ -920,32 +791,6 @@ namespace SPMTool
 		}
 
 		/// <summary>
-		///     Set extended data to this <paramref name="dbObject" /> and return its <see cref="ObjectId" />.
-		/// </summary>
-		/// <param name="dbObject">The <see cref="DBObject" /> to set the extended dictionary.</param>
-		/// <inheritdoc cref="SetExtendedDictionary(ObjectId, IEnumerable{TypedValue}, string, bool)" />
-		public static ObjectId SetExtendedDictionary(this DBObject dbObject, IEnumerable<TypedValue>? data, string dataName, bool overwrite = true) =>
-			dbObject.ObjectId.SetExtendedDictionary(data, dataName, overwrite);
-
-		/// <summary>
-		///     Set extended data to this <paramref name="entity" /> and return its <see cref="ObjectId" />.
-		/// </summary>
-		/// <param name="entity">The <see cref="Entity" /> to set the extended dictionary.</param>
-		/// <inheritdoc cref="SetExtendedDictionary(ObjectId, IEnumerable{TypedValue}, string, bool)" />
-		public static ObjectId SetExtendedDictionary(this Entity entity, IEnumerable<TypedValue>? data, string dataName, bool overwrite = true) =>
-			entity.ObjectId.SetExtendedDictionary(data, dataName, overwrite);
-
-		/// <summary>
-		///     Convert this <paramref name="value" /> to a <see cref="double" />.
-		/// </summary>
-		public static double ToDouble(this TypedValue value) => System.Convert.ToDouble(value.Value);
-
-		/// <summary>
-		///     Convert this <paramref name="value" /> to an <see cref="int" />.
-		/// </summary>
-		public static int ToInt(this TypedValue value) => System.Convert.ToInt32(value.Value);
-
-		/// <summary>
 		///     Return an <see cref="ObjectIdCollection" /> from an<see cref="DBObjectCollection" />.
 		/// </summary>
 		public static ObjectIdCollection? ToObjectIdCollection(this DBObjectCollection? collection)
@@ -966,7 +811,7 @@ namespace SPMTool
 		/// <param name="oldScale">The old scale factor.</param>
 		/// <param name="newScale">The new scale factor.</param>
 		/// <param name="setToAttributes">Set scale to attribute text heights?</param>
-		public static void UpdateScale(this IEnumerable<ObjectId> blockIds, double oldScale, double newScale, bool setToAttributes = false)
+		public static void UpdateScale(this Document document, IEnumerable<ObjectId> blockIds, double oldScale, double newScale, bool setToAttributes = false)
 		{
 			var ratio = newScale / oldScale;
 
@@ -975,7 +820,8 @@ namespace SPMTool
 			if (objIds.IsNullOrEmpty() || !ratio.IsFinite() || ratio.Approx(1, 1E-3))
 				return;
 
-			using var trans = objIds[0].Database.TransactionManager.StartTransaction();
+			using var lck   = document.LockDocument();
+			using var trans = document.Database.TransactionManager.StartTransaction();
 
 			foreach (var id in objIds)
 			{
@@ -1011,19 +857,14 @@ namespace SPMTool
 		/// <summary>
 		///     Update text heights.
 		/// </summary>
-		/// <param name="ids">The collection of objects.</param>
+		/// <param name="objectIds">The collection of objects.</param>
 		/// <param name="height">The height to set to texts.</param>
-		public static void UpdateTextHeight(this IEnumerable<ObjectId> ids, double height)
+		public static void UpdateTextHeight(this Document document, IEnumerable<ObjectId> objectIds, double height)
 		{
-			var database = ids.First().Database;
+			using var lck   = document.LockDocument();
+			using var trans = document.Database.TransactionManager.StartTransaction();
 
-			var doc = database.GetDocument();
-
-			using var lck = doc.LockDocument();
-
-			using var trans = database.TransactionManager.StartTransaction();
-
-			foreach (var id in ids)
+			foreach (var id in objectIds)
 				switch (trans.GetObject(id, OpenMode.ForRead))
 				{
 					case DBText text:
@@ -1052,5 +893,6 @@ namespace SPMTool
 		}
 
 		#endregion
+
 	}
 }

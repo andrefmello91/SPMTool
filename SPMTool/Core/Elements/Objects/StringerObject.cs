@@ -134,15 +134,6 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <summary>
-		///     Read a <see cref="StringerObject" /> in the drawing.
-		/// </summary>
-		/// <param name="stringerObjectId">The <see cref="ObjectId" /> of the stringer.</param>
-		public static StringerObject? From(ObjectId stringerObjectId) =>
-			stringerObjectId.GetEntity() is Line line
-				? From(line)
-				: null;
-
-		/// <summary>
 		///     Create crack blocks.
 		/// </summary>
 		public IEnumerable<StringerCrackBlockCreator?> CreateCrackBlocks() => StringerCrackBlockCreator.CreateBlocks(_stringer);

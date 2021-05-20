@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.Extensions;
-using andrefmello91.FEMAnalysis;
-using andrefmello91.Material.Concrete;
 using andrefmello91.Material.Reinforcement;
-using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.ApplicationServices;
@@ -14,8 +11,6 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.Windows;
-using MathNet.Numerics;
-using SPMTool.Application;
 using SPMTool.Attributes;
 using SPMTool.Core;
 using SPMTool.Core.Blocks;
@@ -24,7 +19,7 @@ using SPMTool.Core.Elements;
 using SPMTool.Editor.Commands;
 using SPMTool.Enums;
 using UnitsNet;
-using UnitsNet.Units;
+
 #nullable enable
 
 namespace SPMTool
@@ -35,49 +30,9 @@ namespace SPMTool
 		#region Methods
 		
 		/// <summary>
-		///     Create a <paramref name="layer" /> given its name.
-		/// </summary>
-		public static void Create(this Document document, Layer layer)
-		{
-			// Get layer name
-			var layerName = $"{layer}";
-
-			// Start a transaction
-			using var lck   = document.LockDocument();
-			using var trans = document.Database.TransactionManager.StartTransaction();
-
-			using var lyrTbl = (LayerTable) trans.GetObject(document.Database.LayerTableId, OpenMode.ForRead);
-
-			if (lyrTbl.Has(layerName))
-				return;
-
-			// Get layer attributes
-			var attribute = layer.GetAttribute<LayerAttribute>()!;
-
-			using var lyrTblRec = new LayerTableRecord
-			{
-				Name = layerName
-			};
-
-			// Upgrade the Layer table for write
-			lyrTbl.UpgradeOpen();
-
-			// Append the new layer to the Layer table and the transaction
-			lyrTbl.Add(lyrTblRec);
-			trans.AddNewlyCreatedDBObject(lyrTblRec, true);
-
-			// Set color and transparency
-			lyrTblRec.Color        = attribute.Color;
-			lyrTblRec.Transparency = attribute.Transparency;
-
-			// Commit and dispose the transaction
-			trans.Commit();
-		}
-
-		/// <summary>
 		///     Create those <paramref name="layers" /> given their names.
 		/// </summary>
-		public static void Create(this Document document, IEnumerable<Layer> layers)
+		public static void Create(this Document document, params Layer[] layers)
 		{
 			// Start a transaction
 			using var lck = document.LockDocument();
@@ -119,57 +74,41 @@ namespace SPMTool
 		}
 
 		/// <summary>
-		///     Create a <paramref name="block" /> given its name.
-		/// </summary>
-		/// <param name="block">The <see cref="Block" />.</param>
-		public static void Create(this Document document, Block block) => document.CreateBlock(block.GetElements()!, block.OriginPoint(), block.ToString());
-
-		/// <summary>
 		///     Create those <paramref name="blocks" /> given their names.
 		/// </summary>
-		public static void Create(this IEnumerable<Block> blocks, Document document)
+		public static void Create(this Document document, params Block[] blocks)
 		{
 			foreach (var block in blocks)
-				document.Create(block);
+				document.CreateBlock(block.GetElements()!, block.OriginPoint(), $"{block}");
 		}
 
 		/// <summary>
 		///     Erase all the objects in this <paramref name="layer" />.
 		/// </summary>
 		public static void EraseObjects(this Document document, Layer layer, ObjectErasedEventHandler? erasedEvent = null) =>
-			document.GetObjectIds(layer)?.EraseObjects(erasedEvent);
+			document.EraseObjects($"{layer}", erasedEvent);
 
 		/// <summary>
 		///     Erase all the objects in these <paramref name="layers" />.
 		/// </summary>
 		public static void EraseObjects(this Document document, IEnumerable<Layer> layers, ObjectErasedEventHandler? erasedEvent = null) =>
-			document.GetObjectIds(layers.ToArray())?.EraseObjects(erasedEvent);
+			document.EraseObjects(layers.Select(l => $"{l}").ToArray(), erasedEvent);
 
 		/// <summary>
 		///     Get a collection containing all the <see cref="ObjectId" />'s in those <paramref name="layers" />.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="layers">The layers.</param>
-		public static IEnumerable<ObjectId>? GetObjectIds(this Document document, params Layer[] layers) =>
+		public static IEnumerable<ObjectId> GetObjectIds(this Document document, params Layer[] layers) =>
+			
 			document.GetObjectIds(layers.Select(l => $"{l}").ToArray());
-
 		/// <summary>
-		///     Get an <see cref="AnalysisSettings" /> from <see cref="TypedValue" />'s.
+		///     Get a collection containing all the <see cref="DBObject" />'s in those <paramref name="layers" />.
 		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="AnalysisSettings" />.</param>
-		public static AnalysisSettings? GetAnalysisSettings(this IEnumerable<TypedValue>? values)
-		{
-			if (values.IsNullOrEmpty() || values.Count() != 4)
-				return null;
-
-			return new AnalysisSettings
-			{
-				Tolerance     = values.ElementAt(0).ToDouble(),
-				NumLoadSteps  = values.ElementAt(1).ToInt(),
-				MaxIterations = values.ElementAt(2).ToInt(),
-				Solver        = (NonLinearSolver) values.ElementAt(3).ToInt()
-			};
-		}
+		/// <param name="document">The AutoCAD document.</param>
+		/// <param name="layers">The layers.</param>
+		public static IEnumerable<DBObject?> GetObjects(this Document document, params Layer[] layers) =>
+			document.GetObjects(layers.Select(l => $"{l}").ToArray());
 
 		/// <summary>
 		///     Get the <see cref="Vector3d" /> associated to this <paramref name="axis" />.
@@ -204,52 +143,6 @@ namespace SPMTool
 			};
 
 		/// <summary>
-		///     Get a <see cref="Constraint" /> from <see cref="TypedValue" />'s.
-		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="Constraint" />.</param>
-		public static Constraint? GetConstraint(this IEnumerable<TypedValue>? values) =>
-			values.IsNullOrEmpty() || values.Count() != 1
-				? null
-				: Constraint.FromDirection((ComponentDirection) values.ElementAt(0).ToInt());
-
-		/// <summary>
-		///     Get a <see cref="CrossSection" /> from <see cref="TypedValue" />'s.
-		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="CrossSection" />.</param>
-		public static CrossSection? GetCrossSection(this IEnumerable<TypedValue>? values) =>
-			values.IsNullOrEmpty() || values.Count() != 2
-				? null
-				: new CrossSection(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
-
-		/// <summary>
-		///     Get a <see cref="PlaneDisplacement" /> from <see cref="TypedValue" />'s.
-		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="PlaneDisplacement" />.</param>
-		public static PlaneDisplacement? GetDisplacement(this IEnumerable<TypedValue>? values) =>
-			values.IsNullOrEmpty() || values.Count() != 2
-				? null
-				: new PlaneDisplacement(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
-
-		/// <summary>
-		///     Get a <see cref="DisplaySettings" /> from <see cref="TypedValue" />'s.
-		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="DisplaySettings" />.</param>
-		public static DisplaySettings? GetDisplaySettings(this IEnumerable<TypedValue>? values)
-		{
-			if (values.IsNullOrEmpty() || values.Count() != 5)
-				return null;
-
-			return new DisplaySettings
-			{
-				NodeScale             = values.ElementAt(0).ToDouble(),
-				ConditionScale        = values.ElementAt(1).ToDouble(),
-				ResultScale           = values.ElementAt(2).ToDouble(),
-				TextScale             = values.ElementAt(3).ToDouble(),
-				DisplacementMagnifier = values.ElementAt(4).ToInt()
-			};
-		}
-
-		/// <summary>
 		///     Get the collection of entities that forms <paramref name="block" />
 		/// </summary>
 		public static IEnumerable<Entity>? GetElements(this Block block)
@@ -263,23 +156,6 @@ namespace SPMTool
 		}
 
 		/// <summary>
-		///     Get an int that represents an <see cref="Enum" /> value from <see cref="TypedValue" />'s.
-		/// </summary>
-		public static int? GetEnumValue(this IEnumerable<TypedValue>? values) =>
-			values.IsNullOrEmpty() || values.Count() != 1
-				? null
-				: values.ElementAt(0).ToInt();
-
-		/// <summary>
-		///     Get a <see cref="PlaneForce" /> from <see cref="TypedValue" />'s.
-		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="PlaneForce" />.</param>
-		public static PlaneForce? GetForce(this IEnumerable<TypedValue>? values) =>
-			values.IsNullOrEmpty() || values.Count() != 2
-				? null
-				: new PlaneForce(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
-
-		/// <summary>
 		///     Get <see cref="NodeType" />.
 		/// </summary>
 		/// <param name="nodePoint">The <see cref="DBPoint" /> object.</param>
@@ -287,31 +163,6 @@ namespace SPMTool
 			nodePoint.Layer == $"{Layer.ExtNode}"
 				? NodeType.External
 				: NodeType.Internal;
-
-		/// <summary>
-		///     Get a <see cref="IParameters" /> from <see cref="TypedValue" />'s.
-		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="IParameters" />.</param>
-		public static IParameters? GetParameters(this IEnumerable<TypedValue>? values)
-		{
-			if (values.IsNullOrEmpty() || values.Count() != 8)
-				return null;
-
-			var model = (ParameterModel) values.ElementAt(0).ToInt();
-			var type  = (AggregateType) values.ElementAt(1).ToInt();
-			var fc    = values.ElementAt(2).ToDouble();
-			var phiAg = values.ElementAt(3).ToDouble();
-
-			if (model != ParameterModel.Custom)
-				return new Parameters(fc, phiAg, model, type);
-
-			var ft  = values.ElementAt(4).ToDouble();
-			var Ec  = values.ElementAt(5).ToDouble();
-			var ec  = -values.ElementAt(6).ToDouble().Abs();
-			var ecu = -values.ElementAt(7).ToDouble().Abs();
-
-			return new CustomParameters(fc, ft, Ec, phiAg, ec, ecu);
-		}
 
 		/// <summary>
 		///     Get the <see cref="BlockReference" /> of this <paramref name="block" />.
@@ -360,230 +211,7 @@ namespace SPMTool
 
 			return blockRef;
 		}
-
-		/// <summary>
-		///     Get a <see cref="UniaxialReinforcement" /> from <see cref="TypedValue" />'s.
-		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="UniaxialReinforcement" />.</param>
-		public static UniaxialReinforcement? GetReinforcement(this IEnumerable<TypedValue>? values)
-		{
-			if (values.IsNullOrEmpty() || values.Count() != 4)
-				return null;
-
-			var nBars = values.ElementAt(0).ToInt();
-			var phi   = values.ElementAt(1).ToDouble();
-
-			if (nBars == 0 || phi.ApproxZero(1E-3))
-				return null;
-
-			var fy = values.ElementAt(2).ToDouble();
-			var Es = values.ElementAt(3).ToDouble();
-
-			return new UniaxialReinforcement(nBars, phi, new Steel(fy, Es));
-		}
-
-		/// <summary>
-		///     Get a <see cref="WebReinforcementDirection" /> from <see cref="TypedValue" />'s.
-		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="WebReinforcementDirection" />.</param>
-		public static WebReinforcementDirection? GetReinforcementDirection(this IEnumerable<TypedValue>? values, Axis direction)
-		{
-			if (values.IsNullOrEmpty() || values.Count() != 4)
-				return null;
-
-			var phi = values.ElementAt(0).ToDouble();
-			var s   = values.ElementAt(1).ToDouble();
-
-			if (phi.ApproxZero(1E-3) || s.ApproxZero(1E-3))
-				return null;
-
-			var fy = values.ElementAt(2).ToDouble();
-			var Es = values.ElementAt(3).ToDouble();
-
-			var angle = direction is Axis.X
-				? 0
-				: Constants.PiOver2;
-
-			return new WebReinforcementDirection(phi, s, new Steel(fy, Es), 0, angle);
-		}
-
-		/// <summary>
-		///     Create a <see cref="RibbonButton" /> based in a command name, contained in <see cref="CommandName" />.
-		/// </summary>
-		public static RibbonButton? GetRibbonButton(this Command command, RibbonItemSize size = RibbonItemSize.Large, bool showText = true) =>
-			command.GetAttribute<CommandAttribute>()?.CreateRibbonButton(size, showText);
-
-		/// <summary>
-		///     Get an array of <see cref="TypedValue" /> from a <see cref="PlaneDisplacement" />.
-		/// </summary>
-		public static TypedValue[] GetTypedValues(this PlaneDisplacement displacement) =>
-			new[]
-			{
-				new TypedValue((int) DxfCode.Real, displacement.X.Millimeters),
-				new TypedValue((int) DxfCode.Real, displacement.Y.Millimeters)
-			};
-
-		/// <summary>
-		///     Get an array of <see cref="TypedValue" /> from a <see cref="PlaneForce" />.
-		/// </summary>
-		public static TypedValue[] GetTypedValues(this PlaneForce force) =>
-			new[]
-			{
-				new TypedValue((int) DxfCode.Real, force.X.Newtons),
-				new TypedValue((int) DxfCode.Real, force.Y.Newtons)
-			};
-
-		/// <summary>
-		///     Get an array of <see cref="TypedValue" /> from a <see cref="Constraint" />.
-		/// </summary>
-		public static TypedValue[] GetTypedValues(this Constraint constraint) =>
-			new[]
-			{
-				new TypedValue((int) DxfCode.Int32, (int) constraint.Direction)
-			};
-
-		/// <summary>
-		///     Get an array of <see cref="TypedValue" /> from a <see cref="CrossSection" />.
-		/// </summary>
-		public static TypedValue[] GetTypedValues(this CrossSection crossSection) =>
-			new[]
-			{
-				new TypedValue((int) DxfCode.Real, crossSection.Width.Millimeters),
-				new TypedValue((int) DxfCode.Real, crossSection.Height.Millimeters)
-			};
-
-		/// <summary>
-		///     Get an array of <see cref="TypedValue" /> from a <see cref="UniaxialReinforcement" />.
-		/// </summary>
-		public static TypedValue[] GetTypedValues(this UniaxialReinforcement? reinforcement) =>
-			new[]
-			{
-				new TypedValue((int) DxfCode.Int32, reinforcement?.NumberOfBars ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.BarDiameter.Millimeters ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.Steel?.YieldStress.Megapascals ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.Steel?.ElasticModule.Megapascals ?? 0)
-			};
-
-		/// <summary>
-		///     Get an array of <see cref="TypedValue" /> from a <see cref="WebReinforcementDirection" />.
-		/// </summary>
-		public static TypedValue[] GetTypedValues(this WebReinforcementDirection? reinforcement) =>
-			new[]
-			{
-				new TypedValue((int) DxfCode.Real, reinforcement?.BarDiameter.Millimeters ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.BarSpacing.Millimeters ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.Steel?.YieldStress.Megapascals ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.Steel?.ElasticModule.Megapascals ?? 0)
-			};
-
-		/// <summary>
-		///     Get an array of <see cref="TypedValue" /> from a <see cref="WebReinforcementDirection" />.
-		/// </summary>
-		public static TypedValue[] GetTypedValues(this IParameters parameters) =>
-			new[]
-			{
-				new TypedValue((int) DxfCode.Int32, (int) parameters.Model),
-				new TypedValue((int) DxfCode.Int32, (int) parameters.Type),
-				new TypedValue((int) DxfCode.Real, parameters.Strength.Megapascals),
-				new TypedValue((int) DxfCode.Real, parameters.AggregateDiameter.Millimeters),
-				new TypedValue((int) DxfCode.Real, parameters.TensileStrength.Megapascals),
-				new TypedValue((int) DxfCode.Real, parameters.ElasticModule.Megapascals),
-				new TypedValue((int) DxfCode.Real, parameters.PlasticStrain.Abs()),
-				new TypedValue((int) DxfCode.Real, parameters.UltimateStrain.Abs())
-			};
-
-
-		/// <summary>
-		///     Get an array of <see cref="TypedValue" /> from an <see cref="Units" />.
-		/// </summary>
-		/// <returns>
-		///     An array based in <see cref="Units.Default" /> if the object is null.
-		/// </returns>
-		public static TypedValue[] GetTypedValues(this Units? units)
-		{
-			units ??= Units.Default;
-
-			return new[]
-			{
-				new TypedValue((int) DxfCode.Int32, (int) units.Geometry),
-				new TypedValue((int) DxfCode.Int32, (int) units.Reinforcement),
-				new TypedValue((int) DxfCode.Int32, (int) units.Displacements),
-				new TypedValue((int) DxfCode.Int32, (int) units.CrackOpenings),
-				new TypedValue((int) DxfCode.Int32, (int) units.AppliedForces),
-				new TypedValue((int) DxfCode.Int32, (int) units.StringerForces),
-				new TypedValue((int) DxfCode.Int32, (int) units.PanelStresses),
-				new TypedValue((int) DxfCode.Int32, (int) units.MaterialStrength)
-			};
-		}
-
-		/// <summary>
-		///     Get an array of <see cref="TypedValue" /> from an <see cref="AnalysisSettings" />.
-		/// </summary>
-		/// <returns>
-		///     An array based in <see cref="AnalysisSettings.Default" /> if the object is null.
-		/// </returns>
-		public static TypedValue[] GetTypedValues(this AnalysisSettings? settings)
-		{
-			settings ??= AnalysisSettings.Default;
-
-			return new[]
-			{
-				new TypedValue((int) DxfCode.Real, settings.Tolerance),
-				new TypedValue((int) DxfCode.Int32, settings.NumLoadSteps),
-				new TypedValue((int) DxfCode.Int32, settings.MaxIterations),
-				new TypedValue((int) DxfCode.Int32, (int) settings.Solver)
-			};
-		}
-
-		/// <summary>
-		///     Get an array of <see cref="TypedValue" /> from a <see cref="DisplaySettings" />.
-		/// </summary>
-		/// <returns>
-		///     An array based in <see cref="DisplaySettings.Default" /> if the object is null.
-		/// </returns>
-		public static TypedValue[] GetTypedValues(this DisplaySettings? displaySettings)
-		{
-			displaySettings ??= DisplaySettings.Default;
-
-			return new[]
-			{
-				new TypedValue((int) DxfCode.Real, displaySettings.NodeScale),
-				new TypedValue((int) DxfCode.Real, displaySettings.ConditionScale),
-				new TypedValue((int) DxfCode.Real, displaySettings.ResultScale),
-				new TypedValue((int) DxfCode.Real, displaySettings.TextScale),
-				new TypedValue((int) DxfCode.Int32, displaySettings.DisplacementMagnifier)
-			};
-		}
-
-		/// <summary>
-		///     Get an array of <see cref="TypedValue" /> from an <see cref="Enum" /> value.
-		/// </summary>
-		/// <typeparam name="TEnum">An <see cref="Enum" /> type.</typeparam>
-		public static TypedValue[] GetTypedValues<TEnum>(this TEnum enumValue) where TEnum : Enum =>
-			new[] { new TypedValue((int) DxfCode.Int32, (int) (object) enumValue) };
-
-		/// <summary>
-		///     Get a <see cref="Units" /> from <see cref="TypedValue" />'s.
-		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="Units" />.</param>
-		public static Units? GetUnits(this IEnumerable<TypedValue>? values)
-		{
-			if (values.IsNullOrEmpty() || values.Count() != 8)
-				return null;
-
-			return new Units
-			{
-				Geometry         = (LengthUnit) values.ElementAt(0).ToInt(),
-				Reinforcement    = (LengthUnit) values.ElementAt(1).ToInt(),
-				Displacements    = (LengthUnit) values.ElementAt(2).ToInt(),
-				CrackOpenings    = (LengthUnit) values.ElementAt(3).ToInt(),
-				AppliedForces    = (ForceUnit) values.ElementAt(4).ToInt(),
-				StringerForces   = (ForceUnit) values.ElementAt(5).ToInt(),
-				PanelStresses    = (PressureUnit) values.ElementAt(6).ToInt(),
-				MaterialStrength = (PressureUnit) values.ElementAt(7).ToInt()
-			};
-		}
-
+		
 		/// <summary>
 		///     Returns a <see cref="SelectionFilter" /> for objects in this <paramref name="layer" />.
 		/// </summary>
@@ -597,15 +225,13 @@ namespace SPMTool
 		/// <summary>
 		///     Get the origin point related to this <paramref name="block" />.
 		/// </summary>
-		public static Point3d OriginPoint(this Block block)
-		{
-			return block switch
+		public static Point3d OriginPoint(this Block block) =>
+			block switch
 			{
 				Block.PanelCrack    => new Point3d(180, 0, 0),
 				Block.StringerCrack => new Point3d(0, 40, 0),
 				_                   => new Point3d(0, 0, 0)
 			};
-		}
 
 		/// <summary>
 		///     Read an object <see cref="Layer" />.
@@ -811,32 +437,67 @@ namespace SPMTool
 		#endregion
 
 		/// <summary>
+		///     Add an object to drawing and set its <see cref="ObjectId" />.
+		/// </summary>
+		/// <param name="obj">The object to add to drawing.</param>
+		public static void AddObject<TDbObjectCreator>(this Document document, TDbObjectCreator? obj)
+			where TDbObjectCreator : IDBObjectCreator
+		{
+			using var lck = document.LockDocument();
+		
+			// Set attributes for blocks
+			switch (obj)
+			{
+				case null:
+					return;
+	
+				case ForceObject force:
+					force.ObjectId = document.AddObject(force.CreateObject(), SPMModel.On_ObjectErase);
+					force.SetAttributes();
+					break;
+				
+				case BlockCreator blockCreator:
+					blockCreator.ObjectId = document.AddObject(blockCreator.CreateObject());
+					blockCreator.SetAttributes();
+					break;
+	
+				case StringerForceCreator stringerForceCreator:
+					stringerForceCreator.AddToDrawing();
+					break;
+				
+				default:
+					obj.ObjectId = document.AddObject(obj.CreateObject(), SPMModel.On_ObjectErase);
+					return;
+			}
+		}
+		
+		/// <summary>
 		///     Add a collection of objects to drawing and set their <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="objects">The objects to add to drawing.</param>
-		public static void AddObject<TDbObjectCreator>(this IEnumerable<TDbObjectCreator?>? objects)
+		public static void AddObjects<TDbObjectCreator>(this Document document, IEnumerable<TDbObjectCreator?>? objects)
 			where TDbObjectCreator : IDBObjectCreator
 		{
-			if (objects.IsNullOrEmpty() || SPMModel.GetOpenedModel(objects.First().DocName)?.AcadDocument is not { } doc)
+			if (objects.IsNullOrEmpty())
 				return;
 			
-			using var lck = doc.LockDocument();
+			using var lck = document.LockDocument();
 		
-			var objs2 = objects
-				.Where(o => o is not StringerForceCreator)
+			var objs = objects
+				.Where(o => o is not null and not StringerForceCreator)
 				.ToList();
 		
-			var entities = objs2
-				.Select(n => n?.CreateObject())
+			var entities = objs
+				.Select(n => n!.CreateObject())
 				.ToList();
 		
 			// Add objects to drawing
-			var objIds = doc.AddObjects(entities, SPMModel.On_ObjectErase)!.ToList();
+			var objIds = document.AddObjects(entities, SPMModel.On_ObjectErase)!.ToList();
 		
 			// Set object ids
-			for (var i = 0; i < objs2.Count; i++)
-				if (objs2[i] is not null)
-					objs2[i].ObjectId = objIds[i];
+			for (var i = 0; i < objs.Count; i++)
+				if (objs[i] is not null)
+					objs[i].ObjectId = objIds[i];
 		
 			// Set attributes for blocks
 			foreach (var obj in objects)
@@ -849,6 +510,10 @@ namespace SPMTool
 						force.SetAttributes();
 						break;
 		
+					case BlockCreator blockCreator:
+						blockCreator.SetAttributes();
+						break;
+
 					case StringerForceCreator stringerForceCreator:
 						stringerForceCreator.AddToDrawing();
 						break;
@@ -886,28 +551,32 @@ namespace SPMTool
 					_                                                                             => null
 				}
 				: null;
-
+		
 		/// <summary>
 		///     Remove a collection of objects from drawing.
 		/// </summary>
 		/// <param name="elements">The objects to remove.</param>
-		public static void EraseObjects<TDbObjectCreator>(this IEnumerable<TDbObjectCreator?>? elements)
-			where TDbObjectCreator : IDBObjectCreator =>
-			elements?.Select(e => e?.ObjectId ?? ObjectId.Null).ToArray().EraseObjects(SPMModel.On_ObjectErase);
+		public static void EraseObjects<TDbObjectCreator>(this Document document, IEnumerable<TDbObjectCreator?>? elements)
+			where TDbObjectCreator : IDBObjectCreator => document.EraseObjects(elements?.Where(e => e is not null).Select(e => e!.ObjectId), SPMModel.On_ObjectErase);
 
 		/// <summary>
 		///     Get a SPM object from this <paramref name="objectId" />.
 		/// </summary>
 		/// <param name="objectId">The <see cref="ObjectId" />.</param>
-		public static IDBObjectCreator? GetSPMObject(this ObjectId objectId) => objectId.GetEntity()?.CreateSPMObject();
+		public static IDBObjectCreator? GetSPMObject(this ObjectId objectId) => SPMDatabase.GetOpenedDatabase(objectId)?.AcadDatabase.GetObject(objectId)?.GetSPMObject();
 
 		/// <summary>
 		///     Remove an object from drawing.
 		/// </summary>
 		/// <param name="element">The object to remove.</param>
-		public static void EraseObjects<TDbObjectCreator>(this TDbObjectCreator? element)
-			where TDbObjectCreator : IDBObjectCreator =>
-			element?.ObjectId.EraseObjects(SPMModel.On_ObjectErase);
+		public static void EraseObject<TDbObjectCreator>(this Document document, TDbObjectCreator? element)
+			where TDbObjectCreator : IDBObjectCreator
+		{
+			if (element is null)
+				return;
+			
+			document.EraseObject(element.ObjectId, SPMModel.On_ObjectErase);
+		}
 
 		/// <summary>
 		///     Set attributes to blocks in this collection.

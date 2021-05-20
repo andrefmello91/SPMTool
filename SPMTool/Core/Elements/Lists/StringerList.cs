@@ -42,7 +42,7 @@ namespace SPMTool.Core.Elements
 		///     Get the collection of stringers in the drawing.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
-		private static IEnumerable<Line?>? GetObjects(Document document) => document.GetObjectIds(Layer.Stringer).GetDBObjects<Line>();
+		private static IEnumerable<Line?> GetObjects(Document document) => document.GetObjects(Layer.Stringer).Cast<Line>();
 
 		/// <summary>
 		///     Read all the <see cref="StringerObject" />'s in the drawing.

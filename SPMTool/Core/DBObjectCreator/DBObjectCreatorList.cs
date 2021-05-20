@@ -16,22 +16,30 @@ namespace SPMTool.Core
 	public abstract class DBObjectCreatorList<TDBObjectCreator> : EList<TDBObjectCreator>
 		where TDBObjectCreator : IDBObjectCreator, IEquatable<TDBObjectCreator>, IComparable<TDBObjectCreator>
 	{
+
+		#region Properties
+
 		/// <summary>
-		///		Get the name of the document associated to this collection.
+		///     Get the name of the document associated to this collection.
 		/// </summary>
 		public string DocName { get; set; }
+
+		/// <summary>
+		///		Get the <see cref="ObjectId"/>'s from the items in this collection.
+		/// </summary>
+		public IEnumerable<ObjectId> ObjectIds => this.Select(obj => obj.ObjectId);
+		
+		#endregion
 
 		#region Constructors
 
 		protected DBObjectCreatorList()
 		{
-			SetEvents();
 		}
 
 		protected DBObjectCreatorList(IEnumerable<TDBObjectCreator> collection)
 			: base(collection)
 		{
-			SetEvents();
 		}
 
 		#endregion
@@ -39,11 +47,45 @@ namespace SPMTool.Core
 		#region Methods
 
 		/// <summary>
+		///     Get an object in this collection that matches <paramref name="objectId" />.
+		/// </summary>
+		/// <param name="objectId">The required <seealso cref="ObjectId" />.</param>
+		[return: MaybeNull]
+		public TDBObjectCreator GetByObjectId(ObjectId objectId) => Find(e => e.ObjectId == objectId);
+
+		/// <summary>
+		///     Get objects in this collection that matches <paramref name="objectIds" />.
+		/// </summary>
+		/// <param name="objectIds">The collection of required <seealso cref="ObjectId" />'s.</param>
+		[return: MaybeNull]
+		public IEnumerable<TDBObjectCreator> GetByObjectIds(IEnumerable<ObjectId>? objectIds) => objectIds is null
+			? null
+			: FindAll(e => objectIds.Contains(e.ObjectId));
+
+		/*
+		/// <summary>
+		///     Set events on this collection.
+		/// </summary>
+		private void SetEvents()
+		{
+			ItemAdded    += On_ObjectAdded;
+			ItemRemoved  += On_ObjectRemoved;
+			RangeAdded   += On_ObjectsAdded;
+			RangeRemoved += On_ObjectsRemoved;
+		}
+		*/
+
+		#endregion
+
+		/*
+		#region Events
+
+		/// <summary>
 		///     Event to execute when an object is added to a list.
 		/// </summary>
 		private void On_ObjectAdded(object? sender, ItemEventArgs<TDBObjectCreator> e)
 		{
-			if (e.Item is not { } obj )
+			if (e.Item is not { } obj)
 				return;
 
 			// Remove from trash
@@ -59,7 +101,7 @@ namespace SPMTool.Core
 		/// </summary>
 		private void On_ObjectRemoved(object? sender, ItemEventArgs<TDBObjectCreator> e)
 		{
-			if (e.Item is not { } obj )
+			if (e.Item is not { } obj)
 				return;
 
 			// Add to trash
@@ -79,19 +121,19 @@ namespace SPMTool.Core
 		private void On_ObjectsAdded(object? sender, RangeEventArgs<TDBObjectCreator> e)
 		{
 			var objs = e.ItemCollection;
-			
+
 			if (objs.IsNullOrEmpty())
 				return;
-			
+
 			foreach (var obj in objs.Where(obj => obj is not null))
 				obj.DocName = DocName;
 
 			var model = SPMModel.GetOpenedModel(DocName);
-			
+
 			model?.Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Contains);
 
 			// Add to drawing
-			objs.AddObject();
+			objs.AddObjects();
 		}
 
 		/// <summary>
@@ -100,47 +142,21 @@ namespace SPMTool.Core
 		private void On_ObjectsRemoved(object? sender, RangeEventArgs<TDBObjectCreator> e)
 		{
 			var objs = e.ItemCollection;
-			
+
 			if (objs.IsNullOrEmpty())
 				return;
 
 			// Add to trash
 			var model = SPMModel.GetOpenedModel(DocName);
-			
+
 			model?.Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Where(obj => obj is not null).Contains);
 
 			// Remove
-			objs.EraseObjects();
-		}
-
-		/// <summary>
-		///     Get an object in this collection that matches <paramref name="objectId" />.
-		/// </summary>
-		/// <param name="objectId">The required <seealso cref="ObjectId" />.</param>
-		[return: MaybeNull]
-		public TDBObjectCreator GetByObjectId(ObjectId objectId) => Find(e => e.ObjectId == objectId);
-
-		/// <summary>
-		///     Get objects in this collection that matches <paramref name="objectIds" />.
-		/// </summary>
-		/// <param name="objectIds">The collection of required <seealso cref="ObjectId" />'s.</param>
-		[return: MaybeNull]
-		public IEnumerable<TDBObjectCreator> GetByObjectIds(IEnumerable<ObjectId>? objectIds) => objectIds is null
-			? null
-			: FindAll(e => objectIds.Contains(e.ObjectId));
-
-		/// <summary>
-		///     Set events on this collection.
-		/// </summary>
-		private void SetEvents()
-		{
-			ItemAdded    += On_ObjectAdded;
-			ItemRemoved  += On_ObjectRemoved;
-			RangeAdded   += On_ObjectsAdded;
-			RangeRemoved += On_ObjectsRemoved;
+			objs.EraseObject();
 		}
 
 		#endregion
+		*/
 
 	}
 }

@@ -14,7 +14,6 @@ using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using UnitsNet;
-
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 #nullable enable
@@ -38,6 +37,7 @@ namespace SPMTool.Core
 		///     Collection of element <see cref="Layer" />'s.
 		/// </summary>
 		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
+		
 		/// <summary>
 		///     The list of opened documents.
 		/// </summary>
@@ -167,12 +167,12 @@ namespace SPMTool.Core
 		public SPMModel(Document acadDocument)
 		{
 			AcadDocument = acadDocument;
-			Database = new SPMDatabase(acadDocument.Database);
-			
+			Database     = new SPMDatabase(acadDocument.Database);
+
 			RegisterApp(acadDocument);
 			CreateLayers(acadDocument);
 			SetAppParameters();
-			
+
 
 			// Initiate trash
 			Trash = new List<IDBObjectCreator>();
@@ -184,6 +184,13 @@ namespace SPMTool.Core
 			Stringers   = StringerList.From(acadDocument);
 			Panels      = PanelList.From(acadDocument);
 
+			// Set events
+			SetEvents(Nodes);
+			SetEvents(Forces);
+			SetEvents(Constraints);
+			SetEvents(Stringers);
+			SetEvents(Panels);
+			
 			// Get properties
 			StringerCrossSections  = GetCrossSections();
 			ElementWidths          = Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToEList() ?? new EList<Length>();
@@ -192,8 +199,8 @@ namespace SPMTool.Core
 			Steels                 = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList() ?? new EList<Steel>();
 
 			// Move panels to bottom
-			Panels.Select(p => p.ObjectId).ToList().MoveToBottom();
-
+			acadDocument.MoveToBottom(Panels.ObjectIds);
+			
 			// Register events
 			RegisterEventsToEntities();
 		}
@@ -213,19 +220,19 @@ namespace SPMTool.Core
 		public static string GetFilePath() => GetSystemVariable("DWGPREFIX").ToString()!;
 
 		/// <summary>
-		///     Get an opened SPM model that contains an <see cref="ObjectId"/>.
+		///     Get an opened SPM model that contains an <see cref="ObjectId" />.
 		/// </summary>
-		/// <param name="objectId">The <see cref="ObjectId"/> of an existing object.</param>
+		/// <param name="objectId">The <see cref="ObjectId" /> of an existing object.</param>
 		public static SPMModel? GetOpenedModel(ObjectId objectId) => !objectId.IsNull
 			? GetOpenedModel(objectId.Database)
 			: null;
-		
+
 		/// <summary>
 		///     Get an opened SPM model.
 		/// </summary>
 		/// <param name="documentName">The opened document name.</param>
 		public static SPMModel? GetOpenedModel(string documentName) => OpenedModels.Find(d => d.Name == documentName);
-		
+
 		/// <summary>
 		///     Get an opened SPM model.
 		/// </summary>
@@ -233,7 +240,7 @@ namespace SPMTool.Core
 		public static SPMModel GetOpenedModel(Document document) => GetOpenedModel(document.Name)!;
 
 		/// <summary>
-		///     <inheritdoc cref="GetOpenedModel(Document)"/>
+		///     <inheritdoc cref="GetOpenedModel(Document)" />
 		/// </summary>
 		/// <param name="database">The opened database.</param>
 		public static SPMModel GetOpenedModel(Database database) => GetOpenedModel(database.GetDocument());
@@ -261,10 +268,6 @@ namespace SPMTool.Core
 			// Commit and dispose the transaction
 			trans.Commit();
 		}
-
-		private static void On_DocumentClosed(object sender, DocumentCollectionEventArgs e) => OpenedModels.RemoveAll(d => d.Name == e.Document.Name);
-
-		private static void On_DocumentCreated(object sender, DocumentCollectionEventArgs e) => OpenedModels.Add(new SPMModel(e.Document));
 
 		/// <summary>
 		///     Create an SPM object associated to an <see cref="Entity" /> and add to the active model;
@@ -311,7 +314,7 @@ namespace SPMTool.Core
 		/// <param name="dataOk">Returns true if data is consistent to start analysis.</param>
 		/// <param name="message">Message to show if data is inconsistent.</param>
 		/// <param name="analysisType">The type of analysis to perform.</param>
-		public SPMInput GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
+		public SPMInput? GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
 		{
 			// Get the element model
 			var elementModel = analysisType switch
@@ -342,85 +345,20 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Event to run when an item is added to <see cref="StringerCrossSections" />.
-		/// </summary>
-		public void On_CrossSection_Add(object sender, ItemEventArgs<CrossSection> e) => ElementWidths.Add(e.Item.Width);
-
-		/// <summary>
-		///     Event to execute when an object is copied.
-		/// </summary>
-		public void On_ObjectCopied(object sender, ObjectEventArgs e)
-		{
-			var entity = (Entity) e.DBObject;
-
-			if (entity is null)
-				return;
-
-			var obj = entity.CreateSPMObject();
-
-			Add(obj);
-
-			// SPMDocument.Editor.WriteMessage($"\n{obj.GetType()} copied.");
-		}
-
-		/// <summary>
-		///     Event to execute when an object is erased or unerased.
-		/// </summary>
-		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
-		{
-			if (sender is not Entity entity || GetOpenedModel(entity.ObjectId) is not { } model)
-				return;
-
-			switch (e.Erased)
-			{
-				case true when entity.GetSPMObject() is { } obj && model.Remove(obj):
-
-					model.Trash.Add(obj);
-
-					model.Editor.WriteMessage($"\n{obj.Name} removed");
-
-					return;
-
-				case false:
-
-					var obj1 = model.Trash.Find(t => t.ObjectId == entity.ObjectId) ?? entity.CreateSPMObject();
-					
-					if (!model.Add(obj1))
-						return;
-
-					model.Trash.Remove(obj1);
-
-					model.Editor.WriteMessage($"\n{obj1.Name} re-added");
-					
-					return;
-			}
-		}
-
-		/// <summary>
-		///     Event to run when an item is added to <see cref="PanelReinforcements" />.
-		/// </summary>
-		public void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e) => Steels.Add(e.Item?.Steel);
-
-		/// <summary>
-		///     Event to run when an item is added to <see cref="StringerReinforcements" />.
-		/// </summary>
-		public void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e) => Steels.Add(e.Item?.Steel);
-
-		/// <summary>
 		///     Register events for AutoCAD entities.
 		/// </summary>
-		public void RegisterEventsToEntities()
+		private void RegisterEventsToEntities()
 		{
 			// Get object ids
-			var ids = Nodes.Select(n => n.ObjectId)
-				.Concat(Forces.Select(f => f.ObjectId))
-				.Concat(Constraints.Select(c => c.ObjectId))
-				.Concat(Stringers.Select(s => s.ObjectId))
-				.Concat(Panels.Select(p => p.ObjectId))
+			var ids = Nodes.ObjectIds
+				.Concat(Forces.ObjectIds)
+				.Concat(Constraints.ObjectIds)
+				.Concat(Stringers.ObjectIds)
+				.Concat(Panels.ObjectIds)
 				.ToList();
 
 			// Register event
-			ids.RegisterErasedEvent(On_ObjectErase);
+			AcadDocument.RegisterErasedEvent(ids, On_ObjectErase);
 		}
 
 		/// <summary>
@@ -472,6 +410,18 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
+		///		Set events to object creator lists.
+		/// </summary>
+		private void SetEvents<TDBObjectCreator>(DBObjectCreatorList<TDBObjectCreator> list)
+			where TDBObjectCreator : IDBObjectCreator, IEquatable<TDBObjectCreator>, IComparable<TDBObjectCreator>
+		{
+			list.ItemAdded    += On_ObjectAdded;
+			list.RangeAdded   += On_ObjectsAdded;
+			list.ItemRemoved  += On_ObjectRemoved;
+			list.RangeRemoved += On_ObjectsRemoved;
+		}
+
+		/// <summary>
 		///     Turn off fillmode setting.
 		/// </summary>
 		public void SetFillMode() => Database.AcadDatabase.Fillmode = false;
@@ -486,10 +436,12 @@ namespace SPMTool.Core
 		/// </summary>
 		/// <param name="oldScale">The old scale factor.</param>
 		/// <param name="newScale">The new scale factor.</param>
-		public void UpdateConditionsScale(double oldScale, double newScale) =>
-			Constraints.Select(c => c.ObjectId)
-				.Concat(Forces.Select(f => f.ObjectId))
-				.UpdateScale(oldScale, newScale);
+		public void UpdateConditionsScale(double oldScale, double newScale) => 
+			AcadDocument.UpdateScale(
+				Constraints.Select(c => c.ObjectId)
+					.Concat(Forces.Select(f => f.ObjectId))
+					.ToList(),
+				oldScale, newScale);
 
 		/// <summary>
 		///     Update all the elements in the drawing.
@@ -519,7 +471,7 @@ namespace SPMTool.Core
 		/// </summary>
 		public void UpdateTextHeight()
 		{
-			var objs    = Forces.Select(f => f.ObjectId).ToList();
+			var objs = Forces.Select(f => f.ObjectId).ToList();
 			var results = Database.AcadDatabase.GetDocument()
 				.GetObjectIds(Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks)?
 				.ToList();
@@ -527,7 +479,7 @@ namespace SPMTool.Core
 			if (!results.IsNullOrEmpty())
 				objs.AddRange(results);
 
-			objs.UpdateTextHeight(TextHeight);
+			AcadDocument.UpdateTextHeight(objs, TextHeight);
 		}
 
 		/// <inheritdoc cref="StringerCrossSections" />
@@ -558,6 +510,153 @@ namespace SPMTool.Core
 			list.ItemAdded += On_StrRef_Add;
 
 			return list;
+		}
+
+		#endregion
+
+		#region Events
+
+		/// <summary>
+		///     Event to execute when an object is erased or unerased in a database.
+		/// </summary>
+		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
+		{
+			if (sender is not Entity entity || ElementLayers.Contains((Layer) Enum.Parse(typeof(Layer), entity.Layer)) || GetOpenedModel(entity.ObjectId) is not { } model)
+				return;
+
+			switch (e.Erased)
+			{
+				case true when entity.GetSPMObject() is { } obj && model.Remove(obj):
+
+					model.Trash.Add(obj);
+
+					model.Editor.WriteMessage($"\n{obj.Name} removed");
+
+					return;
+
+				case false:
+
+					var obj1 = model.Trash.Find(t => t.ObjectId == entity.ObjectId) ?? entity.CreateSPMObject();
+
+					if (!model.Add(obj1))
+						return;
+
+					model.Trash.Remove(obj1);
+
+					model.Editor.WriteMessage($"\n{obj1.Name} re-added");
+
+					return;
+			}
+		}
+
+		private static void On_DocumentClosed(object sender, DocumentCollectionEventArgs e) => OpenedModels.RemoveAll(d => d.Name == e.Document.Name);
+
+		private static void On_DocumentCreated(object sender, DocumentCollectionEventArgs e) => OpenedModels.Add(new SPMModel(e.Document));
+
+		/// <summary>
+		///     Event to run when an item is added to <see cref="StringerCrossSections" />.
+		/// </summary>
+		private void On_CrossSection_Add(object sender, ItemEventArgs<CrossSection> e) => ElementWidths.Add(e.Item.Width);
+
+		/// <summary>
+		///     Event to execute when an object is copied.
+		/// </summary>
+		public void On_ObjectCopied(object sender, ObjectEventArgs e)
+		{
+			var entity = (Entity) e.DBObject;
+
+			if (entity is null)
+				return;
+
+			var obj = entity.CreateSPMObject();
+
+			Add(obj);
+
+			// SPMDocument.Editor.WriteMessage($"\n{obj.GetType()} copied.");
+		}
+
+		/// <summary>
+		///     Event to run when an item is added to <see cref="PanelReinforcements" />.
+		/// </summary>
+		private void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e) => Steels.Add(e.Item?.Steel);
+
+		/// <summary>
+		///     Event to run when an item is added to <see cref="StringerReinforcements" />.
+		/// </summary>
+		private void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e) => Steels.Add(e.Item?.Steel);
+
+		/// <summary>
+		///     Event to execute when an object is added to a list.
+		/// </summary>
+		private void On_ObjectAdded<TDBObjectCreator>(object? sender, ItemEventArgs<TDBObjectCreator> e)
+			where TDBObjectCreator : IDBObjectCreator
+		{
+			if (e.Item is not { } obj)
+				return;
+
+			// Remove from trash
+			obj.DocName = Name;
+			Trash.Remove(obj);
+
+			// Add to drawing
+			AcadDocument.AddObject(obj);
+		}
+
+		/// <summary>
+		///     Event to execute when an object is removed from a list.
+		/// </summary>
+		private void On_ObjectRemoved<TDBObjectCreator>(object? sender, ItemEventArgs<TDBObjectCreator> e)
+			where TDBObjectCreator : IDBObjectCreator
+		{
+			if (e.Item is not { } obj)
+				return;
+
+			// Add to trash
+			obj.DocName = Name;
+
+			if (!Trash.Contains(obj))
+				Trash.Add(obj);
+
+			// Remove
+			AcadDocument.EraseObject(obj);
+		}
+
+		/// <summary>
+		///     Event to execute when a range of objects is added to a list.
+		/// </summary>
+		private void On_ObjectsAdded<TDBObjectCreator>(object? sender, RangeEventArgs<TDBObjectCreator> e)
+			where TDBObjectCreator : IDBObjectCreator
+		{
+			var objs = e.ItemCollection;
+
+			if (objs.IsNullOrEmpty())
+				return;
+
+			foreach (var obj in objs.Where(obj => obj is not null))
+				obj.DocName = Name;
+
+			Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Contains);
+
+			// Add to drawing
+			AcadDocument.AddObjects(objs);
+		}
+
+		/// <summary>
+		///     Event to execute when a range of objects is removed from a list.
+		/// </summary>
+		private void On_ObjectsRemoved<TDBObjectCreator>(object? sender, RangeEventArgs<TDBObjectCreator> e)
+			where TDBObjectCreator : IDBObjectCreator
+		{
+			var objs = e.ItemCollection;
+
+			if (objs.IsNullOrEmpty())
+				return;
+
+			// Add to trash
+			Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Where(obj => obj is not null).Contains);
+
+			// Remove
+			AcadDocument.EraseObjects(objs);
 		}
 
 		#endregion

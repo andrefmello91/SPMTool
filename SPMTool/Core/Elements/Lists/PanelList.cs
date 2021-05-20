@@ -42,7 +42,7 @@ namespace SPMTool.Core.Elements
 		///     Get the collection of panels in the drawing.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
-		private static IEnumerable<Solid?>? GetObjects(Document document) => document.GetObjectIds(Layer.Panel).GetDBObjects<Solid>();
+		private static IEnumerable<Solid?>? GetObjects(Document document) => document.GetObjects(Layer.Panel).Cast<Solid>();
 
 		/// <summary>
 		///     Read all the <see cref="PanelObject" />'s in the drawing.
@@ -70,8 +70,8 @@ namespace SPMTool.Core.Elements
 		{
 			if (sender is not PanelList panelList)
 				return;
-
-			panelList.Select(p => p.ObjectId).MoveToBottom();
+	
+			SPMModel.GetOpenedModel(panelList.DocName)?.AcadDocument.MoveToBottom(panelList.ObjectIds);
 		}
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />

@@ -42,11 +42,6 @@ namespace SPMTool.Core
 		#region Methods
 
 		/// <summary>
-		///     Add a this object to drawing and set it's <see cref="ObjectId" />.
-		/// </summary>
-		void AddToDrawing();
-
-		/// <summary>
 		///     Create a <see cref="DBObject" /> based in this object's properties.
 		/// </summary>
 		DBObject CreateObject();
@@ -55,11 +50,6 @@ namespace SPMTool.Core
 		///     Get the <see cref="DBObject" /> in drawing associated to this object.
 		/// </summary>
 		DBObject? GetObject();
-
-		/// <summary>
-		///     Remove this object from drawing.
-		/// </summary>
-		void RemoveFromDrawing();
 
 		#endregion
 

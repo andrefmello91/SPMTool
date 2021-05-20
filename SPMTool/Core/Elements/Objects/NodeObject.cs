@@ -96,14 +96,6 @@ namespace SPMTool.Core.Elements
 		#region Methods
 
 		/// <summary>
-		///     Read a <see cref="NodeObject" /> from an <see cref="ObjectId" />.
-		/// </summary>
-		/// <param name="nodeObjectId">The <see cref="ObjectId" /> of the node.</param>
-		public static NodeObject? From(ObjectId nodeObjectId) => nodeObjectId.GetEntity() is DBPoint point
-			? From(point)
-			: null;
-
-		/// <summary>
 		///     Read a <see cref="NodeObject" /> from a <see cref="DBPoint" />.
 		/// </summary>
 		/// <param name="dbPoint">The <see cref="DBPoint" /> object of the node.</param>

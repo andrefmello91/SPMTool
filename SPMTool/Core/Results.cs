@@ -98,7 +98,7 @@ namespace SPMTool.Core
 			var blocks = model.Panels.SelectMany(p => p.GetBlocks()).ToList();
 
 			// Add to drawing and set attributes
-			blocks.AddObject();
+			model.AcadDocument.AddObjects(blocks);
 			blocks.SetAttributes();
 		}
 
@@ -108,13 +108,13 @@ namespace SPMTool.Core
 		private static void DrawStringerResults(SPMModel model)
 		{
 			var stringers = model.Stringers;
-			
-			stringers.Select(s => s.CreateDiagram()).AddObject();
+
+			model.AcadDocument.AddObjects(stringers.Select(s => s.CreateDiagram()).ToList());
 
 			var blocks = stringers.SelectMany(s => s.CreateCrackBlocks()).ToList();
 
 			// Add to drawing and set attributes
-			blocks.AddObject();
+			model.AcadDocument.AddObjects(blocks);
 			blocks.SetAttributes();
 		}
 
