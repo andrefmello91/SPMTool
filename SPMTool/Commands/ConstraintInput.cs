@@ -4,15 +4,16 @@ using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Core;
-using SPMTool.Editor.Commands;
+using SPMTool.Commands;
 
 using static SPMTool.Core.SPMModel;
 using static SPMTool.Core.SPMDatabase;
 using static SPMTool.Core.SPMModel;
+using AcadCommands = SPMTool.Commands.AcadCommands;
 
 [assembly: CommandClass(typeof(AcadCommands))]
 
-namespace SPMTool.Editor.Commands
+namespace SPMTool.Commands
 {
 	/// <summary>
 	///     Conditions input class.
@@ -28,15 +29,14 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.AddConstraint)]
 		public static void AddConstraint()
 		{
+			var model = ActiveModel;
+			var unit  = model.Database.Settings.Units.Geometry;
+			
 			// Request objects to be selected in the drawing area
-			var nds = UserInput.SelectNodes("Select nodes to add support conditions:", NodeType.External)?.ToArray();
+			var nds =  model.Database.AcadDatabase.GetNodes("Select nodes to add support conditions:", NodeType.External)?.ToArray();
 
 			if (nds is null)
 				return;
-			
-			var unit = ActiveDatabase.Settings.Units.Geometry;
-
-			var model = ActiveModel;
 			
 			// Erase result objects
 			model.AcadDocument.EraseObjects(Results.ResultLayers);
@@ -48,7 +48,7 @@ namespace SPMTool.Editor.Commands
 
 			var options = Enum.GetNames(typeof(ComponentDirection));
 
-			var keyword = UserInput.SelectKeyword("Add support in which direction?", options, $"{defDirection}");
+			var keyword = model.Editor.GetKeyword("Add support in which direction?", options, $"{defDirection}");
 
 			if (keyword is null)
 				return;
@@ -71,31 +71,30 @@ namespace SPMTool.Editor.Commands
 		public static void AddForce()
 		{
 			// Read units
-			var unit = ActiveDatabase.Settings.Units.Geometry;
+			var model = ActiveModel;
+			var units = model.Database.Settings.Units;
 
 			// Request objects to be selected in the drawing area
-			var nds = UserInput.SelectNodes("Select nodes to add load:", NodeType.External)?.ToArray();
+			var nds = model.Database.AcadDatabase.GetNodes("Select nodes to add load:", NodeType.External)?.ToArray();
 
 			if (nds is null)
 				return;
-
-			var model = ActiveModel;
 
 			// Erase result objects
 			model.AcadDocument.EraseObjects(Results.ResultLayers.Select(l => $"{l}").ToArray());
 
 			// Get force from user
 			var initialForce = nds.Length == 1
-				? ActiveModel.Forces.GetForceByPosition(nds[0].Position.ToPoint(unit))
+				? ActiveModel.Forces.GetForceByPosition(nds[0].Position.ToPoint(units.Geometry))
 				: (PlaneForce?) null;
 
-			var force = UserInput.GetForceValue(initialForce);
+			var force = model.Editor.GetForce(initialForce, units.AppliedForces);
 
 			if (!force.HasValue)
 				return;
 
 			// Get node positions
-			var positions = nds.Select(nd => nd.Position.ToPoint(unit)).ToArray();
+			var positions = nds.Select(nd => nd.Position.ToPoint(units.Geometry)).ToArray();
 
 			// Erase blocks
 			model.Forces.ChangeConditions(positions, force.Value);

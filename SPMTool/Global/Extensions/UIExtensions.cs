@@ -3,7 +3,7 @@ using System.Windows;
 using andrefmello91.Extensions;
 using Autodesk.Windows;
 using SPMTool.Attributes;
-using SPMTool.Editor.Commands;
+using SPMTool.Commands;
 
 namespace SPMTool
 {

@@ -1,6 +1,6 @@
 ﻿using SPMTool.Attributes;
 
-namespace SPMTool.Editor.Commands
+namespace SPMTool.Commands
 {
 	public enum Command
 	{

@@ -5,12 +5,12 @@ using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
-using SPMTool.Editor.Commands;
+using SPMTool.Commands;
 
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.SPMModel;
 
-namespace SPMTool.Editor.Commands
+namespace SPMTool.Commands
 {
 	/// <summary>
 	///     Element editor command class.
@@ -23,29 +23,30 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.DividePanel)]
 		public static void DividePanel()
 		{
-			// Prompt for select panels
-			var pnls = UserInput.SelectPanels("Select panels to divide")?.ToArray();
-
-			if (pnls.IsNullOrEmpty())
-				return;
-
-			// Prompt for the number of rows
-			var rown = UserInput.GetInteger("Enter the number of rows for division:", 2);
-
-			if (!rown.HasValue)
-				return;
-
-			// Prompt for the number of columns
-			var clnn = UserInput.GetInteger("Enter the number of columns for division:", 2);
-
-			if (!clnn.HasValue)
-				return;
-
 			// Get elements
 			var model     = ActiveModel;
 			var stringers = model.Stringers;
 			var nodes     = model.Nodes;
 			var panels    = model.Panels;
+			var database  = model.Database.AcadDatabase;
+			
+			// Prompt for select panels
+			var pnls = database.GetPanels("Select panels to divide")?.ToArray();
+
+			if (pnls.IsNullOrEmpty())
+				return;
+
+			// Prompt for the number of rows
+			var rown = model.Editor.GetInteger("Enter the number of rows for division:", 2);
+
+			if (!rown.HasValue)
+				return;
+
+			// Prompt for the number of columns
+			var clnn = model.Editor.GetInteger("Enter the number of columns for division:", 2);
+
+			if (!clnn.HasValue)
+				return;
 			
 			// Get values
 			int
@@ -124,7 +125,8 @@ namespace SPMTool.Editor.Commands
 			// Update nodes
 			nodes.Update();
 
-			panels.Select(p => p.ObjectId).MoveToBottom();
+			// Move panels to bottom
+			model.AcadDocument.MoveToBottom(panels.Select(p => p.ObjectId).ToList());
 
 			// Show alert if there was a non-rectangular panel
 			var message = (nonRecSelected
@@ -141,27 +143,28 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.DivideStringer)]
 		public static void DivideStringer()
 		{
+			// Get elements
+			var model     = ActiveModel;
+			var stringers = model.Stringers;
+			var nodes     = model.Nodes;
+			var database  = model.Database.AcadDatabase;
+
 			// Prompt for select stringers
-			var strs = UserInput.SelectStringers("Select stringers to divide")?.ToArray();
+			var strs = database.GetStringers("Select stringers to divide")?.ToArray();
 
 			if (strs.IsNullOrEmpty())
 				return;
 
 			// Prompt for the number of segments
-			var numn = UserInput.GetInteger("Enter the number of new stringers:", 2);
+			var numn = model.Editor.GetInteger("Enter the number of new stringers:", 2);
 
 			if (!numn.HasValue)
 				return;
-
-			// Get elements
-			var model     = ActiveModel;
-			var stringers = model.Stringers;
-			var nodes     = model.Nodes;
-
+			
 			var num = numn.Value;
 
 			// Get stringers from list
-			var toDivide = stringers.GetByObjectIds(strs.GetObjectIds().ToArray())?.ToArray();
+			var toDivide = stringers.GetByObjectIds(strs.GetObjectIds()!.ToArray())?.ToArray();
 
 			if (toDivide.IsNullOrEmpty())
 				return;
@@ -191,14 +194,18 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.EditPanel)]
 		public static void EditPanel()
 		{
+			// Get model and database
+			var model    = ActiveModel;
+			var database = model.Database.AcadDatabase;
+
 			// Request objects to be selected in the drawing area
-			var pnls = UserInput.SelectPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)")?.ToArray();
+			var pnls = database.GetPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)")?.ToArray();
 
 			if (pnls.IsNullOrEmpty())
 				return;
 			
 			// Get the elements
-			var panels = ActiveModel.Panels.GetByObjectIds(pnls.GetObjectIds())!.ToList();
+			var panels = model.Panels.GetByObjectIds(pnls.GetObjectIds())!.ToList();
 			
 			// Start the config window
 			SPMToolInterface.ShowWindow(new PanelWindow(panels));
@@ -210,8 +217,12 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.EditStringer)]
 		public static void EditStringer()
 		{
+			// Get model and database
+			var model    = ActiveModel;
+			var database = model.Database.AcadDatabase;
+
 			// Request objects to be selected in the drawing area
-			var strs = UserInput.SelectStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();
+			var strs = database.GetStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();
 
 			if (strs.IsNullOrEmpty())
 				return;

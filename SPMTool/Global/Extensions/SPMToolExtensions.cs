@@ -16,7 +16,7 @@ using SPMTool.Core;
 using SPMTool.Core.Blocks;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
-using SPMTool.Editor.Commands;
+using SPMTool.Commands;
 using SPMTool.Enums;
 using UnitsNet;
 

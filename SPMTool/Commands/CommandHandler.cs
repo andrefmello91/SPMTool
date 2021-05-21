@@ -3,7 +3,7 @@ using System.Windows.Input;
 using Autodesk.Windows;
 using SPMTool.Core;
 
-namespace SPMTool.Editor.Commands
+namespace SPMTool.Commands
 {
 	/// <summary>
 	///     Command Handler class.

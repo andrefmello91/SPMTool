@@ -8,7 +8,7 @@ using static SPMTool.Core.Results;
 
 #nullable enable
 
-namespace SPMTool.Editor.Commands
+namespace SPMTool.Commands
 {
 	public static partial class AcadCommands
 	{
@@ -65,7 +65,7 @@ namespace SPMTool.Editor.Commands
 			}
 
 			// Get the index of node to monitor displacement
-			var uIndexn = UserInput.MonitoredIndex();
+			var uIndexn = model.GetMonitoredIndex();
 
 			if (!uIndexn.HasValue)
 				return;

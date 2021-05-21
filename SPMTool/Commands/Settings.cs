@@ -1,10 +1,10 @@
 ﻿using System.Windows;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
-using SPMTool.Editor.Commands;
+using SPMTool.Commands;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
-namespace SPMTool.Editor.Commands
+namespace SPMTool.Commands
 {
 	/// <summary>
 	///     Settings command class.

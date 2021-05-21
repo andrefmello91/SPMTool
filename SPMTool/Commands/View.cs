@@ -1,11 +1,9 @@
 ﻿using Autodesk.AutoCAD.Runtime;
-using SPMTool.Core;
-using SPMTool.Editor.Commands;
+using SPMTool.Commands;
 using SPMTool.Enums;
-
 using static SPMTool.Core.SPMModel;
 
-namespace SPMTool.Editor.Commands
+namespace SPMTool.Commands
 {
 	/// <summary>
 	///     View commands class.
@@ -114,11 +112,15 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.ElementData)]
 		public static void ViewElementData()
 		{
+			// Get model and database
+			var model    = ActiveModel;
+			var database = model.Database.AcadDatabase;
+
 			// Start a loop for viewing continuous elements
-			for (;;)
+			while (true)
 			{
 				// Get the entity for read
-				var ent = UserInput.SelectEntity("Select an element to view data:", ElementLayers);
+				var ent = database.GetEntity("Select an element to view data:", ElementLayers);
 
 				if (ent is null)
 					return;
@@ -128,9 +130,9 @@ namespace SPMTool.Editor.Commands
 
 				var message = element is null
 					? "Not a SPM element."
-					: element.ToString();
+					: $"{element}";
 
-				ActiveModel.Editor.WriteMessage($"\n{message}");
+				model.Editor.WriteMessage($"\n{message}");
 			}
 		}
 

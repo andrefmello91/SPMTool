@@ -2,14 +2,11 @@
 using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Core;
-using SPMTool.Editor.Commands;
 
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.SPMModel;
-using static SPMTool.Core.SPMDatabase;
-using static SPMTool.Core.SPMModel;
 
-namespace SPMTool.Editor.Commands
+namespace SPMTool.Commands
 {
 	/// <summary>
 	///     Element input command class
@@ -25,10 +22,9 @@ namespace SPMTool.Editor.Commands
 		[CommandMethod(CommandName.AddPanel)]
 		public static void AddPanel()
 		{
-			var unit = ActiveDatabase.Settings.Units.Geometry;
-
 			var model  = ActiveModel;
 			var panels = model.Panels;
+			var unit = model.Database.Settings.Units.Geometry;
 
 			// Erase result objects
 			model.AcadDocument.EraseObjects(Results.ResultLayers);
@@ -37,7 +33,7 @@ namespace SPMTool.Editor.Commands
 			while (true)
 			{
 				// Prompt for user select 4 vertices of the panel
-				var nds = UserInput.SelectNodes("Select four nodes to be the vertices of the panel", NodeType.External)?.ToArray();
+				var nds =  model.Database.AcadDatabase.GetNodes("Select four nodes to be the vertices of the panel", NodeType.External)?.ToArray();
 
 				if (nds is null)
 					goto Finish;
@@ -55,7 +51,7 @@ namespace SPMTool.Editor.Commands
 			Finish:
 
 			// Move panels to bottom
-			panels.Select(p => p.ObjectId).ToList().MoveToBottom();
+			model.AcadDocument.MoveToBottom(panels.Select(p => p.ObjectId).ToList());
 		}
 
 		/// <summary>
@@ -70,17 +66,18 @@ namespace SPMTool.Editor.Commands
 			// Set OSMODE only to end point and node
 			SetSystemVariable("OSMODE", 9);
 
-			// Prompt for the start point of Stringer
-			var stPtn = UserInput.GetPoint("Enter the start point:");
-
-			if (stPtn is null)
-				return;
-
 			// Get elements
 			var model     = ActiveModel;
 			var stringers = model.Stringers;
 			var nodes     = model.Nodes;
+			var unit      = model.Database.Settings.Units.Geometry;
+			
+			// Prompt for the start point of Stringer
+			var stPtn = model.Editor.GetPoint("Enter the start point:", unit: unit);
 
+			if (stPtn is null)
+				return;
+			
 			var stPt = stPtn.Value;
 
 			// Erase result objects
@@ -90,10 +87,9 @@ namespace SPMTool.Editor.Commands
 			while (true)
 			{
 				// Prompt for the start point of Stringer
-				var endPtn = UserInput.GetPoint("Enter the end point:", stPt);
+				var endPtn = model.Editor.GetPoint("Enter the end point:", stPt, unit);
 
 				if (endPtn is null)
-
 					// Finish command
 					goto Finish;
 
