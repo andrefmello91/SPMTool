@@ -179,8 +179,8 @@ namespace SPMTool.Core
 
 			// Get elements
 			Nodes       = NodeList.From(acadDocument);
-			Forces      = ForceList.ReadFromDrawing();
-			Constraints = ConstraintList.ReadFromDrawing();
+			Forces      = ForceList.From(acadDocument);
+			Constraints = ConstraintList.From(acadDocument);
 			Stringers   = StringerList.From(acadDocument);
 			Panels      = PanelList.From(acadDocument);
 

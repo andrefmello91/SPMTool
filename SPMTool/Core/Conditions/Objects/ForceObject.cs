@@ -9,6 +9,7 @@ using MathNet.Numerics;
 using SPMTool.Enums;
 
 using UnitsNet;
+using UnitsNet.Units;
 using static SPMTool.Core.SPMDatabase;
 
 #nullable enable
@@ -69,41 +70,31 @@ namespace SPMTool.Core.Conditions
 		///     Read a <see cref="ForceObject" /> from a <see cref="BlockReference" />.
 		/// </summary>
 		/// <param name="reference">The <see cref="BlockReference" /> object of the force.</param>
-		public static ForceObject? ReadFromBlock(BlockReference? reference) =>
-			reference is null
-				? null
-				: new ForceObject(reference.Position.ToPoint(Settings.Units.Geometry), PlaneForce.Zero)
+		public static ForceObject From(BlockReference reference) =>
+				new (reference.Position.ToPoint(GetOpenedDatabase(reference.ObjectId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter), PlaneForce.Zero)
 				{
 					ObjectId = reference.ObjectId
 				};
-
-		/// <summary>
-		///     Read a <see cref="ForceObject" /> from an <see cref="ObjectId" />.
-		/// </summary>
-		/// <param name="forceObjectId">The <see cref="ObjectId" /> of the force.</param>
-		public static ForceObject? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference?) forceObjectId.GetEntity());
-
-		public override void AddToDrawing()
-		{
-			ObjectId = CreateObject().AddToDrawing();
-			SetAttributes();
-		}
 
 		public override DBObject CreateObject()
 		{
 			var insertionPoint = Position.ToPoint3d();
 
-			var block = Block.GetReference(insertionPoint, Layer, null, 0, Axis.Z, null, Settings.Units.ScaleFactor)!;
+			// Get database
+			var model    = SPMModel.GetOpenedModel(DocName)!;
+			var database = model.Database;
+
+			var block = database.AcadDatabase.GetReference(Block, insertionPoint, Layer, null, 0, Axis.Z, null, database.Settings.Units.ScaleFactor)!;
 
 			// Rotate the block
 			if (Direction is ComponentDirection.X)
-				block.TransformBy(Matrix3d.Rotation(Constants.PiOver2, Ucs.Zaxis, insertionPoint));
+				block.TransformBy(Matrix3d.Rotation(Constants.PiOver2, model.Ucs.Zaxis, insertionPoint));
 
 			else if (!RotationAngleY.ApproxZero(1E-3))
-				block.TransformBy(Matrix3d.Rotation(RotationAngleY, Ucs.Xaxis, insertionPoint));
+				block.TransformBy(Matrix3d.Rotation(RotationAngleY, model.Ucs.Xaxis, insertionPoint));
 
 			if (!RotationAngle.ApproxZero(1E-3))
-				block.TransformBy(Matrix3d.Rotation(RotationAngle, Ucs.Yaxis, insertionPoint));
+				block.TransformBy(Matrix3d.Rotation(RotationAngle, model.Ucs.Yaxis, insertionPoint));
 
 			return block;
 		}
@@ -131,7 +122,8 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		private IEnumerable<AttributeReference?>? ForceAttributeReference()
 		{
-			var txtH = SPMModel.TextHeight;
+			var model = SPMModel.GetOpenedModel(ObjectId) ?? SPMModel.GetOpenedModel(DocName)!;
+			var txtH  = model.TextHeight;
 			
 			if (!Value.IsXZero)
 				yield return new AttributeReference
@@ -193,14 +185,12 @@ namespace SPMTool.Core.Conditions
 		public static explicit operator PlaneForce(ForceObject? forceObject) => forceObject?.Value ?? PlaneForce.Zero;
 
 		/// <summary>
-		///     Get the <see cref="ForceObject" /> from <see cref="Model.Forces" /> associated to a <see cref="BlockReference" />.
+		///     Get the <see cref="ForceObject" /> from the model associated to a <see cref="BlockReference" />.
 		/// </summary>
 		/// <remarks>
 		///     Can be null if <paramref name="blockReference" /> is null or doesn't correspond to a <see cref="ForceObject" />
 		/// </remarks>
-		public static explicit operator ForceObject?(BlockReference? blockReference) => blockReference is null
-			? null
-			: SPMModel.Forces.GetByObjectId(blockReference.ObjectId);
+		public static explicit operator ForceObject?(BlockReference? blockReference) => (ForceObject?) blockReference?.GetSPMObject();
 
 		#endregion
 

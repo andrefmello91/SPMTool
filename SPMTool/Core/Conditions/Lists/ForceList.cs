@@ -2,6 +2,7 @@
 using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 
@@ -32,40 +33,26 @@ namespace SPMTool.Core.Conditions
 		#region Methods
 
 		/// <summary>
-		///     Erase all the force text objects in the drawing.
-		/// </summary>
-		public static void EraseTexts() => Layer.ForceText.EraseObjects();
-
-
-		/// <summary>
 		///     Get the force objects in the drawing.
 		/// </summary>
-		public static IEnumerable<BlockReference?>? GetObjects() => Layer.Force.GetDBObjects<BlockReference>();
+		public static IEnumerable<BlockReference?> GetObjects(Document document) => document.GetObjects(Layer.Force).Cast<BlockReference?>();
 
 		/// <summary>
-		///     Get the force text objects in the drawing.
+		///     Read all <see cref="ForceObject" />'s from a document.
 		/// </summary>
-		public static IEnumerable<DBText?>? GetTexts() => Layer.ForceText.GetDBObjects<DBText>();
-
-		/// <summary>
-		///     Read <see cref="ForceObject" />'s from a collection of <see cref="BlockReference" />'s.
-		/// </summary>
-		/// <param name="blocks">The collection containing the <see cref="BlockReference" />'s of drawing.</param>
-		public static ForceList ReadFromBlocks(IEnumerable<BlockReference?>? blocks) =>
-			blocks.IsNullOrEmpty()
+		public static ForceList From(Document document)
+		{
+			var blocks = GetObjects(document);
+			
+			var list = blocks.IsNullOrEmpty()
 				? new ForceList()
-				: new ForceList(blocks.Where(b => b is not null && b.Layer == $"{Layer.Force}").Select(ForceObject.ReadFromBlock)!);
+				: new ForceList(blocks.Where(b => b is not null).Select(ForceObject.From!));
 
-		/// <summary>
-		///     Read all <see cref="ForceObject" />'s from drawing.
-		/// </summary>
-		/// <param name="updateTexts">
-		///     If true, erase all force texts in the drawing and add them again.
-		///     <para>
-		///         This updates text's <see cref="ObjectId" />'s in <seealso cref="ForceObject" />'s.
-		///     </para>
-		/// </param>
-		public static ForceList ReadFromDrawing(bool updateTexts = true) => ReadFromBlocks(GetObjects());
+			list.DocName = document.Name;
+
+			return list;
+
+		}
 
 		/// <remarks>
 		///     Item is not added if force values are zero.
@@ -87,7 +74,7 @@ namespace SPMTool.Core.Conditions
 		///     Get a <see cref="PlaneForce" /> at this <paramref name="position" />.
 		/// </summary>
 		/// <inheritdoc cref="ConditionList{T1,T2}.GetByPosition(Point)" />
-		public PlaneForce GetForceByPosition(Point position) => (GetByPosition(position)?.Value ?? PlaneForce.Zero).Convert(SPMDatabase.Settings.Units.AppliedForces);
+		public PlaneForce GetForceByPosition(Point position) => (GetByPosition(position)?.Value ?? PlaneForce.Zero).Convert(SPMDatabase.GetOpenedDatabase(DocName)!.Settings.Units.AppliedForces);
 
 		#endregion
 

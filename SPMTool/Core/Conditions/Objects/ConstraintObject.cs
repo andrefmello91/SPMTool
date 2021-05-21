@@ -3,7 +3,7 @@ using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics;
 using SPMTool.Enums;
-
+using UnitsNet.Units;
 using static SPMTool.Core.SPMDatabase;
 
 #nullable enable
@@ -62,19 +62,11 @@ namespace SPMTool.Core.Conditions
 		///     Read a <see cref="ConstraintObject" /> from a <see cref="BlockReference" />.
 		/// </summary>
 		/// <param name="reference">The <see cref="BlockReference" /> object of the force.</param>
-		public static ConstraintObject? ReadFromBlock(BlockReference? reference) =>
-			reference is null
-				? null
-				: new ConstraintObject(reference.Position.ToPoint(Settings.Units.Geometry), Constraint.Free)
-				{
-					ObjectId = reference.ObjectId
-				};
-
-		/// <summary>
-		///     Read a <see cref="ConstraintObject" /> from an <see cref="ObjectId" />.
-		/// </summary>
-		/// <param name="forceObjectId">The <see cref="ObjectId" /> of the force.</param>
-		public static ConstraintObject? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference?) forceObjectId.GetEntity());
+		public static ConstraintObject From(BlockReference reference) =>
+			new (reference.Position.ToPoint(GetOpenedDatabase(reference.ObjectId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter), Constraint.Free)
+			{
+				ObjectId = reference.ObjectId
+			};
 
 		protected override void GetProperties()
 		{
@@ -112,16 +104,14 @@ namespace SPMTool.Core.Conditions
 		public static explicit operator Constraint(ConstraintObject? constraintObject) => constraintObject?.Value ?? Constraint.Free;
 
 		/// <summary>
-		///     Get the <see cref="ConstraintObject" /> from <see cref="Model.Constraints" /> associated to a
+		///     Get the <see cref="ConstraintObject" /> from the active model associated to a
 		///     <see cref="BlockReference" />.
 		/// </summary>
 		/// <remarks>
 		///     Can be null if <paramref name="blockReference" /> is null or doesn't correspond to a
 		///     <see cref="ConstraintObject" />
 		/// </remarks>
-		public static explicit operator ConstraintObject?(BlockReference? blockReference) => blockReference is null
-			? null
-			: SPMModel.Constraints.GetByObjectId(blockReference.ObjectId);
+		public static explicit operator ConstraintObject?(BlockReference? blockReference) => (ConstraintObject?) blockReference?.GetSPMObject();
 
 		#endregion
 

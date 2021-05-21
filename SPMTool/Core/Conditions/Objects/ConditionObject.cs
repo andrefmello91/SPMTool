@@ -2,6 +2,7 @@
 using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
+using Extensions = SPMTool.Extensions;
 
 #nullable enable
 
@@ -98,13 +99,18 @@ namespace SPMTool.Core.Conditions
 
 		#region Interface Implementations
 
-		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(SPMModel.On_ObjectErase);
-
 		public int CompareTo(ConditionObject<TValue>? other) => other is null
 			? 0
 			: Position.CompareTo(other.Position);
 
-		public override DBObject CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, null, SPMDatabase.Settings.Units.ScaleFactor)!;
+		public override DBObject CreateObject()
+		{
+			// Get database
+			var database = SPMDatabase.GetOpenedDatabase(DocName)!;
+			
+			return
+				database.AcadDatabase.GetReference(Block, Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, null, database.Settings.Units.ScaleFactor)!;
+		}
 
 		/// <inheritdoc />
 		BlockReference IDBObjectCreator<BlockReference>.CreateObject() => (BlockReference) CreateObject();
@@ -112,8 +118,6 @@ namespace SPMTool.Core.Conditions
 		public virtual bool Equals(ConditionObject<TValue>? other) => other is not null && Position == other.Position;
 
 		BlockReference? IDBObjectCreator<BlockReference>.GetObject() => (BlockReference?) GetObject();
-
-		public override void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
 		#endregion
 

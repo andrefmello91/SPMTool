@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 
@@ -34,22 +35,23 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the support objects in the drawing.
 		/// </summary>
-		public static IEnumerable<BlockReference>? GetObjects() => Layer.Support.GetDBObjects<BlockReference>();
-
-		/// <summary>
-		///     Read <see cref="ConstraintObject" />'s from a collection of <see cref="BlockReference" />'s.
-		/// </summary>
-		/// <param name="blocks">The collection containing the <see cref="BlockReference" />'s of drawing.</param>
-		[return: NotNull]
-		public static ConstraintList ReadFromBlocks(IEnumerable<BlockReference>? blocks) =>
-			blocks.IsNullOrEmpty()
-				? new ConstraintList()
-				: new ConstraintList(blocks.Where(b => b is not null && b.Layer == $"{Layer.Support}").Select(ConstraintObject.ReadFromBlock)!);
+		private static IEnumerable<BlockReference?> GetObjects(Document document) => document.GetObjects(Layer.Support).Cast<BlockReference?>();
 
 		/// <summary>
 		///     Read all <see cref="ConstraintObject" />'s from drawing.
 		/// </summary>
-		public static ConstraintList ReadFromDrawing() => ReadFromBlocks(GetObjects());
+		public static ConstraintList From(Document document)
+		{
+			var blocks = GetObjects(document);
+			
+			var list = blocks.IsNullOrEmpty()
+				? new ConstraintList()
+				: new ConstraintList(blocks.Where(b => b is not null).Select(ConstraintObject.From!));
+
+			list.DocName = document.Name;
+
+			return list;
+		}
 
 		/// <remarks>
 		///     Item is not added if direction if <see cref="ComponentDirection.None" />.
