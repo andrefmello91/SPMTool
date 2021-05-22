@@ -10,7 +10,7 @@ namespace SPMTool.Core
 	/// </summary>
 	public abstract class ExtendedObject : IDBObjectCreator
 	{
-		
+
 		#region Fields
 
 		protected ObjectId _objectId = ObjectId.Null;
@@ -24,12 +24,10 @@ namespace SPMTool.Core
 		/// </summary>
 		public ObjectId DictionaryId { get; protected set; } = ObjectId.Null;
 
-		
-		
 		#region Interface Implementations
 
 		/// <inheritdoc />
-		public string DocName { get; set; }
+		public ObjectId BlockTableId { get; set; }
 
 		/// <inheritdoc />
 		public abstract Layer Layer { get; }
@@ -37,9 +35,7 @@ namespace SPMTool.Core
 		/// <inheritdoc />
 		public abstract string Name { get; }
 
-		/// <summary>
-		///     Get/set the <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> of this object.
-		/// </summary>
+		/// <inheritdoc />
 		public ObjectId ObjectId
 		{
 			get => _objectId;
@@ -49,7 +45,17 @@ namespace SPMTool.Core
 		#endregion
 
 		#endregion
-		
+
+		#region Constructors
+
+		/// <summary>
+		///     Extended object base constructor.
+		/// </summary>
+		/// <param name="blockTableId">The <see cref="ObjectId" /> of the block table that contains this object.</param>
+		protected ExtendedObject(ObjectId blockTableId) => BlockTableId = blockTableId;
+
+		#endregion
+
 		#region Methods
 
 		/// <summary>
@@ -116,7 +122,7 @@ namespace SPMTool.Core
 		public abstract DBObject CreateObject();
 
 		/// <inheritdoc />
-		public virtual DBObject? GetObject() => SPMDatabase.GetOpenedDatabase(DocName)?.AcadDatabase.GetObject(ObjectId);
+		public virtual DBObject? GetObject() => BlockTableId.Database.GetObject(ObjectId);
 
 		#endregion
 

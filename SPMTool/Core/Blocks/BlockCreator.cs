@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Attributes;
 using SPMTool.Enums;
-using Extensions = SPMTool.Extensions;
 #nullable enable
 
 namespace SPMTool.Core.Blocks
@@ -27,6 +24,11 @@ namespace SPMTool.Core.Blocks
 		#endregion
 
 		#region Properties
+
+		/// <summary>
+		///     Get/set the text height for attributes.
+		/// </summary>
+		public double TextHeight { get; set; }
 
 		/// <summary>
 		///     Get/set the attribute collection for block.
@@ -63,15 +65,10 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		protected double ScaleFactor { get; set; }
 
-		/// <summary>
-		///		Get/set the text height for attributes.
-		/// </summary>
-		public double TextHeight { get; set; }
-		
 		#region Interface Implementations
 
 		/// <inheritdoc />
-		public string DocName { get; set; }
+		public ObjectId BlockTableId { get; set; }
 
 		/// <inheritdoc />
 		public Layer Layer { get; protected set; }
@@ -81,7 +78,7 @@ namespace SPMTool.Core.Blocks
 
 		/// <inheritdoc />
 		public ObjectId ObjectId { get; set; }
-		
+
 		#endregion
 
 		#endregion
@@ -96,13 +93,14 @@ namespace SPMTool.Core.Blocks
 		/// <param name="rotationAngle">The block rotation angle.</param>
 		/// <param name="scaleFactor">The scale factor.</param>
 		/// <param name="textHeight">The text height for attributes.</param>
+		/// <param name="blockTableId">The <see cref="ObjectId"/> of the block table that contains this object.</param>
 		/// <param name="rotationAxis">The rotation <see cref="Axis" />.</param>
 		/// <param name="layer">A custom <see cref="Layer" />. Leave null to set default color from <paramref name="block" />.</param>
 		/// <param name="colorCode">
 		///     A custom <see cref="ColorCode" />. Leave null to set default color from
 		///     <paramref name="block" />'s layer.
 		/// </param>
-		public BlockCreator(Point insertionPoint, Block block, double rotationAngle, double scaleFactor, double textHeight, Axis rotationAxis = Axis.Z, Layer? layer = null, ColorCode? colorCode = null)
+		protected BlockCreator(Point insertionPoint, Block block, double rotationAngle, double scaleFactor, double textHeight, ObjectId blockTableId, Axis rotationAxis = Axis.Z, Layer? layer = null, ColorCode? colorCode = null)
 		{
 			Position      = insertionPoint;
 			Block         = block;
@@ -110,6 +108,7 @@ namespace SPMTool.Core.Blocks
 			RotationAngle = rotationAngle;
 			ScaleFactor   = scaleFactor;
 			TextHeight    = textHeight;
+			BlockTableId  = blockTableId;
 			RotationAxis  = rotationAxis;
 			ColorCode     = colorCode;
 		}
@@ -129,7 +128,7 @@ namespace SPMTool.Core.Blocks
 		public virtual BlockReference CreateObject()
 		{
 			// Get database
-			var database = SPMDatabase.GetOpenedDatabase(DocName)!;
+			var database = SPMDatabase.GetOpenedDatabase(BlockTableId)!;
 
 			return
 				database.AcadDatabase.GetReference(Block, Position.ToPoint3d(), Layer, ColorCode, RotationAngle, RotationAxis, RotationPoint?.ToPoint3d(), ScaleFactor)!;
@@ -149,7 +148,7 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <inheritdoc />
-		public BlockReference? GetObject() => (BlockReference?) (SPMDatabase.GetOpenedDatabase(DocName) ?? SPMDatabase.GetOpenedDatabase(ObjectId))?.AcadDatabase.GetObject(ObjectId);
+		public BlockReference? GetObject() => (BlockReference?) SPMDatabase.GetOpenedDatabase(BlockTableId)?.AcadDatabase.GetObject(ObjectId);
 
 		/// <inheritdoc />
 		DBObject? IDBObjectCreator.GetObject() => GetObject();

@@ -23,12 +23,21 @@ namespace SPMTool.Core.Elements
 
 		#region Constructors
 
-		private NodeList()
+		/// <summary>
+		///		Create a node list.
+		/// </summary>
+		/// <inheritdoc />
+		private NodeList(ObjectId blockTableId)
+			: base(blockTableId)
 		{
 		}
 
-		private NodeList(IEnumerable<NodeObject> nodeObjects)
-			: base(nodeObjects)
+		/// <summary>
+		///		Create a node list.
+		/// </summary>
+		/// <inheritdoc />
+		private NodeList(IEnumerable<NodeObject> nodeObjects, ObjectId blockTableId)
+			: base(nodeObjects, blockTableId)
 		{
 		}
 
@@ -71,21 +80,17 @@ namespace SPMTool.Core.Elements
 		public static NodeList From(Document document)
 		{
 			var points = GetObjects(document)?.ToArray();
+			var bId    = document.Database.BlockTableId;
 
-			var list = points.IsNullOrEmpty() 
-				? new NodeList()
-				: new NodeList(points.Where(p => p is not null).Select(NodeObject.From!));
-			
-			// Set doc name
-			list.DocName = document.Name;
-			
-			return list;
+			return points.IsNullOrEmpty() 
+				? new NodeList(bId)
+				: new NodeList(points.Where(p => p is not null).Select(NodeObject.From!), bId);
 		}
 
 		/// <inheritdoc cref="Add(NodeObject, bool, bool)" />
 		/// <param name="position">The <see cref="Point" /> position.</param>
 		/// <param name="nodeType">The <see cref="NodeType" />.</param>
-		public bool Add(Point position, NodeType nodeType, bool raiseEvents = true, bool sort = true) => Add(new NodeObject(position, nodeType), raiseEvents, sort);
+		public bool Add(Point position, NodeType nodeType, bool raiseEvents = true, bool sort = true) => Add(new NodeObject(position, nodeType, BlockTableId), raiseEvents, sort);
 
 		/// <summary>
 		///     Add nodes in all necessary positions, based on a collection of <seealso cref="StringerGeometry" />'s.
@@ -104,9 +109,9 @@ namespace SPMTool.Core.Elements
 			// Create a list
 			var nds = geometries.SelectMany(g => new[]
 			{
-				new NodeObject(g.InitialPoint, NodeType.External),
-				new NodeObject(g.CenterPoint, NodeType.Internal),
-				new NodeObject(g.EndPoint, NodeType.External)
+				new NodeObject(g.InitialPoint, NodeType.External, BlockTableId),
+				new NodeObject(g.CenterPoint, NodeType.Internal, BlockTableId),
+				new NodeObject(g.EndPoint, NodeType.External, BlockTableId)
 			}).Distinct().ToList();
 
 			//// Add external nodes
@@ -123,7 +128,7 @@ namespace SPMTool.Core.Elements
 		/// <param name="positions">The collection of <see cref="Point" /> positions.</param>
 		/// <param name="nodeType">The <see cref="NodeType" />.</param>
 		public int AddRange(IEnumerable<Point>? positions, NodeType nodeType, bool raiseEvents = true, bool sort = true) =>
-			AddRange(positions?.Distinct()?.Select(p => new NodeObject(p, nodeType))?.ToList(), raiseEvents, sort);
+			AddRange(positions?.Distinct()?.Select(p => new NodeObject(p, nodeType, BlockTableId))?.ToList(), raiseEvents, sort);
 
 		/// <summary>
 		///     Get a list of nodes' <see cref="Point" /> positions.
@@ -176,7 +181,7 @@ namespace SPMTool.Core.Elements
 		/// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
 		public void Update(bool addNodes = true, bool removeNodes = true)
 		{
-			var model      = GetOpenedModel(DocName)!;
+			var model      = GetOpenedModel(BlockTableId)!;
 			var geometries = model.Stringers.GetGeometries();
 
 			// Add nodes to all needed positions

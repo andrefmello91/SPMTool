@@ -18,13 +18,21 @@ namespace SPMTool.Core.Conditions
 
 		#region Constructors
 
-		// Allow duplicates for setting two forces at the same point.
-		private ForceList()
+		/// <summary>
+		///		Create a force list.
+		/// </summary>
+		/// <inheritdoc />
+		private ForceList(ObjectId blockTableId)
+			: base(blockTableId)
 		{
 		}
 
-		private ForceList(IEnumerable<ForceObject> collection)
-			: base(collection)
+		/// <summary>
+		///		Create a force list.
+		/// </summary>
+		/// <inheritdoc />
+		private ForceList(IEnumerable<ForceObject> collection, ObjectId blockTableId)
+			: base(collection, blockTableId)
 		{
 		}
 
@@ -43,12 +51,11 @@ namespace SPMTool.Core.Conditions
 		public static ForceList From(Document document)
 		{
 			var blocks = GetObjects(document);
+			var bId    = document.Database.BlockTableId;
 			
 			var list = blocks.IsNullOrEmpty()
-				? new ForceList()
-				: new ForceList(blocks.Where(b => b is not null).Select(ForceObject.From!));
-
-			list.DocName = document.Name;
+				? new ForceList(bId)
+				: new ForceList(blocks.Where(b => b is not null).Select(ForceObject.From!), bId);
 
 			return list;
 
@@ -59,7 +66,7 @@ namespace SPMTool.Core.Conditions
 		/// </remarks>
 		/// <inheritdoc />
 		public override bool Add(Point position, PlaneForce value, bool raiseEvents = true, bool sort = true) =>
-			!value.IsZero && Add(new ForceObject(position, value), raiseEvents, sort);
+			!value.IsZero && Add(new ForceObject(position, value, BlockTableId), raiseEvents, sort);
 
 		/// <remarks>
 		///     Items are not added if force values are zero.
@@ -68,13 +75,15 @@ namespace SPMTool.Core.Conditions
 		public override int AddRange(IEnumerable<Point>? positions, PlaneForce value, bool raiseEvents = true, bool sort = true) =>
 			value.IsZero
 				? 0
-				: AddRange(positions?.Select(p => new ForceObject(p, value)), raiseEvents, sort);
+				: AddRange(positions?.Select(p => new ForceObject(p, value, BlockTableId)), raiseEvents, sort);
 
 		/// <summary>
 		///     Get a <see cref="PlaneForce" /> at this <paramref name="position" />.
 		/// </summary>
 		/// <inheritdoc cref="ConditionList{T1,T2}.GetByPosition(Point)" />
-		public PlaneForce GetForceByPosition(Point position) => (GetByPosition(position)?.Value ?? PlaneForce.Zero).Convert(SPMDatabase.GetOpenedDatabase(DocName)!.Settings.Units.AppliedForces);
+		public PlaneForce GetForceByPosition(Point position) => 
+			(GetByPosition(position)?.Value ?? PlaneForce.Zero)
+			.Convert(SPMDatabase.GetOpenedDatabase(BlockTableId)!.Settings.Units.AppliedForces);
 
 		#endregion
 

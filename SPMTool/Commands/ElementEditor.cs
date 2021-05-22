@@ -108,7 +108,7 @@ namespace SPMTool.Commands
 			model.AcadDocument.EraseObjects(SPMResults.ResultLayers);
 
 			// Add other stringers
-			newStrs.AddRange(newPanels.SelectMany(p => p.Geometry.Edges.Select(e => new StringerObject(e.InitialVertex, e.FinalVertex))).ToArray());
+			newStrs.AddRange(newPanels.SelectMany(p => p.Geometry.Edges.Select(e => new StringerObject(e.InitialVertex, e.FinalVertex, model.Database.BlockTableId))).ToArray());
 
 			// Remove mid nodes
 			nodes.RemoveRange(strsToDivide.Select(s => s.Geometry.CenterPoint).ToArray());
@@ -240,7 +240,8 @@ namespace SPMTool.Commands
 		[CommandMethod(CommandName.UpdateElements)]
 		public static void UpdateElements()
 		{
-			var model = ActiveModel;
+			var models = OpenedModels;
+			var model  = ActiveModel;
 			
 			model.UpdateElements();
 

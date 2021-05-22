@@ -19,12 +19,21 @@ namespace SPMTool.Core.Conditions
 
 		#region Constructors
 
-		private ConstraintList()
+		/// <summary>
+		///		Create a constraint list.
+		/// </summary>
+		/// <inheritdoc />
+		private ConstraintList(ObjectId blockTableId)
+			: base(blockTableId)
 		{
 		}
-
-		private ConstraintList(IEnumerable<ConstraintObject> constraints)
-			: base(constraints)
+		
+		/// <summary>
+		///		Create a constraint list.
+		/// </summary>
+		/// <inheritdoc />
+		private ConstraintList(IEnumerable<ConstraintObject> constraints, ObjectId blockTableId)
+			: base(constraints, blockTableId)
 		{
 		}
 
@@ -43,13 +52,12 @@ namespace SPMTool.Core.Conditions
 		public static ConstraintList From(Document document)
 		{
 			var blocks = GetObjects(document);
+			var bId    = document.Database.BlockTableId;
 			
 			var list = blocks.IsNullOrEmpty()
-				? new ConstraintList()
-				: new ConstraintList(blocks.Where(b => b is not null).Select(ConstraintObject.From!));
-
-			list.DocName = document.Name;
-
+				? new ConstraintList(bId)
+				: new ConstraintList(blocks.Where(b => b is not null).Select(ConstraintObject.From!), bId);
+			
 			return list;
 		}
 
@@ -58,7 +66,7 @@ namespace SPMTool.Core.Conditions
 		/// </remarks>
 		/// <inheritdoc />
 		public override bool Add(Point position, Constraint value, bool raiseEvents = true, bool sort = true) =>
-			value.Direction != ComponentDirection.None && Add(new ConstraintObject(position, value), raiseEvents, sort);
+			value.Direction != ComponentDirection.None && Add(new ConstraintObject(position, value, BlockTableId), raiseEvents, sort);
 
 		/// <remarks>
 		///     Item is not added if direction if <see cref="ComponentDirection.None" />.
@@ -67,7 +75,7 @@ namespace SPMTool.Core.Conditions
 		public override int AddRange(IEnumerable<Point>? positions, Constraint value, bool raiseEvents = true, bool sort = true) =>
 			value.Direction == ComponentDirection.None
 				? 0
-				: AddRange(positions?.Select(p => new ConstraintObject(p, value)), raiseEvents, sort);
+				: AddRange(positions?.Select(p => new ConstraintObject(p, value, BlockTableId)), raiseEvents, sort);
 
 		/// <summary>
 		///     Get the <see cref="Constraint" /> at <paramref name="position" />.

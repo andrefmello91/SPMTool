@@ -532,7 +532,6 @@ namespace SPMTool.Core
 				return;
 
 			// Remove from trash
-			obj.DocName = Name;
 			Trash.Remove(obj);
 
 			// Add to drawing
@@ -549,8 +548,6 @@ namespace SPMTool.Core
 				return;
 
 			// Add to trash
-			obj.DocName = Name;
-
 			if (!Trash.Contains(obj))
 				Trash.Add(obj);
 
@@ -568,9 +565,6 @@ namespace SPMTool.Core
 
 			if (objs.IsNullOrEmpty())
 				return;
-
-			foreach (var obj in objs.Where(obj => obj is not null))
-				obj.DocName = Name;
 
 			Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Contains);
 

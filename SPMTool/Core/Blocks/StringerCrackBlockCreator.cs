@@ -54,8 +54,8 @@ namespace SPMTool.Core.Blocks
 		/// <param name="crackOpening">The crack opening.</param>
 		/// <param name="rotationPoint">The reference <see cref="Point" /> for block rotation.</param>
 		/// <inheritdoc />
-		private StringerCrackBlockCreator(Point insertionPoint, Length crackOpening, double rotationAngle, Point rotationPoint, double scaleFactor, double textHeight)
-			: base(insertionPoint, Block.StringerCrack, rotationAngle, scaleFactor, textHeight)
+		private StringerCrackBlockCreator(Point insertionPoint, Length crackOpening, double rotationAngle, Point rotationPoint, double scaleFactor, double textHeight, ObjectId blockTableId)
+			: base(insertionPoint, Block.StringerCrack, rotationAngle, scaleFactor, textHeight, blockTableId)
 		{
 			_crackOpening = crackOpening;
 
@@ -73,7 +73,7 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		/// <param name="geometry">The geometry of the stringer.</param>
 		/// <param name="crackOpenings">The collection of crack openings in start, mid and end of the stringer.</param>
-		public static IEnumerable<StringerCrackBlockCreator?> CreateBlocks(StringerGeometry geometry, IEnumerable<Length> crackOpenings, double scaleFactor, double textHeight)
+		public static IEnumerable<StringerCrackBlockCreator?> CreateBlocks(StringerGeometry geometry, IEnumerable<Length> crackOpenings, double scaleFactor, double textHeight, ObjectId blockTableId)
 		{
 			var pts = GetInsertionPoints(geometry).ToArray();
 
@@ -81,7 +81,7 @@ namespace SPMTool.Core.Blocks
 			
 			for (var i = 0; i < cracks.Length; i++)
 				yield return !cracks[i].ApproxZero(Units.CrackTolerance)
-					? new StringerCrackBlockCreator(pts[i], cracks[i], geometry.Angle, geometry.InitialPoint, scaleFactor, textHeight)
+					? new StringerCrackBlockCreator(pts[i], cracks[i], geometry.Angle, geometry.InitialPoint, scaleFactor, textHeight, blockTableId)
 					: null;
 		}
 
@@ -102,7 +102,7 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the attribute for crack block.
 		/// </summary>
-		/// <inheritdoc cref="StringerCrackBlockCreator(Point, Length, double, Point, double, double)" />
+		/// <inheritdoc cref="StringerCrackBlockCreator(Point, Length, double, Point, double, double, ObjectId)" />
 		private static AttributeReference GetAttribute(Length crackOpening, double rotationAngle, double scaleFactor, double textHeight)
 		{
 			var w = crackOpening.Value.Abs();

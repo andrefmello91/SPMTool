@@ -79,29 +79,30 @@ namespace SPMTool.Core.Elements
 
 		#region Constructors
 
-		/// <inheritdoc cref="StringerObject(StringerGeometry)" />
+		/// <inheritdoc cref="StringerObject(StringerGeometry, ObjectId)" />
 		/// <param name="initialPoint">The initial <see cref="Point3d" />.</param>
 		/// <param name="endPoint">The end <see cref="Point3d" />.</param>
 		/// <param name="unit">The <see cref="LengthUnit" /> of points' coordinates.</param>
-		public StringerObject(Point3d initialPoint, Point3d endPoint, LengthUnit unit = LengthUnit.Millimeter)
-			: this(initialPoint.ToPoint(unit), endPoint.ToPoint(unit))
+		public StringerObject(Point3d initialPoint, Point3d endPoint, ObjectId blockTableId, LengthUnit unit = LengthUnit.Millimeter)
+			: this(initialPoint.ToPoint(unit), endPoint.ToPoint(unit), blockTableId)
 		{
 		}
 
-		/// <inheritdoc cref="StringerObject(StringerGeometry)" />
+		/// <inheritdoc cref="StringerObject(StringerGeometry, ObjectId)" />
 		/// <param name="initialPoint">The initial <see cref="Point" />.</param>
 		/// <param name="endPoint">The end <see cref="Point" />.</param>
-		public StringerObject(Point initialPoint, Point endPoint)
-			: this(new StringerGeometry(initialPoint, endPoint, 100, 100))
+		public StringerObject(Point initialPoint, Point endPoint, ObjectId blockTableId)
+			: this(new StringerGeometry(initialPoint, endPoint, 100, 100), blockTableId)
 		{
 		}
 
 		/// <summary>
-		///     Create the stringer object.
+		///     Create a stringer object.
 		/// </summary>
 		/// <param name="geometry">The <see cref="StringerGeometry" />.</param>
-		public StringerObject(StringerGeometry geometry)
-			: base(geometry)
+		/// <inheritdoc />
+		public StringerObject(StringerGeometry geometry, ObjectId blockTableId)
+			: base(geometry, blockTableId)
 		{
 		}
 
@@ -110,12 +111,13 @@ namespace SPMTool.Core.Elements
 		#region Methods
 
 		/// <summary>
-		///     Read a <see cref="StringerObject" /> in the drawing.
+		///     Read a <see cref="StringerObject" /> from an existing line in the drawing.
 		/// </summary>
 		/// <param name="line">The <see cref="Line" /> object of the stringer.</param>
 		public static StringerObject From(Line line)
 		{
-			var unit = SPMModel.GetOpenedModel(line.ObjectId)?.Database.Settings.Units.Geometry ?? LengthUnit.Millimeter;
+			var database = GetOpenedDatabase(line.ObjectId)!;
+			var unit     = database.Settings.Units.Geometry;
 			
 			var pts = new List<Point>
 			{
@@ -127,7 +129,7 @@ namespace SPMTool.Core.Elements
 			pts.Sort();
 
 			return
-				new StringerObject(pts[0], pts[1])
+				new StringerObject(pts[0], pts[1], database.BlockTableId)
 				{
 					ObjectId = line.ObjectId
 				};
@@ -140,7 +142,7 @@ namespace SPMTool.Core.Elements
 		/// <param name="textHeight">The text height for attributes.</param>
 		/// <param name="crackUnit">The unit for crack openings.</param>
 		public IEnumerable<StringerCrackBlockCreator?> CreateCrackBlocks(double scaleFactor, double textHeight, LengthUnit crackUnit) =>
-			StringerCrackBlockCreator.CreateBlocks(_stringer!.Geometry, _stringer.CrackOpenings.Select(c => c.ToUnit(crackUnit)).ToArray(), scaleFactor, textHeight);
+			StringerCrackBlockCreator.CreateBlocks(_stringer!.Geometry, _stringer.CrackOpenings.Select(c => c.ToUnit(crackUnit)).ToArray(), scaleFactor, textHeight, BlockTableId);
 
 		/// <summary>
 		///     Create the stringer diagram. Can be null if the stringer is unloaded.
@@ -149,7 +151,7 @@ namespace SPMTool.Core.Elements
 		/// <param name="textHeight">The text height for attributes.</param>
 		/// <param name="maxForce">The maximum normal force in all of the stringers in the model.</param>
 		public StringerForceCreator? CreateDiagram(double scaleFactor, double textHeight, Force maxForce, ForceUnit unit) =>
-			StringerForceCreator.From(_stringer!.Geometry, (_stringer.NormalForces.N1.ToUnit(unit), _stringer.NormalForces.N3.ToUnit(unit)), maxForce, scaleFactor, textHeight, Number);
+			StringerForceCreator.From(_stringer!.Geometry, (_stringer.NormalForces.N1.ToUnit(unit), _stringer.NormalForces.N3.ToUnit(unit)), maxForce, scaleFactor, textHeight, Number, BlockTableId);
 
 		/// <summary>
 		///     Divide this <see cref="StringerObject" /> in a <paramref name="number" /> of new ones.
@@ -160,7 +162,7 @@ namespace SPMTool.Core.Elements
 			var geometries = Geometry.Divide(number).ToArray();
 
 			foreach (var geometry in geometries)
-				yield return new StringerObject(geometry)
+				yield return new StringerObject(geometry, BlockTableId)
 				{
 					_reinforcement = _reinforcement
 				};
@@ -187,15 +189,15 @@ namespace SPMTool.Core.Elements
 		///     This method returns a linear object.
 		/// </remarks>
 		/// <inheritdoc />
-		public override INumberedElement GetElement() => GetElement(SPMModel.GetOpenedModel(DocName)!.Nodes.GetElements().Cast<Node>().ToArray()!);
+		public override INumberedElement GetElement() => GetElement(SPMModel.GetOpenedModel(BlockTableId)!.Nodes.GetElements().Cast<Node>().ToArray()!);
 
 		/// <inheritdoc cref="SPMObject{T}.GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
 		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
 		public Stringer GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
 		{
-			var dat = SPMModel.GetOpenedModel(DocName)!.Database;
-			_stringer        = Stringer.FromNodes(nodes, Geometry.InitialPoint, Geometry.EndPoint, Geometry.CrossSection, dat.ConcreteData.Parameters, dat.ConcreteData.ConstitutiveModel, Reinforcement?.Clone(), elementModel);
+			var database     = GetOpenedDatabase(BlockTableId)!;
+			_stringer        = Stringer.FromNodes(nodes, Geometry.InitialPoint, Geometry.EndPoint, Geometry.CrossSection, database.ConcreteData.Parameters, database.ConcreteData.ConstitutiveModel, Reinforcement?.Clone(), elementModel);
 			_stringer.Number = Number;
 			return _stringer;
 		}
@@ -279,15 +281,11 @@ namespace SPMTool.Core.Elements
 		public static explicit operator Stringer?(StringerObject? stringerObject) => (Stringer?) stringerObject?.GetElement();
 
 		/// <summary>
-		///     Get the <see cref="StringerObject" /> from <see cref="SPMModel.Stringers" /> associated to a <see cref="Stringer" />.
+		///     Get the <see cref="StringerObject" /> from the active model associated to a <see cref="Stringer" />.
 		/// </summary>
-		/// <remarks>
-		///     A <see cref="StringerObject" /> is created if <paramref name="stringer" /> is not null and is not listed.
-		/// </remarks>
-		public static explicit operator StringerObject?(Stringer? stringer) => stringer is null
-			? null
-			: SPMModel.ActiveModel.Stringers.GetByProperty(stringer.Geometry)
-			  ?? new StringerObject(stringer.Geometry);
+		public static explicit operator StringerObject?(Stringer? stringer) => stringer is not null
+			? SPMModel.ActiveModel.Stringers.GetByProperty(stringer.Geometry)
+			: null;
 
 		/// <summary>
 		///     Get the <see cref="StringerObject" /> from <see cref="SPMModel.Stringers" /> associated to a

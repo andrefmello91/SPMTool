@@ -25,12 +25,21 @@ namespace SPMTool.Core.Elements
 
 		#region Constructors
 
-		private StringerList()
+		/// <summary>
+		///		Create a stringer list.
+		/// </summary>
+		/// <inheritdoc />
+		private StringerList(ObjectId blockTableId)
+			: base(blockTableId)
 		{
 		}
 
-		private StringerList(IEnumerable<StringerObject> stringerObjects)
-			: base(stringerObjects)
+		/// <summary>
+		///		Create a stringer list.
+		/// </summary>
+		/// <inheritdoc />
+		private StringerList(IEnumerable<StringerObject> stringerObjects, ObjectId blockTableId)
+			: base(stringerObjects, blockTableId)
 		{
 		}
 
@@ -42,7 +51,7 @@ namespace SPMTool.Core.Elements
 		///     Get the collection of stringers in the drawing.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
-		private static IEnumerable<Line?> GetObjects(Document document) => document.GetObjects(Layer.Stringer).Cast<Line>();
+		private static IEnumerable<Line?> GetObjects(Document document) => document.GetObjects(Layer.Stringer).Cast<Line?>();
 
 		/// <summary>
 		///     Read all the <see cref="StringerObject" />'s in the drawing.
@@ -50,16 +59,12 @@ namespace SPMTool.Core.Elements
 		/// <param name="document">The AutoCAD document.</param>
 		public static StringerList From(Document document)
 		{
-			var lines = GetObjects(document)?.ToArray();
+			var lines = GetObjects(document).ToArray();
+			var bId   = document.Database.BlockTableId;
 
-			var list = lines.IsNullOrEmpty() 
-				? new StringerList()
-				: new StringerList(lines.Where(p => p is not null).Select(StringerObject.From!));
-			
-			// Set doc name
-			list.DocName = document.Name;
-			
-			return list;
+			return lines.IsNullOrEmpty() 
+				? new StringerList(bId)
+				: new StringerList(lines.Where(p => p is not null).Select(StringerObject.From!), bId);
 		}
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
@@ -72,16 +77,16 @@ namespace SPMTool.Core.Elements
 			pts.Sort();
 
 			return
-				Add(new StringerObject(pts[0], pts[1]), raiseEvents, sort);
+				Add(new StringerObject(pts[0], pts[1], BlockTableId), raiseEvents, sort);
 		}
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		/// <param name="geometry">The <see cref="StringerGeometry" /> to add.</param>
-		public bool Add(StringerGeometry geometry, bool raiseEvents = true, bool sort = true) => Add(new StringerObject(geometry), raiseEvents, sort);
+		public bool Add(StringerGeometry geometry, bool raiseEvents = true, bool sort = true) => Add(new StringerObject(geometry, BlockTableId), raiseEvents, sort);
 
 		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
 		/// <param name="geometries">The <see cref="StringerGeometry" />'s to add.</param>
-		public int AddRange(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true) => AddRange(geometries?.Select(g => new StringerObject(g)), raiseEvents, sort);
+		public int AddRange(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true) => AddRange(geometries?.Select(g => new StringerObject(g, BlockTableId)), raiseEvents, sort);
 
 		/// <summary>
 		///     Get the list of distinct <see cref="CrossSection" />'s from objects in this collection.
@@ -137,11 +142,11 @@ namespace SPMTool.Core.Elements
 
 		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)" />
 		/// <param name="geometry">The <see cref="StringerGeometry" /> to remove from this list.</param>
-		public bool Remove(StringerGeometry geometry, bool raiseEvents = true, bool sort = true) => Remove(new StringerObject(geometry), raiseEvents, sort);
+		public bool Remove(StringerGeometry geometry, bool raiseEvents = true, bool sort = true) => Remove(new StringerObject(geometry, BlockTableId), raiseEvents, sort);
 
 		/// <inheritdoc cref="EList{T}.RemoveRange(IEnumerable{T}, bool, bool)" />
 		/// <param name="geometries">The <see cref="StringerGeometry" />'s to remove from drawing.</param>
-		public int RemoveRange(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true) => RemoveRange(geometries.Select(g => new StringerObject(g)), raiseEvents, sort);
+		public int RemoveRange(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true) => RemoveRange(geometries.Select(g => new StringerObject(g, BlockTableId)), raiseEvents, sort);
 
 		/// <summary>
 		///     Update all the stringers in this collection from drawing.
@@ -150,7 +155,7 @@ namespace SPMTool.Core.Elements
 		{
 			Clear(false);
 
-			AddRange(From(SPMModel.GetOpenedModel(DocName)!.AcadDocument), false);
+			AddRange(From(SPMModel.GetOpenedModel(BlockTableId)!.AcadDocument), false);
 		}
 
 		#endregion

@@ -25,12 +25,21 @@ namespace SPMTool.Core.Elements
 
 		#region Constructors
 
-		private PanelList()
+		/// <summary>
+		///		Create a panel list.
+		/// </summary>
+		/// <inheritdoc />
+		private PanelList(ObjectId blockTableId)
+			: base(blockTableId)
 		{
 		}
 
-		private PanelList(IEnumerable<PanelObject> panelObjects)
-			: base(panelObjects)
+		/// <summary>
+		///		Create a panel list.
+		/// </summary>
+		/// <inheritdoc />
+		private PanelList(IEnumerable<PanelObject> panelObjects, ObjectId blockTableId)
+			: base(panelObjects, blockTableId)
 		{
 		}
 
@@ -42,7 +51,7 @@ namespace SPMTool.Core.Elements
 		///     Get the collection of panels in the drawing.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
-		private static IEnumerable<Solid?>? GetObjects(Document document) => document.GetObjects(Layer.Panel).Cast<Solid>();
+		private static IEnumerable<Solid?> GetObjects(Document document) => document.GetObjects(Layer.Panel).Cast<Solid?>();
 
 		/// <summary>
 		///     Read all the <see cref="PanelObject" />'s in the drawing.
@@ -51,40 +60,25 @@ namespace SPMTool.Core.Elements
 		[return: NotNull]
 		public static PanelList From(Document document)
 		{
-			var solids = GetObjects(document)?.ToArray();
+			var solids = GetObjects(document).ToArray();
+			var bId    = document.Database.BlockTableId;
 
-			var list = solids.IsNullOrEmpty() 
-				? new PanelList()
-				: new PanelList(solids.Where(p => p is not null).Select(PanelObject.From!));
-			
-			// Set doc name
-			list.DocName = document.Name;
-			
-			return list;
-		}
-
-		/// <summary>
-		///     Move panel objects to bottom after adding to list.
-		/// </summary>
-		private static void On_PanelAdd(object sender, EventArgs e)
-		{
-			if (sender is not PanelList panelList)
-				return;
-	
-			SPMModel.GetOpenedModel(panelList.DocName)?.AcadDocument.MoveToBottom(panelList.ObjectIds);
+			return solids.IsNullOrEmpty() 
+				? new PanelList(bId)
+				: new PanelList(solids.Where(p => p is not null).Select(PanelObject.From!), bId);
 		}
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		/// <param name="vertices">The collection of four <see cref="Point" /> vertices, in any order.</param>
-		public bool Add(IEnumerable<Point>? vertices, bool raiseEvents = true, bool sort = true) => vertices is not null && Add(new PanelObject(vertices), raiseEvents, sort);
+		public bool Add(IEnumerable<Point>? vertices, bool raiseEvents = true, bool sort = true) => vertices is not null && Add(new PanelObject(vertices, BlockTableId), raiseEvents, sort);
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		/// <param name="vertices">The panel <see cref="Vertices" /> object.</param>
-		public bool Add(Vertices vertices, bool raiseEvents = true, bool sort = true) => Add(new PanelObject(vertices), raiseEvents, sort);
+		public bool Add(Vertices vertices, bool raiseEvents = true, bool sort = true) => Add(new PanelObject(vertices, BlockTableId), raiseEvents, sort);
 
 		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
 		/// <param name="verticesCollection">The collection of <see cref="Vertices" />'s that represents the panels.</param>
-		public int AddRange(IEnumerable<Vertices>? verticesCollection, bool raiseEvents = true, bool sort = true) => AddRange(verticesCollection?.Select(v => new PanelObject(v)), raiseEvents, sort);
+		public int AddRange(IEnumerable<Vertices>? verticesCollection, bool raiseEvents = true, bool sort = true) => AddRange(verticesCollection?.Select(v => new PanelObject(v, BlockTableId)), raiseEvents, sort);
 
 		/// <summary>
 		///     Get a <see cref="PanelObject" /> in this collection with the corresponding <paramref name="vertices" />.
@@ -138,11 +132,11 @@ namespace SPMTool.Core.Elements
 
 		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)" />
 		/// <param name="vertices">The <see cref="Vertices" /> of panel to remove.</param>
-		public bool Remove(Vertices vertices, bool raiseEvents = true, bool sort = true) => Remove(new PanelObject(vertices), raiseEvents, sort);
+		public bool Remove(Vertices vertices, bool raiseEvents = true, bool sort = true) => Remove(new PanelObject(vertices, BlockTableId), raiseEvents, sort);
 
 		/// <inheritdoc cref="EList{T}.RemoveRange(IEnumerable{T}, bool, bool)" />
 		/// <param name="vertices">The collection of <see cref="Vertices" /> of panels to remove.</param>
-		public int RemoveRange(IEnumerable<Vertices>? vertices, bool raiseEvents = true, bool sort = true) => RemoveRange(vertices?.Select(v => new PanelObject(v)), raiseEvents, sort);
+		public int RemoveRange(IEnumerable<Vertices>? vertices, bool raiseEvents = true, bool sort = true) => RemoveRange(vertices?.Select(v => new PanelObject(v, BlockTableId)), raiseEvents, sort);
 
 		/// <summary>
 		///     Update all the panels in this collection from drawing.
@@ -151,7 +145,7 @@ namespace SPMTool.Core.Elements
 		{
 			Clear(false);
 
-			AddRange(From(SPMModel.GetOpenedModel(DocName)!.AcadDocument), false);
+			AddRange(From(SPMModel.GetOpenedModel(BlockTableId)!.AcadDocument), false);
 		}
 
 		#endregion

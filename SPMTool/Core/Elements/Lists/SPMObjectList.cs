@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.FEMAnalysis;
+using Autodesk.AutoCAD.DatabaseServices;
 #nullable enable
 
 namespace SPMTool.Core.Elements
@@ -19,10 +20,14 @@ namespace SPMTool.Core.Elements
 
 		#region Constructors
 
-		protected SPMObjectList() => SetSortEvent();
+		/// <inheritdoc />
+		protected SPMObjectList(ObjectId blockTableId)
+			: base(blockTableId) =>
+			SetSortEvent();
 
-		protected SPMObjectList(IEnumerable<TSPMObject> collection)
-			: base(collection)
+		/// <inheritdoc />
+		protected SPMObjectList(IEnumerable<TSPMObject> collection, ObjectId blockTableId)
+			: base(collection, blockTableId)
 		{
 			SetSortEvent();
 			Sort();

@@ -71,6 +71,11 @@ namespace SPMTool.Core.Conditions
 
 		public virtual TValue Value { get; protected set; }
 
+		/// <summary>
+		///		The <see cref="ObjectId"/> of the block table to get the reference from.
+		/// </summary>
+		public ObjectId BlockTableId { get; }
+		
 		#endregion
 
 		#endregion
@@ -80,14 +85,11 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Condition base constructor.
 		/// </summary>
-		protected ConditionObject()
-		{
-		}
-
 		/// <param name="position">The position.</param>
 		/// <param name="value">The value.</param>
-		/// <inheritdoc cref="ConditionObject()" />
-		protected ConditionObject(Point position, TValue value)
+		/// <inheritdoc />
+		protected ConditionObject(Point position, TValue value, ObjectId blockTableId)
+			: base (blockTableId)
 		{
 			Position = position;
 			Value    = value;
@@ -106,7 +108,7 @@ namespace SPMTool.Core.Conditions
 		public override DBObject CreateObject()
 		{
 			// Get database
-			var database = SPMDatabase.GetOpenedDatabase(DocName)!;
+			var database = SPMDatabase.GetOpenedDatabase(BlockTableId)!;
 			
 			return
 				database.AcadDatabase.GetReference(Block, Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, null, database.Settings.Units.ScaleFactor)!;

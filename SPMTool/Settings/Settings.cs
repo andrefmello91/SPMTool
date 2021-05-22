@@ -94,9 +94,13 @@ namespace SPMTool.Application
 
 		#region Constructors
 
+		/// <summary>
+		///		Create a settings objects
+		/// </summary>
+		/// <param name="database">The AutoCAD database.</param>
 		public Settings(Database database)
+			: base(database.BlockTableId)
 		{
-			DocName      = database.GetDocument().Name;
 			DictionaryId = database.NamedObjectsDictionaryId;
 			GetProperties();
 		}

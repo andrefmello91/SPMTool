@@ -57,8 +57,8 @@ namespace SPMTool.Core.Conditions
 		///     Plane Force object constructor.
 		/// </summary>
 		/// <inheritdoc />
-		public ForceObject(Point position, PlaneForce value)
-			: base(position, value)
+		public ForceObject(Point position, PlaneForce value, ObjectId blockTableId)
+			: base(position, value, blockTableId)
 		{
 		}
 
@@ -70,18 +70,25 @@ namespace SPMTool.Core.Conditions
 		///     Read a <see cref="ForceObject" /> from a <see cref="BlockReference" />.
 		/// </summary>
 		/// <param name="reference">The <see cref="BlockReference" /> object of the force.</param>
-		public static ForceObject From(BlockReference reference) =>
-				new (reference.Position.ToPoint(GetOpenedDatabase(reference.ObjectId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter), PlaneForce.Zero)
+		public static ForceObject From(BlockReference reference)
+		{
+			var database = GetOpenedDatabase(reference.ObjectId)!;
+			
+			var position = reference.Position.ToPoint(database.Settings.Units.Geometry);
+
+			return 
+				new ForceObject(position, PlaneForce.Zero, database.BlockTableId)
 				{
 					ObjectId = reference.ObjectId
 				};
+		}
 
 		public override DBObject CreateObject()
 		{
 			var insertionPoint = Position.ToPoint3d();
 
 			// Get database
-			var model    = SPMModel.GetOpenedModel(DocName)!;
+			var model    = SPMModel.GetOpenedModel(BlockTableId)!;
 			var database = model.Database;
 
 			var block = database.AcadDatabase.GetReference(Block, insertionPoint, Layer, null, 0, Axis.Z, null, database.Settings.Units.ScaleFactor)!;
@@ -120,9 +127,9 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the attribute references for force block.
 		/// </summary>
-		private IEnumerable<AttributeReference?>? ForceAttributeReference()
+		private IEnumerable<AttributeReference?> ForceAttributeReference()
 		{
-			var model = SPMModel.GetOpenedModel(ObjectId) ?? SPMModel.GetOpenedModel(DocName)!;
+			var model = SPMModel.GetOpenedModel(BlockTableId)!;
 			var txtH  = model.TextHeight;
 			
 			if (!Value.IsXZero)

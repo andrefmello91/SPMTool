@@ -49,8 +49,8 @@ namespace SPMTool.Core.Conditions
 		///     Constraint object constructor.
 		/// </summary>
 		/// <inheritdoc />
-		public ConstraintObject(Point position, Constraint value)
-			: base(position, value)
+		public ConstraintObject(Point position, Constraint value, ObjectId blockTableId)
+			: base(position, value, blockTableId)
 		{
 		}
 
@@ -62,11 +62,18 @@ namespace SPMTool.Core.Conditions
 		///     Read a <see cref="ConstraintObject" /> from a <see cref="BlockReference" />.
 		/// </summary>
 		/// <param name="reference">The <see cref="BlockReference" /> object of the force.</param>
-		public static ConstraintObject From(BlockReference reference) =>
-			new (reference.Position.ToPoint(GetOpenedDatabase(reference.ObjectId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter), Constraint.Free)
-			{
-				ObjectId = reference.ObjectId
-			};
+		public static ConstraintObject From(BlockReference reference)
+		{
+			var database = GetOpenedDatabase(reference.ObjectId)!;
+			
+			var position = reference.Position.ToPoint(database.Settings.Units.Geometry);
+
+			return
+				new ConstraintObject(position, Constraint.Free, database.BlockTableId)
+				{
+					ObjectId = reference.ObjectId
+				};
+		}
 
 		protected override void GetProperties()
 		{

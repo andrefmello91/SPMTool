@@ -50,8 +50,8 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		/// <param name="stressState">The <see cref="PrincipalStressState" />.</param>
 		/// <inheritdoc />
-		private StressBlockCreator(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, double textHeight, Layer? layer = null)
-			: base(insertionPoint, GetBlock(stressState), stressState.Theta1, scaleFactor, textHeight, Axis.Z, layer)
+		private StressBlockCreator(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, double textHeight, ObjectId blockTableId, Layer? layer = null)
+			: base(insertionPoint, GetBlock(stressState), stressState.Theta1, scaleFactor, textHeight, blockTableId, Axis.Z, layer)
 		{
 			_stressState = stressState;
 
@@ -65,10 +65,10 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the average stress <see cref="BlockCreator" />.
 		/// </summary>
-		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double)" />
-		public static StressBlockCreator? From(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, double textHeight, Layer? layer = null) =>
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double, ObjectId)" />
+		public static StressBlockCreator? From(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, double textHeight, ObjectId blockTableId, Layer? layer = null) =>
 			!stressState.IsZero
-				? new StressBlockCreator(insertionPoint,stressState, scaleFactor, textHeight, layer)
+				? new StressBlockCreator(insertionPoint,stressState, scaleFactor, textHeight, blockTableId, layer)
 				: null;
 
 		/// <summary>
@@ -81,7 +81,7 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the attribute for shear block.
 		/// </summary>
-		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double)" />
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double, ObjectId)" />
 		private static IEnumerable<AttributeReference> GetAttributes(PrincipalStressState stressState, double scaleFactor, double textHeight, Layer layer)
 		{
 			if (stressState.IsZero)

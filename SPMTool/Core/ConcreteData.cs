@@ -57,9 +57,13 @@ namespace SPMTool.Core.Materials
 
 		#region Constructors
 
+		/// <summary>
+		///		Create a concrete data object
+		/// </summary>
+		/// <param name="database">The AutoCAD database.</param>
 		public ConcreteData(Database database)
+			: base(database.BlockTableId)
 		{
-			DocName      = database.GetDocument().Name;
 			DictionaryId = database.NamedObjectsDictionaryId;
 			GetProperties();
 		}

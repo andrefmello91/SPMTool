@@ -48,8 +48,8 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		/// <param name="shearStress">The shear stress, in the unit required.</param>
 		/// <inheritdoc />
-		private ShearBlockCreator(Point insertionPoint, Pressure shearStress, double scaleFactor, double textHeight)
-			: base(insertionPoint, Block.Shear, GetRotationAngle(shearStress), scaleFactor, textHeight, Axis.Y)
+		private ShearBlockCreator(Point insertionPoint, Pressure shearStress, double scaleFactor, double textHeight, ObjectId blockTableId)
+			: base(insertionPoint, Block.Shear, GetRotationAngle(shearStress), scaleFactor, textHeight, blockTableId, Axis.Y)
 		{
 			_shearStress = shearStress;
 
@@ -63,16 +63,16 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the shear <see cref="BlockCreator" />.
 		/// </summary>
-		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double)" />
-		public static ShearBlockCreator? From(Point insertionPoint, Pressure shearStress, double scaleFactor, double textHeight) =>
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double, ObjectId)" />
+		public static ShearBlockCreator? From(Point insertionPoint, Pressure shearStress, double scaleFactor, double textHeight, ObjectId blockTableId) =>
 			!shearStress.ApproxZero(StressState.Tolerance)
-				? new ShearBlockCreator(insertionPoint, shearStress, scaleFactor, textHeight)
+				? new ShearBlockCreator(insertionPoint, shearStress, scaleFactor, textHeight, blockTableId)
 				: null;
 
 		/// <summary>
 		///     Get the attribute for shear block.
 		/// </summary>
-		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double)" />
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double, ObjectId)" />
 		private static AttributeReference GetAttribute(Pressure shearStress, double textHeight, Layer layer)
 		{
 			// Get shear stress
@@ -95,7 +95,7 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the rotation angle for shear block.
 		/// </summary>
-		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double)" />
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double, ObjectId)" />
 		private static double GetRotationAngle(Pressure shearStress) => shearStress >= Pressure.Zero
 			? 0
 			: Constants.Pi;

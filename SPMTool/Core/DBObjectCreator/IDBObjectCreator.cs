@@ -20,11 +20,6 @@ namespace SPMTool.Core
 		#region Properties
 
 		/// <summary>
-		///		Get/set the name of the document associated to this object.
-		/// </summary>
-		string DocName { get; set; }
-		
-		/// <summary>
 		///     Get the <see cref="Enums.Layer" /> of this object.
 		/// </summary>
 		Layer Layer { get; }
@@ -34,9 +29,16 @@ namespace SPMTool.Core
 		/// </summary>
 		string Name { get; }
 
-		/// <inheritdoc cref="ExtendedObject.ObjectId" />
+		/// <summary>
+		///     Get/set the <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> of this object.
+		/// </summary>
 		ObjectId ObjectId { get; set; }
-
+		
+		/// <summary>
+		///		The <see cref="ObjectId"/> of the block table that contains this object.
+		/// </summary>
+		ObjectId BlockTableId { get; set; }
+		
 		#endregion
 
 		#region Methods

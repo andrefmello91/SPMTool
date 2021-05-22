@@ -49,8 +49,8 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		/// <param name="crackOpening">The crack opening.</param>
 		/// <inheritdoc />
-		private PanelCrackBlockCreator(Point insertionPoint, Length crackOpening, double rotationAngle, double scaleFactor, double textHeight)
-			: base(insertionPoint, Block.PanelCrack, rotationAngle, scaleFactor, textHeight)
+		private PanelCrackBlockCreator(Point insertionPoint, Length crackOpening, double rotationAngle, double scaleFactor, double textHeight, ObjectId blockTableId)
+			: base(insertionPoint, Block.PanelCrack, rotationAngle, scaleFactor, textHeight, blockTableId)
 		{
 			_crackOpening = crackOpening;
 
@@ -64,16 +64,16 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the average stress <see cref="BlockCreator" />.
 		/// </summary>
-		/// <inheritdoc cref="PanelCrackBlockCreator(Point, Length, double, double, double)" />
-		public static PanelCrackBlockCreator? From(Point insertionPoint, Length crackOpening, double rotationAngle, double scaleFactor, double textHeight) =>
+		/// <inheritdoc cref="PanelCrackBlockCreator(Point, Length, double, double, double, ObjectId)" />
+		public static PanelCrackBlockCreator? From(Point insertionPoint, Length crackOpening, double rotationAngle, double scaleFactor, double textHeight, ObjectId blockTableId) =>
 			crackOpening > Length.Zero
-				? new PanelCrackBlockCreator(insertionPoint, crackOpening, StressBlockCreator.ImproveAngle(rotationAngle), scaleFactor, textHeight)
+				? new PanelCrackBlockCreator(insertionPoint, crackOpening, StressBlockCreator.ImproveAngle(rotationAngle), scaleFactor, textHeight, blockTableId)
 				: null;
 
 		/// <summary>
 		///     Get the attribute for crack block.
 		/// </summary>
-		/// <inheritdoc cref="PanelCrackBlockCreator(Point, Length, double, double, double)" />
+		/// <inheritdoc cref="PanelCrackBlockCreator(Point, Length, double, double, double, ObjectId)" />
 		private static AttributeReference GetAttribute(Length crackOpening, double rotationAngle, double scaleFactor, double textHeight)
 		{
 			var w = crackOpening.Value.Abs();

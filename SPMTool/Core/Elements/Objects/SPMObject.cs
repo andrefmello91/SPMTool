@@ -72,11 +72,23 @@ namespace SPMTool.Core.Elements
 
 		#region Constructors
 
-		protected SPMObject()
+		/// <summary>
+		///		Base constructor.
+		/// </summary>
+		/// <inheritdoc />
+		protected SPMObject(ObjectId blockTableId)
+			: base(blockTableId)
 		{
 		}
 
-		protected SPMObject(TProperty property) => PropertyField = property;
+		/// <summary>
+		///		Base constructor.
+		/// </summary>
+		/// <param name="property">The property value.</param>
+		/// <inheritdoc />
+		protected SPMObject(TProperty property, ObjectId blockTableId) 
+			: base(blockTableId) =>
+			PropertyField = property;
 
 		#endregion
 

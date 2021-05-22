@@ -33,7 +33,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="andrefmello91.OnPlaneComponents.Constraint" /> in this object.
 		/// </summary>
-		public Constraint Constraint => SPMModel.GetOpenedModel(DocName)?.Constraints.GetConstraintByPosition(Position) ?? Constraint.Free;
+		public Constraint Constraint => SPMModel.GetOpenedModel(BlockTableId)?.Constraints.GetConstraintByPosition(Position) ?? Constraint.Free;
 
 		/// <summary>
 		///     Get the <see cref="PlaneDisplacement" /> of this node object.
@@ -47,7 +47,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="Force" /> in this object.
 		/// </summary>
-		public PlaneForce Force => SPMModel.GetOpenedModel(DocName)?.Forces.GetForceByPosition(Position) ?? PlaneForce.Zero;
+		public PlaneForce Force => SPMModel.GetOpenedModel(BlockTableId)?.Forces.GetForceByPosition(Position) ?? PlaneForce.Zero;
 
 		/// <summary>
 		///     Get the position.
@@ -76,18 +76,19 @@ namespace SPMTool.Core.Elements
 		#region Constructors
 
 		/// <summary>
-		///     Create the node object.
+		///     Create a node object.
 		/// </summary>
 		/// <param name="position">The <see cref="Point" /> position.</param>
 		/// <param name="type">The <see cref="NodeType" />.</param>
-		public NodeObject(Point position, NodeType type)
-			: base(position) => Type = type;
+		/// <inheritdoc />
+		public NodeObject(Point position, NodeType type, ObjectId blockTableId)
+			: base(position, blockTableId) => Type = type;
 
 		/// <param name="position">The <see cref="Point3d" /> position.</param>
 		/// <param name="unit">The <see cref="LengthUnit" /> of <paramref name="position" /> coordinates</param>
-		/// <inheritdoc cref="NodeObject(Point, NodeType)" />
-		public NodeObject(Point3d position, NodeType type, LengthUnit unit = LengthUnit.Millimeter)
-			: this(position.ToPoint(unit), type)
+		/// <inheritdoc cref="NodeObject(Point, NodeType, ObjectId)" />
+		public NodeObject(Point3d position, NodeType type, ObjectId blockTableId, LengthUnit unit = LengthUnit.Millimeter)
+			: this(position.ToPoint(unit), type, blockTableId)
 		{
 		}
 
@@ -96,20 +97,26 @@ namespace SPMTool.Core.Elements
 		#region Methods
 
 		/// <summary>
-		///     Read a <see cref="NodeObject" /> from a <see cref="DBPoint" />.
+		///     Read a <see cref="NodeObject" /> from an existing <see cref="DBPoint" /> in the drawing.
 		/// </summary>
 		/// <param name="dbPoint">The <see cref="DBPoint" /> object of the node.</param>
-		public static NodeObject From(DBPoint dbPoint) => new(dbPoint.Position, dbPoint.GetNodeType(), GetOpenedDatabase(dbPoint.ObjectId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter)
+		public static NodeObject From(DBPoint dbPoint)
 		{
-			ObjectId = dbPoint.ObjectId
-		};
+			var database = GetOpenedDatabase(dbPoint.ObjectId)!;
+
+			return
+				new NodeObject(dbPoint.Position, dbPoint.GetNodeType(), database.BlockTableId, database.Settings.Units.Geometry)
+				{
+					ObjectId = dbPoint.ObjectId
+				};
+		}
 
 		/// <summary>
 		///     Get this object as a <see cref="Node" />.
 		/// </summary>
 		public override INumberedElement GetElement()
 		{
-			_node = new Node(Position, Type, GetOpenedDatabase(DocName)?.Settings.Units.Displacements ?? LengthUnit.Millimeter)
+			_node = new Node(Position, Type, GetOpenedDatabase(BlockTableId)?.Settings.Units.Displacements ?? LengthUnit.Millimeter)
 			{
 				Number = Number,
 
@@ -193,13 +200,9 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the <see cref="NodeObject" /> from active model associated to a <see cref="Node" />.
 		/// </summary>
-		/// <remarks>
-		///     A <see cref="NodeObject" /> is created if <paramref name="node" /> is not null and is not listed.
-		/// </remarks>
-		public static explicit operator NodeObject?(Node? node) => node is null
-			? null
-			: SPMModel.ActiveModel.Nodes.GetByProperty(node.Position)
-			  ?? new NodeObject(node.Position, node.Type);
+		public static explicit operator NodeObject?(Node? node) => node is not null
+			? SPMModel.ActiveModel.Nodes.GetByProperty(node.Position)
+			: null;
 
 		/// <summary>
 		///     Get the <see cref="NodeObject" /> from the active model associated to a <see cref="DBPoint" />.

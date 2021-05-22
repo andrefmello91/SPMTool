@@ -2,13 +2,10 @@
 using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
-using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using SPMTool.Application;
 using SPMTool.Enums;
-
 using UnitsNet;
 #nullable enable
 
@@ -20,17 +17,24 @@ namespace SPMTool.Core.Blocks
 	public class StringerForceCreator : IDBObjectCreator<Group>
 	{
 
-		private StringerGeometry _geometry;
-		private double _scaleFactor, _textHeight;
-		private Force _n1, _n2, _maxForce;
-		private int _number;
-		
+		#region Fields
+
+		private readonly StringerGeometry _geometry;
+		private readonly Force _n1;
+		private readonly Force _n2;
+		private readonly Force _maxForce;
+		private readonly int _number;
+		private readonly double _scaleFactor;
+		private readonly double _textHeight;
+
+		#endregion
+
 		#region Properties
 
 		#region Interface Implementations
 
 		/// <inheritdoc />
-		public string DocName { get; set; }
+		public ObjectId BlockTableId { get; set; }
 
 		/// <inheritdoc />
 		public Layer Layer => Layer.StringerForce;
@@ -50,8 +54,8 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Stringer force creator constructor.
 		/// </summary>
-		/// <inheritdoc cref="From"/>
-		private StringerForceCreator(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, double scaleFactor, double textHeight, int stringerNumber)
+		/// <inheritdoc cref="From" />
+		private StringerForceCreator(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, double scaleFactor, double textHeight, int stringerNumber, ObjectId blockTableId)
 		{
 			_geometry    = geometry;
 			(_n1, _n2)   = normalForces;
@@ -59,6 +63,7 @@ namespace SPMTool.Core.Blocks
 			_scaleFactor = scaleFactor;
 			_textHeight  = textHeight;
 			_number      = stringerNumber;
+			BlockTableId = blockTableId;
 		}
 
 		#endregion
@@ -74,9 +79,10 @@ namespace SPMTool.Core.Blocks
 		/// <param name="scaleFactor">The scale factor.</param>
 		/// <param name="textHeight">The text height for attributes.</param>
 		/// <param name="stringerNumber">The number of the stringer.</param>
-		public static StringerForceCreator? From(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, double scaleFactor, double textHeight, int stringerNumber) =>
-			!normalForces.N1.ApproxZero(Units.ForceTolerance) || !normalForces.N2.ApproxZero(Units.ForceTolerance) 
-				? new StringerForceCreator(geometry, normalForces, maxForce, scaleFactor, textHeight, stringerNumber)
+		/// <param name="blockTableId">The <see cref="ObjectId"/> of the block table that contains this object.</param>
+		public static StringerForceCreator? From(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, double scaleFactor, double textHeight, int stringerNumber, ObjectId blockTableId) =>
+			!normalForces.N1.ApproxZero(Units.ForceTolerance) || !normalForces.N2.ApproxZero(Units.ForceTolerance)
+				? new StringerForceCreator(geometry, normalForces, maxForce, scaleFactor, textHeight, stringerNumber, blockTableId)
 				: null;
 
 		/// <summary>
@@ -85,10 +91,10 @@ namespace SPMTool.Core.Blocks
 		/// <inheritdoc cref="From" />
 		private static IEnumerable<Entity> Combined(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, double scaleFactor)
 		{
-			var stPt     = geometry.InitialPoint;
-			var l        = geometry.Length;
+			var stPt = geometry.InitialPoint;
+			var l    = geometry.Length;
 			var (n1, n3) = normalForces;
-			var angle    = geometry.Angle;
+			var angle = geometry.Angle;
 
 			// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
 			// Invert tension and compression axis
@@ -144,29 +150,15 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <summary>
-		///     Create diagram for stringer.
-		/// </summary>
-		public IEnumerable<Entity> CreateDiagram()
-		{
-			var combined = UnitMath.Max(_n1, _n2) > Force.Zero && UnitMath.Min(_n1, _n2) < Force.Zero;
-			
-			var entities = combined
-				? Combined(_geometry, (_n1, _n2), _maxForce, _scaleFactor).ToArray()
-				: new[] { PureTensionOrCompression(_geometry, (_n1, _n2), _maxForce, _scaleFactor) };
-
-			return entities.Concat(GetTexts(_geometry, (_n1, _n2), _maxForce, _scaleFactor, _textHeight));
-		}
-
-		/// <summary>
 		///     Get the attributes for stringer force block.
 		/// </summary>
-		/// <inheritdoc cref="From"/>
+		/// <inheritdoc cref="From" />
 		private static IEnumerable<DBText> GetTexts(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, double scaleFactor, double textHeight)
 		{
-			var stPt     = geometry.InitialPoint;
-			var l        = geometry.Length;
+			var stPt = geometry.InitialPoint;
+			var l    = geometry.Length;
 			var (n1, n3) = normalForces;
-			var angle    = geometry.Angle;
+			var angle = geometry.Angle;
 
 			// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
 			// Invert tension and compression axis
@@ -184,7 +176,7 @@ namespace SPMTool.Core.Blocks
 					.Rotate(stPt, angle).ToPoint3d();
 
 				// Rotate
-				yield return 
+				yield return
 					new DBText
 					{
 						Position       = pt1,
@@ -211,7 +203,7 @@ namespace SPMTool.Core.Blocks
 					: new Point(stPt.X + l - Length.FromMillimeters(10) * scaleFactor, stPt.Y + h3 + Length.FromMillimeters(30) * scaleFactor))
 				.Rotate(stPt, angle).ToPoint3d();
 
-			yield return 
+			yield return
 				new DBText
 				{
 					Position       = pt3,
@@ -238,10 +230,10 @@ namespace SPMTool.Core.Blocks
 		/// <inheritdoc cref="From" />
 		private static Entity PureTensionOrCompression(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, double scaleFactor)
 		{
-			var stPt     = geometry.InitialPoint;
-			var l        = geometry.Length;
+			var stPt = geometry.InitialPoint;
+			var l    = geometry.Length;
 			var (n1, n3) = normalForces;
-			var angle    = geometry.Angle;
+			var angle = geometry.Angle;
 
 			// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
 			// Invert tension and compression axis
@@ -276,6 +268,20 @@ namespace SPMTool.Core.Blocks
 			// return dgrm;
 		}
 
+		/// <summary>
+		///     Create diagram for stringer.
+		/// </summary>
+		public IEnumerable<Entity> CreateDiagram()
+		{
+			var combined = UnitMath.Max(_n1, _n2) > Force.Zero && UnitMath.Min(_n1, _n2) < Force.Zero;
+
+			var entities = combined
+				? Combined(_geometry, (_n1, _n2), _maxForce, _scaleFactor).ToArray()
+				: new[] { PureTensionOrCompression(_geometry, (_n1, _n2), _maxForce, _scaleFactor) };
+
+			return entities.Concat(GetTexts(_geometry, (_n1, _n2), _maxForce, _scaleFactor, _textHeight));
+		}
+
 		#region Interface Implementations
 
 		/// <inheritdoc />
@@ -288,8 +294,8 @@ namespace SPMTool.Core.Blocks
 		DBObject? IDBObjectCreator.GetObject() => GetObject();
 
 		/// <inheritdoc />
-		public Group? GetObject() => (Group?) (SPMDatabase.GetOpenedDatabase(DocName) ?? SPMDatabase.GetOpenedDatabase(ObjectId))?.AcadDatabase.GetObject(ObjectId);
-		
+		public Group? GetObject() => (Group?) SPMDatabase.GetOpenedDatabase(BlockTableId)?.AcadDatabase.GetObject(ObjectId);
+
 		#endregion
 
 		#endregion

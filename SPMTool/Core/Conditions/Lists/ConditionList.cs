@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.EList;
 using andrefmello91.OnPlaneComponents;
+using Autodesk.AutoCAD.DatabaseServices;
 
 namespace SPMTool.Core.Conditions
 {
@@ -31,12 +32,15 @@ namespace SPMTool.Core.Conditions
 
 		#region Constructors
 
-		protected ConditionList()
+		/// <inheritdoc />
+		protected ConditionList(ObjectId blockTableId)
+			: base(blockTableId)
 		{
 		}
-
-		protected ConditionList(IEnumerable<TConditionObject> collection)
-			: base(collection)
+		
+		/// <inheritdoc />
+		protected ConditionList(IEnumerable<TConditionObject> collection, ObjectId blockTableId)
+			: base(collection, blockTableId)
 		{
 		}
 
