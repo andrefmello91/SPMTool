@@ -10,6 +10,7 @@ using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
+using SPMTool.Application;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
@@ -76,8 +77,7 @@ namespace SPMTool.Core
 		///     Get the editor of current document.
 		/// </summary>
 		public Autodesk.AutoCAD.EditorInput.Editor Editor => AcadDocument.Editor;
-
-
+		
 		/// <summary>
 		///     The collection of <see cref="ForceObject" />'s in the model.
 		/// </summary>
@@ -143,7 +143,7 @@ namespace SPMTool.Core
 		public SPMModel(Document acadDocument)
 		{
 			AcadDocument = acadDocument;
-			
+
 			// Initiate dependencies
 			RegisterApp(acadDocument);
 			CreateLayers(acadDocument);
@@ -173,6 +173,7 @@ namespace SPMTool.Core
 			acadDocument.MoveToBottom(Panels.ObjectIds);
 			
 			// Register events
+			SetEvents(Database.Settings.Display);
 			RegisterEventsToEntities();
 			
 			// Set parameters
@@ -594,6 +595,22 @@ namespace SPMTool.Core
 			// Remove
 			AcadDocument.EraseObjects(objs);
 		}
+
+		/// <summary>
+		///		Set events to display settings change.
+		/// </summary>
+		private void SetEvents(DisplaySettings displaySettings)
+		{
+			displaySettings.NodeScaleChanged      += On_NodeScaleChange;
+			displaySettings.ConditionScaleChanged += On_ConditionScaleChange;
+			displaySettings.TextScaleChanged      += On_TextScaleChange;
+		}
+
+		private void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => UpdatePointSize();
+
+		private void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => UpdateConditionsScale(e.OldScale, e.NewScale);
+
+		private void On_TextScaleChange(object sender, ScaleChangedEventArgs e) => UpdateTextHeight();
 
 		#endregion
 

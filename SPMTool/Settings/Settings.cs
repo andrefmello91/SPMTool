@@ -50,6 +50,7 @@ namespace SPMTool.Application
 
 		private AnalysisSettings _analysis;
 		private Units _units;
+		private DisplaySettings _display;
 
 		#endregion
 
@@ -61,14 +62,18 @@ namespace SPMTool.Application
 		public AnalysisSettings Analysis
 		{
 			get => _analysis;
-			set => SetAnalysisSettings(value);
+			set => Set(value);
 		}
 
 		/// /
 		/// <summary>
 		///     Get <see cref="Application.DisplaySettings" /> saved in database.
 		/// </summary>
-		public DisplaySettings Display { get; private set; }
+		public DisplaySettings Display
+		{
+			get => _display;
+			set => Set(value);
+		}
 
 		/// <inheritdoc />
 		public override Layer Layer => default;
@@ -82,7 +87,7 @@ namespace SPMTool.Application
 		public Units Units
 		{
 			get => _units;
-			set => SetUnits(value);
+			set => Set(value);
 		}
 
 		#endregion
@@ -94,20 +99,12 @@ namespace SPMTool.Application
 			DocName      = database.GetDocument().Name;
 			DictionaryId = database.NamedObjectsDictionaryId;
 			GetProperties();
-			SetEvents(Display!);
 		}
 
 		#endregion
 
 		#region Methods
 
-		private void SetEvents(DisplaySettings displaySettings)
-		{
-			displaySettings.NodeScaleChanged      += On_NodeScaleChange;
-			displaySettings.ConditionScaleChanged += On_ConditionScaleChange;
-			displaySettings.TextScaleChanged      += On_TextScaleChange;
-		}
-		
 		/// <inheritdoc />
 		public override DBObject CreateObject() => new Xrecord
 		{
@@ -118,13 +115,14 @@ namespace SPMTool.Application
 		{
 			_analysis = GetAnalysisSettings();
 			_units    = GetUnits();
-			Display   = GetDisplaySettings();
+			_display   = GetDisplaySettings();
 		}
 
 		protected override void SetProperties()
 		{
-			SetAnalysisSettings(_analysis);
-			SetUnits(_units);
+			Set(_analysis);
+			Set(_units);
+			Set(_display);
 		}
 
 		/// <summary>
@@ -148,7 +146,7 @@ namespace SPMTool.Application
 		/// <summary>
 		///     Save this <paramref name="settings" /> in database.
 		/// </summary>
-		private void SetAnalysisSettings(AnalysisSettings settings)
+		private void Set(AnalysisSettings settings)
 		{
 			_analysis = settings;
 
@@ -158,19 +156,23 @@ namespace SPMTool.Application
 		/// <summary>
 		///     Save this <paramref name="units" /> in database.
 		/// </summary>
-		private void SetUnits(Units units)
+		private void Set(Units units)
 		{
 			_units = units;
 
 			SetDictionary((TypedValue[]) units, USaveName);
 		}
+		
+		/// <summary>
+		///     Save this <paramref name="display" /> in database.
+		/// </summary>
+		private void Set(DisplaySettings display)
+		{
+			_display = display;
 
-		private void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.GetOpenedModel(DictionaryId.Database).UpdatePointSize();
-
-		private void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.GetOpenedModel(DictionaryId.Database).UpdateConditionsScale(e.OldScale, e.NewScale);
-
-		private void On_TextScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.GetOpenedModel(DictionaryId.Database).UpdateTextHeight();
-
+			SetDictionary((TypedValue[]) display, USaveName);
+		}
+		
 		#endregion
 
 	}

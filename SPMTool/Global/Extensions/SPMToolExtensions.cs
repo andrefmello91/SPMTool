@@ -100,8 +100,8 @@ namespace SPMTool
 		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="layers">The layers.</param>
 		public static IEnumerable<ObjectId> GetObjectIds(this Document document, params Layer[] layers) =>
-			
 			document.GetObjectIds(layers.Select(l => $"{l}").ToArray());
+		
 		/// <summary>
 		///     Get a collection containing all the <see cref="DBObject" />'s in those <paramref name="layers" />.
 		/// </summary>
