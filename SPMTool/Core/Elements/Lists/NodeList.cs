@@ -50,7 +50,7 @@ namespace SPMTool.Core.Elements
 			{
 				NodeType.Internal => document.GetObjects(Layer.IntNode).Cast<DBPoint?>(),
 				NodeType.External => document.GetObjects(Layer.ExtNode).Cast<DBPoint?>(),
-				_                 => document.GetObjects(Layer.IntNode, Layer.ExtNode).Cast<DBPoint>()
+				_                 => document.GetObjects(Layer.IntNode, Layer.ExtNode).Cast<DBPoint?>()
 			};
 
 		/// <summary>
