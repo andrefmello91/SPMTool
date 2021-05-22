@@ -28,6 +28,8 @@ namespace SPMTool.Application.UserInterface
 
 		private readonly List<StringerObject> _stringers;
 
+		private readonly SPMDatabase _database;
+		
 		#endregion
 
 		#region Properties
@@ -139,20 +141,20 @@ namespace SPMTool.Application.UserInterface
 				{
 					ReinforcementBoxes.Enable();
 
-					if (Steels.Any())
+					if (_database.Steels.Any())
 						SavedSteel.Enable();
 
-					if (StringerReinforcements.Any())
+					if (_database.StringerReinforcements.Any())
 						SavedReinforcement.Enable();
 				}
 				else
 				{
 					ReinforcementBoxes.Disable();
 
-					if (Steels.Any())
+					if (_database.Steels.Any())
 						SavedSteel.Disable();
 
-					if (StringerReinforcements.Any())
+					if (_database.StringerReinforcements.Any())
 						SavedReinforcement.Disable();
 				}
 
@@ -216,11 +218,11 @@ namespace SPMTool.Application.UserInterface
 
 		public StringerWindow(IEnumerable<StringerObject> stringers)
 		{
-			_stringers = stringers.ToList();
-
-			_stressUnit        = SPMDatabase.Settings.Units.MaterialStrength;
-			_geometryUnit      = SPMDatabase.Settings.Units.Geometry;
-			_reinforcementUnit = SPMDatabase.Settings.Units.Reinforcement;
+			_stringers         = stringers.ToList();
+			_database          = SPMDatabase.ActiveDatabase;
+			_stressUnit        = _database.Settings.Units.MaterialStrength;
+			_geometryUnit      = _database.Settings.Units.Geometry;
+			_reinforcementUnit = _database.Settings.Units.Reinforcement;
 			
 			DataContext        = this;
 
@@ -242,19 +244,19 @@ namespace SPMTool.Application.UserInterface
 		///     Get saved steel options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		public static IEnumerable<string> SavedSteelOptions() => Steels.Select(s => $"{s.YieldStress.Value:0.00} | {s.ElasticModule.Value:0.00}");
+		public static IEnumerable<string> SavedSteelOptions(SPMDatabase database) => database.Steels.Select(s => $"{s.YieldStress.Value:0.00} | {s.ElasticModule.Value:0.00}");
 
 		/// <summary>
 		///     Get saved geometry options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedGeoOptions() => StringerCrossSections.Select(geo => $"{geo.Width.Value:0.0} {(char) Character.Times} {geo.Height.Value:0.0}");
+		private static IEnumerable<string> SavedGeoOptions(SPMDatabase database) => database.StringerCrossSections.Select(geo => $"{geo.Width.Value:0.0} {(char) Character.Times} {geo.Height.Value:0.0}");
 
 		/// <summary>
 		///     Get saved reinforcement options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedRefOptions() => StringerReinforcements.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.Value:0.00}");
+		private static IEnumerable<string> SavedRefOptions(SPMDatabase database) => database.StringerReinforcements.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.Value:0.00}");
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
@@ -292,17 +294,17 @@ namespace SPMTool.Application.UserInterface
 		{
 			SetGeometry = true;
 
-			if (!StringerCrossSections.IsNullOrEmpty())
+			if (!_database.StringerCrossSections.IsNullOrEmpty())
 			{
-				SavedGeometries.ItemsSource   = SavedGeoOptions();
+				SavedGeometries.ItemsSource   = SavedGeoOptions(_database);
 				
 				SavedGeometries.SelectedIndex = _stringers.Count == 1
-					? StringerCrossSections.IndexOf(_stringers[0].CrossSection)
+					? _database.StringerCrossSections.IndexOf(_stringers[0].CrossSection)
 					: 0;
 
 				OutputCrossSection = _stringers.Count == 1
 					? _stringers[0].CrossSection
-					: StringerCrossSections[0];
+					: _database.StringerCrossSections[0];
 
 				return;
 			}
@@ -319,13 +321,13 @@ namespace SPMTool.Application.UserInterface
 		{
 			SetReinforcement = true;
 
-			if (!Steels.IsNullOrEmpty())
+			if (!_database.Steels.IsNullOrEmpty())
 			{
-				SavedSteel.ItemsSource   = SavedSteelOptions();
+				SavedSteel.ItemsSource   = SavedSteelOptions(_database);
 				SavedSteel.SelectedIndex = 0;
 
 				if (_stringers.Count > 1)
-					OutputSteel = Steels[0];
+					OutputSteel = _database.Steels[0];
 			}
 			else
 			{
@@ -333,13 +335,13 @@ namespace SPMTool.Application.UserInterface
 				OutputSteel = null;
 			}
 
-			if (!StringerReinforcements.IsNullOrEmpty())
+			if (!_database.StringerReinforcements.IsNullOrEmpty())
 			{
-				SavedReinforcement.ItemsSource   = SavedRefOptions();
+				SavedReinforcement.ItemsSource   = SavedRefOptions(_database);
 				SavedReinforcement.SelectedIndex = 0;
 
 				if (_stringers.Count > 1)
-					OutputReinforcement = StringerReinforcements[0];
+					OutputReinforcement = _database.StringerReinforcements[0];
 			}
 			else
 			{
@@ -371,11 +373,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= StringerCrossSections.Count || i < 0)
+			if (i >= _database.StringerCrossSections.Count || i < 0)
 				return;
 
 			// Update textboxes
-			OutputCrossSection = StringerCrossSections[i];
+			OutputCrossSection = _database.StringerCrossSections[i];
 		}
 
 		private void SavedReinforcement_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -385,11 +387,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= StringerReinforcements.Count || i < 0)
+			if (i >= _database.StringerReinforcements.Count || i < 0)
 				return;
 
 			// Update textboxes
-			OutputReinforcement = StringerReinforcements[i];
+			OutputReinforcement = _database.StringerReinforcements[i];
 		}
 
 		private void SavedSteel_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -399,11 +401,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= Steels.Count || i < 0)
+			if (i >= _database.Steels.Count || i < 0)
 				return;
 
 			// Update textboxes
-			OutputSteel = Steels[i];
+			OutputSteel = _database.Steels[i];
 		}
 
 		/// <summary>
@@ -413,7 +415,7 @@ namespace SPMTool.Application.UserInterface
 		{
 			var crossSection = OutputCrossSection;
 
-			StringerCrossSections.Add(crossSection);
+			_database.StringerCrossSections.Add(crossSection);
 
 			// Set to stringers
 			foreach (var str in _stringers)
@@ -427,7 +429,7 @@ namespace SPMTool.Application.UserInterface
 		{
 			var reinforcement = OutputReinforcement;
 
-			StringerReinforcements.Add(reinforcement);
+			_database.StringerReinforcements.Add(reinforcement);
 
 			// Set to stringers
 			foreach (var str in _stringers)

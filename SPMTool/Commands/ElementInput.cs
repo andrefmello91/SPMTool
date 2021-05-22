@@ -27,7 +27,7 @@ namespace SPMTool.Commands
 			var unit = model.Database.Settings.Units.Geometry;
 
 			// Erase result objects
-			model.AcadDocument.EraseObjects(Results.ResultLayers);
+			model.AcadDocument.EraseObjects(SPMResults.ResultLayers);
 
 			// Create a loop for creating infinite panels
 			while (true)
@@ -81,7 +81,7 @@ namespace SPMTool.Commands
 			var stPt = stPtn.Value;
 
 			// Erase result objects
-			model.AcadDocument.EraseObjects(Results.ResultLayers);
+			model.AcadDocument.EraseObjects(SPMResults.ResultLayers);
 
 			// Loop for creating infinite stringers (until user exits the command)
 			while (true)

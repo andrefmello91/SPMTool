@@ -4,7 +4,7 @@ using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
-using static SPMTool.Core.Results;
+using static SPMTool.Core.SPMResults;
 
 #nullable enable
 
@@ -36,7 +36,7 @@ namespace SPMTool.Commands
 			// Model.Editor.WriteMessage(analysis.ToString());
 
 			// Draw results of analysis
-			var results = new Results(model);
+			var results = new SPMResults(model);
 			results.DrawResults();
 		}
 
@@ -89,7 +89,7 @@ namespace SPMTool.Commands
 			// Updated plot
 			plot.UpdatePlot();
 
-			var results = new Results(model);
+			var results = new SPMResults(model);
 			results.DrawResults();
 		}
 

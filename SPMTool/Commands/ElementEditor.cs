@@ -105,7 +105,7 @@ namespace SPMTool.Commands
 			}
 
 			// Erase result objects
-			model.AcadDocument.EraseObjects(Results.ResultLayers);
+			model.AcadDocument.EraseObjects(SPMResults.ResultLayers);
 
 			// Add other stringers
 			newStrs.AddRange(newPanels.SelectMany(p => p.Geometry.Edges.Select(e => new StringerObject(e.InitialVertex, e.FinalVertex))).ToArray());
@@ -170,7 +170,7 @@ namespace SPMTool.Commands
 				return;
 
 			// Erase result objects
-			model.AcadDocument.EraseObjects(Results.ResultLayers);
+			model.AcadDocument.EraseObjects(SPMResults.ResultLayers);
 
 			// Remove mid nodes
 			nodes.RemoveRange(toDivide.Select(s => s.Geometry.CenterPoint).ToArray());
@@ -245,6 +245,7 @@ namespace SPMTool.Commands
 			model.UpdateElements();
 
 			// Display the number of updated elements
+			model.Editor.WriteMessage($"\n{model.Nodes.Count} nodes, {model.Stringers.Count} stringers and {model.Panels.Count} panels updated.");
 			model.Editor.WriteMessage($"\n{model.Nodes.Count} nodes, {model.Stringers.Count} stringers and {model.Panels.Count} panels updated.");
 		}
 

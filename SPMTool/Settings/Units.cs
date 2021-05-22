@@ -172,10 +172,10 @@ namespace SPMTool.Application
 		/// </summary>
 		public static bool operator !=(Units? left, Units? right) => left.IsNotEqualTo(right);
 
-		/// <inheritdoc cref="Extensions.GetTypedValues(Units)"/>
+		/// <inheritdoc cref="SPMTool.Extensions.GetTypedValues(Units)"/>
 		public static explicit operator TypedValue[](Units? settings) => settings.GetTypedValues();
 		
-		/// <inheritdoc cref="Extensions.GetUnits"/>
+		/// <inheritdoc cref="SPMTool.Extensions.GetUnits"/>
 		public static explicit operator Units?(TypedValue[]? values) => values.GetUnits();
 
 		#endregion

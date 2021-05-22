@@ -28,6 +28,7 @@ namespace SPMTool.Application.UserInterface
 		private readonly List<PanelObject> _panels;
 		private readonly LengthUnit _reinforcementUnit;
 		private readonly PressureUnit _stressUnit;
+		private readonly SPMDatabase _database;
 
 		#endregion
 
@@ -138,20 +139,20 @@ namespace SPMTool.Application.UserInterface
 				{
 					ReinforcementXBoxes.Enable();
 
-					if (Steels.Any())
+					if (_database.Steels.Any())
 						SavedSteelX.Enable();
 
-					if (PanelReinforcements.Any())
+					if (_database.PanelReinforcements.Any())
 						SavedReinforcementX.Enable();
 				}
 				else
 				{
 					ReinforcementXBoxes.Disable();
 
-					if (Steels.Any())
+					if (_database.Steels.Any())
 						SavedSteelX.Disable();
 
-					if (PanelReinforcements.Any())
+					if (_database.PanelReinforcements.Any())
 						SavedReinforcementX.Disable();
 				}
 
@@ -181,20 +182,20 @@ namespace SPMTool.Application.UserInterface
 				{
 					ReinforcementYBoxes.Enable();
 
-					if (Steels.Any())
+					if (_database.Steels.Any())
 						SavedSteelY.Enable();
 
-					if (PanelReinforcements.Any())
+					if (_database.PanelReinforcements.Any())
 						SavedReinforcementY.Enable();
 				}
 				else
 				{
 					ReinforcementYBoxes.Disable();
 
-					if (Steels.Any())
+					if (_database.Steels.Any())
 						SavedSteelY.Disable();
 
-					if (PanelReinforcements.Any())
+					if (_database.PanelReinforcements.Any())
 						SavedReinforcementY.Disable();
 				}
 
@@ -310,9 +311,11 @@ namespace SPMTool.Application.UserInterface
 		{
 			_panels = panels.ToList();
 
-			_geometryUnit      = SPMDatabase.Settings.Units.Geometry;
-			_reinforcementUnit = SPMDatabase.Settings.Units.Reinforcement;
-			_stressUnit        = SPMDatabase.Settings.Units.MaterialStrength;
+			_database = SPMDatabase.ActiveDatabase;
+			
+			_geometryUnit      = _database.Settings.Units.Geometry;
+			_reinforcementUnit = _database.Settings.Units.Reinforcement;
+			_stressUnit        = _database.Settings.Units.MaterialStrength;
 			
 			DataContext        = this;
 
@@ -335,19 +338,13 @@ namespace SPMTool.Application.UserInterface
 		///     Get saved geometry options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedGeoOptions() => ElementWidths.Select(geo => $"{geo.Value:0.00}");
+		private static IEnumerable<string> SavedGeoOptions(SPMDatabase database) => database.ElementWidths.Select(geo => $"{geo.Value:0.00}");
 
 		/// <summary>
 		///     Get saved reinforcement options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedRefOptions() => PanelReinforcements.Select(r => $"{(char) Character.Phi} {r.BarDiameter.Value:0.0} at {r.BarSpacing.Value:0.0}");
-
-		/// <summary>
-		///     Get saved steel options as string collection.
-		/// </summary>
-		/// <returns></returns>
-		private static IEnumerable<string> SavedSteelOptions() => StringerWindow.SavedSteelOptions();
+		private static IEnumerable<string> SavedRefOptions(SPMDatabase database) => database.PanelReinforcements.Select(r => $"{(char) Character.Phi} {r.BarDiameter.Value:0.0} at {r.BarSpacing.Value:0.0}");
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
@@ -391,17 +388,17 @@ namespace SPMTool.Application.UserInterface
 		{
 			SetGeometry = true;
 
-			if (ElementWidths.Any())
+			if (_database.ElementWidths.Any())
 			{
-				SavedGeometries.ItemsSource   = SavedGeoOptions();
+				SavedGeometries.ItemsSource   = SavedGeoOptions(_database);
 				
 				SavedGeometries.SelectedIndex = _panels.Count == 1
-					? ElementWidths.IndexOf(_panels[0].Width)
+					? _database.ElementWidths.IndexOf(_panels[0].Width)
 					: 0;
 
 				PnlWidth = _panels.Count == 1
 					? _panels[0].Width
-					: ElementWidths[0];
+					: _database.ElementWidths[0];
 				
 				return;
 				
@@ -417,13 +414,13 @@ namespace SPMTool.Application.UserInterface
 		{
 			SetReinforcement = true;
 
-			if (Steels.Any())
+			if (_database.Steels.Any())
 			{
-				SavedSteelX.ItemsSource   = SavedSteelY.ItemsSource   = SavedSteelOptions();
+				SavedSteelX.ItemsSource   = SavedSteelY.ItemsSource   = StringerWindow.SavedSteelOptions(_database);
 				SavedSteelX.SelectedIndex = SavedSteelY.SelectedIndex = 0;
 
 				if (_panels.Count > 1)
-					OutputSteelX = OutputSteelY = Steels[0];
+					OutputSteelX = OutputSteelY = _database.Steels[0];
 			}
 			else
 			{
@@ -432,13 +429,13 @@ namespace SPMTool.Application.UserInterface
 				OutputSteelX = OutputSteelY = null;
 			}
 
-			if (PanelReinforcements.Any())
+			if (_database.PanelReinforcements.Any())
 			{
-				SavedReinforcementX.ItemsSource   = SavedReinforcementY.ItemsSource   = SavedRefOptions();
+				SavedReinforcementX.ItemsSource   = SavedReinforcementY.ItemsSource   = SavedRefOptions(_database);
 				SavedReinforcementX.SelectedIndex = SavedReinforcementY.SelectedIndex = 0;
 
 				if (_panels.Count > 1)
-					OutputReinforcementX = OutputReinforcementY = PanelReinforcements[0];
+					OutputReinforcementX = OutputReinforcementY = _database.PanelReinforcements[0];
 			}
 			else
 			{
@@ -474,11 +471,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= ElementWidths.Count || i < 0)
+			if (i >= _database.ElementWidths.Count || i < 0)
 				return;
 
 			// Update textboxes
-			PnlWidth = ElementWidths[i];
+			PnlWidth = _database.ElementWidths[i];
 		}
 
 		private void SavedReinforcementX_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -488,11 +485,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= PanelReinforcements.Count || i < 0)
+			if (i >= _database.PanelReinforcements.Count || i < 0)
 				return;
 
 			// Update textboxes
-			OutputReinforcementX = PanelReinforcements[i];
+			OutputReinforcementX = _database.PanelReinforcements[i];
 		}
 
 		private void SavedReinforcementY_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -502,11 +499,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= PanelReinforcements.Count || i < 0)
+			if (i >= _database.PanelReinforcements.Count || i < 0)
 				return;
 
 			// Update textboxes
-			OutputReinforcementY = PanelReinforcements[i];
+			OutputReinforcementY = _database.PanelReinforcements[i];
 		}
 
 		private void SavedSteelX_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -516,11 +513,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= Steels.Count || i < 0)
+			if (i >= _database.Steels.Count || i < 0)
 				return;
 
 			// Update textboxes
-			OutputSteelX = Steels[i];
+			OutputSteelX = _database.Steels[i];
 		}
 
 		private void SavedSteelY_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -530,11 +527,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= Steels.Count || i < 0)
+			if (i >= _database.Steels.Count || i < 0)
 				return;
 
 			// Update textboxes
-			OutputSteelY = Steels[i];
+			OutputSteelY = _database.Steels[i];
 		}
 
 		/// <summary>
@@ -546,7 +543,7 @@ namespace SPMTool.Application.UserInterface
 			var width = PnlWidth;
 
 			// Save on database
-			ElementWidths.Add(width);
+			_database.ElementWidths.Add(width);
 
 			// Set to panels
 			foreach (var pnl in _panels)
@@ -561,8 +558,8 @@ namespace SPMTool.Application.UserInterface
 			// Set to panels
 			var reinforcement = OutputReinforcement;
 
-			PanelReinforcements.Add(reinforcement?.DirectionX);
-			PanelReinforcements.Add(reinforcement?.DirectionY);
+			_database.PanelReinforcements.Add(reinforcement?.DirectionX);
+			_database.PanelReinforcements.Add(reinforcement?.DirectionY);
 
 			foreach (var pnl in _panels)
 				pnl.Reinforcement = reinforcement;

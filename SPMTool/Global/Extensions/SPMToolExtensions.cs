@@ -195,7 +195,7 @@ namespace SPMTool
 
 			var blockRef = new BlockReference(insertionPoint, blkRec.ObjectId)
 			{
-				Layer = $"{layer ?? block.GetAttribute<BlockAttribute>()!.Layer}"
+				Layer = $"{layer ?? block.GetAttribute<BlockAttribute>()!.Layer}",
 			};
 
 			// Set color
@@ -461,8 +461,8 @@ namespace SPMTool
 					blockCreator.SetAttributes();
 					break;
 	
-				case StringerForceCreator stringerForceCreator:
-					stringerForceCreator.AddToDrawing();
+				case StringerForceCreator forceCreator:
+					forceCreator.ObjectId = document.AddObjectsAsGroup(forceCreator.CreateDiagram().ToArray(), forceCreator.Name);
 					break;
 				
 				default:
@@ -514,8 +514,8 @@ namespace SPMTool
 						blockCreator.SetAttributes();
 						break;
 
-					case StringerForceCreator stringerForceCreator:
-						stringerForceCreator.AddToDrawing();
+					case StringerForceCreator forceCreator:
+						forceCreator.ObjectId = document.AddObjectsAsGroup(forceCreator.CreateDiagram().ToArray(), forceCreator.Name);
 						break;
 				}
 		}

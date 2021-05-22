@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
+using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Application;
@@ -37,7 +39,7 @@ namespace SPMTool.Core.Blocks
 				_crackOpening = value;
 
 				// Update attribute
-				Attributes = new[] { GetAttribute(value, RotationAngle, ScaleFactor) };
+				Attributes = new[] { GetAttribute(value, RotationAngle, ScaleFactor, TextHeight) };
 			}
 		}
 
@@ -52,14 +54,14 @@ namespace SPMTool.Core.Blocks
 		/// <param name="crackOpening">The crack opening.</param>
 		/// <param name="rotationPoint">The reference <see cref="Point" /> for block rotation.</param>
 		/// <inheritdoc />
-		private StringerCrackBlockCreator(Point insertionPoint, Length crackOpening, double rotationAngle, Point rotationPoint, double scaleFactor)
-			: base(insertionPoint, Block.StringerCrack, rotationAngle, scaleFactor)
+		private StringerCrackBlockCreator(Point insertionPoint, Length crackOpening, double rotationAngle, Point rotationPoint, double scaleFactor, double textHeight)
+			: base(insertionPoint, Block.StringerCrack, rotationAngle, scaleFactor, textHeight)
 		{
 			_crackOpening = crackOpening;
 
 			RotationPoint = rotationPoint;
 
-			Attributes = new[] { GetAttribute(crackOpening, rotationAngle, scaleFactor) };
+			Attributes = new[] { GetAttribute(crackOpening, rotationAngle, scaleFactor, textHeight) };
 		}
 
 		#endregion
@@ -69,53 +71,62 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the average stress <see cref="BlockCreator" />.
 		/// </summary>
-		/// <param name="stringer">The <see cref="Stringer" />.</param>
-		public static IEnumerable<StringerCrackBlockCreator?> CreateBlocks(Stringer? stringer)
+		/// <param name="geometry">The geometry of the stringer.</param>
+		/// <param name="crackOpenings">The collection of crack openings in start, mid and end of the stringer.</param>
+		public static IEnumerable<StringerCrackBlockCreator?> CreateBlocks(StringerGeometry geometry, IEnumerable<Length> crackOpenings, double scaleFactor, double textHeight)
 		{
-			var blocks = new StringerCrackBlockCreator?[3];
+			var pts = GetInsertionPoints(geometry).ToArray();
 
-			if (stringer.Model is ElementModel.Elastic)
-				return blocks;
+			var cracks = crackOpenings.ToArray();
+			
+			for (var i = 0; i < cracks.Length; i++)
+				yield return !cracks[i].ApproxZero(Units.CrackTolerance)
+					? new StringerCrackBlockCreator(pts[i], cracks[i], geometry.Angle, geometry.InitialPoint, scaleFactor, textHeight)
+					: null;
+		}
 
-			var l  = stringer.Geometry.Length;
-			var ix = stringer.Geometry.InitialPoint.X + 0.1 * l;
-			var y  = stringer.Geometry.InitialPoint.Y;
+		/// <summary>
+		///		Get the insertion points of blocks.
+		/// </summary>
+		/// <param name="geometry">The geometry of the stringer.</param>
+		private static IEnumerable<Point> GetInsertionPoints(StringerGeometry geometry)
+		{
+			var l  = geometry.Length;
+			var ix = geometry.InitialPoint.X + 0.1 * l;
+			var y  = geometry.InitialPoint.Y;
 
 			for (var i = 0; i < 3; i++)
-				blocks[i] = !stringer.CrackOpenings[i].ApproxZero(Units.CrackTolerance)
-					? new StringerCrackBlockCreator(new Point(ix + 0.4 * i * l, y), stringer.CrackOpenings[i], stringer.Geometry.Angle, stringer.Geometry.InitialPoint, Results.ResultScaleFactor)
-					: null;
-
-			return blocks;
+				yield return new Point(ix + 0.4 * i * l, y);
 		}
 
 		/// <summary>
 		///     Get the attribute for crack block.
 		/// </summary>
-		/// <inheritdoc cref="PanelCrackBlockCreator(Point, Length, double, double)" />
-		private static AttributeReference GetAttribute(Length crackOpening, double rotationAngle, double scaleFactor)
+		/// <inheritdoc cref="StringerCrackBlockCreator(Point, Length, double, Point, double, double)" />
+		private static AttributeReference GetAttribute(Length crackOpening, double rotationAngle, double scaleFactor, double textHeight)
 		{
-			var w = crackOpening.ToUnit(SPMDatabase.Settings.Units.CrackOpenings).Value.Abs();
+			var w = crackOpening.Value.Abs();
 
 			// Set the insertion point
-			var pt = new Point(0, -100 * scaleFactor);
+			var pt = new Point(0, -100 * scaleFactor).Rotate(rotationAngle);
 
-			var attRef = new AttributeReference
+			return new AttributeReference
 			{
 				Position            = pt.ToPoint3d(),
 				TextString          = $"{w:0.00E+00}",
-				Height              = Results.TextHeight,
+				Height              = textHeight,
 				Layer               = $"{Layer.Cracks}",
 				Justify             = AttachmentPoint.MiddleCenter,
 				LockPositionInBlock = true,
-				Invisible           = false
+				Invisible           = false,
+				Rotation            = rotationAngle
 			};
 
 			// Rotate text
-			if (!rotationAngle.ApproxZero(1E-3))
-				attRef.TransformBy(Matrix3d.Rotation(rotationAngle, SPMDatabase.Ucs.Zaxis, new Point3d(0, 0, 0)));
+			// if (!rotationAngle.ApproxZero(1E-3))
+			// 	attRef.TransformBy(Matrix3d.Rotation(rotationAngle, SPMModel.Ucs.Zaxis, new Point3d(0, 0, 0)));
 
-			return attRef;
+			// return attRef;
 		}
 
 		#endregion

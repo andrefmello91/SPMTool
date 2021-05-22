@@ -2,7 +2,7 @@
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
 using SPMTool.Core;
-using SPMTool.Editor.Commands;
+using SPMTool.Commands;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Application.UserInterface
@@ -25,8 +25,8 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private readonly RibbonTab _tab = new()
 		{
-			Title = SPMDatabase.AppName,
-			Id    = SPMDatabase.AppName
+			Title = SPMModel.AppName,
+			Id    = SPMModel.AppName
 		};
 
 		#endregion
@@ -50,7 +50,7 @@ namespace SPMTool.Application.UserInterface
 			var spmInt = new SPMToolInterface();
 
 			// Check if the tab already exists
-			var tab = Ribbon.FindTab(SPMDatabase.AppName);
+			var tab = Ribbon.FindTab(SPMModel.AppName);
 
 			if (tab != null)
 				Ribbon.Tabs.Remove(tab);

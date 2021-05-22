@@ -39,7 +39,7 @@ namespace SPMTool.Commands
 				return;
 			
 			// Erase result objects
-			model.AcadDocument.EraseObjects(Results.ResultLayers);
+			model.AcadDocument.EraseObjects(SPMResults.ResultLayers);
 
 			// Ask the user set the support conditions:
 			var defDirection = nds.Length == 1
@@ -81,7 +81,7 @@ namespace SPMTool.Commands
 				return;
 
 			// Erase result objects
-			model.AcadDocument.EraseObjects(Results.ResultLayers.Select(l => $"{l}").ToArray());
+			model.AcadDocument.EraseObjects(SPMResults.ResultLayers.Select(l => $"{l}").ToArray());
 
 			// Get force from user
 			var initialForce = nds.Length == 1

@@ -15,6 +15,8 @@ namespace SPMTool.Application.UserInterface
 	public partial class UnitsConfig : Window
 	{
 
+		private readonly SPMDatabase _database;
+		
 		#region Properties
 
 		/// <summary>
@@ -56,7 +58,8 @@ namespace SPMTool.Application.UserInterface
 			InitializeComponent();
 
 			// Read units
-			Units = SPMDatabase.Settings.Units;
+			_database = SPMDatabase.ActiveDatabase;
+			Units     = _database.Settings.Units;
 
 			// Get sources
 			GetSources();
@@ -84,7 +87,7 @@ namespace SPMTool.Application.UserInterface
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Save units on database
-			SPMDatabase.Settings.Units = Units;
+			_database.Settings.Units = Units;
 
 			Close();
 		}
@@ -97,12 +100,6 @@ namespace SPMTool.Application.UserInterface
 			GeometryBox.ItemsSource      = ReinforcementBox.ItemsSource  = DisplacementsBox.ItemsSource = CracksBox.ItemsSource = DimensionUnits;
 			AppliedForcesBox.ItemsSource = StringerForcesBox.ItemsSource = ForceUnits;
 			MaterialBox.ItemsSource      = PanelStressesBox.ItemsSource  = StressUnits;
-		}
-
-		private void IntValidationTextBox(object sender, TextCompositionEventArgs e)
-		{
-			var regex = new Regex("[^0-9]+");
-			e.Handled = regex.IsMatch(e.Text);
 		}
 
 		#endregion

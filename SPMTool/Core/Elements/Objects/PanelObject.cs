@@ -186,12 +186,16 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get panel block creators.
 		/// </summary>
-		public IEnumerable<BlockCreator?> GetBlocks() => new BlockCreator?[]
+		/// <param name="scaleFactor">The scale factor.</param>
+		/// <param name="textHeight">The text height for attributes.</param>
+		/// <param name="stressUnit">The unit of panel stresses.</param>
+		/// <param name="crackUnit">The unit of crack openings.</param>
+		public IEnumerable<BlockCreator?> GetBlocks(double scaleFactor, double textHeight, PressureUnit stressUnit, LengthUnit crackUnit) => new BlockCreator?[]
 		{
-			ShearBlockCreator.CreateBlock(_panel),
-			StressBlockCreator.CreateAverageBlock(_panel),
-			StressBlockCreator.CreateConcreteBlock(_panel),
-			PanelCrackBlockCreator.CreateBlock(_panel)
+			ShearBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY.ToUnit(stressUnit), scaleFactor, textHeight),
+			StressBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses.Convert(stressUnit), scaleFactor, textHeight),
+			StressBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses.Convert(stressUnit), scaleFactor, textHeight),
+			PanelCrackBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.CrackOpening.ToUnit(crackUnit), _panel.AveragePrincipalStresses.Theta2, scaleFactor, textHeight)
 		};
 
 		/// <remarks>

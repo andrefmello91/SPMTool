@@ -192,10 +192,10 @@ namespace SPMTool.Application
 		/// </returns>
 		public static bool operator !=(DisplaySettings? left, DisplaySettings? right) => left.IsNotEqualTo(right);
 
-		/// <inheritdoc cref="Extensions.GetTypedValues(DisplaySettings)" />
+		/// <inheritdoc cref="SPMTool.Extensions.GetTypedValues(DisplaySettings)" />
 		public static explicit operator TypedValue[](DisplaySettings? settings) => settings.GetTypedValues();
 
-		/// <inheritdoc cref="Extensions.GetDisplaySettings" />
+		/// <inheritdoc cref="SPMTool.Extensions.GetDisplaySettings" />
 		public static explicit operator DisplaySettings?(TypedValue[]? values) => values.GetDisplaySettings();
 
 		#endregion

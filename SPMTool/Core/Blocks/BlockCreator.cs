@@ -6,7 +6,7 @@ using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Attributes;
 using SPMTool.Enums;
-
+using Extensions = SPMTool.Extensions;
 #nullable enable
 
 namespace SPMTool.Core.Blocks
@@ -63,7 +63,15 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		protected double ScaleFactor { get; set; }
 
+		/// <summary>
+		///		Get/set the text height for attributes.
+		/// </summary>
+		public double TextHeight { get; set; }
+		
 		#region Interface Implementations
+
+		/// <inheritdoc />
+		public string DocName { get; set; }
 
 		/// <inheritdoc />
 		public Layer Layer { get; protected set; }
@@ -73,7 +81,7 @@ namespace SPMTool.Core.Blocks
 
 		/// <inheritdoc />
 		public ObjectId ObjectId { get; set; }
-
+		
 		#endregion
 
 		#endregion
@@ -87,30 +95,29 @@ namespace SPMTool.Core.Blocks
 		/// <param name="block">The <see cref="Enums.Block" /> of block.</param>
 		/// <param name="rotationAngle">The block rotation angle.</param>
 		/// <param name="scaleFactor">The scale factor.</param>
+		/// <param name="textHeight">The text height for attributes.</param>
 		/// <param name="rotationAxis">The rotation <see cref="Axis" />.</param>
 		/// <param name="layer">A custom <see cref="Layer" />. Leave null to set default color from <paramref name="block" />.</param>
 		/// <param name="colorCode">
 		///     A custom <see cref="ColorCode" />. Leave null to set default color from
 		///     <paramref name="block" />'s layer.
 		/// </param>
-		/// <param name="attributes">The collection of <see cref="AttributeReference" />'s to add to block.</param>
-		public BlockCreator(Point insertionPoint, Block block, double rotationAngle, double scaleFactor, Axis rotationAxis = Axis.Z, Layer? layer = null, ColorCode? colorCode = null, IEnumerable<AttributeReference>? attributes = null)
+		public BlockCreator(Point insertionPoint, Block block, double rotationAngle, double scaleFactor, double textHeight, Axis rotationAxis = Axis.Z, Layer? layer = null, ColorCode? colorCode = null)
 		{
 			Position      = insertionPoint;
 			Block         = block;
 			Layer         = layer ?? block.GetAttribute<BlockAttribute>()!.Layer;
 			RotationAngle = rotationAngle;
 			ScaleFactor   = scaleFactor;
+			TextHeight    = textHeight;
 			RotationAxis  = rotationAxis;
 			ColorCode     = colorCode;
-			Attributes    = attributes?.ToArray();
 		}
 
 		#endregion
 
 		#region Methods
 
-	
 		/// <summary>
 		///     Set attributes to block.
 		/// </summary>
@@ -119,14 +126,14 @@ namespace SPMTool.Core.Blocks
 		#region Interface Implementations
 
 		/// <inheritdoc />
-		public void AddToDrawing()
+		public virtual BlockReference CreateObject()
 		{
-			ObjectId = CreateObject().AddToDrawing();
-			SetAttributes();
-		}
+			// Get database
+			var database = SPMDatabase.GetOpenedDatabase(DocName)!;
 
-		/// <inheritdoc />
-		public virtual BlockReference CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, ColorCode, RotationAngle, RotationAxis, RotationPoint?.ToPoint3d(), ScaleFactor)!;
+			return
+				database.AcadDatabase.GetReference(Block, Position.ToPoint3d(), Layer, ColorCode, RotationAngle, RotationAxis, RotationPoint?.ToPoint3d(), ScaleFactor)!;
+		}
 
 		/// <inheritdoc />
 		DBObject IDBObjectCreator.CreateObject() => CreateObject();
@@ -142,13 +149,10 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <inheritdoc />
-		public BlockReference? GetObject() => (BlockReference?) ObjectId.GetEntity();
+		public BlockReference? GetObject() => (BlockReference?) (SPMDatabase.GetOpenedDatabase(DocName) ?? SPMDatabase.GetOpenedDatabase(ObjectId))?.AcadDatabase.GetObject(ObjectId);
 
 		/// <inheritdoc />
 		DBObject? IDBObjectCreator.GetObject() => GetObject();
-
-		/// <inheritdoc />
-		public void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
 
 		#endregion
 

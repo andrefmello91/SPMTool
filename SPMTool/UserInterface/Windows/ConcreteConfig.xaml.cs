@@ -46,6 +46,8 @@ namespace SPMTool.Application.UserInterface
 
 		private IParameters _parameters;
 
+		private readonly SPMDatabase _database;
+		
 		#endregion
 
 		#region Properties
@@ -81,12 +83,14 @@ namespace SPMTool.Application.UserInterface
 
 		public ConcreteConfig()
 		{
+			_database = SPMDatabase.ActiveDatabase;
+			
 			// Read units
-			_stressUnit = SPMDatabase.Settings.Units.MaterialStrength;
-			_aggUnit    = SPMDatabase.Settings.Units.Reinforcement;
+			_stressUnit = _database.Settings.Units.MaterialStrength;
+			_aggUnit    = _database.Settings.Units.Reinforcement;
 
 			// Get settings
-			_parameters       = SPMDatabase.ConcreteData.Parameters;
+			_parameters = _database.ConcreteData.Parameters;
 
 			// Update units
 			_parameters.ChangeUnit(_stressUnit);
@@ -98,7 +102,7 @@ namespace SPMTool.Application.UserInterface
 			Graph.Source = Icons.GetBitmap(Properties.Resources.concrete_constitutive);
 
 			// Initiate combo boxes and set events
-			InitiateComboBoxes();
+			InitiateComboBoxes(_database.ConcreteData.ConstitutiveModel);
 			SetEvents();
 
 			DataContext = this;
@@ -144,8 +148,9 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			// Save units on database
-			SPMDatabase.ConcreteData.Parameters        = _parameters;
-			SPMDatabase.ConcreteData.ConstitutiveModel = ConstitutiveModel;
+			_database.ConcreteData.Parameters        = _parameters;
+			_database.ConcreteData.ConstitutiveModel = ConstitutiveModel;
+			
 			Close();
 		}
 
@@ -169,7 +174,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Initiate combo boxes items.
 		/// </summary>
-		private void InitiateComboBoxes()
+		private void InitiateComboBoxes(ConstitutiveModel constitutiveModel)
 		{
 			// Get sources
 			AggTypeBox.ItemsSource      = AggTypeOptions;
@@ -181,7 +186,7 @@ namespace SPMTool.Application.UserInterface
 			AggDiamBox.Text            = $"{_parameters.AggregateDiameter.Value:0.00}";
 			AggregateType              = _parameters.Type;
 			ParameterBox.SelectedIndex = (int) _parameters.Model;
-			ConstitutiveModel          = SPMDatabase.ConcreteData.ConstitutiveModel;
+			ConstitutiveModel          = constitutiveModel;
 
 			UpdateCustomParameterBoxes();
 

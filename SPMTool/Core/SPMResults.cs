@@ -12,7 +12,7 @@ namespace SPMTool.Core
 	/// <summary>
 	///     Results drawing class.
 	/// </summary>
-	public class Results
+	public class SPMResults
 	{
 
 		private SPMModel _model;
@@ -31,23 +31,28 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get/set the absolute maximum force at stringers.
 		/// </summary>
-		public Force MaxStringerForce { get; private set; }
+		public Force MaxStringerForce { get; }
 
 		/// <summary>
 		///     Get/set the scale factor for result drawing.
 		/// </summary>
-		public double ResultScaleFactor { get; private set; }
+		public double ResultScaleFactor { get; }
 
 		/// <summary>
 		///		Get/set the text height.
 		/// </summary>
-		public double TextHeight { get; private set; }
+		public double TextHeight { get; }
 		
 		#endregion
 
-		public Results(SPMModel model)
+		public SPMResults(SPMModel model)
 		{
 			_model = model;
+			
+			// Set properties
+			MaxStringerForce  = _model.Stringers.Select(s => s.MaxForce).Max();
+			ResultScaleFactor = _model.Database.Settings.Display.ResultScale * _model.Panels.Select(p => p.BlockScaleFactor()).Min();
+			TextHeight        = Math.Min(40 * ResultScaleFactor * _model.Database.Settings.Display.TextScale, _model.TextHeight);
 		}
 		
 		#region Methods
@@ -61,16 +66,11 @@ namespace SPMTool.Core
 			
 			// Erase result objects
 			doc.EraseObjects(ResultLayers);
-
-			// Update properties
-			MaxStringerForce  = _model.Stringers.Select(s => s.MaxForce).Max();
-			ResultScaleFactor = _model.Database.Settings.Display.ResultScale * _model.Panels.Select(p => p.BlockScaleFactor()).Min();
-			TextHeight        = Math.Min(40 * ResultScaleFactor * _model.Database.Settings.Display.TextScale, _model.TextHeight);
 				
-			SetDisplacements(_model);
-			DrawPanelResults(_model);
-			DrawStringerResults(_model);
-			DrawDisplacedModel(_model);
+			SetDisplacements();
+			DrawPanelResults();
+			DrawStringerResults();
+			DrawDisplacedModel();
 
 			// Set layer states
 			doc.Database.TurnOff(Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks, Layer.Displacements);
@@ -80,41 +80,46 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Draw the displaced model.
 		/// </summary>
-		private static void DrawDisplacedModel(SPMModel model)
+		private void DrawDisplacedModel()
 		{
-			var mFactor = model.Database.Settings.Display.DisplacementMagnifier;
+			var mFactor = _model.Database.Settings.Display.DisplacementMagnifier;
 
-			var displaced = model.Stringers.Select(s => s.GetDisplaced(mFactor)).ToList();
+			var displaced = _model.Stringers.Select(s => s.GetDisplaced(mFactor)).ToList();
 
-			var _ = model.AcadDocument.AddObjects(displaced);
+			var _ = _model.AcadDocument.AddObjects(displaced);
 		}
 
 		/// <summary>
 		///     Draw panel stresses.
 		/// </summary>
-		private static void DrawPanelResults(SPMModel model)
+		private void DrawPanelResults()
 		{
+			var sUnit = _model.Database.Settings.Units.PanelStresses;
+			var cUnit = _model.Database.Settings.Units.CrackOpenings;
+			
 			// Get panel blocks
-			var blocks = model.Panels.SelectMany(p => p.GetBlocks()).ToList();
+			var blocks = _model.Panels.SelectMany(p => p.GetBlocks(ResultScaleFactor, TextHeight, sUnit, cUnit)).ToList();
 
 			// Add to drawing and set attributes
-			model.AcadDocument.AddObjects(blocks);
+			_model.AcadDocument.AddObjects(blocks);
 			blocks.SetAttributes();
 		}
 
 		/// <summary>
 		///     Draw stringer forces.
 		/// </summary>
-		private static void DrawStringerResults(SPMModel model)
+		private void DrawStringerResults()
 		{
-			var stringers = model.Stringers;
+			var stringers = _model.Stringers;
+			var fUnit     = _model.Database.Settings.Units.StringerForces;
+			var cUnit     = _model.Database.Settings.Units.CrackOpenings;
 
-			model.AcadDocument.AddObjects(stringers.Select(s => s.CreateDiagram()).ToList());
+			_model.AcadDocument.AddObjects(stringers.Select(s => s.CreateDiagram(ResultScaleFactor, TextHeight, MaxStringerForce, fUnit)).ToList());
 
-			var blocks = stringers.SelectMany(s => s.CreateCrackBlocks()).ToList();
+			var blocks = stringers.SelectMany(s => s.CreateCrackBlocks(ResultScaleFactor, TextHeight, cUnit)).ToList();
 
 			// Add to drawing and set attributes
-			model.AcadDocument.AddObjects(blocks);
+			_model.AcadDocument.AddObjects(blocks);
 			blocks.SetAttributes();
 		}
 
@@ -122,9 +127,9 @@ namespace SPMTool.Core
 		///     Set displacement to <see cref="SPMModel.Nodes" />.
 		/// </summary>
 		/// <inheritdoc cref="DrawResults" />
-		private static void SetDisplacements(SPMModel model)
+		private void SetDisplacements()
 		{
-			foreach (var node in model.Nodes)
+			foreach (var node in _model.Nodes)
 				node.SetDisplacementFromNode();
 		}
 

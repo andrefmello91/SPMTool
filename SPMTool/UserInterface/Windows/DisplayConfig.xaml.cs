@@ -10,6 +10,7 @@ namespace SPMTool.Application.UserInterface
 	/// </summary>
 	public partial class DisplayConfig : BaseWindow
 	{
+		private readonly SPMDatabase _database;
 
 		#region Properties
 
@@ -29,7 +30,9 @@ namespace SPMTool.Application.UserInterface
 			InitializeComponent();
 
 			// Read values
-			GetValues(SPMDatabase.Settings.Display);
+			_database = SPMDatabase.ActiveDatabase;
+			
+			GetValues(_database.Settings.Display);
 		}
 
 		#endregion
@@ -77,7 +80,7 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			// Set values
-			SetValues(SPMDatabase.Settings.Display);
+			SetValues(_database.Settings.Display);
 
 			Close();
 		}

@@ -24,6 +24,8 @@ namespace SPMTool.Application.UserInterface
 			"Mod. Newton-Raphson",
 			"Secant"
 		};
+
+		private readonly SPMDatabase _database;
 		
 		#region Properties
 
@@ -61,7 +63,8 @@ namespace SPMTool.Application.UserInterface
 			SolverBox.ItemsSource = SolverNames;
 
 			// Read saved settings
-			AnalysisSettings = SPMDatabase.Settings.Analysis;
+			_database        = SPMDatabase.ActiveDatabase;
+			AnalysisSettings = _database.Settings.Analysis;
 		}
 
 		#endregion
@@ -86,7 +89,7 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			// Save units on database
-			SPMDatabase.Settings.Analysis = AnalysisSettings;
+			_database.Settings.Analysis = AnalysisSettings;
 
 			Close();
 		}

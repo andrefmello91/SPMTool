@@ -77,10 +77,6 @@ namespace SPMTool.Core
 		/// </summary>
 		public Autodesk.AutoCAD.EditorInput.Editor Editor => AcadDocument.Editor;
 
-		/// <summary>
-		///     List of distinct widths from objects in the model.
-		/// </summary>
-		public EList<Length> ElementWidths { get; }
 
 		/// <summary>
 		///     The collection of <see cref="ForceObject" />'s in the model.
@@ -96,31 +92,11 @@ namespace SPMTool.Core
 		///     The collection of <see cref="NodeObject" />'s in the model.
 		/// </summary>
 		public NodeList Nodes { get; }
-
-		/// <summary>
-		///     List of distinct reinforcements of panels in the model.
-		/// </summary>
-		public EList<WebReinforcementDirection> PanelReinforcements { get; }
-
+		
 		/// <summary>
 		///     The collection of <see cref="PanelObject" />'s in the model.
 		/// </summary>
 		public PanelList Panels { get; }
-
-		/// <summary>
-		///     List of distinct steels of elements in the model.
-		/// </summary>
-		public EList<Steel> Steels { get; }
-
-		/// <summary>
-		///     List of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
-		/// </summary>
-		public EList<CrossSection> StringerCrossSections { get; }
-
-		/// <summary>
-		///     List of distinct reinforcements of stringers in the model.
-		/// </summary>
-		public EList<UniaxialReinforcement> StringerReinforcements { get; }
 
 		/// <summary>
 		///     The collection of <see cref="StringerObject" />'s in the model.
@@ -167,13 +143,12 @@ namespace SPMTool.Core
 		public SPMModel(Document acadDocument)
 		{
 			AcadDocument = acadDocument;
-			Database     = new SPMDatabase(acadDocument.Database);
-
+			
+			// Initiate dependencies
 			RegisterApp(acadDocument);
 			CreateLayers(acadDocument);
-			SetAppParameters();
-
-
+			CreateBlocks(acadDocument);
+			
 			// Initiate trash
 			Trash = new List<IDBObjectCreator>();
 
@@ -191,18 +166,17 @@ namespace SPMTool.Core
 			SetEvents(Stringers);
 			SetEvents(Panels);
 			
-			// Get properties
-			StringerCrossSections  = GetCrossSections();
-			ElementWidths          = Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToEList() ?? new EList<Length>();
-			StringerReinforcements = GetStringerReinforcements();
-			PanelReinforcements    = GetPanelReinforcements();
-			Steels                 = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList() ?? new EList<Steel>();
+			// Initiate database
+			Database = new SPMDatabase(this);
 
 			// Move panels to bottom
 			acadDocument.MoveToBottom(Panels.ObjectIds);
 			
 			// Register events
 			RegisterEventsToEntities();
+			
+			// Set parameters
+			SetAppParameters();
 		}
 
 		#endregion
@@ -212,7 +186,12 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Create layers for use with SPMTool.
 		/// </summary>
-		public static void CreateLayers(Document document) => document.Create(Enum.GetValues(typeof(Layer)).Cast<Layer>().ToArray());
+		private static void CreateLayers(Document document) => document.Create(Enum.GetValues(typeof(Layer)).Cast<Layer>().ToArray());
+
+		/// <summary>
+		///     Create blocks for use in SPMTool.
+		/// </summary>
+		private static void CreateBlocks(Document document) => document.Create(Enum.GetValues(typeof(Block)).Cast<Block>().ToArray());
 
 		/// <summary>
 		///     Get folder path of current file.
@@ -405,6 +384,7 @@ namespace SPMTool.Core
 		/// </summary>
 		public void SetAppParameters()
 		{
+			using var lck = AcadDocument.LockDocument();
 			UpdatePointSize();
 			SetLineWeightDisplay();
 		}
@@ -461,8 +441,8 @@ namespace SPMTool.Core
 		public void UpdatePointSize()
 		{
 			// Set the style for all point objects in the drawing
-			Database.AcadDatabase.Pdmode = 32;
-			Database.AcadDatabase.Pdsize = 40 * Database.Settings.Units.ScaleFactor * Database.Settings.Display.NodeScale;
+			AcadDocument.Database.Pdmode  = 32;
+			AcadDocument.Database.Pdsize = 40 * Database.Settings.Units.ScaleFactor * Database.Settings.Display.NodeScale;
 			Editor.Regen();
 		}
 
@@ -480,36 +460,6 @@ namespace SPMTool.Core
 				objs.AddRange(results);
 
 			AcadDocument.UpdateTextHeight(objs, TextHeight);
-		}
-
-		/// <inheritdoc cref="StringerCrossSections" />
-		private EList<CrossSection> GetCrossSections()
-		{
-			var list = Stringers.GetCrossSections().ToEList() ?? new EList<CrossSection>();
-
-			list.ItemAdded += On_CrossSection_Add;
-
-			return list;
-		}
-
-		/// <inheritdoc cref="PanelReinforcements" />
-		private EList<WebReinforcementDirection> GetPanelReinforcements()
-		{
-			var list = Panels.GetReinforcementDirections().ToEList() ?? new EList<WebReinforcementDirection>();
-
-			list.ItemAdded += On_PanRef_Add;
-
-			return list;
-		}
-
-		/// <inheritdoc cref="StringerReinforcements" />
-		private EList<UniaxialReinforcement> GetStringerReinforcements()
-		{
-			var list = Stringers.GetReinforcements().ToEList() ?? new EList<UniaxialReinforcement>();
-
-			list.ItemAdded += On_StrRef_Add;
-
-			return list;
 		}
 
 		#endregion
@@ -552,12 +502,7 @@ namespace SPMTool.Core
 		private static void On_DocumentClosed(object sender, DocumentCollectionEventArgs e) => OpenedModels.RemoveAll(d => d.Name == e.Document.Name);
 
 		private static void On_DocumentCreated(object sender, DocumentCollectionEventArgs e) => OpenedModels.Add(new SPMModel(e.Document));
-
-		/// <summary>
-		///     Event to run when an item is added to <see cref="StringerCrossSections" />.
-		/// </summary>
-		private void On_CrossSection_Add(object sender, ItemEventArgs<CrossSection> e) => ElementWidths.Add(e.Item.Width);
-
+		
 		/// <summary>
 		///     Event to execute when an object is copied.
 		/// </summary>
@@ -575,15 +520,6 @@ namespace SPMTool.Core
 			// SPMDocument.Editor.WriteMessage($"\n{obj.GetType()} copied.");
 		}
 
-		/// <summary>
-		///     Event to run when an item is added to <see cref="PanelReinforcements" />.
-		/// </summary>
-		private void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e) => Steels.Add(e.Item?.Steel);
-
-		/// <summary>
-		///     Event to run when an item is added to <see cref="StringerReinforcements" />.
-		/// </summary>
-		private void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e) => Steels.Add(e.Item?.Steel);
 
 		/// <summary>
 		///     Event to execute when an object is added to a list.

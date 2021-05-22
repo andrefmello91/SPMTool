@@ -90,10 +90,10 @@ namespace SPMTool.Application
 		/// </summary>
 		public static bool operator !=(AnalysisSettings? left, AnalysisSettings? right) => left.IsNotEqualTo(right);
 
-		/// <inheritdoc cref="Extensions.GetTypedValues(AnalysisSettings)"/>
+		/// <inheritdoc cref="SPMTool.Extensions.GetTypedValues(AnalysisSettings)"/>
 		public static explicit operator TypedValue[](AnalysisSettings? settings) => settings.GetTypedValues();
 		
-		/// <inheritdoc cref="Extensions.GetAnalysisSettings"/>
+		/// <inheritdoc cref="SPMTool.Extensions.GetAnalysisSettings"/>
 		public static explicit operator AnalysisSettings?(TypedValue[]? values) => values.GetAnalysisSettings();
 
 		#endregion

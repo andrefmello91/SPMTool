@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using andrefmello91.EList;
+using andrefmello91.Material.Reinforcement;
+using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Application;
 using SPMTool.Core.Blocks;
+using SPMTool.Core.Elements;
 using SPMTool.Core.Materials;
 using SPMTool.Enums;
-
+using UnitsNet;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 #nullable enable
@@ -69,6 +73,31 @@ namespace SPMTool.Core
 		/// </summary>
 		public ObjectId NodId => AcadDatabase.NamedObjectsDictionaryId;
 
+		/// <summary>
+		///     List of distinct steels of elements in the model.
+		/// </summary>
+		public EList<Steel> Steels { get; }
+
+		/// <summary>
+		///     List of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
+		/// </summary>
+		public EList<CrossSection> StringerCrossSections { get; }
+
+		/// <summary>
+		///     List of distinct reinforcements of stringers in the model.
+		/// </summary>
+		public EList<UniaxialReinforcement> StringerReinforcements { get; }
+		
+		/// <summary>
+		///     List of distinct widths from objects in the model.
+		/// </summary>
+		public EList<Length> ElementWidths { get; }
+
+		/// <summary>
+		///     List of distinct reinforcements of panels in the model.
+		/// </summary>
+		public EList<WebReinforcementDirection> PanelReinforcements { get; }
+
 		#endregion
 
 		#region Constructors
@@ -76,15 +105,22 @@ namespace SPMTool.Core
 		/// <summary>
 		///		Create a SPM database.
 		/// </summary>
-		/// <param name="acadDatabase">The AutoCAD database.</param>
-		public SPMDatabase(Database acadDatabase)
+		/// <param name="model">The SPM model.</param>
+		public SPMDatabase(SPMModel model)
 		{
-			AcadDatabase = acadDatabase;
-			DocName      = acadDatabase.GetDocument().Name;
+			AcadDatabase = model.AcadDocument.Database;
+			DocName      = model.Name;
 			
 			// Get app settings
-			Settings     = new Settings(acadDatabase);
-			ConcreteData = new ConcreteData(acadDatabase);
+			Settings     = new Settings(AcadDatabase);
+			ConcreteData = new ConcreteData(AcadDatabase);
+			
+			// Get properties
+			StringerCrossSections  = GetCrossSections(model.Stringers);
+			ElementWidths          = model.Stringers.GetWidths().Concat(model.Panels.GetWidths()).Distinct().ToEList() ?? new EList<Length>();
+			StringerReinforcements = GetStringerReinforcements(model.Stringers);
+			PanelReinforcements    = GetPanelReinforcements(model.Panels);
+			Steels                 = model.Stringers.GetSteels().Concat(model.Panels.GetSteels()).ToEList() ?? new EList<Steel>();
 		}
 
 		#endregion
@@ -213,6 +249,51 @@ namespace SPMTool.Core
 		///     Start a new transaction in <see cref="AcadDatabase" />.
 		/// </summary>
 		public Transaction StartTransaction() => AcadDatabase.TransactionManager.StartTransaction();
+
+		/// <inheritdoc cref="StringerCrossSections" />
+		private EList<CrossSection> GetCrossSections(StringerList stringers)
+		{
+			var list = stringers.GetCrossSections().ToEList() ?? new EList<CrossSection>();
+
+			list.ItemAdded += On_CrossSection_Add;
+
+			return list;
+		}
+
+		/// <inheritdoc cref="PanelReinforcements" />
+		private EList<WebReinforcementDirection> GetPanelReinforcements(PanelList panels)
+		{
+			var list = panels.GetReinforcementDirections().ToEList() ?? new EList<WebReinforcementDirection>();
+
+			list.ItemAdded += On_PanRef_Add;
+
+			return list;
+		}
+
+		/// <inheritdoc cref="StringerReinforcements" />
+		private EList<UniaxialReinforcement> GetStringerReinforcements(StringerList stringers)
+		{
+			var list = stringers.GetReinforcements().ToEList() ?? new EList<UniaxialReinforcement>();
+
+			list.ItemAdded += On_StrRef_Add;
+
+			return list;
+		}
+		
+		/// <summary>
+		///     Event to run when an item is added to <see cref="StringerCrossSections" />.
+		/// </summary>
+		private void On_CrossSection_Add(object sender, ItemEventArgs<CrossSection> e) => ElementWidths.Add(e.Item.Width);
+
+		/// <summary>
+		///     Event to run when an item is added to <see cref="PanelReinforcements" />.
+		/// </summary>
+		private void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e) => Steels.Add(e.Item?.Steel);
+
+		/// <summary>
+		///     Event to run when an item is added to <see cref="StringerReinforcements" />.
+		/// </summary>
+		private void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e) => Steels.Add(e.Item?.Steel);
 
 		#endregion
 

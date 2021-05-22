@@ -37,7 +37,7 @@ namespace SPMTool.Core.Blocks
 				_stressState = value;
 
 				// Update attribute
-				Attributes = GetAttributes(value, ScaleFactor, Layer).ToArray();
+				Attributes = GetAttributes(value, ScaleFactor, TextHeight, Layer).ToArray();
 			}
 		}
 
@@ -48,16 +48,14 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Block creator constructor.
 		/// </summary>
-		/// <param name="insertionPoint">The insertion <see cref="Point" /> of block.</param>
 		/// <param name="stressState">The <see cref="PrincipalStressState" />.</param>
-		/// <param name="scaleFactor">The scale factor.</param>
 		/// <inheritdoc />
-		private StressBlockCreator(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, Layer? layer = null)
-			: base(insertionPoint, GetBlock(stressState), stressState.Theta1, scaleFactor, Axis.Z, layer)
+		private StressBlockCreator(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, double textHeight, Layer? layer = null)
+			: base(insertionPoint, GetBlock(stressState), stressState.Theta1, scaleFactor, textHeight, Axis.Z, layer)
 		{
 			_stressState = stressState;
 
-			Attributes = GetAttributes(stressState, scaleFactor, Layer).ToArray();
+			Attributes = GetAttributes(stressState, scaleFactor, textHeight, Layer).ToArray();
 		}
 
 		#endregion
@@ -67,20 +65,11 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the average stress <see cref="BlockCreator" />.
 		/// </summary>
-		/// <param name="panel">The <see cref="Panel" />.</param>
-		public static StressBlockCreator? CreateAverageBlock(Panel? panel) =>
-			panel is null || panel.AveragePrincipalStresses.IsZero
-				? null
-				: new StressBlockCreator(panel.Geometry.Vertices.CenterPoint, panel.AveragePrincipalStresses, Results.ResultScaleFactor);
-
-		/// <summary>
-		///     Get the concrete stress <see cref="BlockCreator" />.
-		/// </summary>
-		/// <inheritdoc cref="CreateAverageBlock" />
-		public static StressBlockCreator? CreateConcreteBlock(Panel? panel) =>
-			panel is null || panel.AveragePrincipalStresses.IsZero
-				? null
-				: new StressBlockCreator(panel.Geometry.Vertices.CenterPoint, panel.ConcretePrincipalStresses, Results.ResultScaleFactor, Layer.ConcreteStress);
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double)" />
+		public static StressBlockCreator? From(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, double textHeight, Layer? layer = null) =>
+			!stressState.IsZero
+				? new StressBlockCreator(insertionPoint,stressState, scaleFactor, textHeight, layer)
+				: null;
 
 		/// <summary>
 		///     Improve the angle.
@@ -92,8 +81,8 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the attribute for shear block.
 		/// </summary>
-		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double)" />
-		private static IEnumerable<AttributeReference> GetAttributes(PrincipalStressState stressState, double scaleFactor, Layer layer)
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double)" />
+		private static IEnumerable<AttributeReference> GetAttributes(PrincipalStressState stressState, double scaleFactor, double textHeight, Layer layer)
 		{
 			if (stressState.IsZero)
 				yield break;
@@ -101,7 +90,7 @@ namespace SPMTool.Core.Blocks
 			// Text for sigma 1
 			if (!stressState.Is1Zero)
 			{
-				var sigma1 = stressState.Sigma1.ToUnit(SPMDatabase.Settings.Units.PanelStresses).Value.Abs();
+				var sigma1 = stressState.Sigma1.Value.Abs();
 
 				// Improve angle
 				var angle1 = ImproveAngle(stressState.Theta1);
@@ -112,7 +101,7 @@ namespace SPMTool.Core.Blocks
 				{
 					Position            = pt1.ToPoint3d(),
 					TextString          = $"{sigma1:0.00}",
-					Height              = Results.TextHeight,
+					Height              = textHeight,
 					Layer               = $"{layer}",
 					ColorIndex          = (short) color1,
 					Justify             = AttachmentPoint.MiddleLeft,
@@ -125,7 +114,7 @@ namespace SPMTool.Core.Blocks
 			if (stressState.Is2Zero)
 				yield break;
 
-			var sigma2 = stressState.Sigma2.ToUnit(SPMDatabase.Settings.Units.PanelStresses).Value.Abs();
+			var sigma2 = stressState.Sigma2.Value.Abs();
 
 			// Improve angle
 			var angle2 = ImproveAngle(stressState.Theta2);
@@ -136,7 +125,7 @@ namespace SPMTool.Core.Blocks
 			{
 				Position            = pt2.ToPoint3d(),
 				TextString          = $"{sigma2:0.00}",
-				Height              = Results.TextHeight,
+				Height              = textHeight,
 				Layer               = $"{layer}",
 				ColorIndex          = (short) color2,
 				Justify             = AttachmentPoint.MiddleLeft,
@@ -163,13 +152,14 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		/// <param name="stressAngle">The angle of the stress.</param>
 		/// <param name="scaleFactor"></param>
-		private static Point GetTextInsertionPoint(double stressAngle, double scaleFactor)
-		{
-			var (cos, sin) = stressAngle.DirectionCosines();
+		private static Point GetTextInsertionPoint(double stressAngle, double scaleFactor) => new Point(210 * scaleFactor, 0).Rotate(stressAngle);
 
-			return
-				new Point(210 * cos * scaleFactor, 210 * sin * scaleFactor);
-		}
+		// {
+		// 	var (cos, sin) = stressAngle.DirectionCosines();
+		//
+		// 	return
+		// 		new Point(210 * cos * scaleFactor, 210 * sin * scaleFactor);
+		// }
 
 		#endregion
 

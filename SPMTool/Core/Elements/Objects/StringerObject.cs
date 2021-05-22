@@ -136,12 +136,20 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Create crack blocks.
 		/// </summary>
-		public IEnumerable<StringerCrackBlockCreator?> CreateCrackBlocks() => StringerCrackBlockCreator.CreateBlocks(_stringer);
+		/// <param name="scaleFactor">The scale factor.</param>
+		/// <param name="textHeight">The text height for attributes.</param>
+		/// <param name="crackUnit">The unit for crack openings.</param>
+		public IEnumerable<StringerCrackBlockCreator?> CreateCrackBlocks(double scaleFactor, double textHeight, LengthUnit crackUnit) =>
+			StringerCrackBlockCreator.CreateBlocks(_stringer!.Geometry, _stringer.CrackOpenings.Select(c => c.ToUnit(crackUnit)).ToArray(), scaleFactor, textHeight);
 
 		/// <summary>
 		///     Create the stringer diagram. Can be null if the stringer is unloaded.
 		/// </summary>
-		public StringerForceCreator? CreateDiagram() => StringerForceCreator.Create(_stringer);
+		/// <param name="scaleFactor">The scale factor.</param>
+		/// <param name="textHeight">The text height for attributes.</param>
+		/// <param name="maxForce">The maximum normal force in all of the stringers in the model.</param>
+		public StringerForceCreator? CreateDiagram(double scaleFactor, double textHeight, Force maxForce, ForceUnit unit) =>
+			StringerForceCreator.From(_stringer!.Geometry, (_stringer.NormalForces.N1.ToUnit(unit), _stringer.NormalForces.N3.ToUnit(unit)), maxForce, scaleFactor, textHeight, Number);
 
 		/// <summary>
 		///     Divide this <see cref="StringerObject" /> in a <paramref name="number" /> of new ones.
