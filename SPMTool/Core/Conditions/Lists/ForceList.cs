@@ -43,19 +43,19 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the force objects in the drawing.
 		/// </summary>
-		public static IEnumerable<BlockReference?> GetObjects(Document document) => document.GetObjects(Layer.Force).Cast<BlockReference?>();
+		public static IEnumerable<BlockReference> GetObjects(Document document) => document.GetObjects(Layer.Force).Where(o => o is BlockReference).Cast<BlockReference>();
 
 		/// <summary>
 		///     Read all <see cref="ForceObject" />'s from a document.
 		/// </summary>
 		public static ForceList From(Document document)
 		{
-			var blocks = GetObjects(document);
+			var blocks = GetObjects(document).ToArray();
 			var bId    = document.Database.BlockTableId;
 			
 			var list = blocks.IsNullOrEmpty()
 				? new ForceList(bId)
-				: new ForceList(blocks.Where(b => b is not null).Select(ForceObject.From!), bId);
+				: new ForceList(blocks.Select(ForceObject.From), bId);
 
 			return list;
 

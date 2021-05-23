@@ -51,7 +51,7 @@ namespace SPMTool.Core.Elements
 		///     Get the collection of stringers in the drawing.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
-		private static IEnumerable<Line?> GetObjects(Document document) => document.GetObjects(Layer.Stringer).Cast<Line?>();
+		private static IEnumerable<Line> GetObjects(Document document) => document.GetObjects(Layer.Stringer).Where(o => o is Line).Cast<Line>();
 
 		/// <summary>
 		///     Read all the <see cref="StringerObject" />'s in the drawing.
@@ -64,7 +64,7 @@ namespace SPMTool.Core.Elements
 
 			return lines.IsNullOrEmpty() 
 				? new StringerList(bId)
-				: new StringerList(lines.Where(p => p is not null).Select(StringerObject.From!), bId);
+				: new StringerList(lines.Select(StringerObject.From), bId);
 		}
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />

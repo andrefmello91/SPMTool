@@ -54,12 +54,12 @@ namespace SPMTool.Core.Elements
 		/// </remarks>
 		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="type">The <see cref="NodeType" />.</param>
-		private static IEnumerable<DBPoint?> GetObjects(Document document, NodeType? type = null) =>
+		private static IEnumerable<DBPoint> GetObjects(Document document, NodeType? type = null) =>
 			type switch
 			{
-				NodeType.Internal => document.GetObjects(Layer.IntNode).Cast<DBPoint?>(),
-				NodeType.External => document.GetObjects(Layer.ExtNode).Cast<DBPoint?>(),
-				_                 => document.GetObjects(Layer.IntNode, Layer.ExtNode).Cast<DBPoint?>()
+				NodeType.Internal => document.GetObjects(Layer.IntNode).Where(o => o is DBPoint).Cast<DBPoint>(),
+				NodeType.External => document.GetObjects(Layer.ExtNode).Where(o => o is DBPoint).Cast<DBPoint>(),
+				_                 => document.GetObjects(Layer.IntNode, Layer.ExtNode).Where(o => o is DBPoint).Cast<DBPoint>()
 			};
 
 		/// <summary>
@@ -79,12 +79,12 @@ namespace SPMTool.Core.Elements
 		/// <param name="document">The AutoCAD document.</param>
 		public static NodeList From(Document document)
 		{
-			var points = GetObjects(document)?.ToArray();
+			var points = GetObjects(document).ToArray();
 			var bId    = document.Database.BlockTableId;
 
 			return points.IsNullOrEmpty() 
 				? new NodeList(bId)
-				: new NodeList(points.Where(p => p is not null).Select(NodeObject.From!), bId);
+				: new NodeList(points.Select(NodeObject.From), bId);
 		}
 
 		/// <inheritdoc cref="Add(NodeObject, bool, bool)" />

@@ -44,19 +44,19 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the support objects in the drawing.
 		/// </summary>
-		private static IEnumerable<BlockReference?> GetObjects(Document document) => document.GetObjects(Layer.Support).Cast<BlockReference?>();
+		private static IEnumerable<BlockReference> GetObjects(Document document) => document.GetObjects(Layer.Support).Where(o => o is BlockReference).Cast<BlockReference>();
 
 		/// <summary>
 		///     Read all <see cref="ConstraintObject" />'s from drawing.
 		/// </summary>
 		public static ConstraintList From(Document document)
 		{
-			var blocks = GetObjects(document);
+			var blocks = GetObjects(document).ToArray();
 			var bId    = document.Database.BlockTableId;
 			
 			var list = blocks.IsNullOrEmpty()
 				? new ConstraintList(bId)
-				: new ConstraintList(blocks.Where(b => b is not null).Select(ConstraintObject.From!), bId);
+				: new ConstraintList(blocks.Select(ConstraintObject.From), bId);
 			
 			return list;
 		}
