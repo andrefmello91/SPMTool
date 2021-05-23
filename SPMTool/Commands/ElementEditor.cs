@@ -28,7 +28,7 @@ namespace SPMTool.Commands
 			var stringers = model.Stringers;
 			var nodes     = model.Nodes;
 			var panels    = model.Panels;
-			var database  = model.Database.AcadDatabase;
+			var database  = model.AcadDatabase;
 			
 			// Prompt for select panels
 			var pnls = database.GetPanels("Select panels to divide")?.ToArray();
@@ -108,7 +108,7 @@ namespace SPMTool.Commands
 			model.AcadDocument.EraseObjects(SPMResults.ResultLayers);
 
 			// Add other stringers
-			newStrs.AddRange(newPanels.SelectMany(p => p.Geometry.Edges.Select(e => new StringerObject(e.InitialVertex, e.FinalVertex, model.Database.BlockTableId))).ToArray());
+			newStrs.AddRange(newPanels.SelectMany(p => p.Geometry.Edges.Select(e => new StringerObject(e.InitialVertex, e.FinalVertex, model.BlockTableId))).ToArray());
 
 			// Remove mid nodes
 			nodes.RemoveRange(strsToDivide.Select(s => s.Geometry.CenterPoint).ToArray());
@@ -147,7 +147,7 @@ namespace SPMTool.Commands
 			var model     = ActiveModel;
 			var stringers = model.Stringers;
 			var nodes     = model.Nodes;
-			var database  = model.Database.AcadDatabase;
+			var database  = model.AcadDatabase;
 
 			// Prompt for select stringers
 			var strs = database.GetStringers("Select stringers to divide")?.ToArray();
@@ -196,7 +196,7 @@ namespace SPMTool.Commands
 		{
 			// Get model and database
 			var model    = ActiveModel;
-			var database = model.Database.AcadDatabase;
+			var database = model.AcadDatabase;
 
 			// Request objects to be selected in the drawing area
 			var pnls = database.GetPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)")?.ToArray();
@@ -219,7 +219,7 @@ namespace SPMTool.Commands
 		{
 			// Get model and database
 			var model    = ActiveModel;
-			var database = model.Database.AcadDatabase;
+			var database = model.AcadDatabase;
 
 			// Request objects to be selected in the drawing area
 			var strs = database.GetStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();

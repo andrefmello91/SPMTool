@@ -205,16 +205,16 @@ namespace SPMTool.Core.Elements
 		///     This method a linear object.
 		/// </remarks>
 		/// <inheritdoc />
-		public override INumberedElement GetElement() => GetElement(SPMModel.GetOpenedModel(BlockTableId)!.Nodes.GetElements().Cast<Node>().ToArray()!);
+		public override INumberedElement GetElement() => GetElement(GetOpenedModel(BlockTableId)!.Nodes.GetElements().Cast<Node>().ToArray()!);
 
 		/// <inheritdoc cref="GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
 		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
 		public Panel GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
 		{
-			var dat = SPMModel.GetOpenedModel(BlockTableId)!.Database;
+			var model = GetOpenedModel(BlockTableId)!;
 
-			_panel = Panel.FromNodes(nodes, Geometry, dat.ConcreteData.Parameters, dat.ConcreteData.ConstitutiveModel, Reinforcement, elementModel);
+			_panel = Panel.FromNodes(nodes, Geometry, model.ConcreteData.Parameters, model.ConcreteData.ConstitutiveModel, Reinforcement, elementModel);
 
 			_panel.Number = Number;
 

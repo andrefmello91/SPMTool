@@ -19,7 +19,7 @@ namespace SPMTool.Commands
 		[CommandMethod(CommandName.ConcreteStresses)]
 		public static void ToggleConcreteStresses()
 		{
-			var dat = ActiveModel.Database.AcadDatabase;
+			var dat = ActiveModel.AcadDatabase;
 			
 			if (!dat.Toggle(Layer.ConcreteStress))
 				return;
@@ -32,25 +32,25 @@ namespace SPMTool.Commands
 		///     Toggle view for cracks.
 		/// </summary>
 		[CommandMethod(CommandName.Cracks)]
-		public static void ToggleCracks() => ActiveModel.Database.AcadDatabase.Toggle(Layer.Cracks);
+		public static void ToggleCracks() => ActiveModel.AcadDatabase.Toggle(Layer.Cracks);
 
 		/// <summary>
 		///     Toggle view for displacements.
 		/// </summary>
 		[CommandMethod(CommandName.Displacements)]
-		public static void ToggleDisplacements() => ActiveModel.Database.AcadDatabase.Toggle(Layer.Displacements);
+		public static void ToggleDisplacements() => ActiveModel.AcadDatabase.Toggle(Layer.Displacements);
 
 		/// <summary>
 		///     Toggle view for forces.
 		/// </summary>
 		[CommandMethod(CommandName.Forces)]
-		public static void ToggleForces() => ActiveModel.Database.AcadDatabase.Toggle(Layer.Force);
+		public static void ToggleForces() => ActiveModel.AcadDatabase.Toggle(Layer.Force);
 
 		/// <summary>
 		///     Toggle view for nodes.
 		/// </summary>
 		[CommandMethod(CommandName.Nodes)]
-		public static void ToggleNodes()  => ActiveModel.Database.AcadDatabase.Toggle(Layer.ExtNode, Layer.IntNode);
+		public static void ToggleNodes()  => ActiveModel.AcadDatabase.Toggle(Layer.ExtNode, Layer.IntNode);
 
 		/// <summary>
 		///     Toggle view for panel forces.
@@ -58,7 +58,7 @@ namespace SPMTool.Commands
 		[CommandMethod(CommandName.PanelShear)]
 		public static void TogglePanelForces()
 		{
-			var dat = ActiveModel.Database.AcadDatabase;
+			var dat = ActiveModel.AcadDatabase;
 
 			if (!dat.Toggle(Layer.PanelForce))
 				return;
@@ -71,7 +71,7 @@ namespace SPMTool.Commands
 		///     Toggle view for panels.
 		/// </summary>
 		[CommandMethod(CommandName.Panels)]
-		public static void TogglePanels() => ActiveModel.Database.AcadDatabase.Toggle(Layer.Panel);
+		public static void TogglePanels() => ActiveModel.AcadDatabase.Toggle(Layer.Panel);
 
 		/// <summary>
 		///     Toggle view for panel stresses.
@@ -79,7 +79,7 @@ namespace SPMTool.Commands
 		[CommandMethod(CommandName.PanelStresses)]
 		public static void TogglePanelStresses()
 		{
-			var dat = ActiveModel.Database.AcadDatabase;
+			var dat = ActiveModel.AcadDatabase;
 			
 			if (!dat.Toggle(Layer.PanelStress))
 				return;
@@ -92,19 +92,19 @@ namespace SPMTool.Commands
 		///     Toggle view for stringer forces.
 		/// </summary>
 		[CommandMethod(CommandName.StringerForces)]
-		public static void ToggleStringerForces() => ActiveModel.Database.AcadDatabase.Toggle(Layer.StringerForce);
+		public static void ToggleStringerForces() => ActiveModel.AcadDatabase.Toggle(Layer.StringerForce);
 
 		/// <summary>
 		///     Toggle view for stringers.
 		/// </summary>
 		[CommandMethod(CommandName.Stringers)]
-		public static void ToggleStringers() => ActiveModel.Database.AcadDatabase.Toggle(Layer.Stringer);
+		public static void ToggleStringers() => ActiveModel.AcadDatabase.Toggle(Layer.Stringer);
 
 		/// <summary>
 		///     Toggle view for supports.
 		/// </summary>
 		[CommandMethod(CommandName.Supports)]
-		public static void ToggleSupports() => ActiveModel.Database.AcadDatabase.Toggle(Layer.Support);
+		public static void ToggleSupports() => ActiveModel.AcadDatabase.Toggle(Layer.Support);
 
 		/// <summary>
 		///     View data of a selected element.
@@ -114,7 +114,7 @@ namespace SPMTool.Commands
 		{
 			// Get model and database
 			var model    = ActiveModel;
-			var database = model.Database.AcadDatabase;
+			var database = model.AcadDatabase;
 
 			// Start a loop for viewing continuous elements
 			while (true)

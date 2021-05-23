@@ -87,10 +87,9 @@ namespace SPMTool.Core.Conditions
 			var insertionPoint = Position.ToPoint3d();
 
 			// Get database
-			var model    = SPMModel.GetOpenedModel(BlockTableId)!;
-			var database = model.Database;
+			var model    = GetOpenedModel(BlockTableId)!;
 
-			var block = database.AcadDatabase.GetReference(Block, insertionPoint, Layer, null, 0, Axis.Z, null, database.Settings.Units.ScaleFactor)!;
+			var block = model.AcadDatabase.GetReference(Block, insertionPoint, Layer, null, 0, Axis.Z, null, model.Settings.Units.ScaleFactor)!;
 
 			// Rotate the block
 			if (Direction is ComponentDirection.X)

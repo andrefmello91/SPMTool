@@ -4,14 +4,6 @@ using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Core;
-using SPMTool.Commands;
-
-using static SPMTool.Core.SPMModel;
-using static SPMTool.Core.SPMModel;
-using static SPMTool.Core.SPMModel;
-using AcadCommands = SPMTool.Commands.AcadCommands;
-
-[assembly: CommandClass(typeof(AcadCommands))]
 
 namespace SPMTool.Commands
 {
@@ -30,10 +22,10 @@ namespace SPMTool.Commands
 		public static void AddConstraint()
 		{
 			var model = SPMModel.ActiveModel;
-			var unit  = model.Database.Settings.Units.Geometry;
+			var unit  = model.Settings.Units.Geometry;
 			
 			// Request objects to be selected in the drawing area
-			var nds =  model.Database.AcadDatabase.GetNodes("Select nodes to add support conditions:", NodeType.External)?.ToArray();
+			var nds =  model.AcadDatabase.GetNodes("Select nodes to add support conditions:", NodeType.External)?.ToArray();
 
 			if (nds is null)
 				return;
@@ -43,7 +35,7 @@ namespace SPMTool.Commands
 
 			// Ask the user set the support conditions:
 			var defDirection = nds.Length == 1
-				? SPMModel.ActiveModel.Constraints.GetConstraintByPosition(nds[0].Position.ToPoint(unit)).Direction
+				? model.Constraints.GetConstraintByPosition(nds[0].Position.ToPoint(unit)).Direction
 				: ComponentDirection.None;
 
 			var options = Enum.GetNames(typeof(ComponentDirection));
@@ -72,10 +64,10 @@ namespace SPMTool.Commands
 		{
 			// Read units
 			var model = SPMModel.ActiveModel;
-			var units = model.Database.Settings.Units;
+			var units = model.Settings.Units;
 
 			// Request objects to be selected in the drawing area
-			var nds = model.Database.AcadDatabase.GetNodes("Select nodes to add load:", NodeType.External)?.ToArray();
+			var nds = model.AcadDatabase.GetNodes("Select nodes to add load:", NodeType.External)?.ToArray();
 
 			if (nds is null)
 				return;

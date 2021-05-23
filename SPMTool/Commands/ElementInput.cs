@@ -24,7 +24,7 @@ namespace SPMTool.Commands
 		{
 			var model  = ActiveModel;
 			var panels = model.Panels;
-			var unit = model.Database.Settings.Units.Geometry;
+			var unit = model.Settings.Units.Geometry;
 
 			// Erase result objects
 			model.AcadDocument.EraseObjects(SPMResults.ResultLayers);
@@ -33,7 +33,7 @@ namespace SPMTool.Commands
 			while (true)
 			{
 				// Prompt for user select 4 vertices of the panel
-				var nds =  model.Database.AcadDatabase.GetNodes("Select four nodes to be the vertices of the panel", NodeType.External)?.ToArray();
+				var nds =  model.AcadDatabase.GetNodes("Select four nodes to be the vertices of the panel", NodeType.External)?.ToArray();
 
 				if (nds is null)
 					goto Finish;
@@ -70,7 +70,7 @@ namespace SPMTool.Commands
 			var model     = ActiveModel;
 			var stringers = model.Stringers;
 			var nodes     = model.Nodes;
-			var unit      = model.Database.Settings.Units.Geometry;
+			var unit      = model.Settings.Units.Geometry;
 			
 			// Prompt for the start point of Stringer
 			var stPtn = model.Editor.GetPoint("Enter the start point:", unit: unit);

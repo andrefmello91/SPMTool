@@ -86,11 +86,6 @@ namespace SPMTool.Core
 		public ConstraintList Constraints { get; }
 
 		/// <summary>
-		///     Get the database of the model.
-		/// </summary>
-		public SPMModel Database { get; }
-
-		/// <summary>
 		///     Get the editor of current document.
 		/// </summary>
 		public Editor Editor => AcadDocument.Editor;
@@ -163,7 +158,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the text height for model objects.
 		/// </summary>
-		public double TextHeight => 30 * Database.Settings.Display.TextScale * Database.Settings.Units.ScaleFactor;
+		public double TextHeight => 30 * Settings.Display.TextScale * Settings.Units.ScaleFactor;
 
 		/// <summary>
 		///     Get coordinate system.
@@ -540,12 +535,12 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Turn off fillmode setting.
 		/// </summary>
-		public void SetFillMode() => Database.AcadDatabase.Fillmode = false;
+		public void SetFillMode() => AcadDatabase.Fillmode = false;
 
 		/// <summary>
 		///     Turn on line weight display.
 		/// </summary>
-		public void SetLineWeightDisplay() => Database.AcadDatabase.LineWeightDisplay = true;
+		public void SetLineWeightDisplay() => AcadDatabase.LineWeightDisplay = true;
 
 		/// <summary>
 		///     Start a new transaction in <see cref="AcadDatabase" />.
@@ -582,8 +577,8 @@ namespace SPMTool.Core
 		public void UpdatePointSize()
 		{
 			// Set the style for all point objects in the drawing
-			AcadDocument.Database.Pdmode = 32;
-			AcadDocument.Database.Pdsize = 40 * Database.Settings.Units.ScaleFactor * Database.Settings.Display.NodeScale;
+			AcadDatabase.Pdmode = 32;
+			AcadDatabase.Pdsize = 40 * Settings.Units.ScaleFactor * Settings.Display.NodeScale;
 			Editor.Regen();
 		}
 
@@ -593,7 +588,7 @@ namespace SPMTool.Core
 		public void UpdateTextHeight()
 		{
 			var objs = Forces.Select(f => f.ObjectId).ToList();
-			var results = Database.AcadDatabase.GetDocument()
+			var results = AcadDocument
 				.GetObjectIds(Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks)?
 				.ToList();
 
@@ -653,7 +648,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Set events to object creator lists.
 		/// </summary>
-		private void SetEvents<TDBObjectCreator>(DBObjectCreatorList<TDBObjectCreator> list)
+		private void SetEvents<TDBObjectCreator>(IEList<TDBObjectCreator> list)
 			where TDBObjectCreator : IDBObjectCreator, IEquatable<TDBObjectCreator>, IComparable<TDBObjectCreator>
 		{
 			list.ItemAdded    += On_ObjectAdded;

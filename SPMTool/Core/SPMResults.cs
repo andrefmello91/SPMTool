@@ -51,8 +51,8 @@ namespace SPMTool.Core
 			
 			// Set properties
 			MaxStringerForce  = _model.Stringers.Select(s => s.MaxForce).Max();
-			ResultScaleFactor = _model.Database.Settings.Display.ResultScale * _model.Panels.Select(p => p.BlockScaleFactor()).Min();
-			TextHeight        = Math.Min(40 * ResultScaleFactor * _model.Database.Settings.Display.TextScale, _model.TextHeight);
+			ResultScaleFactor = _model.Settings.Display.ResultScale * _model.Panels.Select(p => p.BlockScaleFactor()).Min();
+			TextHeight        = Math.Min(40 * ResultScaleFactor * _model.Settings.Display.TextScale, _model.TextHeight);
 		}
 		
 		#region Methods
@@ -82,7 +82,7 @@ namespace SPMTool.Core
 		/// </summary>
 		private void DrawDisplacedModel()
 		{
-			var mFactor = _model.Database.Settings.Display.DisplacementMagnifier;
+			var mFactor = _model.Settings.Display.DisplacementMagnifier;
 
 			var displaced = _model.Stringers.Select(s => s.GetDisplaced(mFactor)).ToList();
 
@@ -94,8 +94,8 @@ namespace SPMTool.Core
 		/// </summary>
 		private void DrawPanelResults()
 		{
-			var sUnit = _model.Database.Settings.Units.PanelStresses;
-			var cUnit = _model.Database.Settings.Units.CrackOpenings;
+			var sUnit = _model.Settings.Units.PanelStresses;
+			var cUnit = _model.Settings.Units.CrackOpenings;
 			
 			// Get panel blocks
 			var blocks = _model.Panels.SelectMany(p => p.GetBlocks(ResultScaleFactor, TextHeight, sUnit, cUnit)).ToList();
@@ -111,8 +111,8 @@ namespace SPMTool.Core
 		private void DrawStringerResults()
 		{
 			var stringers = _model.Stringers;
-			var fUnit     = _model.Database.Settings.Units.StringerForces;
-			var cUnit     = _model.Database.Settings.Units.CrackOpenings;
+			var fUnit     = _model.Settings.Units.StringerForces;
+			var cUnit     = _model.Settings.Units.CrackOpenings;
 
 			_model.AcadDocument.AddObjects(stringers.Select(s => s.CreateDiagram(ResultScaleFactor, TextHeight, MaxStringerForce, fUnit)).ToList());
 

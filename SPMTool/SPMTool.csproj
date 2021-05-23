@@ -149,7 +149,7 @@
   <ItemGroup>
     <Compile Include="Commands\CommandHandler.cs" />
     <Compile Include="Commands\CommandNames.cs" />
-    <Compile Include="Commands\ConstraintInput.cs" />
+    <Compile Include="Commands\ConditionInput.cs" />
     <Compile Include="Commands\ElementEditor.cs" />
     <Compile Include="Commands\ElementInput.cs" />
     <Compile Include="Commands\Settings.cs" />

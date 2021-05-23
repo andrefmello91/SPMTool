@@ -198,7 +198,7 @@ namespace SPMTool
 		public static int? GetMonitoredIndex(this SPMModel model)
 		{
 			// Ask user to select a node
-			var nd = model.Database.AcadDatabase.GetEntity("Select a node to monitor displacement:", new[] { Layer.ExtNode, Layer.IntNode });
+			var nd = model.AcadDatabase.GetEntity("Select a node to monitor displacement:", new[] { Layer.ExtNode, Layer.IntNode });
 
 			if (nd is null)
 				return null;
