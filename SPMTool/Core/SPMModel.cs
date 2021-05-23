@@ -26,7 +26,7 @@ namespace SPMTool.Core
 	/// <summary>
 	///     Model class
 	/// </summary>
-	public partial class SPMModel
+	public class SPMModel
 	{
 
 		#region Fields

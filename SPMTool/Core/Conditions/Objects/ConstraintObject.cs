@@ -68,7 +68,7 @@ namespace SPMTool.Core.Conditions
 			var position = reference.Position.ToPoint(unit);
 
 			return
-				new ConstraintObject(position, Constraint.Free, reference.ObjectId.Database.BlockTableId)
+				new ConstraintObject(position, Constraint.Free, reference.BlockTableRecord.Database.BlockTableId)
 				{
 					ObjectId = reference.ObjectId
 				};

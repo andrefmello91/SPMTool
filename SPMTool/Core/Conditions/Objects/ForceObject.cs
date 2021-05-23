@@ -76,7 +76,7 @@ namespace SPMTool.Core.Conditions
 			var position = reference.Position.ToPoint(unit);
 
 			return 
-				new ForceObject(position, PlaneForce.Zero, reference.ObjectId.Database.BlockTableId)
+				new ForceObject(position, PlaneForce.Zero, reference.BlockTableRecord.Database.BlockTableId)
 				{
 					ObjectId = reference.ObjectId
 				};

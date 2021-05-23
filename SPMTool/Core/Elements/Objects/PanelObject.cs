@@ -148,7 +148,7 @@ namespace SPMTool.Core.Elements
 		/// <param name="solid">The <see cref="Solid" /> object of the stringer.</param>
 		/// <param name="unit">The unit for geometry.</param>
 		public static PanelObject From(Solid solid, LengthUnit unit) =>
-			new (solid.GetVertices().ToArray(), solid.ObjectId.Database.BlockTableId, unit)
+			new (solid.GetVertices().ToArray(), solid.Database.BlockTableId, unit)
 			{
 				ObjectId = solid.ObjectId
 			};

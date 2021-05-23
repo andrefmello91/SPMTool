@@ -127,7 +127,7 @@ namespace SPMTool.Core.Elements
 			pts.Sort();
 
 			return
-				new StringerObject(pts[0], pts[1], line.ObjectId.Database.BlockTableId)
+				new StringerObject(pts[0], pts[1], line.Database.BlockTableId)
 				{
 					ObjectId = line.ObjectId
 				};

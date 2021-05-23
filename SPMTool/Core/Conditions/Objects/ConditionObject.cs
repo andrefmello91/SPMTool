@@ -71,11 +71,6 @@ namespace SPMTool.Core.Conditions
 
 		public virtual TValue Value { get; protected set; }
 
-		/// <summary>
-		///		The <see cref="ObjectId"/> of the block table to get the reference from.
-		/// </summary>
-		public ObjectId BlockTableId { get; }
-		
 		#endregion
 
 		#endregion
