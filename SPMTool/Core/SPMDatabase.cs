@@ -1,20 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.EList;
 using andrefmello91.Material.Reinforcement;
 using andrefmello91.SPMElements.StringerProperties;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using SPMTool.Application;
-using SPMTool.Core.Blocks;
 using SPMTool.Core.Elements;
 using SPMTool.Core.Materials;
-using SPMTool.Enums;
 using UnitsNet;
-using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
-
 #nullable enable
 
 namespace SPMTool.Core
@@ -25,43 +18,42 @@ namespace SPMTool.Core
 	public class SPMDatabase
 	{
 
-		#region Fields
-
-		/// <summary>
-		///     Application settings.
-		/// </summary>
-		public Settings Settings { get; }
-
-		/// <summary>
-		///     Concrete parameters and constitutive model.
-		/// </summary>
-		public ConcreteData ConcreteData { get; }
-
-		#endregion
-
 		#region Properties
 
+		/// <summary>
+		///     Get current <see cref="Autodesk.AutoCAD.DatabaseServices.Database" />.
+		/// </summary>
+		public static SPMDatabase ActiveDatabase => SPMModel.ActiveModel.Database;
+
+		/// <summary>
+		///     Get the opened SPM databases.
+		/// </summary>
 		public static List<SPMDatabase> OpenedDatabases => SPMModel.OpenedModels.Select(m => m.Database).ToList();
-		
+
+		/// <summary>
+		///     Get the AutoCAD database related to this.
+		/// </summary>
+		public Database AcadDatabase { get; }
+
 		/// <summary>
 		///     Get the Block Table <see cref="ObjectId" />.
 		/// </summary>
 		public ObjectId BlockTableId => AcadDatabase.BlockTableId;
 
 		/// <summary>
-		///		Get the AutoCAD database related to this.
+		///     Concrete parameters and constitutive model.
 		/// </summary>
-		public Database AcadDatabase { get; }
-		
+		public ConcreteData ConcreteData { get; }
+
 		/// <summary>
-		///		Get the document name associated to this database.
+		///     Get the document name associated to this database.
 		/// </summary>
 		public string DocName { get; }
-		
+
 		/// <summary>
-		///     Get current <see cref="Autodesk.AutoCAD.DatabaseServices.Database" />.
+		///     List of distinct widths from objects in the model.
 		/// </summary>
-		public static SPMDatabase ActiveDatabase => SPMModel.ActiveModel.Database;
+		public EList<Length> ElementWidths { get; }
 
 		/// <summary>
 		///     Get the Layer Table <see cref="ObjectId" />.
@@ -72,6 +64,16 @@ namespace SPMTool.Core
 		///     Get Named Objects <see cref="ObjectId" />.
 		/// </summary>
 		public ObjectId NodId => AcadDatabase.NamedObjectsDictionaryId;
+
+		/// <summary>
+		///     List of distinct reinforcements of panels in the model.
+		/// </summary>
+		public EList<WebReinforcementDirection> PanelReinforcements { get; }
+
+		/// <summary>
+		///     Application settings.
+		/// </summary>
+		public Settings Settings { get; }
 
 		/// <summary>
 		///     List of distinct steels of elements in the model.
@@ -87,34 +89,24 @@ namespace SPMTool.Core
 		///     List of distinct reinforcements of stringers in the model.
 		/// </summary>
 		public EList<UniaxialReinforcement> StringerReinforcements { get; }
-		
-		/// <summary>
-		///     List of distinct widths from objects in the model.
-		/// </summary>
-		public EList<Length> ElementWidths { get; }
-
-		/// <summary>
-		///     List of distinct reinforcements of panels in the model.
-		/// </summary>
-		public EList<WebReinforcementDirection> PanelReinforcements { get; }
 
 		#endregion
 
 		#region Constructors
 
 		/// <summary>
-		///		Create a SPM database.
+		///     Create a SPM database.
 		/// </summary>
 		/// <param name="model">The SPM model.</param>
 		public SPMDatabase(SPMModel model)
 		{
 			AcadDatabase = model.AcadDocument.Database;
 			DocName      = model.Name;
-			
+
 			// Get app settings
 			Settings     = new Settings(AcadDatabase);
 			ConcreteData = new ConcreteData(AcadDatabase);
-			
+
 			// Get properties
 			StringerCrossSections  = GetCrossSections(model.Stringers);
 			ElementWidths          = model.Stringers.GetWidths().Concat(model.Panels.GetWidths()).Distinct().ToEList() ?? new EList<Length>();
@@ -128,25 +120,25 @@ namespace SPMTool.Core
 		#region Methods
 
 		/// <summary>
-		///		Get an opened database from a document name.
+		///     Get an opened database from a document name.
 		/// </summary>
 		/// <param name="documentName">The document name.</param>
 		public static SPMDatabase? GetOpenedDatabase(string documentName) => OpenedDatabases.Find(d => d.DocName == documentName);
 
 		/// <summary>
-		///		Get an opened database from an AutoCAD database.
+		///     Get an opened database from an AutoCAD database.
 		/// </summary>
 		/// <param name="database">The AutoCAD database.</param>
 		public static SPMDatabase GetOpenedDatabase(Database database) => GetOpenedDatabase(database.GetDocument().Name)!;
 
 		/// <summary>
-		///		Get an opened database from an <see cref="ObjectId"/>.
+		///     Get an opened database from an <see cref="ObjectId" />.
 		/// </summary>
-		/// <param name="objectId">The <see cref="ObjectId"/>.</param>
+		/// <param name="objectId">The <see cref="ObjectId" />.</param>
 		public static SPMDatabase? GetOpenedDatabase(ObjectId objectId) => !objectId.IsNull
 			? GetOpenedDatabase(objectId.Database)
 			: null;
-		
+
 		/// <summary>
 		///     Read dictionary entries that contains <paramref name="name" />.
 		/// </summary>
@@ -279,7 +271,11 @@ namespace SPMTool.Core
 
 			return list;
 		}
-		
+
+		#endregion
+
+		#region Events
+
 		/// <summary>
 		///     Event to run when an item is added to <see cref="StringerCrossSections" />.
 		/// </summary>
