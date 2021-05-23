@@ -177,7 +177,6 @@
     <Compile Include="Core\Conditions\Objects\ConditionObject.cs" />
     <Compile Include="Core\Conditions\Objects\ConstraintObject.cs" />
     <Compile Include="Core\Conditions\Objects\ForceObject.cs" />
-    <Compile Include="Core\SPMDatabase.cs" />
     <Compile Include="Core\Elements\ElementData.cs" />
     <Compile Include="Core\Elements\Lists\NodeList.cs" />
     <Compile Include="Core\Elements\Lists\PanelList.cs" />

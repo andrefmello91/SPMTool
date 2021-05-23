@@ -25,7 +25,7 @@ namespace SPMTool.Application.UserInterface
 			"Secant"
 		};
 
-		private readonly SPMDatabase _database;
+		private readonly SPMModel _database;
 		
 		#region Properties
 
@@ -63,7 +63,7 @@ namespace SPMTool.Application.UserInterface
 			SolverBox.ItemsSource = SolverNames;
 
 			// Read saved settings
-			_database        = SPMDatabase.ActiveDatabase;
+			_database        = SPMModel.ActiveModel;
 			AnalysisSettings = _database.Settings.Analysis;
 		}
 

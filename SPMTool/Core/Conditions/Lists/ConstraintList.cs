@@ -6,6 +6,7 @@ using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
+using UnitsNet.Units;
 
 #nullable enable
 
@@ -49,14 +50,15 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Read all <see cref="ConstraintObject" />'s from drawing.
 		/// </summary>
-		public static ConstraintList From(Document document)
+		/// <param name="unit">The unit for geometry.</param>
+		public static ConstraintList From(Document document, LengthUnit unit)
 		{
 			var blocks = GetObjects(document).ToArray();
 			var bId    = document.Database.BlockTableId;
 			
 			var list = blocks.IsNullOrEmpty()
 				? new ConstraintList(bId)
-				: new ConstraintList(blocks.Select(ConstraintObject.From), bId);
+				: new ConstraintList(blocks.Select(b => ConstraintObject.From(b, unit)), bId);
 			
 			return list;
 		}

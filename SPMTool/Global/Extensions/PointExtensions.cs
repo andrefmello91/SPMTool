@@ -96,9 +96,9 @@ namespace SPMTool
 
 		/// <inheritdoc cref="ToPoint(Point3d, LengthUnit)" />
 		/// <remarks>
-		///     This uses unit from <see cref="SPMDatabase.Settings" />.
+		///     This uses unit from <see cref="SPMModel.Settings" />.
 		/// </remarks>
-		public static Point ToPoint(this Point3d point3d) => new(point3d.X, point3d.Y, SPMDatabase.ActiveDatabase.Settings.Units.Geometry);
+		public static Point ToPoint(this Point3d point3d) => new(point3d.X, point3d.Y, SPMModel.ActiveModel.Settings.Units.Geometry);
 
 		/// <summary>
 		///     Convert a <see cref="Point" /> to <see cref="Point3d" />.
@@ -115,7 +115,7 @@ namespace SPMTool
 
 		/// <inheritdoc cref="ToPoint3d(Point, LengthUnit)" />
 		/// <inheritdoc cref="ToPoint(Point3d)" select="remarks" />
-		public static Point3d ToPoint3d(this Point point) => point.ToPoint3d(SPMDatabase.ActiveDatabase.Settings.Units.Geometry);
+		public static Point3d ToPoint3d(this Point point) => point.ToPoint3d(SPMModel.ActiveModel.Settings.Units.Geometry);
 
 		/// <summary>
 		///     Convert a collection of <see cref="Point" />'s to a collection of <see cref="Point3d" />'s.

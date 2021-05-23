@@ -5,6 +5,7 @@ using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
+using UnitsNet.Units;
 
 #nullable enable
 
@@ -48,14 +49,16 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Read all <see cref="ForceObject" />'s from a document.
 		/// </summary>
-		public static ForceList From(Document document)
+		/// <param name="document">The AutoCAD document.</param>
+		/// <param name="unit">The unit for geometry.</param>
+		public static ForceList From(Document document, LengthUnit unit)
 		{
 			var blocks = GetObjects(document).ToArray();
 			var bId    = document.Database.BlockTableId;
 			
 			var list = blocks.IsNullOrEmpty()
 				? new ForceList(bId)
-				: new ForceList(blocks.Select(ForceObject.From), bId);
+				: new ForceList(blocks.Select(b => ForceObject.From(b, unit)), bId);
 
 			return list;
 
@@ -83,7 +86,7 @@ namespace SPMTool.Core.Conditions
 		/// <inheritdoc cref="ConditionList{T1,T2}.GetByPosition(Point)" />
 		public PlaneForce GetForceByPosition(Point position) => 
 			(GetByPosition(position)?.Value ?? PlaneForce.Zero)
-			.Convert(SPMDatabase.GetOpenedDatabase(BlockTableId)!.Settings.Units.AppliedForces);
+			.Convert(SPMModel.GetOpenedModel(BlockTableId)!.Settings.Units.AppliedForces);
 
 		#endregion
 

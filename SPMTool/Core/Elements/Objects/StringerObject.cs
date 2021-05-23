@@ -13,7 +13,7 @@ using SPMTool.Enums;
 
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Core.SPMDatabase;
+using static SPMTool.Core.SPMModel;
 
 #nullable enable
 
@@ -114,11 +114,9 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="StringerObject" /> from an existing line in the drawing.
 		/// </summary>
 		/// <param name="line">The <see cref="Line" /> object of the stringer.</param>
-		public static StringerObject From(Line line)
+		/// <param name="unit">The unit for geometry.</param>
+		public static StringerObject From(Line line, LengthUnit unit)
 		{
-			var database = GetOpenedDatabase(line.ObjectId)!;
-			var unit     = database.Settings.Units.Geometry;
-			
 			var pts = new List<Point>
 			{
 				line.StartPoint.ToPoint(unit),
@@ -129,7 +127,7 @@ namespace SPMTool.Core.Elements
 			pts.Sort();
 
 			return
-				new StringerObject(pts[0], pts[1], database.BlockTableId)
+				new StringerObject(pts[0], pts[1], line.ObjectId.Database.BlockTableId)
 				{
 					ObjectId = line.ObjectId
 				};
@@ -196,7 +194,7 @@ namespace SPMTool.Core.Elements
 		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
 		public Stringer GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
 		{
-			var database     = GetOpenedDatabase(BlockTableId)!;
+			var database     = GetOpenedModel(BlockTableId)!;
 			_stringer        = Stringer.FromNodes(nodes, Geometry.InitialPoint, Geometry.EndPoint, Geometry.CrossSection, database.ConcreteData.Parameters, database.ConcreteData.ConstitutiveModel, Reinforcement?.Clone(), elementModel);
 			_stringer.Number = Number;
 			return _stringer;

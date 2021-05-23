@@ -13,7 +13,7 @@ using SPMTool.Enums;
 
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Core.SPMDatabase;
+using static SPMTool.Core.SPMModel;
 
 
 #nullable enable
@@ -146,22 +146,18 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="PanelObject" /> from an existing solid in the drawing.
 		/// </summary>
 		/// <param name="solid">The <see cref="Solid" /> object of the stringer.</param>
-		public static PanelObject From(Solid solid)
-		{
-			var database = GetOpenedDatabase(solid.ObjectId)!;
-
-			return
-				new PanelObject(solid.GetVertices().ToArray(), database.BlockTableId, database.Settings.Units.Geometry)
-				{
-					ObjectId = solid.ObjectId
-				};
-		}
+		/// <param name="unit">The unit for geometry.</param>
+		public static PanelObject From(Solid solid, LengthUnit unit) =>
+			new (solid.GetVertices().ToArray(), solid.ObjectId.Database.BlockTableId, unit)
+			{
+				ObjectId = solid.ObjectId
+			};
 
 		/// <summary>
 		///     Calculate the scale factor for block insertion.
 		/// </summary>
 		public double BlockScaleFactor() => 
-			UnitMath.Min(Geometry.Dimensions.a, Geometry.Dimensions.b).As(GetOpenedDatabase(BlockTableId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter) * 0.001;
+			UnitMath.Min(Geometry.Dimensions.a, Geometry.Dimensions.b).As(GetOpenedModel(BlockTableId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter) * 0.001;
 
 		/// <summary>
 		///     Divide this <see cref="PanelObject" /> into new ones.
@@ -287,7 +283,7 @@ namespace SPMTool.Core.Elements
 
 			return data is null
 				? null
-				: Length.FromMillimeters(data[0].ToDouble()).ToUnit(GetOpenedDatabase(BlockTableId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter);
+				: Length.FromMillimeters(data[0].ToDouble()).ToUnit(GetOpenedModel(BlockTableId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter);
 		}
 
 		/// <summary>

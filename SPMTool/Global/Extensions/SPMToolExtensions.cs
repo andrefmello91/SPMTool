@@ -17,6 +17,7 @@ using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using UnitsNet;
+using UnitsNet.Units;
 #nullable enable
 
 namespace SPMTool
@@ -167,14 +168,15 @@ namespace SPMTool
 		///     Create a <see cref="IDBObjectCreator{TDbObject}" /> from this <paramref name="dbObject" />.
 		/// </summary>
 		/// <param name="dbObject">The <see cref="DBObject" />.</param>
-		public static IDBObjectCreator? CreateSPMObject(this DBObject? dbObject) =>
+		/// <param name="unit">The unit for geometry.</param>
+		public static IDBObjectCreator? CreateSPMObject(this DBObject? dbObject, LengthUnit unit) =>
 			dbObject switch
 			{
-				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => NodeObject.From(p),
-				Line l when l.Layer == $"{Layer.Stringer}"                                    => StringerObject.From(l),
-				Solid s when s.Layer == $"{Layer.Panel}"                                      => PanelObject.From(s),
-				BlockReference b when b.Layer == $"{Layer.Force}"                             => ForceObject.From(b),
-				BlockReference b when b.Layer == $"{Layer.Support}"                           => ConstraintObject.From(b),
+				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => NodeObject.From(p, unit),
+				Line l when l.Layer == $"{Layer.Stringer}"                                    => StringerObject.From(l, unit),
+				Solid s when s.Layer == $"{Layer.Panel}"                                      => PanelObject.From(s, unit),
+				BlockReference b when b.Layer == $"{Layer.Force}"                             => ForceObject.From(b, unit),
+				BlockReference b when b.Layer == $"{Layer.Support}"                           => ConstraintObject.From(b, unit),
 				_                                                                             => null
 			};
 
@@ -349,7 +351,7 @@ namespace SPMTool
 		///     Get a SPM object from this <paramref name="objectId" />.
 		/// </summary>
 		/// <param name="objectId">The <see cref="ObjectId" />.</param>
-		public static IDBObjectCreator? GetSPMObject(this ObjectId objectId) => SPMDatabase.GetOpenedDatabase(objectId)?.AcadDatabase.GetObject(objectId)?.GetSPMObject();
+		public static IDBObjectCreator? GetSPMObject(this ObjectId objectId) => SPMModel.GetOpenedModel(objectId)?.AcadDatabase.GetObject(objectId)?.GetSPMObject();
 
 		/// <summary>
 		///     Returns a <see cref="SelectionFilter" /> for objects in this <paramref name="layer" />.

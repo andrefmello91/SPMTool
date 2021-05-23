@@ -13,6 +13,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 
 using UnitsNet;
+using UnitsNet.Units;
 #nullable enable
 
 namespace SPMTool.Core.Elements
@@ -57,15 +58,15 @@ namespace SPMTool.Core.Elements
 		///     Read all the <see cref="PanelObject" />'s in the drawing.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
-		[return: NotNull]
-		public static PanelList From(Document document)
+		/// <param name="unit">The unit for geometry.</param>
+		public static PanelList From(Document document, LengthUnit unit)
 		{
 			var solids = GetObjects(document).ToArray();
 			var bId    = document.Database.BlockTableId;
 
 			return solids.IsNullOrEmpty() 
 				? new PanelList(bId)
-				: new PanelList(solids.Select(PanelObject.From), bId);
+				: new PanelList(solids.Select(s => PanelObject.From(s, unit)), bId);
 		}
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
@@ -91,44 +92,64 @@ namespace SPMTool.Core.Elements
 		///     <paramref name="vertices" />.
 		/// </summary>
 		/// <param name="vertices">The collection of <see cref="Vertices" /> required.</param>
-		public IEnumerable<PanelObject>? GetByVertices(IEnumerable<Vertices>? vertices) => this.Where(p => vertices.Contains(p.Vertices));
+		public IEnumerable<PanelObject?> GetByVertices(IEnumerable<Vertices> vertices) =>
+			this.Where(p => vertices.Contains(p.Vertices));
 
 		/// <summary>
 		///     Get the <see cref="Panel" />'s associated to objects in this collection.
 		/// </summary>
 		/// <inheritdoc cref="PanelObject.GetElement(IEnumerable{Node}, ElementModel)" />
 		[return: NotNull]
-		public IEnumerable<Panel> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) => this.Select(s => s.GetElement(nodes, elementModel));
+		public IEnumerable<Panel> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) =>
+			this.Select(s => s.GetElement(nodes, elementModel));
 
 		/// <summary>
 		///     Get the list of <see cref="PanelGeometry" />'s from this collection.
 		/// </summary>
-		public List<PanelGeometry> GetGeometries() => GetProperties();
+		public IEnumerable<PanelGeometry> GetGeometries() => GetProperties();
 
 		/// <summary>
 		///     Get the list of distinct <see cref="WebReinforcementDirection" />'s in this collection.
 		/// </summary>
-		public List<WebReinforcementDirection?> GetReinforcementDirections() => this.SelectMany(p => new[] { p.Reinforcement?.DirectionX, p.Reinforcement?.DirectionY }).Distinct().OrderBy(r => r).ToList();
+		public IEnumerable<WebReinforcementDirection> GetReinforcementDirections() => 
+			this.SelectMany(p => new[] { p.Reinforcement?.DirectionX, p.Reinforcement?.DirectionY })
+				.Where(r => r is not null)
+				.Distinct()
+				.OrderBy(r => r)!;
 
 		/// <summary>
 		///     Get the list of distinct <see cref="WebReinforcement" />'s in this collection.
 		/// </summary>
-		public List<WebReinforcement?> GetReinforcements() => this.Select(p => p.Reinforcement).Distinct().OrderBy(r => r).ToList();
+		public IEnumerable<WebReinforcement> GetReinforcements() => 
+			this.Select(p => p.Reinforcement)
+				.Where(r => r is not null)
+				.Distinct()
+				.OrderBy(r => r)!;
 
 		/// <summary>
 		///     Get the list of distinct <see cref="Steel" />'s in this collection.
 		/// </summary>
-		public List<Steel?> GetSteels() => this.SelectMany(p => new[] { p.Reinforcement?.DirectionX?.Steel, p.Reinforcement?.DirectionY?.Steel }).Distinct().OrderBy(r => r).ToList();
+		public IEnumerable<Steel> GetSteels() => 
+			this.SelectMany(p => new[] { p.Reinforcement?.DirectionX?.Steel, p.Reinforcement?.DirectionY?.Steel })
+				.Where(s => s is not null)
+				.Distinct()
+				.OrderBy(r => r)!;
 
 		/// <summary>
 		///     Get the list of <see cref="Vertices" />'s from this collection.
 		/// </summary>
-		public List<Vertices> GetVertices() => GetGeometries().Select(g => g.Vertices).ToList();
+		public IEnumerable<Vertices> GetVertices() => 
+			GetGeometries()
+				.Select(g => g.Vertices);
 
 		/// <summary>
 		///     Get the list of distinct widths from this collection.
 		/// </summary>
-		public List<Length> GetWidths() => GetGeometries().Select(g => g.Width).Distinct().OrderBy(w => w).ToList();
+		public IEnumerable<Length> GetWidths() => 
+			GetGeometries()
+				.Select(g => g.Width)
+				.Distinct()
+				.OrderBy(w => w);
 
 		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)" />
 		/// <param name="vertices">The <see cref="Vertices" /> of panel to remove.</param>
@@ -145,7 +166,9 @@ namespace SPMTool.Core.Elements
 		{
 			Clear(false);
 
-			AddRange(From(SPMModel.GetOpenedModel(BlockTableId)!.AcadDocument), false);
+			var model = SPMModel.GetOpenedModel(BlockTableId)!;
+
+			AddRange(From(model.AcadDocument, model.Settings.Units.Geometry), false);
 		}
 
 		#endregion

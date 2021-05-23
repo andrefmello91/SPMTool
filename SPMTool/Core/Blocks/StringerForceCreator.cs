@@ -294,7 +294,7 @@ namespace SPMTool.Core.Blocks
 		DBObject? IDBObjectCreator.GetObject() => GetObject();
 
 		/// <inheritdoc />
-		public Group? GetObject() => (Group?) SPMDatabase.GetOpenedDatabase(BlockTableId)?.AcadDatabase.GetObject(ObjectId);
+		public Group? GetObject() => (Group?) SPMModel.GetOpenedModel(BlockTableId)?.AcadDatabase.GetObject(ObjectId);
 
 		#endregion
 

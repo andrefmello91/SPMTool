@@ -10,7 +10,7 @@ using SPMTool.Enums;
 
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Core.SPMDatabase;
+using static SPMTool.Core.SPMModel;
 
 #nullable enable
 
@@ -70,14 +70,13 @@ namespace SPMTool.Core.Conditions
 		///     Read a <see cref="ForceObject" /> from a <see cref="BlockReference" />.
 		/// </summary>
 		/// <param name="reference">The <see cref="BlockReference" /> object of the force.</param>
-		public static ForceObject From(BlockReference reference)
+		/// <param name="unit">The unit for geometry.</param>
+		public static ForceObject From(BlockReference reference, LengthUnit unit)
 		{
-			var database = GetOpenedDatabase(reference.ObjectId)!;
-			
-			var position = reference.Position.ToPoint(database.Settings.Units.Geometry);
+			var position = reference.Position.ToPoint(unit);
 
 			return 
-				new ForceObject(position, PlaneForce.Zero, database.BlockTableId)
+				new ForceObject(position, PlaneForce.Zero, reference.ObjectId.Database.BlockTableId)
 				{
 					ObjectId = reference.ObjectId
 				};

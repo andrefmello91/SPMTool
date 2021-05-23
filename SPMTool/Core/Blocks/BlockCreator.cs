@@ -128,7 +128,7 @@ namespace SPMTool.Core.Blocks
 		public virtual BlockReference CreateObject()
 		{
 			// Get database
-			var database = SPMDatabase.GetOpenedDatabase(BlockTableId)!;
+			var database = SPMModel.GetOpenedModel(BlockTableId)!;
 
 			return
 				database.AcadDatabase.GetReference(Block, Position.ToPoint3d(), Layer, ColorCode, RotationAngle, RotationAxis, RotationPoint?.ToPoint3d(), ScaleFactor)!;
@@ -148,7 +148,7 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <inheritdoc />
-		public BlockReference? GetObject() => (BlockReference?) SPMDatabase.GetOpenedDatabase(BlockTableId)?.AcadDatabase.GetObject(ObjectId);
+		public BlockReference? GetObject() => (BlockReference?) SPMModel.GetOpenedModel(BlockTableId)?.AcadDatabase.GetObject(ObjectId);
 
 		/// <inheritdoc />
 		DBObject? IDBObjectCreator.GetObject() => GetObject();

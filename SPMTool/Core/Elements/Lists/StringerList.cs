@@ -13,6 +13,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 
 using UnitsNet;
+using UnitsNet.Units;
 #nullable enable
 
 namespace SPMTool.Core.Elements
@@ -57,14 +58,15 @@ namespace SPMTool.Core.Elements
 		///     Read all the <see cref="StringerObject" />'s in the drawing.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
-		public static StringerList From(Document document)
+		/// <param name="unit">The unit for geometry.</param>
+		public static StringerList From(Document document, LengthUnit unit)
 		{
 			var lines = GetObjects(document).ToArray();
 			var bId   = document.Database.BlockTableId;
 
 			return lines.IsNullOrEmpty() 
 				? new StringerList(bId)
-				: new StringerList(lines.Select(StringerObject.From), bId);
+				: new StringerList(lines.Select(l => StringerObject.From(l, unit)), bId);
 		}
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
@@ -82,23 +84,30 @@ namespace SPMTool.Core.Elements
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		/// <param name="geometry">The <see cref="StringerGeometry" /> to add.</param>
-		public bool Add(StringerGeometry geometry, bool raiseEvents = true, bool sort = true) => Add(new StringerObject(geometry, BlockTableId), raiseEvents, sort);
+		public bool Add(StringerGeometry geometry, bool raiseEvents = true, bool sort = true) => 
+			Add(new StringerObject(geometry, BlockTableId), raiseEvents, sort);
 
 		/// <inheritdoc cref="EList{T}.AddRange(IEnumerable{T}, bool, bool)" />
 		/// <param name="geometries">The <see cref="StringerGeometry" />'s to add.</param>
-		public int AddRange(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true) => AddRange(geometries?.Select(g => new StringerObject(g, BlockTableId)), raiseEvents, sort);
+		public int AddRange(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true) => 
+			AddRange(geometries?.Select(g => new StringerObject(g, BlockTableId)), raiseEvents, sort);
 
 		/// <summary>
 		///     Get the list of distinct <see cref="CrossSection" />'s from objects in this collection.
 		/// </summary>
-		public List<CrossSection> GetCrossSections() => GetGeometries().Select(g => g.CrossSection).Distinct().OrderBy(c => c).ToList();
+		public IEnumerable<CrossSection> GetCrossSections() => 
+			GetGeometries()
+				.Select(g => g.CrossSection)
+				.Distinct()
+				.OrderBy(c => c);
 
 		/// <summary>
 		///     Get the <see cref="Stringer" />'s associated to objects in this collection.
 		/// </summary>
 		/// <inheritdoc cref="StringerObject.GetElement(IEnumerable{Node}, ElementModel)" />
 		[return: NotNull]
-		public IEnumerable<Stringer> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) => this.Select(s => s.GetElement(nodes, elementModel));
+		public IEnumerable<Stringer> GetElements(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic) => 
+			this.Select(s => s.GetElement(nodes, elementModel));
 
 		/// <summary>
 		///     Get a <see cref="StringerObject" /> from this collection that matches <paramref name="panelEdge" />.
@@ -128,17 +137,29 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the list of distinct <see cref="UniaxialReinforcement" />'s of this collection.
 		/// </summary>
-		public List<UniaxialReinforcement?> GetReinforcements() => this.Select(s => s.Reinforcement).Distinct().OrderBy(r => r).ToList();
+		public IEnumerable<UniaxialReinforcement> GetReinforcements() => 
+			this.Select(s => s.Reinforcement)
+				.Where(s => s is not null)
+				.Distinct()
+				.OrderBy(r => r)!;
 
 		/// <summary>
 		///     Get the list of distinct <see cref="Steel" />'s of this collection.
 		/// </summary>
-		public List<Steel?> GetSteels() => this.Select(s => s.Reinforcement?.Steel).Distinct().OrderBy(s => s).ToList();
+		public IEnumerable<Steel> GetSteels() => 
+			this.Select(s => s.Reinforcement?.Steel)
+				.Where(s => s is not null)
+				.Distinct()
+				.OrderBy(s => s)!;
 
 		/// <summary>
 		///     Get the list of distinct widths from this collection.
 		/// </summary>
-		public List<Length> GetWidths() => GetCrossSections().Select(c => c.Width).Distinct().OrderBy(w => w).ToList();
+		public IEnumerable<Length> GetWidths() => 
+			GetCrossSections()
+				.Select(c => c.Width)
+				.Distinct()
+				.OrderBy(w => w);
 
 		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)" />
 		/// <param name="geometry">The <see cref="StringerGeometry" /> to remove from this list.</param>
@@ -155,7 +176,9 @@ namespace SPMTool.Core.Elements
 		{
 			Clear(false);
 
-			AddRange(From(SPMModel.GetOpenedModel(BlockTableId)!.AcadDocument), false);
+			var model = SPMModel.GetOpenedModel(BlockTableId)!;
+			
+			AddRange(From(model.AcadDocument, model.Settings.Units.Geometry), false);
 		}
 
 		#endregion

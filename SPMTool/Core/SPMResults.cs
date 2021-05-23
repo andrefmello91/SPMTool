@@ -3,7 +3,7 @@ using System.Linq;
 using andrefmello91.Extensions;
 using SPMTool.Enums;
 using UnitsNet;
-using static SPMTool.Core.SPMDatabase;
+using static SPMTool.Core.SPMModel;
 using static SPMTool.Core.SPMModel;
 using static SPMTool.Extensions;
 

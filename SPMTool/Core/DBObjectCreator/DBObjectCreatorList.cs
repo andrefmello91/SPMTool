@@ -51,7 +51,7 @@ namespace SPMTool.Core
 		{
 			BlockTableId = blockTableId;
 			
-			foreach (var obj in collection.Where(obj => obj is not null))
+			foreach (var obj in this.Where(o => o is not null))
 				obj.BlockTableId = BlockTableId;
 
 			ItemAdded  += On_ObjectAdded;

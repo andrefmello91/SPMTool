@@ -8,7 +8,7 @@ using SPMTool.Enums;
 
 using UnitsNet.Units;
 using static SPMTool.Core.Elements.NodeList;
-using static SPMTool.Core.SPMDatabase;
+using static SPMTool.Core.SPMModel;
 
 #nullable enable
 
@@ -100,23 +100,19 @@ namespace SPMTool.Core.Elements
 		///     Read a <see cref="NodeObject" /> from an existing <see cref="DBPoint" /> in the drawing.
 		/// </summary>
 		/// <param name="dbPoint">The <see cref="DBPoint" /> object of the node.</param>
-		public static NodeObject From(DBPoint dbPoint)
-		{
-			var database = GetOpenedDatabase(dbPoint.ObjectId)!;
-
-			return
-				new NodeObject(dbPoint.Position, dbPoint.GetNodeType(), database.BlockTableId, database.Settings.Units.Geometry)
-				{
-					ObjectId = dbPoint.ObjectId
-				};
-		}
+		/// <param name="unit">The unit for geometry.</param>
+		public static NodeObject From(DBPoint dbPoint, LengthUnit unit) =>
+			new(dbPoint.Position, dbPoint.GetNodeType(), dbPoint.Database.BlockTableId, unit)
+			{
+				ObjectId = dbPoint.ObjectId
+			};
 
 		/// <summary>
 		///     Get this object as a <see cref="Node" />.
 		/// </summary>
 		public override INumberedElement GetElement()
 		{
-			_node = new Node(Position, Type, GetOpenedDatabase(BlockTableId)?.Settings.Units.Displacements ?? LengthUnit.Millimeter)
+			_node = new Node(Position, Type, GetOpenedModel(BlockTableId)?.Settings.Units.Displacements ?? LengthUnit.Millimeter)
 			{
 				Number = Number,
 

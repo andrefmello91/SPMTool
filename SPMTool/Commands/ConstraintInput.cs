@@ -7,7 +7,7 @@ using SPMTool.Core;
 using SPMTool.Commands;
 
 using static SPMTool.Core.SPMModel;
-using static SPMTool.Core.SPMDatabase;
+using static SPMTool.Core.SPMModel;
 using static SPMTool.Core.SPMModel;
 using AcadCommands = SPMTool.Commands.AcadCommands;
 
@@ -29,7 +29,7 @@ namespace SPMTool.Commands
 		[CommandMethod(CommandName.AddConstraint)]
 		public static void AddConstraint()
 		{
-			var model = ActiveModel;
+			var model = SPMModel.ActiveModel;
 			var unit  = model.Database.Settings.Units.Geometry;
 			
 			// Request objects to be selected in the drawing area
@@ -43,7 +43,7 @@ namespace SPMTool.Commands
 
 			// Ask the user set the support conditions:
 			var defDirection = nds.Length == 1
-				? ActiveModel.Constraints.GetConstraintByPosition(nds[0].Position.ToPoint(unit)).Direction
+				? SPMModel.ActiveModel.Constraints.GetConstraintByPosition(nds[0].Position.ToPoint(unit)).Direction
 				: ComponentDirection.None;
 
 			var options = Enum.GetNames(typeof(ComponentDirection));
@@ -71,7 +71,7 @@ namespace SPMTool.Commands
 		public static void AddForce()
 		{
 			// Read units
-			var model = ActiveModel;
+			var model = SPMModel.ActiveModel;
 			var units = model.Database.Settings.Units;
 
 			// Request objects to be selected in the drawing area
@@ -85,7 +85,7 @@ namespace SPMTool.Commands
 
 			// Get force from user
 			var initialForce = nds.Length == 1
-				? ActiveModel.Forces.GetForceByPosition(nds[0].Position.ToPoint(units.Geometry))
+				? SPMModel.ActiveModel.Forces.GetForceByPosition(nds[0].Position.ToPoint(units.Geometry))
 				: (PlaneForce?) null;
 
 			var force = model.Editor.GetForce(initialForce, units.AppliedForces);

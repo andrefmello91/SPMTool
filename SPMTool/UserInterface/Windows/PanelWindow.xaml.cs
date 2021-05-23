@@ -28,7 +28,7 @@ namespace SPMTool.Application.UserInterface
 		private readonly List<PanelObject> _panels;
 		private readonly LengthUnit _reinforcementUnit;
 		private readonly PressureUnit _stressUnit;
-		private readonly SPMDatabase _database;
+		private readonly SPMModel _database;
 
 		#endregion
 
@@ -311,7 +311,7 @@ namespace SPMTool.Application.UserInterface
 		{
 			_panels = panels.ToList();
 
-			_database = SPMDatabase.ActiveDatabase;
+			_database = SPMModel.ActiveModel;
 			
 			_geometryUnit      = _database.Settings.Units.Geometry;
 			_reinforcementUnit = _database.Settings.Units.Reinforcement;
@@ -338,13 +338,13 @@ namespace SPMTool.Application.UserInterface
 		///     Get saved geometry options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedGeoOptions(SPMDatabase database) => database.ElementWidths.Select(geo => $"{geo.Value:0.00}");
+		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.ElementWidths.Select(geo => $"{geo.Value:0.00}");
 
 		/// <summary>
 		///     Get saved reinforcement options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedRefOptions(SPMDatabase database) => database.PanelReinforcements.Select(r => $"{(char) Character.Phi} {r.BarDiameter.Value:0.0} at {r.BarSpacing.Value:0.0}");
+		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.PanelReinforcements.Select(r => $"{(char) Character.Phi} {r.BarDiameter.Value:0.0} at {r.BarSpacing.Value:0.0}");
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{

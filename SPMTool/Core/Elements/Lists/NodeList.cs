@@ -8,7 +8,7 @@ using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
-
+using UnitsNet.Units;
 using static SPMTool.Core.SPMModel;
 
 #nullable enable
@@ -77,14 +77,15 @@ namespace SPMTool.Core.Elements
 		///     Read all <see cref="NodeObject" />'s from a document.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
-		public static NodeList From(Document document)
+		/// <param name="unit">The unit for geometry.</param>
+		public static NodeList From(Document document, LengthUnit unit)
 		{
 			var points = GetObjects(document).ToArray();
 			var bId    = document.Database.BlockTableId;
 
 			return points.IsNullOrEmpty() 
 				? new NodeList(bId)
-				: new NodeList(points.Select(NodeObject.From), bId);
+				: new NodeList(points.Select(p => NodeObject.From(p, unit)), bId);
 		}
 
 		/// <inheritdoc cref="Add(NodeObject, bool, bool)" />

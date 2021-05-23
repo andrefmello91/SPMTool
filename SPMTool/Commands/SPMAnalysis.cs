@@ -71,7 +71,7 @@ namespace SPMTool.Commands
 				return;
 
 			// Get analysis settings
-			var settings = SPMDatabase.ActiveDatabase.Settings.Analysis;
+			var settings = SPMModel.ActiveModel.Settings.Analysis;
 
 			// Do analysis
 			var analysis = new SPMNonlinearAnalysis(input, settings.Solver, settings.NumLoadSteps, settings.Tolerance, settings.MaxIterations);

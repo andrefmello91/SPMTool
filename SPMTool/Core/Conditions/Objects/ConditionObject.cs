@@ -108,7 +108,7 @@ namespace SPMTool.Core.Conditions
 		public override DBObject CreateObject()
 		{
 			// Get database
-			var database = SPMDatabase.GetOpenedDatabase(BlockTableId)!;
+			var database = SPMModel.GetOpenedModel(BlockTableId)!;
 			
 			return
 				database.AcadDatabase.GetReference(Block, Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, null, database.Settings.Units.ScaleFactor)!;

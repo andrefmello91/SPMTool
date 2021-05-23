@@ -15,7 +15,7 @@ namespace SPMTool.Application.UserInterface
 	public partial class UnitsConfig : Window
 	{
 
-		private readonly SPMDatabase _database;
+		private readonly SPMModel _database;
 		
 		#region Properties
 
@@ -58,7 +58,7 @@ namespace SPMTool.Application.UserInterface
 			InitializeComponent();
 
 			// Read units
-			_database = SPMDatabase.ActiveDatabase;
+			_database = SPMModel.ActiveModel;
 			Units     = _database.Settings.Units;
 
 			// Get sources

@@ -46,7 +46,7 @@ namespace SPMTool.Application.UserInterface
 
 		private IParameters _parameters;
 
-		private readonly SPMDatabase _database;
+		private readonly SPMModel _database;
 		
 		#endregion
 
@@ -83,7 +83,7 @@ namespace SPMTool.Application.UserInterface
 
 		public ConcreteConfig()
 		{
-			_database = SPMDatabase.ActiveDatabase;
+			_database = SPMModel.ActiveModel;
 			
 			// Read units
 			_stressUnit = _database.Settings.Units.MaterialStrength;

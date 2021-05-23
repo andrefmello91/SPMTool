@@ -60,7 +60,7 @@ namespace SPMTool.Application.UserInterface
 		{
 			InitializeComponent();
 
-			_displacementUnit = SPMDatabase.ActiveDatabase.Settings.Units.Displacements;
+			_displacementUnit = SPMModel.ActiveModel.Settings.Units.Displacements;
 			_femOutput        = femOutput;
 
 			DataContext = this;
