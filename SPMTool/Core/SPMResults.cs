@@ -116,10 +116,13 @@ namespace SPMTool.Core
 
 			_model.AcadDocument.AddObjects(stringers.Select(s => s.CreateDiagram(ResultScaleFactor, TextHeight, MaxStringerForce, fUnit)).ToList());
 
-			var blocks = stringers.SelectMany(s => s.CreateCrackBlocks(ResultScaleFactor, TextHeight, cUnit)).ToList();
+			var cracks = stringers
+				.SelectMany(s => s.CreateCrackBlocks(ResultScaleFactor, TextHeight, cUnit))
+				.Where(b => b is not null)
+				.ToList();
 
 			// Add to drawing and set attributes
-			_model.AcadDocument.AddObjects(blocks);
+			_model.AcadDocument.AddObjects(cracks);
 			// blocks.SetAttributes();
 		}
 

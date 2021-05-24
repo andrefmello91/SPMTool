@@ -139,8 +139,10 @@ namespace SPMTool.Core.Elements
 		/// <param name="scaleFactor">The scale factor.</param>
 		/// <param name="textHeight">The text height for attributes.</param>
 		/// <param name="crackUnit">The unit for crack openings.</param>
-		public IEnumerable<StringerCrackBlockCreator?> CreateCrackBlocks(double scaleFactor, double textHeight, LengthUnit crackUnit) =>
-			StringerCrackBlockCreator.CreateBlocks(_stringer!.Geometry, _stringer.CrackOpenings.Select(c => c.ToUnit(crackUnit)).ToArray(), scaleFactor, textHeight, BlockTableId);
+		public IEnumerable<StringerCrackBlockCreator?> CreateCrackBlocks(double scaleFactor, double textHeight, LengthUnit crackUnit) => 
+			_stringer!.Model is ElementModel.Nonlinear 
+				? StringerCrackBlockCreator.CreateBlocks(_stringer!.Geometry, _stringer.CrackOpenings.Select(c => c.ToUnit(crackUnit)).ToArray(), scaleFactor, textHeight, BlockTableId)
+				: new StringerCrackBlockCreator?[] { null, null, null };
 
 		/// <summary>
 		///     Create the stringer diagram. Can be null if the stringer is unloaded.

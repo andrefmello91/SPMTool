@@ -113,7 +113,7 @@ namespace SPMTool.Core.Blocks
 					invPt,
 					new(stPt.X, stPt.Y + h1)
 				}
-				.Select(p => p.Rotate(angle)).ToPoint3ds().ToArray();
+				.Select(p => p.Rotate(stPt, angle)).ToPoint3ds().ToArray();
 
 
 			var vrts3 = new[]
@@ -122,7 +122,7 @@ namespace SPMTool.Core.Blocks
 					new(stPt.X + l, stPt.Y),
 					new(stPt.X + l, stPt.Y + h3)
 				}
-				.Select(p => p.Rotate(angle)).ToPoint3ds().ToArray();
+				.Select(p => p.Rotate(stPt, angle)).ToPoint3ds().ToArray();
 
 			// Create the diagrams as solids with 3 segments (3 points)
 			yield return
@@ -249,7 +249,7 @@ namespace SPMTool.Core.Blocks
 					new(stPt.X, stPt.Y + h1),
 					new(stPt.X + l, stPt.Y + h3)
 				}
-				.Select(p => p.Rotate(angle)).ToPoint3ds().ToArray();
+				.Select(p => p.Rotate(stPt, angle)).ToPoint3ds().ToArray();
 
 			// Create the diagram as a solid with 4 segments (4 points)
 			var nMax = n1.Abs() > n3.Abs()

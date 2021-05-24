@@ -193,13 +193,23 @@ namespace SPMTool.Core.Elements
 		/// <param name="textHeight">The text height for attributes.</param>
 		/// <param name="stressUnit">The unit of panel stresses.</param>
 		/// <param name="crackUnit">The unit of crack openings.</param>
-		public IEnumerable<BlockCreator?> GetBlocks(double scaleFactor, double textHeight, PressureUnit stressUnit, LengthUnit crackUnit) => new BlockCreator?[]
+		public IEnumerable<BlockCreator?> GetBlocks(double scaleFactor, double textHeight, PressureUnit stressUnit, LengthUnit crackUnit)
 		{
-			ShearBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY.ToUnit(stressUnit), scaleFactor, textHeight, BlockTableId),
-			StressBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses.Convert(stressUnit), scaleFactor, textHeight, BlockTableId),
-			StressBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses.Convert(stressUnit), scaleFactor, textHeight, BlockTableId, Layer.ConcreteStress),
-			PanelCrackBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.CrackOpening.ToUnit(crackUnit), _panel.AveragePrincipalStresses.Theta2, scaleFactor, textHeight, BlockTableId)
-		};
+			yield return 
+				ShearBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY.ToUnit(stressUnit), scaleFactor, textHeight, BlockTableId);
+			
+			yield return 
+				StressBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses.Convert(stressUnit), scaleFactor, textHeight, BlockTableId);
+			
+			yield return 
+				StressBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses.Convert(stressUnit), scaleFactor, textHeight, BlockTableId, Layer.ConcreteStress);
+			
+			if (_panel.Model is ElementModel.Elastic)
+				yield break;
+			
+			yield return
+				PanelCrackBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.CrackOpening.ToUnit(crackUnit), _panel.AveragePrincipalStresses.Theta2, scaleFactor, textHeight, BlockTableId);
+		}
 
 		/// <remarks>
 		///     This method a linear object.

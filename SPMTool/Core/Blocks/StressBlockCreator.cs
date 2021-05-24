@@ -5,6 +5,7 @@ using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics;
+using SPMTool.Application;
 using SPMTool.Enums;
 
 using UnitsNet;
@@ -111,7 +112,7 @@ namespace SPMTool.Core.Blocks
 			}
 
 			// Text for sigma 1
-			if (stressState.Is2Zero)
+			if (stressState.Sigma2.ApproxZero(Units.StressTolerance))
 				yield break;
 
 			var sigma2 = stressState.Sigma2.Value.Abs();
