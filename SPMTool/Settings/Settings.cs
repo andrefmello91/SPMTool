@@ -119,7 +119,7 @@ namespace SPMTool.Application
 		{
 			_analysis = GetAnalysisSettings();
 			_units    = GetUnits();
-			_display   = GetDisplaySettings();
+			_display  = GetDisplaySettings();
 		}
 
 		protected override void SetProperties()
@@ -172,9 +172,13 @@ namespace SPMTool.Application
 		/// </summary>
 		private void Set(DisplaySettings display)
 		{
-			_display = display;
+			_display.NodeScale             = display.NodeScale;
+			_display.ConditionScale        = display.ConditionScale;
+			_display.ResultScale           = display.ResultScale;
+			_display.TextScale             = display.TextScale;
+			_display.DisplacementMagnifier = display.DisplacementMagnifier;
 
-			SetDictionary((TypedValue[]) display, USaveName);
+			SetDictionary((TypedValue[]) display, DSaveName);
 		}
 		
 		#endregion

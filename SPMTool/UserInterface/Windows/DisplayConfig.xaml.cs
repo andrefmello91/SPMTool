@@ -80,7 +80,9 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			// Set values
-			SetValues(_database.Settings.Display);
+			var display = new DisplaySettings();
+			SetValues(display);
+			_database.Settings.Display = display;
 
 			Close();
 		}
