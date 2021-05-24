@@ -12,7 +12,17 @@ namespace SPMTool.Application
 	public class Units : IEquatable<Units>
 	{
 
-		#region Fields
+		#region Properties
+
+		/// <summary>
+		///     Default tolerance for <see cref="Area" /> comparisons.
+		/// </summary>
+		public static Area AreaTolerance { get; } = Area.FromSquareMillimeters(1E-3);
+
+		/// <summary>
+		///     Default tolerance for crack openings comparisons.
+		/// </summary>
+		public static Length CrackTolerance { get; } = Length.FromMillimeters(1E-4);
 
 		/// <summary>
 		///     Default units object.
@@ -20,49 +30,35 @@ namespace SPMTool.Application
 		/// </summary>
 		public static Units Default { get; } = new()
 		{
-			Geometry              = LengthUnit.Millimeter,
-			Reinforcement         = LengthUnit.Millimeter,
-			Displacements         = LengthUnit.Millimeter,
-			CrackOpenings         = LengthUnit.Millimeter,
-			AppliedForces         = ForceUnit.Kilonewton,
-			StringerForces        = ForceUnit.Kilonewton,
-			PanelStresses         = PressureUnit.Megapascal,
-			MaterialStrength      = PressureUnit.Megapascal,
+			Geometry         = LengthUnit.Millimeter,
+			Reinforcement    = LengthUnit.Millimeter,
+			Displacements    = LengthUnit.Millimeter,
+			CrackOpenings    = LengthUnit.Millimeter,
+			AppliedForces    = ForceUnit.Kilonewton,
+			StringerForces   = ForceUnit.Kilonewton,
+			PanelStresses    = PressureUnit.Megapascal,
+			MaterialStrength = PressureUnit.Megapascal
 		};
-
-		/// <summary>
-		///     Default tolerance for <see cref="Length" /> comparisons.
-		/// </summary>
-		public static readonly Length LengthTolerance = Length.FromMillimeters(1E-3);
-
-		/// <summary>
-		///     Default tolerance for crack openings comparisons.
-		/// </summary>
-		public static readonly Length CrackTolerance = Length.FromMillimeters(1E-4);
 
 		/// <summary>
 		///     Default tolerance for <see cref="Force" /> comparisons.
 		/// </summary>
-		public static readonly Force ForceTolerance = Force.FromKilonewtons(1E-3);
+		public static Force ForceTolerance { get; } = Force.FromKilonewtons(1E-3);
 
 		/// <summary>
-		///     Default tolerance for stringer <see cref="Force" />'s.
+		///     Default tolerance for <see cref="Length" /> comparisons.
 		/// </summary>
-		public static readonly Force StringerForceTolerance = Force.FromKilonewtons(1E-1);
+		public static Length LengthTolerance { get; } = Length.FromMillimeters(1E-3);
 
 		/// <summary>
 		///     Default tolerance for <see cref="Pressure" /> comparisons.
 		/// </summary>
-		public static readonly Pressure StressTolerance = Pressure.FromPascals(1E-3);
+		public static Pressure StressTolerance { get; } = Pressure.FromPascals(1E-3);
 
 		/// <summary>
-		///     Default tolerance for <see cref="Area" /> comparisons.
+		///     Default tolerance for stringer <see cref="Force" />'s.
 		/// </summary>
-		public static readonly Area AreaTolerance = Area.FromSquareMillimeters(1E-3);
-
-		#endregion
-
-		#region Properties
+		public static Force StringerForceTolerance { get; } = Force.FromKilonewtons(1E-1);
 
 		/// <summary>
 		///     Get/set the <see cref="ForceUnit" /> for applied forces.
@@ -116,10 +112,10 @@ namespace SPMTool.Application
 		public AreaUnit ReinforcementArea => Reinforcement.GetAreaUnit();
 
 		/// <summary>
-		///     Get the drawing scale factor related to <see cref="LengthUnit.Millimeter"/>.
+		///     Get the drawing scale factor related to <see cref="LengthUnit.Millimeter" />.
 		/// </summary>
-		public double ScaleFactor => Geometry is LengthUnit.Millimeter 
-			? 1 
+		public double ScaleFactor => Geometry is LengthUnit.Millimeter
+			? 1
 			: 1.ConvertFromMillimeter(Geometry);
 
 		/// <summary>
@@ -172,10 +168,10 @@ namespace SPMTool.Application
 		/// </summary>
 		public static bool operator !=(Units? left, Units? right) => left.IsNotEqualTo(right);
 
-		/// <inheritdoc cref="SPMTool.Extensions.GetTypedValues(Units)"/>
+		/// <inheritdoc cref="SPMTool.Extensions.GetTypedValues(Units)" />
 		public static explicit operator TypedValue[](Units? settings) => settings.GetTypedValues();
-		
-		/// <inheritdoc cref="SPMTool.Extensions.GetUnits"/>
+
+		/// <inheritdoc cref="SPMTool.Extensions.GetUnits" />
 		public static explicit operator Units?(TypedValue[]? values) => values.GetUnits();
 
 		#endregion
