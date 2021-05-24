@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -12,7 +11,7 @@ namespace SPMTool.Application
 	public class AnalysisSettings : IEquatable<AnalysisSettings>
 	{
 
-		#region Fields
+		#region Properties
 
 		/// <summary>
 		///     Default <see cref="AnalysisSettings" /> object.
@@ -22,23 +21,14 @@ namespace SPMTool.Application
 			Tolerance     = 1E-3,
 			NumLoadSteps  = 50,
 			MaxIterations = 10000,
-			Solver        = NonLinearSolver.Secant
+			Solver        = NonLinearSolver.NewtonRaphson
 		};
-
-		#endregion
-
-		#region Properties
 
 		/// <summary>
 		///     Returns true if this <see cref="AnalysisSettings" /> has the default values.
 		/// </summary>
 		public bool IsDefault => Equals(Default);
 
-		/// <summary>
-		///		Get/set the nonlinear solver.
-		/// </summary>
-		public NonLinearSolver Solver { get; set; }
-		
 		/// <summary>
 		///     Get/set the maximum number of iterations.
 		/// </summary>
@@ -48,6 +38,11 @@ namespace SPMTool.Application
 		///     Get/set the number of load steps.
 		/// </summary>
 		public int NumLoadSteps { get; set; }
+
+		/// <summary>
+		///     Get/set the nonlinear solver.
+		/// </summary>
+		public NonLinearSolver Solver { get; set; }
 
 		/// <summary>
 		///     Get/set the convergence tolerance
@@ -90,10 +85,10 @@ namespace SPMTool.Application
 		/// </summary>
 		public static bool operator !=(AnalysisSettings? left, AnalysisSettings? right) => left.IsNotEqualTo(right);
 
-		/// <inheritdoc cref="SPMTool.Extensions.GetTypedValues(AnalysisSettings)"/>
+		/// <inheritdoc cref="SPMTool.Extensions.GetTypedValues(AnalysisSettings)" />
 		public static explicit operator TypedValue[](AnalysisSettings? settings) => settings.GetTypedValues();
-		
-		/// <inheritdoc cref="SPMTool.Extensions.GetAnalysisSettings"/>
+
+		/// <inheritdoc cref="SPMTool.Extensions.GetAnalysisSettings" />
 		public static explicit operator AnalysisSettings?(TypedValue[]? values) => values.GetAnalysisSettings();
 
 		#endregion
