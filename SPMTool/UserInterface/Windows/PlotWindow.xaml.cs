@@ -116,7 +116,7 @@ namespace SPMTool.Application.UserInterface
 		{
 			// Get location and name
 			string
-				path = SPMModel.GetFilePath(),
+				path = Path.GetDirectoryName(SPMModel.ActiveModel.Name)!,
 				name = $"{Path.GetFileNameWithoutExtension(SPMModel.ActiveModel.Name)}_SPMResult";
 
 			// Export

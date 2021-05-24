@@ -246,11 +246,6 @@ namespace SPMTool.Core
 		#region Methods
 
 		/// <summary>
-		///     Get folder path of current file.
-		/// </summary>
-		public static string GetFilePath() => GetSystemVariable("DWGPREFIX").ToString()!;
-
-		/// <summary>
 		///     Get an opened SPM model that contains an <see cref="ObjectId" />.
 		/// </summary>
 		/// <param name="objectId">The <see cref="ObjectId" /> of an existing object.</param>
@@ -279,7 +274,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Add the app to the Registered Applications Record.
 		/// </summary>
-		public static void RegisterApp(Document document)
+		private static void RegisterApp(Document document)
 		{
 			// Start a transaction
 			using var lck   = document.LockDocument();
