@@ -102,7 +102,7 @@ namespace SPMTool.Core
 
 			// Add to drawing and set attributes
 			_model.AcadDocument.AddObjects(blocks);
-			blocks.SetAttributes();
+			// blocks.SetAttributes();
 		}
 
 		/// <summary>
@@ -120,7 +120,7 @@ namespace SPMTool.Core
 
 			// Add to drawing and set attributes
 			_model.AcadDocument.AddObjects(blocks);
-			blocks.SetAttributes();
+			// blocks.SetAttributes();
 		}
 
 		/// <summary>

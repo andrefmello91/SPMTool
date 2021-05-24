@@ -443,6 +443,10 @@ namespace SPMTool
 			if (!blockRefId.IsOk() || attributes.IsNullOrEmpty())
 				return;
 
+			var doc = blockRefId.Database.GetDocument();
+
+			using var lck = doc.LockDocument();
+			
 			// Start a transaction
 			using var trans = blockRefId.Database.TransactionManager.StartTransaction();
 
