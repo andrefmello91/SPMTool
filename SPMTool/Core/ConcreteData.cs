@@ -98,7 +98,7 @@ namespace SPMTool.Core.Materials
 		/// <summary>
 		///     Read concrete <see cref="Parameters" /> saved in database.
 		/// </summary>
-		private IParameters GetParameters() => GetDictionary(ConcreteParams).GetParameters() ?? C30(Length.FromMillimeters(19));
+		private IParameters GetParameters() => GetDictionary(ConcreteParams).GetParameters() ?? C30(Length.FromMillimeters(19), ParameterModel.Default);
 
 		private void SetConstitutive(ConstitutiveModel model)
 		{
