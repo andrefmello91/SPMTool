@@ -52,7 +52,7 @@ namespace SPMTool.Core.Elements
 		///     Get the collection of panels in the drawing.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
-		private static IEnumerable<Solid?> GetObjects(Document document) => document.GetObjects(Layer.Panel).Cast<Solid?>();
+		private static IEnumerable<Solid?>? GetObjects(Document document) => document.GetObjects(Layer.Panel)?.Cast<Solid?>();
 
 		/// <summary>
 		///     Read all the <see cref="PanelObject" />'s in the drawing.
@@ -61,7 +61,7 @@ namespace SPMTool.Core.Elements
 		/// <param name="unit">The unit for geometry.</param>
 		public static PanelList From(Document document, LengthUnit unit)
 		{
-			var solids = GetObjects(document)
+			var solids = GetObjects(document)?
 				.Where(s => s is not null)
 				.ToArray();
 			var bId    = document.Database.BlockTableId;

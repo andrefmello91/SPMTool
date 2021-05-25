@@ -499,7 +499,7 @@ namespace SPMTool
 		/// </summary>
 		public static DBObject? GetObject(this Database database, ObjectId objectId)
 		{
-			if (objectId == ObjectId.Null)
+			if (!objectId.IsOk())
 				return null;
 
 			// Start a transaction
@@ -521,13 +521,15 @@ namespace SPMTool
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="layerNames">The layer names.</param>
-		public static IEnumerable<ObjectId> GetObjectIds(this Document document, params string[] layerNames)
+		public static IEnumerable<ObjectId>? GetObjectIds(this Document document, params string[] layerNames)
 		{
 			// Get the entities on the layername
 			var selRes = document.Editor.SelectAll(layerNames.LayerFilter());
 
 			return
-				selRes.Value.GetObjectIds();
+				selRes.Status is PromptStatus.OK && selRes.Value is not null
+					? selRes.Value.GetObjectIds()
+					: null;
 		}
 		
 		/// <summary>
@@ -535,12 +537,15 @@ namespace SPMTool
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="layerNames">The layer names.</param>
-		public static IEnumerable<DBObject?> GetObjects(this Document document, params string[] layerNames)
+		public static IEnumerable<DBObject?>? GetObjects(this Document document, params string[] layerNames)
 		{
 			// Get the ids
 			var ids = document.GetObjectIds(layerNames);
 
-			return document.Database.GetObjects(ids);
+			return 
+				ids is not null
+					? document.Database.GetObjects(ids)
+					: null;
 		}
 
 		/// <summary>
@@ -552,7 +557,9 @@ namespace SPMTool
 			// Start a transaction
 			using var trans = database.TransactionManager.StartTransaction();
 
-			var objs = objectIds.Select(obj => trans.GetObject(obj, OpenMode.ForRead)).ToArray();
+			var objs = objectIds
+				.Select(obj => obj.IsOk() ? trans.GetObject(obj, OpenMode.ForRead) : null)
+				.ToArray();	
 
 			return objs;
 		}
@@ -581,7 +588,7 @@ namespace SPMTool
 		/// <returns>
 		///     True if <paramref name="objectId" /> is valid, not null and not erased.
 		/// </returns>
-		public static bool IsOk(this ObjectId objectId) => objectId != ObjectId.Null || !objectId.IsValid || objectId.IsErased;
+		public static bool IsOk(this ObjectId objectId) => objectId != ObjectId.Null || !objectId.IsValid || !objectId.IsErased;
 
 		/// <summary>
 		///     Returns true if this <paramref name="solid" /> is rectangular.

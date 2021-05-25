@@ -242,6 +242,7 @@ namespace SPMTool.Commands
 		{
 			var models = OpenedModels;
 			var model  = ActiveModel;
+			models = OpenedModels;
 			
 			model.UpdateElements();
 

@@ -271,7 +271,7 @@ namespace SPMTool
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="layers">The layers.</param>
-		public static IEnumerable<ObjectId> GetObjectIds(this Document document, params Layer[] layers) =>
+		public static IEnumerable<ObjectId>? GetObjectIds(this Document document, params Layer[] layers) =>
 			document.GetObjectIds(layers.Select(l => $"{l}").ToArray());
 
 		/// <summary>
@@ -279,7 +279,7 @@ namespace SPMTool
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="layers">The layers.</param>
-		public static IEnumerable<DBObject?> GetObjects(this Document document, params Layer[] layers) =>
+		public static IEnumerable<DBObject?>? GetObjects(this Document document, params Layer[] layers) =>
 			document.GetObjects(layers.Select(l => $"{l}").ToArray());
 
 		/// <summary>

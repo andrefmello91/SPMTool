@@ -127,7 +127,7 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		private IEnumerable<AttributeReference?> ForceAttributeReference()
 		{
-			var model = SPMModel.GetOpenedModel(BlockTableId)!;
+			var model = GetOpenedModel(BlockTableId)!;
 			var txtH  = model.TextHeight;
 			
 			if (!Value.IsXZero)

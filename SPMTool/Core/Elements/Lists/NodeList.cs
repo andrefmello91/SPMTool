@@ -54,14 +54,14 @@ namespace SPMTool.Core.Elements
 		/// </remarks>
 		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="type">The <see cref="NodeType" />.</param>
-		private static IEnumerable<DBPoint?> GetObjects(Document document, NodeType? type = null)
+		private static IEnumerable<DBPoint?>? GetObjects(Document document, NodeType? type = null)
 		{
 			var layers = type.HasValue
 				? new[] { GetLayer(type.Value) }
 				: new[] { Layer.IntNode, Layer.ExtNode };
 
 			return
-				document.GetObjects(layers).Cast<DBPoint?>();
+				document.GetObjects(layers)?.Cast<DBPoint?>();
 		}
 
 		/// <summary>
@@ -82,7 +82,9 @@ namespace SPMTool.Core.Elements
 		/// <param name="unit">The unit for geometry.</param>
 		public static NodeList From(Document document, LengthUnit unit)
 		{
-			var points = GetObjects(document).Where(o => o is not null).ToList();
+			var points = GetObjects(document)?
+				.Where(o => o is not null)
+				.ToList();
 			var bId    = document.Database.BlockTableId;
 
 			return points.IsNullOrEmpty() 

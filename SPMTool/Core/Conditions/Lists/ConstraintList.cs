@@ -45,7 +45,7 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the support objects in the drawing.
 		/// </summary>
-		private static IEnumerable<BlockReference?> GetObjects(Document document) => document.GetObjects(Layer.Support).Cast<BlockReference?>();
+		private static IEnumerable<BlockReference?>? GetObjects(Document document) => document.GetObjects(Layer.Support)?.Cast<BlockReference?>();
 
 		/// <summary>
 		///     Read all <see cref="ConstraintObject" />'s from drawing.
@@ -53,7 +53,7 @@ namespace SPMTool.Core.Conditions
 		/// <param name="unit">The unit for geometry.</param>
 		public static ConstraintList From(Document document, LengthUnit unit)
 		{
-			var blocks = GetObjects(document)
+			var blocks = GetObjects(document)?
 				.Where(b => b is not null)
 				.ToArray();
 			var bId    = document.Database.BlockTableId;

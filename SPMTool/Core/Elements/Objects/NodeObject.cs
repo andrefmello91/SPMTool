@@ -33,7 +33,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="andrefmello91.OnPlaneComponents.Constraint" /> in this object.
 		/// </summary>
-		public Constraint Constraint => SPMModel.GetOpenedModel(BlockTableId)?.Constraints.GetConstraintByPosition(Position) ?? Constraint.Free;
+		public Constraint Constraint => GetOpenedModel(BlockTableId)?.Constraints.GetConstraintByPosition(Position) ?? Constraint.Free;
 
 		/// <summary>
 		///     Get the <see cref="PlaneDisplacement" /> of this node object.
@@ -47,7 +47,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="Force" /> in this object.
 		/// </summary>
-		public PlaneForce Force => SPMModel.GetOpenedModel(BlockTableId)?.Forces.GetForceByPosition(Position) ?? PlaneForce.Zero;
+		public PlaneForce Force => GetOpenedModel(BlockTableId)?.Forces.GetForceByPosition(Position) ?? PlaneForce.Zero;
 
 		/// <summary>
 		///     Get the position.
