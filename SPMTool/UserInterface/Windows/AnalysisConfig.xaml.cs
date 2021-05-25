@@ -44,7 +44,7 @@ namespace SPMTool.Application.UserInterface
 
 			set
 			{
-				ToleranceBox.Text       = $"{value.Tolerance:G}";
+				ToleranceBox.Text       = $"{value.Tolerance:E2}";
 				LoadStepsBox.Text       = $"{value.NumLoadSteps}";
 				IterationsBox.Text      = $"{value.MaxIterations}";
 				SolverBox.SelectedIndex = (int) value.Solver;
@@ -85,6 +85,18 @@ namespace SPMTool.Application.UserInterface
 			if (!CheckBoxes(ToleranceBox, LoadStepsBox, IterationsBox))
 			{
 				MessageBox.Show("Please set positive and non zero values.");
+				return;
+			}
+
+			if (double.Parse(ToleranceBox.Text) >= 1)
+			{
+				MessageBox.Show("Please set a tolerance smaller than 1.");
+				return;
+			}
+			
+			if (int.Parse(IterationsBox.Text) < 1000)
+			{
+				MessageBox.Show("Please set at least 1000 for maximum iterations.");
 				return;
 			}
 
