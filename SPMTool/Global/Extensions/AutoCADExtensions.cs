@@ -527,9 +527,7 @@ namespace SPMTool
 			var selRes = document.Editor.SelectAll(layerNames.LayerFilter());
 
 			return
-				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0
-					? selRes.Value.GetObjectIds()
-					: new [] { ObjectId.Null };
+				selRes.Value.GetObjectIds();
 		}
 		
 		/// <summary>
