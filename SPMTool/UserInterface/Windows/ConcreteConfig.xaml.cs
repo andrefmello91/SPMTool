@@ -182,8 +182,8 @@ namespace SPMTool.Application.UserInterface
 			ConstitutiveBox.ItemsSource = ConstitutiveOptions;
 
 			// Get values
-			StrengthBox.Text           = $"{_parameters.Strength.Value:0.00}";
-			AggDiamBox.Text            = $"{_parameters.AggregateDiameter.Value:0.00}";
+			StrengthBox.Text           = $"{_parameters.Strength.As(_stressUnit):F3}";
+			AggDiamBox.Text            = $"{_parameters.AggregateDiameter.As(_aggUnit):F3}";
 			AggregateType              = _parameters.Type;
 			ParameterBox.SelectedIndex = (int) _parameters.Model;
 			ConstitutiveModel          = constitutiveModel;
@@ -243,13 +243,13 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void UpdateCustomParameterBoxes()
 		{
-			ModuleBox.Text = $"{_parameters.ElasticModule.Value:0.00}";
+			ModuleBox.Text = $"{_parameters.ElasticModule.As(_stressUnit):F3}";
 
-			TensileBox.Text = $"{_parameters.TensileStrength.Value:0.00}";
+			TensileBox.Text = $"{_parameters.TensileStrength.As(_stressUnit):F3}";
 
-			PlasticStrainBox.Text = $"{-1000 * _parameters.PlasticStrain:0.00}";
+			PlasticStrainBox.Text = $"{-1000 * _parameters.PlasticStrain:F3}";
 
-			UltStrainBox.Text = $"{-1000 * _parameters.UltimateStrain:0.00}";
+			UltStrainBox.Text = $"{-1000 * _parameters.UltimateStrain:F3}";
 		}
 
 		/// <summary>

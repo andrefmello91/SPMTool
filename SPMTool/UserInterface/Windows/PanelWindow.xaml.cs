@@ -66,7 +66,7 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private WebReinforcementDirection? OutputReinforcementX
 		{
-			get => ReinforcementXChecked ? new WebReinforcementDirection(XBarDiameter, XSpacing, OutputSteelX, PnlWidth, 0) : null;
+			get => ReinforcementXChecked ? new WebReinforcementDirection(XBarDiameter, XSpacing, OutputSteelX!, PnlWidth, 0) : null;
 			set
 			{
 				XSpacing     = value?.BarSpacing ?? Length.FromMillimeters(100);
@@ -79,7 +79,7 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private WebReinforcementDirection? OutputReinforcementY
 		{
-			get => ReinforcementYChecked ? new WebReinforcementDirection(YBarDiameter, YSpacing, OutputSteelY, PnlWidth, Constants.PiOver2) : null;
+			get => ReinforcementYChecked ? new WebReinforcementDirection(YBarDiameter, YSpacing, OutputSteelY!, PnlWidth, Constants.PiOver2) : null;
 			set
 			{
 				YSpacing     = value?.BarSpacing ?? Length.FromMillimeters(100);
@@ -119,7 +119,7 @@ namespace SPMTool.Application.UserInterface
 		private Length PnlWidth
 		{
 			get => Length.From(double.Parse(WBox.Text), _geometryUnit);
-			set => WBox.Text = $"{value.Value:0.00}";
+			set => WBox.Text = $"{value.As(_geometryUnit):F3}";
 		}
 
 		/// <summary>
@@ -237,7 +237,7 @@ namespace SPMTool.Application.UserInterface
 		private Length XBarDiameter
 		{
 			get => Length.From(double.Parse(PhiXBox.Text), _reinforcementUnit);
-			set => PhiXBox.Text = $"{value.Value:0.00}";
+			set => PhiXBox.Text = $"{value.As(_reinforcementUnit):F3}";
 		}
 
 		/// <summary>
@@ -246,7 +246,7 @@ namespace SPMTool.Application.UserInterface
 		private Pressure XElasticModule
 		{
 			get => Pressure.From(double.Parse(ExBox.Text), _stressUnit);
-			set => ExBox.Text = $"{value.Value:0.00}";
+			set => ExBox.Text = $"{value.As(_stressUnit):F3}";
 		}
 
 		/// <summary>
@@ -255,7 +255,7 @@ namespace SPMTool.Application.UserInterface
 		private Length XSpacing
 		{
 			get => Length.From(double.Parse(SxBox.Text), _geometryUnit);
-			set => SxBox.Text = $"{value.Value:0.00}";
+			set => SxBox.Text = $"{value.As(_geometryUnit):F3}";
 		}
 
 		/// <summary>
@@ -264,7 +264,7 @@ namespace SPMTool.Application.UserInterface
 		private Pressure XYieldStress
 		{
 			get => Pressure.From(double.Parse(FxBox.Text), _stressUnit);
-			set => FxBox.Text = $"{value.Value:0.00}";
+			set => FxBox.Text = $"{value.As(_stressUnit):F3}";
 		}
 
 		/// <summary>
@@ -273,7 +273,7 @@ namespace SPMTool.Application.UserInterface
 		private Length YBarDiameter
 		{
 			get => Length.From(double.Parse(PhiYBox.Text), _reinforcementUnit);
-			set => PhiYBox.Text = $"{value.Value:0.00}";
+			set => PhiYBox.Text = $"{value.As(_reinforcementUnit):F3}";
 		}
 
 		/// <summary>
@@ -282,7 +282,7 @@ namespace SPMTool.Application.UserInterface
 		private Pressure YElasticModule
 		{
 			get => Pressure.From(double.Parse(EyBox.Text), _stressUnit);
-			set => EyBox.Text = $"{value.Value:0.00}";
+			set => EyBox.Text = $"{value.As(_stressUnit):F3}";
 		}
 
 		/// <summary>
@@ -291,7 +291,7 @@ namespace SPMTool.Application.UserInterface
 		private Length YSpacing
 		{
 			get => Length.From(double.Parse(SyBox.Text), _geometryUnit);
-			set => SyBox.Text = $"{value.Value:0.00}";
+			set => SyBox.Text = $"{value.As(_geometryUnit):F3}";
 		}
 
 		/// <summary>
@@ -300,7 +300,7 @@ namespace SPMTool.Application.UserInterface
 		private Pressure YYieldStress
 		{
 			get => Pressure.From(double.Parse(FyBox.Text), _stressUnit);
-			set => FyBox.Text = $"{value.Value:0.00}";
+			set => FyBox.Text = $"{value.As(_stressUnit):F3}";
 		}
 
 		#endregion
@@ -338,13 +338,13 @@ namespace SPMTool.Application.UserInterface
 		///     Get saved geometry options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.ElementWidths.Select(geo => $"{geo.Value:0.00}");
+		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.ElementWidths.Select(geo => $"{geo.As(database.Settings.Units.Geometry):F3}");
 
 		/// <summary>
 		///     Get saved reinforcement options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.PanelReinforcements.Select(r => $"{(char) Character.Phi} {r.BarDiameter.Value:0.0} at {r.BarSpacing.Value:0.0}");
+		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.PanelReinforcements.Select(r => $"{(char) Character.Phi} {r.BarDiameter.As(database.Settings.Units.Reinforcement):F3} at {r.BarSpacing.As(database.Settings.Units.Geometry):F3}");
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{

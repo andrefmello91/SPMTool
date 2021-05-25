@@ -54,7 +54,7 @@ namespace SPMTool.Application.UserInterface
 		private Length BarDiameter
 		{
 			get => Length.From(double.Parse(PhiBox.Text), _reinforcementUnit);
-			set => PhiBox.Text = $"{value.Value:0.00}";
+			set => PhiBox.Text = $"{value.As(_reinforcementUnit):F3}";
 		}
 
 		/// <summary>
@@ -63,7 +63,7 @@ namespace SPMTool.Application.UserInterface
 		private Pressure ElasticModule
 		{
 			get => Pressure.From(double.Parse(EBox.Text), _stressUnit);
-			set => EBox.Text = $"{value.Value:0.00}";
+			set => EBox.Text = $"{value.As(_stressUnit):F3}";
 		}
 
 		/// <summary>
@@ -191,7 +191,7 @@ namespace SPMTool.Application.UserInterface
 		private Length StrHeight
 		{
 			get => Length.From(double.Parse(HBox.Text), _geometryUnit);
-			set => HBox.Text = $"{value.Value:0.00}";
+			set => HBox.Text = $"{value.As(_geometryUnit):F3}";
 		}
 
 		/// <summary>
@@ -200,7 +200,7 @@ namespace SPMTool.Application.UserInterface
 		private Length StrWidth
 		{
 			get => Length.From(double.Parse(WBox.Text), _geometryUnit);
-			set => WBox.Text = $"{value.Value:0.00}";
+			set => WBox.Text = $"{value.As(_geometryUnit):F3}";
 		}
 
 		/// <summary>
@@ -209,7 +209,7 @@ namespace SPMTool.Application.UserInterface
 		private Pressure YieldStress
 		{
 			get => Pressure.From(double.Parse(FBox.Text), _stressUnit);
-			set => FBox.Text = $"{value.Value:0.00}";
+			set => FBox.Text = $"{value.As(_stressUnit):F3}";
 		}
 
 		#endregion
@@ -244,19 +244,19 @@ namespace SPMTool.Application.UserInterface
 		///     Get saved steel options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		public static IEnumerable<string> SavedSteelOptions(SPMModel database) => database.Steels.Select(s => $"{s.YieldStress.Value:0.00} | {s.ElasticModule.Value:0.00}");
+		public static IEnumerable<string> SavedSteelOptions(SPMModel database) => database.Steels.Select(s => $"{s.YieldStress.As(database.Settings.Units.MaterialStrength):F3} | {s.ElasticModule.As(database.Settings.Units.MaterialStrength):F3}");
 
 		/// <summary>
 		///     Get saved geometry options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.StringerCrossSections.Select(geo => $"{geo.Width.Value:0.0} {(char) Character.Times} {geo.Height.Value:0.0}");
+		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.StringerCrossSections.Select(geo => $"{geo.Width.As(database.Settings.Units.Geometry):F3} {(char) Character.Times} {geo.Height.Value:F3}");
 
 		/// <summary>
 		///     Get saved reinforcement options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.StringerReinforcements.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.Value:0.00}");
+		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.StringerReinforcements.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.As(database.Settings.Units.Reinforcement):F3}");
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
