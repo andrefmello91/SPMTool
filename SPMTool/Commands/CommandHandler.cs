@@ -60,6 +60,6 @@ namespace SPMTool.Commands
 
 		#endregion
 
-		public event EventHandler CanExecuteChanged;
+		public event EventHandler? CanExecuteChanged;
 	}
 }

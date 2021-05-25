@@ -16,7 +16,7 @@ namespace SPMTool
 		/// <summary>
 		///     Initialize user interface and create layers and blocks.
 		/// </summary>
-		public void On_ApplicationIdle(object sender, EventArgs e)
+		private static void On_ApplicationIdle(object sender, EventArgs e)
 		{
 			// Add application buttons
 			SPMToolInterface.AddButtons();

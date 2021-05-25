@@ -15,7 +15,7 @@ namespace SPMTool.Commands
 
 		#region Methods
 
-		[CommandMethod(CommandName.Linear)]
+		[CommandMethod(Command.Linear)]
 		public static void LinearAnalysis()
 		{
 			var model = SPMModel.ActiveModel;
@@ -40,11 +40,11 @@ namespace SPMTool.Commands
 			results.DrawResults();
 		}
 
-		[CommandMethod(CommandName.Nonlinear)]
+		[CommandMethod(Command.Nonlinear)]
 		public static void NonLinearAnalysis() => ExecuteNonlinearAnalysis();
 
 
-		[CommandMethod(CommandName.Simulation)]
+		[CommandMethod(Command.Simulation)]
 		public static void Simulation() => ExecuteNonlinearAnalysis(true);
 
 		/// <summary>

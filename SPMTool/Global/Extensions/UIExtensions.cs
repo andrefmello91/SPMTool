@@ -61,13 +61,7 @@ namespace SPMTool
 			foreach (var element in elements)
 				element.Enable();
 		}
-
-		/// <summary>
-		///     Create a <see cref="RibbonButton" /> based in a command name, contained in <see cref="CommandName" />.
-		/// </summary>
-		public static RibbonButton? GetRibbonButton(this Command command, RibbonItemSize size = RibbonItemSize.Large, bool showText = true) =>
-			command.GetAttribute<CommandAttribute>()?.CreateRibbonButton(size, showText);
-
+		
 		#endregion
 
 	}

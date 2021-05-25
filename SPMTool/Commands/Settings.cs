@@ -17,19 +17,19 @@ namespace SPMTool.Commands
 		/// <summary>
 		///     Set analysis settings.
 		/// </summary>
-		[CommandMethod(CommandName.Analysis)]
+		[CommandMethod(Command.Analysis)]
 		public static void SetAnalysisSettings() => SPMToolInterface.ShowWindow(new AnalysisConfig());
 
 		/// <summary>
 		///     Set units.
 		/// </summary>
-		[CommandMethod(CommandName.Units)]
+		[CommandMethod(Command.Units)]
 		public static void SetUnits() => SPMToolInterface.ShowWindow(new UnitsConfig());
 		
 		/// <summary>
 		///     Set display settings.
 		/// </summary>
-		[CommandMethod(CommandName.Display)]
+		[CommandMethod(Command.Display)]
 		public static void SetDisplaySettings() => SPMToolInterface.ShowWindow(new DisplayConfig());
 
 		#endregion
@@ -37,7 +37,7 @@ namespace SPMTool.Commands
 		/// <summary>
 		///     Set concrete parameters to model.
 		/// </summary>
-		[CommandMethod(CommandName.Parameters)]
+		[CommandMethod(Command.Parameters)]
 		public static void ConcreteParameters() => SPMToolInterface.ShowWindow(new ConcreteConfig());
 	}
 }

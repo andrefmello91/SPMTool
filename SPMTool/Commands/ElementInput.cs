@@ -19,7 +19,7 @@ namespace SPMTool.Commands
 		/// <summary>
 		///     Add a panel to panel list and drawing.
 		/// </summary>
-		[CommandMethod(CommandName.AddPanel)]
+		[CommandMethod(Command.AddPanel)]
 		public static void AddPanel()
 		{
 			var model  = ActiveModel;
@@ -57,7 +57,7 @@ namespace SPMTool.Commands
 		/// <summary>
 		///     Add a stringer to to stringer list and drawing.
 		/// </summary>
-		[CommandMethod(CommandName.AddStringer)]
+		[CommandMethod(Command.AddStringer)]
 		public static void AddStringer()
 		{
 			// Get current OSMODE

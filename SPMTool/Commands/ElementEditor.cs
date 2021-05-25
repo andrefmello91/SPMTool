@@ -20,7 +20,7 @@ namespace SPMTool.Commands
 
 		#region Methods
 
-		[CommandMethod(CommandName.DividePanel)]
+		[CommandMethod(Command.DividePanel)]
 		public static void DividePanel()
 		{
 			// Get elements
@@ -140,7 +140,7 @@ namespace SPMTool.Commands
 		/// <summary>
 		///     Divide a stringer into new ones.
 		/// </summary>
-		[CommandMethod(CommandName.DivideStringer)]
+		[CommandMethod(Command.DivideStringer)]
 		public static void DivideStringer()
 		{
 			// Get elements
@@ -191,7 +191,7 @@ namespace SPMTool.Commands
 		/// <summary>
 		///     Set geometry to a selection of panels.
 		/// </summary>
-		[CommandMethod(CommandName.EditPanel)]
+		[CommandMethod(Command.EditPanel)]
 		public static void EditPanel()
 		{
 			// Get model and database
@@ -214,7 +214,7 @@ namespace SPMTool.Commands
 		/// <summary>
 		///     Set geometry to a selection of stringers.
 		/// </summary>
-		[CommandMethod(CommandName.EditStringer)]
+		[CommandMethod(Command.EditStringer)]
 		public static void EditStringer()
 		{
 			// Get model and database
@@ -237,7 +237,7 @@ namespace SPMTool.Commands
 		/// <summary>
 		///     Update all the elements in the drawing.
 		/// </summary>
-		[CommandMethod(CommandName.UpdateElements)]
+		[CommandMethod(Command.UpdateElements)]
 		public static void UpdateElements()
 		{
 			var models = OpenedModels;

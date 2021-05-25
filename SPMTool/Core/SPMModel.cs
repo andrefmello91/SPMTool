@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.EList;
 using andrefmello91.Extensions;
@@ -44,7 +45,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     The list of opened documents.
 		/// </summary>
-		public static readonly List<SPMModel> OpenedModels;
+		public static readonly List<SPMModel> OpenedModels = new();
 
 		/// <summary>
 		///     Collection of removed elements.
@@ -179,12 +180,12 @@ namespace SPMTool.Core
 		/// </summary>
 		static SPMModel()
 		{
-			OpenedModels =
-				(from Document doc in DocumentManager 
-					select new SPMModel(doc))
-				.ToList();
-
-			DocumentManager.DocumentCreated       += On_DocumentCreated;
+			// OpenedModels =
+			// 	(from Document doc in DocumentManager 
+			// 		select new SPMModel(doc))
+			// 	.ToList();
+			//
+			// DocumentManager.DocumentCreated       += On_DocumentCreated;
 			DocumentManager.DocumentToBeDestroyed += On_DocumentClosed;
 		}
 
@@ -245,31 +246,33 @@ namespace SPMTool.Core
 
 		#region Methods
 
-		/// <summary>
-		///     Get an opened SPM model that contains an <see cref="ObjectId" />.
-		/// </summary>
+		/// <inheritdoc cref="GetOpenedModel(Document, bool)" />
 		/// <param name="objectId">The <see cref="ObjectId" /> of an existing object.</param>
-		public static SPMModel? GetOpenedModel(ObjectId objectId) => !objectId.IsNull
-			? GetOpenedModel(objectId.Database)
+		public static SPMModel? GetOpenedModel(ObjectId objectId, bool create = true) => !objectId.IsNull
+			? GetOpenedModel(objectId.Database, create)
 			: null;
 
 		/// <summary>
 		///     Get an opened SPM model.
 		/// </summary>
-		/// <param name="documentName">The opened document name.</param>
-		public static SPMModel? GetOpenedModel(string documentName) => OpenedModels.Find(d => d.Name == documentName);
-
-		/// <summary>
-		///     Get an opened SPM model.
-		/// </summary>
 		/// <param name="document">The opened document.</param>
-		public static SPMModel GetOpenedModel(Document document) => GetOpenedModel(document.Name)!;
+		/// <param name="create">Add to <see cref="OpenedModels"/> if it was not created?</param>
+		public static SPMModel? GetOpenedModel(Document document, bool create = true)
+		{
+			var model = OpenedModels.Find(m => m.AcadDocument.Name == document.Name);
 
-		/// <summary>
-		///     <inheritdoc cref="GetOpenedModel(Document)" />
-		/// </summary>
+			if (!create || model is not null)
+				return model;
+
+			model = new SPMModel(document);
+			OpenedModels.Add(model);
+
+			return model;
+		}
+
+		/// <inheritdoc cref="GetOpenedModel(Document, bool)" />
 		/// <param name="database">The opened database.</param>
-		public static SPMModel GetOpenedModel(Database database) => GetOpenedModel(database.GetDocument());
+		public static SPMModel? GetOpenedModel(Database database, bool create = true) => GetOpenedModel(database.GetDocument(), create);
 
 		/// <summary>
 		///     Add the app to the Registered Applications Record.

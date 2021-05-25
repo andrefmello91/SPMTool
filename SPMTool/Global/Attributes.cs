@@ -100,11 +100,11 @@ namespace SPMTool.Attributes
 
 		#region Properties
 
-		public Command Command { get; }
+		public string CommandName { get; }
 
-		public BitmapImage Icon => (BitmapImage) SPMToolInterface.Icons.GetType().GetProperty($"{Command}").GetValue(SPMToolInterface.Icons);
+		public BitmapImage Icon => (BitmapImage) SPMToolInterface.Icons.GetType().GetProperty(CommandName)!.GetValue(SPMToolInterface.Icons);
 
-		public string Text => Command.ToString().SplitCamelCase();
+		public string Text => CommandName.ToString().SplitCamelCase();
 
 		public string Tooltip { get; }
 
@@ -112,9 +112,9 @@ namespace SPMTool.Attributes
 
 		#region Constructors
 
-		public CommandAttribute(Command command, string tooltip)
+		public CommandAttribute(string commandName, string tooltip)
 		{
-			Command = command;
+			CommandName = commandName;
 			Tooltip = tooltip;
 		}
 
@@ -140,7 +140,7 @@ namespace SPMTool.Attributes
 					? Icon
 					: null,
 				CommandHandler   = new CommandHandler(),
-				CommandParameter = $"{Command}"
+				CommandParameter = CommandName
 			};
 
 		#endregion

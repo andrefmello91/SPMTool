@@ -18,7 +18,7 @@ namespace SPMTool.Commands
 		/// <summary>
 		///     Add constraints to model.
 		/// </summary>
-		[CommandMethod(CommandName.AddConstraint)]
+		[CommandMethod(Command.AddConstraint)]
 		public static void AddConstraint()
 		{
 			var model = SPMModel.ActiveModel;
@@ -59,7 +59,7 @@ namespace SPMTool.Commands
 		/// <summary>
 		///     Add forces to model.
 		/// </summary>
-		[CommandMethod(CommandName.AddForce)]
+		[CommandMethod(Command.AddForce)]
 		public static void AddForce()
 		{
 			// Read units
