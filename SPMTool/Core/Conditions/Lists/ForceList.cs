@@ -44,7 +44,7 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the force objects in the drawing.
 		/// </summary>
-		public static IEnumerable<BlockReference> GetObjects(Document document) => document.GetObjects(Layer.Force).Where(o => o is BlockReference).Cast<BlockReference>();
+		public static IEnumerable<BlockReference?> GetObjects(Document document) => document.GetObjects(Layer.Force).Cast<BlockReference?>();
 
 		/// <summary>
 		///     Read all <see cref="ForceObject" />'s from a document.
@@ -53,12 +53,14 @@ namespace SPMTool.Core.Conditions
 		/// <param name="unit">The unit for geometry.</param>
 		public static ForceList From(Document document, LengthUnit unit)
 		{
-			var blocks = GetObjects(document).ToArray();
+			var blocks = GetObjects(document)
+				.Where(b => b is not null)
+				.ToArray();
 			var bId    = document.Database.BlockTableId;
 			
 			var list = blocks.IsNullOrEmpty()
 				? new ForceList(bId)
-				: new ForceList(blocks.Select(b => ForceObject.From(b, unit)), bId);
+				: new ForceList(blocks.Select(b => ForceObject.From(b!, unit)), bId);
 
 			return list;
 

@@ -54,18 +54,20 @@ namespace SPMTool.Core.Elements
 		/// </remarks>
 		/// <param name="document">The AutoCAD document.</param>
 		/// <param name="type">The <see cref="NodeType" />.</param>
-		private static IEnumerable<DBPoint> GetObjects(Document document, NodeType? type = null) =>
-			type switch
-			{
-				NodeType.Internal => document.GetObjects(Layer.IntNode).Where(o => o is DBPoint).Cast<DBPoint>(),
-				NodeType.External => document.GetObjects(Layer.ExtNode).Where(o => o is DBPoint).Cast<DBPoint>(),
-				_                 => document.GetObjects(Layer.IntNode, Layer.ExtNode).Where(o => o is DBPoint).Cast<DBPoint>()
-			};
+		private static IEnumerable<DBPoint?> GetObjects(Document document, NodeType? type = null)
+		{
+			var layers = type.HasValue
+				? new[] { GetLayer(type.Value) }
+				: new[] { Layer.IntNode, Layer.ExtNode };
+
+			return
+				document.GetObjects(layers).Cast<DBPoint?>();
+		}
 
 		/// <summary>
 		///     Get the layer name based on <paramref name="nodeType" />.
 		/// </summary>
-		/// <param name="nodeType">The <see cref="NodeType" /> (excluding <see cref="NodeType.All" />).</param>
+		/// <param name="nodeType">The <see cref="NodeType" />.</param>
 		public static Layer GetLayer(NodeType nodeType) =>
 			nodeType switch
 			{
@@ -80,15 +82,15 @@ namespace SPMTool.Core.Elements
 		/// <param name="unit">The unit for geometry.</param>
 		public static NodeList From(Document document, LengthUnit unit)
 		{
-			var points = GetObjects(document).ToArray();
+			var points = GetObjects(document).Where(o => o is not null).ToList();
 			var bId    = document.Database.BlockTableId;
 
 			return points.IsNullOrEmpty() 
 				? new NodeList(bId)
-				: new NodeList(points.Select(p => NodeObject.From(p, unit)), bId);
+				: new NodeList(points.Select(p => NodeObject.From(p!, unit)), bId);
 		}
 
-		/// <inheritdoc cref="Add(NodeObject, bool, bool)" />
+		/// <inheritdoc cref="Add(Point, NodeType, bool, bool)" />
 		/// <param name="position">The <see cref="Point" /> position.</param>
 		/// <param name="nodeType">The <see cref="NodeType" />.</param>
 		public bool Add(Point position, NodeType nodeType, bool raiseEvents = true, bool sort = true) => Add(new NodeObject(position, nodeType, BlockTableId), raiseEvents, sort);
@@ -101,7 +103,7 @@ namespace SPMTool.Core.Elements
 		///     and <see cref="StringerGeometry.EndPoint" />.
 		/// </remarks>
 		/// <param name="geometries">The collection of <see cref="StringerGeometry" />'s for adding nodes.</param>
-		/// <inheritdoc cref="AddRange(IEnumerable{NodeObject}, bool, bool)" />
+		/// <inheritdoc cref="AddRange(IEnumerable{Point}, NodeType, bool, bool)" />
 		public int AddNecessary(IEnumerable<StringerGeometry>? geometries, bool raiseEvents = true, bool sort = true)
 		{
 			if (geometries.IsNullOrEmpty())

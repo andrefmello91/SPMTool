@@ -529,7 +529,7 @@ namespace SPMTool
 			return
 				selRes.Status == PromptStatus.OK && selRes.Value.Count > 0
 					? selRes.Value.GetObjectIds()
-					: new ObjectId[0];
+					: new [] { ObjectId.Null };
 		}
 		
 		/// <summary>

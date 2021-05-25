@@ -52,7 +52,7 @@ namespace SPMTool.Core.Elements
 		///     Get the collection of stringers in the drawing.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
-		private static IEnumerable<Line> GetObjects(Document document) => document.GetObjects(Layer.Stringer).Where(o => o is Line).Cast<Line>();
+		private static IEnumerable<Line?> GetObjects(Document document) => document.GetObjects(Layer.Stringer).Cast<Line?>();
 
 		/// <summary>
 		///     Read all the <see cref="StringerObject" />'s in the drawing.
@@ -61,12 +61,14 @@ namespace SPMTool.Core.Elements
 		/// <param name="unit">The unit for geometry.</param>
 		public static StringerList From(Document document, LengthUnit unit)
 		{
-			var lines = GetObjects(document).ToArray();
+			var lines = GetObjects(document)
+				.Where(l => l is not null)
+				.ToArray();
 			var bId   = document.Database.BlockTableId;
 
 			return lines.IsNullOrEmpty() 
 				? new StringerList(bId)
-				: new StringerList(lines.Select(l => StringerObject.From(l, unit)), bId);
+				: new StringerList(lines.Select(l => StringerObject.From(l!, unit)), bId);
 		}
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />

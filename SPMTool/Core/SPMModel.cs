@@ -179,10 +179,10 @@ namespace SPMTool.Core
 		/// </summary>
 		static SPMModel()
 		{
-			OpenedModels = new List<SPMModel>();
-
-			foreach (Document doc in DocumentManager)
-				OpenedModels.Add(new SPMModel(doc));
+			OpenedModels =
+				(from Document doc in DocumentManager 
+					select new SPMModel(doc))
+				.ToList();
 
 			DocumentManager.DocumentCreated       += On_DocumentCreated;
 			DocumentManager.DocumentToBeDestroyed += On_DocumentClosed;

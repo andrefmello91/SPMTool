@@ -291,9 +291,9 @@ namespace SPMTool.Core.Elements
 		{
 			var data = GetDictionary("Width");
 
-			return data is null
-				? null
-				: Length.FromMillimeters(data[0].ToDouble()).ToUnit(GetOpenedModel(BlockTableId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter);
+			return data is not null
+				? Length.FromMillimeters(data[0].ToDouble())
+				: null;
 		}
 
 		/// <summary>
@@ -342,7 +342,7 @@ namespace SPMTool.Core.Elements
 		///     Get the <see cref="PanelObject" /> from the active model associated to a <see cref="Panel" />.
 		/// </summary>
 		public static explicit operator PanelObject?(Panel? panel) => panel is not null
-			? SPMModel.ActiveModel.Panels.GetByProperty(panel.Geometry)
+			? ActiveModel.Panels.GetByProperty(panel.Geometry)
 			: null;
 
 		/// <summary>
