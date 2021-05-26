@@ -38,7 +38,7 @@ namespace SPMTool.Core.Blocks
 				_stressState = value;
 
 				// Update attribute
-				Attributes = GetAttributes(value, ScaleFactor, TextHeight, Layer).ToArray();
+				Attributes = GetAttributes(value, TextHeight, Layer, BlockTableId).ToArray();
 			}
 		}
 
@@ -56,7 +56,7 @@ namespace SPMTool.Core.Blocks
 		{
 			_stressState = stressState;
 
-			Attributes = GetAttributes(stressState, scaleFactor, textHeight, Layer).ToArray();
+			Attributes = GetAttributes(stressState, textHeight, Layer, blockTableId).ToArray();
 		}
 
 		#endregion
@@ -83,10 +83,12 @@ namespace SPMTool.Core.Blocks
 		///     Get the attribute for shear block.
 		/// </summary>
 		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double, ObjectId)" />
-		private static IEnumerable<AttributeReference> GetAttributes(PrincipalStressState stressState, double scaleFactor, double textHeight, Layer layer)
+		private static IEnumerable<AttributeReference> GetAttributes(PrincipalStressState stressState, double textHeight, Layer layer, ObjectId blockTableId)
 		{
 			if (stressState.IsZero)
 				yield break;
+
+			var unit = SPMModel.GetOpenedModel(blockTableId)!.Settings.Units.Geometry;
 
 			// Text for sigma 1
 			if (!stressState.Is1Zero)
@@ -95,13 +97,13 @@ namespace SPMTool.Core.Blocks
 
 				// Improve angle
 				var angle1 = ImproveAngle(stressState.Theta1);
-				var pt1    = GetTextInsertionPoint(angle1, scaleFactor);
+				var pt1    = GetTextInsertionPoint(angle1);
 				var color1 = stressState.Sigma1.GetColorCode();
 
 				yield return new AttributeReference
 				{
-					Position            = pt1.ToPoint3d(),
-					TextString          = $"{sigma1:0.00}",
+					Position            = pt1.ToPoint3d(unit),
+					TextString          = $"{sigma1:G4}",
 					Height              = textHeight,
 					Layer               = $"{layer}",
 					ColorIndex          = (short) color1,
@@ -119,13 +121,13 @@ namespace SPMTool.Core.Blocks
 
 			// Improve angle
 			var angle2 = ImproveAngle(stressState.Theta2);
-			var pt2    = GetTextInsertionPoint(angle2, scaleFactor);
+			var pt2    = GetTextInsertionPoint(angle2);
 			var color2 = stressState.Sigma2.GetColorCode();
 
 			yield return new AttributeReference
 			{
-				Position            = pt2.ToPoint3d(),
-				TextString          = $"{sigma2:0.00}",
+				Position            = pt2.ToPoint3d(unit),
+				TextString          = $"{sigma2:G4}",
 				Height              = textHeight,
 				Layer               = $"{layer}",
 				ColorIndex          = (short) color2,
@@ -152,15 +154,7 @@ namespace SPMTool.Core.Blocks
 		///     Get insertion point for text.
 		/// </summary>
 		/// <param name="stressAngle">The angle of the stress.</param>
-		/// <param name="scaleFactor"></param>
-		private static Point GetTextInsertionPoint(double stressAngle, double scaleFactor) => new Point(210 * scaleFactor, 0).Rotate(stressAngle);
-
-		// {
-		// 	var (cos, sin) = stressAngle.DirectionCosines();
-		//
-		// 	return
-		// 		new Point(210 * cos * scaleFactor, 210 * sin * scaleFactor);
-		// }
+		private static Point GetTextInsertionPoint(double stressAngle) => new Point(210, 0).Rotate(stressAngle);
 
 		#endregion
 

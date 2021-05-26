@@ -104,9 +104,10 @@ namespace SPMTool.Core.Conditions
 		{
 			// Get database
 			var model = SPMModel.GetOpenedModel(BlockTableId)!;
+			var units = model.Settings.Units;
 			
 			return
-				model.AcadDatabase.GetReference(Block, Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, null, model.Settings.Units.ScaleFactor)!;
+				model.AcadDatabase.GetReference(Block, Position.ToPoint3d(units.Geometry), Layer, null, RotationAngle, Axis.Z, null, units.ScaleFactor)!;
 		}
 
 		/// <inheritdoc />

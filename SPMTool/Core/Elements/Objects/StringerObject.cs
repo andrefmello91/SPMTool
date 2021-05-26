@@ -179,10 +179,13 @@ namespace SPMTool.Core.Elements
 				start = Geometry.InitialPoint + (_stringer?.Grip1.Displacement ?? PlaneDisplacement.Zero) * displacementMagnifier,
 				end   = Geometry.EndPoint + (_stringer?.Grip3.Displacement ?? PlaneDisplacement.Zero) * displacementMagnifier;
 
-			return new Line(start.ToPoint3d(), end.ToPoint3d())
-			{
-				Layer = $"{Layer.Displacements}"
-			};
+			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
+			
+			return
+				new Line(start.ToPoint3d(unit), end.ToPoint3d(unit))
+				{
+					Layer = $"{Layer.Displacements}"
+				};
 		}
 
 		/// <remarks>
@@ -255,11 +258,16 @@ namespace SPMTool.Core.Elements
 
 		#region Interface Implementations
 
-		public override DBObject CreateObject() =>
-			new Line(Geometry.InitialPoint.ToPoint3d(), Geometry.EndPoint.ToPoint3d())
-			{
-				Layer = $"{Layer}"
-			};
+		public override DBObject CreateObject()
+		{
+			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
+			
+			return
+				new Line(Geometry.InitialPoint.ToPoint3d(unit), Geometry.EndPoint.ToPoint3d(unit))
+				{
+					Layer = $"{Layer}"
+				};
+		}
 
 		/// <inheritdoc />
 		Line IDBObjectCreator<Line>.CreateObject() => (Line) CreateObject();

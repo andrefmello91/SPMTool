@@ -44,10 +44,10 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void GetValues(DisplaySettings displaySettings)
 		{
-			NodeBox.Text         = $"{displaySettings.NodeScale:0.0}";
-			ConditionBox.Text    = $"{displaySettings.ConditionScale:0.0}";
-			ResultBox.Text       = $"{displaySettings.ResultScale:0.0}";
-			TextScaleBox.Text    = $"{displaySettings.TextScale:0.0}";
+			NodeBox.Text         = $"{displaySettings.NodeScale:F2}";
+			ConditionBox.Text    = $"{displaySettings.ConditionScale:F2}";
+			ResultBox.Text       = $"{displaySettings.ResultScale:F2}";
+			TextScaleBox.Text    = $"{displaySettings.TextScale:F2}";
 			DisplacementBox.Text = $"{displaySettings.DisplacementMagnifier}";
 		}
 

@@ -162,10 +162,11 @@ namespace SPMTool.Core.Elements
 
 		#region Interface Implementations
 
-		public override DBObject CreateObject() => new DBPoint(Position.ToPoint3d())
-		{
-			Layer = $"{Layer}"
-		};
+		public override DBObject CreateObject() =>
+			new DBPoint(Position.ToPoint3d(GetOpenedModel(BlockTableId)!.Settings.Units.Geometry))
+			{
+				Layer = $"{Layer}"
+			};
 
 		/// <inheritdoc />
 		DBPoint IDBObjectCreator<DBPoint>.CreateObject() => (DBPoint) CreateObject();

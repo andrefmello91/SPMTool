@@ -84,12 +84,14 @@ namespace SPMTool.Core.Conditions
 
 		public override DBObject CreateObject()
 		{
-			var insertionPoint = Position.ToPoint3d();
-
 			// Get database
-			var model    = GetOpenedModel(BlockTableId)!;
+			var model = GetOpenedModel(BlockTableId)!;
+			var units = model.Settings.Units;
+			
+			var insertionPoint = Position.ToPoint3d(units.Geometry);
 
-			var block = model.AcadDatabase.GetReference(Block, insertionPoint, Layer, null, 0, Axis.Z, null, model.Settings.Units.ScaleFactor)!;
+
+			var block = model.AcadDatabase.GetReference(Block, insertionPoint, Layer, null, 0, Axis.Z, null, units.ScaleFactor)!;
 
 			// Rotate the block
 			if (Direction is ComponentDirection.X)
@@ -128,12 +130,13 @@ namespace SPMTool.Core.Conditions
 		private IEnumerable<AttributeReference?> ForceAttributeReference()
 		{
 			var model = GetOpenedModel(BlockTableId)!;
+			var unit  = model.Settings.Units.Geometry;
 			var txtH  = model.TextHeight;
 			
 			if (!Value.IsXZero)
 				yield return new AttributeReference
 				{
-					Position            = TextInsertionPoint(ComponentDirection.X).ToPoint3d(),
+					Position            = TextInsertionPoint(ComponentDirection.X).ToPoint3d(unit),
 					TextString          = $"{Value.X.Value.Abs():0.00}",
 					Height              = txtH,
 					Justify             = AttachmentPoint.MiddleLeft,
@@ -144,7 +147,7 @@ namespace SPMTool.Core.Conditions
 			if (!Value.IsYZero)
 				yield return new AttributeReference
 				{
-					Position            = TextInsertionPoint(ComponentDirection.Y).ToPoint3d(),
+					Position            = TextInsertionPoint(ComponentDirection.Y).ToPoint3d(unit),
 					TextString          = $"{Value.Y.Value.Abs():0.00}",
 					Height              = txtH,
 					Justify             = AttachmentPoint.MiddleLeft,

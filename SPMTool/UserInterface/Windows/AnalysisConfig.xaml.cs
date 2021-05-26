@@ -44,7 +44,7 @@ namespace SPMTool.Application.UserInterface
 
 			set
 			{
-				ToleranceBox.Text       = $"{value.Tolerance:E2}";
+				ToleranceBox.Text       = $"{value.Tolerance:G2}";
 				LoadStepsBox.Text       = $"{value.NumLoadSteps}";
 				IterationsBox.Text      = $"{value.MaxIterations}";
 				SolverBox.SelectedIndex = (int) value.Solver;

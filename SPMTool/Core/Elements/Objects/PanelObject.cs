@@ -314,10 +314,16 @@ namespace SPMTool.Core.Elements
 
 		#region Interface Implementations
 
-		public override DBObject CreateObject() => new Solid(Vertices.Vertex1.ToPoint3d(), Vertices.Vertex2.ToPoint3d(), Vertices.Vertex4.ToPoint3d(), Vertices.Vertex3.ToPoint3d())
+		public override DBObject CreateObject()
 		{
-			Layer = $"{Layer}"
-		};
+			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
+			
+			return
+				new Solid(Vertices.Vertex1.ToPoint3d(unit), Vertices.Vertex2.ToPoint3d(unit), Vertices.Vertex4.ToPoint3d(unit), Vertices.Vertex3.ToPoint3d(unit))
+				{
+					Layer = $"{Layer}"
+				};
+		}
 
 		/// <inheritdoc />
 		Solid IDBObjectCreator<Solid>.CreateObject() => (Solid) CreateObject();

@@ -31,7 +31,7 @@ namespace SPMTool
 		/// <param name="defaultValue">The default value to display.</param>
 		/// <param name="allowNegative">Allow negative input?</param>
 		/// <param name="allowZero">Allow zero input?</param>
-		public static double? GetDouble(this Autodesk.AutoCAD.EditorInput.Editor editor, string message, double defaultValue = 0, bool allowNegative = false, bool allowZero = false)
+		public static double? GetDouble(this Editor editor, string message, double defaultValue = 0, bool allowNegative = false, bool allowZero = false)
 		{
 			// Ask the user to input the panel width
 			var dbOp = new PromptDoubleOptions($"\n{message}")
@@ -309,14 +309,15 @@ namespace SPMTool
 		///     Get a <see cref="Point" /> from user.
 		/// </summary>
 		/// <inheritdoc cref="GetPoint3d" />
-		public static Point? GetPoint(this Autodesk.AutoCAD.EditorInput.Editor editor, string message, Point? basePoint = null, LengthUnit unit = LengthUnit.Millimeter) => editor.GetPoint3d(message, basePoint?.ToPoint3d())?.ToPoint(unit);
+		public static Point? GetPoint(this Editor editor, string message, Point? basePoint = null, LengthUnit unit = LengthUnit.Millimeter) =>
+			editor.GetPoint3d(message, basePoint?.ToPoint3d(unit))?.ToPoint(unit);
 
 		/// <summary>
 		///     Get a <see cref="Point3d" /> from user.
 		/// </summary>
 		/// <param name="message">The message to display.</param>
 		/// <param name="basePoint">The base point to use, if needed.</param>
-		public static Point3d? GetPoint3d(this Autodesk.AutoCAD.EditorInput.Editor editor, string message, Point3d? basePoint = null)
+		public static Point3d? GetPoint3d(this Editor editor, string message, Point3d? basePoint = null)
 		{
 			// Prompt for the start point of Stringer
 			var ptOp = new PromptPointOptions($"\n{message}");

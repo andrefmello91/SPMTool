@@ -89,18 +89,19 @@ namespace SPMTool.Core.Blocks
 		///     Get the entities for combined diagram.
 		/// </summary>
 		/// <inheritdoc cref="From" />
-		private static IEnumerable<Entity> Combined(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, double scaleFactor)
+		private static IEnumerable<Entity> Combined(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, ObjectId blockTableId)
 		{
 			var stPt = geometry.InitialPoint;
 			var l    = geometry.Length;
 			var (n1, n3) = normalForces;
 			var angle = geometry.Angle;
+			var unit  = SPMModel.GetOpenedModel(blockTableId)!.Settings.Units.Geometry;
 
 			// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
 			// Invert tension and compression axis
 			Length
-				h1 = -Length.FromMillimeters(150) * scaleFactor * n1 / maxForce,
-				h3 = -Length.FromMillimeters(150) * scaleFactor * n3 / maxForce;
+				h1 = -Length.FromMillimeters(150) * n1 / maxForce,
+				h3 = -Length.FromMillimeters(150) * n3 / maxForce;
 
 			// Calculate the point where the Stringer force will be zero
 			var x     = h1.Abs() * l / (h1.Abs() + h3.Abs());
@@ -113,7 +114,7 @@ namespace SPMTool.Core.Blocks
 					invPt,
 					new(stPt.X, stPt.Y + h1)
 				}
-				.Select(p => p.Rotate(stPt, angle)).ToPoint3ds().ToArray();
+				.Select(p => p.Rotate(stPt, angle)).ToPoint3ds(unit).ToArray();
 
 
 			var vrts3 = new[]
@@ -122,7 +123,7 @@ namespace SPMTool.Core.Blocks
 					new(stPt.X + l, stPt.Y),
 					new(stPt.X + l, stPt.Y + h3)
 				}
-				.Select(p => p.Rotate(stPt, angle)).ToPoint3ds().ToArray();
+				.Select(p => p.Rotate(stPt, angle)).ToPoint3ds(unit).ToArray();
 
 			// Create the diagrams as solids with 3 segments (3 points)
 			yield return
@@ -153,34 +154,35 @@ namespace SPMTool.Core.Blocks
 		///     Get the attributes for stringer force block.
 		/// </summary>
 		/// <inheritdoc cref="From" />
-		private static IEnumerable<DBText> GetTexts(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, double scaleFactor, double textHeight)
+		private static IEnumerable<DBText> GetTexts(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, double textHeight, ObjectId blockTableId)
 		{
 			var stPt = geometry.InitialPoint;
 			var l    = geometry.Length;
 			var (n1, n3) = normalForces;
 			var angle = geometry.Angle;
+			var unit  = SPMModel.GetOpenedModel(blockTableId)!.Settings.Units.Geometry;
 
 			// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
 			// Invert tension and compression axis
 			Length
-				h1 = -Length.FromMillimeters(150) * scaleFactor * n1 / maxForce,
-				h3 = -Length.FromMillimeters(150) * scaleFactor * n3 / maxForce;
+				h1 = -Length.FromMillimeters(150) * n1 / maxForce,
+				h3 = -Length.FromMillimeters(150) * n3 / maxForce;
 
 			// Create attributes
 
 			if (!n1.ApproxZero(Units.StringerForceTolerance))
 			{
 				var pt1 = (n1.Value > 0
-						? new Point(stPt.X + Length.FromMillimeters(10) * scaleFactor, stPt.Y + h1 - Length.FromMillimeters(30) * scaleFactor)
-						: new Point(stPt.X + Length.FromMillimeters(10) * scaleFactor, stPt.Y + h1 + Length.FromMillimeters(30) * scaleFactor))
-					.Rotate(stPt, angle).ToPoint3d();
+						? new Point(stPt.X + Length.FromMillimeters(10), stPt.Y + h1 - Length.FromMillimeters(30))
+						: new Point(stPt.X + Length.FromMillimeters(10), stPt.Y + h1 + Length.FromMillimeters(30)))
+					.Rotate(stPt, angle).ToPoint3d(unit);
 
 				// Rotate
 				yield return
 					new DBText
 					{
 						Position       = pt1,
-						TextString     = $"{n1.Value.Abs():0.00}",
+						TextString     = $"{n1.Value.Abs():G4}",
 						Height         = textHeight,
 						Justify        = AttachmentPoint.MiddleLeft,
 						AlignmentPoint = pt1,
@@ -199,15 +201,15 @@ namespace SPMTool.Core.Blocks
 				yield break;
 
 			var pt3 = (n3.Value > 0
-					? new Point(stPt.X + l - Length.FromMillimeters(10) * scaleFactor, stPt.Y + h3 - Length.FromMillimeters(30) * scaleFactor)
-					: new Point(stPt.X + l - Length.FromMillimeters(10) * scaleFactor, stPt.Y + h3 + Length.FromMillimeters(30) * scaleFactor))
-				.Rotate(stPt, angle).ToPoint3d();
+					? new Point(stPt.X + l - Length.FromMillimeters(10), stPt.Y + h3 - Length.FromMillimeters(30))
+					: new Point(stPt.X + l - Length.FromMillimeters(10), stPt.Y + h3 + Length.FromMillimeters(30)))
+				.Rotate(stPt, angle).ToPoint3d(unit);
 
 			yield return
 				new DBText
 				{
 					Position       = pt3,
-					TextString     = $"{n3.Value.Abs():0.00}",
+					TextString     = $"{n3.Value.Abs():G4}",
 					Height         = textHeight,
 					Justify        = AttachmentPoint.MiddleRight,
 					AlignmentPoint = pt3,
@@ -228,18 +230,19 @@ namespace SPMTool.Core.Blocks
 		///     Get the entities for pure tension/compression diagram.
 		/// </summary>
 		/// <inheritdoc cref="From" />
-		private static Entity PureTensionOrCompression(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, double scaleFactor)
+		private static Entity PureTensionOrCompression(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, ObjectId blockTableId)
 		{
 			var stPt = geometry.InitialPoint;
 			var l    = geometry.Length;
 			var (n1, n3) = normalForces;
 			var angle = geometry.Angle;
+			var unit  = SPMModel.GetOpenedModel(blockTableId)!.Settings.Units.Geometry;
 
 			// Calculate the dimensions to draw the solid (the maximum dimension will be 150 mm)
 			// Invert tension and compression axis
 			Length
-				h1 = -Length.FromMillimeters(150) * scaleFactor * n1 / maxForce,
-				h3 = -Length.FromMillimeters(150) * scaleFactor * n3 / maxForce;
+				h1 = -Length.FromMillimeters(150) * n1 / maxForce,
+				h3 = -Length.FromMillimeters(150) * n3 / maxForce;
 
 			// Calculate the points (the solid will be rotated later)
 			var vrts = new[]
@@ -249,7 +252,7 @@ namespace SPMTool.Core.Blocks
 					new(stPt.X, stPt.Y + h1),
 					new(stPt.X + l, stPt.Y + h3)
 				}
-				.Select(p => p.Rotate(stPt, angle)).ToPoint3ds().ToArray();
+				.Select(p => p.Rotate(stPt, angle)).ToPoint3ds(unit).ToArray();
 
 			// Create the diagram as a solid with 4 segments (4 points)
 			var nMax = n1.Abs() > n3.Abs()
@@ -276,10 +279,10 @@ namespace SPMTool.Core.Blocks
 			var combined = UnitMath.Max(_n1, _n2) > Force.Zero && UnitMath.Min(_n1, _n2) < Force.Zero;
 
 			var entities = combined
-				? Combined(_geometry, (_n1, _n2), _maxForce, _scaleFactor).ToArray()
-				: new[] { PureTensionOrCompression(_geometry, (_n1, _n2), _maxForce, _scaleFactor) };
+				? Combined(_geometry, (_n1, _n2), _maxForce, BlockTableId).ToArray()
+				: new[] { PureTensionOrCompression(_geometry, (_n1, _n2), _maxForce, BlockTableId) };
 
-			return entities.Concat(GetTexts(_geometry, (_n1, _n2), _maxForce, _scaleFactor, _textHeight));
+			return entities.Concat(GetTexts(_geometry, (_n1, _n2), _maxForce, _textHeight, BlockTableId));
 		}
 
 		#region Interface Implementations

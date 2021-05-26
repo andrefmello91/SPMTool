@@ -128,10 +128,11 @@ namespace SPMTool.Core.Blocks
 		public virtual BlockReference CreateObject()
 		{
 			// Get database
-			var database = SPMModel.GetOpenedModel(BlockTableId)!;
+			var model = SPMModel.GetOpenedModel(BlockTableId)!;
+			var unit  = model.Settings.Units.Geometry;
 
 			return
-				database.AcadDatabase.GetReference(Block, Position.ToPoint3d(), Layer, ColorCode, RotationAngle, RotationAxis, RotationPoint?.ToPoint3d(), ScaleFactor)!;
+				model.AcadDatabase.GetReference(Block, Position.ToPoint3d(unit), Layer, ColorCode, RotationAngle, RotationAxis, RotationPoint?.ToPoint3d(unit), ScaleFactor)!;
 		}
 
 		/// <inheritdoc />

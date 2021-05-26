@@ -83,7 +83,7 @@ namespace SPMTool.Core.Blocks
 				new AttributeReference
 				{
 					Position            = Point3d.Origin,
-					TextString          = $"{tau:0.00}",
+					TextString          = $"{tau:G4}",
 					Height              = textHeight,
 					Justify             = AttachmentPoint.MiddleCenter,
 					Layer               = $"{layer}",

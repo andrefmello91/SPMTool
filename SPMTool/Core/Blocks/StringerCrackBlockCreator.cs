@@ -39,7 +39,7 @@ namespace SPMTool.Core.Blocks
 				_crackOpening = value;
 
 				// Update attribute
-				Attributes = new[] { GetAttribute(value, RotationAngle, ScaleFactor, TextHeight) };
+				Attributes = new[] { GetAttribute(value, RotationAngle, ScaleFactor, TextHeight, BlockTableId) };
 			}
 		}
 
@@ -61,7 +61,7 @@ namespace SPMTool.Core.Blocks
 
 			RotationPoint = rotationPoint;
 
-			Attributes = new[] { GetAttribute(crackOpening, rotationAngle, scaleFactor, textHeight) };
+			Attributes = new[] { GetAttribute(crackOpening, rotationAngle, scaleFactor, textHeight, blockTableId) };
 		}
 
 		#endregion
@@ -103,16 +103,17 @@ namespace SPMTool.Core.Blocks
 		///     Get the attribute for crack block.
 		/// </summary>
 		/// <inheritdoc cref="StringerCrackBlockCreator(Point, Length, double, Point, double, double, ObjectId)" />
-		private static AttributeReference GetAttribute(Length crackOpening, double rotationAngle, double scaleFactor, double textHeight)
+		private static AttributeReference GetAttribute(Length crackOpening, double rotationAngle, double scaleFactor, double textHeight, ObjectId blockTableId)
 		{
 			var w = crackOpening.Value.Abs();
 
 			// Set the insertion point
-			var pt = new Point(0, -100 * scaleFactor).Rotate(rotationAngle);
+			var unit = SPMModel.GetOpenedModel(blockTableId)!.Settings.Units.Geometry;
+			var pt   = new Point(0, -100).Rotate(rotationAngle).ToPoint3d(unit);
 
 			return new AttributeReference
 			{
-				Position            = pt.ToPoint3d(),
+				Position            = pt,
 				TextString          = $"{w:0.00E+00}",
 				Height              = textHeight,
 				Layer               = $"{Layer.Cracks}",
