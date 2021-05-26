@@ -250,7 +250,7 @@ namespace SPMTool.Application.UserInterface
 		///     Get saved geometry options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.StringerCrossSections.Select(geo => $"{geo.Width.As(database.Settings.Units.Geometry):F3} {(char) Character.Times} {geo.Height.Value:F3}");
+		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.StringerCrossSections.Select(geo => $"{geo.Width.As(database.Settings.Units.Geometry):F3} {(char) Character.Times} {geo.Height.As(database.Settings.Units.Geometry):F3}");
 
 		/// <summary>
 		///     Get saved reinforcement options as string collection.
