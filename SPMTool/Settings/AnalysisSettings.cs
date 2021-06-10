@@ -18,10 +18,11 @@ namespace SPMTool.Application
 		/// </summary>
 		public static AnalysisSettings Default { get; } = new()
 		{
-			Tolerance     = 1E-3,
-			NumLoadSteps  = 50,
-			MaxIterations = 10000,
-			Solver        = NonLinearSolver.NewtonRaphson
+			ForceTolerance        = 1E-3,
+			DisplacementTolerance = 1E-8,
+			NumberOfSteps         = 50,
+			MaxIterations         = 10000,
+			Solver                = NonLinearSolver.NewtonRaphson
 		};
 
 		/// <summary>
@@ -35,9 +36,9 @@ namespace SPMTool.Application
 		public int MaxIterations { get; set; }
 
 		/// <summary>
-		///     Get/set the number of load steps.
+		///     Get/set the number of steps.
 		/// </summary>
-		public int NumLoadSteps { get; set; }
+		public int NumberOfSteps { get; set; }
 
 		/// <summary>
 		///     Get/set the nonlinear solver.
@@ -45,9 +46,14 @@ namespace SPMTool.Application
 		public NonLinearSolver Solver { get; set; }
 
 		/// <summary>
-		///     Get/set the convergence tolerance
+		///     Get/set the convergence tolerance for residual forces.
 		/// </summary>
-		public double Tolerance { get; set; }
+		public double ForceTolerance { get; set; }
+		
+		/// <summary>
+		///     Get/set the convergence tolerance for displacement increments.
+		/// </summary>
+		public double DisplacementTolerance { get; set; }
 
 		#endregion
 
@@ -59,7 +65,7 @@ namespace SPMTool.Application
 		///     Returns true if all parameters coincide.
 		/// </summary>
 		/// <param name="other">The other <see cref="AnalysisSettings" /> object.</param>
-		public bool Equals(AnalysisSettings? other) => other is not null && Tolerance.Approx(other.Tolerance) && NumLoadSteps == other.NumLoadSteps && MaxIterations == other.MaxIterations;
+		public bool Equals(AnalysisSettings? other) => other is not null && ForceTolerance.Approx(other.ForceTolerance) && NumberOfSteps == other.NumberOfSteps && MaxIterations == other.MaxIterations;
 
 		#endregion
 

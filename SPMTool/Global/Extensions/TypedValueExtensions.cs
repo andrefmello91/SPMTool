@@ -33,15 +33,16 @@ namespace SPMTool
 		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="AnalysisSettings" />.</param>
 		public static AnalysisSettings? GetAnalysisSettings(this IEnumerable<TypedValue>? values)
 		{
-			if (values.IsNullOrEmpty() || values.Count() != 4)
+			if (values.IsNullOrEmpty() || values.Count() != 5)
 				return null;
 
 			return new AnalysisSettings
 			{
-				Tolerance     = values.ElementAt(0).ToDouble(),
-				NumLoadSteps  = values.ElementAt(1).ToInt(),
-				MaxIterations = values.ElementAt(2).ToInt(),
-				Solver        = (NonLinearSolver) values.ElementAt(3).ToInt()
+				ForceTolerance        = values.ElementAt(0).ToDouble(),
+				DisplacementTolerance = values.ElementAt(1).ToDouble(),
+				NumberOfSteps         = values.ElementAt(2).ToInt(),
+				MaxIterations         = values.ElementAt(3).ToInt(),
+				Solver                = (NonLinearSolver) values.ElementAt(4).ToInt()
 			};
 		}
 		
@@ -294,8 +295,9 @@ namespace SPMTool
 
 			return new[]
 			{
-				new TypedValue((int) DxfCode.Real, settings.Tolerance),
-				new TypedValue((int) DxfCode.Int32, settings.NumLoadSteps),
+				new TypedValue((int) DxfCode.Real,  settings.ForceTolerance),
+				new TypedValue((int) DxfCode.Real,  settings.DisplacementTolerance),
+				new TypedValue((int) DxfCode.Int32, settings.NumberOfSteps),
 				new TypedValue((int) DxfCode.Int32, settings.MaxIterations),
 				new TypedValue((int) DxfCode.Int32, (int) settings.Solver)
 			};

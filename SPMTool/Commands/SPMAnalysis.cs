@@ -56,7 +56,7 @@ namespace SPMTool.Commands
 			var model = SPMModel.ActiveModel;
 
 			// Get input data
-			var input = model.GenerateInput(AnalysisType.Nonlinear, out var dataOk, out var message);
+			var input = model.GenerateInput(AnalysisType.Nonlinear, out var dataOk, out var message)!;
 
 			if (!dataOk)
 			{
@@ -74,7 +74,13 @@ namespace SPMTool.Commands
 			var settings = SPMModel.ActiveModel.Settings.Analysis;
 
 			// Do analysis
-			var analysis = new SPMNonlinearAnalysis(input, settings.Solver, settings.NumLoadSteps, settings.Tolerance, settings.MaxIterations);
+			var analysis = new SPMNonlinearAnalysis(input, settings.Solver)
+			{
+				NumberOfSteps  = settings.NumberOfSteps,
+				ForceTolerance = settings.ForceTolerance,
+				MaxIterations  = settings.MaxIterations
+			};
+			
 			analysis.Execute(uIndexn.Value, simulate);
 			var output = analysis.GenerateOutput();
 

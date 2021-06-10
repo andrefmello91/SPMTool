@@ -36,16 +36,18 @@ namespace SPMTool.Application.UserInterface
 		{
 			get => new()
 			{
-				Tolerance     = double.Parse(ToleranceBox.Text),
-				NumLoadSteps  = int.Parse(LoadStepsBox.Text),
-				MaxIterations = int.Parse(IterationsBox.Text),
-				Solver        = (NonLinearSolver) SolverBox.SelectedIndex
+				ForceTolerance        = double.Parse(FToleranceBox.Text),
+				DisplacementTolerance = double.Parse(DToleranceBox.Text),
+				NumberOfSteps         = int.Parse(LoadStepsBox.Text),
+				MaxIterations         = int.Parse(IterationsBox.Text),
+				Solver                = (NonLinearSolver) SolverBox.SelectedIndex
 			};
 
 			set
 			{
-				ToleranceBox.Text       = $"{value.Tolerance:G2}";
-				LoadStepsBox.Text       = $"{value.NumLoadSteps}";
+				FToleranceBox.Text      = $"{value.ForceTolerance:G2}";
+				DToleranceBox.Text      = $"{value.DisplacementTolerance:G2}";
+				LoadStepsBox.Text       = $"{value.NumberOfSteps}";
 				IterationsBox.Text      = $"{value.MaxIterations}";
 				SolverBox.SelectedIndex = (int) value.Solver;
 			}
@@ -82,13 +84,13 @@ namespace SPMTool.Application.UserInterface
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Check if parameters parse
-			if (!CheckBoxes(ToleranceBox, LoadStepsBox, IterationsBox))
+			if (!CheckBoxes(FToleranceBox, DToleranceBox, LoadStepsBox, IterationsBox))
 			{
 				MessageBox.Show("Please set positive and non zero values.");
 				return;
 			}
 
-			if (double.Parse(ToleranceBox.Text) >= 1)
+			if (double.Parse(FToleranceBox.Text) >= 1 || double.Parse(DToleranceBox.Text) >= 1)
 			{
 				MessageBox.Show("Please set a tolerance smaller than 1.");
 				return;
