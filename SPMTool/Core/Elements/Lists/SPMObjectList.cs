@@ -18,6 +18,22 @@ namespace SPMTool.Core.Elements
 		where TProperty : IComparable<TProperty>, IEquatable<TProperty>
 	{
 
+		#region Properties
+
+		/// <summary>
+		///     Get the elements in this collection that match any property in a collection.
+		/// </summary>
+		/// <param name="properties">The collection of required properties.</param>
+		public IEnumerable<TSPMObject> this[IEnumerable<TProperty> properties] => this.Where(t => properties.Contains(t.Property));
+
+		/// <summary>
+		///     Get an element in this collection that matches <paramref name="property" />.
+		/// </summary>
+		/// <param name="property">The required property.</param>
+		public TSPMObject? this[TProperty property] => Find(t => t.Property.Equals(property));
+
+		#endregion
+
 		#region Constructors
 
 		/// <inheritdoc />
@@ -36,11 +52,6 @@ namespace SPMTool.Core.Elements
 		#endregion
 
 		#region Methods
-
-		/// <summary>
-		///     Event to execute when a list is sorted.
-		/// </summary>
-		private static void On_ListSort(object? sender, EventArgs? e) => SetNumbers((IEnumerable<TSPMObject>?) sender);
 
 		/// <summary>
 		///     Set numbers to a collection of objects.
@@ -66,18 +77,6 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <summary>
-		///     Get the elements in this collection that match any property in a collection.
-		/// </summary>
-		/// <param name="properties">The collection of required properties.</param>
-		public IEnumerable<TSPMObject>? GetByProperties(IEnumerable<TProperty>? properties) => this.Where(t => properties.Contains(t.Property));
-
-		/// <summary>
-		///     Get an element in this collection that matches <paramref name="property" />.
-		/// </summary>
-		/// <param name="property">The required property.</param>
-		public TSPMObject? GetByProperty(TProperty property) => Find(t => t.Property.Equals(property));
-
-		/// <summary>
 		///     Get the the list of SPM elements from objects in this collection.
 		/// </summary>
 		[return: NotNull]
@@ -92,6 +91,15 @@ namespace SPMTool.Core.Elements
 		///     Set sort event to this collection.
 		/// </summary>
 		private void SetSortEvent() => ListSorted += On_ListSort;
+
+		#endregion
+
+		#region Events
+
+		/// <summary>
+		///     Event to execute when a list is sorted.
+		/// </summary>
+		private static void On_ListSort(object? sender, EventArgs? e) => SetNumbers((IEnumerable<TSPMObject>?) sender);
 
 		#endregion
 

@@ -348,7 +348,7 @@ namespace SPMTool.Core.Elements
 		///     Get the <see cref="PanelObject" /> from the active model associated to a <see cref="Panel" />.
 		/// </summary>
 		public static explicit operator PanelObject?(Panel? panel) => panel is not null
-			? ActiveModel.Panels.GetByProperty(panel.Geometry)
+			? ActiveModel.Panels[panel.Geometry]
 			: null;
 
 		/// <summary>

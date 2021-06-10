@@ -216,7 +216,7 @@ namespace SPMTool
 				return null;
 
 			// Get the node global indexes
-			var node  = model.Nodes.GetByObjectId(nd.ObjectId)?.GetElement();
+			var node  = model.Nodes[nd.ObjectId]?.GetElement();
 			var index = node?.DoFIndex;
 
 			return

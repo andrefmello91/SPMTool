@@ -292,7 +292,7 @@ namespace SPMTool.Core.Elements
 		///     Get the <see cref="StringerObject" /> from the active model associated to a <see cref="Stringer" />.
 		/// </summary>
 		public static explicit operator StringerObject?(Stringer? stringer) => stringer is not null
-			? SPMModel.ActiveModel.Stringers.GetByProperty(stringer.Geometry)
+			? ActiveModel.Stringers[stringer.Geometry]
 			: null;
 
 		/// <summary>

@@ -338,11 +338,11 @@ namespace SPMTool
 			SPMModel.GetOpenedModel(dbObject?.ObjectId ?? ObjectId.Null) is { } model
 				? dbObject switch
 				{
-					DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => model.Nodes.GetByObjectId(dbObject.ObjectId),
-					Line l when l.Layer == $"{Layer.Stringer}"                                    => model.Stringers.GetByObjectId(dbObject.ObjectId),
-					Solid s when s.Layer == $"{Layer.Panel}"                                      => model.Panels.GetByObjectId(dbObject.ObjectId),
-					BlockReference b when b.Layer == $"{Layer.Force}"                             => model.Forces.GetByObjectId(dbObject.ObjectId),
-					BlockReference b when b.Layer == $"{Layer.Support}"                           => model.Constraints.GetByObjectId(dbObject.ObjectId),
+					DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => model.Nodes[dbObject.ObjectId],
+					Line l when l.Layer == $"{Layer.Stringer}"                                    => model.Stringers[dbObject.ObjectId],
+					Solid s when s.Layer == $"{Layer.Panel}"                                      => model.Panels[dbObject.ObjectId],
+					BlockReference b when b.Layer == $"{Layer.Force}"                             => model.Forces[dbObject.ObjectId],
+					BlockReference b when b.Layer == $"{Layer.Support}"                           => model.Constraints[dbObject.ObjectId],
 					_                                                                             => null
 				}
 				: null;

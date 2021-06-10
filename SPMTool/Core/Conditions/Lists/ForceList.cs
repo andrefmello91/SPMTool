@@ -82,14 +82,6 @@ namespace SPMTool.Core.Conditions
 				? 0
 				: AddRange(positions?.Select(p => new ForceObject(p, value, BlockTableId)), raiseEvents, sort);
 
-		/// <summary>
-		///     Get a <see cref="PlaneForce" /> at this <paramref name="position" />.
-		/// </summary>
-		/// <inheritdoc cref="ConditionList{T1,T2}.GetByPosition(Point)" />
-		public PlaneForce GetForceByPosition(Point position) => 
-			(GetByPosition(position)?.Value ?? PlaneForce.Zero)
-			.Convert(SPMModel.GetOpenedModel(BlockTableId)!.Settings.Units.AppliedForces);
-
 		#endregion
 
 	}

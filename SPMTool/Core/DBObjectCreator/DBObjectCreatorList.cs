@@ -20,23 +20,35 @@ namespace SPMTool.Core
 		#region Properties
 
 		/// <summary>
-		///		Get the <see cref="ObjectId"/>'s from the items in this collection.
-		/// </summary>
-		public IEnumerable<ObjectId> ObjectIds => this.Select(obj => obj.ObjectId);
-		
-		/// <summary>
-		///		The <see cref="ObjectId"/> of the block table that contains this object.
+		///     The <see cref="ObjectId" /> of the block table that contains this object.
 		/// </summary>
 		public ObjectId BlockTableId { get; }
+
+		/// <summary>
+		///     Get an object in this collection that matches <paramref name="objectId" />.
+		/// </summary>
+		/// <param name="objectId">The required <see cref="ObjectId" />.</param>
+		public TDBObjectCreator? this[ObjectId objectId] => Find(e => e.ObjectId == objectId);
+
+		/// <summary>
+		///     Get objects in this collection that matches <paramref name="objectIds" />.
+		/// </summary>
+		/// <param name="objectIds">The collection of required <see cref="ObjectId" />'s.</param>
+		public IEnumerable<TDBObjectCreator> this[IEnumerable<ObjectId> objectIds] => FindAll(e => objectIds.Contains(e.ObjectId));
+
+		/// <summary>
+		///     Get the <see cref="ObjectId" />'s from the items in this collection.
+		/// </summary>
+		public IEnumerable<ObjectId> ObjectIds => this.Select(obj => obj.ObjectId);
 
 		#endregion
 
 		#region Constructors
 
 		/// <summary>
-		///		Base constructor.
+		///     Base constructor.
 		/// </summary>
-		/// <param name="blockTableId">The <see cref="ObjectId"/> of the block table that contains this object.</param>
+		/// <param name="blockTableId">The <see cref="ObjectId" /> of the block table that contains this object.</param>
 		protected DBObjectCreatorList(ObjectId blockTableId)
 		{
 			BlockTableId =  blockTableId;
@@ -45,12 +57,12 @@ namespace SPMTool.Core
 		}
 
 		/// <param name="collection">The collection of objects.</param>
-		/// <inheritdoc cref="DBObjectCreatorList{TDBObjectCreator}(ObjectId)"/>
+		/// <inheritdoc cref="DBObjectCreatorList{TDBObjectCreator}(ObjectId)" />
 		protected DBObjectCreatorList(IEnumerable<TDBObjectCreator> collection, ObjectId blockTableId)
 			: base(collection)
 		{
 			BlockTableId = blockTableId;
-			
+
 			foreach (var obj in this.Where(o => o is not null))
 				obj.BlockTableId = BlockTableId;
 
@@ -60,38 +72,7 @@ namespace SPMTool.Core
 
 		#endregion
 
-		#region Methods
-
-		/// <summary>
-		///     Get an object in this collection that matches <paramref name="objectId" />.
-		/// </summary>
-		/// <param name="objectId">The required <seealso cref="ObjectId" />.</param>
-		[return: MaybeNull]
-		public TDBObjectCreator GetByObjectId(ObjectId objectId) => Find(e => e.ObjectId == objectId);
-
-		/// <summary>
-		///     Get objects in this collection that matches <paramref name="objectIds" />.
-		/// </summary>
-		/// <param name="objectIds">The collection of required <seealso cref="ObjectId" />'s.</param>
-		[return: MaybeNull]
-		public IEnumerable<TDBObjectCreator> GetByObjectIds(IEnumerable<ObjectId>? objectIds) => objectIds is null
-			? null
-			: FindAll(e => objectIds.Contains(e.ObjectId));
-
-		/*
-		/// <summary>
-		///     Set events on this collection.
-		/// </summary>
-		private void SetEvents()
-		{
-			ItemAdded    += On_ObjectAdded;
-			ItemRemoved  += On_ObjectRemoved;
-			RangeAdded   += On_ObjectsAdded;
-			RangeRemoved += On_ObjectsRemoved;
-		}
-		*/
-
-		#endregion
+		#region Events
 
 		/// <summary>
 		///     Event to execute when an object is added to a list.
@@ -118,7 +99,22 @@ namespace SPMTool.Core
 				obj.BlockTableId = BlockTableId;
 		}
 
-		
+		#endregion
+
+		/*
+		/// <summary>
+		///     Set events on this collection.
+		/// </summary>
+		private void SetEvents()
+		{
+			ItemAdded    += On_ObjectAdded;
+			ItemRemoved  += On_ObjectRemoved;
+			RangeAdded   += On_ObjectsAdded;
+			RangeRemoved += On_ObjectsRemoved;
+		}
+		*/
+
+
 // 		/*
 // 		#region Events
 //
@@ -199,6 +195,5 @@ namespace SPMTool.Core
 //
 // 		#endregion
 // 		*/
-
 	}
 }

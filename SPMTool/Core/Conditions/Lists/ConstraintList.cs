@@ -81,12 +81,6 @@ namespace SPMTool.Core.Conditions
 				? 0
 				: AddRange(positions?.Select(p => new ConstraintObject(p, value, BlockTableId)), raiseEvents, sort);
 
-		/// <summary>
-		///     Get the <see cref="Constraint" /> at <paramref name="position" />.
-		/// </summary>
-		/// <param name="position">The required position.</param>
-		public Constraint GetConstraintByPosition(Point position) => Find(c => c.Position == position)?.Value ?? Constraint.Free;
-
 		#endregion
 
 	}

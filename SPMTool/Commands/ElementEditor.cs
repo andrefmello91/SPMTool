@@ -54,7 +54,7 @@ namespace SPMTool.Commands
 				cln = clnn.Value;
 
 			// Get the panels and stringers to divide
-			var pnlsToDivide = panels.GetByObjectIds(pnls.GetObjectIds())?.ToArray();
+			var pnlsToDivide = panels[pnls.GetObjectIds()!].ToArray();
 
 			if (pnlsToDivide.IsNullOrEmpty())
 				return;
@@ -164,7 +164,7 @@ namespace SPMTool.Commands
 			var num = numn.Value;
 
 			// Get stringers from list
-			var toDivide = stringers.GetByObjectIds(strs.GetObjectIds()!.ToArray())?.ToArray();
+			var toDivide = stringers[strs.GetObjectIds()!].ToArray();
 
 			if (toDivide.IsNullOrEmpty())
 				return;
@@ -205,7 +205,7 @@ namespace SPMTool.Commands
 				return;
 			
 			// Get the elements
-			var panels = model.Panels.GetByObjectIds(pnls.GetObjectIds())!.ToList();
+			var panels = model.Panels[pnls.GetObjectIds()!].ToArray();
 			
 			// Start the config window
 			SPMToolInterface.ShowWindow(new PanelWindow(panels));
@@ -228,7 +228,7 @@ namespace SPMTool.Commands
 				return;
 
 			// Get the elements
-			var stringers = ActiveModel.Stringers.GetByObjectIds(strs.GetObjectIds())!.ToList();
+			var stringers = ActiveModel.Stringers[strs.GetObjectIds()!].ToList();
 			
 			// Start the config window
 			SPMToolInterface.ShowWindow(new StringerWindow(stringers));
