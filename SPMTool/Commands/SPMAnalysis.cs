@@ -74,7 +74,7 @@ namespace SPMTool.Commands
 			var settings = SPMModel.ActiveModel.Settings.Analysis;
 
 			// Do analysis
-			var analysis = new SPMNonlinearAnalysis(input, settings.Solver, AnalysisControl.Displacement)
+			var analysis = new SPMNonlinearAnalysis(input, settings.Solver)
 			{
 				NumberOfSteps  = settings.NumberOfSteps,
 				ForceTolerance = settings.ForceTolerance,
