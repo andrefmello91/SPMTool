@@ -74,12 +74,7 @@ namespace SPMTool.Commands
 			var settings = SPMModel.ActiveModel.Settings.Analysis;
 
 			// Do analysis
-			var analysis = new SPMNonlinearAnalysis(input, settings.Solver)
-			{
-				NumberOfSteps  = settings.NumberOfSteps,
-				ForceTolerance = settings.ForceTolerance,
-				MaxIterations  = settings.MaxIterations
-			};
+			var analysis = new NonlinearAnalysis(input, settings);
 			
 			analysis.Execute(uIndexn.Value, simulate);
 			var output = analysis.GenerateOutput();

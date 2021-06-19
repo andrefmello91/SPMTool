@@ -203,7 +203,6 @@
     <Compile Include="Global\Extensions\UIExtensions.cs" />
     <Compile Include="Global\FlowAnalysisAttributes.cs" />
     <Compile Include="Initializer.cs" />
-    <Compile Include="Settings\AnalysisSettings.cs" />
     <Compile Include="Settings\DisplaySettings.cs" />
     <Compile Include="Settings\Settings.cs" />
     <Compile Include="Settings\Units.cs" />

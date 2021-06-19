@@ -32,9 +32,9 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Get/set settings.
 		/// </summary>
-		private AnalysisSettings AnalysisSettings
+		private AnalysisParameters Parameters
 		{
-			get => new()
+			get => AnalysisParameters.Default with
 			{
 				ForceTolerance        = double.Parse(FToleranceBox.Text),
 				DisplacementTolerance = double.Parse(DToleranceBox.Text),
@@ -66,7 +66,7 @@ namespace SPMTool.Application.UserInterface
 
 			// Read saved settings
 			_database        = SPMModel.ActiveModel;
-			AnalysisSettings = _database.Settings.Analysis;
+			Parameters = _database.Settings.Analysis;
 		}
 
 		#endregion
@@ -76,7 +76,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Set default analysis settings.
 		/// </summary>
-		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => AnalysisSettings = AnalysisSettings.Default;
+		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => Parameters = AnalysisParameters.Default;
 
 		/// <summary>
 		///     Save units if OK button is clicked.
@@ -103,7 +103,7 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			// Save units on database
-			_database.Settings.Analysis = AnalysisSettings;
+			_database.Settings.Analysis = Parameters;
 
 			Close();
 		}

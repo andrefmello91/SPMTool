@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using andrefmello91.Extensions;
+using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Core;
 using SPMTool.Enums;
@@ -24,7 +25,7 @@ namespace SPMTool.Application
 		private const string USaveName = "Units";
 
 		/// <summary>
-		///     <see cref="AnalysisSettings" /> save name.
+		///     <see cref="AnalysisParameters" /> save name.
 		/// </summary>
 		private const string ASSaveName = "Analysis Settings";
 
@@ -48,7 +49,7 @@ namespace SPMTool.Application
 		/// </summary>
 		public static readonly string[] StressUnits = { PressureUnit.Pascal.Abbrev(), PressureUnit.Kilopascal.Abbrev(), PressureUnit.Megapascal.Abbrev(), PressureUnit.Gigapascal.Abbrev() };
 
-		private AnalysisSettings _analysis;
+		private AnalysisParameters _analysis;
 		private Units _units;
 		private DisplaySettings _display;
 
@@ -57,9 +58,9 @@ namespace SPMTool.Application
 		#region Properties
 
 		/// <summary>
-		///     Get <see cref="AnalysisSettings" /> saved in database.
+		///     Get <see cref="AnalysisParameters" /> saved in database.
 		/// </summary>
-		public AnalysisSettings Analysis
+		public AnalysisParameters Analysis
 		{
 			get => _analysis;
 			set => Set(value);
@@ -133,7 +134,7 @@ namespace SPMTool.Application
 		///     Read analysis settings on dictionary.
 		/// </summary>
 		[return: NotNull]
-		private AnalysisSettings GetAnalysisSettings() => GetDictionary(ASSaveName).GetAnalysisSettings() ?? AnalysisSettings.Default;
+		private AnalysisParameters GetAnalysisSettings() => GetDictionary(ASSaveName).GetAnalysisParameters() ?? AnalysisParameters.Default;
 
 		/// <summary>
 		///     Read display settings on dictionary.
@@ -148,13 +149,13 @@ namespace SPMTool.Application
 		private Units GetUnits() => GetDictionary(USaveName).GetUnits() ?? Units.Default;
 
 		/// <summary>
-		///     Save this <paramref name="settings" /> in database.
+		///     Save this <paramref name="parameters" /> in database.
 		/// </summary>
-		private void Set(AnalysisSettings settings)
+		private void Set(AnalysisParameters parameters)
 		{
-			_analysis = settings;
+			_analysis = parameters;
 
-			SetDictionary((TypedValue[]) settings, ASSaveName);
+			SetDictionary(parameters.GetTypedValues(), ASSaveName);
 		}
 
 		/// <summary>

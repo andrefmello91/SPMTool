@@ -28,15 +28,15 @@ namespace SPMTool
 		public static int ToInt(this TypedValue value) => System.Convert.ToInt32(value.Value);
 
 		/// <summary>
-		///     Get an <see cref="AnalysisSettings" /> from <see cref="TypedValue" />'s.
+		///     Get an <see cref="AnalysisParameters" /> from <see cref="TypedValue" />'s.
 		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="AnalysisSettings" />.</param>
-		public static AnalysisSettings? GetAnalysisSettings(this IEnumerable<TypedValue>? values)
+		/// <param name="values">The <see cref="TypedValue" />'s that represent an <see cref="AnalysisParameters" />.</param>
+		public static AnalysisParameters? GetAnalysisParameters(this IEnumerable<TypedValue>? values)
 		{
 			if (values.IsNullOrEmpty() || values.Count() != 5)
 				return null;
 
-			return new AnalysisSettings
+			return AnalysisParameters.Default with
 			{
 				ForceTolerance        = values.ElementAt(0).ToDouble(),
 				DisplacementTolerance = values.ElementAt(1).ToDouble(),
@@ -284,22 +284,22 @@ namespace SPMTool
 		}
 
 		/// <summary>
-		///     Get an array of <see cref="TypedValue" /> from an <see cref="AnalysisSettings" />.
+		///     Get an array of <see cref="TypedValue" /> from an <see cref="AnalysisParameters" />.
 		/// </summary>
 		/// <returns>
-		///     An array based in <see cref="AnalysisSettings.Default" /> if the object is null.
+		///     An array based in <see cref="AnalysisParameters.Default" /> if the object is null.
 		/// </returns>
-		public static TypedValue[] GetTypedValues(this AnalysisSettings? settings)
+		public static TypedValue[] GetTypedValues(this AnalysisParameters? parameters)
 		{
-			settings ??= AnalysisSettings.Default;
+			parameters ??= AnalysisParameters.Default;
 
 			return new[]
 			{
-				new TypedValue((int) DxfCode.Real,  settings.ForceTolerance),
-				new TypedValue((int) DxfCode.Real,  settings.DisplacementTolerance),
-				new TypedValue((int) DxfCode.Int32, settings.NumberOfSteps),
-				new TypedValue((int) DxfCode.Int32, settings.MaxIterations),
-				new TypedValue((int) DxfCode.Int32, (int) settings.Solver)
+				new TypedValue((int) DxfCode.Real,  parameters.ForceTolerance),
+				new TypedValue((int) DxfCode.Real,  parameters.DisplacementTolerance),
+				new TypedValue((int) DxfCode.Int32, parameters.NumberOfSteps),
+				new TypedValue((int) DxfCode.Int32, parameters.MaxIterations),
+				new TypedValue((int) DxfCode.Int32, (int) parameters.Solver)
 			};
 		}
 
