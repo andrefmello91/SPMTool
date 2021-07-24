@@ -44,7 +44,7 @@ namespace SPMTool.Application.UserInterface
 			set => AggTypeBox.SelectedIndex = (int) value;
 		}
 
-		private IParameters _parameters;
+		private IConcreteParameters _parameters;
 
 		private readonly SPMModel _database;
 		
@@ -161,14 +161,14 @@ namespace SPMTool.Application.UserInterface
 		{
 			if (_parameters is not CustomParameters cusPar)
 				return;
-
+			
 			// Read parameters
-			cusPar.TensileStrength = Pressure.From(double.Parse(TensileBox.Text), _stressUnit);
-			cusPar.ElasticModule   = Pressure.From(double.Parse(ModuleBox.Text), _stressUnit);
-			cusPar.PlasticStrain   = double.Parse(PlasticStrainBox.Text) * -0.001;
-			cusPar.UltimateStrain  = double.Parse(UltStrainBox.Text) * -0.001;
+			var ft  = Pressure.From(double.Parse(TensileBox.Text), _stressUnit);
+			var Ec  = Pressure.From(double.Parse(ModuleBox.Text), _stressUnit);
+			var ec  = double.Parse(PlasticStrainBox.Text) * -0.001;
+			var ecu = double.Parse(UltStrainBox.Text) * -0.001;
 
-			_parameters = cusPar;
+			_parameters = new CustomParameters(cusPar.Strength, ft, Ec, cusPar.AggregateDiameter, ec, ecu);
 		}
 
 		/// <summary>
@@ -234,7 +234,12 @@ namespace SPMTool.Application.UserInterface
 			if (_parameters.Model == ParameterModel.Custom || fcBox.Text == string.Empty)
 				return;
 
-			_parameters.Strength = Pressure.From(double.Parse(fcBox.Text), _stressUnit);
+			var fc    = Pressure.From(double.Parse(fcBox.Text), _stressUnit);
+			var agg   = _parameters.AggregateDiameter;
+			var model = _parameters.Model;
+			var type  = _parameters.Type;
+			
+			_parameters = new Parameters(fc, agg, model, type);
 			UpdateCustomParameterBoxes();
 		}
 

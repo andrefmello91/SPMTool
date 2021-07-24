@@ -110,10 +110,10 @@ namespace SPMTool
 				: new PlaneForce(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
 		
 		/// <summary>
-		///     Get a <see cref="IParameters" /> from <see cref="TypedValue" />'s.
+		///     Get a <see cref="IConcreteParameters" /> from <see cref="TypedValue" />'s.
 		/// </summary>
-		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="IParameters" />.</param>
-		public static IParameters? GetParameters(this IEnumerable<TypedValue>? values)
+		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="IConcreteParameters" />.</param>
+		public static IConcreteParameters? GetParameters(this IEnumerable<TypedValue>? values)
 		{
 			if (values.IsNullOrEmpty() || values.Count() != 8)
 				return null;
@@ -246,7 +246,7 @@ namespace SPMTool
 		/// <summary>
 		///     Get an array of <see cref="TypedValue" /> from a <see cref="WebReinforcementDirection" />.
 		/// </summary>
-		public static TypedValue[] GetTypedValues(this IParameters parameters) =>
+		public static TypedValue[] GetTypedValues(this IConcreteParameters parameters) =>
 			new[]
 			{
 				new TypedValue((int) DxfCode.Int32, (int) parameters.Model),
