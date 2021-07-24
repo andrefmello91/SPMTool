@@ -131,9 +131,10 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the list of distinct <see cref="Steel" />'s in this collection.
 		/// </summary>
-		public IEnumerable<Steel> GetSteels() => 
+		public IEnumerable<SteelParameters> GetSteelParameters() => 
 			this.SelectMany(p => new[] { p.Reinforcement?.DirectionX?.Steel, p.Reinforcement?.DirectionY?.Steel })
 				.Where(s => s is not null)
+				.Select(s => s!.Parameters)
 				.Distinct()
 				.OrderBy(r => r)!;
 

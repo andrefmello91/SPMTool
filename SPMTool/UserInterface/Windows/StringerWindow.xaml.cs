@@ -103,7 +103,7 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private UniaxialReinforcement? OutputReinforcement
 		{
-			get => ReinforcementChecked ? new UniaxialReinforcement(NumOfBars, BarDiameter, OutputSteel, Area.Zero) : null;
+			get => ReinforcementChecked ? new UniaxialReinforcement(NumOfBars, BarDiameter, OutputSteel!, Area.Zero) : null;
 			set
 			{
 				NumOfBars   = value?.NumberOfBars ?? 2;
@@ -114,7 +114,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Get steel for output.
 		/// </summary>
-		private Steel? OutputSteel
+		private SteelParameters? OutputSteel
 		{
 			get => new(YieldStress, ElasticModule);
 			set
@@ -244,19 +244,22 @@ namespace SPMTool.Application.UserInterface
 		///     Get saved steel options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		public static IEnumerable<string> SavedSteelOptions(SPMModel database) => database.Steels.Select(s => $"{s.YieldStress.As(database.Settings.Units.MaterialStrength):F3} | {s.ElasticModule.As(database.Settings.Units.MaterialStrength):F3}");
+		public static IEnumerable<string> SavedSteelOptions(SPMModel database) => database.Steels
+			.Select(s => $"{s.YieldStress.As(database.Settings.Units.MaterialStrength):F3} | {s.ElasticModule.As(database.Settings.Units.MaterialStrength):F3}");
 
 		/// <summary>
 		///     Get saved geometry options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.StringerCrossSections.Select(geo => $"{geo.Width.As(database.Settings.Units.Geometry):F3} {(char) Character.Times} {geo.Height.As(database.Settings.Units.Geometry):F3}");
+		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.StringerCrossSections
+			.Select(geo => $"{geo.Width.As(database.Settings.Units.Geometry):F3} {(char) Character.Times} {geo.Height.As(database.Settings.Units.Geometry):F3}");
 
 		/// <summary>
 		///     Get saved reinforcement options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.StringerReinforcements.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.As(database.Settings.Units.Reinforcement):F3}");
+		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.StringerReinforcements
+			.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.As(database.Settings.Units.Reinforcement):F3}");
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{

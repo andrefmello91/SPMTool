@@ -139,7 +139,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     List of distinct steels of elements in the model.
 		/// </summary>
-		public EList<Steel> Steels { get; }
+		public EList<SteelParameters> Steels { get; }
 
 		/// <summary>
 		///     List of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
@@ -229,7 +229,7 @@ namespace SPMTool.Core
 			ElementWidths          = Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToEList() ?? new EList<Length>();
 			StringerReinforcements = GetStringerReinforcements(Stringers);
 			PanelReinforcements    = GetPanelReinforcements(Panels);
-			Steels                 = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList() ?? new EList<Steel>();
+			Steels                 = Stringers.GetSteelParameters().Concat(Panels.GetSteelParameters()).ToEList() ?? new EList<SteelParameters>();
 
 			// Move panels to bottom
 			acadDocument.MoveToBottom(Panels.ObjectIds);
@@ -804,12 +804,24 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Event to run when an item is added to <see cref="PanelReinforcements" />.
 		/// </summary>
-		private void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e) => Steels.Add(e.Item?.Steel);
+		private void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e)
+		{
+			if (e.Item?.Steel is null)
+				return;
+			
+			Steels.Add(e.Item.Steel.Parameters);
+		}
 
 		/// <summary>
 		///     Event to run when an item is added to <see cref="StringerReinforcements" />.
 		/// </summary>
-		private void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e) => Steels.Add(e.Item?.Steel);
+		private void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e)
+		{
+			if (e.Item?.Steel is null)
+				return;
+			
+			Steels.Add(e.Item.Steel.Parameters);
+		}
 
 		private void On_TextScaleChange(object sender, ScaleChangedEventArgs e) => UpdateTextHeight();
 

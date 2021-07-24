@@ -66,7 +66,9 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private WebReinforcementDirection? OutputReinforcementX
 		{
-			get => ReinforcementXChecked ? new WebReinforcementDirection(XBarDiameter, XSpacing, OutputSteelX!, PnlWidth, 0) : null;
+			get => ReinforcementXChecked
+				? new WebReinforcementDirection(XBarDiameter, XSpacing, OutputSteelX!, PnlWidth, 0)
+				: null;
 			set
 			{
 				XSpacing     = value?.BarSpacing ?? Length.FromMillimeters(100);
@@ -79,7 +81,9 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private WebReinforcementDirection? OutputReinforcementY
 		{
-			get => ReinforcementYChecked ? new WebReinforcementDirection(YBarDiameter, YSpacing, OutputSteelY!, PnlWidth, Constants.PiOver2) : null;
+			get => ReinforcementYChecked
+				? new WebReinforcementDirection(YBarDiameter, YSpacing, OutputSteelY!, PnlWidth, Constants.PiOver2)
+				: null;
 			set
 			{
 				YSpacing     = value?.BarSpacing ?? Length.FromMillimeters(100);
@@ -90,7 +94,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Get/set steel for X output.
 		/// </summary>
-		private Steel? OutputSteelX
+		private SteelParameters? OutputSteelX
 		{
 			get => new(XYieldStress, XElasticModule);
 			set
@@ -103,7 +107,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Get/set steel for Y output.
 		/// </summary>
-		private Steel? OutputSteelY
+		private SteelParameters? OutputSteelY
 		{
 			get => new(YYieldStress, YElasticModule);
 			set

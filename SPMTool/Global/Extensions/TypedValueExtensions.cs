@@ -227,8 +227,8 @@ namespace SPMTool
 			{
 				new TypedValue((int) DxfCode.Int32, reinforcement?.NumberOfBars ?? 0),
 				new TypedValue((int) DxfCode.Real, reinforcement?.BarDiameter.Millimeters ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.Steel?.YieldStress.Megapascals ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.Steel?.ElasticModule.Megapascals ?? 0)
+				new TypedValue((int) DxfCode.Real, reinforcement?.Steel.Parameters.YieldStress.Megapascals ?? 0),
+				new TypedValue((int) DxfCode.Real, reinforcement?.Steel.Parameters.ElasticModule.Megapascals ?? 0)
 			};
 
 		/// <summary>
@@ -239,8 +239,8 @@ namespace SPMTool
 			{
 				new TypedValue((int) DxfCode.Real, reinforcement?.BarDiameter.Millimeters ?? 0),
 				new TypedValue((int) DxfCode.Real, reinforcement?.BarSpacing.Millimeters ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.Steel?.YieldStress.Megapascals ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.Steel?.ElasticModule.Megapascals ?? 0)
+				new TypedValue((int) DxfCode.Real, reinforcement?.Steel.Parameters.YieldStress.Megapascals ?? 0),
+				new TypedValue((int) DxfCode.Real, reinforcement?.Steel.Parameters.ElasticModule.Megapascals ?? 0)
 			};
 
 		/// <summary>

@@ -404,7 +404,7 @@ namespace SPMTool
 		/// <summary>
 		///     Returns the save name for this <see cref="Steel" />.
 		/// </summary>
-		public static string SaveName(this Steel steel) => $"SteelF{steel.YieldStress:0.00}E{steel.ElasticModule:0.00}";
+		public static string SaveName(this Steel steel) => $"SteelF{steel.Parameters.YieldStress:0.00}E{steel.Parameters.ElasticModule:0.00}";
 
 		/// <summary>
 		///     Returns the save name for this <see cref="UniaxialReinforcement" />.
