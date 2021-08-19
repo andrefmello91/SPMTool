@@ -181,7 +181,7 @@ namespace SPMTool
 				keyOp.Keywords.Add(option);
 
 			// Set default
-			if (defaultKeyword != null)
+			if (!string.IsNullOrEmpty(defaultKeyword))
 				keyOp.Keywords.Default = defaultKeyword;
 
 			var result = editor.GetKeywords(keyOp);

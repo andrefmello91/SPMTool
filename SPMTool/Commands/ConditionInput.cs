@@ -34,8 +34,8 @@ namespace SPMTool.Commands
 			model.AcadDocument.EraseObjects(SPMResults.ResultLayers);
 
 			// Ask the user set the support conditions:
-			var defDirection = nds.Length == 1
-				? model.Constraints[nds[0].Position.ToPoint(unit)]!.Direction
+			var defDirection = nds.Length == 1 && model.Constraints.Any()
+				? model.Constraints[nds[0].Position.ToPoint(unit)]?.Direction
 				: ComponentDirection.None;
 
 			var options = Enum.GetNames(typeof(ComponentDirection));
@@ -76,9 +76,9 @@ namespace SPMTool.Commands
 			model.AcadDocument.EraseObjects(SPMResults.ResultLayers.Select(l => $"{l}").ToArray());
 
 			// Get force from user
-			var initialForce = nds.Length == 1
-				? SPMModel.ActiveModel.Forces[nds[0].Position.ToPoint(units.Geometry)]!.Value
-				: (PlaneForce?) null;
+			var initialForce = nds.Length == 1 && model.Forces.Any()
+				? model.Forces[nds[0].Position.ToPoint(units.Geometry)]?.Value
+				: null;
 
 			var force = model.Editor.GetForce(initialForce, units.AppliedForces);
 
