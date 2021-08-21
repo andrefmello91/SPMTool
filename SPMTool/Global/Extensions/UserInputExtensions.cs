@@ -4,6 +4,7 @@ using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
+using andrefmello91.SPMElements.PanelProperties;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
@@ -54,10 +55,13 @@ namespace SPMTool
 		///     Get an <see cref="Entity" /> from user.
 		/// </summary>
 		/// <inheritdoc cref="GetPoint3d" />
+		/// <param name="pickedPoint">The picked point in the model. Null if command is canceled.</param>
 		/// <param name="layers">The collection of layers to filter the object. Leave null to select  any layer.</param>
 		public static Entity? GetEntity(this Database database, string message, IEnumerable<Layer>? layers = null)
 		{
-			var editor = database.GetDocument().Editor;
+			var model  = SPMModel.GetOpenedModel(database);
+			var editor = model?.Editor ?? database.GetDocument().Editor;
+			var unit   = model?.Settings.Units.Geometry ?? LengthUnit.Millimeter;
 
 			// Start a transaction
 			using var trans = database.TransactionManager.StartTransaction();
@@ -66,16 +70,17 @@ namespace SPMTool
 			while (true)
 			{
 				// Request the object to be selected in the drawing area
-				var entOp  = new PromptEntityOptions($"\n{message}");
+				var entOp = new PromptEntityOptions($"\n{message}");
+				entOp.AllowNone = true;
 				var entRes = editor.GetEntity(entOp);
-
+				
 				if (entRes.Status == PromptStatus.Cancel)
 					return null;
 
-				var ent = (Entity) trans.GetObject(entRes.ObjectId, OpenMode.ForRead);
+				var ent = (Entity)trans.GetObject(entRes.ObjectId, OpenMode.ForRead);
 
 				// Get layername
-				var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
+				var layer = (Layer)Enum.Parse(typeof(Layer), ent.Layer);
 
 				if (layers is null || layers.Contains(layer))
 					return ent;
@@ -89,7 +94,7 @@ namespace SPMTool
 		/// </summary>
 		/// <param name="initialForce">The initial value to display.</param>
 		/// <param name="unit">The <see cref="ForceUnit" />.</param>
-		public static PlaneForce? GetForce(this Autodesk.AutoCAD.EditorInput.Editor editor, PlaneForce? initialForce = null, ForceUnit unit = ForceUnit.Kilonewton)
+		public static PlaneForce? GetForce(this Editor editor, PlaneForce? initialForce = null, ForceUnit unit = ForceUnit.Kilonewton)
 		{
 			var fAbrev = unit.Abbrev();
 
@@ -120,7 +125,7 @@ namespace SPMTool
 		/// <param name="defaultValue">The default value to display.</param>
 		/// <param name="allowNegative">Allow negative input?</param>
 		/// <param name="allowZero">Allow zero input?</param>
-		public static int? GetInteger(this Autodesk.AutoCAD.EditorInput.Editor editor, string message, int defaultValue = 0, bool allowNegative = false, bool allowZero = false)
+		public static int? GetInteger(this Editor editor, string message, int defaultValue = 0, bool allowNegative = false, bool allowZero = false)
 		{
 			// Prompt for the number of rows
 			var intOp = new PromptIntegerOptions($"\n{message}")
@@ -147,7 +152,7 @@ namespace SPMTool
 		/// <param name="index">The index of selection.</param>
 		/// <param name="defaultKeyword">The default keyword.</param>
 		/// <param name="allowNone">Allow no keyword selection?</param>
-		public static string? GetKeyword(this Autodesk.AutoCAD.EditorInput.Editor editor, string message, IEnumerable<string> options, out int index, string defaultKeyword = null, bool allowNone = false)
+		public static string? GetKeyword(this Editor editor, string message, IEnumerable<string> options, out int index, string defaultKeyword = null, bool allowNone = false)
 		{
 			index = 0;
 
@@ -167,7 +172,7 @@ namespace SPMTool
 		/// <param name="options">Keyword options.</param>
 		/// <param name="defaultKeyword">The default keyword.</param>
 		/// <param name="allowNone">Allow no keyword selection?</param>
-		public static string? GetKeyword(this Autodesk.AutoCAD.EditorInput.Editor editor, string message, IEnumerable<string> options, string? defaultKeyword = null, bool allowNone = false)
+		public static string? GetKeyword(this Editor editor, string message, IEnumerable<string> options, string? defaultKeyword = null, bool allowNone = false)
 		{
 			// Ask the user to choose the options
 			var keyOp = new PromptKeywordOptions("\n" + message)
@@ -261,8 +266,7 @@ namespace SPMTool
 		///     Get a collection of <see cref="DBObject" />'s from user.
 		/// </summary>
 		/// <inheritdoc cref="GetEntity" />
-		public static IEnumerable<TDBObject>? GetObjects<TDBObject>(this Database database, string message, IEnumerable<Layer>? layers = null)
-			where TDBObject : DBObject
+		public static IEnumerable<DBObject>? GetObjects(this Database database, string message, IEnumerable<Layer>? layers = null)
 		{
 			var editor = database.GetDocument().Editor;
 
@@ -277,10 +281,19 @@ namespace SPMTool
 				: editor.GetSelection(selOp, layers.LayerFilter());
 
 			return
-				selRes.Status == PromptStatus.OK && selRes.Value is not null
-					? database.GetObjects(selRes.Value.GetObjectIds()).Where(db => db is TDBObject).Cast<TDBObject>()
-					: null;
+				(selRes.Status == PromptStatus.OK && selRes.Value is not null
+					? database.GetObjects(selRes.Value.GetObjectIds()).Where(d => d is not null)
+					: null)!;
+
 		}
+
+		/// <summary>
+		///     Get a collection of <see cref="DBObject" />'s from user.
+		/// </summary>
+		/// <inheritdoc cref="GetEntity" />
+		public static IEnumerable<TDBObject>? GetObjects<TDBObject>(this Database database, string message, IEnumerable<Layer>? layers = null)
+			where TDBObject : DBObject =>
+			database.GetObjects(message, layers)?.Where(o => o is TDBObject).Cast<TDBObject>();
 
 		/// <summary>
 		///     Get a collection of panels' <see cref="Solid" />'s from user.
@@ -288,21 +301,57 @@ namespace SPMTool
 		/// <inheritdoc cref="GetEntity" />
 		public static IEnumerable<Solid>? GetPanels(this Database database, string message)
 		{
-			var layers = new[] { Layer.Panel };
+			List<Solid>? pnls  = null;
+			
+			var         model = SPMModel.GetOpenedModel(database);
+			var         unit  = model!.Settings.Units.Geometry;
+			
+			var layers = new[] { Layer.Panel, Layer.PanelCenter };
+
+			// Create auxiliary points on panel centers
+			var auxPts = model.Panels.Select(p => new DBPoint(p.Vertices.CenterPoint.ToPoint3d(unit)) { Layer = $"{Layer.PanelCenter}" }).ToList();
+			model.AcadDocument.AddObjects(auxPts);
 
 			// Create an infinite loop for selecting elements
 			while (true)
 			{
-				var pnls = database.GetObjects<Solid>(message, layers)?.ToArray();
+				var objs = database.GetObjects(message, layers)?.ToList();
 
-				if (pnls is null)
-					return null;
+				if (objs is null)
+					break;
+
+				pnls = objs.Where(o => o is Solid)
+					.Cast<Solid>()
+					.ToList();
+				
+				var pts  = objs.Where(o => o is DBPoint)
+					.Cast<DBPoint>()
+					.Select(d => d.Position.ToPoint(unit))
+					.ToList();
+
+				if (pts.Any())
+				{
+					// Get selected panel vertices and object ids
+					var ids         = pnls.GetObjectIds()!;
+					var otherPanels = database.GetDocument()
+						.GetObjects(Layer.Panel)!
+						.Where(p => p is Solid && !ids.Contains(p.ObjectId))
+						.Cast<Solid>();
+					
+					// Get panels from center points and add to the list
+					pnls.AddRange(otherPanels.Where(pnl => pts.Any(pt => pt == pnl.CenterPoint().ToPoint(unit))));
+				}
 
 				if (pnls.Any())
-					return pnls;
+					break;
 
 				ShowAlertDialog("Please select at least one panel.");
 			}
+
+			// Remove panel auxiliary points
+			model.AcadDocument.EraseObjects(Layer.PanelCenter);
+
+			return pnls;
 		}
 
 		/// <summary>

@@ -1,4 +1,7 @@
-﻿using Autodesk.AutoCAD.Runtime;
+﻿using System.Linq;
+using andrefmello91.SPMElements;
+using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Runtime;
 using SPMTool.Commands;
 using SPMTool.Enums;
 using static SPMTool.Core.SPMModel;
@@ -115,6 +118,11 @@ namespace SPMTool.Commands
 			// Get model and database
 			var model    = ActiveModel;
 			var database = model.AcadDatabase;
+			var unit     = model.Settings.Units.Geometry;
+			
+			// Create auxiliary points on panel centers
+			var pts = model.Panels.Select(p => new DBPoint(p.Vertices.CenterPoint.ToPoint3d(unit)) { Layer = $"{Layer.PanelCenter}" }).ToList();
+			model.AcadDocument.AddObjects(pts);
 
 			// Start a loop for viewing continuous elements
 			while (true)
@@ -123,17 +131,16 @@ namespace SPMTool.Commands
 				var ent = database.GetEntity("Select an element to view data:", ElementLayers);
 
 				if (ent is null)
-					return;
+					break;
 
 				// Read the element
 				var element = ent.GetSPMObject();
-
-				var message = element is null
-					? "Not a SPM element."
-					: $"{element}";
-
-				model.Editor.WriteMessage($"\n{message}");
+			
+				model.Editor.WriteMessage($"\n{element?.ToString() ?? "Not a SPM element."}");
 			}
+			
+			// Remove panel auxiliary points
+			model.AcadDocument.EraseObjects(Layer.PanelCenter);
 		}
 
 		#endregion

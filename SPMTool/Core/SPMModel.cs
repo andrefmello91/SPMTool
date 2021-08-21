@@ -40,7 +40,7 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Collection of element <see cref="Layer" />'s.
 		/// </summary>
-		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
+		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support, Layer.PanelCenter };
 
 		/// <summary>
 		///     The list of opened documents.

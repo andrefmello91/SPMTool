@@ -24,6 +24,12 @@ namespace SPMTool.Core.Elements
 	public class PanelList : SPMObjectList<PanelObject, PanelGeometry>
 	{
 
+		/// <summary>
+		///		Get a panel object that correspond to a center point.
+		/// </summary>
+		/// <param name="centerPoint">The panel center point</param>
+		public PanelObject? this[Point centerPoint] => Find(p => p.Vertices.CenterPoint == centerPoint);
+		
 		#region Constructors
 
 		/// <summary>
@@ -45,7 +51,7 @@ namespace SPMTool.Core.Elements
 		}
 
 		#endregion
-
+		
 		#region Methods
 
 		/// <summary>

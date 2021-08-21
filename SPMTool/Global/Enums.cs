@@ -74,8 +74,8 @@ namespace SPMTool.Enums
 		[Layer(ColorCode.Yellow)]
 		Force,
 
-		[Layer(ColorCode.Yellow)]
-		ForceText,
+		[Layer(ColorCode.White)]
+		PanelCenter,
 
 		[Layer(ColorCode.Grey, 50)]
 		StringerForce,

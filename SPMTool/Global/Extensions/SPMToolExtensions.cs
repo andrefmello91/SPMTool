@@ -343,6 +343,7 @@ namespace SPMTool
 					Solid s when s.Layer == $"{Layer.Panel}"                                      => model.Panels[dbObject.ObjectId],
 					BlockReference b when b.Layer == $"{Layer.Force}"                             => model.Forces[dbObject.ObjectId],
 					BlockReference b when b.Layer == $"{Layer.Support}"                           => model.Constraints[dbObject.ObjectId],
+					DBPoint p when p.Layer == $"{Layer.PanelCenter}"                              => model.Panels[p.Position.ToPoint(model.Settings.Units.Geometry)],
 					_                                                                             => null
 				}
 				: null;
