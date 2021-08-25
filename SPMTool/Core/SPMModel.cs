@@ -240,6 +240,9 @@ namespace SPMTool.Core
 
 			// Set parameters
 			SetAppParameters();
+			
+			// Set point monitor
+			Editor.PointMonitor += On_ElementHover;
 		}
 
 		#endregion
@@ -665,6 +668,30 @@ namespace SPMTool.Core
 			displaySettings.TextScaleChanged      += On_TextScaleChange;
 		}
 
+		/// <summary>
+		///     Get a SPM object from this model that correspond to <paramref name="dbObject" />.
+		/// </summary>
+		/// <param name="dbObject">The <see cref="DBObject" />.</param>
+		public IDBObjectCreator? GetSPMObject(DBObject? dbObject) =>
+			dbObject switch
+			{
+				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => Nodes[dbObject.ObjectId],
+				Line l when l.Layer == $"{Layer.Stringer}"                                    => Stringers[dbObject.ObjectId],
+				Solid s when s.Layer == $"{Layer.Panel}"                                      => Panels[dbObject.ObjectId],
+				BlockReference b when b.Layer == $"{Layer.Force}"                             => Forces[dbObject.ObjectId],
+				BlockReference b when b.Layer == $"{Layer.Support}"                           => Constraints[dbObject.ObjectId],
+				DBPoint p when p.Layer == $"{Layer.PanelCenter}"                              => Panels[p.Position.ToPoint(Settings.Units.Geometry)],
+				_                                                                             => null
+			};
+		
+		/// <summary>
+		///     Get a SPM object from this model that correspond to <paramref name="objectId" />.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId" />.</param>
+		public IDBObjectCreator? GetSPMObject(ObjectId objectId) => !objectId.IsNull 
+			? GetSPMObject(AcadDatabase.GetObject(objectId))
+			: null;
+
 		#endregion
 
 		#region Events
@@ -824,6 +851,44 @@ namespace SPMTool.Core
 		}
 
 		private void On_TextScaleChange(object sender, ScaleChangedEventArgs e) => UpdateTextHeight();
+
+		/// <summary>
+		///		Show a custom tooltip for SPM objects.
+		/// </summary>
+		private void On_ElementHover(object sender, PointMonitorEventArgs e)
+		{
+			var fullPaths = e.Context.GetPickedEntities();
+			
+			if (fullPaths.Length == 0) 
+				return;
+			
+			var entId = ObjectId.Null;
+			foreach (var path in fullPaths)
+			{
+				if (!path.IsNull)
+				{
+					var ids = path.GetObjectIds();
+					
+					if (ids.Length > 0)
+					{
+						entId = ids[0];
+					}
+				}
+ 
+				if (!entId.IsNull)
+					break;
+			}
+			
+			
+			// Get the spm object
+			var obj = GetSPMObject(entId);
+			
+			if (obj is null)
+				return;
+			
+			// Append text
+			e.AppendToolTipText($"\n{obj}");
+		}
 
 		#endregion
 

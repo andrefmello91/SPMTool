@@ -335,24 +335,13 @@ namespace SPMTool
 		/// </summary>
 		/// <param name="dbObject">The <see cref="DBObject" />.</param>
 		public static IDBObjectCreator? GetSPMObject(this DBObject? dbObject) =>
-			SPMModel.GetOpenedModel(dbObject?.ObjectId ?? ObjectId.Null) is { } model
-				? dbObject switch
-				{
-					DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => model.Nodes[dbObject.ObjectId],
-					Line l when l.Layer == $"{Layer.Stringer}"                                    => model.Stringers[dbObject.ObjectId],
-					Solid s when s.Layer == $"{Layer.Panel}"                                      => model.Panels[dbObject.ObjectId],
-					BlockReference b when b.Layer == $"{Layer.Force}"                             => model.Forces[dbObject.ObjectId],
-					BlockReference b when b.Layer == $"{Layer.Support}"                           => model.Constraints[dbObject.ObjectId],
-					DBPoint p when p.Layer == $"{Layer.PanelCenter}"                              => model.Panels[p.Position.ToPoint(model.Settings.Units.Geometry)],
-					_                                                                             => null
-				}
-				: null;
+			SPMModel.GetOpenedModel(dbObject?.ObjectId ?? ObjectId.Null)?.GetSPMObject(dbObject);
 
 		/// <summary>
 		///     Get a SPM object from this <paramref name="objectId" />.
 		/// </summary>
 		/// <param name="objectId">The <see cref="ObjectId" />.</param>
-		public static IDBObjectCreator? GetSPMObject(this ObjectId objectId) => SPMModel.GetOpenedModel(objectId)?.AcadDatabase.GetObject(objectId)?.GetSPMObject();
+		public static IDBObjectCreator? GetSPMObject(this ObjectId objectId) => SPMModel.GetOpenedModel(objectId)?.GetSPMObject(objectId);
 
 		/// <summary>
 		///     Returns a <see cref="SelectionFilter" /> for objects in this <paramref name="layer" />.
