@@ -110,14 +110,14 @@ namespace SPMTool.Core.Elements
 		/// <param name="vertices">The collection of panel's four <see cref="Point3d" /> vertices.</param>
 		/// <param name="unit">The <see cref="LengthUnit" /> of <paramref name="vertices" />.</param>
 		public PanelObject(IEnumerable<Point3d> vertices, ObjectId blockTableId, LengthUnit unit = LengthUnit.Millimeter)
-			: this(new Vertices(vertices.Select(v => v.ToPoint(unit)).ToArray()), blockTableId)
+			: this(Vertices.From(vertices.ToPoints(unit)), blockTableId)
 		{
 		}
 
 		/// <inheritdoc cref="PanelObject(PanelGeometry, ObjectId)" />
 		/// <param name="vertices">The collection of panel's four <see cref="Point" /> vertices.</param>
 		public PanelObject(IEnumerable<Point> vertices, ObjectId blockTableId)
-			: this(new Vertices(vertices), blockTableId)
+			: this(Vertices.From(vertices), blockTableId)
 		{
 		}
 
