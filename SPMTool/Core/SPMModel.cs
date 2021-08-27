@@ -857,6 +857,11 @@ namespace SPMTool.Core
 		/// </summary>
 		private void On_ElementHover(object sender, PointMonitorEventArgs e)
 		{
+			// Check if there is a command running
+			var cmd = (string) GetSystemVariable("CMDNAMES");
+			if (cmd != string.Empty)
+				return;
+			
 			var fullPaths = e.Context.GetPickedEntities();
 			
 			if (fullPaths.IsNullOrEmpty()) 
