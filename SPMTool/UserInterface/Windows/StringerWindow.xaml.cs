@@ -244,21 +244,21 @@ namespace SPMTool.Application.UserInterface
 		///     Get saved steel options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		public static IEnumerable<string> SavedSteelOptions(SPMModel database) => database.Steels
+		public static IEnumerable<string> SavedSteelOptions(SPMModel database) => database.Steels.Distinct()
 			.Select(s => $"{s.YieldStress.As(database.Settings.Units.MaterialStrength):F3} | {s.ElasticModule.As(database.Settings.Units.MaterialStrength):F3}");
 
 		/// <summary>
 		///     Get saved geometry options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.StringerCrossSections
+		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.StringerCrossSections.Distinct()
 			.Select(geo => $"{geo.Width.As(database.Settings.Units.Geometry):F3} {(char) Character.Times} {geo.Height.As(database.Settings.Units.Geometry):F3}");
 
 		/// <summary>
 		///     Get saved reinforcement options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.StringerReinforcements
+		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.StringerReinforcements.Distinct()
 			.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.As(database.Settings.Units.Reinforcement):F3}");
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)

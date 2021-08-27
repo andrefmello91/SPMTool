@@ -342,13 +342,15 @@ namespace SPMTool.Application.UserInterface
 		///     Get saved geometry options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.ElementWidths.Select(geo => $"{geo.As(database.Settings.Units.Geometry):F3}");
+		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.ElementWidths.Distinct()
+			.Select(geo => $"{geo.As(database.Settings.Units.Geometry):F3}");
 
 		/// <summary>
 		///     Get saved reinforcement options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.PanelReinforcements.Select(r => $"{(char) Character.Phi} {r.BarDiameter.As(database.Settings.Units.Reinforcement):F3} at {r.BarSpacing.As(database.Settings.Units.Geometry):F3}");
+		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.PanelReinforcements.Distinct()
+			.Select(r => $"{(char) Character.Phi} {r.BarDiameter.As(database.Settings.Units.Reinforcement):F3} at {r.BarSpacing.As(database.Settings.Units.Geometry):F3}");
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
