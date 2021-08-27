@@ -859,35 +859,19 @@ namespace SPMTool.Core
 		{
 			var fullPaths = e.Context.GetPickedEntities();
 			
-			if (fullPaths.Length == 0) 
+			if (fullPaths.IsNullOrEmpty()) 
 				return;
 			
-			var entId = ObjectId.Null;
-			foreach (var path in fullPaths)
-			{
-				if (!path.IsNull)
-				{
-					var ids = path.GetObjectIds();
-					
-					if (ids.Length > 0)
-					{
-						entId = ids[0];
-					}
-				}
- 
-				if (!entId.IsNull)
-					break;
-			}
-			
-			
-			// Get the spm object
-			var obj = GetSPMObject(entId);
-			
-			if (obj is null)
-				return;
-			
+			// var               entId = ObjectId.Null;
+			var obj = fullPaths
+				.Where(p => !p.IsNull)
+				.SelectMany(p => p.GetObjectIds())
+				.Select(GetSPMObject)
+				.FirstOrDefault(o => o is not null);
+
 			// Append text
-			e.AppendToolTipText($"\n{obj}");
+			if (obj is not null)
+				e.AppendToolTipText($"{obj}");
 		}
 
 		#endregion
