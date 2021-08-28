@@ -3,9 +3,11 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
+using andrefmello91.SPMElements;
 using LiveCharts;
 using LiveCharts.Configurations;
 using LiveCharts.Defaults;
@@ -21,7 +23,15 @@ namespace SPMTool.Application.UserInterface
 	/// </summary>
 	public partial class PlotWindow : Window
 	{
-
+		/// <summary>
+		///		Element auxiliary enumeration.
+		/// </summary>
+		private enum Element
+		{
+			Stringer,
+			Panel
+		}
+		
 		#region Fields
 
 		/// <summary>
@@ -30,9 +40,9 @@ namespace SPMTool.Application.UserInterface
 		private readonly LengthUnit _displacementUnit;
 
 		/// <summary>
-		///     The <see cref="FEMOutput" />'s.
+		///     The <see cref="SPMOutput" />'s.
 		/// </summary>
-		private readonly FEMOutput _femOutput;
+		private readonly SPMOutput _spmOutput;
 
 		#endregion
 
@@ -55,13 +65,13 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     <see cref="PlotWindow" /> constructor.
 		/// </summary>
-		/// <param name="femOutput">The <see cref="FEMOutput" />.</param>
-		public PlotWindow([NotNull] FEMOutput femOutput)
+		/// <param name="spmOutput">The <see cref="FEMOutput" />.</param>
+		public PlotWindow(SPMOutput spmOutput)
 		{
 			InitializeComponent();
 
 			_displacementUnit = SPMModel.ActiveModel.Settings.Units.Displacements;
-			_femOutput        = femOutput;
+			_spmOutput        = spmOutput;
 
 			DataContext = this;
 		}
@@ -91,15 +101,16 @@ namespace SPMTool.Application.UserInterface
 		public void UpdatePlot()
 		{
 			// Set max load factor
-			LoadFactorAxis.MaxValue = _femOutput.Select(m => m.LoadFactor).Max();
+			LoadFactorAxis.MaxValue = _spmOutput.Select(m => m.LoadFactor).Max();
 
 			// Initiate series
 			CartesianChart.Series = new SeriesCollection
 			{
+				// Full chart
 				new LineSeries
 				{
 					Title           = "Load Factor x Displacement",
-					Values          = GetValues(_femOutput, _displacementUnit),
+					Values          = GetValues(_spmOutput, _displacementUnit),
 					PointGeometry   = null,
 					StrokeThickness = 3,
 					Stroke          = Brushes.LightSkyBlue,
@@ -108,10 +119,47 @@ namespace SPMTool.Application.UserInterface
 					LabelPoint      = Label
 				}
 			};
-
+			
+			// If stringers cracked
+			if (_spmOutput.StringerCrackLoadStep.HasValue)
+				CartesianChart.Series.Add(CrackSeries(_spmOutput.StringerCrackLoadStep.Value, Element.Stringer));
+			
+			// If panels cracked
+			if (_spmOutput.PanelCrackLoadStep.HasValue)
+				CartesianChart.Series.Add(CrackSeries(_spmOutput.PanelCrackLoadStep.Value, Element.Panel));
+			
 			SetMapper();
 		}
 
+		/// <summary>
+		///		Get the line series of cracking.
+		/// </summary>
+		/// <param name="crackLoadStep">The number of the element and the load step of cracking.</param>
+		/// <param name="element">The <see cref="Element"/>.</param>
+		private LineSeries CrackSeries((int number, int step) crackLoadStep, Element element)
+		{
+			var (number, step) = crackLoadStep;
+			
+			var md = _spmOutput[step - 1];
+
+			var pt = new ObservablePoint(md.Displacement.As(_displacementUnit), md.LoadFactor);
+
+			return
+				new LineSeries
+				{
+					Title             = $"First {element} crack",
+					Values            = new ChartValues<ObservablePoint>(new[] { pt }),
+					PointGeometry     = DefaultGeometries.Circle,
+					PointGeometrySize = 15,
+					PointForeground   = new SolidColorBrush((Color) ColorConverter.ConvertFromString("#282c34")),
+					StrokeThickness   = 3,
+					Stroke            = element is Element.Stringer ? Brushes.Aqua : Brushes.Gray,
+					Fill              = Brushes.Transparent,
+					DataLabels        = false,
+					LabelPoint        = point => $"{element} {number} cracked!\n{Label(point)}"
+				};
+		}
+		
 		private void ButtonExport_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Get location and name
@@ -120,7 +168,7 @@ namespace SPMTool.Application.UserInterface
 				name = $"{Path.GetFileNameWithoutExtension(SPMModel.ActiveModel.Name)}_SPMResult";
 
 			// Export
-			_femOutput.Export(path, name, _displacementUnit);
+			_spmOutput.Export(path, name, _displacementUnit);
 			MessageBox.Show("Data exported to file location.");
 		}
 
@@ -143,7 +191,7 @@ namespace SPMTool.Application.UserInterface
 		private void SetMapper()
 		{
 			// If there is a displacement bigger than zero, nothing is done
-			if (_femOutput.Any(p => !p.Displacement.ApproxZero(Units.LengthTolerance) && p.Displacement > Length.Zero))
+			if (_spmOutput.Any(p => !p.Displacement.ApproxZero(Units.LengthTolerance) && p.Displacement > Length.Zero))
 			{
 				Inverted = false;
 				return;
@@ -151,9 +199,10 @@ namespace SPMTool.Application.UserInterface
 
 			// Invert x values
 			Inverted = true;
-			CartesianChart.Series[0].Configuration = Mappers.Xy<ObservablePoint>()
-				.X(point => -point.X)
-				.Y(point => point.Y);
+			foreach (var series in CartesianChart.Series)
+				series.Configuration = Mappers.Xy<ObservablePoint>()
+					.X(point => -point.X)
+					.Y(point => point.Y);
 
 			// Correct the labels
 			DisplacementAxis.LabelFormatter = x => $"{x * -1}";
