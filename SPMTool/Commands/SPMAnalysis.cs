@@ -74,7 +74,7 @@ namespace SPMTool.Commands
 			var settings = SPMModel.ActiveModel.Settings.Analysis;
 
 			// Do analysis
-			var analysis = new NonlinearAnalysis(input, settings);
+			var analysis = new SPMAnalysis(input, settings);
 			
 			analysis.Execute(uIndexn.Value, simulate);
 			var output = analysis.GenerateOutput();
