@@ -67,7 +67,7 @@ namespace SPMTool.Application.UserInterface
 		private WebReinforcementDirection? OutputReinforcementX
 		{
 			get => ReinforcementXChecked
-				? new WebReinforcementDirection(XBarDiameter, XSpacing, OutputSteelX!, PnlWidth, 0)
+				? WebReinforcementDirection.From(XBarDiameter, XSpacing, OutputSteelX!.Value, PnlWidth, 0)
 				: null;
 			set
 			{
@@ -82,7 +82,7 @@ namespace SPMTool.Application.UserInterface
 		private WebReinforcementDirection? OutputReinforcementY
 		{
 			get => ReinforcementYChecked
-				? new WebReinforcementDirection(YBarDiameter, YSpacing, OutputSteelY!, PnlWidth, Constants.PiOver2)
+				? WebReinforcementDirection.From(YBarDiameter, YSpacing, OutputSteelY!.Value, PnlWidth, Constants.PiOver2)
 				: null;
 			set
 			{

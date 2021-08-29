@@ -177,7 +177,7 @@ namespace SPMTool
 				? 0
 				: Constants.PiOver2;
 
-			return new WebReinforcementDirection(phi, s, new Steel(fy, Es), 0, angle);
+			return WebReinforcementDirection.From(phi, s, new SteelParameters(fy, Es), 0, angle);
 		}
 		
 				/// <summary>
