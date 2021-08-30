@@ -80,7 +80,7 @@
                    VerticalAlignment="Center" Grid.Row="2" Grid.Column="2"
                    ToolTip="Set custom parameter model to edit." />
         <ComboBox Name="ParameterBox" VerticalAlignment="Center" Width="80" Height="25" Grid.Row="2" Grid.Column="3"
-                  ToolTip="Select a parameter model or custom" />
+                  ToolTip="Select a parameter model or use custom parameters" />
         <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="3">
             <StackPanel>
                 <Grid>

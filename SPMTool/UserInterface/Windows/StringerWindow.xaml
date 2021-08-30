@@ -37,7 +37,7 @@
                        Grid.Column="0" Margin="5,0,0,0" />
             <ComboBox Name="SavedGeometries" HorizontalAlignment="left" VerticalContentAlignment="Center"
                       Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Width="125" Height="23"
-                      SelectionChanged="SavedGeometries_OnSelectionChanged" />
+                      ToolTip="Geometries used in other elements." SelectionChanged="SavedGeometries_OnSelectionChanged" />
             <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="1" Grid.ColumnSpan="3">
                 <StackPanel>
                     <Grid>
@@ -87,7 +87,7 @@
                       Margin="0,0,0,0" Checked="ReinforcementCheck_OnCheck" Unchecked="ReinforcementCheck_OnCheck" />
             <ComboBox Name="SavedReinforcement" HorizontalAlignment="left" VerticalContentAlignment="Center"
                       Grid.Column="1" Grid.ColumnSpan="2" Width="125" Height="23"
-                      SelectionChanged="SavedReinforcement_OnSelectionChanged" />
+                      ToolTip="Reinforcement used in other elements." SelectionChanged="SavedReinforcement_OnSelectionChanged" />
             <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="1" Grid.ColumnSpan="3">
                 <StackPanel>
                     <Grid>
@@ -131,7 +131,7 @@
                                  Grid.Column="1" Grid.Row="7" />
                         <ComboBox Name="SavedSteel" HorizontalAlignment="left" Grid.Column="1" Grid.Row="4"
                                   Grid.ColumnSpan="2" Width="120" Height="23"
-                                  SelectionChanged="SavedSteel_OnSelectionChanged" />
+                                  ToolTip="Steel parameters used in other elements." SelectionChanged="SavedSteel_OnSelectionChanged" />
                         <TextBlock Text="{Binding DiameterUnit}" HorizontalAlignment="Left" VerticalAlignment="Center"
                                    Grid.Column="2" Grid.Row="2" Width="20" Margin="5,7,0,7" />
                         <TextBlock Text="{Binding StressUnit}" HorizontalAlignment="Left" VerticalAlignment="Center"
