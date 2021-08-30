@@ -161,23 +161,25 @@ namespace SPMTool
 		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="WebReinforcementDirection" />.</param>
 		public static WebReinforcementDirection? GetReinforcementDirection(this IEnumerable<TypedValue>? values, Axis direction)
 		{
-			if (values.IsNullOrEmpty() || values.Count() != 4)
+			if (values.IsNullOrEmpty() || values.Count() != 5)
 				return null;
 
 			var phi = values.ElementAt(0).ToDouble();
 			var s   = values.ElementAt(1).ToDouble();
+			var n   = values.ElementAt(2).ToInt();
 
 			if (phi.ApproxZero(1E-3) || s.ApproxZero(1E-3))
 				return null;
 
-			var fy = values.ElementAt(2).ToDouble();
-			var Es = values.ElementAt(3).ToDouble();
+			var fy = values.ElementAt(3).ToDouble();
+			var Es = values.ElementAt(4).ToDouble();
 
 			var angle = direction is Axis.X
 				? 0
 				: Constants.PiOver2;
 
-			return WebReinforcementDirection.From(phi, s, new SteelParameters(fy, Es), 0, angle);
+			return
+				WebReinforcementDirection.From(phi, s, new SteelParameters(fy, Es), 0, angle, n);
 		}
 		
 				/// <summary>
@@ -237,10 +239,11 @@ namespace SPMTool
 		public static TypedValue[] GetTypedValues(this WebReinforcementDirection? reinforcement) =>
 			new[]
 			{
-				new TypedValue((int) DxfCode.Real, reinforcement?.BarDiameter.Millimeters ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.BarSpacing.Millimeters ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.Steel.Parameters.YieldStress.Megapascals ?? 0),
-				new TypedValue((int) DxfCode.Real, reinforcement?.Steel.Parameters.ElasticModule.Megapascals ?? 0)
+				new TypedValue((int) DxfCode.Real,  reinforcement?.BarDiameter.Millimeters ?? 0),
+				new TypedValue((int) DxfCode.Real,  reinforcement?.BarSpacing.Millimeters ?? 0),
+				new TypedValue((int) DxfCode.Int32, reinforcement?.NumberOfLegs ?? 0),
+				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel.Parameters.YieldStress.Megapascals ?? 0),
+				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel.Parameters.ElasticModule.Megapascals ?? 0)
 			};
 
 		/// <summary>
