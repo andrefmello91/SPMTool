@@ -67,12 +67,13 @@ namespace SPMTool.Application.UserInterface
 		private WebReinforcementDirection? OutputReinforcementX
 		{
 			get => ReinforcementXChecked
-				? WebReinforcementDirection.From(XBarDiameter, XSpacing, OutputSteelX!.Value, PnlWidth, 0)
+				? WebReinforcementDirection.From(XBarDiameter, XSpacing, OutputSteelX!.Value, PnlWidth, 0, XLegs)
 				: null;
 			set
 			{
-				XSpacing     = value?.BarSpacing ?? Length.FromMillimeters(100);
-				XBarDiameter = value?.BarDiameter ?? Length.FromMillimeters(8);
+				XSpacing     = value?.BarSpacing   ?? Length.FromMillimeters(100);
+				XBarDiameter = value?.BarDiameter  ?? Length.FromMillimeters(8);
+				XLegs        = value?.NumberOfLegs ?? 2;
 			}
 		}
 
@@ -82,12 +83,13 @@ namespace SPMTool.Application.UserInterface
 		private WebReinforcementDirection? OutputReinforcementY
 		{
 			get => ReinforcementYChecked
-				? WebReinforcementDirection.From(YBarDiameter, YSpacing, OutputSteelY!.Value, PnlWidth, Constants.PiOver2)
+				? WebReinforcementDirection.From(YBarDiameter, YSpacing, OutputSteelY!.Value, PnlWidth, Constants.PiOver2, YLegs)
 				: null;
 			set
 			{
-				YSpacing     = value?.BarSpacing ?? Length.FromMillimeters(100);
-				YBarDiameter = value?.BarDiameter ?? Length.FromMillimeters(8);
+				YSpacing     = value?.BarSpacing   ?? Length.FromMillimeters(100);
+				YBarDiameter = value?.BarDiameter  ?? Length.FromMillimeters(8);
+				YLegs        = value?.NumberOfLegs ?? 2;
 			}
 		}
 
@@ -129,7 +131,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Get X reinforcement <see cref="TextBox" />'s.
 		/// </summary>
-		private IEnumerable<TextBox> ReinforcementXBoxes => new[] { SxBox, PhiXBox, FxBox, ExBox };
+		private IEnumerable<TextBox> ReinforcementXBoxes => new[] { SxBox, PhiXBox, NxBox, FxBox, ExBox };
 
 		/// <summary>
 		///     Gets and sets X reinforcement checkbox state.
@@ -172,7 +174,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Get Y reinforcement <see cref="TextBox" />'s.
 		/// </summary>
-		private IEnumerable<TextBox> ReinforcementYBoxes => new[] { SyBox, PhiYBox, FyBox, EyBox };
+		private IEnumerable<TextBox> ReinforcementYBoxes => new[] { SyBox, PhiYBox, NyBox, FyBox, EyBox };
 
 		/// <summary>
 		///     Gets and sets Y reinforcement checkbox state.
@@ -233,7 +235,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Verify if geometry text boxes are filled.
 		/// </summary>
-		private bool WidthFilled => CheckBoxes(new[] { WBox });
+		private bool WidthFilled => CheckBoxes(WBox);
 
 		/// <summary>
 		///     Get/set X bar diameter.
@@ -251,6 +253,15 @@ namespace SPMTool.Application.UserInterface
 		{
 			get => Pressure.From(double.Parse(ExBox.Text), _stressUnit);
 			set => ExBox.Text = $"{value.As(_stressUnit):F3}";
+		}
+
+		/// <summary>
+		///		Get/set the number of legs/branches in X direction.
+		/// </summary>
+		private int XLegs
+		{
+			get => int.Parse(NxBox.Text);
+			set => NxBox.Text = $"{value}";
 		}
 
 		/// <summary>
@@ -290,6 +301,15 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
+		///		Get/set the number of legs/branches in Y direction.
+		/// </summary>
+		private int YLegs
+		{
+			get => int.Parse(NyBox.Text);
+			set => NyBox.Text = $"{value}";
+		}
+
+		/// <summary>
 		///     Get/set Y spacing.
 		/// </summary>
 		private Length YSpacing
@@ -315,7 +335,7 @@ namespace SPMTool.Application.UserInterface
 		{
 			_panels = panels.ToList();
 
-			_database = SPMModel.ActiveModel;
+			_database = ActiveModel;
 			
 			_geometryUnit      = _database.Settings.Units.Geometry;
 			_reinforcementUnit = _database.Settings.Units.Reinforcement;
