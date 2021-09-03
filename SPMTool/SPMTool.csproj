@@ -93,17 +93,19 @@
       <HintPath>..\packages\IndexRange.1.0.0\lib\net471\IndexRange.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="LiveCharts, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
-      <HintPath>packages\LiveCharts.0.9.7\lib\net45\LiveCharts.dll</HintPath>
+    <Reference Include="LiveCharts, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df">
+      <HintPath>..\packages\LiveCharts.0.9.7\lib\net45\LiveCharts.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="LiveCharts.Wpf, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
-      <HintPath>packages\LiveCharts.Wpf.0.9.7\lib\net45\LiveCharts.Wpf.dll</HintPath>
+    <Reference Include="LiveCharts.Wpf, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df">
+      <HintPath>..\packages\LiveCharts.Wpf.0.9.7\lib\net45\LiveCharts.Wpf.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="MathNet.Numerics, Version=4.15.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\MathNet.Numerics.4.15.0\lib\net461\MathNet.Numerics.dll</HintPath>
+    <Reference Include="MathNet.Numerics, Version=4.15.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>C:\Users\andre\.nuget\packages\mathnet.numerics\4.15.0\lib\netstandard2.0\MathNet.Numerics.dll</HintPath>
     </Reference>
-    <Reference Include="MathNet.Numerics.Data.Text, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\MathNet.Numerics.Data.Text.4.1.0\lib\net461\MathNet.Numerics.Data.Text.dll</HintPath>
+    <Reference Include="MathNet.Numerics.Data.Text, Version=4.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>C:\Users\andre\.nuget\packages\mathnet.numerics.data.text\4.1.0\lib\netstandard2.0\MathNet.Numerics.Data.Text.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="PresentationCore" />
@@ -454,7 +456,7 @@
       <Project>{f853ef6c-0b69-449d-96af-e74bb0d66b6f}</Project>
       <Name>andrefmello91.Extensions</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\FEMAnalysis\andrefmello91.FEMAnalysis\andrefmello91.FEMAnalysis.csproj">
+    <ProjectReference Include="..\..\FEM-Analysis\andrefmello91.FEMAnalysis\andrefmello91.FEMAnalysis.csproj">
       <Project>{11ff8a9f-3315-47ff-a437-44fa658492e8}</Project>
       <Name>andrefmello91.FEMAnalysis</Name>
     </ProjectReference>
@@ -462,11 +464,11 @@
       <Project>{f0b8f7d7-72b6-48f5-9a31-0de7c73c2ccb}</Project>
       <Name>andrefmello91.Material</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\OnPlaneComponents\andrefmello91.OnPlaneComponents\andrefmello91.OnPlaneComponents.csproj">
+    <ProjectReference Include="..\..\On-Plane-Components\andrefmello91.OnPlaneComponents\andrefmello91.OnPlaneComponents.csproj">
       <Project>{a1516fa1-cbf1-4297-8846-ebb8e3d39670}</Project>
       <Name>andrefmello91.OnPlaneComponents</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\ReinforcedConcreteMembrane\andrefmello91.ReinforcedConcreteMembrane\andrefmello91.ReinforcedConcreteMembrane.csproj">
+    <ProjectReference Include="..\..\Reinforced-Concrete-Membrane\andrefmello91.ReinforcedConcreteMembrane\andrefmello91.ReinforcedConcreteMembrane.csproj">
       <Project>{50c9f779-81ba-4c52-9876-da52aac4325d}</Project>
       <Name>andrefmello91.ReinforcedConcreteMembrane</Name>
     </ProjectReference>
