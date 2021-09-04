@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -29,10 +30,11 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private readonly LengthUnit _displacementUnit;
 
-		/// <summary>
-		///     The <see cref="SPMOutput" />'s.
-		/// </summary>
-		private readonly SPMOutput _spmOutput;
+		private readonly int _monitoredIndex;
+
+		private readonly bool _simulate;
+
+		private bool _inverted;
 
 		#endregion
 
@@ -44,9 +46,25 @@ namespace SPMTool.Application.UserInterface
 		public string DisplacementTitle => $"Displacement ({_displacementUnit.Abbrev()})";
 
 		/// <summary>
+		///     The <see cref="SPMOutput" />'s.
+		/// </summary>
+		private SPMAnalysis Analysis { get; }
+
+		/// <summary>
 		///     Get/set inverted displacement axis state.
 		/// </summary>
-		private bool Inverted { get; set; }
+		private bool Inverted
+		{
+			get => _inverted;
+			set
+			{
+				if (_inverted == value)
+					return;
+
+				_inverted = value;
+				SetMapper();
+			}
+		}
 
 		#endregion
 
@@ -55,13 +73,17 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     <see cref="PlotWindow" /> constructor.
 		/// </summary>
-		/// <param name="spmOutput">The <see cref="FEMOutput" />.</param>
-		public PlotWindow(SPMOutput spmOutput)
+		/// <param name="analysis">The <see cref="Analysis" />, before initiating analysis.</param>
+		public PlotWindow(SPMAnalysis analysis, int monitoredIndex, bool simulate)
 		{
+			_monitoredIndex = monitoredIndex;
 			InitializeComponent();
 
 			_displacementUnit = SPMModel.ActiveModel.Settings.Units.Displacements;
-			_spmOutput        = spmOutput;
+			Analysis          = analysis;
+			_simulate         = simulate;
+			AddEvents(Analysis);
+			InitiatePlot();
 
 			DataContext = this;
 		}
@@ -85,41 +107,48 @@ namespace SPMTool.Application.UserInterface
 			return values;
 		}
 
-		/// <summary>
-		///     Update the plot.
-		/// </summary>
-		public void UpdatePlot()
+		private void AddEvents(SPMAnalysis analysis)
 		{
-			// Set max load factor
-			LoadFactorAxis.MaxValue = _spmOutput.Select(m => m.LoadFactor).Max();
-
-			// Initiate series
-			CartesianChart.Series = new SeriesCollection
-			{
-				// Full chart
-				new LineSeries
-				{
-					Title           = "Load Factor x Displacement",
-					Values          = GetValues(_spmOutput, _displacementUnit),
-					PointGeometry   = null,
-					StrokeThickness = 3,
-					Stroke          = Brushes.LightSkyBlue,
-					Fill            = Brushes.Transparent,
-					DataLabels      = false,
-					LabelPoint      = Label
-				}
-			};
-
-			// If stringers cracked
-			if (_spmOutput.StringerCrackLoadStep.HasValue)
-				CartesianChart.Series.Add(CrackSeries(_spmOutput.StringerCrackLoadStep.Value, Element.Stringer));
-
-			// If panels cracked
-			if (_spmOutput.PanelCrackLoadStep.HasValue)
-				CartesianChart.Series.Add(CrackSeries(_spmOutput.PanelCrackLoadStep.Value, Element.Panel));
-
-			SetMapper();
+			analysis.StepConverged   += On_StepConverged;
+			analysis.ElementCracked  += On_ElementCracked;
+			analysis.AnalysisAborted += On_AnalysisAborted;
 		}
+
+		// /// <summary>
+		// ///     Update the plot.
+		// /// </summary>
+		// public void UpdatePlot()
+		// {
+		// 	// Set max load factor
+		// 	LoadFactorAxis.MaxValue = _spmOutput.Select(m => m.LoadFactor).Max();
+		//
+		// 	// Initiate series
+		// 	CartesianChart.Series = new SeriesCollection
+		// 	{
+		// 		// Full chart
+		// 		new LineSeries
+		// 		{
+		// 			Title           = "Load Factor x Displacement",
+		// 			Values          = GetValues(_spmOutput, _displacementUnit),
+		// 			PointGeometry   = null,
+		// 			StrokeThickness = 3,
+		// 			Stroke          = Brushes.LightSkyBlue,
+		// 			Fill            = Brushes.Transparent,
+		// 			DataLabels      = false,
+		// 			LabelPoint      = Label
+		// 		}
+		// 	};
+		//
+		// 	// If stringers cracked
+		// 	if (_spmOutput.StringerCrackLoadStep.HasValue)
+		// 		CartesianChart.Series.Add(CrackSeries(_spmOutput.StringerCrackLoadStep.Value, Element.Stringer));
+		//
+		// 	// If panels cracked
+		// 	if (_spmOutput.PanelCrackLoadStep.HasValue)
+		// 		CartesianChart.Series.Add(CrackSeries(_spmOutput.PanelCrackLoadStep.Value, Element.Panel));
+		//
+		// 	SetMapper();
+		// }
 
 		/// <summary>
 		///     Get the line series of cracking.
@@ -130,9 +159,7 @@ namespace SPMTool.Application.UserInterface
 		{
 			var (number, step) = crackLoadStep;
 
-			var md = _spmOutput[step - 1];
-
-			var pt = new ObservablePoint(md.Displacement.As(_displacementUnit), md.LoadFactor);
+			var pt = (ObservablePoint) CartesianChart.Series[0].Values[step - 1];
 
 			return
 				new LineSeries
@@ -150,6 +177,29 @@ namespace SPMTool.Application.UserInterface
 				};
 		}
 
+		private void InitiatePlot()
+		{
+			// Set max load factor
+			LoadFactorAxis.MaxValue = 1;
+
+			// Initiate series
+			CartesianChart.Series = new SeriesCollection
+			{
+				// Full chart
+				new LineSeries
+				{
+					Title           = "Load Factor x Displacement",
+					Values          = new ChartValues<ObservablePoint>(new[] { new ObservablePoint(0, 0) }),
+					PointGeometry   = null,
+					StrokeThickness = 3,
+					Stroke          = Brushes.LightSkyBlue,
+					Fill            = Brushes.Transparent,
+					DataLabels      = false,
+					LabelPoint      = Label
+				}
+			};
+		}
+
 		/// <summary>
 		///     Get the label of a <paramref name="point" />.
 		/// </summary>
@@ -163,22 +213,14 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void SetMapper()
 		{
-			// If there is a displacement bigger than zero, nothing is done
-			if (_spmOutput.Any(p => !p.Displacement.ApproxZero(Units.LengthTolerance) && p.Displacement > Length.Zero))
-			{
-				Inverted = false;
-				return;
-			}
-
 			// Invert x values
-			Inverted = true;
 			foreach (var series in CartesianChart.Series)
 				series.Configuration = Mappers.Xy<ObservablePoint>()
-					.X(point => -point.X)
+					.X(point => Inverted ? -point.X : point.X)
 					.Y(point => point.Y);
 
 			// Correct the labels
-			DisplacementAxis.LabelFormatter = x => $"{x * -1}";
+			DisplacementAxis.LabelFormatter = x => $"{(Inverted ? -x : x)}";
 		}
 
 		private void ButtonExport_OnClick(object sender, RoutedEventArgs e)
@@ -189,13 +231,46 @@ namespace SPMTool.Application.UserInterface
 				name = $"{Path.GetFileNameWithoutExtension(SPMModel.ActiveModel.Name)}_SPMResult";
 
 			// Export
-			_spmOutput.Export(path, name, _displacementUnit);
+			var output = Analysis.GenerateOutput();
+			output.Export(path, name, _displacementUnit);
 			MessageBox.Show("Data exported to file location.");
 		}
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
 			Close();
+		}
+
+		private void ButtonStart_OnClick(object sender, RoutedEventArgs e) => Analysis.Execute(_monitoredIndex, _simulate);
+
+		private void On_AnalysisAborted(object sender, EventArgs e) => MessageBox.Show(Analysis.StopMessage, "SPMTool");
+
+		private void On_ElementCracked(object sender, SPMElementEventArgs e)
+		{
+			var el   = e.Element;
+			var step = e.LoadStep!.Value;
+
+			var element = el is Stringer
+				? Element.Stringer
+				: Element.Panel;
+
+			CartesianChart.Series.Add(CrackSeries((el.Number, step), element));
+
+			SetMapper();
+		}
+
+		private void On_StepConverged(object sender, StepEventArgs e)
+		{
+			var md = e.Step.MonitoredDisplacement!.Value;
+
+			CartesianChart.Series[0].Values.Add(new ObservablePoint(md.Displacement.ToUnit(_displacementUnit).Value, md.LoadFactor));
+
+			// Check maximum value
+			if (md.LoadFactor > LoadFactorAxis.MaxValue)
+				LoadFactorAxis.MaxValue = md.LoadFactor;
+
+			// Update inversion
+			Inverted = Analysis.Select(step => step.MonitoredDisplacement!.Value.Displacement).Max() <= Length.Zero;
 		}
 
 		#endregion

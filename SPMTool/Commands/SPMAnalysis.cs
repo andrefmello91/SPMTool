@@ -75,19 +75,16 @@ namespace SPMTool.Commands
 			// Do analysis
 			var analysis = new SPMAnalysis(input, settings);
 
-			analysis.Execute(uIndexn.Value, simulate);
-			var output = analysis.GenerateOutput();
-
 			// Show window
-			var plot = new PlotWindow(output);
-			ShowModelessWindow(MainWindow.Handle, plot);
+			var plot = new PlotWindow(analysis, uIndexn.Value, simulate);
+			ShowModalWindow(MainWindow.Handle, plot);
 
 			// Show a message if analysis stopped
-			if (analysis.Stop)
-				ShowAlertDialog(analysis.StopMessage);
+			// if (analysis.Stop)
+			// 	ShowAlertDialog(analysis.StopMessage);
 
 			// Updated plot
-			plot.UpdatePlot();
+			// plot.UpdatePlot();
 
 			var results = new SPMResults(model);
 			results.DrawResults();
