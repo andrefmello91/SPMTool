@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using andrefmello91.Extensions;
 using andrefmello91.Material.Concrete;
 using SPMTool.Core;
@@ -29,25 +26,13 @@ namespace SPMTool.Application.UserInterface
 
 		private readonly LengthUnit _aggUnit;
 
+		private readonly SPMModel _database;
+
 		// Properties
 		private readonly PressureUnit _stressUnit;
 
-		private ConstitutiveModel ConstitutiveModel
-		{
-			get => (ConstitutiveModel) ConstitutiveBox.SelectedIndex;
-			set => ConstitutiveBox.SelectedIndex = (int) value;
-		}
-
-		private AggregateType AggregateType
-		{
-			get => (AggregateType) AggTypeBox.SelectedIndex;
-			set => AggTypeBox.SelectedIndex = (int) value;
-		}
-
 		private IConcreteParameters _parameters;
 
-		private readonly SPMModel _database;
-		
 		#endregion
 
 		#region Properties
@@ -61,6 +46,18 @@ namespace SPMTool.Application.UserInterface
 		///     Get the stress unit.
 		/// </summary>
 		public string StressUnit => _stressUnit.Abbrev();
+
+		private AggregateType AggregateType
+		{
+			get => (AggregateType) AggTypeBox.SelectedIndex;
+			set => AggTypeBox.SelectedIndex = (int) value;
+		}
+
+		private ConstitutiveModel ConstitutiveModel
+		{
+			get => (ConstitutiveModel) ConstitutiveBox.SelectedIndex;
+			set => ConstitutiveBox.SelectedIndex = (int) value;
+		}
 
 		/// <summary>
 		///     Get the text boxes for custom parameters.
@@ -84,7 +81,7 @@ namespace SPMTool.Application.UserInterface
 		public ConcreteConfig()
 		{
 			_database = SPMModel.ActiveModel;
-			
+
 			// Read units
 			_stressUnit = _database.Settings.Units.MaterialStrength;
 			_aggUnit    = _database.Settings.Units.Reinforcement;
@@ -150,7 +147,7 @@ namespace SPMTool.Application.UserInterface
 			// Save units on database
 			_database.ConcreteData.Parameters        = _parameters;
 			_database.ConcreteData.ConstitutiveModel = ConstitutiveModel;
-			
+
 			Close();
 		}
 
@@ -161,7 +158,7 @@ namespace SPMTool.Application.UserInterface
 		{
 			if (_parameters is not CustomParameters cusPar)
 				return;
-			
+
 			// Read parameters
 			var ft  = Pressure.From(double.Parse(TensileBox.Text), _stressUnit);
 			var Ec  = Pressure.From(double.Parse(ModuleBox.Text), _stressUnit);
@@ -212,7 +209,7 @@ namespace SPMTool.Application.UserInterface
 				CustomParameterBoxes.Disable();
 				return;
 			}
-			
+
 			GetCustomParameters();
 			CustomParameterBoxes.Enable();
 		}
@@ -238,7 +235,7 @@ namespace SPMTool.Application.UserInterface
 			var agg   = _parameters.AggregateDiameter;
 			var model = _parameters.Model;
 			var type  = _parameters.Type;
-			
+
 			_parameters = new Parameters(fc, agg, model, type);
 			UpdateCustomParameterBoxes();
 		}
@@ -270,7 +267,7 @@ namespace SPMTool.Application.UserInterface
 			_parameters = _parameters switch
 			{
 				CustomParameters cusPar when model != ParameterModel.Custom => cusPar.ToParameters(model, type),
-				Parameters       par    when model == ParameterModel.Custom => par.ToCustomParameters(),
+				Parameters par when model == ParameterModel.Custom          => par.ToCustomParameters(),
 				_                                                           => _parameters
 			};
 

@@ -1,9 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
 using andrefmello91.Extensions;
-using Autodesk.Windows;
-using SPMTool.Attributes;
-using SPMTool.Commands;
 
 namespace SPMTool
 {
@@ -61,7 +58,7 @@ namespace SPMTool
 			foreach (var element in elements)
 				element.Enable();
 		}
-		
+
 		#endregion
 
 	}

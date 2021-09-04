@@ -10,8 +10,8 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.Windows;
 using SPMTool.Application.UserInterface;
-using SPMTool.Core.Blocks;
 using SPMTool.Commands;
+using SPMTool.Core.Blocks;
 using SPMTool.Enums;
 #nullable enable
 
@@ -104,7 +104,7 @@ namespace SPMTool.Attributes
 
 		public BitmapImage Icon => (BitmapImage) SPMToolInterface.Icons.GetType().GetProperty(CommandName)!.GetValue(SPMToolInterface.Icons);
 
-		public string Text => CommandName.ToString().SplitCamelCase();
+		public string Text => CommandName.SplitCamelCase();
 
 		public string Tooltip { get; }
 
@@ -115,7 +115,7 @@ namespace SPMTool.Attributes
 		public CommandAttribute(string commandName, string tooltip)
 		{
 			CommandName = commandName;
-			Tooltip = tooltip;
+			Tooltip     = tooltip;
 		}
 
 		#endregion

@@ -10,7 +10,6 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Core.Blocks;
 using SPMTool.Enums;
-
 using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.SPMModel;
@@ -94,14 +93,6 @@ namespace SPMTool.Core.Elements
 			set => SetWidth(value);
 		}
 
-		#region Interface Implementations
-
-		public override Layer Layer => Layer.Panel;
-
-		public override string Name => $"Panel {Number}";
-
-		#endregion
-
 		#endregion
 
 		#region Constructors
@@ -148,7 +139,7 @@ namespace SPMTool.Core.Elements
 		/// <param name="solid">The <see cref="Solid" /> object of the stringer.</param>
 		/// <param name="unit">The unit for geometry.</param>
 		public static PanelObject From(Solid solid, LengthUnit unit) =>
-			new (solid.GetVertices().ToArray(), solid.Database.BlockTableId, unit)
+			new(solid.GetVertices().ToArray(), solid.Database.BlockTableId, unit)
 			{
 				ObjectId = solid.ObjectId
 			};
@@ -156,7 +147,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Calculate the scale factor for block insertion.
 		/// </summary>
-		public double BlockScaleFactor() => 
+		public double BlockScaleFactor() =>
 			UnitMath.Min(Geometry.Dimensions.a, Geometry.Dimensions.b).As(GetOpenedModel(BlockTableId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter) * 0.001;
 
 		/// <summary>
@@ -195,18 +186,18 @@ namespace SPMTool.Core.Elements
 		/// <param name="crackUnit">The unit of crack openings.</param>
 		public IEnumerable<BlockCreator?> GetBlocks(double scaleFactor, double textHeight, PressureUnit stressUnit, LengthUnit crackUnit)
 		{
-			yield return 
+			yield return
 				ShearBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY.ToUnit(stressUnit), scaleFactor, textHeight, BlockTableId);
-			
-			yield return 
+
+			yield return
 				StressBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses.Convert(stressUnit), scaleFactor, textHeight, BlockTableId);
-			
-			yield return 
+
+			yield return
 				StressBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses.Convert(stressUnit), scaleFactor, textHeight, BlockTableId, Layer.ConcreteStress);
-			
+
 			if (_panel.Model is ElementModel.Elastic)
 				yield break;
-			
+
 			yield return
 				PanelCrackBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.CrackOpening.ToUnit(crackUnit), _panel.AveragePrincipalStresses.Theta2, scaleFactor, textHeight, BlockTableId);
 		}
@@ -312,29 +303,6 @@ namespace SPMTool.Core.Elements
 			SetDictionary(direction.GetTypedValues(), $"Reinforcement{dir}");
 		}
 
-		#region Interface Implementations
-
-		public override DBObject CreateObject()
-		{
-			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
-			
-			return
-				new Solid(Vertices.Vertex1.ToPoint3d(unit), Vertices.Vertex2.ToPoint3d(unit), Vertices.Vertex4.ToPoint3d(unit), Vertices.Vertex3.ToPoint3d(unit))
-				{
-					Layer = $"{Layer}"
-				};
-		}
-
-		/// <inheritdoc />
-		Solid IDBObjectCreator<Solid>.CreateObject() => (Solid) CreateObject();
-
-		public bool Equals(PanelObject other) => base.Equals(other);
-
-		/// <inheritdoc />
-		Solid? IDBObjectCreator<Solid>.GetObject() => (Solid?) base.GetObject();
-
-		#endregion
-
 		#endregion
 
 		#region Operators
@@ -352,7 +320,8 @@ namespace SPMTool.Core.Elements
 			: null;
 
 		/// <summary>
-		///     Get the <see cref="PanelObject" /> from <see cref="SPMModel.Stringers" /> associated to a <see cref="SPMElement{T}" />
+		///     Get the <see cref="PanelObject" /> from <see cref="SPMModel.Stringers" /> associated to a
+		///     <see cref="SPMElement{T}" />
 		///     .
 		/// </summary>
 		/// <remarks>
@@ -377,6 +346,37 @@ namespace SPMTool.Core.Elements
 		///     Can be null if <paramref name="panelObject" /> is null or doesn't exist in drawing.
 		/// </remarks>
 		public static explicit operator Solid?(PanelObject? panelObject) => (Solid?) panelObject?.GetObject();
+
+		#endregion
+
+		#region Interface Implementations
+
+		public override Layer Layer => Layer.Panel;
+
+		public override string Name => $"Panel {Number}";
+
+		#endregion
+
+		#region Interface Implementations
+
+		public override DBObject CreateObject()
+		{
+			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
+
+			return
+				new Solid(Vertices.Vertex1.ToPoint3d(unit), Vertices.Vertex2.ToPoint3d(unit), Vertices.Vertex4.ToPoint3d(unit), Vertices.Vertex3.ToPoint3d(unit))
+				{
+					Layer = $"{Layer}"
+				};
+		}
+
+		/// <inheritdoc />
+		Solid IDBObjectCreator<Solid>.CreateObject() => (Solid) CreateObject();
+
+		public bool Equals(PanelObject other) => base.Equals(other);
+
+		/// <inheritdoc />
+		Solid? IDBObjectCreator<Solid>.GetObject() => (Solid?) base.GetObject();
 
 		#endregion
 

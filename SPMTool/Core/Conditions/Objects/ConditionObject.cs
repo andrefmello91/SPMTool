@@ -2,8 +2,6 @@
 using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
-using Extensions = SPMTool.Extensions;
-
 #nullable enable
 
 namespace SPMTool.Core.Conditions
@@ -57,6 +55,47 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		protected abstract double RotationAngle { get; }
 
+		#endregion
+
+		#region Constructors
+
+		/// <summary>
+		///     Condition base constructor.
+		/// </summary>
+		/// <param name="position">The position.</param>
+		/// <param name="value">The value.</param>
+		/// <inheritdoc />
+		protected ConditionObject(Point position, TValue value, ObjectId blockTableId)
+			: base(blockTableId)
+		{
+			Position = position;
+			Value    = value;
+		}
+
+		#endregion
+
+		#region Operators
+
+		/// <summary>
+		///     Returns true if objects are equal.
+		/// </summary>
+		public static bool operator ==(ConditionObject<TValue>? left, ConditionObject<TValue>? right) => left is not null && left.Equals(right);
+
+		/// <summary>
+		///     Get the <see cref="BlockReference" /> associated to a <see cref="ConditionObject{T}" />.
+		/// </summary>
+		/// <remarks>
+		///     Can be null if <paramref name="conditionObject" /> is null or doesn't exist in drawing.
+		/// </remarks>
+		public static explicit operator BlockReference?(ConditionObject<TValue>? conditionObject) => (BlockReference?) conditionObject?.GetObject();
+
+		/// <summary>
+		///     Returns true if objects are different.
+		/// </summary>
+		public static bool operator !=(ConditionObject<TValue>? left, ConditionObject<TValue>? right) => left is not null && !left.Equals(right);
+
+		#endregion
+
 		#region Interface Implementations
 
 		public abstract Block Block { get; }
@@ -73,27 +112,6 @@ namespace SPMTool.Core.Conditions
 
 		#endregion
 
-		#endregion
-
-		#region Constructors
-
-		/// <summary>
-		///     Condition base constructor.
-		/// </summary>
-		/// <param name="position">The position.</param>
-		/// <param name="value">The value.</param>
-		/// <inheritdoc />
-		protected ConditionObject(Point position, TValue value, ObjectId blockTableId)
-			: base (blockTableId)
-		{
-			Position = position;
-			Value    = value;
-		}
-
-		#endregion
-
-		#region Methods
-
 		#region Interface Implementations
 
 		public int CompareTo(ConditionObject<TValue>? other) => other is null
@@ -105,7 +123,7 @@ namespace SPMTool.Core.Conditions
 			// Get database
 			var model = SPMModel.GetOpenedModel(BlockTableId)!;
 			var units = model.Settings.Units;
-			
+
 			return
 				model.AcadDatabase.GetReference(Block, Position.ToPoint3d(units.Geometry), Layer, null, RotationAngle, Axis.Z, null, units.ScaleFactor)!;
 		}
@@ -128,30 +146,6 @@ namespace SPMTool.Core.Conditions
 		public override int GetHashCode() => Value.GetHashCode();
 
 		public override string ToString() => Value.ToString();
-
-		#endregion
-
-		#endregion
-
-		#region Operators
-
-		/// <summary>
-		///     Returns true if objects are equal.
-		/// </summary>
-		public static bool operator ==(ConditionObject<TValue>? left, ConditionObject<TValue>? right) => left is not null && left.Equals(right);
-
-		/// <summary>
-		///     Returns true if objects are different.
-		/// </summary>
-		public static bool operator !=(ConditionObject<TValue>? left, ConditionObject<TValue>? right) => left is not null && !left.Equals(right);
-
-		/// <summary>
-		///     Get the <see cref="BlockReference" /> associated to a <see cref="ConditionObject{T}" />.
-		/// </summary>
-		/// <remarks>
-		///     Can be null if <paramref name="conditionObject" /> is null or doesn't exist in drawing.
-		/// </remarks>
-		public static explicit operator BlockReference?(ConditionObject<TValue>? conditionObject) => (BlockReference?) conditionObject?.GetObject();
 
 		#endregion
 

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.EList;
@@ -11,7 +10,6 @@ using andrefmello91.SPMElements.PanelProperties;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
-
 using UnitsNet;
 using UnitsNet.Units;
 #nullable enable
@@ -24,16 +22,20 @@ namespace SPMTool.Core.Elements
 	public class PanelList : SPMObjectList<PanelObject, PanelGeometry>
 	{
 
+		#region Properties
+
 		/// <summary>
-		///		Get a panel object that correspond to a center point.
+		///     Get a panel object that correspond to a center point.
 		/// </summary>
 		/// <param name="centerPoint">The panel center point</param>
 		public PanelObject? this[Point centerPoint] => Find(p => p.Vertices.CenterPoint == centerPoint);
-		
+
+		#endregion
+
 		#region Constructors
 
 		/// <summary>
-		///		Create a panel list.
+		///     Create a panel list.
 		/// </summary>
 		/// <inheritdoc />
 		private PanelList(ObjectId blockTableId)
@@ -42,7 +44,7 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <summary>
-		///		Create a panel list.
+		///     Create a panel list.
 		/// </summary>
 		/// <inheritdoc />
 		private PanelList(IEnumerable<PanelObject> panelObjects, ObjectId blockTableId)
@@ -51,14 +53,8 @@ namespace SPMTool.Core.Elements
 		}
 
 		#endregion
-		
-		#region Methods
 
-		/// <summary>
-		///     Get the collection of panels in the drawing.
-		/// </summary>
-		/// <param name="document">The AutoCAD document.</param>
-		private static IEnumerable<Solid?>? GetObjects(Document document) => document.GetObjects(Layer.Panel)?.Cast<Solid?>();
+		#region Methods
 
 		/// <summary>
 		///     Read all the <see cref="PanelObject" />'s in the drawing.
@@ -70,12 +66,18 @@ namespace SPMTool.Core.Elements
 			var solids = GetObjects(document)?
 				.Where(s => s is not null)
 				.ToArray();
-			var bId    = document.Database.BlockTableId;
+			var bId = document.Database.BlockTableId;
 
-			return solids.IsNullOrEmpty() 
+			return solids.IsNullOrEmpty()
 				? new PanelList(bId)
 				: new PanelList(solids.Select(s => PanelObject.From(s!, unit)), bId);
 		}
+
+		/// <summary>
+		///     Get the collection of panels in the drawing.
+		/// </summary>
+		/// <param name="document">The AutoCAD document.</param>
+		private static IEnumerable<Solid?>? GetObjects(Document document) => document.GetObjects(Layer.Panel)?.Cast<Solid?>();
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />
 		/// <param name="vertices">The collection of four <see cref="Point" /> vertices, in any order.</param>
@@ -119,7 +121,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the list of distinct <see cref="WebReinforcementDirection" />'s in this collection.
 		/// </summary>
-		public IEnumerable<WebReinforcementDirection> GetReinforcementDirections() => 
+		public IEnumerable<WebReinforcementDirection> GetReinforcementDirections() =>
 			this.SelectMany(p => new[] { p.Reinforcement?.DirectionX, p.Reinforcement?.DirectionY })
 				.Where(r => r is not null)
 				.Distinct()
@@ -128,7 +130,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the list of distinct <see cref="WebReinforcement" />'s in this collection.
 		/// </summary>
-		public IEnumerable<WebReinforcement> GetReinforcements() => 
+		public IEnumerable<WebReinforcement> GetReinforcements() =>
 			this.Select(p => p.Reinforcement)
 				.Where(r => r is not null)
 				.Distinct()
@@ -137,7 +139,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the list of distinct <see cref="Steel" />'s in this collection.
 		/// </summary>
-		public IEnumerable<SteelParameters> GetSteelParameters() => 
+		public IEnumerable<SteelParameters> GetSteelParameters() =>
 			this.SelectMany(p => new[] { p.Reinforcement?.DirectionX?.Steel, p.Reinforcement?.DirectionY?.Steel })
 				.Where(s => s is not null)
 				.Select(s => s!.Parameters)
@@ -147,14 +149,14 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the list of <see cref="Vertices" />'s from this collection.
 		/// </summary>
-		public IEnumerable<Vertices> GetVertices() => 
+		public IEnumerable<Vertices> GetVertices() =>
 			GetGeometries()
 				.Select(g => g.Vertices);
 
 		/// <summary>
 		///     Get the list of distinct widths from this collection.
 		/// </summary>
-		public IEnumerable<Length> GetWidths() => 
+		public IEnumerable<Length> GetWidths() =>
 			GetGeometries()
 				.Select(g => g.Width)
 				.Distinct()

@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Windows;
-using andrefmello91.Extensions;
+﻿using System.Windows;
 using SPMTool.Core;
 
 namespace SPMTool.Application.UserInterface
@@ -10,7 +8,12 @@ namespace SPMTool.Application.UserInterface
 	/// </summary>
 	public partial class DisplayConfig : BaseWindow
 	{
+
+		#region Fields
+
 		private readonly SPMModel _database;
+
+		#endregion
 
 		#region Properties
 
@@ -31,7 +34,7 @@ namespace SPMTool.Application.UserInterface
 
 			// Read values
 			_database = SPMModel.ActiveModel;
-			
+
 			GetValues(_database.Settings.Display);
 		}
 
@@ -39,30 +42,6 @@ namespace SPMTool.Application.UserInterface
 
 		#region Methods
 
-		/// <summary>
-		///		Get initial values for text boxes.
-		/// </summary>
-		private void GetValues(DisplaySettings displaySettings)
-		{
-			NodeBox.Text         = $"{displaySettings.NodeScale:F2}";
-			ConditionBox.Text    = $"{displaySettings.ConditionScale:F2}";
-			ResultBox.Text       = $"{displaySettings.ResultScale:F2}";
-			TextScaleBox.Text    = $"{displaySettings.TextScale:F2}";
-			DisplacementBox.Text = $"{displaySettings.DisplacementMagnifier}";
-		}
-
-		/// <summary>
-		///		Set values on <paramref name="displaySettings"/>.
-		/// </summary>
-		private void SetValues(DisplaySettings displaySettings)
-		{
-			displaySettings.NodeScale             = double.Parse(NodeBox.Text);
-			displaySettings.ConditionScale        = double.Parse(ConditionBox.Text);
-			displaySettings.ResultScale           = double.Parse(ResultBox.Text);
-			displaySettings.TextScale             = double.Parse(TextScaleBox.Text);
-			displaySettings.DisplacementMagnifier = int.Parse(DisplacementBox.Text);
-		}
-		
 		/// <summary>
 		///     Set default units.
 		/// </summary>
@@ -85,6 +64,30 @@ namespace SPMTool.Application.UserInterface
 			_database.Settings.Display = display;
 
 			Close();
+		}
+
+		/// <summary>
+		///     Get initial values for text boxes.
+		/// </summary>
+		private void GetValues(DisplaySettings displaySettings)
+		{
+			NodeBox.Text         = $"{displaySettings.NodeScale:F2}";
+			ConditionBox.Text    = $"{displaySettings.ConditionScale:F2}";
+			ResultBox.Text       = $"{displaySettings.ResultScale:F2}";
+			TextScaleBox.Text    = $"{displaySettings.TextScale:F2}";
+			DisplacementBox.Text = $"{displaySettings.DisplacementMagnifier}";
+		}
+
+		/// <summary>
+		///     Set values on <paramref name="displaySettings" />.
+		/// </summary>
+		private void SetValues(DisplaySettings displaySettings)
+		{
+			displaySettings.NodeScale             = double.Parse(NodeBox.Text);
+			displaySettings.ConditionScale        = double.Parse(ConditionBox.Text);
+			displaySettings.ResultScale           = double.Parse(ResultBox.Text);
+			displaySettings.TextScale             = double.Parse(TextScaleBox.Text);
+			displaySettings.DisplacementMagnifier = int.Parse(DisplacementBox.Text);
 		}
 
 		#endregion

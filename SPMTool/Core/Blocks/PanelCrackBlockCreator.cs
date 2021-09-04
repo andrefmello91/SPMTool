@@ -1,13 +1,8 @@
-﻿using System;
-using andrefmello91.Extensions;
+﻿using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
-using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using SPMTool.Enums;
-
 using UnitsNet;
-using UnitsNet.Units;
 #nullable enable
 
 namespace SPMTool.Core.Blocks
@@ -54,7 +49,7 @@ namespace SPMTool.Core.Blocks
 			: base(insertionPoint, Block.PanelCrack, rotationAngle, scaleFactor, textHeight, blockTableId)
 		{
 			_crackOpening = crackOpening;
-			
+
 			Attributes = new[] { GetAttribute(crackOpening, rotationAngle, textHeight, blockTableId) };
 		}
 

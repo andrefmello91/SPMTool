@@ -6,7 +6,6 @@ using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
-using SPMTool.Core;
 using UnitsNet.Units;
 
 namespace SPMTool
@@ -15,6 +14,7 @@ namespace SPMTool
 	{
 
 		#region Methods
+
 		/// <summary>
 		///     Return the angle (in radians), related to horizontal axis, of a line that connects this to
 		///     <paramref name="otherPoint" /> .
@@ -41,22 +41,21 @@ namespace SPMTool
 		}
 
 		/// <summary>
-		///     Return the mid <see cref="Point3d" /> between this and <paramref name="otherPoint" />.
+		///     Returns true if this <paramref name="point" /> is approximately equal to <paramref name="otherPoint" />.
 		/// </summary>
-		/// <inheritdoc cref="DistanceInX" />
-		public static Point3d MidPoint(this Point3d point, Point3d otherPoint) => point == otherPoint 
-			? point 
-			: new Point3d(0.5 * (point.X + otherPoint.X), 0.5 * (point.Y + otherPoint.Y), 0.5 * (point.Z + otherPoint.Z));
+		/// <param name="otherPoint">The other <see cref="Point3d" /> to compare.</param>
+		/// <param name="tolerance">The tolerance to considering equivalent.</param>
+		public static bool Approx(this Point3d point, Point3d otherPoint, double tolerance = 1E-3) => point.X.Approx(otherPoint.X, tolerance) && point.Y.Approx(otherPoint.Y, tolerance) && point.Z.Approx(otherPoint.Z, tolerance);
 
 		/// <summary>
-		///     Get the mid <see cref="Point3d" /> of a <paramref name="line" />.
+		///     Return a <see cref="Point3d" /> with coordinates converted.
 		/// </summary>
-		public static Point3d MidPoint(this Line line) => line.StartPoint.MidPoint(line.EndPoint);
-
-		/// <summary>
-		///     Return this collection of <see cref="Point3d" />'s ordered in ascending Y then ascending X.
-		/// </summary>
-		public static IEnumerable<Point3d> Order(this IEnumerable<Point3d> points) => points.OrderBy(p => p.Y).ThenBy(p => p.X);
+		/// <param name="fromUnit">The <see cref="LengthUnit" /> of origin.</param>
+		/// <param name="toUnit">The <seealso cref="LengthUnit" /> to convert.</param>
+		/// <returns></returns>
+		public static Point3d Convert(this Point3d point, LengthUnit fromUnit, LengthUnit toUnit = LengthUnit.Millimeter) => fromUnit == toUnit
+			? point
+			: new Point3d(point.X.Convert(fromUnit, toUnit), point.Y.Convert(fromUnit, toUnit), point.Z.Convert(fromUnit, toUnit));
 
 		/// <summary>
 		///     Return the horizontal distance from this <paramref name="point" /> to <paramref name="otherPoint" /> .
@@ -71,22 +70,23 @@ namespace SPMTool
 		public static double DistanceInY(this Point3d point, Point3d otherPoint) => (otherPoint.Y - point.Y).Abs();
 
 		/// <summary>
-		///     Return a <see cref="Point3d" /> with coordinates converted.
+		///     Return the mid <see cref="Point3d" /> between this and <paramref name="otherPoint" />.
 		/// </summary>
-		/// <param name="fromUnit">The <see cref="LengthUnit" /> of origin.</param>
-		/// <param name="toUnit">The <seealso cref="LengthUnit" /> to convert.</param>
-		/// <returns></returns>
-		public static Point3d Convert(this Point3d point, LengthUnit fromUnit, LengthUnit toUnit = LengthUnit.Millimeter) => fromUnit == toUnit 
-			? point 
-			: new Point3d(point.X.Convert(fromUnit, toUnit), point.Y.Convert(fromUnit, toUnit), point.Z.Convert(fromUnit, toUnit));
+		/// <inheritdoc cref="DistanceInX" />
+		public static Point3d MidPoint(this Point3d point, Point3d otherPoint) => point == otherPoint
+			? point
+			: new Point3d(0.5 * (point.X + otherPoint.X), 0.5 * (point.Y + otherPoint.Y), 0.5 * (point.Z + otherPoint.Z));
 
 		/// <summary>
-		///     Returns true if this <paramref name="point" /> is approximately equal to <paramref name="otherPoint" />.
+		///     Get the mid <see cref="Point3d" /> of a <paramref name="line" />.
 		/// </summary>
-		/// <param name="otherPoint">The other <see cref="Point3d" /> to compare.</param>
-		/// <param name="tolerance">The tolerance to considering equivalent.</param>
-		public static bool Approx(this Point3d point, Point3d otherPoint, double tolerance = 1E-3) => point.X.Approx(otherPoint.X, tolerance) && point.Y.Approx(otherPoint.Y, tolerance) && point.Z.Approx(otherPoint.Z, tolerance);
-		
+		public static Point3d MidPoint(this Line line) => line.StartPoint.MidPoint(line.EndPoint);
+
+		/// <summary>
+		///     Return this collection of <see cref="Point3d" />'s ordered in ascending Y then ascending X.
+		/// </summary>
+		public static IEnumerable<Point3d> Order(this IEnumerable<Point3d> points) => points.OrderBy(p => p.Y).ThenBy(p => p.X);
+
 		/// <summary>
 		///     Convert a <see cref="Point3d" /> to <see cref="Point" />.
 		/// </summary>

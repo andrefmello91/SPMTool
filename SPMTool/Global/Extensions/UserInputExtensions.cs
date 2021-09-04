@@ -4,7 +4,6 @@ using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
-using andrefmello91.SPMElements.PanelProperties;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
@@ -73,14 +72,14 @@ namespace SPMTool
 				var entOp = new PromptEntityOptions($"\n{message}");
 				entOp.AllowNone = true;
 				var entRes = editor.GetEntity(entOp);
-				
+
 				if (entRes.Status == PromptStatus.Cancel)
 					return null;
 
-				var ent = (Entity)trans.GetObject(entRes.ObjectId, OpenMode.ForRead);
+				var ent = (Entity) trans.GetObject(entRes.ObjectId, OpenMode.ForRead);
 
 				// Get layername
-				var layer = (Layer)Enum.Parse(typeof(Layer), ent.Layer);
+				var layer = (Layer) Enum.Parse(typeof(Layer), ent.Layer);
 
 				if (layers is null || layers.Contains(layer))
 					return ent;
@@ -301,11 +300,11 @@ namespace SPMTool
 		/// <inheritdoc cref="GetEntity" />
 		public static IEnumerable<Solid>? GetPanels(this Database database, string message)
 		{
-			List<Solid>? pnls  = null;
-			
-			var         model = SPMModel.GetOpenedModel(database);
-			var         unit  = model!.Settings.Units.Geometry;
-			
+			List<Solid>? pnls = null;
+
+			var model = SPMModel.GetOpenedModel(database);
+			var unit  = model!.Settings.Units.Geometry;
+
 			var layers = new[] { Layer.Panel, Layer.PanelCenter };
 
 			// Create auxiliary points on panel centers
@@ -323,8 +322,8 @@ namespace SPMTool
 				pnls = objs.Where(o => o is Solid)
 					.Cast<Solid>()
 					.ToList();
-				
-				var pts  = objs.Where(o => o is DBPoint)
+
+				var pts = objs.Where(o => o is DBPoint)
 					.Cast<DBPoint>()
 					.Select(d => d.Position.ToPoint(unit))
 					.ToList();
@@ -332,12 +331,12 @@ namespace SPMTool
 				if (pts.Any())
 				{
 					// Get selected panel vertices and object ids
-					var ids         = pnls.GetObjectIds()!;
+					var ids = pnls.GetObjectIds()!;
 					var otherPanels = database.GetDocument()
 						.GetObjects(Layer.Panel)!
 						.Where(p => p is Solid && !ids.Contains(p.ObjectId))
 						.Cast<Solid>();
-					
+
 					// Get panels from center points and add to the list
 					pnls.AddRange(otherPanels.Where(pnl => pts.Any(pt => pt == pnl.CenterPoint().ToPoint(unit))));
 				}

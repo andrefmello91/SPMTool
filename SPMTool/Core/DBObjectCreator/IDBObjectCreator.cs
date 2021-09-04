@@ -1,12 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using andrefmello91.Extensions;
-using Autodesk.AutoCAD.DatabaseServices;
-using SPMTool.Core.Blocks;
-using SPMTool.Core.Conditions;
-using SPMTool.Core.Elements;
+﻿using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
-
 #nullable enable
 
 namespace SPMTool.Core
@@ -18,6 +11,11 @@ namespace SPMTool.Core
 	{
 
 		#region Properties
+
+		/// <summary>
+		///     The <see cref="ObjectId" /> of the block table that contains this object.
+		/// </summary>
+		ObjectId BlockTableId { get; set; }
 
 		/// <summary>
 		///     Get the <see cref="Enums.Layer" /> of this object.
@@ -33,12 +31,7 @@ namespace SPMTool.Core
 		///     Get/set the <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> of this object.
 		/// </summary>
 		ObjectId ObjectId { get; set; }
-		
-		/// <summary>
-		///		The <see cref="ObjectId"/> of the block table that contains this object.
-		/// </summary>
-		ObjectId BlockTableId { get; set; }
-		
+
 		#endregion
 
 		#region Methods

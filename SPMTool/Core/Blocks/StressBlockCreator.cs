@@ -2,12 +2,10 @@
 using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
-using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics;
 using SPMTool.Application;
 using SPMTool.Enums;
-
 using UnitsNet;
 #nullable enable
 
@@ -69,7 +67,7 @@ namespace SPMTool.Core.Blocks
 		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double, ObjectId)" />
 		public static StressBlockCreator? From(Point insertionPoint, PrincipalStressState stressState, double scaleFactor, double textHeight, ObjectId blockTableId, Layer? layer = null) =>
 			!stressState.IsZero
-				? new StressBlockCreator(insertionPoint,stressState, scaleFactor, textHeight, blockTableId, layer)
+				? new StressBlockCreator(insertionPoint, stressState, scaleFactor, textHeight, blockTableId, layer)
 				: null;
 
 		/// <summary>

@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
 using System.Windows;
-using System.Windows.Input;
-using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using SPMTool.Core;
 
@@ -15,8 +10,11 @@ namespace SPMTool.Application.UserInterface
 	/// </summary>
 	public partial class AnalysisConfig : BaseWindow
 	{
+
+		#region Fields
+
 		/// <summary>
-		///		The solver names to show in <see cref="SolverBox"/>.
+		///     The solver names to show in <see cref="SolverBox" />.
 		/// </summary>
 		private static readonly List<string> SolverNames = new()
 		{
@@ -26,7 +24,9 @@ namespace SPMTool.Application.UserInterface
 		};
 
 		private readonly SPMModel _database;
-		
+
+		#endregion
+
 		#region Properties
 
 		/// <summary>
@@ -36,11 +36,11 @@ namespace SPMTool.Application.UserInterface
 		{
 			get => AnalysisParameters.Default with
 			{
-				ForceTolerance        = double.Parse(FToleranceBox.Text),
+				ForceTolerance = double.Parse(FToleranceBox.Text),
 				DisplacementTolerance = double.Parse(DToleranceBox.Text),
-				NumberOfSteps         = int.Parse(LoadStepsBox.Text),
-				MaxIterations         = int.Parse(IterationsBox.Text),
-				Solver                = (NonLinearSolver) SolverBox.SelectedIndex
+				NumberOfSteps = int.Parse(LoadStepsBox.Text),
+				MaxIterations = int.Parse(IterationsBox.Text),
+				Solver = (NonLinearSolver) SolverBox.SelectedIndex
 			};
 
 			set
@@ -65,7 +65,7 @@ namespace SPMTool.Application.UserInterface
 			SolverBox.ItemsSource = SolverNames;
 
 			// Read saved settings
-			_database        = SPMModel.ActiveModel;
+			_database  = SPMModel.ActiveModel;
 			Parameters = _database.Settings.Analysis;
 		}
 
@@ -95,7 +95,7 @@ namespace SPMTool.Application.UserInterface
 				MessageBox.Show("Please set a tolerance smaller than 1.");
 				return;
 			}
-			
+
 			if (int.Parse(IterationsBox.Text) < 1000)
 			{
 				MessageBox.Show("Please set at least 1000 for maximum iterations.");

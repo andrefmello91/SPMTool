@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.Extensions;
-using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
 using SPMTool.Enums;
-
 
 namespace SPMTool.Core.Blocks
 {
@@ -27,7 +24,7 @@ namespace SPMTool.Core.Blocks
 			new[] { StressSquare() }
 				.Concat(TensileArrows())
 				.Concat(CompressiveArrows(Constants.Pi));
-		
+
 		/// <summary>
 		///     Get the <see cref="AttributeDefinition" /> for force blocks.
 		/// </summary>

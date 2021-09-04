@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 using Autodesk.AutoCAD.Runtime;
+using SPMTool.Commands;
 
 // As informações gerais sobre um assembly são controladas por
 // conjunto de atributos. Altere estes valores de atributo para modificar as informações
@@ -36,4 +37,4 @@ using Autodesk.AutoCAD.Runtime;
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
 // Assembly AutoCAD command class
-[assembly: CommandClass(typeof(SPMTool.Commands.AcadCommands))]
+[assembly: CommandClass(typeof(AcadCommands))]

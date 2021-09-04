@@ -24,11 +24,12 @@ namespace SPMTool.Application.UserInterface
 
 		#region Fields
 
+		private readonly SPMModel _database;
+
 		private readonly LengthUnit _geometryUnit;
 		private readonly List<PanelObject> _panels;
 		private readonly LengthUnit _reinforcementUnit;
 		private readonly PressureUnit _stressUnit;
-		private readonly SPMModel _database;
 
 		#endregion
 
@@ -71,8 +72,8 @@ namespace SPMTool.Application.UserInterface
 				: null;
 			set
 			{
-				XSpacing     = value?.BarSpacing   ?? Length.FromMillimeters(100);
-				XBarDiameter = value?.BarDiameter  ?? Length.FromMillimeters(8);
+				XSpacing     = value?.BarSpacing ?? Length.FromMillimeters(100);
+				XBarDiameter = value?.BarDiameter ?? Length.FromMillimeters(8);
 				XLegs        = value?.NumberOfLegs ?? 2;
 			}
 		}
@@ -87,8 +88,8 @@ namespace SPMTool.Application.UserInterface
 				: null;
 			set
 			{
-				YSpacing     = value?.BarSpacing   ?? Length.FromMillimeters(100);
-				YBarDiameter = value?.BarDiameter  ?? Length.FromMillimeters(8);
+				YSpacing     = value?.BarSpacing ?? Length.FromMillimeters(100);
+				YBarDiameter = value?.BarDiameter ?? Length.FromMillimeters(8);
 				YLegs        = value?.NumberOfLegs ?? 2;
 			}
 		}
@@ -256,7 +257,7 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
-		///		Get/set the number of legs/branches in X direction.
+		///     Get/set the number of legs/branches in X direction.
 		/// </summary>
 		private int XLegs
 		{
@@ -301,7 +302,7 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
-		///		Get/set the number of legs/branches in Y direction.
+		///     Get/set the number of legs/branches in Y direction.
 		/// </summary>
 		private int YLegs
 		{
@@ -336,12 +337,12 @@ namespace SPMTool.Application.UserInterface
 			_panels = panels.ToList();
 
 			_database = ActiveModel;
-			
+
 			_geometryUnit      = _database.Settings.Units.Geometry;
 			_reinforcementUnit = _database.Settings.Units.Reinforcement;
 			_stressUnit        = _database.Settings.Units.MaterialStrength;
-			
-			DataContext        = this;
+
+			DataContext = this;
 
 			InitializeComponent();
 
@@ -416,8 +417,8 @@ namespace SPMTool.Application.UserInterface
 
 			if (_database.ElementWidths.Any())
 			{
-				SavedGeometries.ItemsSource   = SavedGeoOptions(_database);
-				
+				SavedGeometries.ItemsSource = SavedGeoOptions(_database);
+
 				SavedGeometries.SelectedIndex = _panels.Count == 1
 					? _database.ElementWidths.IndexOf(_panels[0].Width)
 					: 0;
@@ -425,9 +426,9 @@ namespace SPMTool.Application.UserInterface
 				PnlWidth = _panels.Count == 1
 					? _panels[0].Width
 					: _database.ElementWidths[0];
-				
+
 				return;
-				
+
 			}
 			SavedGeometries.Disable();
 			PnlWidth = Length.FromMillimeters(100);
@@ -483,7 +484,9 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			else
+			{
 				ReinforcementXChecked = ReinforcementYChecked = false;
+			}
 		}
 
 		private void ReinforcementXCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementXChecked = ((CheckBox) sender).IsChecked ?? false;

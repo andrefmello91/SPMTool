@@ -4,8 +4,6 @@ using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics;
 using SPMTool.Enums;
 using UnitsNet.Units;
-using static SPMTool.Core.SPMModel;
-
 #nullable enable
 
 namespace SPMTool.Core.Conditions

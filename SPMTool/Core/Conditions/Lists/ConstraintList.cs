@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
@@ -7,7 +6,6 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 using UnitsNet.Units;
-
 #nullable enable
 
 namespace SPMTool.Core.Conditions
@@ -21,16 +19,16 @@ namespace SPMTool.Core.Conditions
 		#region Constructors
 
 		/// <summary>
-		///		Create a constraint list.
+		///     Create a constraint list.
 		/// </summary>
 		/// <inheritdoc />
 		private ConstraintList(ObjectId blockTableId)
 			: base(blockTableId)
 		{
 		}
-		
+
 		/// <summary>
-		///		Create a constraint list.
+		///     Create a constraint list.
 		/// </summary>
 		/// <inheritdoc />
 		private ConstraintList(IEnumerable<ConstraintObject> constraints, ObjectId blockTableId)
@@ -43,11 +41,6 @@ namespace SPMTool.Core.Conditions
 		#region Methods
 
 		/// <summary>
-		///     Get the support objects in the drawing.
-		/// </summary>
-		private static IEnumerable<BlockReference?>? GetObjects(Document document) => document.GetObjects(Layer.Support)?.Cast<BlockReference?>();
-
-		/// <summary>
 		///     Read all <see cref="ConstraintObject" />'s from drawing.
 		/// </summary>
 		/// <param name="unit">The unit for geometry.</param>
@@ -56,14 +49,19 @@ namespace SPMTool.Core.Conditions
 			var blocks = GetObjects(document)?
 				.Where(b => b is not null)
 				.ToArray();
-			var bId    = document.Database.BlockTableId;
-			
+			var bId = document.Database.BlockTableId;
+
 			var list = blocks.IsNullOrEmpty()
 				? new ConstraintList(bId)
 				: new ConstraintList(blocks.Select(b => ConstraintObject.From(b, unit)), bId);
-			
+
 			return list;
 		}
+
+		/// <summary>
+		///     Get the support objects in the drawing.
+		/// </summary>
+		private static IEnumerable<BlockReference?>? GetObjects(Document document) => document.GetObjects(Layer.Support)?.Cast<BlockReference?>();
 
 		/// <remarks>
 		///     Item is not added if direction if <see cref="ComponentDirection.None" />.

@@ -1,6 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using System.Windows;
-using System.Windows.Input;
+﻿using System.Windows;
 using andrefmello91.Extensions;
 using SPMTool.Core;
 using UnitsNet;
@@ -15,8 +13,12 @@ namespace SPMTool.Application.UserInterface
 	public partial class UnitsConfig : Window
 	{
 
+		#region Fields
+
 		private readonly SPMModel _database;
-		
+
+		#endregion
+
 		#region Properties
 
 		/// <summary>
@@ -26,14 +28,14 @@ namespace SPMTool.Application.UserInterface
 		{
 			get => new()
 			{
-				Geometry              = UnitParser.Default.Parse<LengthUnit>((string) GeometryBox.SelectedItem),
-				Reinforcement         = UnitParser.Default.Parse<LengthUnit>((string) ReinforcementBox.SelectedItem),
-				Displacements         = UnitParser.Default.Parse<LengthUnit>((string) DisplacementsBox.SelectedItem),
-				CrackOpenings         = UnitParser.Default.Parse<LengthUnit>((string) CracksBox.SelectedItem),
-				AppliedForces         = UnitParser.Default.Parse<ForceUnit>((string) AppliedForcesBox.SelectedItem),
-				StringerForces        = UnitParser.Default.Parse<ForceUnit>((string) StringerForcesBox.SelectedItem),
-				PanelStresses         = UnitParser.Default.Parse<PressureUnit>((string) PanelStressesBox.SelectedItem),
-				MaterialStrength      = UnitParser.Default.Parse<PressureUnit>((string) MaterialBox.SelectedItem),
+				Geometry         = UnitParser.Default.Parse<LengthUnit>((string) GeometryBox.SelectedItem),
+				Reinforcement    = UnitParser.Default.Parse<LengthUnit>((string) ReinforcementBox.SelectedItem),
+				Displacements    = UnitParser.Default.Parse<LengthUnit>((string) DisplacementsBox.SelectedItem),
+				CrackOpenings    = UnitParser.Default.Parse<LengthUnit>((string) CracksBox.SelectedItem),
+				AppliedForces    = UnitParser.Default.Parse<ForceUnit>((string) AppliedForcesBox.SelectedItem),
+				StringerForces   = UnitParser.Default.Parse<ForceUnit>((string) StringerForcesBox.SelectedItem),
+				PanelStresses    = UnitParser.Default.Parse<PressureUnit>((string) PanelStressesBox.SelectedItem),
+				MaterialStrength = UnitParser.Default.Parse<PressureUnit>((string) MaterialBox.SelectedItem)
 			};
 
 			set

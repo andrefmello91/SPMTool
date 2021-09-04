@@ -2,13 +2,10 @@
 using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
-using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using SPMTool.Application;
 using SPMTool.Enums;
-
 using UnitsNet;
 #nullable enable
 
@@ -78,25 +75,11 @@ namespace SPMTool.Core.Blocks
 			var pts = GetInsertionPoints(geometry).ToArray();
 
 			var cracks = crackOpenings.ToArray();
-			
+
 			for (var i = 0; i < cracks.Length; i++)
 				yield return !cracks[i].ApproxZero(Units.CrackTolerance)
 					? new StringerCrackBlockCreator(pts[i], cracks[i], geometry.Angle, geometry.InitialPoint, scaleFactor, textHeight, blockTableId)
 					: null;
-		}
-
-		/// <summary>
-		///		Get the insertion points of blocks.
-		/// </summary>
-		/// <param name="geometry">The geometry of the stringer.</param>
-		private static IEnumerable<Point> GetInsertionPoints(StringerGeometry geometry)
-		{
-			var l  = geometry.Length;
-			var ix = geometry.InitialPoint.X + 0.1 * l;
-			var y  = geometry.InitialPoint.Y;
-
-			for (var i = 0; i < 3; i++)
-				yield return new Point(ix + 0.4 * i * l, y);
 		}
 
 		/// <summary>
@@ -128,6 +111,20 @@ namespace SPMTool.Core.Blocks
 			// 	attRef.TransformBy(Matrix3d.Rotation(rotationAngle, SPMModel.Ucs.Zaxis, new Point3d(0, 0, 0)));
 
 			// return attRef;
+		}
+
+		/// <summary>
+		///     Get the insertion points of blocks.
+		/// </summary>
+		/// <param name="geometry">The geometry of the stringer.</param>
+		private static IEnumerable<Point> GetInsertionPoints(StringerGeometry geometry)
+		{
+			var l  = geometry.Length;
+			var ix = geometry.InitialPoint.X + 0.1 * l;
+			var y  = geometry.InitialPoint.Y;
+
+			for (var i = 0; i < 3; i++)
+				yield return new Point(ix + 0.4 * i * l, y);
 		}
 
 		#endregion

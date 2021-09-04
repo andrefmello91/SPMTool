@@ -4,7 +4,6 @@ using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
-using static SPMTool.Core.SPMResults;
 
 #nullable enable
 
@@ -19,7 +18,7 @@ namespace SPMTool.Commands
 		public static void LinearAnalysis()
 		{
 			var model = SPMModel.ActiveModel;
-			
+
 			// Get input data
 			var input = model.GenerateInput(AnalysisType.Linear, out var dataOk, out var message);
 
@@ -75,7 +74,7 @@ namespace SPMTool.Commands
 
 			// Do analysis
 			var analysis = new SPMAnalysis(input, settings);
-			
+
 			analysis.Execute(uIndexn.Value, simulate);
 			var output = analysis.GenerateOutput();
 

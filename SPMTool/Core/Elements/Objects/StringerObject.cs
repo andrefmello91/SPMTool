@@ -10,7 +10,6 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Core.Blocks;
 using SPMTool.Enums;
-
 using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.SPMModel;
@@ -66,14 +65,6 @@ namespace SPMTool.Core.Elements
 			get => _reinforcement;
 			set => SetReinforcement(value);
 		}
-
-		#region Interface Implementations
-
-		public override Layer Layer => Layer.Stringer;
-
-		public override string Name => $"Stringer {Number}";
-
-		#endregion
 
 		#endregion
 
@@ -139,8 +130,8 @@ namespace SPMTool.Core.Elements
 		/// <param name="scaleFactor">The scale factor.</param>
 		/// <param name="textHeight">The text height for attributes.</param>
 		/// <param name="crackUnit">The unit for crack openings.</param>
-		public IEnumerable<StringerCrackBlockCreator?> CreateCrackBlocks(double scaleFactor, double textHeight, LengthUnit crackUnit) => 
-			_stringer!.Model is ElementModel.Nonlinear 
+		public IEnumerable<StringerCrackBlockCreator?> CreateCrackBlocks(double scaleFactor, double textHeight, LengthUnit crackUnit) =>
+			_stringer!.Model is ElementModel.Nonlinear
 				? StringerCrackBlockCreator.CreateBlocks(_stringer!.Geometry, _stringer.CrackOpenings.Select(c => c.ToUnit(crackUnit)).ToArray(), scaleFactor, textHeight, BlockTableId)
 				: new StringerCrackBlockCreator?[] { null, null, null };
 
@@ -180,7 +171,7 @@ namespace SPMTool.Core.Elements
 				end   = Geometry.EndPoint + (_stringer?.Grip3.Displacement ?? PlaneDisplacement.Zero) * displacementMagnifier;
 
 			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
-			
+
 			return
 				new Line(start.ToPoint3d(unit), end.ToPoint3d(unit))
 				{
@@ -192,14 +183,14 @@ namespace SPMTool.Core.Elements
 		///     This method returns a linear object.
 		/// </remarks>
 		/// <inheritdoc />
-		public override INumberedElement GetElement() => GetElement(SPMModel.GetOpenedModel(BlockTableId)!.Nodes.GetElements().Cast<Node>().ToArray()!);
+		public override INumberedElement GetElement() => GetElement(GetOpenedModel(BlockTableId)!.Nodes.GetElements().Cast<Node>().ToArray()!);
 
 		/// <inheritdoc cref="SPMObject{T}.GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
 		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
 		public Stringer GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
 		{
-			var database     = GetOpenedModel(BlockTableId)!;
+			var database = GetOpenedModel(BlockTableId)!;
 			_stringer        = Stringer.FromNodes(nodes, Geometry.InitialPoint, Geometry.EndPoint, Geometry.CrossSection, database.ConcreteData.Parameters, database.ConcreteData.ConstitutiveModel, Reinforcement?.Clone(), elementModel);
 			_stringer.Number = Number;
 			return _stringer;
@@ -256,29 +247,6 @@ namespace SPMTool.Core.Elements
 			SetDictionary(reinforcement?.GetTypedValues(), "Reinforcement");
 		}
 
-		#region Interface Implementations
-
-		public override DBObject CreateObject()
-		{
-			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
-			
-			return
-				new Line(Geometry.InitialPoint.ToPoint3d(unit), Geometry.EndPoint.ToPoint3d(unit))
-				{
-					Layer = $"{Layer}"
-				};
-		}
-
-		/// <inheritdoc />
-		Line IDBObjectCreator<Line>.CreateObject() => (Line) CreateObject();
-
-		public bool Equals(StringerObject other) => base.Equals(other);
-
-		/// <inheritdoc />
-		Line? IDBObjectCreator<Line>.GetObject() => (Line?) base.GetObject();
-
-		#endregion
-
 		#endregion
 
 		#region Operators
@@ -322,6 +290,37 @@ namespace SPMTool.Core.Elements
 		///     Can be null if <paramref name="stringerObject" /> is null or doesn't exist in drawing.
 		/// </remarks>
 		public static explicit operator Line?(StringerObject? stringerObject) => (Line?) stringerObject?.GetObject();
+
+		#endregion
+
+		#region Interface Implementations
+
+		public override Layer Layer => Layer.Stringer;
+
+		public override string Name => $"Stringer {Number}";
+
+		#endregion
+
+		#region Interface Implementations
+
+		public override DBObject CreateObject()
+		{
+			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
+
+			return
+				new Line(Geometry.InitialPoint.ToPoint3d(unit), Geometry.EndPoint.ToPoint3d(unit))
+				{
+					Layer = $"{Layer}"
+				};
+		}
+
+		/// <inheritdoc />
+		Line IDBObjectCreator<Line>.CreateObject() => (Line) CreateObject();
+
+		public bool Equals(StringerObject other) => base.Equals(other);
+
+		/// <inheritdoc />
+		Line? IDBObjectCreator<Line>.GetObject() => (Line?) base.GetObject();
 
 		#endregion
 

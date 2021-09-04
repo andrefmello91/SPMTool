@@ -5,8 +5,6 @@ using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
-using SPMTool.Commands;
-
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.SPMModel;
 
@@ -29,7 +27,7 @@ namespace SPMTool.Commands
 			var nodes     = model.Nodes;
 			var panels    = model.Panels;
 			var database  = model.AcadDatabase;
-			
+
 			// Prompt for select panels
 			var pnls = database.GetPanels("Select panels to divide")?.ToArray();
 
@@ -47,7 +45,7 @@ namespace SPMTool.Commands
 
 			if (!clnn.HasValue)
 				return;
-			
+
 			// Get values
 			int
 				row = rown.Value,
@@ -160,7 +158,7 @@ namespace SPMTool.Commands
 
 			if (!numn.HasValue)
 				return;
-			
+
 			var num = numn.Value;
 
 			// Get stringers from list
@@ -203,10 +201,10 @@ namespace SPMTool.Commands
 
 			if (pnls.IsNullOrEmpty())
 				return;
-			
+
 			// Get the elements
 			var panels = model.Panels[pnls.GetObjectIds()!].ToArray();
-			
+
 			// Start the config window
 			SPMToolInterface.ShowWindow(new PanelWindow(panels));
 		}
@@ -229,7 +227,7 @@ namespace SPMTool.Commands
 
 			// Get the elements
 			var stringers = ActiveModel.Stringers[strs.GetObjectIds()!].ToList();
-			
+
 			// Start the config window
 			SPMToolInterface.ShowWindow(new StringerWindow(stringers));
 		}
@@ -243,7 +241,7 @@ namespace SPMTool.Commands
 			var models = OpenedModels;
 			var model  = ActiveModel;
 			models = OpenedModels;
-			
+
 			model.UpdateElements();
 
 			// Display the number of updated elements

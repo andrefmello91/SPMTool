@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.EList;
 using andrefmello91.Extensions;
@@ -20,11 +19,6 @@ namespace SPMTool.Core
 		#region Properties
 
 		/// <summary>
-		///     The <see cref="ObjectId" /> of the block table that contains this object.
-		/// </summary>
-		public ObjectId BlockTableId { get; }
-
-		/// <summary>
 		///     Get an object in this collection that matches <paramref name="objectId" />.
 		/// </summary>
 		/// <param name="objectId">The required <see cref="ObjectId" />.</param>
@@ -35,6 +29,11 @@ namespace SPMTool.Core
 		/// </summary>
 		/// <param name="objectIds">The collection of required <see cref="ObjectId" />'s.</param>
 		public IEnumerable<TDBObjectCreator> this[IEnumerable<ObjectId> objectIds] => FindAll(e => objectIds.Contains(e.ObjectId));
+
+		/// <summary>
+		///     The <see cref="ObjectId" /> of the block table that contains this object.
+		/// </summary>
+		public ObjectId BlockTableId { get; }
 
 		/// <summary>
 		///     Get the <see cref="ObjectId" />'s from the items in this collection.

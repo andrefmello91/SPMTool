@@ -7,6 +7,7 @@ namespace SPMTool.Commands
 	/// </summary>
 	public static class Command
 	{
+
 		#region Fields
 
 		[Command(AddConstraint, "Set constraint condition to a group of nodes")]

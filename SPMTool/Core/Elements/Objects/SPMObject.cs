@@ -2,8 +2,6 @@
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
-using Extensions = SPMTool.Extensions;
-
 #nullable enable
 
 namespace SPMTool.Core.Elements
@@ -58,22 +56,10 @@ namespace SPMTool.Core.Elements
 
 		#endregion
 
-		#region Properties
-
-		#region Interface Implementations
-
-		public int Number { get; set; } = 0;
-
-		TProperty ISPMObject<TProperty>.Property => PropertyField;
-
-		#endregion
-
-		#endregion
-
 		#region Constructors
 
 		/// <summary>
-		///		Base constructor.
+		///     Base constructor.
 		/// </summary>
 		/// <inheritdoc />
 		protected SPMObject(ObjectId blockTableId)
@@ -82,17 +68,37 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <summary>
-		///		Base constructor.
+		///     Base constructor.
 		/// </summary>
 		/// <param name="property">The property value.</param>
 		/// <inheritdoc />
-		protected SPMObject(TProperty property, ObjectId blockTableId) 
+		protected SPMObject(TProperty property, ObjectId blockTableId)
 			: base(blockTableId) =>
 			PropertyField = property;
 
 		#endregion
 
-		#region Methods
+		#region Operators
+
+		/// <summary>
+		///     Returns true if objects are equal.
+		/// </summary>
+		public static bool operator ==(SPMObject<TProperty>? left, SPMObject<TProperty>? right) => left.IsEqualTo(right);
+
+		/// <summary>
+		///     Returns true if objects are different.
+		/// </summary>
+		public static bool operator !=(SPMObject<TProperty>? left, SPMObject<TProperty>? right) => left.IsNotEqualTo(right);
+
+		#endregion
+
+		#region Interface Implementations
+
+		public int Number { get; set; } = 0;
+
+		TProperty ISPMObject<TProperty>.Property => PropertyField;
+
+		#endregion
 
 		#region Interface Implementations
 
@@ -119,22 +125,6 @@ namespace SPMTool.Core.Elements
 		public override int GetHashCode() => PropertyField.GetHashCode();
 
 		public override string ToString() => GetElement()?.ToString() ?? "Null element";
-
-		#endregion
-
-		#endregion
-
-		#region Operators
-
-		/// <summary>
-		///     Returns true if objects are equal.
-		/// </summary>
-		public static bool operator ==(SPMObject<TProperty>? left, SPMObject<TProperty>? right) => left.IsEqualTo(right);
-
-		/// <summary>
-		///     Returns true if objects are different.
-		/// </summary>
-		public static bool operator !=(SPMObject<TProperty>? left, SPMObject<TProperty>? right) => left.IsNotEqualTo(right);
 
 		#endregion
 

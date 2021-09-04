@@ -17,15 +17,8 @@ namespace SPMTool
 {
 	public partial class Extensions
 	{
-		/// <summary>
-		///     Convert this <paramref name="value" /> to a <see cref="double" />.
-		/// </summary>
-		public static double ToDouble(this TypedValue value) => System.Convert.ToDouble(value.Value);
 
-		/// <summary>
-		///     Convert this <paramref name="value" /> to an <see cref="int" />.
-		/// </summary>
-		public static int ToInt(this TypedValue value) => System.Convert.ToInt32(value.Value);
+		#region Methods
 
 		/// <summary>
 		///     Get an <see cref="AnalysisParameters" /> from <see cref="TypedValue" />'s.
@@ -38,15 +31,15 @@ namespace SPMTool
 
 			return AnalysisParameters.Default with
 			{
-				ForceTolerance        = values.ElementAt(0).ToDouble(),
+				ForceTolerance = values.ElementAt(0).ToDouble(),
 				DisplacementTolerance = values.ElementAt(1).ToDouble(),
-				NumberOfSteps         = values.ElementAt(2).ToInt(),
-				MaxIterations         = values.ElementAt(3).ToInt(),
-				Solver                = (NonLinearSolver) values.ElementAt(4).ToInt()
+				NumberOfSteps = values.ElementAt(2).ToInt(),
+				MaxIterations = values.ElementAt(3).ToInt(),
+				Solver = (NonLinearSolver) values.ElementAt(4).ToInt()
 			};
 		}
-		
-				/// <summary>
+
+		/// <summary>
 		///     Get a <see cref="Constraint" /> from <see cref="TypedValue" />'s.
 		/// </summary>
 		/// <param name="values">The <see cref="TypedValue" />'s that represent a <see cref="Constraint" />.</param>
@@ -91,7 +84,7 @@ namespace SPMTool
 				DisplacementMagnifier = values.ElementAt(4).ToInt()
 			};
 		}
-		
+
 		/// <summary>
 		///     Get an int that represents an <see cref="Enum" /> value from <see cref="TypedValue" />'s.
 		/// </summary>
@@ -108,7 +101,7 @@ namespace SPMTool
 			values.IsNullOrEmpty() || values.Count() != 2
 				? null
 				: new PlaneForce(values.ElementAt(0).ToDouble(), values.ElementAt(1).ToDouble());
-		
+
 		/// <summary>
 		///     Get a <see cref="IConcreteParameters" /> from <see cref="TypedValue" />'s.
 		/// </summary>
@@ -133,7 +126,7 @@ namespace SPMTool
 
 			return new CustomParameters(fc, ft, Ec, phiAg, ec, ecu);
 		}
-		
+
 		/// <summary>
 		///     Get a <see cref="UniaxialReinforcement" /> from <see cref="TypedValue" />'s.
 		/// </summary>
@@ -181,8 +174,8 @@ namespace SPMTool
 			return
 				WebReinforcementDirection.From(phi, s, new SteelParameters(fy, Es), 0, angle, n);
 		}
-		
-				/// <summary>
+
+		/// <summary>
 		///     Get an array of <see cref="TypedValue" /> from a <see cref="PlaneDisplacement" />.
 		/// </summary>
 		public static TypedValue[] GetTypedValues(this PlaneDisplacement displacement) =>
@@ -239,11 +232,11 @@ namespace SPMTool
 		public static TypedValue[] GetTypedValues(this WebReinforcementDirection? reinforcement) =>
 			new[]
 			{
-				new TypedValue((int) DxfCode.Real,  reinforcement?.BarDiameter.Millimeters ?? 0),
-				new TypedValue((int) DxfCode.Real,  reinforcement?.BarSpacing.Millimeters ?? 0),
+				new TypedValue((int) DxfCode.Real, reinforcement?.BarDiameter.Millimeters ?? 0),
+				new TypedValue((int) DxfCode.Real, reinforcement?.BarSpacing.Millimeters ?? 0),
 				new TypedValue((int) DxfCode.Int32, reinforcement?.NumberOfLegs ?? 0),
-				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel.Parameters.YieldStress.Megapascals ?? 0),
-				new TypedValue((int) DxfCode.Real,  reinforcement?.Steel.Parameters.ElasticModule.Megapascals ?? 0)
+				new TypedValue((int) DxfCode.Real, reinforcement?.Steel.Parameters.YieldStress.Megapascals ?? 0),
+				new TypedValue((int) DxfCode.Real, reinforcement?.Steel.Parameters.ElasticModule.Megapascals ?? 0)
 			};
 
 		/// <summary>
@@ -298,8 +291,8 @@ namespace SPMTool
 
 			return new[]
 			{
-				new TypedValue((int) DxfCode.Real,  parameters.ForceTolerance),
-				new TypedValue((int) DxfCode.Real,  parameters.DisplacementTolerance),
+				new TypedValue((int) DxfCode.Real, parameters.ForceTolerance),
+				new TypedValue((int) DxfCode.Real, parameters.DisplacementTolerance),
 				new TypedValue((int) DxfCode.Int32, parameters.NumberOfSteps),
 				new TypedValue((int) DxfCode.Int32, parameters.MaxIterations),
 				new TypedValue((int) DxfCode.Int32, (int) parameters.Solver)
@@ -354,5 +347,17 @@ namespace SPMTool
 				MaterialStrength = (PressureUnit) values.ElementAt(7).ToInt()
 			};
 		}
+		/// <summary>
+		///     Convert this <paramref name="value" /> to a <see cref="double" />.
+		/// </summary>
+		public static double ToDouble(this TypedValue value) => System.Convert.ToDouble(value.Value);
+
+		/// <summary>
+		///     Convert this <paramref name="value" /> to an <see cref="int" />.
+		/// </summary>
+		public static int ToInt(this TypedValue value) => System.Convert.ToInt32(value.Value);
+
+		#endregion
+
 	}
 }

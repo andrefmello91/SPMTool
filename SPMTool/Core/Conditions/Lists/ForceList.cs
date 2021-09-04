@@ -6,7 +6,6 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 using UnitsNet.Units;
-
 #nullable enable
 
 namespace SPMTool.Core.Conditions
@@ -20,7 +19,7 @@ namespace SPMTool.Core.Conditions
 		#region Constructors
 
 		/// <summary>
-		///		Create a force list.
+		///     Create a force list.
 		/// </summary>
 		/// <inheritdoc />
 		private ForceList(ObjectId blockTableId)
@@ -29,7 +28,7 @@ namespace SPMTool.Core.Conditions
 		}
 
 		/// <summary>
-		///		Create a force list.
+		///     Create a force list.
 		/// </summary>
 		/// <inheritdoc />
 		private ForceList(IEnumerable<ForceObject> collection, ObjectId blockTableId)
@@ -42,11 +41,6 @@ namespace SPMTool.Core.Conditions
 		#region Methods
 
 		/// <summary>
-		///     Get the force objects in the drawing.
-		/// </summary>
-		public static IEnumerable<BlockReference?>? GetObjects(Document document) => document.GetObjects(Layer.Force)?.Cast<BlockReference?>();
-
-		/// <summary>
 		///     Read all <see cref="ForceObject" />'s from a document.
 		/// </summary>
 		/// <param name="document">The AutoCAD document.</param>
@@ -56,8 +50,8 @@ namespace SPMTool.Core.Conditions
 			var blocks = GetObjects(document)?
 				.Where(b => b is not null)
 				.ToArray();
-			var bId    = document.Database.BlockTableId;
-			
+			var bId = document.Database.BlockTableId;
+
 			var list = blocks.IsNullOrEmpty()
 				? new ForceList(bId)
 				: new ForceList(blocks.Select(b => ForceObject.From(b!, unit)), bId);
@@ -65,6 +59,11 @@ namespace SPMTool.Core.Conditions
 			return list;
 
 		}
+
+		/// <summary>
+		///     Get the force objects in the drawing.
+		/// </summary>
+		public static IEnumerable<BlockReference?>? GetObjects(Document document) => document.GetObjects(Layer.Force)?.Cast<BlockReference?>();
 
 		/// <remarks>
 		///     Item is not added if force values are zero.

@@ -20,32 +20,12 @@ namespace SPMTool.Core.Blocks
 		#region Fields
 
 		private readonly StringerGeometry _geometry;
+		private readonly Force _maxForce;
 		private readonly Force _n1;
 		private readonly Force _n2;
-		private readonly Force _maxForce;
 		private readonly int _number;
 		private readonly double _scaleFactor;
 		private readonly double _textHeight;
-
-		#endregion
-
-		#region Properties
-
-		#region Interface Implementations
-
-		/// <inheritdoc />
-		public ObjectId BlockTableId { get; set; }
-
-		/// <inheritdoc />
-		public Layer Layer => Layer.StringerForce;
-
-		/// <inheritdoc />
-		public string Name => $"Stringer Force {_number}";
-
-		/// <inheritdoc />
-		public ObjectId ObjectId { get; set; }
-
-		#endregion
 
 		#endregion
 
@@ -79,7 +59,7 @@ namespace SPMTool.Core.Blocks
 		/// <param name="scaleFactor">The scale factor.</param>
 		/// <param name="textHeight">The text height for attributes.</param>
 		/// <param name="stringerNumber">The number of the stringer.</param>
-		/// <param name="blockTableId">The <see cref="ObjectId"/> of the block table that contains this object.</param>
+		/// <param name="blockTableId">The <see cref="ObjectId" /> of the block table that contains this object.</param>
 		public static StringerForceCreator? From(StringerGeometry geometry, (Force N1, Force N2) normalForces, Force maxForce, double scaleFactor, double textHeight, int stringerNumber, ObjectId blockTableId) =>
 			!normalForces.N1.ApproxZero(Units.ForceTolerance) || !normalForces.N2.ApproxZero(Units.ForceTolerance)
 				? new StringerForceCreator(geometry, normalForces, maxForce, scaleFactor, textHeight, stringerNumber, blockTableId)
@@ -285,6 +265,24 @@ namespace SPMTool.Core.Blocks
 			return entities.Concat(GetTexts(_geometry, (_n1, _n2), _maxForce, _textHeight, BlockTableId));
 		}
 
+		#endregion
+
+		#region Interface Implementations
+
+		/// <inheritdoc />
+		public ObjectId BlockTableId { get; set; }
+
+		/// <inheritdoc />
+		public Layer Layer => Layer.StringerForce;
+
+		/// <inheritdoc />
+		public string Name => $"Stringer Force {_number}";
+
+		/// <inheritdoc />
+		public ObjectId ObjectId { get; set; }
+
+		#endregion
+
 		#region Interface Implementations
 
 		/// <inheritdoc />
@@ -298,8 +296,6 @@ namespace SPMTool.Core.Blocks
 
 		/// <inheritdoc />
 		public Group? GetObject() => (Group?) SPMModel.GetOpenedModel(BlockTableId)?.AcadDatabase.GetObject(ObjectId);
-
-		#endregion
 
 		#endregion
 

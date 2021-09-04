@@ -409,8 +409,8 @@ namespace SPMTool
 
 			// Get record
 			using var obj = trans.GetObject(objectId, OpenMode.ForRead);
-			
-			return 
+
+			return
 				obj is DBDictionary dict
 					? dict.GetData(dataName)
 					: null;
@@ -531,7 +531,7 @@ namespace SPMTool
 					? selRes.Value.GetObjectIds()
 					: null;
 		}
-		
+
 		/// <summary>
 		///     Get a collection containing all the <see cref="ObjectId" />'s in those <paramref name="layerNames" />.
 		/// </summary>
@@ -542,7 +542,7 @@ namespace SPMTool
 			// Get the ids
 			var ids = document.GetObjectIds(layerNames);
 
-			return 
+			return
 				ids is not null
 					? document.Database.GetObjects(ids)
 					: null;
@@ -559,7 +559,7 @@ namespace SPMTool
 
 			var objs = objectIds
 				.Select(obj => obj.IsOk() ? trans.GetObject(obj, OpenMode.ForRead) : null)
-				.ToArray();	
+				.ToArray();
 
 			return objs;
 		}

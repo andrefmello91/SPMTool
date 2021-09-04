@@ -1,7 +1,6 @@
 ﻿using andrefmello91.Material.Concrete;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
-
 using UnitsNet;
 using static andrefmello91.Material.Concrete.Parameters;
 
@@ -58,7 +57,7 @@ namespace SPMTool.Core.Materials
 		#region Constructors
 
 		/// <summary>
-		///		Create a concrete data object
+		///     Create a concrete data object
 		/// </summary>
 		/// <param name="database">The AutoCAD database.</param>
 		public ConcreteData(Database database)

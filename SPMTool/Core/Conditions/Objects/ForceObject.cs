@@ -7,7 +7,6 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
 using SPMTool.Enums;
-
 using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.SPMModel;
@@ -75,7 +74,7 @@ namespace SPMTool.Core.Conditions
 		{
 			var position = reference.Position.ToPoint(unit);
 
-			return 
+			return
 				new ForceObject(position, PlaneForce.Zero, reference.ObjectId.Database.BlockTableId)
 				{
 					ObjectId = reference.ObjectId
@@ -87,7 +86,7 @@ namespace SPMTool.Core.Conditions
 			// Get database
 			var model = GetOpenedModel(BlockTableId)!;
 			var units = model.Settings.Units;
-			
+
 			var insertionPoint = Position.ToPoint3d(units.Geometry);
 
 
@@ -132,7 +131,7 @@ namespace SPMTool.Core.Conditions
 			var model = GetOpenedModel(BlockTableId)!;
 			var unit  = model.Settings.Units.Geometry;
 			var txtH  = model.TextHeight;
-			
+
 			if (!Value.IsXZero)
 				yield return new AttributeReference
 				{

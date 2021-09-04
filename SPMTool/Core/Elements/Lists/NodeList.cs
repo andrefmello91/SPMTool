@@ -24,7 +24,7 @@ namespace SPMTool.Core.Elements
 		#region Constructors
 
 		/// <summary>
-		///		Create a node list.
+		///     Create a node list.
 		/// </summary>
 		/// <inheritdoc />
 		private NodeList(ObjectId blockTableId)
@@ -33,7 +33,7 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <summary>
-		///		Create a node list.
+		///     Create a node list.
 		/// </summary>
 		/// <inheritdoc />
 		private NodeList(IEnumerable<NodeObject> nodeObjects, ObjectId blockTableId)
@@ -44,6 +44,34 @@ namespace SPMTool.Core.Elements
 		#endregion
 
 		#region Methods
+
+		/// <summary>
+		///     Read all <see cref="NodeObject" />'s from a document.
+		/// </summary>
+		/// <param name="document">The AutoCAD document.</param>
+		/// <param name="unit">The unit for geometry.</param>
+		public static NodeList From(Document document, LengthUnit unit)
+		{
+			var points = GetObjects(document)?
+				.Where(o => o is not null)
+				.ToList();
+			var bId = document.Database.BlockTableId;
+
+			return points.IsNullOrEmpty()
+				? new NodeList(bId)
+				: new NodeList(points.Select(p => NodeObject.From(p!, unit)), bId);
+		}
+
+		/// <summary>
+		///     Get the layer name based on <paramref name="nodeType" />.
+		/// </summary>
+		/// <param name="nodeType">The <see cref="NodeType" />.</param>
+		public static Layer GetLayer(NodeType nodeType) =>
+			nodeType switch
+			{
+				NodeType.Internal => Layer.IntNode,
+				_                 => Layer.ExtNode
+			};
 
 		/// <summary>
 		///     Get the collection of <see cref="DBPoint" />'s in the active drawing, based in the <see cref="NodeType" />.
@@ -62,34 +90,6 @@ namespace SPMTool.Core.Elements
 
 			return
 				document.GetObjects(layers)?.Cast<DBPoint?>();
-		}
-
-		/// <summary>
-		///     Get the layer name based on <paramref name="nodeType" />.
-		/// </summary>
-		/// <param name="nodeType">The <see cref="NodeType" />.</param>
-		public static Layer GetLayer(NodeType nodeType) =>
-			nodeType switch
-			{
-				NodeType.Internal => Layer.IntNode,
-				_                 => Layer.ExtNode
-			};
-
-		/// <summary>
-		///     Read all <see cref="NodeObject" />'s from a document.
-		/// </summary>
-		/// <param name="document">The AutoCAD document.</param>
-		/// <param name="unit">The unit for geometry.</param>
-		public static NodeList From(Document document, LengthUnit unit)
-		{
-			var points = GetObjects(document)?
-				.Where(o => o is not null)
-				.ToList();
-			var bId    = document.Database.BlockTableId;
-
-			return points.IsNullOrEmpty() 
-				? new NodeList(bId)
-				: new NodeList(points.Select(p => NodeObject.From(p!, unit)), bId);
 		}
 
 		/// <inheritdoc cref="Add(Point, NodeType, bool, bool)" />

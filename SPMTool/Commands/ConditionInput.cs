@@ -23,13 +23,13 @@ namespace SPMTool.Commands
 		{
 			var model = SPMModel.ActiveModel;
 			var unit  = model.Settings.Units.Geometry;
-			
+
 			// Request objects to be selected in the drawing area
-			var nds =  model.AcadDatabase.GetNodes("Select nodes to add support conditions:", NodeType.External)?.ToArray();
+			var nds = model.AcadDatabase.GetNodes("Select nodes to add support conditions:", NodeType.External)?.ToArray();
 
 			if (nds is null)
 				return;
-			
+
 			// Erase result objects
 			model.AcadDocument.EraseObjects(SPMResults.ResultLayers);
 

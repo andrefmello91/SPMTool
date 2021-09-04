@@ -3,8 +3,8 @@ using System.Windows;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
 using SPMTool.Attributes;
-using SPMTool.Core;
 using SPMTool.Commands;
+using SPMTool.Core;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Application.UserInterface
@@ -83,6 +83,28 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
+		///     Create a <see cref="RibbonButton" /> based in a command name, contained in <see cref="Command" />.
+		/// </summary>
+		public static RibbonButton? GetRibbonButton(string commandName, RibbonItemSize size = RibbonItemSize.Large, bool showText = true) =>
+			((CommandAttribute?) typeof(Command).GetField(commandName)?.GetCustomAttribute(typeof(CommandAttribute)))?.CreateRibbonButton(size, showText);
+
+		/// <summary>
+		///     Show a modal window in AutoCAD interface.
+		/// </summary>
+		/// <param name="window">The <see cref="Window" /> to show.</param>
+		/// <param name="modeless">Show as a modeless window?</param>
+		public static void ShowWindow(Window window, bool modeless = false)
+		{
+			if (modeless)
+			{
+				ShowModelessWindow(MainWindow.Handle, window, false);
+				return;
+			}
+
+			ShowModalWindow(MainWindow.Handle, window, false);
+		}
+
+		/// <summary>
 		///     Create Analysis Panel.
 		/// </summary>
 		private void AnalysisPanel()
@@ -101,7 +123,7 @@ namespace SPMTool.Application.UserInterface
 			splitButton.Items.Add(GetRibbonButton(Command.Linear));
 
 			splitButton.Items.Add(GetRibbonButton(Command.Nonlinear));
-			
+
 			splitButton.Items.Add(GetRibbonButton(Command.Simulation));
 
 			// Add to the panel source
@@ -271,7 +293,7 @@ namespace SPMTool.Application.UserInterface
 			pnlSrc.Items.Add(GetRibbonButton(Command.Units));
 
 			pnlSrc.Items.Add(GetRibbonButton(Command.Analysis));
-			
+
 			pnlSrc.Items.Add(GetRibbonButton(Command.Display));
 		}
 
@@ -307,28 +329,6 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		#endregion
-
-		///  <summary>
-		/// 		Show a modal window in AutoCAD interface.
-		///  </summary>
-		///  <param name="window">The <see cref="Window"/> to show.</param>
-		///  <param name="modeless">Show as a modeless window?</param>
-		public static void ShowWindow(Window window, bool modeless = false)
-		{
-			if (modeless)
-			{
-				ShowModelessWindow(MainWindow.Handle, window, false);
-				return;
-			}
-
-			ShowModalWindow(MainWindow.Handle, window, false);
-		}
-		
-		/// <summary>
-		///     Create a <see cref="RibbonButton" /> based in a command name, contained in <see cref="Command" />.
-		/// </summary>
-		public static RibbonButton? GetRibbonButton(string commandName, RibbonItemSize size = RibbonItemSize.Large, bool showText = true) =>
-			((CommandAttribute?) typeof(Command).GetField(commandName)?.GetCustomAttribute(typeof(CommandAttribute)))?.CreateRibbonButton(size, showText);
 
 	}
 }

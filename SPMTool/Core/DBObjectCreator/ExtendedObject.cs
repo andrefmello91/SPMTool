@@ -24,26 +24,6 @@ namespace SPMTool.Core
 		/// </summary>
 		public ObjectId DictionaryId { get; protected set; } = ObjectId.Null;
 
-		#region Interface Implementations
-
-		/// <inheritdoc />
-		public ObjectId BlockTableId { get; set; }
-
-		/// <inheritdoc />
-		public abstract Layer Layer { get; }
-
-		/// <inheritdoc />
-		public abstract string Name { get; }
-
-		/// <inheritdoc />
-		public ObjectId ObjectId
-		{
-			get => _objectId;
-			set => AttachObject(value);
-		}
-
-		#endregion
-
 		#endregion
 
 		#region Constructors
@@ -116,6 +96,28 @@ namespace SPMTool.Core
 		/// </returns>
 		protected abstract void SetProperties();
 
+		#endregion
+
+		#region Interface Implementations
+
+		/// <inheritdoc />
+		public ObjectId BlockTableId { get; set; }
+
+		/// <inheritdoc />
+		public abstract Layer Layer { get; }
+
+		/// <inheritdoc />
+		public abstract string Name { get; }
+
+		/// <inheritdoc />
+		public ObjectId ObjectId
+		{
+			get => _objectId;
+			set => AttachObject(value);
+		}
+
+		#endregion
+
 		#region Interface Implementations
 
 		/// <inheritdoc />
@@ -123,8 +125,6 @@ namespace SPMTool.Core
 
 		/// <inheritdoc />
 		public virtual DBObject? GetObject() => BlockTableId.Database.GetObject(ObjectId);
-
-		#endregion
 
 		#endregion
 

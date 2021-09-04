@@ -65,22 +65,6 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		protected double ScaleFactor { get; set; }
 
-		#region Interface Implementations
-
-		/// <inheritdoc />
-		public ObjectId BlockTableId { get; set; }
-
-		/// <inheritdoc />
-		public Layer Layer { get; protected set; }
-
-		/// <inheritdoc />
-		public string Name => $"{Block}";
-
-		/// <inheritdoc />
-		public ObjectId ObjectId { get; set; }
-
-		#endregion
-
 		#endregion
 
 		#region Constructors
@@ -93,7 +77,7 @@ namespace SPMTool.Core.Blocks
 		/// <param name="rotationAngle">The block rotation angle.</param>
 		/// <param name="scaleFactor">The scale factor.</param>
 		/// <param name="textHeight">The text height for attributes.</param>
-		/// <param name="blockTableId">The <see cref="ObjectId"/> of the block table that contains this object.</param>
+		/// <param name="blockTableId">The <see cref="ObjectId" /> of the block table that contains this object.</param>
 		/// <param name="rotationAxis">The rotation <see cref="Axis" />.</param>
 		/// <param name="layer">A custom <see cref="Layer" />. Leave null to set default color from <paramref name="block" />.</param>
 		/// <param name="colorCode">
@@ -121,6 +105,24 @@ namespace SPMTool.Core.Blocks
 		///     Set attributes to block.
 		/// </summary>
 		public void SetAttributes() => ObjectId.SetBlockAttributes(Attributes);
+
+		#endregion
+
+		#region Interface Implementations
+
+		/// <inheritdoc />
+		public ObjectId BlockTableId { get; set; }
+
+		/// <inheritdoc />
+		public Layer Layer { get; protected set; }
+
+		/// <inheritdoc />
+		public string Name => $"{Block}";
+
+		/// <inheritdoc />
+		public ObjectId ObjectId { get; set; }
+
+		#endregion
 
 		#region Interface Implementations
 
@@ -153,8 +155,6 @@ namespace SPMTool.Core.Blocks
 
 		/// <inheritdoc />
 		DBObject? IDBObjectCreator.GetObject() => GetObject();
-
-		#endregion
 
 		#endregion
 

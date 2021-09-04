@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.EList;
 using andrefmello91.Extensions;
@@ -178,8 +177,8 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get the opened documents and set app events.
 		/// </summary>
-		static SPMModel()
-		{
+		static SPMModel() =>
+
 			// OpenedModels =
 			// 	(from Document doc in DocumentManager 
 			// 		select new SPMModel(doc))
@@ -187,7 +186,6 @@ namespace SPMTool.Core
 			//
 			// DocumentManager.DocumentCreated       += On_DocumentCreated;
 			DocumentManager.DocumentToBeDestroyed += On_DocumentClosed;
-		}
 
 		/// <summary>
 		///     Create a SPM model.
@@ -210,7 +208,7 @@ namespace SPMTool.Core
 			Trash = new List<IDBObjectCreator>();
 
 			// Get elements
-			var unit    = Settings.Units.Geometry;
+			var unit = Settings.Units.Geometry;
 			Nodes       = NodeList.From(acadDocument, unit);
 			Forces      = ForceList.From(acadDocument, unit);
 			Constraints = ConstraintList.From(acadDocument, unit);
@@ -240,7 +238,7 @@ namespace SPMTool.Core
 
 			// Set parameters
 			SetAppParameters();
-			
+
 			// Set point monitor
 			Editor.PointMonitor += On_ElementHover;
 		}
@@ -259,7 +257,7 @@ namespace SPMTool.Core
 		///     Get an opened SPM model.
 		/// </summary>
 		/// <param name="document">The opened document.</param>
-		/// <param name="create">Add to <see cref="OpenedModels"/> if it was not created?</param>
+		/// <param name="create">Add to <see cref="OpenedModels" /> if it was not created?</param>
 		public static SPMModel? GetOpenedModel(Document document, bool create = true)
 		{
 			var model = OpenedModels.Find(m => m.AcadDocument.Name == document.Name);
@@ -276,6 +274,16 @@ namespace SPMTool.Core
 		/// <inheritdoc cref="GetOpenedModel(Document, bool)" />
 		/// <param name="database">The opened database.</param>
 		public static SPMModel? GetOpenedModel(Database database, bool create = true) => GetOpenedModel(database.GetDocument(), create);
+
+		/// <summary>
+		///     Create blocks for use in SPMTool.
+		/// </summary>
+		private static void CreateBlocks(Document document) => document.Create(Enum.GetValues(typeof(Block)).Cast<Block>().ToArray());
+
+		/// <summary>
+		///     Create layers for use with SPMTool.
+		/// </summary>
+		private static void CreateLayers(Document document) => document.Create(Enum.GetValues(typeof(Layer)).Cast<Layer>().ToArray());
 
 		/// <summary>
 		///     Add the app to the Registered Applications Record.
@@ -300,16 +308,6 @@ namespace SPMTool.Core
 			// Commit and dispose the transaction
 			trans.Commit();
 		}
-
-		/// <summary>
-		///     Create blocks for use in SPMTool.
-		/// </summary>
-		private static void CreateBlocks(Document document) => document.Create(Enum.GetValues(typeof(Block)).Cast<Block>().ToArray());
-
-		/// <summary>
-		///     Create layers for use with SPMTool.
-		/// </summary>
-		private static void CreateLayers(Document document) => document.Create(Enum.GetValues(typeof(Layer)).Cast<Layer>().ToArray());
 
 		/// <summary>
 		///     Create an SPM object associated to an <see cref="Entity" /> and add to the active model;
@@ -385,6 +383,30 @@ namespace SPMTool.Core
 			return
 				SPMInput.From(stringers, panels, nodes, analysisType);
 		}
+
+		/// <summary>
+		///     Get a SPM object from this model that correspond to <paramref name="dbObject" />.
+		/// </summary>
+		/// <param name="dbObject">The <see cref="DBObject" />.</param>
+		public IDBObjectCreator? GetSPMObject(DBObject? dbObject) =>
+			dbObject switch
+			{
+				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => Nodes[dbObject.ObjectId],
+				Line l when l.Layer == $"{Layer.Stringer}"                                    => Stringers[dbObject.ObjectId],
+				Solid s when s.Layer == $"{Layer.Panel}"                                      => Panels[dbObject.ObjectId],
+				BlockReference b when b.Layer == $"{Layer.Force}"                             => Forces[dbObject.ObjectId],
+				BlockReference b when b.Layer == $"{Layer.Support}"                           => Constraints[dbObject.ObjectId],
+				DBPoint p when p.Layer == $"{Layer.PanelCenter}"                              => Panels[p.Position.ToPoint(Settings.Units.Geometry)],
+				_                                                                             => null
+			};
+
+		/// <summary>
+		///     Get a SPM object from this model that correspond to <paramref name="objectId" />.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId" />.</param>
+		public IDBObjectCreator? GetSPMObject(ObjectId objectId) => !objectId.IsNull
+			? GetSPMObject(AcadDatabase.GetObject(objectId))
+			: null;
 
 		/// <summary>
 		///     Read dictionary entries that contains <paramref name="name" />.
@@ -668,30 +690,6 @@ namespace SPMTool.Core
 			displaySettings.TextScaleChanged      += On_TextScaleChange;
 		}
 
-		/// <summary>
-		///     Get a SPM object from this model that correspond to <paramref name="dbObject" />.
-		/// </summary>
-		/// <param name="dbObject">The <see cref="DBObject" />.</param>
-		public IDBObjectCreator? GetSPMObject(DBObject? dbObject) =>
-			dbObject switch
-			{
-				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => Nodes[dbObject.ObjectId],
-				Line l when l.Layer == $"{Layer.Stringer}"                                    => Stringers[dbObject.ObjectId],
-				Solid s when s.Layer == $"{Layer.Panel}"                                      => Panels[dbObject.ObjectId],
-				BlockReference b when b.Layer == $"{Layer.Force}"                             => Forces[dbObject.ObjectId],
-				BlockReference b when b.Layer == $"{Layer.Support}"                           => Constraints[dbObject.ObjectId],
-				DBPoint p when p.Layer == $"{Layer.PanelCenter}"                              => Panels[p.Position.ToPoint(Settings.Units.Geometry)],
-				_                                                                             => null
-			};
-		
-		/// <summary>
-		///     Get a SPM object from this model that correspond to <paramref name="objectId" />.
-		/// </summary>
-		/// <param name="objectId">The <see cref="ObjectId" />.</param>
-		public IDBObjectCreator? GetSPMObject(ObjectId objectId) => !objectId.IsNull 
-			? GetSPMObject(AcadDatabase.GetObject(objectId))
-			: null;
-
 		#endregion
 
 		#region Events
@@ -835,7 +833,7 @@ namespace SPMTool.Core
 		{
 			if (e.Item?.Steel is null)
 				return;
-			
+
 			Steels.Add(e.Item.Steel.Parameters);
 		}
 
@@ -846,14 +844,14 @@ namespace SPMTool.Core
 		{
 			if (e.Item?.Steel is null)
 				return;
-			
+
 			Steels.Add(e.Item.Steel.Parameters);
 		}
 
 		private void On_TextScaleChange(object sender, ScaleChangedEventArgs e) => UpdateTextHeight();
 
 		/// <summary>
-		///		Show a custom tooltip for SPM objects.
+		///     Show a custom tooltip for SPM objects.
 		/// </summary>
 		private void On_ElementHover(object sender, PointMonitorEventArgs e)
 		{
@@ -861,12 +859,12 @@ namespace SPMTool.Core
 			var cmd = (string) GetSystemVariable("CMDNAMES");
 			if (cmd != string.Empty)
 				return;
-			
+
 			var fullPaths = e.Context.GetPickedEntities();
-			
-			if (fullPaths.IsNullOrEmpty()) 
+
+			if (fullPaths.IsNullOrEmpty())
 				return;
-			
+
 			// var               entId = ObjectId.Null;
 			var obj = fullPaths
 				.Where(p => !p.IsNull)

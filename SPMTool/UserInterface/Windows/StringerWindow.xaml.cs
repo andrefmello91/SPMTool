@@ -22,14 +22,14 @@ namespace SPMTool.Application.UserInterface
 
 		#region Fields
 
+		private readonly SPMModel _database;
+
 		private readonly LengthUnit _geometryUnit;
 		private readonly LengthUnit _reinforcementUnit;
 		private readonly PressureUnit _stressUnit;
 
 		private readonly List<StringerObject> _stringers;
 
-		private readonly SPMModel _database;
-		
 		#endregion
 
 		#region Properties
@@ -219,12 +219,12 @@ namespace SPMTool.Application.UserInterface
 		public StringerWindow(IEnumerable<StringerObject> stringers)
 		{
 			_stringers         = stringers.ToList();
-			_database          = SPMModel.ActiveModel;
+			_database          = ActiveModel;
 			_stressUnit        = _database.Settings.Units.MaterialStrength;
 			_geometryUnit      = _database.Settings.Units.Geometry;
 			_reinforcementUnit = _database.Settings.Units.Reinforcement;
-			
-			DataContext        = this;
+
+			DataContext = this;
 
 			InitializeComponent();
 
@@ -299,8 +299,8 @@ namespace SPMTool.Application.UserInterface
 
 			if (!_database.StringerCrossSections.IsNullOrEmpty())
 			{
-				SavedGeometries.ItemsSource   = SavedGeoOptions(_database);
-				
+				SavedGeometries.ItemsSource = SavedGeoOptions(_database);
+
 				SavedGeometries.SelectedIndex = _stringers.Count == 1
 					? _database.StringerCrossSections.IndexOf(_stringers[0].CrossSection)
 					: 0;

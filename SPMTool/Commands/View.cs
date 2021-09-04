@@ -1,8 +1,6 @@
 ﻿using System.Linq;
-using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Runtime;
-using SPMTool.Commands;
 using SPMTool.Enums;
 using static SPMTool.Core.SPMModel;
 
@@ -23,7 +21,7 @@ namespace SPMTool.Commands
 		public static void ToggleConcreteStresses()
 		{
 			var dat = ActiveModel.AcadDatabase;
-			
+
 			if (!dat.Toggle(Layer.ConcreteStress))
 				return;
 
@@ -53,7 +51,7 @@ namespace SPMTool.Commands
 		///     Toggle view for nodes.
 		/// </summary>
 		[CommandMethod(Command.Nodes)]
-		public static void ToggleNodes()  => ActiveModel.AcadDatabase.Toggle(Layer.ExtNode, Layer.IntNode);
+		public static void ToggleNodes() => ActiveModel.AcadDatabase.Toggle(Layer.ExtNode, Layer.IntNode);
 
 		/// <summary>
 		///     Toggle view for panel forces.
@@ -83,7 +81,7 @@ namespace SPMTool.Commands
 		public static void TogglePanelStresses()
 		{
 			var dat = ActiveModel.AcadDatabase;
-			
+
 			if (!dat.Toggle(Layer.PanelStress))
 				return;
 
@@ -119,7 +117,7 @@ namespace SPMTool.Commands
 			var model    = ActiveModel;
 			var database = model.AcadDatabase;
 			var unit     = model.Settings.Units.Geometry;
-			
+
 			// Create auxiliary points on panel centers
 			var pts = model.Panels.Select(p => new DBPoint(p.Vertices.CenterPoint.ToPoint3d(unit)) { Layer = $"{Layer.PanelCenter}" }).ToList();
 			model.AcadDocument.AddObjects(pts);
@@ -135,10 +133,10 @@ namespace SPMTool.Commands
 
 				// Read the element
 				var element = ent.GetSPMObject();
-			
+
 				model.Editor.WriteMessage($"\n{element?.ToString() ?? "Not a SPM element."}");
 			}
-			
+
 			// Remove panel auxiliary points
 			model.AcadDocument.EraseObjects(Layer.PanelCenter);
 		}

@@ -146,14 +146,6 @@ namespace SPMTool.Application
 
 		#endregion
 
-		#region Object override
-
-		public override bool Equals(object obj) => obj is Units units && Equals(units);
-
-		public override int GetHashCode() => base.GetHashCode();
-
-		#endregion
-
 		#endregion
 
 		#region Operators
@@ -163,16 +155,24 @@ namespace SPMTool.Application
 		/// </summary>
 		public static bool operator ==(Units? left, Units? right) => left.IsEqualTo(right);
 
-		/// <summary>
-		///     Returns true if at least a unit do not coincide.
-		/// </summary>
-		public static bool operator !=(Units? left, Units? right) => left.IsNotEqualTo(right);
-
 		/// <inheritdoc cref="SPMTool.Extensions.GetTypedValues(Units)" />
 		public static explicit operator TypedValue[](Units? settings) => settings.GetTypedValues();
 
 		/// <inheritdoc cref="SPMTool.Extensions.GetUnits" />
 		public static explicit operator Units?(TypedValue[]? values) => values.GetUnits();
+
+		/// <summary>
+		///     Returns true if at least a unit do not coincide.
+		/// </summary>
+		public static bool operator !=(Units? left, Units? right) => left.IsNotEqualTo(right);
+
+		#endregion
+
+		#region Object override
+
+		public override bool Equals(object obj) => obj is Units units && Equals(units);
+
+		public override int GetHashCode() => base.GetHashCode();
 
 		#endregion
 

@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
@@ -23,15 +21,7 @@ namespace SPMTool.Application.UserInterface
 	/// </summary>
 	public partial class PlotWindow : Window
 	{
-		/// <summary>
-		///		Element auxiliary enumeration.
-		/// </summary>
-		private enum Element
-		{
-			Stringer,
-			Panel
-		}
-		
+
 		#region Fields
 
 		/// <summary>
@@ -119,27 +109,44 @@ namespace SPMTool.Application.UserInterface
 					LabelPoint      = Label
 				}
 			};
-			
+
 			// If stringers cracked
 			if (_spmOutput.StringerCrackLoadStep.HasValue)
 				CartesianChart.Series.Add(CrackSeries(_spmOutput.StringerCrackLoadStep.Value, Element.Stringer));
-			
+
 			// If panels cracked
 			if (_spmOutput.PanelCrackLoadStep.HasValue)
 				CartesianChart.Series.Add(CrackSeries(_spmOutput.PanelCrackLoadStep.Value, Element.Panel));
-			
+
 			SetMapper();
 		}
 
+		private void ButtonExport_OnClick(object sender, RoutedEventArgs e)
+		{
+			// Get location and name
+			string
+				path = Path.GetDirectoryName(SPMModel.ActiveModel.Name)!,
+				name = $"{Path.GetFileNameWithoutExtension(SPMModel.ActiveModel.Name)}_SPMResult";
+
+			// Export
+			_spmOutput.Export(path, name, _displacementUnit);
+			MessageBox.Show("Data exported to file location.");
+		}
+
+		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
+		{
+			Close();
+		}
+
 		/// <summary>
-		///		Get the line series of cracking.
+		///     Get the line series of cracking.
 		/// </summary>
 		/// <param name="crackLoadStep">The number of the element and the load step of cracking.</param>
-		/// <param name="element">The <see cref="Element"/>.</param>
+		/// <param name="element">The <see cref="Element" />.</param>
 		private LineSeries CrackSeries((int number, int step) crackLoadStep, Element element)
 		{
 			var (number, step) = crackLoadStep;
-			
+
 			var md = _spmOutput[step - 1];
 
 			var pt = new ObservablePoint(md.Displacement.As(_displacementUnit), md.LoadFactor);
@@ -158,23 +165,6 @@ namespace SPMTool.Application.UserInterface
 					DataLabels        = false,
 					LabelPoint        = point => $"{element} {number} cracked!\n{Label(point)}"
 				};
-		}
-		
-		private void ButtonExport_OnClick(object sender, RoutedEventArgs e)
-		{
-			// Get location and name
-			string
-				path = Path.GetDirectoryName(SPMModel.ActiveModel.Name)!,
-				name = $"{Path.GetFileNameWithoutExtension(SPMModel.ActiveModel.Name)}_SPMResult";
-
-			// Export
-			_spmOutput.Export(path, name, _displacementUnit);
-			MessageBox.Show("Data exported to file location.");
-		}
-
-		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
-		{
-			Close();
 		}
 
 		/// <summary>
@@ -210,5 +200,13 @@ namespace SPMTool.Application.UserInterface
 
 		#endregion
 
+		/// <summary>
+		///     Element auxiliary enumeration.
+		/// </summary>
+		private enum Element
+		{
+			Stringer,
+			Panel
+		}
 	}
 }

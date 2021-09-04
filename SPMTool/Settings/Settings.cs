@@ -1,12 +1,10 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Core;
 using SPMTool.Enums;
 using UnitsNet.Units;
-
 #nullable enable
 
 namespace SPMTool.Application
@@ -50,8 +48,8 @@ namespace SPMTool.Application
 		public static readonly string[] StressUnits = { PressureUnit.Pascal.Abbrev(), PressureUnit.Kilopascal.Abbrev(), PressureUnit.Megapascal.Abbrev(), PressureUnit.Gigapascal.Abbrev() };
 
 		private AnalysisParameters _analysis;
-		private Units _units;
 		private DisplaySettings _display;
+		private Units _units;
 
 		#endregion
 
@@ -96,7 +94,7 @@ namespace SPMTool.Application
 		#region Constructors
 
 		/// <summary>
-		///		Create a settings objects
+		///     Create a settings objects
 		/// </summary>
 		/// <param name="database">The AutoCAD database.</param>
 		public Settings(Database database)
@@ -167,7 +165,7 @@ namespace SPMTool.Application
 
 			SetDictionary((TypedValue[]) units, USaveName);
 		}
-		
+
 		/// <summary>
 		///     Save this <paramref name="display" /> in database.
 		/// </summary>
@@ -181,7 +179,7 @@ namespace SPMTool.Application
 
 			SetDictionary((TypedValue[]) display, DSaveName);
 		}
-		
+
 		#endregion
 
 	}

@@ -26,6 +26,8 @@ namespace SPMTool
 			Idle -= On_ApplicationIdle;
 		}
 
+		#endregion
+
 		#region Interface Implementations
 
 		/// <summary>
@@ -37,8 +39,6 @@ namespace SPMTool
 		///     Terminate application.
 		/// </summary>
 		public void Terminate() => SystemVariableChanged -= SPMToolInterface.ColorThemeChanged;
-
-		#endregion
 
 		#endregion
 

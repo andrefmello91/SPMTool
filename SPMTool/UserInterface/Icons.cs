@@ -94,6 +94,11 @@ namespace SPMTool.Application.UserInterface
 		public BitmapImage Displacements => GetBitmap(_dispBmp);
 
 		/// <summary>
+		///     Get Display Settings icon.
+		/// </summary>
+		public BitmapImage Display => GetBitmap(_dpSetBmp);
+
+		/// <summary>
 		///     Get DividePanel icon.
 		/// </summary>
 		public BitmapImage DividePanel => GetBitmap(_dvPnlBmp);
@@ -159,6 +164,11 @@ namespace SPMTool.Application.UserInterface
 		public BitmapImage Parameters => GetBitmap(_cncrtBmp);
 
 		/// <summary>
+		///     Get Simulation icon.
+		/// </summary>
+		public BitmapImage Simulation => GetBitmap(_simBmp);
+
+		/// <summary>
 		///     Get StringerForces icon.
 		/// </summary>
 		public BitmapImage StringerForces => GetBitmap(_strFBmp);
@@ -182,16 +192,6 @@ namespace SPMTool.Application.UserInterface
 		///     Get UpdateElements icon.
 		/// </summary>
 		public BitmapImage UpdateElements => GetBitmap(_updtBmp);
-			
-		/// <summary>
-		///     Get Simulation icon.
-		/// </summary>
-		public BitmapImage Simulation => GetBitmap(_simBmp);
-		
-		/// <summary>
-		///     Get Display Settings icon.
-		/// </summary>
-		public BitmapImage Display => GetBitmap(_dpSetBmp);
 
 		#endregion
 
