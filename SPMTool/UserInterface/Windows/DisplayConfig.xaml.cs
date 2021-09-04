@@ -43,30 +43,6 @@ namespace SPMTool.Application.UserInterface
 		#region Methods
 
 		/// <summary>
-		///     Set default units.
-		/// </summary>
-		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => GetValues(DisplaySettings.Default);
-
-		/// <summary>
-		///     Save units if OK button is clicked.
-		/// </summary>
-		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
-		{
-			if (!BoxesFilled)
-			{
-				MessageBox.Show("Please set positive and non zero values.");
-				return;
-			}
-
-			// Set values
-			var display = new DisplaySettings();
-			SetValues(display);
-			_database.Settings.Display = display;
-
-			Close();
-		}
-
-		/// <summary>
 		///     Get initial values for text boxes.
 		/// </summary>
 		private void GetValues(DisplaySettings displaySettings)
@@ -88,6 +64,30 @@ namespace SPMTool.Application.UserInterface
 			displaySettings.ResultScale           = double.Parse(ResultBox.Text);
 			displaySettings.TextScale             = double.Parse(TextScaleBox.Text);
 			displaySettings.DisplacementMagnifier = int.Parse(DisplacementBox.Text);
+		}
+
+		/// <summary>
+		///     Set default units.
+		/// </summary>
+		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => GetValues(DisplaySettings.Default);
+
+		/// <summary>
+		///     Save units if OK button is clicked.
+		/// </summary>
+		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
+		{
+			if (!BoxesFilled)
+			{
+				MessageBox.Show("Please set positive and non zero values.");
+				return;
+			}
+
+			// Set values
+			var display = new DisplaySettings();
+			SetValues(display);
+			_database.Settings.Display = display;
+
+			Close();
 		}
 
 		#endregion

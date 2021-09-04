@@ -11,6 +11,12 @@ namespace SPMTool.Commands
 	public class CommandHandler : ICommand
 	{
 
+		#region Events
+
+		public event EventHandler? CanExecuteChanged;
+
+		#endregion
+
 		#region Methods
 
 		/// <summary>
@@ -56,6 +62,5 @@ namespace SPMTool.Commands
 
 		#endregion
 
-		public event EventHandler? CanExecuteChanged;
 	}
 }

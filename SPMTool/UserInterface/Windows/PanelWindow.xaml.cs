@@ -373,41 +373,6 @@ namespace SPMTool.Application.UserInterface
 		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.PanelReinforcements.Distinct()
 			.Select(r => $"{(char) Character.Phi} {r.BarDiameter.As(database.Settings.Units.Reinforcement):F3} at {r.BarSpacing.As(database.Settings.Units.Geometry):F3}");
 
-		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
-		{
-			// Check geometry
-			if (SetGeometry)
-			{
-				if (!WidthFilled)
-				{
-					MessageBox.Show("Please set  positive and non zero values for panel geometry.", "Alert");
-					return;
-				}
-
-				SaveGeometry();
-			}
-
-			// Check if reinforcement is set
-			if (SetReinforcement)
-			{
-				if (ReinforcementXChecked && !ReinforcementXFilled)
-				{
-					MessageBox.Show("Please set positive and non zero values for reinforcement properties or uncheck X reinforcement checkbox.", "Alert");
-					return;
-				}
-
-				if (ReinforcementYChecked && !ReinforcementYFilled)
-				{
-					MessageBox.Show("Please set positive and non zero values for reinforcement properties or uncheck Y reinforcement checkbox.", "Alert");
-					return;
-				}
-
-				SaveReinforcement();
-			}
-
-			Close();
-		}
-
 		/// <summary>
 		///     Get the initial geometry data of panels.
 		/// </summary>
@@ -489,6 +454,72 @@ namespace SPMTool.Application.UserInterface
 			}
 		}
 
+		/// <summary>
+		///     Save data in the stringer object.
+		/// </summary>
+		private void SaveGeometry()
+		{
+			// Convert values
+			var width = PnlWidth;
+
+			// Save on database
+			_database.ElementWidths.Add(width);
+
+			// Set to panels
+			foreach (var pnl in _panels)
+				pnl.Width = width;
+		}
+
+		/// <summary>
+		///     Save data in the stringer object.
+		/// </summary>
+		private void SaveReinforcement()
+		{
+			// Set to panels
+			var reinforcement = OutputReinforcement;
+
+			_database.PanelReinforcements.Add(reinforcement?.DirectionX);
+			_database.PanelReinforcements.Add(reinforcement?.DirectionY);
+
+			foreach (var pnl in _panels)
+				pnl.Reinforcement = reinforcement;
+		}
+
+		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
+		{
+			// Check geometry
+			if (SetGeometry)
+			{
+				if (!WidthFilled)
+				{
+					MessageBox.Show("Please set  positive and non zero values for panel geometry.", "Alert");
+					return;
+				}
+
+				SaveGeometry();
+			}
+
+			// Check if reinforcement is set
+			if (SetReinforcement)
+			{
+				if (ReinforcementXChecked && !ReinforcementXFilled)
+				{
+					MessageBox.Show("Please set positive and non zero values for reinforcement properties or uncheck X reinforcement checkbox.", "Alert");
+					return;
+				}
+
+				if (ReinforcementYChecked && !ReinforcementYFilled)
+				{
+					MessageBox.Show("Please set positive and non zero values for reinforcement properties or uncheck Y reinforcement checkbox.", "Alert");
+					return;
+				}
+
+				SaveReinforcement();
+			}
+
+			Close();
+		}
+
 		private void ReinforcementXCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementXChecked = ((CheckBox) sender).IsChecked ?? false;
 
 		private void ReinforcementYCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementYChecked = ((CheckBox) sender).IsChecked ?? false;
@@ -561,37 +592,6 @@ namespace SPMTool.Application.UserInterface
 
 			// Update textboxes
 			OutputSteelY = _database.Steels[i];
-		}
-
-		/// <summary>
-		///     Save data in the stringer object.
-		/// </summary>
-		private void SaveGeometry()
-		{
-			// Convert values
-			var width = PnlWidth;
-
-			// Save on database
-			_database.ElementWidths.Add(width);
-
-			// Set to panels
-			foreach (var pnl in _panels)
-				pnl.Width = width;
-		}
-
-		/// <summary>
-		///     Save data in the stringer object.
-		/// </summary>
-		private void SaveReinforcement()
-		{
-			// Set to panels
-			var reinforcement = OutputReinforcement;
-
-			_database.PanelReinforcements.Add(reinforcement?.DirectionX);
-			_database.PanelReinforcements.Add(reinforcement?.DirectionY);
-
-			foreach (var pnl in _panels)
-				pnl.Reinforcement = reinforcement;
 		}
 
 		private void SetGeometry_OnCheck(object sender, RoutedEventArgs e) => SetGeometry = ((CheckBox) sender).IsChecked ?? false;

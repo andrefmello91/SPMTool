@@ -132,6 +132,35 @@ namespace SPMTool.Application
 
 		#endregion
 
+		#region Events
+
+		/// <summary>
+		///     Event to run when <see cref="ConditionScale" /> changes.
+		/// </summary>
+		public event EventHandler<ScaleChangedEventArgs>? ConditionScaleChanged;
+
+		/// <summary>
+		///     Event to run when <see cref="DisplacementMagnifier" /> changes.
+		/// </summary>
+		public event EventHandler<ScaleChangedEventArgs>? DisplacementMagnifierChanged;
+
+		/// <summary>
+		///     Event to run when <see cref="NodeScale" /> changes.
+		/// </summary>
+		public event EventHandler<ScaleChangedEventArgs>? NodeScaleChanged;
+
+		/// <summary>
+		///     Event to run when <see cref="ResultScale" /> changes.
+		/// </summary>
+		public event EventHandler<ScaleChangedEventArgs>? ResultScaleChanged;
+
+		/// <summary>
+		///     Event to run when <see cref="TextScale" /> changes.
+		/// </summary>
+		public event EventHandler<ScaleChangedEventArgs>? TextScaleChanged;
+
+		#endregion
+
 		#region Methods
 
 		/// <inheritdoc />
@@ -168,30 +197,6 @@ namespace SPMTool.Application
 
 		#endregion
 
-		/// <summary>
-		///     Event to run when <see cref="NodeScale" /> changes.
-		/// </summary>
-		public event EventHandler<ScaleChangedEventArgs>? NodeScaleChanged;
-
-		/// <summary>
-		///     Event to run when <see cref="ConditionScale" /> changes.
-		/// </summary>
-		public event EventHandler<ScaleChangedEventArgs>? ConditionScaleChanged;
-
-		/// <summary>
-		///     Event to run when <see cref="ResultScale" /> changes.
-		/// </summary>
-		public event EventHandler<ScaleChangedEventArgs>? ResultScaleChanged;
-
-		/// <summary>
-		///     Event to run when <see cref="TextScale" /> changes.
-		/// </summary>
-		public event EventHandler<ScaleChangedEventArgs>? TextScaleChanged;
-
-		/// <summary>
-		///     Event to run when <see cref="DisplacementMagnifier" /> changes.
-		/// </summary>
-		public event EventHandler<ScaleChangedEventArgs>? DisplacementMagnifierChanged;
 	}
 
 	public class ScaleChangedEventArgs : EventArgs

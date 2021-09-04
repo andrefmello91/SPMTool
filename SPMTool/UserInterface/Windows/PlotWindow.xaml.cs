@@ -121,23 +121,6 @@ namespace SPMTool.Application.UserInterface
 			SetMapper();
 		}
 
-		private void ButtonExport_OnClick(object sender, RoutedEventArgs e)
-		{
-			// Get location and name
-			string
-				path = Path.GetDirectoryName(SPMModel.ActiveModel.Name)!,
-				name = $"{Path.GetFileNameWithoutExtension(SPMModel.ActiveModel.Name)}_SPMResult";
-
-			// Export
-			_spmOutput.Export(path, name, _displacementUnit);
-			MessageBox.Show("Data exported to file location.");
-		}
-
-		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
-		{
-			Close();
-		}
-
 		/// <summary>
 		///     Get the line series of cracking.
 		/// </summary>
@@ -196,6 +179,23 @@ namespace SPMTool.Application.UserInterface
 
 			// Correct the labels
 			DisplacementAxis.LabelFormatter = x => $"{x * -1}";
+		}
+
+		private void ButtonExport_OnClick(object sender, RoutedEventArgs e)
+		{
+			// Get location and name
+			string
+				path = Path.GetDirectoryName(SPMModel.ActiveModel.Name)!,
+				name = $"{Path.GetFileNameWithoutExtension(SPMModel.ActiveModel.Name)}_SPMResult";
+
+			// Export
+			_spmOutput.Export(path, name, _displacementUnit);
+			MessageBox.Show("Data exported to file location.");
+		}
+
+		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
+		{
+			Close();
 		}
 
 		#endregion

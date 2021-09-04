@@ -261,35 +261,6 @@ namespace SPMTool.Application.UserInterface
 		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.StringerReinforcements.Distinct()
 			.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.As(database.Settings.Units.Reinforcement):F3}");
 
-		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
-		{
-			// Check geometry
-			if (SetGeometry)
-			{
-				if (!GeometryFilled)
-				{
-					MessageBox.Show("Please set positive and non zero values for stringer geometry.", "Alert");
-					return;
-				}
-
-				SaveGeometry();
-			}
-
-			// Check if reinforcement is set
-			if (SetReinforcement)
-			{
-				if (ReinforcementChecked && !ReinforcementFilled)
-				{
-					MessageBox.Show("Please set positive and non zero values for reinforcement properties or uncheck reinforcement checkbox.", "Alert");
-					return;
-				}
-
-				SaveReinforcement();
-			}
-
-			Close();
-		}
-
 		/// <summary>
 		///     Get the initial geometry data of stringers.
 		/// </summary>
@@ -367,6 +338,63 @@ namespace SPMTool.Application.UserInterface
 			}
 		}
 
+		/// <summary>
+		///     Save data in the stringer object.
+		/// </summary>
+		private void SaveGeometry()
+		{
+			var crossSection = OutputCrossSection;
+
+			_database.StringerCrossSections.Add(crossSection);
+
+			// Set to stringers
+			foreach (var str in _stringers)
+				str.CrossSection = crossSection;
+		}
+
+		/// <summary>
+		///     Save data in the stringer object.
+		/// </summary>
+		private void SaveReinforcement()
+		{
+			var reinforcement = OutputReinforcement;
+
+			_database.StringerReinforcements.Add(reinforcement);
+
+			// Set to stringers
+			foreach (var str in _stringers)
+				str.Reinforcement = reinforcement;
+		}
+
+		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
+		{
+			// Check geometry
+			if (SetGeometry)
+			{
+				if (!GeometryFilled)
+				{
+					MessageBox.Show("Please set positive and non zero values for stringer geometry.", "Alert");
+					return;
+				}
+
+				SaveGeometry();
+			}
+
+			// Check if reinforcement is set
+			if (SetReinforcement)
+			{
+				if (ReinforcementChecked && !ReinforcementFilled)
+				{
+					MessageBox.Show("Please set positive and non zero values for reinforcement properties or uncheck reinforcement checkbox.", "Alert");
+					return;
+				}
+
+				SaveReinforcement();
+			}
+
+			Close();
+		}
+
 		private void ReinforcementCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementChecked = ((CheckBox) sender).IsChecked ?? false;
 
 		private void SavedGeometries_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -409,34 +437,6 @@ namespace SPMTool.Application.UserInterface
 
 			// Update textboxes
 			OutputSteel = _database.Steels[i];
-		}
-
-		/// <summary>
-		///     Save data in the stringer object.
-		/// </summary>
-		private void SaveGeometry()
-		{
-			var crossSection = OutputCrossSection;
-
-			_database.StringerCrossSections.Add(crossSection);
-
-			// Set to stringers
-			foreach (var str in _stringers)
-				str.CrossSection = crossSection;
-		}
-
-		/// <summary>
-		///     Save data in the stringer object.
-		/// </summary>
-		private void SaveReinforcement()
-		{
-			var reinforcement = OutputReinforcement;
-
-			_database.StringerReinforcements.Add(reinforcement);
-
-			// Set to stringers
-			foreach (var str in _stringers)
-				str.Reinforcement = reinforcement;
 		}
 
 		private void SetGeometry_OnCheck(object sender, RoutedEventArgs e) => SetGeometry = ((CheckBox) sender).IsChecked ?? false;

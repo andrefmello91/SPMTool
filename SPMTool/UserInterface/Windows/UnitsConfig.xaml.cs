@@ -74,6 +74,16 @@ namespace SPMTool.Application.UserInterface
 		#region Methods
 
 		/// <summary>
+		///     Get sources of combo boxes.
+		/// </summary>
+		private void GetSources()
+		{
+			GeometryBox.ItemsSource      = ReinforcementBox.ItemsSource  = DisplacementsBox.ItemsSource = CracksBox.ItemsSource = DimensionUnits;
+			AppliedForcesBox.ItemsSource = StringerForcesBox.ItemsSource = ForceUnits;
+			MaterialBox.ItemsSource      = PanelStressesBox.ItemsSource  = StressUnits;
+		}
+
+		/// <summary>
 		///     Close window if cancel button is clicked.
 		/// </summary>
 		private void ButtonCancel_OnClick(object sender, RoutedEventArgs e) => Close();
@@ -92,16 +102,6 @@ namespace SPMTool.Application.UserInterface
 			_database.Settings.Units = Units;
 
 			Close();
-		}
-
-		/// <summary>
-		///     Get sources of combo boxes.
-		/// </summary>
-		private void GetSources()
-		{
-			GeometryBox.ItemsSource      = ReinforcementBox.ItemsSource  = DisplacementsBox.ItemsSource = CracksBox.ItemsSource = DimensionUnits;
-			AppliedForcesBox.ItemsSource = StringerForcesBox.ItemsSource = ForceUnits;
-			MaterialBox.ItemsSource      = PanelStressesBox.ItemsSource  = StressUnits;
 		}
 
 		#endregion

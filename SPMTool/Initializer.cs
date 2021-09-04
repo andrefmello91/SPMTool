@@ -14,6 +14,16 @@ namespace SPMTool
 		#region Methods
 
 		/// <summary>
+		///     Initialize application.
+		/// </summary>
+		public void Initialize() => Idle += On_ApplicationIdle;
+
+		/// <summary>
+		///     Terminate application.
+		/// </summary>
+		public void Terminate() => SystemVariableChanged -= SPMToolInterface.ColorThemeChanged;
+
+		/// <summary>
 		///     Initialize user interface and create layers and blocks.
 		/// </summary>
 		private static void On_ApplicationIdle(object sender, EventArgs e)
@@ -25,16 +35,6 @@ namespace SPMTool
 
 			Idle -= On_ApplicationIdle;
 		}
-
-		/// <summary>
-		///     Initialize application.
-		/// </summary>
-		public void Initialize() => Idle += On_ApplicationIdle;
-
-		/// <summary>
-		///     Terminate application.
-		/// </summary>
-		public void Terminate() => SystemVariableChanged -= SPMToolInterface.ColorThemeChanged;
 
 		#endregion
 

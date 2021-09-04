@@ -70,19 +70,6 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
-		///     Alternate colors if theme is changed.
-		/// </summary>
-		public static void ColorThemeChanged(object senderObj, SystemVariableChangedEventArgs sysVarChEvtArgs)
-		{
-			// Check if it's a theme change
-			if (sysVarChEvtArgs.Name != "COLORTHEME")
-				return;
-
-			// Reinitialize the ribbon buttons
-			AddButtons();
-		}
-
-		/// <summary>
 		///     Create a <see cref="RibbonButton" /> based in a command name, contained in <see cref="Command" />.
 		/// </summary>
 		public static RibbonButton? GetRibbonButton(string commandName, RibbonItemSize size = RibbonItemSize.Large, bool showText = true) =>
@@ -326,6 +313,19 @@ namespace SPMTool.Application.UserInterface
 
 			// Add to the panel source
 			pnlSrc.Items.Add(splitButton);
+		}
+
+		/// <summary>
+		///     Alternate colors if theme is changed.
+		/// </summary>
+		public static void ColorThemeChanged(object senderObj, SystemVariableChangedEventArgs sysVarChEvtArgs)
+		{
+			// Check if it's a theme change
+			if (sysVarChEvtArgs.Name != "COLORTHEME")
+				return;
+
+			// Reinitialize the ribbon buttons
+			AddButtons();
 		}
 
 		#endregion
