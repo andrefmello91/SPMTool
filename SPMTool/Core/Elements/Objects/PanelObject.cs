@@ -93,6 +93,10 @@ namespace SPMTool.Core.Elements
 			set => SetWidth(value);
 		}
 
+		public override Layer Layer => Layer.Panel;
+
+		public override string Name => $"Panel {Number}";
+
 		#endregion
 
 		#region Constructors
@@ -303,6 +307,25 @@ namespace SPMTool.Core.Elements
 			SetDictionary(direction.GetTypedValues(), $"Reinforcement{dir}");
 		}
 
+		public override DBObject CreateObject()
+		{
+			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
+
+			return
+				new Solid(Vertices.Vertex1.ToPoint3d(unit), Vertices.Vertex2.ToPoint3d(unit), Vertices.Vertex4.ToPoint3d(unit), Vertices.Vertex3.ToPoint3d(unit))
+				{
+					Layer = $"{Layer}"
+				};
+		}
+
+		/// <inheritdoc />
+		Solid IDBObjectCreator<Solid>.CreateObject() => (Solid) CreateObject();
+
+		/// <inheritdoc />
+		Solid? IDBObjectCreator<Solid>.GetObject() => (Solid?) base.GetObject();
+
+		public bool Equals(PanelObject other) => base.Equals(other);
+
 		#endregion
 
 		#region Operators
@@ -346,37 +369,6 @@ namespace SPMTool.Core.Elements
 		///     Can be null if <paramref name="panelObject" /> is null or doesn't exist in drawing.
 		/// </remarks>
 		public static explicit operator Solid?(PanelObject? panelObject) => (Solid?) panelObject?.GetObject();
-
-		#endregion
-
-		#region Interface Implementations
-
-		public override Layer Layer => Layer.Panel;
-
-		public override string Name => $"Panel {Number}";
-
-		#endregion
-
-		#region Interface Implementations
-
-		public override DBObject CreateObject()
-		{
-			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
-
-			return
-				new Solid(Vertices.Vertex1.ToPoint3d(unit), Vertices.Vertex2.ToPoint3d(unit), Vertices.Vertex4.ToPoint3d(unit), Vertices.Vertex3.ToPoint3d(unit))
-				{
-					Layer = $"{Layer}"
-				};
-		}
-
-		/// <inheritdoc />
-		Solid IDBObjectCreator<Solid>.CreateObject() => (Solid) CreateObject();
-
-		public bool Equals(PanelObject other) => base.Equals(other);
-
-		/// <inheritdoc />
-		Solid? IDBObjectCreator<Solid>.GetObject() => (Solid?) base.GetObject();
 
 		#endregion
 

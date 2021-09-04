@@ -29,6 +29,22 @@ namespace SPMTool.Core.Blocks
 
 		#endregion
 
+		#region Properties
+
+		/// <inheritdoc />
+		public ObjectId BlockTableId { get; set; }
+
+		/// <inheritdoc />
+		public Layer Layer => Layer.StringerForce;
+
+		/// <inheritdoc />
+		public string Name => $"Stringer Force {_number}";
+
+		/// <inheritdoc />
+		public ObjectId ObjectId { get; set; }
+
+		#endregion
+
 		#region Constructors
 
 		/// <summary>
@@ -265,37 +281,17 @@ namespace SPMTool.Core.Blocks
 			return entities.Concat(GetTexts(_geometry, (_n1, _n2), _maxForce, _textHeight, BlockTableId));
 		}
 
-		#endregion
-
-		#region Interface Implementations
+		/// <inheritdoc />
+		public Group CreateObject() => new(Name, true);
 
 		/// <inheritdoc />
-		public ObjectId BlockTableId { get; set; }
-
-		/// <inheritdoc />
-		public Layer Layer => Layer.StringerForce;
-
-		/// <inheritdoc />
-		public string Name => $"Stringer Force {_number}";
-
-		/// <inheritdoc />
-		public ObjectId ObjectId { get; set; }
-
-		#endregion
-
-		#region Interface Implementations
+		public Group? GetObject() => (Group?) SPMModel.GetOpenedModel(BlockTableId)?.AcadDatabase.GetObject(ObjectId);
 
 		/// <inheritdoc />
 		DBObject IDBObjectCreator.CreateObject() => CreateObject();
 
 		/// <inheritdoc />
-		public Group CreateObject() => new(Name, true);
-
-		/// <inheritdoc />
 		DBObject? IDBObjectCreator.GetObject() => GetObject();
-
-		/// <inheritdoc />
-		public Group? GetObject() => (Group?) SPMModel.GetOpenedModel(BlockTableId)?.AcadDatabase.GetObject(ObjectId);
 
 		#endregion
 

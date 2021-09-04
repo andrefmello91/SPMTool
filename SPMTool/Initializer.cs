@@ -26,10 +26,6 @@ namespace SPMTool
 			Idle -= On_ApplicationIdle;
 		}
 
-		#endregion
-
-		#region Interface Implementations
-
 		/// <summary>
 		///     Initialize application.
 		/// </summary>

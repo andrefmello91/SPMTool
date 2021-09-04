@@ -65,6 +65,18 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		protected double ScaleFactor { get; set; }
 
+		/// <inheritdoc />
+		public ObjectId BlockTableId { get; set; }
+
+		/// <inheritdoc />
+		public Layer Layer { get; protected set; }
+
+		/// <inheritdoc />
+		public string Name => $"{Block}";
+
+		/// <inheritdoc />
+		public ObjectId ObjectId { get; set; }
+
 		#endregion
 
 		#region Constructors
@@ -106,26 +118,6 @@ namespace SPMTool.Core.Blocks
 		/// </summary>
 		public void SetAttributes() => ObjectId.SetBlockAttributes(Attributes);
 
-		#endregion
-
-		#region Interface Implementations
-
-		/// <inheritdoc />
-		public ObjectId BlockTableId { get; set; }
-
-		/// <inheritdoc />
-		public Layer Layer { get; protected set; }
-
-		/// <inheritdoc />
-		public string Name => $"{Block}";
-
-		/// <inheritdoc />
-		public ObjectId ObjectId { get; set; }
-
-		#endregion
-
-		#region Interface Implementations
-
 		/// <inheritdoc />
 		public virtual BlockReference CreateObject()
 		{
@@ -138,7 +130,13 @@ namespace SPMTool.Core.Blocks
 		}
 
 		/// <inheritdoc />
+		public BlockReference? GetObject() => (BlockReference?) SPMModel.GetOpenedModel(BlockTableId)?.AcadDatabase.GetObject(ObjectId);
+
+		/// <inheritdoc />
 		DBObject IDBObjectCreator.CreateObject() => CreateObject();
+
+		/// <inheritdoc />
+		DBObject? IDBObjectCreator.GetObject() => GetObject();
 
 		/// <inheritdoc />
 		public void Dispose()
@@ -149,12 +147,6 @@ namespace SPMTool.Core.Blocks
 			foreach (var att in Attributes)
 				att.Dispose();
 		}
-
-		/// <inheritdoc />
-		public BlockReference? GetObject() => (BlockReference?) SPMModel.GetOpenedModel(BlockTableId)?.AcadDatabase.GetObject(ObjectId);
-
-		/// <inheritdoc />
-		DBObject? IDBObjectCreator.GetObject() => GetObject();
 
 		#endregion
 

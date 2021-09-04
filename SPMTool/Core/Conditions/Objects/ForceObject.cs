@@ -173,11 +173,7 @@ namespace SPMTool.Core.Conditions
 				_                                              => Position
 			};
 
-		#region Interface Implementations
-
 		public bool Equals(ForceObject other) => base.Equals(other);
-
-		#endregion
 
 		#endregion
 

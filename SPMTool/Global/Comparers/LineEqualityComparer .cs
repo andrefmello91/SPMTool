@@ -11,8 +11,6 @@ namespace SPMTool.Comparers
 
 		#region Methods
 
-		#region Object override
-
 		/// <summary>
 		///     Returns true if the connected points are approximately equal.
 		/// </summary>
@@ -21,12 +19,6 @@ namespace SPMTool.Comparers
 			otherLine is not null &&
 			(line.StartPoint.Approx(otherLine.StartPoint, tolerance) && line.EndPoint.Approx(otherLine.EndPoint, tolerance) ||
 			 line.StartPoint.Approx(otherLine.EndPoint, tolerance) && line.EndPoint.Approx(otherLine.StartPoint, tolerance));
-
-		#endregion
-
-		#endregion
-
-		#region Interface Implementations
 
 		/// <summary>
 		///     Returns true if the connected points are approximately equal.

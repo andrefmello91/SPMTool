@@ -132,7 +132,9 @@ namespace SPMTool.Application
 
 		#region Methods
 
-		#region Interface Implementations
+		public override bool Equals(object obj) => obj is Units units && Equals(units);
+
+		public override int GetHashCode() => base.GetHashCode();
 
 		/// <summary>
 		///     Returns true if all units coincide.
@@ -143,8 +145,6 @@ namespace SPMTool.Application
 			&& Displacements == other.Displacements && AppliedForces == other.AppliedForces
 			&& StringerForces == other.StringerForces && PanelStresses == other.PanelStresses
 			&& MaterialStrength == other.MaterialStrength;
-
-		#endregion
 
 		#endregion
 
@@ -165,14 +165,6 @@ namespace SPMTool.Application
 		///     Returns true if at least a unit do not coincide.
 		/// </summary>
 		public static bool operator !=(Units? left, Units? right) => left.IsNotEqualTo(right);
-
-		#endregion
-
-		#region Object override
-
-		public override bool Equals(object obj) => obj is Units units && Equals(units);
-
-		public override int GetHashCode() => base.GetHashCode();
 
 		#endregion
 

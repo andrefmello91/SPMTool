@@ -73,6 +73,10 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		public NodeType Type { get; }
 
+		public override Layer Layer => GetLayer(Type);
+
+		public override string Name => $"Node {Number}";
+
 		#endregion
 
 		#region Constructors
@@ -135,12 +139,8 @@ namespace SPMTool.Core.Elements
 				Displacement = _node.Displacement;
 		}
 
-		#region Object override
-
 		/// <inheritdoc />
 		public override string ToString() => _node?.ToString() ?? base.ToString();
-
-		#endregion
 
 		protected override void GetProperties()
 		{
@@ -168,6 +168,20 @@ namespace SPMTool.Core.Elements
 			_displacement = displacement;
 			SetDictionary(Displacement.GetTypedValues(), "Displacements");
 		}
+
+		public override DBObject CreateObject() =>
+			new DBPoint(Position.ToPoint3d(GetOpenedModel(BlockTableId)!.Settings.Units.Geometry))
+			{
+				Layer = $"{Layer}"
+			};
+
+		/// <inheritdoc />
+		DBPoint IDBObjectCreator<DBPoint>.CreateObject() => (DBPoint) CreateObject();
+
+		/// <inheritdoc />
+		DBPoint? IDBObjectCreator<DBPoint>.GetObject() => (DBPoint?) base.GetObject();
+
+		public bool Equals(NodeObject other) => base.Equals(other);
 
 		#endregion
 
@@ -200,32 +214,6 @@ namespace SPMTool.Core.Elements
 		///     Can be null if <paramref name="nodeObject" /> is null or doesn't exist in drawing.
 		/// </remarks>
 		public static explicit operator DBPoint?(NodeObject? nodeObject) => (DBPoint?) nodeObject?.GetObject();
-
-		#endregion
-
-		#region Interface Implementations
-
-		public override Layer Layer => GetLayer(Type);
-
-		public override string Name => $"Node {Number}";
-
-		#endregion
-
-		#region Interface Implementations
-
-		public override DBObject CreateObject() =>
-			new DBPoint(Position.ToPoint3d(GetOpenedModel(BlockTableId)!.Settings.Units.Geometry))
-			{
-				Layer = $"{Layer}"
-			};
-
-		/// <inheritdoc />
-		DBPoint IDBObjectCreator<DBPoint>.CreateObject() => (DBPoint) CreateObject();
-
-		public bool Equals(NodeObject other) => base.Equals(other);
-
-		/// <inheritdoc />
-		DBPoint? IDBObjectCreator<DBPoint>.GetObject() => (DBPoint?) base.GetObject();
 
 		#endregion
 

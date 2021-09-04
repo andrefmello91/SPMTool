@@ -71,7 +71,7 @@ namespace SPMTool.Core
 
 		#endregion
 
-		#region Events
+		#region Methods
 
 		/// <summary>
 		///     Event to execute when an object is added to a list.

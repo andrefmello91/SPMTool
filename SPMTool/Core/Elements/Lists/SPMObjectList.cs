@@ -53,14 +53,10 @@ namespace SPMTool.Core.Elements
 
 		#region Methods
 
-		#region Events
-
 		/// <summary>
 		///     Event to execute when a list is sorted.
 		/// </summary>
 		private static void On_ListSort(object? sender, EventArgs? e) => SetNumbers((IEnumerable<TSPMObject>?) sender);
-
-		#endregion
 
 		/// <summary>
 		///     Set numbers to a collection of objects.

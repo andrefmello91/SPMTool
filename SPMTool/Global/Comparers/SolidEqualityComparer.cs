@@ -14,8 +14,6 @@ namespace SPMTool.Comparers
 
 		#region Methods
 
-		#region Object override
-
 		/// <summary>
 		///     Returns true if the vertices are approximately equal.
 		/// </summary>
@@ -34,12 +32,6 @@ namespace SPMTool.Comparers
 
 			return true;
 		}
-
-		#endregion
-
-		#endregion
-
-		#region Interface Implementations
 
 		/// <summary>
 		///     Returns true if the vertices are approximately equal.

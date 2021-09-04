@@ -55,6 +55,18 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		protected abstract double RotationAngle { get; }
 
+		public abstract Block Block { get; }
+
+		public abstract ComponentDirection Direction { get; }
+
+		public Point Position { get; }
+
+		public virtual TValue Value { get; protected set; }
+
+		public abstract override Layer Layer { get; }
+
+		public abstract override string Name { get; }
+
 		#endregion
 
 		#region Constructors
@@ -71,6 +83,39 @@ namespace SPMTool.Core.Conditions
 			Position = position;
 			Value    = value;
 		}
+
+		#endregion
+
+		#region Methods
+
+		/// <inheritdoc />
+		public override bool Equals(object obj) => obj is ConditionObject<TValue> conditionObject && Equals(conditionObject);
+
+		/// <inheritdoc />
+		public override int GetHashCode() => Value.GetHashCode();
+
+		public override string ToString() => Value.ToString();
+
+		public int CompareTo(ConditionObject<TValue>? other) => other is null
+			? 0
+			: Position.CompareTo(other.Position);
+
+		public override DBObject CreateObject()
+		{
+			// Get database
+			var model = SPMModel.GetOpenedModel(BlockTableId)!;
+			var units = model.Settings.Units;
+
+			return
+				model.AcadDatabase.GetReference(Block, Position.ToPoint3d(units.Geometry), Layer, null, RotationAngle, Axis.Z, null, units.ScaleFactor)!;
+		}
+
+		/// <inheritdoc />
+		BlockReference IDBObjectCreator<BlockReference>.CreateObject() => (BlockReference) CreateObject();
+
+		BlockReference? IDBObjectCreator<BlockReference>.GetObject() => (BlockReference?) GetObject();
+
+		public virtual bool Equals(ConditionObject<TValue>? other) => other is not null && Position == other.Position;
 
 		#endregion
 
@@ -93,59 +138,6 @@ namespace SPMTool.Core.Conditions
 		///     Returns true if objects are different.
 		/// </summary>
 		public static bool operator !=(ConditionObject<TValue>? left, ConditionObject<TValue>? right) => left is not null && !left.Equals(right);
-
-		#endregion
-
-		#region Interface Implementations
-
-		public abstract Block Block { get; }
-
-		public abstract ComponentDirection Direction { get; }
-
-		public abstract override Layer Layer { get; }
-
-		public abstract override string Name { get; }
-
-		public Point Position { get; }
-
-		public virtual TValue Value { get; protected set; }
-
-		#endregion
-
-		#region Interface Implementations
-
-		public int CompareTo(ConditionObject<TValue>? other) => other is null
-			? 0
-			: Position.CompareTo(other.Position);
-
-		public override DBObject CreateObject()
-		{
-			// Get database
-			var model = SPMModel.GetOpenedModel(BlockTableId)!;
-			var units = model.Settings.Units;
-
-			return
-				model.AcadDatabase.GetReference(Block, Position.ToPoint3d(units.Geometry), Layer, null, RotationAngle, Axis.Z, null, units.ScaleFactor)!;
-		}
-
-		/// <inheritdoc />
-		BlockReference IDBObjectCreator<BlockReference>.CreateObject() => (BlockReference) CreateObject();
-
-		public virtual bool Equals(ConditionObject<TValue>? other) => other is not null && Position == other.Position;
-
-		BlockReference? IDBObjectCreator<BlockReference>.GetObject() => (BlockReference?) GetObject();
-
-		#endregion
-
-		#region Object override
-
-		/// <inheritdoc />
-		public override bool Equals(object obj) => obj is ConditionObject<TValue> conditionObject && Equals(conditionObject);
-
-		/// <inheritdoc />
-		public override int GetHashCode() => Value.GetHashCode();
-
-		public override string ToString() => Value.ToString();
 
 		#endregion
 

@@ -66,6 +66,10 @@ namespace SPMTool.Core.Elements
 			set => SetReinforcement(value);
 		}
 
+		public override Layer Layer => Layer.Stringer;
+
+		public override string Name => $"Stringer {Number}";
+
 		#endregion
 
 		#region Constructors
@@ -247,6 +251,25 @@ namespace SPMTool.Core.Elements
 			SetDictionary(reinforcement?.GetTypedValues(), "Reinforcement");
 		}
 
+		public override DBObject CreateObject()
+		{
+			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
+
+			return
+				new Line(Geometry.InitialPoint.ToPoint3d(unit), Geometry.EndPoint.ToPoint3d(unit))
+				{
+					Layer = $"{Layer}"
+				};
+		}
+
+		/// <inheritdoc />
+		Line IDBObjectCreator<Line>.CreateObject() => (Line) CreateObject();
+
+		/// <inheritdoc />
+		Line? IDBObjectCreator<Line>.GetObject() => (Line?) base.GetObject();
+
+		public bool Equals(StringerObject other) => base.Equals(other);
+
 		#endregion
 
 		#region Operators
@@ -290,37 +313,6 @@ namespace SPMTool.Core.Elements
 		///     Can be null if <paramref name="stringerObject" /> is null or doesn't exist in drawing.
 		/// </remarks>
 		public static explicit operator Line?(StringerObject? stringerObject) => (Line?) stringerObject?.GetObject();
-
-		#endregion
-
-		#region Interface Implementations
-
-		public override Layer Layer => Layer.Stringer;
-
-		public override string Name => $"Stringer {Number}";
-
-		#endregion
-
-		#region Interface Implementations
-
-		public override DBObject CreateObject()
-		{
-			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
-
-			return
-				new Line(Geometry.InitialPoint.ToPoint3d(unit), Geometry.EndPoint.ToPoint3d(unit))
-				{
-					Layer = $"{Layer}"
-				};
-		}
-
-		/// <inheritdoc />
-		Line IDBObjectCreator<Line>.CreateObject() => (Line) CreateObject();
-
-		public bool Equals(StringerObject other) => base.Equals(other);
-
-		/// <inheritdoc />
-		Line? IDBObjectCreator<Line>.GetObject() => (Line?) base.GetObject();
 
 		#endregion
 

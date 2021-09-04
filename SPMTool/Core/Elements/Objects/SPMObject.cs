@@ -56,6 +56,14 @@ namespace SPMTool.Core.Elements
 
 		#endregion
 
+		#region Properties
+
+		public int Number { get; set; } = 0;
+
+		TProperty ISPMObject<TProperty>.Property => PropertyField;
+
+		#endregion
+
 		#region Constructors
 
 		/// <summary>
@@ -78,6 +86,30 @@ namespace SPMTool.Core.Elements
 
 		#endregion
 
+		#region Methods
+
+		public override bool Equals(object? other) => other is TProperty obj && Equals(obj);
+
+		public override int GetHashCode() => PropertyField.GetHashCode();
+
+		public override string ToString() => GetElement()?.ToString() ?? "Null element";
+
+		public int CompareTo(SPMObject<TProperty>? other) => other is null || other.GetType() != GetType()
+			? 0
+			: PropertyField.CompareTo(other.PropertyField);
+
+		/// <inheritdoc />
+		Entity IDBObjectCreator<Entity>.CreateObject() => (Entity) CreateObject();
+
+		/// <inheritdoc />
+		Entity? IDBObjectCreator<Entity>.GetObject() => (Entity?) GetObject();
+
+		public bool Equals(SPMObject<TProperty>? other) => other is not null && PropertyField.Equals(other.PropertyField);
+
+		public abstract INumberedElement GetElement();
+
+		#endregion
+
 		#region Operators
 
 		/// <summary>
@@ -89,42 +121,6 @@ namespace SPMTool.Core.Elements
 		///     Returns true if objects are different.
 		/// </summary>
 		public static bool operator !=(SPMObject<TProperty>? left, SPMObject<TProperty>? right) => left.IsNotEqualTo(right);
-
-		#endregion
-
-		#region Interface Implementations
-
-		public int Number { get; set; } = 0;
-
-		TProperty ISPMObject<TProperty>.Property => PropertyField;
-
-		#endregion
-
-		#region Interface Implementations
-
-		public int CompareTo(SPMObject<TProperty>? other) => other is null || other.GetType() != GetType()
-			? 0
-			: PropertyField.CompareTo(other.PropertyField);
-
-		/// <inheritdoc />
-		Entity IDBObjectCreator<Entity>.CreateObject() => (Entity) CreateObject();
-
-		public bool Equals(SPMObject<TProperty>? other) => other is not null && PropertyField.Equals(other.PropertyField);
-
-		public abstract INumberedElement GetElement();
-
-		/// <inheritdoc />
-		Entity? IDBObjectCreator<Entity>.GetObject() => (Entity?) GetObject();
-
-		#endregion
-
-		#region Object override
-
-		public override bool Equals(object? other) => other is TProperty obj && Equals(obj);
-
-		public override int GetHashCode() => PropertyField.GetHashCode();
-
-		public override string ToString() => GetElement()?.ToString() ?? "Null element";
 
 		#endregion
 

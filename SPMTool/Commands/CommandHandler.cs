@@ -32,12 +32,6 @@ namespace SPMTool.Commands
 			return esc;
 		}
 
-		#endregion
-
-		public event EventHandler? CanExecuteChanged;
-
-		#region Interface Implementations
-
 		public bool CanExecute(object parameter) => true;
 
 		/// <summary>
@@ -62,5 +56,6 @@ namespace SPMTool.Commands
 
 		#endregion
 
+		public event EventHandler? CanExecuteChanged;
 	}
 }

@@ -89,11 +89,7 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		private Constraint? GetConstraint() => GetDictionary("Constraint").GetConstraint();
 
-		#region Interface Implementations
-
 		public bool Equals(ConstraintObject other) => base.Equals(other);
-
-		#endregion
 
 		#endregion
 

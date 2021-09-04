@@ -276,6 +276,39 @@ namespace SPMTool.Core
 		public static SPMModel? GetOpenedModel(Database database, bool create = true) => GetOpenedModel(database.GetDocument(), create);
 
 		/// <summary>
+		///     Event to execute when an object is erased or unerased in a database.
+		/// </summary>
+		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
+		{
+			if (sender is not Entity entity || ElementLayers.Contains((Layer) Enum.Parse(typeof(Layer), entity.Layer)) || GetOpenedModel(entity.ObjectId) is not { } model)
+				return;
+
+			switch (e.Erased)
+			{
+				case true when entity.GetSPMObject() is { } obj && model.Remove(obj):
+
+					model.Trash.Add(obj);
+
+					model.Editor.WriteMessage($"\n{obj.Name} removed");
+
+					return;
+
+				case false:
+
+					var obj1 = model.Trash.Find(t => t.ObjectId == entity.ObjectId) ?? entity.CreateSPMObject(model.Settings.Units.Geometry);
+
+					if (!model.Add(obj1))
+						return;
+
+					model.Trash.Remove(obj1);
+
+					model.Editor.WriteMessage($"\n{obj1.Name} re-added");
+
+					return;
+			}
+		}
+
+		/// <summary>
 		///     Create blocks for use in SPMTool.
 		/// </summary>
 		private static void CreateBlocks(Document document) => document.Create(Enum.GetValues(typeof(Block)).Cast<Block>().ToArray());
@@ -284,6 +317,10 @@ namespace SPMTool.Core
 		///     Create layers for use with SPMTool.
 		/// </summary>
 		private static void CreateLayers(Document document) => document.Create(Enum.GetValues(typeof(Layer)).Cast<Layer>().ToArray());
+
+		private static void On_DocumentClosed(object sender, DocumentCollectionEventArgs e) => OpenedModels.RemoveAll(d => d.Name == e.Document.Name);
+
+		private static void On_DocumentCreated(object sender, DocumentCollectionEventArgs e) => OpenedModels.Add(new SPMModel(e.Document));
 
 		/// <summary>
 		///     Add the app to the Registered Applications Record.
@@ -407,6 +444,23 @@ namespace SPMTool.Core
 		public IDBObjectCreator? GetSPMObject(ObjectId objectId) => !objectId.IsNull
 			? GetSPMObject(AcadDatabase.GetObject(objectId))
 			: null;
+
+		/// <summary>
+		///     Event to execute when an object is copied.
+		/// </summary>
+		public void On_ObjectCopied(object sender, ObjectEventArgs e)
+		{
+			var entity = (Entity) e.DBObject;
+
+			if (entity is null)
+				return;
+
+			var obj = entity.CreateSPMObject(Settings.Units.Geometry);
+
+			Add(obj);
+
+			// SPMDocument.Editor.WriteMessage($"\n{obj.GetType()} copied.");
+		}
 
 		/// <summary>
 		///     Read dictionary entries that contains <paramref name="name" />.
@@ -651,109 +705,39 @@ namespace SPMTool.Core
 			return list;
 		}
 
-		/// <summary>
-		///     Register events for AutoCAD entities.
-		/// </summary>
-		private void RegisterEventsToEntities()
-		{
-			// Get object ids
-			var ids = Nodes.ObjectIds
-				.Concat(Forces.ObjectIds)
-				.Concat(Constraints.ObjectIds)
-				.Concat(Stringers.ObjectIds)
-				.Concat(Panels.ObjectIds)
-				.ToList();
-
-			// Register event
-			AcadDocument.RegisterErasedEvent(ids, On_ObjectErase);
-		}
-
-		/// <summary>
-		///     Set events to object creator lists.
-		/// </summary>
-		private void SetEvents<TDBObjectCreator>(IEList<TDBObjectCreator> list)
-			where TDBObjectCreator : IDBObjectCreator, IEquatable<TDBObjectCreator>, IComparable<TDBObjectCreator>
-		{
-			list.ItemAdded    += On_ObjectAdded;
-			list.RangeAdded   += On_ObjectsAdded;
-			list.ItemRemoved  += On_ObjectRemoved;
-			list.RangeRemoved += On_ObjectsRemoved;
-		}
-
-		/// <summary>
-		///     Set events to display settings change.
-		/// </summary>
-		private void SetEvents(DisplaySettings displaySettings)
-		{
-			displaySettings.NodeScaleChanged      += On_NodeScaleChange;
-			displaySettings.ConditionScaleChanged += On_ConditionScaleChange;
-			displaySettings.TextScaleChanged      += On_TextScaleChange;
-		}
-
-		#endregion
-
-		#region Events
-
-		/// <summary>
-		///     Event to execute when an object is erased or unerased in a database.
-		/// </summary>
-		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
-		{
-			if (sender is not Entity entity || ElementLayers.Contains((Layer) Enum.Parse(typeof(Layer), entity.Layer)) || GetOpenedModel(entity.ObjectId) is not { } model)
-				return;
-
-			switch (e.Erased)
-			{
-				case true when entity.GetSPMObject() is { } obj && model.Remove(obj):
-
-					model.Trash.Add(obj);
-
-					model.Editor.WriteMessage($"\n{obj.Name} removed");
-
-					return;
-
-				case false:
-
-					var obj1 = model.Trash.Find(t => t.ObjectId == entity.ObjectId) ?? entity.CreateSPMObject(model.Settings.Units.Geometry);
-
-					if (!model.Add(obj1))
-						return;
-
-					model.Trash.Remove(obj1);
-
-					model.Editor.WriteMessage($"\n{obj1.Name} re-added");
-
-					return;
-			}
-		}
-
-		private static void On_DocumentClosed(object sender, DocumentCollectionEventArgs e) => OpenedModels.RemoveAll(d => d.Name == e.Document.Name);
-
-		private static void On_DocumentCreated(object sender, DocumentCollectionEventArgs e) => OpenedModels.Add(new SPMModel(e.Document));
-
-		/// <summary>
-		///     Event to execute when an object is copied.
-		/// </summary>
-		public void On_ObjectCopied(object sender, ObjectEventArgs e)
-		{
-			var entity = (Entity) e.DBObject;
-
-			if (entity is null)
-				return;
-
-			var obj = entity.CreateSPMObject(Settings.Units.Geometry);
-
-			Add(obj);
-
-			// SPMDocument.Editor.WriteMessage($"\n{obj.GetType()} copied.");
-		}
-
 		private void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => UpdateConditionsScale(e.OldScale, e.NewScale);
 
 		/// <summary>
 		///     Event to run when an item is added to <see cref="StringerCrossSections" />.
 		/// </summary>
 		private void On_CrossSection_Add(object sender, ItemEventArgs<CrossSection> e) => ElementWidths.Add(e.Item.Width);
+
+		/// <summary>
+		///     Show a custom tooltip for SPM objects.
+		/// </summary>
+		private void On_ElementHover(object sender, PointMonitorEventArgs e)
+		{
+			// Check if there is a command running
+			var cmd = (string) GetSystemVariable("CMDNAMES");
+			if (cmd != string.Empty)
+				return;
+
+			var fullPaths = e.Context.GetPickedEntities();
+
+			if (fullPaths.IsNullOrEmpty())
+				return;
+
+			// var               entId = ObjectId.Null;
+			var obj = fullPaths
+				.Where(p => !p.IsNull)
+				.SelectMany(p => p.GetObjectIds())
+				.Select(GetSPMObject)
+				.FirstOrDefault(o => o is not null);
+
+			// Append text
+			if (obj is not null)
+				e.AppendToolTipText($"{obj}");
+		}
 
 		private void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => UpdatePointSize();
 
@@ -851,30 +835,42 @@ namespace SPMTool.Core
 		private void On_TextScaleChange(object sender, ScaleChangedEventArgs e) => UpdateTextHeight();
 
 		/// <summary>
-		///     Show a custom tooltip for SPM objects.
+		///     Register events for AutoCAD entities.
 		/// </summary>
-		private void On_ElementHover(object sender, PointMonitorEventArgs e)
+		private void RegisterEventsToEntities()
 		{
-			// Check if there is a command running
-			var cmd = (string) GetSystemVariable("CMDNAMES");
-			if (cmd != string.Empty)
-				return;
+			// Get object ids
+			var ids = Nodes.ObjectIds
+				.Concat(Forces.ObjectIds)
+				.Concat(Constraints.ObjectIds)
+				.Concat(Stringers.ObjectIds)
+				.Concat(Panels.ObjectIds)
+				.ToList();
 
-			var fullPaths = e.Context.GetPickedEntities();
+			// Register event
+			AcadDocument.RegisterErasedEvent(ids, On_ObjectErase);
+		}
 
-			if (fullPaths.IsNullOrEmpty())
-				return;
+		/// <summary>
+		///     Set events to object creator lists.
+		/// </summary>
+		private void SetEvents<TDBObjectCreator>(IEList<TDBObjectCreator> list)
+			where TDBObjectCreator : IDBObjectCreator, IEquatable<TDBObjectCreator>, IComparable<TDBObjectCreator>
+		{
+			list.ItemAdded    += On_ObjectAdded;
+			list.RangeAdded   += On_ObjectsAdded;
+			list.ItemRemoved  += On_ObjectRemoved;
+			list.RangeRemoved += On_ObjectsRemoved;
+		}
 
-			// var               entId = ObjectId.Null;
-			var obj = fullPaths
-				.Where(p => !p.IsNull)
-				.SelectMany(p => p.GetObjectIds())
-				.Select(GetSPMObject)
-				.FirstOrDefault(o => o is not null);
-
-			// Append text
-			if (obj is not null)
-				e.AppendToolTipText($"{obj}");
+		/// <summary>
+		///     Set events to display settings change.
+		/// </summary>
+		private void SetEvents(DisplaySettings displaySettings)
+		{
+			displaySettings.NodeScaleChanged      += On_NodeScaleChange;
+			displaySettings.ConditionScaleChanged += On_ConditionScaleChange;
+			displaySettings.TextScaleChanged      += On_TextScaleChange;
 		}
 
 		#endregion

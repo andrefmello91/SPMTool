@@ -134,15 +134,11 @@ namespace SPMTool.Application
 
 		#region Methods
 
-		#region Interface Implementations
-
 		/// <inheritdoc />
 		public bool Equals(DisplaySettings? other) =>
 			other is not null && DisplacementMagnifier == other.DisplacementMagnifier &&
 			NodeScale.Approx(other.NodeScale) && ResultScale.Approx(other.ResultScale) &&
 			TextScale.Approx(other.TextScale);
-
-		#endregion
 
 		#endregion
 
@@ -172,8 +168,6 @@ namespace SPMTool.Application
 
 		#endregion
 
-		#region Events
-
 		/// <summary>
 		///     Event to run when <see cref="NodeScale" /> changes.
 		/// </summary>
@@ -198,9 +192,6 @@ namespace SPMTool.Application
 		///     Event to run when <see cref="DisplacementMagnifier" /> changes.
 		/// </summary>
 		public event EventHandler<ScaleChangedEventArgs>? DisplacementMagnifierChanged;
-
-		#endregion
-
 	}
 
 	public class ScaleChangedEventArgs : EventArgs
