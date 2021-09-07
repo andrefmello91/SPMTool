@@ -44,11 +44,11 @@
                 <lvc:DefaultTooltip SelectionMode="OnlySender" ShowSeries="False" />
             </lvc:CartesianChart.DataTooltip>
         </lvc:CartesianChart>
-        <Button Content="Start" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
-                Margin="0,0,150,0" Width="58" Click="ButtonStart_OnClick" ToolTip="Start analysis" />
-        <Button Content="Export" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
+        <TextBlock Name="Status" FontWeight="SemiBold" Foreground="WhiteSmoke" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
+                Margin="5,0,0,0" Width="100" />
+        <Button Name="ButtonExport" Content="Export" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
                 Margin="0,0,80,0" Width="58" Click="ButtonExport_OnClick" ToolTip="Export analysis results" />
-        <Button Content="OK" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
+        <Button Name="ButtonOk" Content="OK" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
                 Margin="0,0,10,0" Width="47" Click="ButtonOK_OnClick" />
     </Grid>
 </Window>

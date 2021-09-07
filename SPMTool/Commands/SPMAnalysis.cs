@@ -75,9 +75,18 @@ namespace SPMTool.Commands
 			// Do analysis
 			var analysis = new SPMAnalysis(input, settings);
 
-			// Show window
 			var plot = new PlotWindow(analysis, uIndexn.Value, simulate);
 			ShowModalWindow(MainWindow.Handle, plot);
+
+			// Show window
+			// var task = new Task(() =>
+			// {
+			// 	analysis.Execute(uIndexn.Value, simulate);
+			// });
+			//
+			// task.Start();
+
+			// Task.Run(async () => await task);
 
 			// Show a message if analysis stopped
 			// if (analysis.Stop)
@@ -85,6 +94,8 @@ namespace SPMTool.Commands
 
 			// Updated plot
 			// plot.UpdatePlot();
+
+			// task.Wait();
 
 			var results = new SPMResults(model);
 			results.DrawResults();
