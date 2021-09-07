@@ -39,7 +39,10 @@ namespace SPMTool.Application.UserInterface
 
 		private readonly bool _simulate;
 
-		private readonly Func<ChartPoint, string> CrackLabel;
+		private int? _crackedPanel;
+
+		private int? _crackedStringer;
+
 		private bool _done;
 
 		private bool _inverted;
@@ -122,7 +125,6 @@ namespace SPMTool.Application.UserInterface
 			ButtonExport.IsEnabled                            =  false;
 			ButtonOk.IsEnabled                                =  false;
 			Status.Text                                       =  "Running Analysis...";
-			CrackLabel                                        =  point => $"Element cracked!\n{Label(point)}";
 			CartesianChart.Series[0].Values.CollectionChanged += On_CollectionChanged;
 
 			DataContext = this;
@@ -237,16 +239,24 @@ namespace SPMTool.Application.UserInterface
 						Stroke            = element is Element.Stringer ? Brushes.Aqua : Brushes.Gray,
 						Fill              = Brushes.Transparent,
 						DataLabels        = false,
-						LabelPoint        = point => CrackLabel(point)
 					});
 			});
 
 			// await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
 		}
 
-		private async Task AddCrackPoint(MonitoredDisplacement monitoredDisplacement)
+		private async Task AddCrackPoint(MonitoredDisplacement monitoredDisplacement, INumberedElement element)
 		{
-			var vals = CartesianChart.Series[1].Values;
+			var el = element is Stringer
+				? Element.Stringer
+				: Element.Panel;
+
+			if (el is Element.Stringer)
+				_crackedStringer = element.Number;
+			else
+				_crackedPanel = element.Number;
+
+			var vals = CartesianChart.Series[(int) el].Values;
 
 			vals.Add(GetPoint(monitoredDisplacement, _displacementUnit));
 
@@ -281,6 +291,12 @@ namespace SPMTool.Application.UserInterface
 
 			ButtonExport.IsEnabled = true;
 			ButtonOk.IsEnabled     = true;
+
+			if (_crackedStringer.HasValue)
+				CartesianChart.Series[1].LabelPoint = point => $"Stringer {_crackedStringer.Value} cracked!\n{Label(point)}";
+
+			if (_crackedPanel.HasValue)
+				CartesianChart.Series[2].LabelPoint = point => $"Panel {_crackedPanel.Value} cracked!\n{Label(point)}";
 		}
 
 		private void InitiatePlot()
@@ -314,8 +330,20 @@ namespace SPMTool.Application.UserInterface
 					Stroke            = Brushes.Aqua,
 					Fill              = Brushes.Transparent,
 					DataLabels        = false,
-					LabelPoint        = point => $"First stringer cracked!\n{Label(point)}"
+				},
+				new LineSeries
+				{
+					Title             = "First panel crack",
+					Values            = new ChartValues<ObservablePoint>(),
+					PointGeometry     = DefaultGeometries.Circle,
+					PointGeometrySize = 15,
+					PointForeground   = new SolidColorBrush((Color) ColorConverter.ConvertFromString("#282c34")),
+					StrokeThickness   = 3,
+					Stroke            = Brushes.Gray,
+					Fill              = Brushes.Transparent,
+					DataLabels        = false
 				}
+
 			};
 		}
 
@@ -371,16 +399,9 @@ namespace SPMTool.Application.UserInterface
 		{
 			var step = e.LoadStep!.Value;
 
-			// var element = e.Element is Stringer
-			// 	? Element.Stringer
-			// 	: Element.Panel;
-
-			// var series = CartesianChart.Series[0];
-
-			// series.LabelPoint = point => $"{element} {e.Element.Number} cracked!\n{Label(point)}";
-
 			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
-			Task.Run(() => AddCrackPoint(md));
+
+			Task.Run(() => AddCrackPoint(md, e.Element));
 		}
 
 		private void On_StepConverged(object sender, StepEventArgs e)
@@ -427,8 +448,8 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private enum Element
 		{
-			Stringer,
-			Panel
+			Stringer = 1,
+			Panel = 2
 		}
 	}
 }
