@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Core;
@@ -72,26 +73,38 @@ namespace SPMTool.Commands
 			var unit      = model.Settings.Units.Geometry;
 
 			// Prompt for the start point of Stringer
-			var stPtn = model.Editor.GetPoint("Enter the start point:", unit: unit);
+			Point? StartPoint() => model.Editor.GetPoint("Enter the start point:", unit: unit);
+			var stPtn = StartPoint();
 
 			if (stPtn is null)
-				return;
+				goto Finish;
 
 			var stPt = stPtn.Value;
 
 			// Erase result objects
 			model.AcadDocument.EraseObjects(SPMResults.ResultLayers);
 
+			Point? EndPoint(Point startPoint) => model.Editor.GetPoint("Enter the end point:", startPoint, unit);
+
 			// Loop for creating infinite stringers (until user exits the command)
 			while (true)
 			{
 				// Prompt for the start point of Stringer
-				var endPtn = model.Editor.GetPoint("Enter the end point:", stPt, unit);
+				var endPtn = EndPoint(stPt);
 
 				if (endPtn is null)
+				{
+					stPtn = StartPoint();
+
+					if (stPtn.HasValue)
+					{
+						stPt = stPtn.Value;
+						continue;
+					}
 
 					// Finish command
 					goto Finish;
+				}
 
 				var endPt = endPtn.Value;
 
