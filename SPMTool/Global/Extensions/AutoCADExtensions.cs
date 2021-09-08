@@ -302,10 +302,12 @@ namespace SPMTool
 
 			using var trans = database.TransactionManager.StartTransaction();
 
-			using var dbObject = trans.GetObject(objectId, OpenMode.ForWrite);
+			using var dbObject = trans.GetObject(objectId, OpenMode.ForRead);
 
 			if (dbObject is null)
 				return;
+
+			dbObject.UpgradeOpen();
 
 			if (erasedEvent != null)
 				dbObject.Erased -= erasedEvent;
@@ -340,8 +342,10 @@ namespace SPMTool
 
 			foreach (var obj in objects)
 			{
-				if (obj.IsErased || trans.GetObject(obj, OpenMode.ForWrite) is not { } dbObject)
+				if (!obj.IsOk() || trans.GetObject(obj, OpenMode.ForRead) is not { } dbObject)
 					continue;
+
+				dbObject.UpgradeOpen();
 
 				if (erasedEvent != null)
 					dbObject.Erased -= erasedEvent;
