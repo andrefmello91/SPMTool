@@ -340,9 +340,7 @@ namespace SPMTool
 
 			foreach (var obj in objects)
 			{
-				using var dbObject = trans.GetObject(obj, OpenMode.ForWrite);
-
-				if (dbObject is null)
+				if (obj.IsErased || trans.GetObject(obj, OpenMode.ForWrite) is not { } dbObject)
 					continue;
 
 				if (erasedEvent != null)
