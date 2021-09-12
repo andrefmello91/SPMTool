@@ -47,6 +47,8 @@ namespace SPMTool.Application.UserInterface
 
 		private bool _inverted;
 
+		private IProgress<MonitoredDisplacement> _progress;
+
 		#endregion
 
 		#region Properties
@@ -134,116 +136,7 @@ namespace SPMTool.Application.UserInterface
 
 		#region Methods
 
-		// private async Task UpdatePlot()
-		// {
-		// 	do
-		// 	{
-		// 		var lfs   = CartesianChart.Series[0].Values.GetPoints(new LineSeries()).Select(pt => pt.Y);
-		// 		var toAdd = _monitoredDisplacements.Where(md => !lfs.Contains(md.LoadFactor)).Select(md => GetPoint(md, _displacementUnit));
-		// 		CartesianChart.Series[0].Values.AddRange(toAdd);
-		//
-		// 		await Task.Delay(TimeSpan.FromMilliseconds(10));
-		// 		
-		// 	} while (true);
-		// }
-
 		private static ObservablePoint GetPoint(MonitoredDisplacement monitoredDisplacement, LengthUnit unit) => new(monitoredDisplacement.Displacement.As(unit), monitoredDisplacement.LoadFactor);
-
-		/// <summary>
-		///     Get the chart values from monitored displacements.
-		/// </summary>
-		/// <param name="monitoredDisplacements">The monitored displacements.</param>
-		/// <param name="displacementUnit">The <see cref="LengthUnit" /> of displacements.</param>
-		private static ChartValues<ObservablePoint> GetValues(IEnumerable<MonitoredDisplacement> monitoredDisplacements, LengthUnit displacementUnit)
-		{
-			// Add zero
-			var values = new ChartValues<ObservablePoint> { new(0, 0) };
-
-			values.AddRange(monitoredDisplacements.Select(d => new ObservablePoint(d.Displacement.ToUnit(displacementUnit).Value, d.LoadFactor)));
-
-			return values;
-		}
-
-		private void Add(MonitoredDisplacement monitoredDisplacement)
-		{
-			_monitoredDisplacements.Add(monitoredDisplacement);
-
-			CartesianChart.Series[0].Values.Add(new ObservablePoint(monitoredDisplacement.Displacement.ToUnit(_displacementUnit).Value, monitoredDisplacement.LoadFactor));
-
-			// Check maximum value
-			if (monitoredDisplacement.LoadFactor > LoadFactorAxis.MaxValue)
-				LoadFactorAxis.MaxValue = monitoredDisplacement.LoadFactor;
-
-			// Update inversion
-			Inverted = _monitoredDisplacements.Select(md => md.Displacement).Max() <= Length.Zero;
-		}
-
-		// /// <summary>
-		// ///     Update the plot.
-		// /// </summary>
-		// public void UpdatePlot()
-		// {
-		// 	// Set max load factor
-		// 	LoadFactorAxis.MaxValue = _spmOutput.Select(m => m.LoadFactor).Max();
-		//
-		// 	// Initiate series
-		// 	CartesianChart.Series = new SeriesCollection
-		// 	{
-		// 		// Full chart
-		// 		new LineSeries
-		// 		{
-		// 			Title           = "Load Factor x Displacement",
-		// 			Values          = GetValues(_spmOutput, _displacementUnit),
-		// 			PointGeometry   = null,
-		// 			StrokeThickness = 3,
-		// 			Stroke          = Brushes.LightSkyBlue,
-		// 			Fill            = Brushes.Transparent,
-		// 			DataLabels      = false,
-		// 			LabelPoint      = Label
-		// 		}
-		// 	};
-		//
-		// 	// If stringers cracked
-		// 	if (_spmOutput.StringerCrackLoadStep.HasValue)
-		// 		CartesianChart.Series.Add(CrackSeries(_spmOutput.StringerCrackLoadStep.Value, Element.Stringer));
-		//
-		// 	// If panels cracked
-		// 	if (_spmOutput.PanelCrackLoadStep.HasValue)
-		// 		CartesianChart.Series.Add(CrackSeries(_spmOutput.PanelCrackLoadStep.Value, Element.Panel));
-		//
-		// 	SetMapper();
-		// }
-
-		/// <summary>
-		///     Get the line series of cracking.
-		/// </summary>
-		/// <param name="crackLoadStep">The number of the element and the load step of cracking.</param>
-		/// <param name="element">The <see cref="Element" />.</param>
-		private async Task AddCrackedElement((int number, int step) crackLoadStep, Element element)
-		{
-			var (number, step) = crackLoadStep;
-
-			var pt = (ObservablePoint) CartesianChart.Series[0].Values[step - 1];
-
-			await Task.Run(() =>
-			{
-				CartesianChart.Series.Add(
-					new LineSeries
-					{
-						Title             = $"First {element} crack",
-						Values            = new ChartValues<ObservablePoint>(new[] { pt }),
-						PointGeometry     = DefaultGeometries.Circle,
-						PointGeometrySize = 15,
-						PointForeground   = new SolidColorBrush((Color) ColorConverter.ConvertFromString("#282c34")),
-						StrokeThickness   = 3,
-						Stroke            = element is Element.Stringer ? Brushes.Aqua : Brushes.Gray,
-						Fill              = Brushes.Transparent,
-						DataLabels        = false,
-					});
-			});
-
-			// await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
-		}
 
 		private async Task AddCrackPoint(MonitoredDisplacement monitoredDisplacement, INumberedElement element)
 		{
