@@ -34,9 +34,6 @@ namespace SPMTool.Application.UserInterface
 		private readonly LengthUnit _displacementUnit;
 
 		private readonly List<MonitoredDisplacement> _monitoredDisplacements = new(new[] { new MonitoredDisplacement(Length.Zero, 0) });
-
-		private readonly int _monitoredIndex;
-
 		private readonly bool _simulate;
 
 		private int? _crackedPanel;
@@ -46,8 +43,6 @@ namespace SPMTool.Application.UserInterface
 		private bool _done;
 
 		private bool _inverted;
-
-		private IProgress<MonitoredDisplacement> _progress;
 
 		#endregion
 
@@ -91,6 +86,18 @@ namespace SPMTool.Application.UserInterface
 			}
 		}
 
+		private double MaxDisplacement
+		{
+			get => DisplacementAxis.MaxValue;
+			set
+			{
+				if (DisplacementAxis.MaxValue >= value)
+					return;
+
+				DisplacementAxis.MaxValue = value;
+			}
+		}
+
 		private double MaxLoadFactor
 		{
 			get => LoadFactorAxis.MaxValue;
@@ -103,6 +110,18 @@ namespace SPMTool.Application.UserInterface
 			}
 		}
 
+		private double MinDisplacement
+		{
+			get => DisplacementAxis.MinValue;
+			set
+			{
+				if (DisplacementAxis.MinValue <= value)
+					return;
+
+				DisplacementAxis.MinValue = value;
+			}
+		}
+
 		#endregion
 
 		#region Constructors
@@ -111,23 +130,17 @@ namespace SPMTool.Application.UserInterface
 		///     <see cref="PlotWindow" /> constructor.
 		/// </summary>
 		/// <param name="analysis">The <see cref="Analysis" />, before initiating analysis.</param>
-		public PlotWindow(SPMAnalysis analysis, int monitoredIndex, bool simulate)
+		public PlotWindow(SPMAnalysis analysis, bool simulate)
 		{
-			_monitoredIndex = monitoredIndex;
+			_simulate = simulate;
 			InitializeComponent();
 
 			_displacementUnit = SPMModel.ActiveModel.Settings.Units.Displacements;
 			Analysis          = analysis;
-			_simulate         = simulate;
 			AddEvents(Analysis);
 			InitiatePlot();
 
 			ContentRendered += On_WindowShown;
-
-			ButtonExport.IsEnabled                            =  false;
-			ButtonOk.IsEnabled                                =  false;
-			Status.Text                                       =  "Running Analysis...";
-			CartesianChart.Series[0].Values.CollectionChanged += On_CollectionChanged;
 
 			DataContext = this;
 		}
@@ -158,22 +171,25 @@ namespace SPMTool.Application.UserInterface
 
 		private void AddEvents(SPMAnalysis analysis)
 		{
-			analysis.StepConverged  += On_StepConverged;
+			// analysis.StepConverged  += On_StepConverged;
 			analysis.ElementCracked += On_ElementCracked;
-
-			// analysis.AnalysisAborted  += On_AnalysisComplete;
-			// analysis.AnalysisComplete += On_AnalysisComplete;
 		}
 
 		private async Task AddPoint(MonitoredDisplacement monitoredDisplacement)
 		{
-			var mds  = _monitoredDisplacements;
 			var vals = CartesianChart.Series[0].Values;
 
-			mds.Add(monitoredDisplacement);
+			_monitoredDisplacements.Add(monitoredDisplacement);
+
 			vals.Add(GetPoint(monitoredDisplacement, _displacementUnit));
 
 			await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
+		}
+
+		private void AddPoint2(MonitoredDisplacement monitoredDisplacement)
+		{
+			_monitoredDisplacements.Add(monitoredDisplacement);
+			CartesianChart.Series[0].Values.Add(GetPoint(monitoredDisplacement, _displacementUnit));
 		}
 
 		private void AnalysisOk()
@@ -192,11 +208,32 @@ namespace SPMTool.Application.UserInterface
 				CartesianChart.Series[2].LabelPoint = point => $"Panel {_crackedPanel.Value} cracked!\n{Label(point)}";
 		}
 
+		private async Task<bool> ExecuteAnalysis()
+		{
+			// Analysis by steps
+			while (true)
+			{
+				var md = await Task.Run(() =>
+				{
+					Analysis.ExecuteStep();
+					return Analysis.CurrentStep.MonitoredDisplacement;
+				});
+
+				if (md.HasValue)
+				{
+					AddPoint2(md.Value);
+					UpdatePlot(md.Value);
+				}
+
+				if (Analysis.Stop || !_simulate && Analysis.CurrentStep >= Analysis.Parameters.NumberOfSteps)
+					break;
+			}
+
+			return true;
+		}
+
 		private void InitiatePlot()
 		{
-			// Set max load factor
-			LoadFactorAxis.MaxValue = 1;
-
 			// Initiate series
 			CartesianChart.Series = new SeriesCollection
 			{
@@ -263,6 +300,29 @@ namespace SPMTool.Application.UserInterface
 			DisplacementAxis.LabelFormatter = x => $"{(inverted ? -x : x)}";
 		}
 
+		private void UpdatePlot(MonitoredDisplacement monitoredDisplacement)
+		{
+			// Set inversion
+			Inverted = _monitoredDisplacements
+				.Select(md => md.Displacement)
+				.Max() <= Length.Zero;
+
+			var lf = monitoredDisplacement.LoadFactor;
+			var d  = monitoredDisplacement.Displacement.As(_displacementUnit);
+
+			// Update maximum load factor 
+			while (!lf.Approx(MaxLoadFactor, 1E-3) && lf > MaxLoadFactor)
+				MaxLoadFactor += 0.2;
+
+			// Update maximum displacement
+			while (!d.Approx(MaxDisplacement, 1E-3) && d > MaxDisplacement)
+				MaxDisplacement += 0.2;
+
+			// Update minimum displacement
+			while (!d.Approx(MinDisplacement, 1E-3) && d < MinDisplacement)
+				MinDisplacement -= 0.2;
+		}
+
 		private void ButtonExport_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Get location and name
@@ -281,12 +341,8 @@ namespace SPMTool.Application.UserInterface
 			Close();
 		}
 
-		private void On_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-		{
-			var mds = _monitoredDisplacements;
-
-			Inverted = mds.Select(md => md.Displacement).Max() <= Length.Zero;
-		}
+		private void On_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+			Inverted = e.NewItems.Cast<ObservablePoint>().Select(pt => pt.X).Max() <= 0;
 
 		private void On_ElementCracked(object sender, SPMElementEventArgs e)
 		{
@@ -312,11 +368,7 @@ namespace SPMTool.Application.UserInterface
 			if (Done)
 				return;
 
-			Done = await Task.Run(() =>
-			{
-				Analysis.Execute(_monitoredIndex, _simulate);
-				return true;
-			});
+			Done = await ExecuteAnalysis();
 
 			// // AddEvents(Analysis);
 			//

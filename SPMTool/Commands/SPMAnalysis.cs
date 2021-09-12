@@ -73,9 +73,9 @@ namespace SPMTool.Commands
 			var settings = SPMModel.ActiveModel.Settings.Analysis;
 
 			// Do analysis
-			var analysis = new SPMAnalysis(input, settings);
+			var analysis = new SPMAnalysis(input, settings, uIndexn.Value, simulate);
 
-			var plot = new PlotWindow(analysis, uIndexn.Value, simulate);
+			var plot = new PlotWindow(analysis, simulate);
 			ShowModalWindow(MainWindow.Handle, plot);
 
 			// Show window
