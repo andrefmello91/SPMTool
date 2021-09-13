@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using andrefmello91.SPMElements;
@@ -33,7 +32,11 @@ namespace SPMTool.Application.UserInterface
 		private readonly LengthUnit _displacementUnit;
 
 		private readonly List<MonitoredDisplacement> _monitoredDisplacements = new(new[] { new MonitoredDisplacement(Length.Zero, 0) });
+
+		private readonly List<(int number, ObservablePoint point)> _panelCracks = new();
 		private readonly bool _simulate;
+
+		private readonly List<(int number, ObservablePoint point)> _stringerCracks = new();
 
 		private int? _crackedPanel;
 
@@ -42,6 +45,7 @@ namespace SPMTool.Application.UserInterface
 		private bool _done;
 
 		private bool _inverted;
+		private bool _viewCracks;
 
 		#endregion
 
@@ -51,6 +55,19 @@ namespace SPMTool.Application.UserInterface
 		///     Get the displacement axis title.
 		/// </summary>
 		public string DisplacementTitle => $"Displacement ({_displacementUnit.Abbrev()})";
+
+		public bool ViewCracks
+		{
+			get => _viewCracks;
+			set
+			{
+				_viewCracks = value;
+
+				StringerCracks.Visibility = PanelCracks.Visibility = value
+					? Visibility.Visible
+					: Visibility.Hidden;
+			}
+		}
 
 		/// <summary>
 		///     The <see cref="SPMOutput" />'s.
@@ -85,17 +102,12 @@ namespace SPMTool.Application.UserInterface
 			}
 		}
 
-		private double MaxDisplacement
-		{
-			get => DisplacementAxis.MaxValue;
-			set
-			{
-				if (DisplacementAxis.MaxValue >= value)
-					return;
-
-				DisplacementAxis.MaxValue = value;
-			}
-		}
+		/// <summary>
+		///     Get the label of a chart point.
+		/// </summary>
+		private Func<ChartPoint, string> Label => point =>
+			$"LF = {point.Y:0.00}\n" +
+			$"u  = {Length.FromMillimeters(Inverted ? -point.X : point.X).ToUnit(_displacementUnit)}";
 
 		private double MaxLoadFactor
 		{
@@ -109,17 +121,29 @@ namespace SPMTool.Application.UserInterface
 			}
 		}
 
-		private double MinDisplacement
+		private Func<ChartPoint, string> PanelCrackLabel => point =>
 		{
-			get => DisplacementAxis.MinValue;
-			set
-			{
-				if (DisplacementAxis.MinValue <= value)
-					return;
+			if (!Done || !_panelCracks.Any())
+				return Label(point);
 
-				DisplacementAxis.MinValue = value;
-			}
-		}
+			var number = _panelCracks.First(p => (Inverted ? -p.point.X : p.point.X).Approx(point.X, 1E-6) && p.point.Y.Approx(point.Y, 1E-6)).number;
+
+			return
+				$"Panel {number} cracked!\n" +
+				$"{Label(point)}";
+		};
+
+		private Func<ChartPoint, string> StringerCrackLabel => point =>
+		{
+			if (!Done || !_stringerCracks.Any())
+				return Label(point);
+
+			var number = _stringerCracks.First(s => (Inverted ? -s.point.X : s.point.X).Approx(point.X, 1E-6) && s.point.Y.Approx(point.Y, 1E-6)).number;
+
+			return
+				$"Stringer {number} cracked!\n" +
+				$"{Label(point)}";
+		};
 
 		#endregion
 
@@ -137,7 +161,6 @@ namespace SPMTool.Application.UserInterface
 			_displacementUnit = SPMModel.ActiveModel.Settings.Units.Displacements;
 			Analysis          = analysis;
 			AddEvents(Analysis);
-			InitiatePlot();
 
 			ContentRendered += On_WindowShown;
 
@@ -158,18 +181,14 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private async Task AddCrackPoint(MonitoredDisplacement monitoredDisplacement, INumberedElement element)
 		{
-			var el = element is Stringer
-				? Element.Stringer
-				: Element.Panel;
+			var pt = GetPoint(monitoredDisplacement, _displacementUnit);
 
-			if (el is Element.Stringer)
-				_crackedStringer = element.Number;
-			else
-				_crackedPanel = element.Number;
+			var (list, vals) = element is Stringer
+				? (_stringerCracks, StringerCracks.Values)
+				: (_panelCracks, PanelCracks.Values);
 
-			var vals = CartesianChart.Series[(int) el].Values;
-
-			vals.Add(GetPoint(monitoredDisplacement, _displacementUnit));
+			list.Add((element.Number, pt));
+			vals.Add(pt);
 
 			await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
 		}
@@ -188,7 +207,7 @@ namespace SPMTool.Application.UserInterface
 		private void AddPoint(MonitoredDisplacement monitoredDisplacement)
 		{
 			_monitoredDisplacements.Add(monitoredDisplacement);
-			CartesianChart.Series[0].Values.Add(GetPoint(monitoredDisplacement, _displacementUnit));
+			Plot.Values.Add(GetPoint(monitoredDisplacement, _displacementUnit));
 		}
 
 		/// <summary>
@@ -202,47 +221,26 @@ namespace SPMTool.Application.UserInterface
 
 			ButtonExport.IsEnabled = true;
 			ButtonOk.IsEnabled     = true;
-
-			if (_crackedStringer.HasValue)
-				CartesianChart.Series[1].LabelPoint = point => $"Stringer {_crackedStringer.Value} cracked!\n{Label(point)}";
-
-			if (_crackedPanel.HasValue)
-				CartesianChart.Series[2].LabelPoint = point => $"Panel {_crackedPanel.Value} cracked!\n{Label(point)}";
-		}
-
-		/// <summary>
-		///     Execute the analysis asynchronously.
-		/// </summary>
-		private async Task<bool> ExecuteAnalysis()
-		{
-			// Analysis by steps
-			while (true)
-			{
-				var md = await Task.Run(() =>
-				{
-					Analysis.ExecuteStep();
-					return Analysis.CurrentStep.MonitoredDisplacement;
-				});
-
-				if (md.HasValue)
-				{
-					AddPoint(md.Value);
-					UpdatePlot(md.Value);
-				}
-
-				if (Analysis.Stop || !_simulate && Analysis.CurrentStep >= Analysis.Parameters.NumberOfSteps)
-					break;
-			}
-
-			return true;
 		}
 
 		/// <summary>
 		///     Initiate the plot.
 		/// </summary>
-		private void InitiatePlot()
+		private void ConfigurePlot()
 		{
-			// Initiate series
+			// Configure main plot
+			Plot.Values        = new ChartValues<ObservablePoint>(new[] { new ObservablePoint(0, 0) });
+			Plot.PointGeometry = null;
+			Plot.LabelPoint    = Label;
+
+			// Configure stringer and panel cracks
+			StringerCracks.Values        = new ChartValues<ObservablePoint>();
+			PanelCracks.Values           = new ChartValues<ObservablePoint>();
+			StringerCracks.PointGeometry = PanelCracks.PointGeometry = DefaultGeometries.Circle;
+			StringerCracks.LabelPoint    = StringerCrackLabel;
+			PanelCracks.LabelPoint       = PanelCrackLabel;
+
+			/*// Initiate series
 			CartesianChart.Series = new SeriesCollection
 			{
 				// Full chart
@@ -282,16 +280,35 @@ namespace SPMTool.Application.UserInterface
 					DataLabels        = false
 				}
 
-			};
+			};*/
 		}
 
 		/// <summary>
-		///     Get the label of a <paramref name="point" />.
+		///     Execute the analysis asynchronously.
 		/// </summary>
-		/// <param name="point">The <see cref="ChartPoint" />.</param>
-		private string Label(ChartPoint point) =>
-			$"LF = {point.Y:0.00}\n" +
-			$"u  = {Length.FromMillimeters(Inverted ? -point.X : point.X).ToUnit(_displacementUnit)}";
+		private async Task<bool> ExecuteAnalysis()
+		{
+			// Analysis by steps
+			while (true)
+			{
+				var md = await Task.Run(() =>
+				{
+					Analysis.ExecuteStep();
+					return Analysis.CurrentStep.MonitoredDisplacement;
+				});
+
+				if (md.HasValue)
+				{
+					AddPoint(md.Value);
+					UpdatePlot(md.Value);
+				}
+
+				if (Analysis.Stop || !_simulate && Analysis.CurrentStep >= Analysis.Parameters.NumberOfSteps)
+					break;
+			}
+
+			return true;
+		}
 
 		/// <summary>
 		///     Set mapper for inverting X axis.
@@ -369,18 +386,12 @@ namespace SPMTool.Application.UserInterface
 			if (Done)
 				return;
 
+			ConfigurePlot();
+
 			Done = await ExecuteAnalysis();
 		}
 
 		#endregion
 
-		/// <summary>
-		///     Element auxiliary enumeration.
-		/// </summary>
-		private enum Element
-		{
-			Stringer = 1,
-			Panel = 2
-		}
 	}
 }

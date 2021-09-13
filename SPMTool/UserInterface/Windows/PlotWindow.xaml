@@ -4,8 +4,13 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        xmlns:plotWindow="clr-namespace:SPMTool.Application.UserInterface"
         mc:Ignorable="d"
-        Title="Load x Displacement - Monitored Node" Height="520" Width="710">
+        Title="Load x Displacement - Monitored Node" Height="520" Width="710"
+        d:DataContext="{d:DesignInstance plotWindow:PlotWindow}">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="bvc" />
+    </Window.Resources>
     <Grid Background="#282c34" Width="700" Height="Auto">
         <Grid.RowDefinitions>
             <RowDefinition Height="450" />
@@ -40,12 +45,19 @@
                     </lvc:Axis.Separator>
                 </lvc:Axis>
             </lvc:CartesianChart.AxisY>
+            <lvc:CartesianChart.Series>
+                <lvc:LineSeries Name="Plot" Stroke="LightSkyBlue" StrokeThickness="3" Fill="Transparent" DataLabels="False"/>
+                <lvc:LineSeries Name="StringerCracks" PointGeometrySize="15" PointForeground="Aqua" Stroke="Transparent" Fill="Transparent" Visibility="{Binding ViewCracks, Converter={StaticResource bvc}}"/>
+                <lvc:LineSeries Name="PanelCracks" PointGeometrySize="15" PointForeground="Gray" Stroke="Transparent" Fill="Transparent" Visibility="{Binding ViewCracks, Converter={StaticResource bvc}}"/>
+            </lvc:CartesianChart.Series>
             <lvc:CartesianChart.DataTooltip>
                 <lvc:DefaultTooltip SelectionMode="OnlySender" ShowSeries="False" />
             </lvc:CartesianChart.DataTooltip>
         </lvc:CartesianChart>
         <TextBlock Name="Status" Text="Running Analysis..." FontWeight="SemiBold" Foreground="WhiteSmoke" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
-                Margin="5,0,0,0" Width="500" />
+                Margin="5,0,0,0" Width="250" />
+        <CheckBox Content="Cracking" IsChecked="{Binding ViewCracks}" FontWeight="SemiBold" Foreground="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
+                Margin="0,0,160,0" Width="70" />
         <Button Name="ButtonExport" Content="Export" IsEnabled="False" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
                 Margin="0,0,80,0" Width="58" Click="ButtonExport_OnClick" ToolTip="Export analysis results" />
         <Button Name="ButtonOk" Content="OK" IsEnabled="False" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
