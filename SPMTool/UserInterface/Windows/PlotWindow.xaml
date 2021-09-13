@@ -19,7 +19,7 @@
         <lvc:CartesianChart Name="CartesianChart" Background="#282c34" DisableAnimations="True" Hoverable="False"
                             Grid.Column="1">
             <lvc:CartesianChart.AxisX>
-                <lvc:Axis Name="DisplacementAxis" Title="{Binding DisplacementTitle}" MinValue="0" MaxValue="0.5">
+                <lvc:Axis Name="DisplacementAxis" Title="{Binding DisplacementTitle}">
                     <lvc:Axis.Separator>
                         <lvc:Separator StrokeThickness="1">
                             <lvc:Separator.Stroke>

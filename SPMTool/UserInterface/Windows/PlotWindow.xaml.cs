@@ -263,9 +263,9 @@ namespace SPMTool.Application.UserInterface
 					Values            = new ChartValues<ObservablePoint>(),
 					PointGeometry     = DefaultGeometries.Circle,
 					PointGeometrySize = 15,
-					PointForeground   = new SolidColorBrush((Color) ColorConverter.ConvertFromString("#282c34")),
+					PointForeground   = Brushes.Aqua,
 					StrokeThickness   = 3,
-					Stroke            = Brushes.Aqua,
+					Stroke            = Brushes.Transparent,
 					Fill              = Brushes.Transparent,
 					DataLabels        = false,
 				},
@@ -275,9 +275,9 @@ namespace SPMTool.Application.UserInterface
 					Values            = new ChartValues<ObservablePoint>(),
 					PointGeometry     = DefaultGeometries.Circle,
 					PointGeometrySize = 15,
-					PointForeground   = new SolidColorBrush((Color) ColorConverter.ConvertFromString("#282c34")),
+					PointForeground   = Brushes.Gray,
 					StrokeThickness   = 3,
-					Stroke            = Brushes.Gray,
+					Stroke            = Brushes.Transparent,
 					Fill              = Brushes.Transparent,
 					DataLabels        = false
 				}
@@ -319,19 +319,10 @@ namespace SPMTool.Application.UserInterface
 				.Max() <= Length.Zero;
 
 			var lf = monitoredDisplacement.LoadFactor;
-			var d  = monitoredDisplacement.Displacement.As(_displacementUnit);
 
 			// Update maximum load factor 
 			while (!lf.Approx(MaxLoadFactor, 1E-3) && lf > MaxLoadFactor)
 				MaxLoadFactor += 0.2;
-
-			// Update maximum displacement
-			while (!d.Approx(MaxDisplacement, 1E-3) && d > MaxDisplacement)
-				MaxDisplacement += 0.2;
-
-			// Update minimum displacement
-			while (!d.Approx(MinDisplacement, 1E-3) && d < MinDisplacement)
-				MinDisplacement -= 0.2;
 		}
 
 		/// <summary>
