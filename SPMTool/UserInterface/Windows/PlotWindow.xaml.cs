@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -149,8 +148,14 @@ namespace SPMTool.Application.UserInterface
 
 		#region Methods
 
+		/// <summary>
+		///     Get an <see cref="ObservablePoint" /> from a <see cref="MonitoredDisplacement" />.
+		/// </summary>
 		private static ObservablePoint GetPoint(MonitoredDisplacement monitoredDisplacement, LengthUnit unit) => new(monitoredDisplacement.Displacement.As(unit), monitoredDisplacement.LoadFactor);
 
+		/// <summary>
+		///     Add the point of element's cracking.
+		/// </summary>
 		private async Task AddCrackPoint(MonitoredDisplacement monitoredDisplacement, INumberedElement element)
 		{
 			var el = element is Stringer
@@ -169,29 +174,26 @@ namespace SPMTool.Application.UserInterface
 			await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
 		}
 
+		/// <summary>
+		///     Add events to analysis.
+		/// </summary>
 		private void AddEvents(SPMAnalysis analysis)
 		{
-			// analysis.StepConverged  += On_StepConverged;
 			analysis.ElementCracked += On_ElementCracked;
 		}
 
-		private async Task AddPoint(MonitoredDisplacement monitoredDisplacement)
-		{
-			var vals = CartesianChart.Series[0].Values;
-
-			_monitoredDisplacements.Add(monitoredDisplacement);
-
-			vals.Add(GetPoint(monitoredDisplacement, _displacementUnit));
-
-			await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
-		}
-
-		private void AddPoint2(MonitoredDisplacement monitoredDisplacement)
+		/// <summary>
+		///     Add the monitored point to plot.
+		/// </summary>
+		private void AddPoint(MonitoredDisplacement monitoredDisplacement)
 		{
 			_monitoredDisplacements.Add(monitoredDisplacement);
 			CartesianChart.Series[0].Values.Add(GetPoint(monitoredDisplacement, _displacementUnit));
 		}
 
+		/// <summary>
+		///     Execute when analysis is done.
+		/// </summary>
 		private void AnalysisOk()
 		{
 			Status.Text = Analysis.Stop
@@ -208,6 +210,9 @@ namespace SPMTool.Application.UserInterface
 				CartesianChart.Series[2].LabelPoint = point => $"Panel {_crackedPanel.Value} cracked!\n{Label(point)}";
 		}
 
+		/// <summary>
+		///     Execute the analysis asynchronously.
+		/// </summary>
 		private async Task<bool> ExecuteAnalysis()
 		{
 			// Analysis by steps
@@ -221,7 +226,7 @@ namespace SPMTool.Application.UserInterface
 
 				if (md.HasValue)
 				{
-					AddPoint2(md.Value);
+					AddPoint(md.Value);
 					UpdatePlot(md.Value);
 				}
 
@@ -232,6 +237,9 @@ namespace SPMTool.Application.UserInterface
 			return true;
 		}
 
+		/// <summary>
+		///     Initiate the plot.
+		/// </summary>
 		private void InitiatePlot()
 		{
 			// Initiate series
@@ -251,7 +259,7 @@ namespace SPMTool.Application.UserInterface
 				},
 				new LineSeries
 				{
-					Title             = "First stringer crack",
+					Title             = "Stringer cracking",
 					Values            = new ChartValues<ObservablePoint>(),
 					PointGeometry     = DefaultGeometries.Circle,
 					PointGeometrySize = 15,
@@ -263,7 +271,7 @@ namespace SPMTool.Application.UserInterface
 				},
 				new LineSeries
 				{
-					Title             = "First panel crack",
+					Title             = "Panel cracking",
 					Values            = new ChartValues<ObservablePoint>(),
 					PointGeometry     = DefaultGeometries.Circle,
 					PointGeometrySize = 15,
@@ -300,6 +308,9 @@ namespace SPMTool.Application.UserInterface
 			DisplacementAxis.LabelFormatter = x => $"{(inverted ? -x : x)}";
 		}
 
+		/// <summary>
+		///     Update plot after adding a monitored displacement.
+		/// </summary>
 		private void UpdatePlot(MonitoredDisplacement monitoredDisplacement)
 		{
 			// Set inversion
@@ -323,6 +334,9 @@ namespace SPMTool.Application.UserInterface
 				MinDisplacement -= 0.2;
 		}
 
+		/// <summary>
+		///     Execute when <see cref="ButtonExport" /> is clicked.
+		/// </summary>
 		private void ButtonExport_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Get location and name
@@ -336,14 +350,17 @@ namespace SPMTool.Application.UserInterface
 			MessageBox.Show("Data exported to file location.");
 		}
 
+		/// <summary>
+		///     Execute when <see cref="ButtonOk" /> is clicked.
+		/// </summary>
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
 			Close();
 		}
 
-		private void On_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-			Inverted = e.NewItems.Cast<ObservablePoint>().Select(pt => pt.X).Max() <= 0;
-
+		/// <summary>
+		///     Execute when an element cracks.
+		/// </summary>
 		private void On_ElementCracked(object sender, SPMElementEventArgs e)
 		{
 			var step = e.LoadStep!.Value;
@@ -353,37 +370,15 @@ namespace SPMTool.Application.UserInterface
 			Task.Run(() => AddCrackPoint(md, e.Element));
 		}
 
-		private void On_StepConverged(object sender, StepEventArgs e)
-		{
-			if (!e.Step.MonitoredDisplacement.HasValue)
-				return;
-
-			var md = e.Step.MonitoredDisplacement.Value;
-
-			Task.Run(() => AddPoint(md));
-		}
-
+		/// <summary>
+		///     Execute when the window is rendered.
+		/// </summary>
 		private async void On_WindowShown(object sender, EventArgs e)
 		{
 			if (Done)
 				return;
 
 			Done = await ExecuteAnalysis();
-
-			// // AddEvents(Analysis);
-			//
-			// var task = new Task(() =>
-			// {
-			// 	Analysis.Execute(_monitoredIndex, _simulate);
-			// });
-			//
-			// task.Start();
-			//
-			// // Task.Run(async () => await UpdatePlot());
-			//
-			// // Analysis.Execute(_monitoredIndex, _simulate);
-			//
-			// task.Wait();
 		}
 
 		#endregion
