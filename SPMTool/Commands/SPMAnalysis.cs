@@ -78,25 +78,6 @@ namespace SPMTool.Commands
 			var plot = new PlotWindow(analysis, simulate);
 			ShowModalWindow(MainWindow.Handle, plot);
 
-			// Show window
-			// var task = new Task(() =>
-			// {
-			// 	analysis.Execute(uIndexn.Value, simulate);
-			// });
-			//
-			// task.Start();
-
-			// Task.Run(async () => await task);
-
-			// Show a message if analysis stopped
-			// if (analysis.Stop)
-			// 	ShowAlertDialog(analysis.StopMessage);
-
-			// Updated plot
-			// plot.UpdatePlot();
-
-			// task.Wait();
-
 			var results = new SPMResults(model);
 			results.DrawResults();
 		}
