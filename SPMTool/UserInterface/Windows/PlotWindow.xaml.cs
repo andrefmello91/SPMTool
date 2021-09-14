@@ -43,7 +43,7 @@ namespace SPMTool.Application.UserInterface
 
 		private bool _inverted;
 
-		private bool _viewCracks;
+		private bool _showCracks;
 
 		#endregion
 
@@ -54,18 +54,22 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		public string DisplacementTitle => $"Displacement ({_displacementUnit.Abbrev()})";
 
-		public bool ViewCracks
+		public bool ShowCracks
 		{
-			get => _viewCracks;
+			get => _showCracks;
 			set
 			{
-				_viewCracks = value;
+				_showCracks = value;
 
 				StringerCracks.Visibility = PanelCracks.Visibility = value
 					? Visibility.Visible
 					: Visibility.Hidden;
 			}
 		}
+
+		public bool ShowCrushing { get; set; }
+
+		public bool ShowYielding { get; set; }
 
 		/// <summary>
 		///     The <see cref="SPMOutput" />'s.

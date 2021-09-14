@@ -47,17 +47,23 @@
             </lvc:CartesianChart.AxisY>
             <lvc:CartesianChart.Series>
                 <lvc:LineSeries Name="Plot" Stroke="LightSkyBlue" StrokeThickness="3" Fill="Transparent" DataLabels="False"/>
-                <lvc:LineSeries Name="StringerCracks" PointGeometrySize="15" PointForeground="Aqua" Stroke="Transparent" Fill="Transparent" Visibility="{Binding ViewCracks, Converter={StaticResource bvc}}"/>
-                <lvc:LineSeries Name="PanelCracks" PointGeometrySize="15" PointForeground="Gray" Stroke="Transparent" Fill="Transparent" Visibility="{Binding ViewCracks, Converter={StaticResource bvc}}"/>
+                <lvc:LineSeries Name="StringerCracks" PointGeometrySize="15" PointForeground="Aqua" Stroke="Transparent" Fill="Transparent" Visibility="{Binding ShowCracks, Converter={StaticResource bvc}}"/>
+                <lvc:LineSeries Name="PanelCracks" PointGeometrySize="15" PointForeground="Gray" Stroke="Transparent" Fill="Transparent" Visibility="{Binding ShowCracks, Converter={StaticResource bvc}}"/>
             </lvc:CartesianChart.Series>
             <lvc:CartesianChart.DataTooltip>
                 <lvc:DefaultTooltip SelectionMode="OnlySender" ShowSeries="False" />
             </lvc:CartesianChart.DataTooltip>
         </lvc:CartesianChart>
-        <TextBlock Name="Status" Text="Running Analysis..." FontWeight="SemiBold" Foreground="WhiteSmoke" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
-                Margin="5,0,0,0" Width="250" />
-        <CheckBox Content="Cracking" IsChecked="{Binding ViewCracks}" FontWeight="SemiBold" Foreground="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
-                Margin="0,0,160,0" Width="70" />
+        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Width="500" HorizontalAlignment="Left">
+            <TextBlock Name="Status" Text="Running Analysis..." FontWeight="SemiBold" Foreground="WhiteSmoke" HorizontalAlignment="Left" VerticalAlignment="Center"
+                       Margin="5,0,0,0" Width="250" />
+            <CheckBox Content="Cracking" IsChecked="{Binding ShowCracks}" FontWeight="SemiBold" Foreground="WhiteSmoke" VerticalAlignment="Center"
+                     Width="80" ToolTip="Show when elements cracked." />
+            <CheckBox Content="Yielding" IsChecked="{Binding ShowYielding}" FontWeight="SemiBold" Foreground="WhiteSmoke" VerticalAlignment="Center"
+                     Width="80" ToolTip="Show when elements yielded." />
+            <CheckBox Content="Crushing" IsChecked="{Binding ShowCrushing}" FontWeight="SemiBold" Foreground="WhiteSmoke" VerticalAlignment="Center"
+                     Width="80" ToolTip="Show when elements crushed." />
+        </StackPanel>
         <Button Name="ButtonExport" Content="Export" IsEnabled="False" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
                 Margin="0,0,80,0" Width="58" Click="ButtonExport_OnClick" ToolTip="Export analysis results" />
         <Button Name="ButtonOk" Content="OK" IsEnabled="False" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
