@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,6 +14,7 @@ using LiveCharts;
 using LiveCharts.Configurations;
 using LiveCharts.Defaults;
 using LiveCharts.Wpf;
+using SPMTool.Annotations;
 using SPMTool.Core;
 using UnitsNet;
 using UnitsNet.Units;
@@ -21,7 +24,7 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para GraphWindow.xaml
 	/// </summary>
-	public partial class PlotWindow : Window
+	public partial class PlotWindow : Window, INotifyPropertyChanged
 	{
 
 		#region Fields
@@ -42,6 +45,8 @@ namespace SPMTool.Application.UserInterface
 		private bool _inverted;
 
 		private bool _showCracks;
+		private bool _showCrushing;
+		private bool _showYielding;
 
 		#endregion
 
@@ -59,15 +64,40 @@ namespace SPMTool.Application.UserInterface
 			{
 				_showCracks = value;
 
-				CrackingPlot.Visibility = value
-					? Visibility.Visible
-					: Visibility.Hidden;
+				if (value)
+					ShowCrushing = ShowYielding = false;
+
+				OnPropertyChanged();
 			}
 		}
 
-		public bool ShowCrushing { get; set; }
+		public bool ShowCrushing
+		{
+			get => _showCrushing;
+			set
+			{
+				_showCrushing = value;
 
-		public bool ShowYielding { get; set; }
+				if (value)
+					ShowCracks = ShowYielding = false;
+
+				OnPropertyChanged();
+			}
+		}
+
+		public bool ShowYielding
+		{
+			get => _showYielding;
+			set
+			{
+				_showYielding = value;
+
+				if (value)
+					ShowCracks = ShowCrushing = false;
+
+				OnPropertyChanged();
+			}
+		}
 
 		/// <summary>
 		///     The <see cref="SPMOutput" />'s.
@@ -135,6 +165,12 @@ namespace SPMTool.Application.UserInterface
 
 		#endregion
 
+		#region Events
+
+		public event PropertyChangedEventHandler? PropertyChanged;
+
+		#endregion
+
 		#region Constructors
 
 		/// <summary>
@@ -163,6 +199,12 @@ namespace SPMTool.Application.UserInterface
 		///     Get an <see cref="ObservablePoint" /> from a <see cref="MonitoredDisplacement" />.
 		/// </summary>
 		private static ObservablePoint GetPoint(MonitoredDisplacement monitoredDisplacement, LengthUnit unit) => new(monitoredDisplacement.Displacement.As(unit), monitoredDisplacement.LoadFactor);
+
+		[NotifyPropertyChangedInvocator]
+		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
 
 		/// <summary>
 		///     Add the point of element's cracking.
