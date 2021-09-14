@@ -33,18 +33,16 @@ namespace SPMTool.Application.UserInterface
 
 		private readonly List<MonitoredDisplacement> _monitoredDisplacements = new(new[] { new MonitoredDisplacement(Length.Zero, 0) });
 
-		private readonly List<(int number, ObservablePoint point)> _panelCracks = new();
+		private readonly List<(string name, ObservablePoint point)> _panelCracks = new();
+
 		private readonly bool _simulate;
 
-		private readonly List<(int number, ObservablePoint point)> _stringerCracks = new();
-
-		private int? _crackedPanel;
-
-		private int? _crackedStringer;
+		private readonly List<(string name, ObservablePoint point)> _stringerCracks = new();
 
 		private bool _done;
 
 		private bool _inverted;
+
 		private bool _viewCracks;
 
 		#endregion
@@ -126,10 +124,10 @@ namespace SPMTool.Application.UserInterface
 			if (!Done || !_panelCracks.Any())
 				return Label(point);
 
-			var number = _panelCracks.First(p => (Inverted ? -p.point.X : p.point.X).Approx(point.X, 1E-6) && p.point.Y.Approx(point.Y, 1E-6)).number;
+			var name = _panelCracks.First(p => (Inverted ? -p.point.X : p.point.X).Approx(point.X, 1E-6) && p.point.Y.Approx(point.Y, 1E-6)).name;
 
 			return
-				$"Panel {number} cracked!\n" +
+				$"{name} cracked!\n" +
 				$"{Label(point)}";
 		};
 
@@ -138,10 +136,10 @@ namespace SPMTool.Application.UserInterface
 			if (!Done || !_stringerCracks.Any())
 				return Label(point);
 
-			var number = _stringerCracks.First(s => (Inverted ? -s.point.X : s.point.X).Approx(point.X, 1E-6) && s.point.Y.Approx(point.Y, 1E-6)).number;
+			var name = _stringerCracks.First(s => (Inverted ? -s.point.X : s.point.X).Approx(point.X, 1E-6) && s.point.Y.Approx(point.Y, 1E-6)).name;
 
 			return
-				$"Stringer {number} cracked!\n" +
+				$"{name} cracked!\n" +
 				$"{Label(point)}";
 		};
 
@@ -181,13 +179,16 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private async Task AddCrackPoint(MonitoredDisplacement monitoredDisplacement, INumberedElement element)
 		{
+			if (element is not INonlinearSPMElement nonlinearSpmElement)
+				return;
+
 			var pt = GetPoint(monitoredDisplacement, _displacementUnit);
 
 			var (list, vals) = element is Stringer
 				? (_stringerCracks, StringerCracks.Values)
 				: (_panelCracks, PanelCracks.Values);
 
-			list.Add((element.Number, pt));
+			list.Add((nonlinearSpmElement.Name, pt));
 			vals.Add(pt);
 
 			await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
@@ -361,10 +362,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Execute when <see cref="ButtonOk" /> is clicked.
 		/// </summary>
-		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
-		{
-			Close();
-		}
+		private void ButtonOK_OnClick(object sender, RoutedEventArgs e) => Close();
 
 		/// <summary>
 		///     Execute when an element cracks.
