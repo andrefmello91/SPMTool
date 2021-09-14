@@ -47,8 +47,7 @@
             </lvc:CartesianChart.AxisY>
             <lvc:CartesianChart.Series>
                 <lvc:LineSeries Name="Plot" Stroke="LightSkyBlue" StrokeThickness="3" Fill="Transparent" DataLabels="False"/>
-                <lvc:LineSeries Name="StringerCracks" PointGeometrySize="15" PointForeground="Aqua" Stroke="Transparent" Fill="Transparent" Visibility="{Binding ShowCracks, Converter={StaticResource bvc}}"/>
-                <lvc:LineSeries Name="PanelCracks" PointGeometrySize="15" PointForeground="Gray" Stroke="Transparent" Fill="Transparent" Visibility="{Binding ShowCracks, Converter={StaticResource bvc}}"/>
+                <lvc:LineSeries Name="CrackingPlot" PointGeometrySize="12" PointForeground="Chocolate" Stroke="Transparent" Fill="Transparent" Visibility="{Binding ShowCracks, Converter={StaticResource bvc}}"/>
             </lvc:CartesianChart.Series>
             <lvc:CartesianChart.DataTooltip>
                 <lvc:DefaultTooltip SelectionMode="OnlySender" ShowSeries="False" />

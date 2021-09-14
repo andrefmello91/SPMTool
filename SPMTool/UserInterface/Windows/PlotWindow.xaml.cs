@@ -26,6 +26,8 @@ namespace SPMTool.Application.UserInterface
 
 		#region Fields
 
+		private readonly List<(string label, ObservablePoint point)> _crackLabels = new();
+
 		/// <summary>
 		///     The <see cref="LengthUnit" /> of displacements.
 		/// </summary>
@@ -33,11 +35,7 @@ namespace SPMTool.Application.UserInterface
 
 		private readonly List<MonitoredDisplacement> _monitoredDisplacements = new(new[] { new MonitoredDisplacement(Length.Zero, 0) });
 
-		private readonly List<(string name, ObservablePoint point)> _panelCracks = new();
-
 		private readonly bool _simulate;
-
-		private readonly List<(string name, ObservablePoint point)> _stringerCracks = new();
 
 		private bool _done;
 
@@ -61,7 +59,7 @@ namespace SPMTool.Application.UserInterface
 			{
 				_showCracks = value;
 
-				StringerCracks.Visibility = PanelCracks.Visibility = value
+				CrackingPlot.Visibility = value
 					? Visibility.Visible
 					: Visibility.Hidden;
 			}
@@ -75,6 +73,18 @@ namespace SPMTool.Application.UserInterface
 		///     The <see cref="SPMOutput" />'s.
 		/// </summary>
 		private SPMAnalysis Analysis { get; }
+
+		private Func<ChartPoint, string> CrackLabel => point =>
+		{
+			if (!_crackLabels.Any())
+				return Label(point);
+
+			var label = _crackLabels.First(p => (Inverted ? -p.point.X : p.point.X).Approx(point.X, 1E-6) && p.point.Y.Approx(point.Y, 1E-6)).label;
+
+			return
+				(label.IsNullOrEmpty() ? string.Empty : $"{label}\n") +
+				$"{Label(point)}";
+		};
 
 		private bool Done
 		{
@@ -123,30 +133,6 @@ namespace SPMTool.Application.UserInterface
 			}
 		}
 
-		private Func<ChartPoint, string> PanelCrackLabel => point =>
-		{
-			if (!Done || !_panelCracks.Any())
-				return Label(point);
-
-			var name = _panelCracks.First(p => (Inverted ? -p.point.X : p.point.X).Approx(point.X, 1E-6) && p.point.Y.Approx(point.Y, 1E-6)).name;
-
-			return
-				$"{name} cracked!\n" +
-				$"{Label(point)}";
-		};
-
-		private Func<ChartPoint, string> StringerCrackLabel => point =>
-		{
-			if (!Done || !_stringerCracks.Any())
-				return Label(point);
-
-			var name = _stringerCracks.First(s => (Inverted ? -s.point.X : s.point.X).Approx(point.X, 1E-6) && s.point.Y.Approx(point.Y, 1E-6)).name;
-
-			return
-				$"{name} cracked!\n" +
-				$"{Label(point)}";
-		};
-
 		#endregion
 
 		#region Constructors
@@ -181,19 +167,63 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Add the point of element's cracking.
 		/// </summary>
-		private async Task AddCrackPoint(MonitoredDisplacement monitoredDisplacement, INumberedElement element)
+		private async Task AddCrackPoint(MonitoredDisplacement monitoredDisplacement, IEnumerable<ISPMElement> elements)
 		{
-			if (element is not INonlinearSPMElement nonlinearSpmElement)
-				return;
-
 			var pt = GetPoint(monitoredDisplacement, _displacementUnit);
 
-			var (list, vals) = element is Stringer
-				? (_stringerCracks, StringerCracks.Values)
-				: (_panelCracks, PanelCracks.Values);
+			var stringers = elements
+				.Where(e => e is Stringer)
+				.ToList();
 
-			list.Add((nonlinearSpmElement.Name, pt));
-			vals.Add(pt);
+			var panels = elements
+				.Where(e => e is Panel)
+				.ToList();
+
+			var label = string.Empty;
+
+			if (stringers.Any())
+			{
+				switch (stringers.Count)
+				{
+					case 1:
+						label += stringers[0].Name;
+						break;
+
+					default:
+						label += stringers.Aggregate("Stringers", (s, element) => $"{s} {element.Number},");
+
+						// Remove ","
+						label = label.TrimEnd(',');
+						break;
+				}
+
+				label += " cracked!";
+			}
+
+			if (panels.Any())
+			{
+				if (stringers.Any())
+					label += "\n";
+
+				switch (panels.Count)
+				{
+					case 1:
+						label += panels[0].Name;
+						break;
+
+					default:
+						label += panels.Aggregate("Panels", (s, element) => $"{s} {element.Number},");
+
+						// Remove ","
+						label = label.TrimEnd(',');
+						break;
+				}
+
+				label += " cracked!";
+			}
+
+			_crackLabels.Add((label, pt));
+			CrackingPlot.Values.Add(pt);
 
 			await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
 		}
@@ -203,7 +233,7 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void AddEvents(SPMAnalysis analysis)
 		{
-			analysis.ElementCracked += On_ElementCracked;
+			analysis.ElementsCracked += OnElementsCracked;
 		}
 
 		/// <summary>
@@ -239,11 +269,9 @@ namespace SPMTool.Application.UserInterface
 			Plot.LabelPoint    = Label;
 
 			// Configure stringer and panel cracks
-			StringerCracks.Values        = new ChartValues<ObservablePoint>();
-			PanelCracks.Values           = new ChartValues<ObservablePoint>();
-			StringerCracks.PointGeometry = PanelCracks.PointGeometry = DefaultGeometries.Circle;
-			StringerCracks.LabelPoint    = StringerCrackLabel;
-			PanelCracks.LabelPoint       = PanelCrackLabel;
+			CrackingPlot.Values        = new ChartValues<ObservablePoint>();
+			CrackingPlot.PointGeometry = DefaultGeometries.Circle;
+			CrackingPlot.LabelPoint    = CrackLabel;
 
 			/*// Initiate series
 			CartesianChart.Series = new SeriesCollection
@@ -369,18 +397,6 @@ namespace SPMTool.Application.UserInterface
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e) => Close();
 
 		/// <summary>
-		///     Execute when an element cracks.
-		/// </summary>
-		private void On_ElementCracked(object sender, SPMElementEventArgs e)
-		{
-			var step = e.LoadStep!.Value;
-
-			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
-
-			Task.Run(() => AddCrackPoint(md, e.Element));
-		}
-
-		/// <summary>
 		///     Execute when the window is rendered.
 		/// </summary>
 		private async void On_WindowShown(object sender, EventArgs e)
@@ -391,6 +407,18 @@ namespace SPMTool.Application.UserInterface
 			ConfigurePlot();
 
 			Done = await ExecuteAnalysis();
+		}
+
+		/// <summary>
+		///     Execute when an element cracks.
+		/// </summary>
+		private void OnElementsCracked(object sender, SPMElementEventArgs e)
+		{
+			var step = e.LoadStep!.Value;
+
+			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
+
+			Task.Run(() => AddCrackPoint(md, e.Elements));
 		}
 
 		#endregion
