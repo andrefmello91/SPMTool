@@ -24,7 +24,7 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para GraphWindow.xaml
 	/// </summary>
-	public partial class PlotWindow : Window, INotifyPropertyChanged
+	public partial class PlotWindow : INotifyPropertyChanged
 	{
 
 		#region Fields
@@ -196,6 +196,32 @@ namespace SPMTool.Application.UserInterface
 		#region Methods
 
 		/// <summary>
+		///     Get the label for a collection of SPM elements.
+		/// </summary>
+		private static string? GetLabel<TSPMElement>(IEnumerable<TSPMElement> elements, string append)
+			where TSPMElement : ISPMElement
+		{
+			switch (elements.Count())
+			{
+				case 0:
+					return null;
+
+				case 1:
+					return elements.First().Name + append;
+
+				default:
+					var type = elements.First() is Stringer
+						? "Stringers"
+						: "Panels";
+
+					var label = elements.Aggregate(type, (s, element) => $"{s} {element.Number},");
+
+					// Remove ","
+					return label.TrimEnd(',') + append;
+			}
+		}
+
+		/// <summary>
 		///     Get an <see cref="ObservablePoint" /> from a <see cref="MonitoredDisplacement" />.
 		/// </summary>
 		private static ObservablePoint GetPoint(MonitoredDisplacement monitoredDisplacement, LengthUnit unit) => new(monitoredDisplacement.Displacement.As(unit), monitoredDisplacement.LoadFactor);
@@ -221,48 +247,12 @@ namespace SPMTool.Application.UserInterface
 				.Where(e => e is Panel)
 				.ToList();
 
-			var label = string.Empty;
+			var label = GetLabel(stringers, " cracked!") ?? string.Empty;
 
-			if (stringers.Any())
-			{
-				switch (stringers.Count)
-				{
-					case 1:
-						label += stringers[0].Name;
-						break;
+			var pLabel = GetLabel(panels, " cracked!");
 
-					default:
-						label += stringers.Aggregate("Stringers", (s, element) => $"{s} {element.Number},");
-
-						// Remove ","
-						label = label.TrimEnd(',');
-						break;
-				}
-
-				label += " cracked!";
-			}
-
-			if (panels.Any())
-			{
-				if (stringers.Any())
-					label += "\n";
-
-				switch (panels.Count)
-				{
-					case 1:
-						label += panels[0].Name;
-						break;
-
-					default:
-						label += panels.Aggregate("Panels", (s, element) => $"{s} {element.Number},");
-
-						// Remove ","
-						label = label.TrimEnd(',');
-						break;
-				}
-
-				label += " cracked!";
-			}
+			if (pLabel is not null)
+				label += (label == string.Empty ? label : "\n") + pLabel;
 
 			_crackLabels.Add((label, pt));
 			CrackingPlot.Values.Add(pt);
@@ -455,6 +445,18 @@ namespace SPMTool.Application.UserInterface
 		///     Execute when an element cracks.
 		/// </summary>
 		private void OnElementsCracked(object sender, SPMElementEventArgs e)
+		{
+			var step = e.LoadStep!.Value;
+
+			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
+
+			Task.Run(() => AddCrackPoint(md, e.Elements));
+		}
+
+		/// <summary>
+		///     Execute when an element yields.
+		/// </summary>
+		private void OnElementsYielded(object sender, SPMElementEventArgs e)
 		{
 			var step = e.LoadStep!.Value;
 
