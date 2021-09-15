@@ -29,7 +29,10 @@ namespace SPMTool.Application.UserInterface
 
 		#region Fields
 
-		private readonly List<(string label, ObservablePoint point)> _crackLabels = new();
+		private readonly List<(string label, ObservablePoint point)>
+			_crackLabels = new(),
+			_yieldLabels = new(),
+			_crushLabels = new();
 
 		/// <summary>
 		///     The <see cref="LengthUnit" /> of displacements.
@@ -40,13 +43,7 @@ namespace SPMTool.Application.UserInterface
 
 		private readonly bool _simulate;
 
-		private bool _done;
-
-		private bool _inverted;
-
-		private bool _showCracks;
-		private bool _showCrushing;
-		private bool _showYielding;
+		private bool _done, _inverted, _showCracks, _showCrushing, _showYielding;
 
 		#endregion
 
@@ -116,6 +113,18 @@ namespace SPMTool.Application.UserInterface
 				$"{Label(point)}";
 		};
 
+		private Func<ChartPoint, string> CrushLabel => point =>
+		{
+			if (!_crushLabels.Any())
+				return Label(point);
+
+			var label = _crushLabels.First(p => (Inverted ? -p.point.X : p.point.X).Approx(point.X, 1E-6) && p.point.Y.Approx(point.Y, 1E-6)).label;
+
+			return
+				(label.IsNullOrEmpty() ? string.Empty : $"{label}\n") +
+				$"{Label(point)}";
+		};
+
 		private bool Done
 		{
 			get => _done;
@@ -163,6 +172,18 @@ namespace SPMTool.Application.UserInterface
 			}
 		}
 
+		private Func<ChartPoint, string> YieldLabel => point =>
+		{
+			if (!_yieldLabels.Any())
+				return Label(point);
+
+			var label = _yieldLabels.First(p => (Inverted ? -p.point.X : p.point.X).Approx(point.X, 1E-6) && p.point.Y.Approx(point.Y, 1E-6)).label;
+
+			return
+				(label.IsNullOrEmpty() ? string.Empty : $"{label}\n") +
+				$"{Label(point)}";
+		};
+
 		#endregion
 
 		#region Events
@@ -198,26 +219,59 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Get the label for a collection of SPM elements.
 		/// </summary>
-		private static string? GetLabel<TSPMElement>(IEnumerable<TSPMElement> elements, string append)
-			where TSPMElement : ISPMElement
+		private static string GetLabel(IEnumerable<ISPMElement> elements, ElementPlot elementPlot)
 		{
+			var append = elementPlot switch
+			{
+				ElementPlot.Cracking => ": Concrete cracked!",
+				ElementPlot.Crushing => ": Concrete crushed!",
+				_                    => null
+			};
+
 			switch (elements.Count())
 			{
 				case 0:
-					return null;
+					return string.Empty;
 
 				case 1:
+					var element = (INonlinearSPMElement) elements.First()!;
+
+					append ??= element.ConcreteYielded
+						? ": Concrete yielded!"
+						: ": Steel yielded!";
+
 					return elements.First().Name + append;
 
 				default:
-					var type = elements.First() is Stringer
-						? "Stringers"
-						: "Panels";
+					var stringers = elements
+						.Where(e => e is Stringer and INonlinearSPMElement)
+						.Cast<INonlinearSPMElement>()
+						.ToList();
 
-					var label = elements.Aggregate(type, (s, element) => $"{s} {element.Number},");
+					var panels = elements
+						.Where(e => e is Panel and INonlinearSPMElement)
+						.Cast<INonlinearSPMElement>()
+						.ToList();
+
+					var sLabel = stringers.Any() switch
+					{
+						true when append is not null && stringers.Count == 1 => stringers[0].Name + append,
+						true when append is not null                         => stringers.Aggregate("Stringers", (s, element) => $"{s} {element.Number},").Trim(',') + append,
+						true when append is null                             => GetYieldLabel(stringers),
+						_                                                    => null
+					};
+
+					var pLabel = panels.Any() switch
+					{
+						true when append is not null && panels.Count == 1 => panels[0].Name + append,
+						true when append is not null                      => panels.Aggregate("Panels", (s, element) => $"{s} {element.Number},").Trim(',') + append,
+						true when append is null                          => GetYieldLabel(panels),
+						_                                                 => null
+					};
 
 					// Remove ","
-					return label.TrimEnd(',') + append;
+					return
+						(sLabel ?? string.Empty) + (pLabel is null ? string.Empty : $"\n{pLabel}");
 			}
 		}
 
@@ -226,38 +280,56 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private static ObservablePoint GetPoint(MonitoredDisplacement monitoredDisplacement, LengthUnit unit) => new(monitoredDisplacement.Displacement.As(unit), monitoredDisplacement.LoadFactor);
 
+		/// <summary>
+		///     Get the label for yielded elements.
+		/// </summary>
+		private static string GetYieldLabel<TNonlinearSPMElement>(IEnumerable<TNonlinearSPMElement> elements)
+			where TNonlinearSPMElement : INonlinearSPMElement
+		{
+			switch (elements.Count())
+			{
+				case 0:
+					return string.Empty;
+
+				case 1:
+					var element = elements.First()!;
+
+					var append = element.ConcreteYielded
+						? ": Concrete yielded!"
+						: ": Steel yielded!";
+
+					return elements.First().Name + append;
+
+				default:
+					var prepend = elements.First() is Stringer
+						? "Stringers"
+						: "Panels";
+
+					var cYield = elements
+						.Where(e => e.ConcreteYielded)
+						.ToList();
+
+					var sYield = elements
+						.Where(e => e.SteelYielded)
+						.ToList();
+
+					var label = string.Empty;
+
+					if (cYield.Any())
+						label += $"{cYield.Aggregate(prepend, (s, element) => $"{s} {element.Number},").Trim(',')}: Concrete yielded!";
+
+					if (sYield.Any())
+						label += (label == string.Empty ? string.Empty : "\n") +
+						         $"{sYield.Aggregate(prepend, (s, element) => $"{s} {element.Number},").Trim(',')}: Steel yielded!";
+
+					return label;
+			}
+		}
+
 		[NotifyPropertyChangedInvocator]
 		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-		}
-
-		/// <summary>
-		///     Add the point of element's cracking.
-		/// </summary>
-		private async Task AddCrackPoint(MonitoredDisplacement monitoredDisplacement, IEnumerable<ISPMElement> elements)
-		{
-			var pt = GetPoint(monitoredDisplacement, _displacementUnit);
-
-			var stringers = elements
-				.Where(e => e is Stringer)
-				.ToList();
-
-			var panels = elements
-				.Where(e => e is Panel)
-				.ToList();
-
-			var label = GetLabel(stringers, " cracked!") ?? string.Empty;
-
-			var pLabel = GetLabel(panels, " cracked!");
-
-			if (pLabel is not null)
-				label += (label == string.Empty ? label : "\n") + pLabel;
-
-			_crackLabels.Add((label, pt));
-			CrackingPlot.Values.Add(pt);
-
-			await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
 		}
 
 		/// <summary>
@@ -266,6 +338,8 @@ namespace SPMTool.Application.UserInterface
 		private void AddEvents(SPMAnalysis analysis)
 		{
 			analysis.ElementsCracked += OnElementsCracked;
+			analysis.ElementsYielded += OnElementsYielded;
+			analysis.ElementsCrushed += OnElementsCrushed;
 		}
 
 		/// <summary>
@@ -275,6 +349,56 @@ namespace SPMTool.Application.UserInterface
 		{
 			_monitoredDisplacements.Add(monitoredDisplacement);
 			Plot.Values.Add(GetPoint(monitoredDisplacement, _displacementUnit));
+		}
+
+		// /// <summary>
+		// ///     Add the point of element's cracking.
+		// /// </summary>
+		// private async Task AddCrackPoint(MonitoredDisplacement monitoredDisplacement, IEnumerable<ISPMElement> elements)
+		// {
+		// 	var pt = GetPoint(monitoredDisplacement, _displacementUnit);
+		//
+		// 	var stringers = elements
+		// 		.Where(e => e is Stringer)
+		// 		.ToList();
+		//
+		// 	var panels = elements
+		// 		.Where(e => e is Panel)
+		// 		.ToList();
+		//
+		// 	var label = GetLabel(stringers, " cracked!") ?? string.Empty;
+		//
+		// 	var pLabel = GetLabel(panels, " cracked!");
+		//
+		// 	if (pLabel is not null)
+		// 		label += (label == string.Empty ? label : "\n") + pLabel;
+		//
+		// 	_crackLabels.Add((label, pt));
+		// 	CrackingPlot.Values.Add(pt);
+		//
+		// 	await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
+		// }
+
+		/// <summary>
+		///     Add the point of element's cracking, yielding or crushing.
+		/// </summary>
+		private async Task AddPoints(MonitoredDisplacement monitoredDisplacement, IEnumerable<ISPMElement> elements, ElementPlot elementPlot)
+		{
+			var pt = GetPoint(monitoredDisplacement, _displacementUnit);
+
+			var (plot, labels) = elementPlot switch
+			{
+				ElementPlot.Cracking => (CrackingPlot, _crackLabels),
+				ElementPlot.Yielding => (YieldingPlot, _yieldLabels),
+				_                    => (CrushingPlot, _crushLabels)
+			};
+
+			var label = GetLabel(elements, elementPlot);
+
+			labels.Add((label, pt));
+			plot.Values.Add(pt);
+
+			await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
 		}
 
 		/// <summary>
@@ -300,52 +424,20 @@ namespace SPMTool.Application.UserInterface
 			Plot.PointGeometry = null;
 			Plot.LabelPoint    = Label;
 
-			// Configure stringer and panel cracks
+			// Configure crack plot
 			CrackingPlot.Values        = new ChartValues<ObservablePoint>();
 			CrackingPlot.PointGeometry = DefaultGeometries.Circle;
 			CrackingPlot.LabelPoint    = CrackLabel;
 
-			/*// Initiate series
-			CartesianChart.Series = new SeriesCollection
-			{
-				// Full chart
-				new LineSeries
-				{
-					Title           = "Load Factor x Displacement",
-					Values          = new ChartValues<ObservablePoint>(new[] { new ObservablePoint(0, 0) }),
-					PointGeometry   = null,
-					StrokeThickness = 3,
-					Stroke          = Brushes.LightSkyBlue,
-					Fill            = Brushes.Transparent,
-					DataLabels      = false,
-					LabelPoint      = Label
-				},
-				new LineSeries
-				{
-					Title             = "Stringer cracking",
-					Values            = new ChartValues<ObservablePoint>(),
-					PointGeometry     = DefaultGeometries.Circle,
-					PointGeometrySize = 15,
-					PointForeground   = Brushes.Aqua,
-					StrokeThickness   = 3,
-					Stroke            = Brushes.Transparent,
-					Fill              = Brushes.Transparent,
-					DataLabels        = false,
-				},
-				new LineSeries
-				{
-					Title             = "Panel cracking",
-					Values            = new ChartValues<ObservablePoint>(),
-					PointGeometry     = DefaultGeometries.Circle,
-					PointGeometrySize = 15,
-					PointForeground   = Brushes.Gray,
-					StrokeThickness   = 3,
-					Stroke            = Brushes.Transparent,
-					Fill              = Brushes.Transparent,
-					DataLabels        = false
-				}
+			// Configure yield plot
+			YieldingPlot.Values        = new ChartValues<ObservablePoint>();
+			YieldingPlot.PointGeometry = DefaultGeometries.Circle;
+			YieldingPlot.LabelPoint    = YieldLabel;
 
-			};*/
+			// Configure crush plot
+			CrushingPlot.Values        = new ChartValues<ObservablePoint>();
+			CrushingPlot.PointGeometry = DefaultGeometries.Circle;
+			CrushingPlot.LabelPoint    = CrushLabel;
 		}
 
 		/// <summary>
@@ -444,28 +536,46 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Execute when an element cracks.
 		/// </summary>
-		private void OnElementsCracked(object sender, SPMElementEventArgs e)
+		private async void OnElementsCracked(object sender, SPMElementEventArgs e)
 		{
 			var step = e.LoadStep!.Value;
 
 			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
 
-			Task.Run(() => AddCrackPoint(md, e.Elements));
+			await AddPoints(md, e.Elements, ElementPlot.Cracking);
+		}
+
+		/// <summary>
+		///     Execute when an element crushes.
+		/// </summary>
+		private async void OnElementsCrushed(object sender, SPMElementEventArgs e)
+		{
+			var step = e.LoadStep!.Value;
+
+			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
+
+			await AddPoints(md, e.Elements, ElementPlot.Crushing);
 		}
 
 		/// <summary>
 		///     Execute when an element yields.
 		/// </summary>
-		private void OnElementsYielded(object sender, SPMElementEventArgs e)
+		private async void OnElementsYielded(object sender, SPMElementEventArgs e)
 		{
 			var step = e.LoadStep!.Value;
 
 			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
 
-			Task.Run(() => AddCrackPoint(md, e.Elements));
+			await AddPoints(md, e.Elements, ElementPlot.Yielding);
 		}
 
 		#endregion
 
+		private enum ElementPlot
+		{
+			Cracking,
+			Yielding,
+			Crushing
+		}
 	}
 }
