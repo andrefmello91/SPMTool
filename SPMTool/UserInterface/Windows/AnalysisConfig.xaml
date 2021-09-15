@@ -5,6 +5,7 @@
                           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                           xmlns:userInterface="clr-namespace:SPMTool.Application.UserInterface"
                           mc:Ignorable="d"
+                          d:DataContext="{d:DesignInstance userInterface:AnalysisConfig}"
                           Title="Analysis settings" Height="260" Width="320">
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
@@ -42,7 +43,7 @@
                     <TextBlock Text="Force Tolerance:" HorizontalAlignment="Left" VerticalAlignment="Center"
                                Grid.Row="1"
                                Grid.Column="1" />
-                    <TextBox Name="FToleranceBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                    <TextBox Name="FToleranceBox" Text="{Binding FTolerance}" VerticalAlignment="Center" VerticalContentAlignment="Center"
                              Height="25" Grid.Row="1" Grid.Column="3"
                              PreviewTextInput="DoubleValidation" />
                     <TextBlock Text="Displacement Tolerance:" HorizontalAlignment="Left" VerticalAlignment="Center"

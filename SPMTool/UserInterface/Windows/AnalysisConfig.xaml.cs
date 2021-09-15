@@ -29,10 +29,12 @@ namespace SPMTool.Application.UserInterface
 
 		#region Properties
 
+		public double FTolerance { get; set; }
+
 		/// <summary>
 		///     Get/set settings.
 		/// </summary>
-		private AnalysisParameters Parameters
+		public AnalysisParameters Parameters
 		{
 			get => AnalysisParameters.Default with
 			{
@@ -67,6 +69,8 @@ namespace SPMTool.Application.UserInterface
 			// Read saved settings
 			_database  = SPMModel.ActiveModel;
 			Parameters = _database.Settings.Analysis;
+
+			DataContext = this;
 		}
 
 		#endregion
