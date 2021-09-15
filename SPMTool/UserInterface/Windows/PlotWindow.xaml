@@ -4,10 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
-        xmlns:plotWindow="clr-namespace:SPMTool.Application.UserInterface"
+        xmlns:userInterface="clr-namespace:SPMTool.Application.UserInterface"
         mc:Ignorable="d"
         Title="Load x Displacement - Monitored Node" Height="520" Width="710"
-        d:DataContext="{d:DesignInstance plotWindow:PlotWindow}">
+        d:DataContext="{d:DesignInstance userInterface:PlotWindow}">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="bvc" />
     </Window.Resources>
