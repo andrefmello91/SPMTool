@@ -8,7 +8,7 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para AnalysisConfig.xaml
 	/// </summary>
-	public partial class AnalysisConfig : BaseWindow
+	public partial class AnalysisConfig
 	{
 
 		#region Fields

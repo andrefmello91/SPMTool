@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using andrefmello91.Extensions;
 using andrefmello91.Material.Reinforcement;
 using andrefmello91.SPMElements.StringerProperties;
+using SPMTool.Annotations;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
@@ -17,7 +20,7 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para StringerGeometryWindow.xaml
 	/// </summary>
-	public partial class StringerWindow
+	public partial class StringerWindow : INotifyPropertyChanged
 	{
 
 		#region Fields
@@ -29,6 +32,8 @@ namespace SPMTool.Application.UserInterface
 		private readonly PressureUnit _stressUnit;
 
 		private readonly List<StringerObject> _stringers;
+
+		private bool _reinforcementChecked, _setGeometry, _setReinforcement;
 
 		#endregion
 
@@ -45,6 +50,68 @@ namespace SPMTool.Application.UserInterface
 		public string HeaderText => _stringers.Count == 1
 			? $"Stringer {_stringers[0].Number}"
 			: $"{_stringers.Count} stringers selected";
+
+		/// <summary>
+		///     Gets and sets reinforcement checkbox state.
+		/// </summary>
+		public bool ReinforcementChecked
+		{
+			get => _reinforcementChecked;
+			set
+			{
+				// if (value)
+				// {
+				// 	ReinforcementBoxes.Enable();
+				//
+				// 	if (_database.Steels.Any())
+				// 		SavedSteel.Enable();
+				//
+				// 	if (_database.StringerReinforcements.Any())
+				// 		SavedReinforcement.Enable();
+				// }
+				// else
+				// {
+				// 	ReinforcementBoxes.Disable();
+				//
+				// 	if (_database.Steels.Any())
+				// 		SavedSteel.Disable();
+				//
+				// 	if (_database.StringerReinforcements.Any())
+				// 		SavedReinforcement.Disable();
+				// }
+
+				_reinforcementChecked = value;
+				OnPropertyChanged();
+			}
+		}
+
+		/// <summary>
+		///     Get and set option to save geometry to all stringers.
+		/// </summary>
+		public bool SetGeometry
+		{
+			get => _setGeometry;
+			set
+			{
+				_setGeometry = value;
+
+				OnPropertyChanged();
+			}
+		}
+
+		/// <summary>
+		///     Get and set option to save reinforcement to all stringers.
+		/// </summary>
+		public bool SetReinforcement
+		{
+			get => _setReinforcement;
+			set
+			{
+				_setReinforcement = value;
+
+				OnPropertyChanged();
+			}
+		}
 
 		public string StressUnit => _stressUnit.Abbrev();
 
@@ -130,60 +197,9 @@ namespace SPMTool.Application.UserInterface
 		private IEnumerable<TextBox> ReinforcementBoxes => new[] { NumBox, PhiBox, FBox, EBox };
 
 		/// <summary>
-		///     Gets and sets reinforcement checkbox state.
-		/// </summary>
-		private bool ReinforcementChecked
-		{
-			get => ReinforcementCheck.IsChecked ?? false;
-			set
-			{
-				if (value)
-				{
-					ReinforcementBoxes.Enable();
-
-					if (_database.Steels.Any())
-						SavedSteel.Enable();
-
-					if (_database.StringerReinforcements.Any())
-						SavedReinforcement.Enable();
-				}
-				else
-				{
-					ReinforcementBoxes.Disable();
-
-					if (_database.Steels.Any())
-						SavedSteel.Disable();
-
-					if (_database.StringerReinforcements.Any())
-						SavedReinforcement.Disable();
-				}
-
-				ReinforcementCheck.IsChecked = value;
-			}
-		}
-
-		/// <summary>
 		///     Verify if reinforcement text boxes are filled.
 		/// </summary>
 		private bool ReinforcementFilled => CheckBoxes(ReinforcementBoxes);
-
-		/// <summary>
-		///     Get and set option to save geometry to all stringers.
-		/// </summary>
-		private bool SetGeometry
-		{
-			get => SetGeometryBox.IsChecked ?? false;
-			set => SetGeometryBox.IsChecked = value;
-		}
-
-		/// <summary>
-		///     Get and set option to save reinforcement to all stringers.
-		/// </summary>
-		private bool SetReinforcement
-		{
-			get => SetReinforcementBox.IsChecked ?? false;
-			set => SetReinforcementBox.IsChecked = value;
-		}
 
 		/// <summary>
 		///     Get/set height.
@@ -211,6 +227,12 @@ namespace SPMTool.Application.UserInterface
 			get => Pressure.From(double.Parse(FBox.Text), _stressUnit);
 			set => FBox.Text = $"{value.As(_stressUnit):F3}";
 		}
+
+		#endregion
+
+		#region Events
+
+		public event PropertyChangedEventHandler? PropertyChanged;
 
 		#endregion
 
@@ -260,6 +282,12 @@ namespace SPMTool.Application.UserInterface
 		/// <returns></returns>
 		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.StringerReinforcements.Distinct()
 			.Select(r => $"{r.NumberOfBars:0} {(char) Character.Phi} {r.BarDiameter.As(database.Settings.Units.Reinforcement):F3}");
+
+		[NotifyPropertyChangedInvocator]
+		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
 
 		/// <summary>
 		///     Get the initial geometry data of stringers.
@@ -395,8 +423,6 @@ namespace SPMTool.Application.UserInterface
 			Close();
 		}
 
-		private void ReinforcementCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementChecked = ((CheckBox) sender).IsChecked ?? false;
-
 		private void SavedGeometries_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			var box = (ComboBox) sender;
@@ -438,10 +464,6 @@ namespace SPMTool.Application.UserInterface
 			// Update textboxes
 			OutputSteel = _database.Steels[i];
 		}
-
-		private void SetGeometry_OnCheck(object sender, RoutedEventArgs e) => SetGeometry = ((CheckBox) sender).IsChecked ?? false;
-
-		private void SetReinforcement_OnCheck(object sender, RoutedEventArgs e) => SetReinforcement = ((CheckBox) sender).IsChecked ?? false;
 
 		#endregion
 

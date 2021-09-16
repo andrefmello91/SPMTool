@@ -54,6 +54,20 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		public string DisplacementTitle => $"Displacement ({_displacementUnit.Abbrev()})";
 
+		public bool Done
+		{
+			get => _done;
+			set
+			{
+				_done = value;
+
+				if (value)
+					AnalysisOk();
+
+				OnPropertyChanged();
+			}
+		}
+
 		public bool ShowCracks
 		{
 			get => _showCracks;
@@ -124,18 +138,6 @@ namespace SPMTool.Application.UserInterface
 				(label.IsNullOrEmpty() ? string.Empty : $"{label}\n") +
 				$"{Label(point)}";
 		};
-
-		private bool Done
-		{
-			get => _done;
-			set
-			{
-				_done = value;
-
-				if (value)
-					AnalysisOk();
-			}
-		}
 
 		/// <summary>
 		///     Get/set inverted displacement axis state.
@@ -409,9 +411,6 @@ namespace SPMTool.Application.UserInterface
 			Status.Text = Analysis.Stop
 				? Analysis.StopMessage
 				: "Analysis done!";
-
-			ButtonExport.IsEnabled = true;
-			ButtonOk.IsEnabled     = true;
 		}
 
 		/// <summary>

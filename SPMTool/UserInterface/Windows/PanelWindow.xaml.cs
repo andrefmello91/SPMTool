@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using andrefmello91.Extensions;
 using andrefmello91.Material.Reinforcement;
 using MathNet.Numerics;
+using SPMTool.Annotations;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
@@ -19,7 +22,7 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para StringerGeometryWindow.xaml
 	/// </summary>
-	public partial class PanelWindow
+	public partial class PanelWindow : INotifyPropertyChanged
 	{
 
 		#region Fields
@@ -30,6 +33,7 @@ namespace SPMTool.Application.UserInterface
 		private readonly List<PanelObject> _panels;
 		private readonly LengthUnit _reinforcementUnit;
 		private readonly PressureUnit _stressUnit;
+		private bool _reinforcementXChecked, _reinforcementYChecked, _setGeometry, _setReinforcement;
 
 		#endregion
 
@@ -46,6 +50,62 @@ namespace SPMTool.Application.UserInterface
 		public string HeaderText => _panels.Count == 1
 			? $"Panel {_panels[0].Number}"
 			: $"{_panels.Count} panels selected";
+
+		/// <summary>
+		///     Gets and sets X reinforcement checkbox state.
+		/// </summary>
+		public bool ReinforcementXChecked
+		{
+			get => _reinforcementXChecked;
+			set
+			{
+				_reinforcementXChecked = value;
+
+				OnPropertyChanged();
+			}
+		}
+
+		/// <summary>
+		///     Gets and sets Y reinforcement checkbox state.
+		/// </summary>
+		public bool ReinforcementYChecked
+		{
+			get => _reinforcementYChecked;
+			set
+			{
+				_reinforcementYChecked = value;
+
+				OnPropertyChanged();
+			}
+		}
+
+		/// <summary>
+		///     Get and set option to save geometry to all stringers.
+		/// </summary>
+		public bool SetGeometry
+		{
+			get => _setGeometry;
+			set
+			{
+				_setGeometry = value;
+
+				OnPropertyChanged();
+			}
+		}
+
+		/// <summary>
+		///     Get and set option to save reinforcement to all stringers.
+		/// </summary>
+		public bool SetReinforcement
+		{
+			get => _setReinforcement;
+			set
+			{
+				_setReinforcement = value;
+
+				OnPropertyChanged();
+			}
+		}
 
 		public string StressUnit => _stressUnit.Abbrev();
 
@@ -135,39 +195,6 @@ namespace SPMTool.Application.UserInterface
 		private IEnumerable<TextBox> ReinforcementXBoxes => new[] { SxBox, PhiXBox, NxBox, FxBox, ExBox };
 
 		/// <summary>
-		///     Gets and sets X reinforcement checkbox state.
-		/// </summary>
-		private bool ReinforcementXChecked
-		{
-			get => ReinforcementXCheck.IsChecked ?? false;
-			set
-			{
-				if (value)
-				{
-					ReinforcementXBoxes.Enable();
-
-					if (_database.Steels.Any())
-						SavedSteelX.Enable();
-
-					if (_database.PanelReinforcements.Any())
-						SavedReinforcementX.Enable();
-				}
-				else
-				{
-					ReinforcementXBoxes.Disable();
-
-					if (_database.Steels.Any())
-						SavedSteelX.Disable();
-
-					if (_database.PanelReinforcements.Any())
-						SavedReinforcementX.Disable();
-				}
-
-				ReinforcementXCheck.IsChecked = value;
-			}
-		}
-
-		/// <summary>
 		///     Verify if X reinforcement text boxes are filled.
 		/// </summary>
 		private bool ReinforcementXFilled => CheckBoxes(ReinforcementXBoxes);
@@ -178,60 +205,9 @@ namespace SPMTool.Application.UserInterface
 		private IEnumerable<TextBox> ReinforcementYBoxes => new[] { SyBox, PhiYBox, NyBox, FyBox, EyBox };
 
 		/// <summary>
-		///     Gets and sets Y reinforcement checkbox state.
-		/// </summary>
-		private bool ReinforcementYChecked
-		{
-			get => ReinforcementYCheck.IsChecked ?? false;
-			set
-			{
-				if (value)
-				{
-					ReinforcementYBoxes.Enable();
-
-					if (_database.Steels.Any())
-						SavedSteelY.Enable();
-
-					if (_database.PanelReinforcements.Any())
-						SavedReinforcementY.Enable();
-				}
-				else
-				{
-					ReinforcementYBoxes.Disable();
-
-					if (_database.Steels.Any())
-						SavedSteelY.Disable();
-
-					if (_database.PanelReinforcements.Any())
-						SavedReinforcementY.Disable();
-				}
-
-				ReinforcementYCheck.IsChecked = value;
-			}
-		}
-
-		/// <summary>
 		///     Verify if Y reinforcement text boxes are filled.
 		/// </summary>
 		private bool ReinforcementYFilled => CheckBoxes(ReinforcementYBoxes);
-
-		/// <summary>
-		///     Get and set option to save geometry to all stringers.
-		/// </summary>
-		private bool SetGeometry
-		{
-			get => SetGeometryBox.IsChecked ?? false;
-			set => SetGeometryBox.IsChecked = value;
-		}
-
-		/// <summary>
-		///     Get and set option to save reinforcement to all stringers.
-		/// </summary>
-		private bool SetReinforcement
-		{
-			get => SetReinforcementBox.IsChecked ?? false;
-			set => SetReinforcementBox.IsChecked = value;
-		}
 
 		/// <summary>
 		///     Verify if geometry text boxes are filled.
@@ -330,6 +306,12 @@ namespace SPMTool.Application.UserInterface
 
 		#endregion
 
+		#region Events
+
+		public event PropertyChangedEventHandler? PropertyChanged;
+
+		#endregion
+
 		#region Constructors
 
 		public PanelWindow(IEnumerable<PanelObject> panels)
@@ -372,6 +354,12 @@ namespace SPMTool.Application.UserInterface
 		/// <returns></returns>
 		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.PanelReinforcements.Distinct()
 			.Select(r => $"{(char) Character.Phi} {r.BarDiameter.As(database.Settings.Units.Reinforcement):F3} at {r.BarSpacing.As(database.Settings.Units.Geometry):F3}");
+
+		[NotifyPropertyChangedInvocator]
+		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
 
 		/// <summary>
 		///     Get the initial geometry data of panels.
@@ -520,10 +508,6 @@ namespace SPMTool.Application.UserInterface
 			Close();
 		}
 
-		private void ReinforcementXCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementXChecked = ((CheckBox) sender).IsChecked ?? false;
-
-		private void ReinforcementYCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementYChecked = ((CheckBox) sender).IsChecked ?? false;
-
 		private void SavedGeometries_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			var box = (ComboBox) sender;
@@ -593,10 +577,6 @@ namespace SPMTool.Application.UserInterface
 			// Update textboxes
 			OutputSteelY = _database.Steels[i];
 		}
-
-		private void SetGeometry_OnCheck(object sender, RoutedEventArgs e) => SetGeometry = ((CheckBox) sender).IsChecked ?? false;
-
-		private void SetReinforcement_OnCheck(object sender, RoutedEventArgs e) => SetReinforcement = ((CheckBox) sender).IsChecked ?? false;
 
 		#endregion
 

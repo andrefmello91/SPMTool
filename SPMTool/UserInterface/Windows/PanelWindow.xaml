@@ -5,6 +5,7 @@
                           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                           xmlns:userInterface="clr-namespace:SPMTool.Application.UserInterface"
                           mc:Ignorable="d"
+                          d:DataContext="{d:DesignInstance userInterface:PanelWindow}"
                           Title="Set width and reinforcement to selected panels" Height="380" Width="770">
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
@@ -80,16 +81,16 @@
                 <ColumnDefinition Width="65" />
                 <ColumnDefinition Width="45" />
             </Grid.ColumnDefinitions>
-            <CheckBox Name="ReinforcementXCheck" Content="Reinforcement X"
+            <CheckBox Content="Reinforcement X" IsChecked="{Binding ReinforcementXChecked, Mode=TwoWay}"
                       ToolTip="Apply reinforcement in X direction. Disable to remove reinforcement in this direction."
                       HorizontalAlignment="Left" VerticalAlignment="Center" FontWeight="SemiBold" Grid.ColumnSpan="2"
-                      Margin="0,0,0,0" Checked="ReinforcementXCheck_OnCheck" Unchecked="ReinforcementXCheck_OnCheck" />
+                      Margin="0,0,0,0"/>
             <ComboBox Name="SavedReinforcementX" VerticalContentAlignment="Center" HorizontalAlignment="left"
                       Grid.Column="1" Grid.ColumnSpan="2" Width="110" Height="23"
                       ToolTip="Reinforcement used in other elements."
                       SelectionChanged="SavedReinforcementX_OnSelectionChanged" />
             <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="1" Grid.ColumnSpan="3">
-                <StackPanel>
+                <StackPanel IsEnabled="{Binding ReinforcementXChecked}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="5" />
@@ -163,16 +164,16 @@
                 <ColumnDefinition Width="65" />
                 <ColumnDefinition Width="45" />
             </Grid.ColumnDefinitions>
-            <CheckBox Name="ReinforcementYCheck" Content="Reinforcement Y"
+            <CheckBox Content="Reinforcement Y" IsChecked="{Binding ReinforcementYChecked, Mode=TwoWay}"
                       ToolTip="Apply reinforcement in Y direction. Disable to remove reinforcement in this direction."
                       HorizontalAlignment="Left" VerticalAlignment="Center" FontWeight="SemiBold" Grid.ColumnSpan="2"
-                      Margin="0,0,0,0" Checked="ReinforcementYCheck_OnCheck" Unchecked="ReinforcementYCheck_OnCheck" />
+                      Margin="0,0,0,0"/>
             <ComboBox Name="SavedReinforcementY" VerticalContentAlignment="Center" HorizontalAlignment="left"
                       Grid.Column="1" Grid.ColumnSpan="2" Width="110" Height="23"
                       ToolTip="Reinforcement used in other elements."
                       SelectionChanged="SavedReinforcementY_OnSelectionChanged" />
             <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="1" Grid.ColumnSpan="3">
-                <StackPanel>
+                <StackPanel IsEnabled="{Binding ReinforcementYChecked}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="5" />
@@ -235,16 +236,14 @@
                 </StackPanel>
             </Border>
         </Grid>
-        <TextBlock Text="Set:" Grid.Row="6" Grid.Column="3" HorizontalAlignment="Left" VerticalAlignment="Center"
+        <TextBlock Text="Set:" FontWeight="SemiBold" Grid.Row="6" Grid.Column="3" HorizontalAlignment="Left" VerticalAlignment="Center"
                    Width="25" Margin="0,0,0,0" />
-        <CheckBox Name="SetGeometryBox" Content="Geometry"
+        <CheckBox Content="Geometry" FontWeight="SemiBold" IsChecked="{Binding SetGeometry, Mode=TwoWay}"
                   ToolTip="Set geometry. Disable to leave each panel widths unchanged." HorizontalAlignment="Left"
-                  VerticalAlignment="Center" Grid.Row="6" Grid.Column="3" Margin="25,0,0,0"
-                  Checked="SetGeometry_OnCheck" Unchecked="SetGeometry_OnCheck" />
-        <CheckBox Name="SetReinforcementBox" Content="Reinforcement"
+                  VerticalAlignment="Center" Grid.Row="6" Grid.Column="3" Margin="25,0,0,0"/>
+        <CheckBox Content="Reinforcement" FontWeight="SemiBold" IsChecked="{Binding SetReinforcement, Mode=TwoWay}"
                   ToolTip="Set reinforcement. Disable to leave each panel reinforcement unchanged."
-                  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="6" Grid.Column="3" Margin="105,0,0,0"
-                  Checked="SetReinforcement_OnCheck" Unchecked="SetReinforcement_OnCheck" />
+                  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="6" Grid.Column="3" Margin="105,0,0,0"/>
         <Button Content="OK" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75"
                 Click="ButtonOK_OnClick" ToolTip="Save panel parameters" Grid.Row="6" Grid.Column="5" Height="20"
                 Margin="0,6,0,5" />

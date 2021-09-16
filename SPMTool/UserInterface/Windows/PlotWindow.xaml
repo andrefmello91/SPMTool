@@ -65,9 +65,9 @@
             <CheckBox Content="Crushing" IsChecked="{Binding ShowCrushing, Mode=TwoWay}" FontWeight="SemiBold" Foreground="WhiteSmoke" VerticalAlignment="Center"
                      Width="80" ToolTip="Show when elements crushed." />
         </StackPanel>
-        <Button Name="ButtonExport" Content="Export" IsEnabled="False" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
+        <Button Name="ButtonExport" Content="Export" IsEnabled="{Binding Done}" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
                 Margin="0,0,80,0" Width="58" Click="ButtonExport_OnClick" ToolTip="Export analysis results" />
-        <Button Name="ButtonOk" Content="OK" IsEnabled="False" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
+        <Button Name="ButtonOk" Content="OK" IsEnabled="{Binding Done}" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
                 Margin="0,0,10,0" Width="47" Click="ButtonOK_OnClick" />
     </Grid>
 </Window>
