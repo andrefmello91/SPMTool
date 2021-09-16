@@ -29,8 +29,6 @@ namespace SPMTool.Application.UserInterface
 
 		#region Properties
 
-		public double FTolerance { get; set; }
-
 		/// <summary>
 		///     Get/set settings.
 		/// </summary>
