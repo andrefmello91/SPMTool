@@ -353,34 +353,6 @@ namespace SPMTool.Application.UserInterface
 			Plot.Values.Add(GetPoint(monitoredDisplacement, _displacementUnit));
 		}
 
-		// /// <summary>
-		// ///     Add the point of element's cracking.
-		// /// </summary>
-		// private async Task AddCrackPoint(MonitoredDisplacement monitoredDisplacement, IEnumerable<ISPMElement> elements)
-		// {
-		// 	var pt = GetPoint(monitoredDisplacement, _displacementUnit);
-		//
-		// 	var stringers = elements
-		// 		.Where(e => e is Stringer)
-		// 		.ToList();
-		//
-		// 	var panels = elements
-		// 		.Where(e => e is Panel)
-		// 		.ToList();
-		//
-		// 	var label = GetLabel(stringers, " cracked!") ?? string.Empty;
-		//
-		// 	var pLabel = GetLabel(panels, " cracked!");
-		//
-		// 	if (pLabel is not null)
-		// 		label += (label == string.Empty ? label : "\n") + pLabel;
-		//
-		// 	_crackLabels.Add((label, pt));
-		// 	CrackingPlot.Values.Add(pt);
-		//
-		// 	await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
-		// }
-
 		/// <summary>
 		///     Add the point of element's cracking, yielding or crushing.
 		/// </summary>

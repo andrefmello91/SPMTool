@@ -6,7 +6,7 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para UnitsConfig.xaml
 	/// </summary>
-	public partial class DisplayConfig : BaseWindow
+	public partial class DisplayConfig
 	{
 
 		#region Fields

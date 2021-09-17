@@ -1,9 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using andrefmello91.Extensions;
 using andrefmello91.Material.Concrete;
+using SPMTool.Annotations;
 using SPMTool.Core;
 using UnitsNet;
 using UnitsNet.Units;
@@ -13,7 +15,7 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para ConcreteConfig.xaml
 	/// </summary>
-	public partial class ConcreteConfig : BaseWindow
+	public partial class ConcreteConfig : INotifyPropertyChanged
 	{
 
 		#region Fields
@@ -32,6 +34,7 @@ namespace SPMTool.Application.UserInterface
 		private readonly PressureUnit _stressUnit;
 
 		private IConcreteParameters _parameters;
+		private bool _setCustomParameters;
 
 		#endregion
 
@@ -41,6 +44,19 @@ namespace SPMTool.Application.UserInterface
 		///     Get aggregate diameter unit.
 		/// </summary>
 		public string AggregateUnit => _aggUnit.Abbrev();
+
+		/// <summary>
+		///     Set true to enable custom parameter setting.
+		/// </summary>
+		public bool SetCustomParameters
+		{
+			get => _setCustomParameters;
+			set
+			{
+				_setCustomParameters = value;
+				OnPropertyChanged();
+			}
+		}
 
 		/// <summary>
 		///     Get the stress unit.
@@ -60,19 +76,20 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
-		///     Get the text boxes for custom parameters.
-		/// </summary>
-		private IEnumerable<TextBox> CustomParameterBoxes => new[] { ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox };
-
-		/// <summary>
 		///     Verify if custom parameters text boxes are filled.
 		/// </summary>
-		private bool CustomParametersSet => CheckBoxes(CustomParameterBoxes);
+		private bool CustomParametersSet => CheckBoxes(ModuleBox, TensileBox, PlasticStrainBox, UltStrainBox);
 
 		/// <summary>
 		///     Verify if strength and aggregate diameter text boxes are filled.
 		/// </summary>
 		private bool ParametersSet => CheckBoxes(StrengthBox, AggDiamBox);
+
+		#endregion
+
+		#region Events
+
+		public event PropertyChangedEventHandler? PropertyChanged;
 
 		#endregion
 
@@ -108,6 +125,12 @@ namespace SPMTool.Application.UserInterface
 		#endregion
 
 		#region Methods
+
+		[NotifyPropertyChangedInvocator]
+		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
 
 		/// <summary>
 		///     Get custom parameters.
@@ -145,8 +168,8 @@ namespace SPMTool.Application.UserInterface
 
 			UpdateCustomParameterBoxes();
 
-			if (_parameters.Model != ParameterModel.Custom)
-				CustomParameterBoxes.Disable();
+			if (_parameters.Model is ParameterModel.Custom)
+				SetCustomParameters = true;
 		}
 
 		/// <summary>
@@ -254,12 +277,12 @@ namespace SPMTool.Application.UserInterface
 			if (model != ParameterModel.Custom)
 			{
 				UpdateCustomParameterBoxes();
-				CustomParameterBoxes.Disable();
+				SetCustomParameters = false;
 				return;
 			}
 
 			GetCustomParameters();
-			CustomParameterBoxes.Enable();
+			SetCustomParameters = true;
 		}
 
 		private void StrengthBox_OnTextChanged(object sender, TextChangedEventArgs e)

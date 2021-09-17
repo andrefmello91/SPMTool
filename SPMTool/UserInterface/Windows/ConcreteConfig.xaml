@@ -5,7 +5,8 @@
                           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                           xmlns:userInterface="clr-namespace:SPMTool.Application.UserInterface"
                           mc:Ignorable="d"
-                          Title="Concrete Parameters" Height="400" Width="640" d:DataContext="{d:DesignData }">
+                          d:DataContext="{d:DesignInstance userInterface:ConcreteConfig}"
+                          Title="Concrete Parameters" Height="400" Width="640">
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="30" />
@@ -82,7 +83,7 @@
         <ComboBox Name="ParameterBox" VerticalAlignment="Center" Width="80" Height="25" Grid.Row="2" Grid.Column="3"
                   ToolTip="Select a parameter model or use custom parameters" />
         <Border BorderBrush="SlateGray" BorderThickness="1" Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="3">
-            <StackPanel>
+            <StackPanel IsEnabled="{Binding SetCustomParameters}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="5" />
@@ -137,10 +138,10 @@
         </Border>
 
         <Button Content="OK" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75"
-                Grid.Row="6" Grid.Column="3" Grid.ColumnSpan="2" Click="ButtonOK_OnClick"
+                Grid.Row="4" Grid.Column="3" Grid.ColumnSpan="2" Click="ButtonOK_OnClick"
                 ToolTip="Save concrete parameters" />
         <Button Content="Cancel" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center"
-                Width="75" Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="3" Margin="0,0,80,0"
+                Width="75" Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="3" Margin="0,0,80,0"
                 Click="ButtonCancel_OnClick" ToolTip="Discard changes" />
     </Grid>
 </userInterface:BaseWindow>
