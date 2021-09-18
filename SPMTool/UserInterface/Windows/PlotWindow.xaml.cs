@@ -225,9 +225,10 @@ namespace SPMTool.Application.UserInterface
 		{
 			var append = elementPlot switch
 			{
-				ElementPlot.Cracking => ": Concrete cracked!",
-				ElementPlot.Crushing => ": Concrete crushed!",
-				_                    => null
+				ElementPlot.Cracking         => ": Concrete cracked!",
+				ElementPlot.Crushing         => ": Concrete crushed!",
+				ElementPlot.ConcreteYielding => ": Concrete yielded!",
+				_                            => ": Steel yielded!"
 			};
 
 			switch (elements.Count())
@@ -236,44 +237,36 @@ namespace SPMTool.Application.UserInterface
 					return string.Empty;
 
 				case 1:
-					var element = (INonlinearSPMElement) elements.First()!;
-
-					append ??= element.ConcreteYielded
-						? ": Concrete yielded!"
-						: ": Steel yielded!";
-
 					return elements.First().Name + append;
 
 				default:
 					var stringers = elements
-						.Where(e => e is Stringer and INonlinearSPMElement)
-						.Cast<INonlinearSPMElement>()
+						.Where(e => e is Stringer)
 						.ToList();
 
 					var panels = elements
-						.Where(e => e is Panel and INonlinearSPMElement)
-						.Cast<INonlinearSPMElement>()
+						.Where(e => e is Panel)
 						.ToList();
 
 					var sLabel = stringers.Any() switch
 					{
-						true when append is not null && stringers.Count == 1 => stringers[0].Name + append,
-						true when append is not null                         => stringers.Aggregate("Stringers", (s, element) => $"{s} {element.Number},").Trim(',') + append,
-						true when append is null                             => GetYieldLabel(stringers),
-						_                                                    => null
+						true when stringers.Count == 1 => stringers[0].Name + append,
+						true                           => stringers.Aggregate("Stringers", (s, element) => $"{s} {element.Number},").Trim(',') + append,
+						_                              => null
 					};
 
 					var pLabel = panels.Any() switch
 					{
-						true when append is not null && panels.Count == 1 => panels[0].Name + append,
-						true when append is not null                      => panels.Aggregate("Panels", (s, element) => $"{s} {element.Number},").Trim(',') + append,
-						true when append is null                          => GetYieldLabel(panels),
-						_                                                 => null
+						true when panels.Count == 1 => panels[0].Name + append,
+						true                        => panels.Aggregate("Panels", (s, element) => $"{s} {element.Number},").Trim(',') + append,
+						_                           => null
 					};
 
 					// Remove ","
 					return
-						(sLabel ?? string.Empty) + (pLabel is null ? string.Empty : $"\n{pLabel}");
+						(sLabel ?? string.Empty) +
+						(sLabel is not null && pLabel is not null ? "\n" : string.Empty) +
+						(pLabel ?? string.Empty);
 			}
 		}
 
@@ -281,52 +274,6 @@ namespace SPMTool.Application.UserInterface
 		///     Get an <see cref="ObservablePoint" /> from a <see cref="MonitoredDisplacement" />.
 		/// </summary>
 		private static ObservablePoint GetPoint(MonitoredDisplacement monitoredDisplacement, LengthUnit unit) => new(monitoredDisplacement.Displacement.As(unit), monitoredDisplacement.LoadFactor);
-
-		/// <summary>
-		///     Get the label for yielded elements.
-		/// </summary>
-		private static string GetYieldLabel<TNonlinearSPMElement>(IEnumerable<TNonlinearSPMElement> elements)
-			where TNonlinearSPMElement : INonlinearSPMElement
-		{
-			switch (elements.Count())
-			{
-				case 0:
-					return string.Empty;
-
-				case 1:
-					var element = elements.First()!;
-
-					var append = element.ConcreteYielded
-						? ": Concrete yielded!"
-						: ": Steel yielded!";
-
-					return elements.First().Name + append;
-
-				default:
-					var prepend = elements.First() is Stringer
-						? "Stringers"
-						: "Panels";
-
-					var cYield = elements
-						.Where(e => e.ConcreteYielded)
-						.ToList();
-
-					var sYield = elements
-						.Where(e => e.SteelYielded)
-						.ToList();
-
-					var label = string.Empty;
-
-					if (cYield.Any())
-						label += $"{cYield.Aggregate(prepend, (s, element) => $"{s} {element.Number},").Trim(',')}: Concrete yielded!";
-
-					if (sYield.Any())
-						label += (label == string.Empty ? string.Empty : "\n") +
-						         $"{sYield.Aggregate(prepend, (s, element) => $"{s} {element.Number},").Trim(',')}: Steel yielded!";
-
-					return label;
-			}
-		}
 
 		[NotifyPropertyChangedInvocator]
 		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -339,9 +286,10 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private void AddEvents(SPMAnalysis analysis)
 		{
-			analysis.ElementsCracked += OnElementsCracked;
-			analysis.ElementsYielded += OnElementsYielded;
-			analysis.ElementsCrushed += OnElementsCrushed;
+			analysis.ElementsCracked         += OnElementsCracked;
+			analysis.ElementsConcreteYielded += OnElementsConcreteYielded;
+			analysis.ElementsSteelYielded    += OnElementsSteelYielded;
+			analysis.ElementsCrushed         += OnElementsCrushed;
 		}
 
 		/// <summary>
@@ -363,8 +311,8 @@ namespace SPMTool.Application.UserInterface
 			var (plot, labels) = elementPlot switch
 			{
 				ElementPlot.Cracking => (CrackingPlot, _crackLabels),
-				ElementPlot.Yielding => (YieldingPlot, _yieldLabels),
-				_                    => (CrushingPlot, _crushLabels)
+				ElementPlot.Crushing => (CrushingPlot, _crushLabels),
+				_                    => (YieldingPlot, _yieldLabels)
 			};
 
 			var label = GetLabel(elements, elementPlot);
@@ -505,6 +453,18 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
+		///     Execute when an element's concrete yields.
+		/// </summary>
+		private async void OnElementsConcreteYielded(object sender, SPMElementEventArgs e)
+		{
+			var step = e.LoadStep!.Value;
+
+			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
+
+			await AddPoints(md, e.Elements, ElementPlot.ConcreteYielding);
+		}
+
+		/// <summary>
 		///     Execute when an element cracks.
 		/// </summary>
 		private async void OnElementsCracked(object sender, SPMElementEventArgs e)
@@ -529,15 +489,15 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
-		///     Execute when an element yields.
+		///     Execute when an element's steel yields.
 		/// </summary>
-		private async void OnElementsYielded(object sender, SPMElementEventArgs e)
+		private async void OnElementsSteelYielded(object sender, SPMElementEventArgs e)
 		{
 			var step = e.LoadStep!.Value;
 
 			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
 
-			await AddPoints(md, e.Elements, ElementPlot.Yielding);
+			await AddPoints(md, e.Elements, ElementPlot.SteelYielding);
 		}
 
 		#endregion
@@ -545,7 +505,8 @@ namespace SPMTool.Application.UserInterface
 		private enum ElementPlot
 		{
 			Cracking,
-			Yielding,
+			ConcreteYielding,
+			SteelYielding,
 			Crushing
 		}
 	}
