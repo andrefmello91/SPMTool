@@ -85,7 +85,7 @@
                       ToolTip="Apply reinforcement in X direction. Disable to remove reinforcement in this direction."
                       HorizontalAlignment="Left" VerticalAlignment="Center" FontWeight="SemiBold" Grid.ColumnSpan="2"
                       Margin="0,0,0,0"/>
-            <ComboBox Name="SavedReinforcementX" VerticalContentAlignment="Center" HorizontalAlignment="left"
+            <ComboBox Name="SavedReinforcementX" IsEnabled="{Binding ReinforcementXChecked}" VerticalContentAlignment="Center" HorizontalAlignment="left"
                       Grid.Column="1" Grid.ColumnSpan="2" Width="110" Height="23"
                       ToolTip="Reinforcement used in other elements."
                       SelectionChanged="SavedReinforcementX_OnSelectionChanged" />
@@ -168,7 +168,7 @@
                       ToolTip="Apply reinforcement in Y direction. Disable to remove reinforcement in this direction."
                       HorizontalAlignment="Left" VerticalAlignment="Center" FontWeight="SemiBold" Grid.ColumnSpan="2"
                       Margin="0,0,0,0"/>
-            <ComboBox Name="SavedReinforcementY" VerticalContentAlignment="Center" HorizontalAlignment="left"
+            <ComboBox Name="SavedReinforcementY" IsEnabled="{Binding ReinforcementXChecked}" VerticalContentAlignment="Center" HorizontalAlignment="left"
                       Grid.Column="1" Grid.ColumnSpan="2" Width="110" Height="23"
                       ToolTip="Reinforcement used in other elements."
                       SelectionChanged="SavedReinforcementY_OnSelectionChanged" />
