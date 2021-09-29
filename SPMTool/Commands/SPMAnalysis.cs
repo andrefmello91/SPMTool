@@ -1,8 +1,12 @@
-﻿using andrefmello91.FEMAnalysis;
+﻿using System.Linq;
+using andrefmello91.Extensions;
+using andrefmello91.FEMAnalysis;
 using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
+using SPMTool.Core.Elements;
+using SPMTool.Enums;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 #nullable enable
@@ -68,6 +72,26 @@ namespace SPMTool.Commands
 
 			if (!uIndexn.HasValue)
 				return;
+
+			// Get elements to monitor
+			var elements = model.AcadDatabase.GetObjects("Select stringers and panels to monitor. Press ESC to disable element monitoring", new[] { Layer.Stringer, Layer.Panel });
+
+			if (!elements.IsNullOrEmpty())
+			{
+				// Get SPM object names
+				var names = elements
+					.Select(e => model.GetSPMObject(e) is ISPMObject spmElement ? spmElement.Name : null)
+					.Where(s => s is not null);
+
+				var mds = input.Cast<INumberedElement>()
+					.Concat(input.Grips)
+					.Where(e => e is IMonitoredElement && names.Contains(e.Name))
+					.Cast<IMonitoredElement>()
+					.ToList();
+
+				foreach (var element in mds)
+					element.Monitored = true;
+			}
 
 			// Get analysis settings
 			var settings = SPMModel.ActiveModel.Settings.Analysis;

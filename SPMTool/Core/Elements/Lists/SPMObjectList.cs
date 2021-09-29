@@ -14,7 +14,7 @@ namespace SPMTool.Core.Elements
 	/// <typeparam name="TSPMObject">Any type that implements <see cref="ISPMObject{T1}" />.</typeparam>
 	/// <typeparam name="TProperty">The type that represents the main property of the object.</typeparam>
 	public abstract class SPMObjectList<TSPMObject, TProperty> : DBObjectCreatorList<TSPMObject>
-		where TSPMObject : ISPMObject<TProperty>, IDBObjectCreator, IEquatable<TSPMObject>, IComparable<TSPMObject>
+		where TSPMObject : SPMObject<TProperty>, IDBObjectCreator, IEquatable<TSPMObject>, IComparable<TSPMObject>
 		where TProperty : IComparable<TProperty>, IEquatable<TProperty>
 	{
 
