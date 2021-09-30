@@ -44,17 +44,18 @@ namespace SPMTool.Commands
 		}
 
 		[CommandMethod(Command.Nonlinear)]
-		public static void NonLinearAnalysis() => ExecuteNonlinearAnalysis();
+		public static void NonLinearAnalysis() => ExecuteNonlinearAnalysis(true);
 
 
 		[CommandMethod(Command.Simulation)]
-		public static void Simulation() => ExecuteNonlinearAnalysis(true);
+		public static void Simulation() => ExecuteNonlinearAnalysis(true, true);
 
 		/// <summary>
 		///     Execute the nonlinear analysis.
 		/// </summary>
+		/// <param name="monitorElements">Prompt to choose elements other than the monitored node?.</param>
 		/// <param name="simulate">Execute a simulation until failure?</param>
-		private static void ExecuteNonlinearAnalysis(bool simulate = false)
+		private static void ExecuteNonlinearAnalysis(bool monitorElements = false, bool simulate = false)
 		{
 			var model = SPMModel.ActiveModel;
 
@@ -74,24 +75,8 @@ namespace SPMTool.Commands
 				return;
 
 			// Get elements to monitor
-			var elements = model.AcadDatabase.GetObjects("Select stringers and panels to monitor. Press ESC to disable element monitoring", new[] { Layer.Stringer, Layer.Panel });
-
-			if (!elements.IsNullOrEmpty())
-			{
-				// Get SPM object names
-				var names = elements
-					.Select(e => model.GetSPMObject(e) is ISPMObject spmElement ? spmElement.Name : null)
-					.Where(s => s is not null);
-
-				var mds = input.Cast<INumberedElement>()
-					.Concat(input.Grips)
-					.Where(e => e is IMonitoredElement && names.Contains(e.Name))
-					.Cast<IMonitoredElement>()
-					.ToList();
-
-				foreach (var element in mds)
-					element.Monitored = true;
-			}
+			if (monitorElements)
+				SetMonitors(model, input);
 
 			// Get analysis settings
 			var settings = SPMModel.ActiveModel.Settings.Analysis;
@@ -104,6 +89,33 @@ namespace SPMTool.Commands
 
 			var results = new SPMResults(model);
 			results.DrawResults();
+		}
+
+		/// <summary>
+		///     Set monitors to elements.
+		/// </summary>
+		/// <param name="model">The SPM model.</param>
+		/// <param name="input">The finite element input.</param>
+		private static void SetMonitors(SPMModel model, IFEMInput input)
+		{
+			var elements = model.AcadDatabase.GetObjects("Select stringers and panels to monitor. Press ESC to disable element monitoring", new[] { Layer.Stringer, Layer.Panel });
+
+			if (elements.IsNullOrEmpty())
+				return;
+
+			// Get SPM object names
+			var names = elements
+				.Select(e => model.GetSPMObject(e) is ISPMObject spmElement ? spmElement.Name : null)
+				.Where(s => s is not null);
+
+			var mds = input.Cast<INumberedElement>()
+				.Concat(input.Grips)
+				.Where(e => e is IMonitoredElement && names.Contains(e.Name))
+				.Cast<IMonitoredElement>()
+				.ToList();
+
+			foreach (var element in mds)
+				element.Monitored = true;
 		}
 
 		#endregion
