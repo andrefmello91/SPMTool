@@ -49,6 +49,9 @@ namespace SPMTool.Commands
 		[Command(EditStringer, "Set geometry and reinforcement to a selection of stringers")]
 		public const string EditStringer = nameof(EditStringer);
 
+		[Command(CopyElementProperties, "Copy properties from a stringer or a panel to other elements of the same type")]
+		public const string CopyElementProperties = nameof(CopyElementProperties);
+
 		[Command(ElementData, "View an elements data")]
 		public const string ElementData = nameof(ElementData);
 

@@ -184,6 +184,8 @@ namespace SPMTool.Application.UserInterface
 
 			splitButton2.Items.Add(GetRibbonButton(Command.EditPanel));
 
+			splitButton2.Items.Add(GetRibbonButton(Command.CopyElementProperties));
+
 			subPnl1.Items.Add(splitButton2);
 			pnlSrc.Items.Add(subPnl1);
 

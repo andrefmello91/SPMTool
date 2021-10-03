@@ -1,10 +1,12 @@
 ﻿using System.Linq;
 using andrefmello91.EList;
 using andrefmello91.Extensions;
+using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
+using SPMTool.Enums;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using static SPMTool.Core.SPMModel;
 
@@ -17,6 +19,94 @@ namespace SPMTool.Commands
 	{
 
 		#region Methods
+
+		/// <summary>
+		///     Copy an element's properties to other elements at the same type.
+		/// </summary>
+		[CommandMethod(Command.CopyElementProperties)]
+		public static void CopyElementProperties()
+		{
+			// Get model and database
+			var model    = ActiveModel;
+			var database = model.AcadDatabase;
+			var unit     = model.Settings.Units.Geometry;
+
+			// Create auxiliary points on panel centers
+			var pts = model.Panels.Select(p => new DBPoint(p.Vertices.CenterPoint.ToPoint3d(unit)) { Layer = $"{Layer.PanelCenter}" }).ToList();
+			model.AcadDocument.AddObjects(pts);
+
+			// Get the entity for read
+			var ent = database.GetEntity("Select an element to copy properties:", new[] { Layer.Stringer, Layer.Panel, Layer.PanelCenter });
+
+			if (ent is null)
+				return;
+
+			// Read the element
+			var element = ent.GetSPMObject();
+
+			// Copy options
+			var options = new[]
+			{
+				"Both",
+				"Geometry",
+				"Reinforcement"
+			};
+
+			// Select copy options
+			var op = model.Editor.GetKeyword("Select properties to copy:", options, options[0]);
+
+			if (op.IsNullOrEmpty())
+				goto Finish;
+
+			switch (element)
+			{
+				case StringerObject baseStringer:
+					// Get other stringers
+					var strs = database.GetStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();
+
+					if (strs.IsNullOrEmpty())
+						goto Finish;
+
+					// Get the elements
+					var stringers = ActiveModel.Stringers[strs.GetObjectIds()!].ToList();
+
+					foreach (var stringer in stringers)
+					{
+						if (op is "Both" or "Geometry")
+							stringer.CrossSection = baseStringer.CrossSection.Clone();
+
+						if (op is "Both" or "Reinforcement")
+							stringer.Reinforcement = baseStringer.Reinforcement?.Clone();
+					}
+
+					goto Finish;
+
+				case PanelObject basePanel:
+					// Get other panels
+					var pnls = database.GetPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)")?.ToArray();
+
+					if (pnls.IsNullOrEmpty())
+						goto Finish;
+
+					// Get the elements
+					var panels = model.Panels[pnls.GetObjectIds()!].ToArray();
+
+					foreach (var panel in panels)
+					{
+						if (op is "Both" or "Geometry")
+							panel.Width = basePanel.Width;
+
+						if (op is "Both" or "Reinforcement")
+							panel.Reinforcement = basePanel.Reinforcement?.Clone();
+					}
+
+					goto Finish;
+			}
+
+			// Remove panel auxiliary points
+			Finish:
+			model.AcadDocument.EraseObjects(Layer.PanelCenter);
+		}
 
 		[CommandMethod(Command.DividePanel)]
 		public static void DividePanel()
@@ -240,7 +330,6 @@ namespace SPMTool.Commands
 		{
 			var models = OpenedModels;
 			var model  = ActiveModel;
-			models = OpenedModels;
 
 			model.UpdateElements();
 

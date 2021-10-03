@@ -47,7 +47,8 @@ namespace SPMTool.Application.UserInterface
 			_crackBmp,
 			_unitsBmp,
 			_anSetBmp,
-			_dpSetBmp;
+			_dpSetBmp,
+			_copyBmp;
 
 		#endregion
 
@@ -82,6 +83,11 @@ namespace SPMTool.Application.UserInterface
 		///     Get ConcreteStresses icon.
 		/// </summary>
 		public BitmapImage ConcreteStresses => GetBitmap(_concStBmp);
+
+		/// <summary>
+		///     Get CopyElementProperties icon.
+		/// </summary>
+		public BitmapImage CopyElementProperties => GetBitmap(_copyBmp);
 
 		/// <summary>
 		///     Get Cracks icon.
@@ -254,6 +260,7 @@ namespace SPMTool.Application.UserInterface
 			_unitsBmp   = GetFromResource("units", theme)!;
 			_anSetBmp   = GetFromResource("analysissettings", theme)!;
 			_dpSetBmp   = GetFromResource("display_large", theme)!;
+			_copyBmp    = GetFromResource("copy_large", theme)!;
 		}
 
 		#endregion
