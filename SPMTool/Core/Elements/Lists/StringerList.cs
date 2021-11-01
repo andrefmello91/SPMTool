@@ -75,12 +75,18 @@ namespace SPMTool.Core.Elements
 		/// <param name="endPoint">The end <see cref="Point" />.</param>
 		public bool Add(Point startPoint, Point endPoint, bool raiseEvents = true, bool sort = true)
 		{
-			// Order points
-			var pts = new[] { startPoint, endPoint }.OrderBy(p => p).ToList();
-			pts.Sort();
+			var pts = new[] { startPoint, endPoint }
+				.OrderBy(p => p.Y)
+				.ThenBy(p => p.X)
+				.ToArray();
+
+			// Get correct order
+			var (p1, p2) = pts[1].X > pts[0].X
+				? (pts[0], pts[1])
+				: (pts[1], pts[0]);
 
 			return
-				Add(new StringerObject(pts[0], pts[1], BlockTableId), raiseEvents, sort);
+				Add(new StringerObject(p1, p2, BlockTableId), raiseEvents, sort);
 		}
 
 		/// <inheritdoc cref="EList{T}.Add(T, bool, bool)" />

@@ -112,17 +112,21 @@ namespace SPMTool.Core.Elements
 		/// <param name="unit">The unit for geometry.</param>
 		public static StringerObject From(Line line, LengthUnit unit)
 		{
-			var pts = new List<Point>
-			{
-				line.StartPoint.ToPoint(unit),
-				line.EndPoint.ToPoint(unit)
-			};
+			var pts = new[]
+				{
+					line.StartPoint.ToPoint(unit),
+					line.EndPoint.ToPoint(unit)
+				}.OrderBy(p => p.Y)
+				.ThenBy(p => p.X)
+				.ToArray();
 
-			// Sort list
-			pts.Sort();
+			// Get correct order
+			var (p1, p2) = pts[1].X > pts[0].X
+				? (pts[0], pts[1])
+				: (pts[1], pts[0]);
 
 			return
-				new StringerObject(pts[0], pts[1], line.Database.BlockTableId)
+				new StringerObject(p1, p2, line.Database.BlockTableId)
 				{
 					ObjectId = line.ObjectId
 				};

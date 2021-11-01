@@ -108,10 +108,18 @@ namespace SPMTool.Commands
 
 				var endPt = endPtn.Value;
 
-				var pts = new[] { stPt, endPt }.OrderBy(p => p).ToArray();
+				var pts = new[] { stPt, endPt }
+					.OrderBy(p => p.Y)
+					.ThenBy(p => p.X)
+					.ToArray();
+
+				// Get correct order
+				var (p1, p2) = pts[1].X > pts[0].X
+					? (pts[0], pts[1])
+					: (pts[1], pts[0]);
 
 				// Create the Stringer and add to drawing
-				stringers.Add(pts[0], pts[1]);
+				stringers.Add(p1, p2);
 
 				// Set the start point of the new Stringer
 				stPt = endPt;
