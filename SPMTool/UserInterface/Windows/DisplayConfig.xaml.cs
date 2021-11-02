@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Windows;
-using andrefmello91.Extensions;
+﻿using System.Windows;
 using SPMTool.Core;
 
 namespace SPMTool.Application.UserInterface
@@ -8,8 +6,14 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para UnitsConfig.xaml
 	/// </summary>
-	public partial class DisplayConfig : BaseWindow
+	public partial class DisplayConfig
 	{
+
+		#region Fields
+
+		private readonly SPMModel _database;
+
+		#endregion
 
 		#region Properties
 
@@ -29,7 +33,9 @@ namespace SPMTool.Application.UserInterface
 			InitializeComponent();
 
 			// Read values
-			GetValues(SPMDatabase.Settings.Display);
+			_database = SPMModel.ActiveModel;
+
+			GetValues(_database.Settings.Display);
 		}
 
 		#endregion
@@ -37,19 +43,19 @@ namespace SPMTool.Application.UserInterface
 		#region Methods
 
 		/// <summary>
-		///		Get initial values for text boxes.
+		///     Get initial values for text boxes.
 		/// </summary>
 		private void GetValues(DisplaySettings displaySettings)
 		{
-			NodeBox.Text         = $"{displaySettings.NodeScale:0.0}";
-			ConditionBox.Text    = $"{displaySettings.ConditionScale:0.0}";
-			ResultBox.Text       = $"{displaySettings.ResultScale:0.0}";
-			TextScaleBox.Text    = $"{displaySettings.TextScale:0.0}";
+			NodeBox.Text         = $"{displaySettings.NodeScale:F2}";
+			ConditionBox.Text    = $"{displaySettings.ConditionScale:F2}";
+			ResultBox.Text       = $"{displaySettings.ResultScale:F2}";
+			TextScaleBox.Text    = $"{displaySettings.TextScale:F2}";
 			DisplacementBox.Text = $"{displaySettings.DisplacementMagnifier}";
 		}
 
 		/// <summary>
-		///		Set values on <paramref name="displaySettings"/>.
+		///     Set values on <paramref name="displaySettings" />.
 		/// </summary>
 		private void SetValues(DisplaySettings displaySettings)
 		{
@@ -59,7 +65,7 @@ namespace SPMTool.Application.UserInterface
 			displaySettings.TextScale             = double.Parse(TextScaleBox.Text);
 			displaySettings.DisplacementMagnifier = int.Parse(DisplacementBox.Text);
 		}
-		
+
 		/// <summary>
 		///     Set default units.
 		/// </summary>
@@ -77,7 +83,9 @@ namespace SPMTool.Application.UserInterface
 			}
 
 			// Set values
-			SetValues(SPMDatabase.Settings.Display);
+			var display = new DisplaySettings();
+			SetValues(display);
+			_database.Settings.Display = display;
 
 			Close();
 		}

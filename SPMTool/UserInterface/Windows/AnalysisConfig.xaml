@@ -1,11 +1,12 @@
 ﻿<userInterface:BaseWindow x:Class="SPMTool.Application.UserInterface.AnalysisConfig"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:userInterface="clr-namespace:SPMTool.Application.UserInterface"
-        mc:Ignorable="d"
-        Title="Analysis settings" Height="230" Width="320">
+                          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                          xmlns:userInterface="clr-namespace:SPMTool.Application.UserInterface"
+                          mc:Ignorable="d"
+                          d:DataContext="{d:DesignInstance userInterface:AnalysisConfig}"
+                          Title="Analysis settings" Height="260" Width="320">
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="30" />
@@ -29,6 +30,7 @@
                         <RowDefinition Height="30" />
                         <RowDefinition Height="30" />
                         <RowDefinition Height="30" />
+                        <RowDefinition Height="30" />
                         <RowDefinition Height="5" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
@@ -38,25 +40,32 @@
                         <ColumnDefinition Width="70" />
                         <ColumnDefinition Width="5" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Tolerance:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1"
+                    <TextBlock Text="Force Tolerance:" HorizontalAlignment="Left" VerticalAlignment="Center"
+                               Grid.Row="1"
                                Grid.Column="1" />
-                    <TextBox Name="ToleranceBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                    <TextBox Name="FToleranceBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
                              Height="25" Grid.Row="1" Grid.Column="3"
                              PreviewTextInput="DoubleValidation" />
-                    <TextBlock Text="Number of load steps:" HorizontalAlignment="Left" VerticalAlignment="Center"
-                               Grid.Row="2" Grid.Column="1" />
-                    <TextBox Name="LoadStepsBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                    <TextBlock Text="Displacement Tolerance:" HorizontalAlignment="Left" VerticalAlignment="Center"
+                               Grid.Row="2"
+                               Grid.Column="1" />
+                    <TextBox Name="DToleranceBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
                              Height="25" Grid.Row="2" Grid.Column="3"
-                             PreviewTextInput="IntValidation" />
-                    <TextBlock Text="Maximum iterations:" HorizontalAlignment="Left" VerticalAlignment="Center"
+                             PreviewTextInput="DoubleValidation" />
+                    <TextBlock Text="Number of steps:" HorizontalAlignment="Left" VerticalAlignment="Center"
                                Grid.Row="3" Grid.Column="1" />
-                    <TextBox Name="IterationsBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                    <TextBox Name="LoadStepsBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
                              Height="25" Grid.Row="3" Grid.Column="3"
                              PreviewTextInput="IntValidation" />
-                    <TextBlock Text="Nonlinear Solver:" HorizontalAlignment="Left" VerticalAlignment="Center"
+                    <TextBlock Text="Maximum iterations:" HorizontalAlignment="Left" VerticalAlignment="Center"
                                Grid.Row="4" Grid.Column="1" />
+                    <TextBox Name="IterationsBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                             Height="25" Grid.Row="4" Grid.Column="3"
+                             PreviewTextInput="IntValidation" />
+                    <TextBlock Text="Nonlinear Solver:" HorizontalAlignment="Left" VerticalAlignment="Center"
+                               Grid.Row="5" Grid.Column="1" />
                     <ComboBox Name="SolverBox" VerticalAlignment="Center" VerticalContentAlignment="Center"
-                             Height="25" Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2"/>
+                              Height="25" Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" />
                 </Grid>
             </StackPanel>
         </Border>

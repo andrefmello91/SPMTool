@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.Extensions;
 using Autodesk.AutoCAD.Colors;
@@ -7,7 +6,6 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
 using SPMTool.Enums;
-
 
 namespace SPMTool.Core.Blocks
 {
@@ -26,18 +24,6 @@ namespace SPMTool.Core.Blocks
 			new[] { StressSquare() }
 				.Concat(TensileArrows())
 				.Concat(CompressiveArrows(Constants.Pi));
-
-		/// <summary>
-		///     Create blocks for use in SPMTool.
-		/// </summary>
-		public static void CreateBlocks()
-		{
-			// Get the block enum as an array
-			var blocks = Enum.GetValues(typeof(Block)).Cast<Block>().ToArray();
-
-			// Create the blocks
-			blocks.Create();
-		}
 
 		/// <summary>
 		///     Get the <see cref="AttributeDefinition" /> for force blocks.

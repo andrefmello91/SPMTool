@@ -14,21 +14,6 @@ namespace SPMTool
 		#region Methods
 
 		/// <summary>
-		///     Initialize user interface and create layers and blocks.
-		/// </summary>
-		public void On_ApplicationIdle(object sender, EventArgs e)
-		{
-			// Add application buttons
-			SPMToolInterface.AddButtons();
-
-			SystemVariableChanged += SPMToolInterface.ColorThemeChanged;
-
-			Idle -= On_ApplicationIdle;
-		}
-
-		#region Interface Implementations
-
-		/// <summary>
 		///     Initialize application.
 		/// </summary>
 		public void Initialize() => Idle += On_ApplicationIdle;
@@ -38,7 +23,18 @@ namespace SPMTool
 		/// </summary>
 		public void Terminate() => SystemVariableChanged -= SPMToolInterface.ColorThemeChanged;
 
-		#endregion
+		/// <summary>
+		///     Initialize user interface and create layers and blocks.
+		/// </summary>
+		private static void On_ApplicationIdle(object sender, EventArgs e)
+		{
+			// Add application buttons
+			SPMToolInterface.AddButtons();
+
+			SystemVariableChanged += SPMToolInterface.ColorThemeChanged;
+
+			Idle -= On_ApplicationIdle;
+		}
 
 		#endregion
 

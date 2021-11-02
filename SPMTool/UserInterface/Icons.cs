@@ -47,7 +47,8 @@ namespace SPMTool.Application.UserInterface
 			_crackBmp,
 			_unitsBmp,
 			_anSetBmp,
-			_dpSetBmp;
+			_dpSetBmp,
+			_copyBmp;
 
 		#endregion
 
@@ -84,6 +85,11 @@ namespace SPMTool.Application.UserInterface
 		public BitmapImage ConcreteStresses => GetBitmap(_concStBmp);
 
 		/// <summary>
+		///     Get CopyElementProperties icon.
+		/// </summary>
+		public BitmapImage CopyElementProperties => GetBitmap(_copyBmp);
+
+		/// <summary>
 		///     Get Cracks icon.
 		/// </summary>
 		public BitmapImage Cracks => GetBitmap(_crackBmp);
@@ -92,6 +98,11 @@ namespace SPMTool.Application.UserInterface
 		///     Get Displacements icon.
 		/// </summary>
 		public BitmapImage Displacements => GetBitmap(_dispBmp);
+
+		/// <summary>
+		///     Get Display Settings icon.
+		/// </summary>
+		public BitmapImage Display => GetBitmap(_dpSetBmp);
 
 		/// <summary>
 		///     Get DividePanel icon.
@@ -159,6 +170,11 @@ namespace SPMTool.Application.UserInterface
 		public BitmapImage Parameters => GetBitmap(_cncrtBmp);
 
 		/// <summary>
+		///     Get Simulation icon.
+		/// </summary>
+		public BitmapImage Simulation => GetBitmap(_simBmp);
+
+		/// <summary>
 		///     Get StringerForces icon.
 		/// </summary>
 		public BitmapImage StringerForces => GetBitmap(_strFBmp);
@@ -182,16 +198,6 @@ namespace SPMTool.Application.UserInterface
 		///     Get UpdateElements icon.
 		/// </summary>
 		public BitmapImage UpdateElements => GetBitmap(_updtBmp);
-			
-		/// <summary>
-		///     Get Simulation icon.
-		/// </summary>
-		public BitmapImage Simulation => GetBitmap(_simBmp);
-		
-		/// <summary>
-		///     Get Display Settings icon.
-		/// </summary>
-		public BitmapImage Display => GetBitmap(_dpSetBmp);
 
 		#endregion
 
@@ -254,6 +260,7 @@ namespace SPMTool.Application.UserInterface
 			_unitsBmp   = GetFromResource("units", theme)!;
 			_anSetBmp   = GetFromResource("analysissettings", theme)!;
 			_dpSetBmp   = GetFromResource("display_large", theme)!;
+			_copyBmp    = GetFromResource("copy_large", theme)!;
 		}
 
 		#endregion

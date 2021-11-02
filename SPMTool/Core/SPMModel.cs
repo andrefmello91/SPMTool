@@ -7,146 +7,317 @@ using andrefmello91.FEMAnalysis;
 using andrefmello91.Material.Reinforcement;
 using andrefmello91.SPMElements;
 using andrefmello91.SPMElements.StringerProperties;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.EditorInput;
+using Autodesk.AutoCAD.Geometry;
+using SPMTool.Application;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
+using SPMTool.Core.Materials;
 using SPMTool.Enums;
-
 using UnitsNet;
-using static SPMTool.Core.SPMDatabase;
+using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
-#nullable disable
+#nullable enable
 
 namespace SPMTool.Core
 {
 	/// <summary>
 	///     Model class
 	/// </summary>
-	public static class SPMModel
+	public class SPMModel
 	{
 
 		#region Fields
 
 		/// <summary>
+		///     Get the application name.
+		/// </summary>
+		public const string AppName = "SPMTool";
+
+		/// <summary>
 		///     Collection of element <see cref="Layer" />'s.
 		/// </summary>
-		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support };
+		public static readonly Layer[] ElementLayers = { Layer.ExtNode, Layer.IntNode, Layer.Stringer, Layer.Panel, Layer.Force, Layer.Support, Layer.PanelCenter };
+
+		/// <summary>
+		///     The list of opened documents.
+		/// </summary>
+		public static readonly List<SPMModel> OpenedModels = new();
 
 		/// <summary>
 		///     Collection of removed elements.
 		/// </summary>
-		public static readonly List<IDBObjectCreator> Trash;
-
-		/// <summary>
-		///     The collection of <see cref="NodeObject" />'s in the model.
-		/// </summary>
-		public static NodeList Nodes;
-
-		/// <summary>
-		///     The collection of <see cref="StringerObject" />'s in the model.
-		/// </summary>
-		public static StringerList Stringers;
-
-		/// <summary>
-		///     The collection of <see cref="PanelObject" />'s in the model.
-		/// </summary>
-		public static PanelList Panels;
-
-		/// <summary>
-		///     The collection of <see cref="ForceObject" />'s in the model.
-		/// </summary>
-		public static ForceList Forces;
-
-		/// <summary>
-		///     The collection of <see cref="ConstraintObject" />'s in the model.
-		/// </summary>
-		public static ConstraintList Constraints;
-
-		/// <summary>
-		///     List of distinct widths from objects in the model.
-		/// </summary>
-		public static EList<Length> ElementWidths;
-
-		/// <summary>
-		///     List of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
-		/// </summary>
-		public static EList<CrossSection> StringerCrossSections;
-
-		/// <summary>
-		///     List of distinct reinforcements of stringers in the model.
-		/// </summary>
-		public static EList<UniaxialReinforcement> StringerReinforcements;
-
-		/// <summary>
-		///     List of distinct reinforcements of panels in the model.
-		/// </summary>
-		public static EList<WebReinforcementDirection> PanelReinforcements;
-
-		/// <summary>
-		///     List of distinct steels of elements in the model.
-		/// </summary>
-		public static EList<Steel> Steels;
+		public readonly List<IDBObjectCreator> Trash;
 
 		#endregion
 
 		#region Properties
 
 		/// <summary>
-		///     Get application <see cref="Autodesk.AutoCAD.EditorInput.Editor" />.
+		///     Get the active model.
 		/// </summary>
-		public static Autodesk.AutoCAD.EditorInput.Editor Editor => SPMDatabase.ActiveDocument.Editor;
+		public static SPMModel ActiveModel => GetOpenedModel(DocumentManager.MdiActiveDocument)!;
 
 		/// <summary>
-		///		Get the text height for model objects.
+		///     Get the AutoCAD database related to this.
 		/// </summary>
-		public static double TextHeight => 30 * Settings.Display.TextScale * Settings.Units.ScaleFactor;
-		
+		public Database AcadDatabase => AcadDocument.Database;
+
+		/// <summary>
+		///     Get the related document.
+		/// </summary>
+		public Document AcadDocument { get; }
+
+		/// <summary>
+		///     Get the Block Table <see cref="ObjectId" />.
+		/// </summary>
+		public ObjectId BlockTableId => AcadDatabase.BlockTableId;
+
+		/// <summary>
+		///     Concrete parameters and constitutive model.
+		/// </summary>
+		public ConcreteData ConcreteData { get; }
+
+		/// <summary>
+		///     The collection of <see cref="ConstraintObject" />'s in the model.
+		/// </summary>
+		public ConstraintList Constraints { get; }
+
+		/// <summary>
+		///     Get the editor of current document.
+		/// </summary>
+		public Editor Editor => AcadDocument.Editor;
+
+		/// <summary>
+		///     List of distinct widths from objects in the model.
+		/// </summary>
+		public EList<Length> ElementWidths { get; }
+
+		/// <summary>
+		///     The collection of <see cref="ForceObject" />'s in the model.
+		/// </summary>
+		public ForceList Forces { get; }
+
+		/// <summary>
+		///     Get the Layer Table <see cref="ObjectId" />.
+		/// </summary>
+		public ObjectId LayerTableId => AcadDatabase.LayerTableId;
+
+		/// <summary>
+		///     Get the document name.
+		/// </summary>
+		public string Name => AcadDocument.Name;
+
+		/// <summary>
+		///     The collection of <see cref="NodeObject" />'s in the model.
+		/// </summary>
+		public NodeList Nodes { get; }
+
+		/// <summary>
+		///     Get Named Objects <see cref="ObjectId" />.
+		/// </summary>
+		public ObjectId NodId => AcadDatabase.NamedObjectsDictionaryId;
+
+		/// <summary>
+		///     List of distinct reinforcements of panels in the model.
+		/// </summary>
+		public EList<WebReinforcementDirection> PanelReinforcements { get; }
+
+		/// <summary>
+		///     The collection of <see cref="PanelObject" />'s in the model.
+		/// </summary>
+		public PanelList Panels { get; }
+
+		/// <summary>
+		///     Application settings.
+		/// </summary>
+		public Settings Settings { get; }
+
+		/// <summary>
+		///     List of distinct steels of elements in the model.
+		/// </summary>
+		public EList<SteelParameters> Steels { get; }
+
+		/// <summary>
+		///     List of distinct stringer's <see cref="CrossSection" />'s from objects in the model.
+		/// </summary>
+		public EList<CrossSection> StringerCrossSections { get; }
+
+		/// <summary>
+		///     List of distinct reinforcements of stringers in the model.
+		/// </summary>
+		public EList<UniaxialReinforcement> StringerReinforcements { get; }
+
+		/// <summary>
+		///     The collection of <see cref="StringerObject" />'s in the model.
+		/// </summary>
+		public StringerList Stringers { get; }
+
+		/// <summary>
+		///     Get the text height for model objects.
+		/// </summary>
+		public double TextHeight => 30 * Settings.Display.TextScale * Settings.Units.ScaleFactor;
+
+		/// <summary>
+		///     Get coordinate system.
+		/// </summary>
+		public CoordinateSystem3d Ucs => UcsMatrix.CoordinateSystem3d;
+
+		/// <summary>
+		///     Get current user coordinate system.
+		/// </summary>
+		public Matrix3d UcsMatrix => Editor.CurrentUserCoordinateSystem;
+
 		#endregion
 
 		#region Constructors
 
-		static SPMModel()
+		/// <summary>
+		///     Get the opened documents and set app events.
+		/// </summary>
+		static SPMModel() =>
+
+			// OpenedModels =
+			// 	(from Document doc in DocumentManager 
+			// 		select new SPMModel(doc))
+			// 	.ToList();
+			//
+			// DocumentManager.DocumentCreated       += On_DocumentCreated;
+			DocumentManager.DocumentToBeDestroyed += On_DocumentClosed;
+
+		/// <summary>
+		///     Create a SPM model.
+		/// </summary>
+		/// <param name="acadDocument">The AutoCAD document.</param>
+		public SPMModel(Document acadDocument)
 		{
+			AcadDocument = acadDocument;
+
+			// Initiate dependencies
+			RegisterApp(acadDocument);
+			CreateLayers(acadDocument);
+			CreateBlocks(acadDocument);
+
+			// Get app settings
+			Settings     = new Settings(AcadDatabase);
+			ConcreteData = new ConcreteData(AcadDatabase);
+
 			// Initiate trash
 			Trash = new List<IDBObjectCreator>();
 
 			// Get elements
-			Nodes       = NodeList.ReadFromDrawing();
-			Forces      = ForceList.ReadFromDrawing();
-			Constraints = ConstraintList.ReadFromDrawing();
-			Stringers   = StringerList.ReadFromDrawing();
-			Panels      = PanelList.ReadFromDrawing();
+			var unit = Settings.Units.Geometry;
+			Nodes       = NodeList.From(acadDocument, unit);
+			Forces      = ForceList.From(acadDocument, unit);
+			Constraints = ConstraintList.From(acadDocument, unit);
+			Stringers   = StringerList.From(acadDocument, unit);
+			Panels      = PanelList.From(acadDocument, unit);
+
+			// Set events
+			SetEvents(Nodes);
+			SetEvents(Forces);
+			SetEvents(Constraints);
+			SetEvents(Stringers);
+			SetEvents(Panels);
 
 			// Get properties
-			StringerCrossSections  = GetCrossSections();
-			ElementWidths          = Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToEList();
-			StringerReinforcements = GetStringerReinforcements();
-			PanelReinforcements    = GetPanelReinforcements();
-			Steels                 = Stringers.GetSteels().Concat(Panels.GetSteels()).ToEList();
+			StringerCrossSections  = GetCrossSections(Stringers);
+			ElementWidths          = Stringers.GetWidths().Concat(Panels.GetWidths()).Distinct().ToEList() ?? new EList<Length>();
+			StringerReinforcements = GetStringerReinforcements(Stringers);
+			PanelReinforcements    = GetPanelReinforcements(Panels);
+			Steels                 = Stringers.GetSteelParameters().Concat(Panels.GetSteelParameters()).ToEList() ?? new EList<SteelParameters>();
 
 			// Move panels to bottom
-			Panels.Select(p => p.ObjectId).ToList().MoveToBottom();
+			acadDocument.MoveToBottom(Panels.ObjectIds);
 
 			// Register events
+			SetEvents(Settings.Display);
 			RegisterEventsToEntities();
 
 			// Set parameters
 			SetAppParameters();
+
+			// Set point monitor
+			Editor.PointMonitor += On_ElementHover;
 		}
 
 		#endregion
 
 		#region Methods
 
-		/// <summary>
-		///     Create an SPM object associated to an <see cref="Entity" /> and add to its list.
-		/// </summary>
-		public static bool Add(Entity entity, bool raiseEvents = false) => Add(entity.CreateSPMObject(), raiseEvents);
+		/// <inheritdoc cref="GetOpenedModel(Document, bool)" />
+		/// <param name="objectId">The <see cref="ObjectId" /> of an existing object.</param>
+		public static SPMModel? GetOpenedModel(ObjectId objectId, bool create = true) => !objectId.IsNull
+			? GetOpenedModel(objectId.Database, create)
+			: null;
 
 		/// <summary>
-		///     Add a SPM object to its list.
+		///     Get an opened SPM model.
 		/// </summary>
-		public static bool Add(IDBObjectCreator obj, bool raiseEvents = false)
+		/// <param name="document">The opened document.</param>
+		/// <param name="create">Add to <see cref="OpenedModels" /> if it was not created?</param>
+		public static SPMModel? GetOpenedModel(Document document, bool create = true)
+		{
+			var model = OpenedModels.Find(m => m.AcadDocument.Name == document.Name);
+
+			if (!create || model is not null)
+				return model;
+
+			model = new SPMModel(document);
+			OpenedModels.Add(model);
+
+			return model;
+		}
+
+		/// <inheritdoc cref="GetOpenedModel(Document, bool)" />
+		/// <param name="database">The opened database.</param>
+		public static SPMModel? GetOpenedModel(Database database, bool create = true) => GetOpenedModel(database.GetDocument(), create);
+
+		/// <summary>
+		///     Create blocks for use in SPMTool.
+		/// </summary>
+		private static void CreateBlocks(Document document) => document.Create(Enum.GetValues(typeof(Block)).Cast<Block>().ToArray());
+
+		/// <summary>
+		///     Create layers for use with SPMTool.
+		/// </summary>
+		private static void CreateLayers(Document document) => document.Create(Enum.GetValues(typeof(Layer)).Cast<Layer>().ToArray());
+
+		/// <summary>
+		///     Add the app to the Registered Applications Record.
+		/// </summary>
+		private static void RegisterApp(Document document)
+		{
+			// Start a transaction
+			using var lck   = document.LockDocument();
+			using var trans = document.Database.TransactionManager.StartTransaction();
+
+			// Open the Registered Applications table for read
+			var regAppTbl = (RegAppTable) trans.GetObject(document.Database.RegAppTableId, OpenMode.ForRead);
+
+			if (regAppTbl.Has(AppName))
+				return;
+
+			var regAppTblRec = new RegAppTableRecord { Name = AppName };
+			regAppTbl.UpgradeOpen();
+			regAppTbl.Add(regAppTblRec);
+			trans.AddNewlyCreatedDBObject(regAppTblRec, true);
+
+			// Commit and dispose the transaction
+			trans.Commit();
+		}
+
+		/// <summary>
+		///     Create an SPM object associated to an <see cref="Entity" /> and add to the active model;
+		/// </summary>
+		public bool Add(Entity entity, bool raiseEvents = false) => Add(entity.CreateSPMObject(Settings.Units.Geometry), raiseEvents);
+
+		/// <summary>
+		///     Add a SPM object to the active model.
+		/// </summary>
+		public bool Add(IDBObjectCreator? obj, bool raiseEvents = false)
 		{
 			if (obj is null)
 				return false;
@@ -183,7 +354,7 @@ namespace SPMTool.Core
 		/// <param name="dataOk">Returns true if data is consistent to start analysis.</param>
 		/// <param name="message">Message to show if data is inconsistent.</param>
 		/// <param name="analysisType">The type of analysis to perform.</param>
-		public static SPMInput GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
+		public SPMInput? GenerateInput(AnalysisType analysisType, out bool dataOk, out string message)
 		{
 			// Get the element model
 			var elementModel = analysisType switch
@@ -214,137 +385,105 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Event to run when an item is added to <see cref="StringerCrossSections" />.
+		///     Get a SPM object from this model that correspond to <paramref name="dbObject" />.
 		/// </summary>
-		public static void On_CrossSection_Add(object sender, ItemEventArgs<CrossSection> e) => ElementWidths.Add(e.Item.Width);
-
-		/// <summary>
-		///     Event to execute when an object is copied.
-		/// </summary>
-		public static void On_ObjectCopied(object sender, ObjectEventArgs e)
-		{
-			var entity = (Entity) e.DBObject;
-
-			if (entity is null)
-				return;
-
-			var obj = entity.CreateSPMObject();
-
-			Add(obj);
-			Editor.WriteMessage($"\n{obj.GetType()} copied.");
-		}
-
-		/// <summary>
-		///     Event to execute when an object is erased or unerased.
-		/// </summary>
-		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
-		{
-			var entity = (Entity) sender;
-
-			if (entity is null)
-				return;
-
-			if (e.Erased)
+		/// <param name="dbObject">The <see cref="DBObject" />.</param>
+		public IDBObjectCreator? GetSPMObject(DBObject? dbObject) =>
+			dbObject switch
 			{
-				var obj = entity.GetSPMObject();
+				DBPoint p when p.Layer == $"{Layer.ExtNode}" || p.Layer == $"{Layer.IntNode}" => Nodes[dbObject.ObjectId],
+				Line l when l.Layer == $"{Layer.Stringer}"                                    => Stringers[dbObject.ObjectId],
+				Solid s when s.Layer == $"{Layer.Panel}"                                      => Panels[dbObject.ObjectId],
+				BlockReference b when b.Layer == $"{Layer.Force}"                             => Forces[dbObject.ObjectId],
+				BlockReference b when b.Layer == $"{Layer.Support}"                           => Constraints[dbObject.ObjectId],
+				DBPoint p when p.Layer == $"{Layer.PanelCenter}"                              => Panels[p.Position.ToPoint(Settings.Units.Geometry)],
+				_                                                                             => null
+			};
 
-				if (!Remove(obj))
-					return;
+		/// <summary>
+		///     Get a SPM object from this model that correspond to <paramref name="objectId" />.
+		/// </summary>
+		/// <param name="objectId">The <see cref="ObjectId" />.</param>
+		public IDBObjectCreator? GetSPMObject(ObjectId objectId) => !objectId.IsNull
+			? GetSPMObject(AcadDatabase.GetObject(objectId))
+			: null;
 
-				Trash.Add(obj);
+		/// <summary>
+		///     Read dictionary entries that contains <paramref name="name" />.
+		/// </summary>
+		/// <param name="name">The name of entry.</param>
+		public IEnumerable<ResultBuffer> ReadDictionaryEntries(string name)
+		{
+			// Start a transaction
+			using var trans = StartTransaction();
 
-				Editor.WriteMessage($"\n{obj.Name} removed");
+			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForRead);
 
-				return;
+			var resList = new List<ResultBuffer>();
+
+			// Check if name contains
+			foreach (var entry in nod)
+			{
+				if (!entry.Key.Contains(name))
+					continue;
+
+				var xRec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+
+				// Add data
+				resList.Add(xRec.Data);
 			}
 
-			IDBObjectCreator obj1;
-			try
+			return resList;
+		}
+
+		/// <summary>
+		///     Read data on a dictionary entry.
+		/// </summary>
+		/// <param name="name">The name of entry.</param>
+		/// <param name="fullName">Return only data corresponding to full name?</param>
+		public TypedValue[]? ReadDictionaryEntry(string name, bool fullName = true)
+		{
+			// Start a transaction
+			using var trans = StartTransaction();
+
+			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForRead);
+
+			// Check if it exists as full name
+			if (fullName && nod.Contains(name))
+
+				// Read the concrete Xrecord
 			{
-				obj1 = Trash.Find(t => t.ObjectId == entity.ObjectId);
+				using var xrec = (Xrecord) trans.GetObject(nod.GetAt(name), OpenMode.ForRead);
+				return
+					xrec.Data.AsArray();
 			}
-			catch
+
+			// Check if name contains
+			foreach (var entry in nod)
 			{
-				Editor.WriteMessage("\nNot found in trash.");
-				obj1 = entity.CreateSPMObject();
+				if (!entry.Key.Contains(name))
+					continue;
+
+				// Read data
+				var refXrec = (Xrecord) trans.GetObject(entry.Value, OpenMode.ForRead);
+
+				return
+					refXrec.Data.AsArray();
 			}
 
-			if (!Add(obj1))
-				return;
-
-			Trash.Remove(obj1);
-
-			Editor.WriteMessage($"\n{obj1.Name} re-added");
-		}
-
-		/// <summary>
-		///     Event to execute when an object is reappended to database.
-		/// </summary>
-		public static void On_ObjectReappended(object sender, EventArgs e)
-		{
-			var entity = (Entity) sender;
-
-			if (entity is null)
-				return;
-
-			var obj = entity.CreateSPMObject();
-
-			Add(obj);
-			Editor.WriteMessage($"\n{obj.GetType()} added");
-		}
-
-		/// <summary>
-		///     Event to execute when an object is unappended from database.
-		/// </summary>
-		public static void On_ObjectUnappended(object sender, EventArgs e)
-		{
-			var entity = (Entity) sender;
-
-			if (entity is null)
-				return;
-
-			var obj = entity.GetSPMObject();
-
-			Remove(obj);
-			Editor.WriteMessage($"\n{obj.GetType()} removed");
-		}
-
-		/// <summary>
-		///     Event to run when an item is added to <see cref="PanelReinforcements" />.
-		/// </summary>
-		public static void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e) => Steels.Add(e.Item?.Steel);
-
-		/// <summary>
-		///     Event to run when an item is added to <see cref="StringerReinforcements" />.
-		/// </summary>
-		public static void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e) => Steels.Add(e.Item?.Steel);
-
-		/// <summary>
-		///     Register events for AutoCAD entities.
-		/// </summary>
-		public static void RegisterEventsToEntities()
-		{
-			// Get object ids
-			var ids = Nodes.Select(n => n.ObjectId)
-				.Concat(Forces.Select(f => f.ObjectId))
-				.Concat(Constraints.Select(c => c.ObjectId))
-				.Concat(Stringers.Select(s => s.ObjectId))
-				.Concat(Panels.Select(p => p.ObjectId))
-				.ToList();
-
-			// Register event
-			ids.RegisterErasedEvent(On_ObjectErase);
+			// Not set
+			return null;
 		}
 
 		/// <summary>
 		///     Get the SPM object associated to an <see cref="Entity" /> and remove from its list.
 		/// </summary>
-		public static bool Remove(Entity entity, bool raiseEvents = false) => Remove(entity.GetSPMObject(), raiseEvents);
+		public bool Remove(Entity entity, bool raiseEvents = false) => Remove(entity.GetSPMObject(), raiseEvents);
 
 		/// <summary>
 		///     Remove a SPM object from its list.
 		/// </summary>
-		public static bool Remove(IDBObjectCreator obj, bool raiseEvents = false)
+		public bool Remove(IDBObjectCreator? obj, bool raiseEvents = false)
 		{
 			if (obj is null)
 				return false;
@@ -376,10 +515,42 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
+		///     Save <paramref name="data" /> in <see cref="DBDictionary" />.
+		/// </summary>
+		/// <param name="data">The <see cref="ResultBuffer" /> to save.</param>
+		/// <param name="name">The name to save.</param>
+		/// <param name="overwrite">Overwrite data with the same <paramref name="name" />?</param>
+		public void SaveDictionary(ResultBuffer data, string name, bool overwrite = true)
+		{
+			// Start a transaction
+			using var trans = StartTransaction();
+
+			using var nod = (DBDictionary) trans.GetObject(NodId, OpenMode.ForWrite);
+
+			// Verify if object exists and must be overwrote
+			if (!overwrite && nod.Contains(name))
+				return;
+
+			// Create and add data to an Xrecord
+			var xRec = new Xrecord
+			{
+				Data = data
+			};
+
+			// Create the entry in the NOD and add to the transaction
+			nod.SetAt(name, xRec);
+			trans.AddNewlyCreatedDBObject(xRec, true);
+
+			// Save the new object to the database
+			trans.Commit();
+		}
+
+		/// <summary>
 		///     Set application parameters for drawing.
 		/// </summary>
-		public static void SetAppParameters()
+		public void SetAppParameters()
 		{
+			using var lck = AcadDocument.LockDocument();
 			UpdatePointSize();
 			SetLineWeightDisplay();
 		}
@@ -387,40 +558,36 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Turn off fillmode setting.
 		/// </summary>
-		public static void SetFillMode() => SPMDatabase.ActiveDatabase.Fillmode = false;
+		public void SetFillMode() => AcadDatabase.Fillmode = false;
 
 		/// <summary>
 		///     Turn on line weight display.
 		/// </summary>
-		public static void SetLineWeightDisplay() => SPMDatabase.ActiveDatabase.LineWeightDisplay = true;
+		public void SetLineWeightDisplay() => AcadDatabase.LineWeightDisplay = true;
 
 		/// <summary>
-		///     Update size of points in the drawing.
+		///     Start a new transaction in <see cref="AcadDatabase" />.
 		/// </summary>
-		public static void UpdatePointSize()
-		{
-			// Set the style for all point objects in the drawing
-			SPMDatabase.ActiveDatabase.Pdmode = 32;
-			SPMDatabase.ActiveDatabase.Pdsize = 40 * Settings.Units.ScaleFactor * Settings.Display.NodeScale;
-			Editor.Regen();
-		}
+		public Transaction StartTransaction() => AcadDatabase.TransactionManager.StartTransaction();
 
 		/// <summary>
-		///		Update scale of forces and supports.
+		///     Update scale of forces and supports.
 		/// </summary>
 		/// <param name="oldScale">The old scale factor.</param>
 		/// <param name="newScale">The new scale factor.</param>
-		public static void UpdateConditionsScale(double oldScale, double newScale) =>
-			Constraints.Select(c => c.ObjectId)
-				.Concat(Forces.Select(f => f.ObjectId))
-				.UpdateScale(oldScale, newScale);
+		public void UpdateConditionsScale(double oldScale, double newScale) =>
+			AcadDocument.UpdateScale(
+				Constraints.Select(c => c.ObjectId)
+					.Concat(Forces.Select(f => f.ObjectId))
+					.ToList(),
+				oldScale, newScale);
 
 		/// <summary>
 		///     Update all the elements in the drawing.
 		/// </summary>
 		/// <param name="addNodes">Add nodes to stringer start, mid and end points?</param>
 		/// <param name="removeNodes">Remove nodes at unnecessary positions?</param>
-		public static void UpdateElements(bool addNodes = true, bool removeNodes = true)
+		public void UpdateElements(bool addNodes = true, bool removeNodes = true)
 		{
 			Stringers.Update();
 			Panels.Update();
@@ -428,36 +595,36 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
-		///     Update collections from objects in drawing.
+		///     Update size of points in the drawing.
 		/// </summary>
-		public static void UpdateObjects()
+		public void UpdatePointSize()
 		{
-			// Get elements
-			Nodes       = NodeList.ReadFromDrawing();
-			Forces      = ForceList.ReadFromDrawing();
-			Constraints = ConstraintList.ReadFromDrawing();
-			Stringers   = StringerList.ReadFromDrawing();
-			Panels      = PanelList.ReadFromDrawing();
+			// Set the style for all point objects in the drawing
+			AcadDatabase.Pdmode = 32;
+			AcadDatabase.Pdsize = 40 * Settings.Units.ScaleFactor * Settings.Display.NodeScale;
+			Editor.Regen();
 		}
 
 		/// <summary>
-		///		Update text height in the model.
+		///     Update text height in the model.
 		/// </summary>
-		public static void UpdateTextHeight()
+		public void UpdateTextHeight()
 		{
-			var objs    = Forces.Select(f => f.ObjectId).ToList();
-			var results = new[] { Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks }.GetObjectIds()?.ToList();
-			
+			var objs = Forces.Select(f => f.ObjectId).ToList();
+			var results = AcadDocument
+				.GetObjectIds(Layer.StringerForce, Layer.PanelForce, Layer.PanelStress, Layer.ConcreteStress, Layer.Cracks)?
+				.ToList();
+
 			if (!results.IsNullOrEmpty())
 				objs.AddRange(results);
-			
-			objs.UpdateTextHeight(TextHeight);
+
+			AcadDocument.UpdateTextHeight(objs, TextHeight);
 		}
-		
+
 		/// <inheritdoc cref="StringerCrossSections" />
-		private static EList<CrossSection> GetCrossSections()
+		private EList<CrossSection> GetCrossSections(StringerList stringers)
 		{
-			var list = Stringers.GetCrossSections().ToEList() ?? new EList<CrossSection>();
+			var list = stringers.GetCrossSections().ToEList() ?? new EList<CrossSection>();
 
 			list.ItemAdded += On_CrossSection_Add;
 
@@ -465,9 +632,9 @@ namespace SPMTool.Core
 		}
 
 		/// <inheritdoc cref="PanelReinforcements" />
-		private static EList<WebReinforcementDirection> GetPanelReinforcements()
+		private EList<WebReinforcementDirection> GetPanelReinforcements(PanelList panels)
 		{
-			var list = Panels.GetReinforcementDirections().ToEList() ?? new EList<WebReinforcementDirection>();
+			var list = panels.GetReinforcementDirections().ToEList() ?? new EList<WebReinforcementDirection>();
 
 			list.ItemAdded += On_PanRef_Add;
 
@@ -475,14 +642,236 @@ namespace SPMTool.Core
 		}
 
 		/// <inheritdoc cref="StringerReinforcements" />
-		private static EList<UniaxialReinforcement> GetStringerReinforcements()
+		private EList<UniaxialReinforcement> GetStringerReinforcements(StringerList stringers)
 		{
-			var list = Stringers.GetReinforcements().ToEList() ?? new EList<UniaxialReinforcement>();
+			var list = stringers.GetReinforcements().ToEList() ?? new EList<UniaxialReinforcement>();
 
 			list.ItemAdded += On_StrRef_Add;
 
 			return list;
 		}
+
+		/// <summary>
+		///     Register events for AutoCAD entities.
+		/// </summary>
+		private void RegisterEventsToEntities()
+		{
+			// Get object ids
+			var ids = Nodes.ObjectIds
+				.Concat(Forces.ObjectIds)
+				.Concat(Constraints.ObjectIds)
+				.Concat(Stringers.ObjectIds)
+				.Concat(Panels.ObjectIds)
+				.ToList();
+
+			// Register event
+			AcadDocument.RegisterErasedEvent(ids, On_ObjectErase);
+		}
+
+		/// <summary>
+		///     Set events to object creator lists.
+		/// </summary>
+		private void SetEvents<TDBObjectCreator>(IEList<TDBObjectCreator> list)
+			where TDBObjectCreator : IDBObjectCreator, IEquatable<TDBObjectCreator>, IComparable<TDBObjectCreator>
+		{
+			list.ItemAdded    += On_ObjectAdded;
+			list.RangeAdded   += On_ObjectsAdded;
+			list.ItemRemoved  += On_ObjectRemoved;
+			list.RangeRemoved += On_ObjectsRemoved;
+		}
+
+		/// <summary>
+		///     Set events to display settings change.
+		/// </summary>
+		private void SetEvents(DisplaySettings displaySettings)
+		{
+			displaySettings.NodeScaleChanged      += On_NodeScaleChange;
+			displaySettings.ConditionScaleChanged += On_ConditionScaleChange;
+			displaySettings.TextScaleChanged      += On_TextScaleChange;
+		}
+
+		/// <summary>
+		///     Event to execute when an object is erased or unerased in a database.
+		/// </summary>
+		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
+		{
+			if (sender is not Entity entity || ElementLayers.Contains((Layer) Enum.Parse(typeof(Layer), entity.Layer)) || GetOpenedModel(entity.ObjectId) is not { } model)
+				return;
+
+			switch (e.Erased)
+			{
+				case true when entity.GetSPMObject() is { } obj && model.Remove(obj):
+
+					model.Trash.Add(obj);
+
+					model.Editor.WriteMessage($"\n{obj.Name} removed");
+
+					return;
+
+				case false:
+
+					var obj1 = model.Trash.Find(t => t.ObjectId == entity.ObjectId) ?? entity.CreateSPMObject(model.Settings.Units.Geometry);
+
+					if (!model.Add(obj1))
+						return;
+
+					model.Trash.Remove(obj1);
+
+					model.Editor.WriteMessage($"\n{obj1.Name} re-added");
+
+					return;
+			}
+		}
+
+		private static void On_DocumentClosed(object sender, DocumentCollectionEventArgs e) => OpenedModels.RemoveAll(d => d.Name == e.Document.Name);
+
+		private static void On_DocumentCreated(object sender, DocumentCollectionEventArgs e) => OpenedModels.Add(new SPMModel(e.Document));
+
+		/// <summary>
+		///     Event to execute when an object is copied.
+		/// </summary>
+		public void On_ObjectCopied(object sender, ObjectEventArgs e)
+		{
+			var entity = (Entity) e.DBObject;
+
+			if (entity is null)
+				return;
+
+			var obj = entity.CreateSPMObject(Settings.Units.Geometry);
+
+			Add(obj);
+
+			// SPMDocument.Editor.WriteMessage($"\n{obj.GetType()} copied.");
+		}
+
+		private void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => UpdateConditionsScale(e.OldScale, e.NewScale);
+
+		/// <summary>
+		///     Event to run when an item is added to <see cref="StringerCrossSections" />.
+		/// </summary>
+		private void On_CrossSection_Add(object sender, ItemEventArgs<CrossSection> e) => ElementWidths.Add(e.Item.Width);
+
+		/// <summary>
+		///     Show a custom tooltip for SPM objects.
+		/// </summary>
+		private void On_ElementHover(object sender, PointMonitorEventArgs e)
+		{
+			// Check if there is a command running
+			var cmd = (string) GetSystemVariable("CMDNAMES");
+			if (cmd != string.Empty)
+				return;
+
+			var fullPaths = e.Context.GetPickedEntities();
+
+			if (fullPaths.IsNullOrEmpty())
+				return;
+
+			// var               entId = ObjectId.Null;
+			var obj = fullPaths
+				.Where(p => !p.IsNull)
+				.SelectMany(p => p.GetObjectIds())
+				.Select(GetSPMObject)
+				.FirstOrDefault(o => o is not null);
+
+			// Append text
+			if (obj is not null)
+				e.AppendToolTipText($"{obj}");
+		}
+
+		private void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => UpdatePointSize();
+
+
+		/// <summary>
+		///     Event to execute when an object is added to a list.
+		/// </summary>
+		private void On_ObjectAdded<TDBObjectCreator>(object? sender, ItemEventArgs<TDBObjectCreator> e)
+			where TDBObjectCreator : IDBObjectCreator
+		{
+			if (e.Item is not { } obj)
+				return;
+
+			// Remove from trash
+			Trash.Remove(obj);
+
+			// Add to drawing
+			AcadDocument.AddObject(obj);
+		}
+
+		/// <summary>
+		///     Event to execute when an object is removed from a list.
+		/// </summary>
+		private void On_ObjectRemoved<TDBObjectCreator>(object? sender, ItemEventArgs<TDBObjectCreator> e)
+			where TDBObjectCreator : IDBObjectCreator
+		{
+			if (e.Item is not { } obj)
+				return;
+
+			// Add to trash
+			if (!Trash.Contains(obj))
+				Trash.Add(obj);
+
+			// Remove
+			AcadDocument.EraseObject(obj);
+		}
+
+		/// <summary>
+		///     Event to execute when a range of objects is added to a list.
+		/// </summary>
+		private void On_ObjectsAdded<TDBObjectCreator>(object? sender, RangeEventArgs<TDBObjectCreator> e)
+			where TDBObjectCreator : IDBObjectCreator
+		{
+			var objs = e.ItemCollection;
+
+			if (objs.IsNullOrEmpty())
+				return;
+
+			Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Contains);
+
+			// Add to drawing
+			AcadDocument.AddObjects(objs);
+		}
+
+		/// <summary>
+		///     Event to execute when a range of objects is removed from a list.
+		/// </summary>
+		private void On_ObjectsRemoved<TDBObjectCreator>(object? sender, RangeEventArgs<TDBObjectCreator> e)
+			where TDBObjectCreator : IDBObjectCreator
+		{
+			var objs = e.ItemCollection;
+
+			if (objs.IsNullOrEmpty())
+				return;
+
+			// Add to trash
+			Trash.RemoveAll(objs.Cast<IDBObjectCreator>().Where(obj => obj is not null).Contains);
+
+			// Remove
+			AcadDocument.EraseObjects(objs);
+		}
+
+		/// <summary>
+		///     Event to run when an item is added to <see cref="PanelReinforcements" />.
+		/// </summary>
+		private void On_PanRef_Add(object sender, ItemEventArgs<WebReinforcementDirection> e)
+		{
+			if (e.Item?.Steel is null)
+				return;
+
+			Steels.Add(e.Item.Steel.Parameters);
+		}
+
+		/// <summary>
+		///     Event to run when an item is added to <see cref="StringerReinforcements" />.
+		/// </summary>
+		private void On_StrRef_Add(object sender, ItemEventArgs<UniaxialReinforcement> e)
+		{
+			if (e.Item?.Steel is null)
+				return;
+
+			Steels.Add(e.Item.Steel.Parameters);
+		}
+
+		private void On_TextScaleChange(object sender, ScaleChangedEventArgs e) => UpdateTextHeight();
 
 		#endregion
 

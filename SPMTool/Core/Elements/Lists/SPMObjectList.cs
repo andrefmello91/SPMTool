@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.FEMAnalysis;
+using Autodesk.AutoCAD.DatabaseServices;
 #nullable enable
 
 namespace SPMTool.Core.Elements
@@ -13,16 +14,36 @@ namespace SPMTool.Core.Elements
 	/// <typeparam name="TSPMObject">Any type that implements <see cref="ISPMObject{T1}" />.</typeparam>
 	/// <typeparam name="TProperty">The type that represents the main property of the object.</typeparam>
 	public abstract class SPMObjectList<TSPMObject, TProperty> : DBObjectCreatorList<TSPMObject>
-		where TSPMObject : ISPMObject<TProperty>, IDBObjectCreator, IEquatable<TSPMObject>, IComparable<TSPMObject>
+		where TSPMObject : SPMObject<TProperty>, IDBObjectCreator, IEquatable<TSPMObject>, IComparable<TSPMObject>
 		where TProperty : IComparable<TProperty>, IEquatable<TProperty>
 	{
 
+		#region Properties
+
+		/// <summary>
+		///     Get the elements in this collection that match any property in a collection.
+		/// </summary>
+		/// <param name="properties">The collection of required properties.</param>
+		public IEnumerable<TSPMObject> this[IEnumerable<TProperty> properties] => this.Where(t => properties.Contains(t.Property));
+
+		/// <summary>
+		///     Get an element in this collection that matches <paramref name="property" />.
+		/// </summary>
+		/// <param name="property">The required property.</param>
+		public TSPMObject? this[TProperty property] => Find(t => t.Property.Equals(property));
+
+		#endregion
+
 		#region Constructors
 
-		protected SPMObjectList() => SetSortEvent();
+		/// <inheritdoc />
+		protected SPMObjectList(ObjectId blockTableId)
+			: base(blockTableId) =>
+			SetSortEvent();
 
-		protected SPMObjectList(IEnumerable<TSPMObject> collection)
-			: base(collection)
+		/// <inheritdoc />
+		protected SPMObjectList(IEnumerable<TSPMObject> collection, ObjectId blockTableId)
+			: base(collection, blockTableId)
 		{
 			SetSortEvent();
 			Sort();
@@ -33,15 +54,10 @@ namespace SPMTool.Core.Elements
 		#region Methods
 
 		/// <summary>
-		///     Event to execute when a list is sorted.
-		/// </summary>
-		public static void On_ListSort(object? sender, EventArgs? e) => SetNumbers((IEnumerable<TSPMObject>?) sender);
-
-		/// <summary>
 		///     Set numbers to a collection of objects.
 		/// </summary>
 		/// <param name="objects">The objects to update numbers</param>
-		public static void SetNumbers(IEnumerable<TSPMObject>? objects)
+		private static void SetNumbers(IEnumerable<TSPMObject>? objects)
 		{
 			if (objects is null || !objects.Any())
 				return;
@@ -61,18 +77,6 @@ namespace SPMTool.Core.Elements
 		}
 
 		/// <summary>
-		///     Get the elements in this collection that match any property in a collection.
-		/// </summary>
-		/// <param name="properties">The collection of required properties.</param>
-		public IEnumerable<TSPMObject>? GetByProperties(IEnumerable<TProperty>? properties) => this.Where(t => properties.Contains(t.Property));
-
-		/// <summary>
-		///     Get an element in this collection that matches <paramref name="property" />.
-		/// </summary>
-		/// <param name="property">The required property.</param>
-		public TSPMObject? GetByProperty(TProperty property) => Find(t => t.Property.Equals(property));
-
-		/// <summary>
 		///     Get the the list of SPM elements from objects in this collection.
 		/// </summary>
 		[return: NotNull]
@@ -86,7 +90,12 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Set sort event to this collection.
 		/// </summary>
-		protected void SetSortEvent() => ListSorted += On_ListSort;
+		private void SetSortEvent() => ListSorted += On_ListSort;
+
+		/// <summary>
+		///     Event to execute when a list is sorted.
+		/// </summary>
+		private static void On_ListSort(object? sender, EventArgs? e) => SetNumbers((IEnumerable<TSPMObject>?) sender);
 
 		#endregion
 

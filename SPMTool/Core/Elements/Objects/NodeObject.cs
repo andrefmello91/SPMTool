@@ -5,10 +5,9 @@ using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Enums;
-
 using UnitsNet.Units;
 using static SPMTool.Core.Elements.NodeList;
-using static SPMTool.Core.SPMDatabase;
+using static SPMTool.Core.SPMModel;
 
 #nullable enable
 
@@ -33,7 +32,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="andrefmello91.OnPlaneComponents.Constraint" /> in this object.
 		/// </summary>
-		public Constraint Constraint => SPMModel.Constraints.GetConstraintByPosition(Position);
+		public Constraint Constraint => GetOpenedModel(BlockTableId)?.Constraints[Position]?.Value ?? Constraint.Free;
 
 		/// <summary>
 		///     Get the <see cref="PlaneDisplacement" /> of this node object.
@@ -47,7 +46,18 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get/set the <see cref="Force" /> in this object.
 		/// </summary>
-		public PlaneForce Force => SPMModel.Forces.GetForceByPosition(Position);
+		public PlaneForce Force
+		{
+			get
+			{
+				var model = GetOpenedModel(BlockTableId)!;
+				var unit  = model.Settings.Units.AppliedForces;
+				var force = model.Forces[Position]?.Value ?? PlaneForce.Zero;
+
+				return
+					force.Convert(unit);
+			}
+		}
 
 		/// <summary>
 		///     Get the position.
@@ -63,31 +73,28 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		public NodeType Type { get; }
 
-		#region Interface Implementations
-
 		public override Layer Layer => GetLayer(Type);
 
 		public override string Name => $"Node {Number}";
 
 		#endregion
 
-		#endregion
-
 		#region Constructors
 
 		/// <summary>
-		///     Create the node object.
+		///     Create a node object.
 		/// </summary>
 		/// <param name="position">The <see cref="Point" /> position.</param>
 		/// <param name="type">The <see cref="NodeType" />.</param>
-		public NodeObject(Point position, NodeType type)
-			: base(position) => Type = type;
+		/// <inheritdoc />
+		public NodeObject(Point position, NodeType type, ObjectId blockTableId)
+			: base(position, blockTableId) => Type = type;
 
 		/// <param name="position">The <see cref="Point3d" /> position.</param>
 		/// <param name="unit">The <see cref="LengthUnit" /> of <paramref name="position" /> coordinates</param>
-		/// <inheritdoc cref="NodeObject(Point, NodeType)" />
-		public NodeObject(Point3d position, NodeType type, LengthUnit unit = LengthUnit.Millimeter)
-			: this(position.ToPoint(unit), type)
+		/// <inheritdoc cref="NodeObject(Point, NodeType, ObjectId)" />
+		public NodeObject(Point3d position, NodeType type, ObjectId blockTableId, LengthUnit unit = LengthUnit.Millimeter)
+			: this(position.ToPoint(unit), type, blockTableId)
 		{
 		}
 
@@ -96,28 +103,22 @@ namespace SPMTool.Core.Elements
 		#region Methods
 
 		/// <summary>
-		///     Read a <see cref="NodeObject" /> from an <see cref="ObjectId" />.
-		/// </summary>
-		/// <param name="nodeObjectId">The <see cref="ObjectId" /> of the node.</param>
-		public static NodeObject? GetFromObjectId(ObjectId nodeObjectId) => nodeObjectId.GetEntity() is DBPoint point
-			? GetFromPoint(point)
-			: null;
-
-		/// <summary>
-		///     Read a <see cref="NodeObject" /> from a <see cref="DBPoint" />.
+		///     Read a <see cref="NodeObject" /> from an existing <see cref="DBPoint" /> in the drawing.
 		/// </summary>
 		/// <param name="dbPoint">The <see cref="DBPoint" /> object of the node.</param>
-		public static NodeObject GetFromPoint(DBPoint dbPoint) => new(dbPoint.Position, dbPoint.GetNodeType(), Settings.Units.Geometry)
-		{
-			ObjectId = dbPoint.ObjectId
-		};
+		/// <param name="unit">The unit for geometry.</param>
+		public static NodeObject From(DBPoint dbPoint, LengthUnit unit) =>
+			new(dbPoint.Position, dbPoint.GetNodeType(), dbPoint.Database.BlockTableId, unit)
+			{
+				ObjectId = dbPoint.ObjectId
+			};
 
 		/// <summary>
 		///     Get this object as a <see cref="Node" />.
 		/// </summary>
 		public override INumberedElement GetElement()
 		{
-			_node = new Node(Position, Type, Settings.Units.Displacements)
+			_node = new Node(Position, Type, GetOpenedModel(BlockTableId)?.Settings.Units.Displacements ?? LengthUnit.Millimeter)
 			{
 				Number = Number,
 
@@ -137,6 +138,9 @@ namespace SPMTool.Core.Elements
 			if (_node is not null)
 				Displacement = _node.Displacement;
 		}
+
+		/// <inheritdoc />
+		public override string ToString() => _node?.ToString() ?? base.ToString();
 
 		protected override void GetProperties()
 		{
@@ -165,29 +169,19 @@ namespace SPMTool.Core.Elements
 			SetDictionary(Displacement.GetTypedValues(), "Displacements");
 		}
 
-		#region Interface Implementations
-
-		public override DBObject CreateObject() => new DBPoint(Position.ToPoint3d())
-		{
-			Layer = $"{Layer}"
-		};
+		public override DBObject CreateObject() =>
+			new DBPoint(Position.ToPoint3d(GetOpenedModel(BlockTableId)!.Settings.Units.Geometry))
+			{
+				Layer = $"{Layer}"
+			};
 
 		/// <inheritdoc />
 		DBPoint IDBObjectCreator<DBPoint>.CreateObject() => (DBPoint) CreateObject();
 
-		public bool Equals(NodeObject other) => base.Equals(other);
-
 		/// <inheritdoc />
 		DBPoint? IDBObjectCreator<DBPoint>.GetObject() => (DBPoint?) base.GetObject();
 
-		#endregion
-
-		#region Object override
-
-		/// <inheritdoc />
-		public override string ToString() => _node?.ToString() ?? base.ToString();
-
-		#endregion
+		public bool Equals(NodeObject other) => base.Equals(other);
 
 		#endregion
 
@@ -199,25 +193,19 @@ namespace SPMTool.Core.Elements
 		public static explicit operator Node?(NodeObject? nodeObject) => (Node?) nodeObject?.GetElement();
 
 		/// <summary>
-		///     Get the <see cref="NodeObject" /> from <see cref="Model.Nodes" /> associated to a <see cref="Node" />.
+		///     Get the <see cref="NodeObject" /> from active model associated to a <see cref="Node" />.
 		/// </summary>
-		/// <remarks>
-		///     A <see cref="NodeObject" /> is created if <paramref name="node" /> is not null and is not listed.
-		/// </remarks>
-		public static explicit operator NodeObject?(Node? node) => node is null
-			? null
-			: SPMModel.Nodes.GetByProperty(node.Position)
-			  ?? new NodeObject(node.Position, node.Type);
+		public static explicit operator NodeObject?(Node? node) => node is not null
+			? ActiveModel.Nodes[node.Position]
+			: null;
 
 		/// <summary>
-		///     Get the <see cref="NodeObject" /> from <see cref="Model.Nodes" /> associated to a <see cref="DBPoint" />.
+		///     Get the <see cref="NodeObject" /> from the active model associated to a <see cref="DBPoint" />.
 		/// </summary>
 		/// <remarks>
 		///     Can be null if <paramref name="dbPoint" /> is null or doesn't correspond to a <see cref="NodeObject" />
 		/// </remarks>
-		public static explicit operator NodeObject?(DBPoint? dbPoint) => dbPoint is null
-			? null
-			: SPMModel.Nodes.GetByObjectId(dbPoint.ObjectId);
+		public static explicit operator NodeObject?(DBPoint? dbPoint) => (NodeObject?) dbPoint.GetSPMObject();
 
 		/// <summary>
 		///     Get the <see cref="DBPoint" /> associated to a <see cref="NodeObject" />.

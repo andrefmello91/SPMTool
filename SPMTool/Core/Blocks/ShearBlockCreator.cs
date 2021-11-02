@@ -1,6 +1,5 @@
 ﻿using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
-using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
@@ -35,7 +34,7 @@ namespace SPMTool.Core.Blocks
 				_shearStress = value;
 
 				// Update attribute
-				Attributes = new[] { GetAttribute(value, ScaleFactor, Layer) };
+				Attributes = new[] { GetAttribute(value, TextHeight, Layer) };
 			}
 		}
 
@@ -46,15 +45,14 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Block creator constructor.
 		/// </summary>
-		/// <param name="insertionPoint">The insertion <see cref="Point" /> of block.</param>
-		/// <param name="shearStress">The shear stress.</param>
-		/// <param name="scaleFactor">The scale factor.</param>
-		private ShearBlockCreator(Point insertionPoint, Pressure shearStress, double scaleFactor)
-			: base(insertionPoint, Block.Shear, GetRotationAngle(shearStress), scaleFactor, Axis.Y)
+		/// <param name="shearStress">The shear stress, in the unit required.</param>
+		/// <inheritdoc />
+		private ShearBlockCreator(Point insertionPoint, Pressure shearStress, double scaleFactor, double textHeight, ObjectId blockTableId)
+			: base(insertionPoint, Block.Shear, GetRotationAngle(shearStress), scaleFactor, textHeight, blockTableId, Axis.Y)
 		{
 			_shearStress = shearStress;
 
-			Attributes = new[] { GetAttribute(shearStress, scaleFactor, Layer) };
+			Attributes = new[] { GetAttribute(shearStress, textHeight, Layer) };
 		}
 
 		#endregion
@@ -64,28 +62,28 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the shear <see cref="BlockCreator" />.
 		/// </summary>
-		/// <param name="panel">The <see cref="Panel" />.</param>
-		public static ShearBlockCreator? CreateBlock(Panel? panel) =>
-			panel is null || panel.AverageStresses.IsXYZero
-				? null
-				: new ShearBlockCreator(panel.Geometry.Vertices.CenterPoint, panel.AverageStresses.TauXY, Results.ResultScaleFactor);
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double, ObjectId)" />
+		public static ShearBlockCreator? From(Point insertionPoint, Pressure shearStress, double scaleFactor, double textHeight, ObjectId blockTableId) =>
+			!shearStress.ApproxZero(StressState.Tolerance)
+				? new ShearBlockCreator(insertionPoint, shearStress, scaleFactor, textHeight, blockTableId)
+				: null;
 
 		/// <summary>
 		///     Get the attribute for shear block.
 		/// </summary>
-		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double)" />
-		private static AttributeReference GetAttribute(Pressure shearStress, double scaleFactor, Layer layer)
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double, ObjectId)" />
+		private static AttributeReference GetAttribute(Pressure shearStress, double textHeight, Layer layer)
 		{
 			// Get shear stress
-			var tau = shearStress.ToUnit(SPMDatabase.Settings.Units.PanelStresses).Value.Abs();
+			var tau = shearStress.Value.Abs();
 
 			// Create attribute
 			return
 				new AttributeReference
 				{
 					Position            = Point3d.Origin,
-					TextString          = $"{tau:0.00}",
-					Height              = Results.TextHeight,
+					TextString          = $"{tau:G4}",
+					Height              = textHeight,
 					Justify             = AttachmentPoint.MiddleCenter,
 					Layer               = $"{layer}",
 					LockPositionInBlock = true,
@@ -96,7 +94,7 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the rotation angle for shear block.
 		/// </summary>
-		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double)" />
+		/// <inheritdoc cref="ShearBlockCreator(Point, Pressure, double, double, ObjectId)" />
 		private static double GetRotationAngle(Pressure shearStress) => shearStress >= Pressure.Zero
 			? 0
 			: Constants.Pi;

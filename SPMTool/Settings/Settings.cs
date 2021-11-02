@@ -1,11 +1,10 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using andrefmello91.Extensions;
+using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Core;
 using SPMTool.Enums;
 using UnitsNet.Units;
-
 #nullable enable
 
 namespace SPMTool.Application
@@ -24,7 +23,7 @@ namespace SPMTool.Application
 		private const string USaveName = "Units";
 
 		/// <summary>
-		///     <see cref="AnalysisSettings" /> save name.
+		///     <see cref="AnalysisParameters" /> save name.
 		/// </summary>
 		private const string ASSaveName = "Analysis Settings";
 
@@ -48,7 +47,8 @@ namespace SPMTool.Application
 		/// </summary>
 		public static readonly string[] StressUnits = { PressureUnit.Pascal.Abbrev(), PressureUnit.Kilopascal.Abbrev(), PressureUnit.Megapascal.Abbrev(), PressureUnit.Gigapascal.Abbrev() };
 
-		private AnalysisSettings _analysis;
+		private AnalysisParameters _analysis;
+		private DisplaySettings _display;
 		private Units _units;
 
 		#endregion
@@ -56,19 +56,23 @@ namespace SPMTool.Application
 		#region Properties
 
 		/// <summary>
-		///     Get <see cref="AnalysisSettings" /> saved in database.
+		///     Get <see cref="AnalysisParameters" /> saved in database.
 		/// </summary>
-		public AnalysisSettings Analysis
+		public AnalysisParameters Analysis
 		{
 			get => _analysis;
-			set => SetAnalysisSettings(value);
+			set => Set(value);
 		}
 
 		/// /
 		/// <summary>
 		///     Get <see cref="Application.DisplaySettings" /> saved in database.
 		/// </summary>
-		public DisplaySettings Display { get; private set; }
+		public DisplaySettings Display
+		{
+			get => _display;
+			set => Set(value);
+		}
 
 		/// <inheritdoc />
 		public override Layer Layer => default;
@@ -82,31 +86,28 @@ namespace SPMTool.Application
 		public Units Units
 		{
 			get => _units;
-			set => SetUnits(value);
+			set => Set(value);
 		}
 
 		#endregion
 
 		#region Constructors
 
-		public Settings()
+		/// <summary>
+		///     Create a settings objects
+		/// </summary>
+		/// <param name="database">The AutoCAD database.</param>
+		public Settings(Database database)
+			: base(database.BlockTableId)
 		{
-			DictionaryId = SPMDatabase.NodId;
+			DictionaryId = database.NamedObjectsDictionaryId;
 			GetProperties();
-			SetEvents(Display!);
 		}
 
 		#endregion
 
 		#region Methods
 
-		private static void SetEvents(DisplaySettings displaySettings)
-		{
-			displaySettings.NodeScaleChanged      += On_NodeScaleChange;
-			displaySettings.ConditionScaleChanged += On_ConditionScaleChange;
-			displaySettings.TextScaleChanged      += On_TextScaleChange;
-		}
-		
 		/// <inheritdoc />
 		public override DBObject CreateObject() => new Xrecord
 		{
@@ -117,20 +118,21 @@ namespace SPMTool.Application
 		{
 			_analysis = GetAnalysisSettings();
 			_units    = GetUnits();
-			Display   = GetDisplaySettings();
+			_display  = GetDisplaySettings();
 		}
 
 		protected override void SetProperties()
 		{
-			SetAnalysisSettings(_analysis);
-			SetUnits(_units);
+			Set(_analysis);
+			Set(_units);
+			Set(_display);
 		}
 
 		/// <summary>
 		///     Read analysis settings on dictionary.
 		/// </summary>
 		[return: NotNull]
-		private AnalysisSettings GetAnalysisSettings() => GetDictionary(ASSaveName).GetAnalysisSettings() ?? AnalysisSettings.Default;
+		private AnalysisParameters GetAnalysisSettings() => GetDictionary(ASSaveName).GetAnalysisParameters() ?? AnalysisParameters.Default;
 
 		/// <summary>
 		///     Read display settings on dictionary.
@@ -145,33 +147,37 @@ namespace SPMTool.Application
 		private Units GetUnits() => GetDictionary(USaveName).GetUnits() ?? Units.Default;
 
 		/// <summary>
-		///     Save this <paramref name="settings" /> in database.
+		///     Save this <paramref name="parameters" /> in database.
 		/// </summary>
-		private void SetAnalysisSettings(AnalysisSettings settings)
+		private void Set(AnalysisParameters parameters)
 		{
-			_analysis = settings;
+			_analysis = parameters;
 
-			SetDictionary((TypedValue[]) settings, ASSaveName);
+			SetDictionary(parameters.GetTypedValues(), ASSaveName);
 		}
 
 		/// <summary>
 		///     Save this <paramref name="units" /> in database.
 		/// </summary>
-		private void SetUnits(Units units)
+		private void Set(Units units)
 		{
 			_units = units;
 
 			SetDictionary((TypedValue[]) units, USaveName);
 		}
 
-		private static void On_NodeScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.UpdatePointSize();
-
-		private static void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => SPMModel.UpdateConditionsScale(e.OldScale, e.NewScale);
-
-		private static void On_TextScaleChange(object sender, ScaleChangedEventArgs e)
+		/// <summary>
+		///     Save this <paramref name="display" /> in database.
+		/// </summary>
+		private void Set(DisplaySettings display)
 		{
-			SPMModel.UpdateTextHeight();
-			Results.UpdateTextHeight();
+			_display.NodeScale             = display.NodeScale;
+			_display.ConditionScale        = display.ConditionScale;
+			_display.ResultScale           = display.ResultScale;
+			_display.TextScale             = display.TextScale;
+			_display.DisplacementMagnifier = display.DisplacementMagnifier;
+
+			SetDictionary((TypedValue[]) display, DSaveName);
 		}
 
 		#endregion

@@ -24,7 +24,8 @@ namespace SPMTool.Core
 		/// </summary>
 		public ObjectId DictionaryId { get; protected set; } = ObjectId.Null;
 
-		#region Interface Implementations
+		/// <inheritdoc />
+		public ObjectId BlockTableId { get; set; }
 
 		/// <inheritdoc />
 		public abstract Layer Layer { get; }
@@ -32,9 +33,7 @@ namespace SPMTool.Core
 		/// <inheritdoc />
 		public abstract string Name { get; }
 
-		/// <summary>
-		///     Get/set the <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> of this object.
-		/// </summary>
+		/// <inheritdoc />
 		public ObjectId ObjectId
 		{
 			get => _objectId;
@@ -42,6 +41,14 @@ namespace SPMTool.Core
 		}
 
 		#endregion
+
+		#region Constructors
+
+		/// <summary>
+		///     Extended object base constructor.
+		/// </summary>
+		/// <param name="blockTableId">The <see cref="ObjectId" /> of the block table that contains this object.</param>
+		protected ExtendedObject(ObjectId blockTableId) => BlockTableId = blockTableId;
 
 		#endregion
 
@@ -105,21 +112,11 @@ namespace SPMTool.Core
 		/// </returns>
 		protected abstract void SetProperties();
 
-		#region Interface Implementations
-
-		/// <inheritdoc />
-		public virtual void AddToDrawing() => CreateObject().AddToDrawing();
-
 		/// <inheritdoc />
 		public abstract DBObject CreateObject();
 
 		/// <inheritdoc />
-		public virtual DBObject? GetObject() => ObjectId.GetDBObject();
-
-		/// <inheritdoc />
-		public virtual void RemoveFromDrawing() => ObjectId.RemoveFromDrawing();
-
-		#endregion
+		public virtual DBObject? GetObject() => BlockTableId.Database.GetObject(ObjectId);
 
 		#endregion
 

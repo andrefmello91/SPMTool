@@ -1,11 +1,7 @@
-﻿using System;
-using andrefmello91.Extensions;
+﻿using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
-using andrefmello91.SPMElements;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
 using SPMTool.Enums;
-
 using UnitsNet;
 #nullable enable
 
@@ -36,7 +32,7 @@ namespace SPMTool.Core.Blocks
 				_crackOpening = value;
 
 				// Update attribute
-				Attributes = new[] { GetAttribute(value, RotationAngle, ScaleFactor) };
+				Attributes = new[] { GetAttribute(value, RotationAngle, TextHeight, BlockTableId) };
 			}
 		}
 
@@ -47,15 +43,14 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Block creator constructor.
 		/// </summary>
-		/// <param name="insertionPoint">The insertion <see cref="Point" /> of block.</param>
 		/// <param name="crackOpening">The crack opening.</param>
 		/// <inheritdoc />
-		private PanelCrackBlockCreator(Point insertionPoint, Length crackOpening, double rotationAngle, double scaleFactor)
-			: base(insertionPoint, Block.PanelCrack, rotationAngle, scaleFactor)
+		private PanelCrackBlockCreator(Point insertionPoint, Length crackOpening, double rotationAngle, double scaleFactor, double textHeight, ObjectId blockTableId)
+			: base(insertionPoint, Block.PanelCrack, rotationAngle, scaleFactor, textHeight, blockTableId)
 		{
 			_crackOpening = crackOpening;
 
-			Attributes = new[] { GetAttribute(crackOpening, rotationAngle, scaleFactor) };
+			Attributes = new[] { GetAttribute(crackOpening, rotationAngle, textHeight, blockTableId) };
 		}
 
 		#endregion
@@ -65,37 +60,39 @@ namespace SPMTool.Core.Blocks
 		/// <summary>
 		///     Get the average stress <see cref="BlockCreator" />.
 		/// </summary>
-		/// <param name="panel">The <see cref="Panel" />.</param>
-		public static PanelCrackBlockCreator? CreateBlock(Panel? panel) =>
-			panel?.Model is ElementModel.Nonlinear && panel.CrackOpening > Length.Zero
-				? new PanelCrackBlockCreator(panel.Geometry.Vertices.CenterPoint, panel.CrackOpening, StressBlockCreator.ImproveAngle(panel.ConcretePrincipalStresses.Theta2), Results.ResultScaleFactor)
+		/// <inheritdoc cref="PanelCrackBlockCreator(Point, Length, double, double, double, ObjectId)" />
+		public static PanelCrackBlockCreator? From(Point insertionPoint, Length crackOpening, double rotationAngle, double scaleFactor, double textHeight, ObjectId blockTableId) =>
+			crackOpening > Length.Zero
+				? new PanelCrackBlockCreator(insertionPoint, crackOpening, StressBlockCreator.ImproveAngle(rotationAngle), scaleFactor, textHeight, blockTableId)
 				: null;
 
 		/// <summary>
 		///     Get the attribute for crack block.
 		/// </summary>
-		/// <inheritdoc cref="PanelCrackBlockCreator(Point, Length, double, double)" />
-		private static AttributeReference GetAttribute(Length crackOpening, double rotationAngle, double scaleFactor)
+		/// <inheritdoc cref="PanelCrackBlockCreator(Point, Length, double, double, double, ObjectId)" />
+		private static AttributeReference GetAttribute(Length crackOpening, double rotationAngle, double textHeight, ObjectId blockTableId)
 		{
-			var w = crackOpening.ToUnit(SPMDatabase.Settings.Units.CrackOpenings).Value.Abs();
+			var w = crackOpening.Value.Abs();
 
 			// Set the insertion point
-			var pt = new Point(0, -40 * scaleFactor);
+			var unit = SPMModel.GetOpenedModel(blockTableId)!.Settings.Units.Geometry;
+			var pt   = new Point(0, -40).ToPoint3d(unit);
 
 			var attRef = new AttributeReference
 			{
-				Position            = pt.ToPoint3d(),
+				Position            = pt,
 				TextString          = $"{w:0.00E+00}",
-				Height              = Results.TextHeight,
+				Height              = textHeight,
 				Layer               = $"{Layer.Cracks}",
 				Justify             = AttachmentPoint.MiddleCenter,
 				LockPositionInBlock = true,
-				Invisible           = false
+				Invisible           = false,
+				Rotation            = rotationAngle
 			};
 
 			// Rotate text
-			if (!rotationAngle.ApproxZero(1E-3))
-				attRef.TransformBy(Matrix3d.Rotation(rotationAngle, SPMDatabase.Ucs.Zaxis, new Point3d(0, 0, 0)));
+			// if (!rotationAngle.ApproxZero(1E-3))
+			// 	attRef.TransformBy(Matrix3d.Rotation(rotationAngle, SPMModel.Ucs.Zaxis, new Point3d(0, 0, 0)));
 
 			return attRef;
 		}

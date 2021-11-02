@@ -3,13 +3,19 @@ using System.Windows.Input;
 using Autodesk.Windows;
 using SPMTool.Core;
 
-namespace SPMTool.Editor.Commands
+namespace SPMTool.Commands
 {
 	/// <summary>
 	///     Command Handler class.
 	/// </summary>
 	public class CommandHandler : ICommand
 	{
+
+		#region Events
+
+		public event EventHandler? CanExecuteChanged;
+
+		#endregion
 
 		#region Methods
 
@@ -32,8 +38,6 @@ namespace SPMTool.Editor.Commands
 			return esc;
 		}
 
-		#region Interface Implementations
-
 		public bool CanExecute(object parameter) => true;
 
 		/// <summary>
@@ -53,13 +57,10 @@ namespace SPMTool.Editor.Commands
 			if (!cmdText.EndsWith(";"))
 				cmdText += " ";
 
-			SPMDatabase.ActiveDocument.SendStringToExecute(esc + cmdText, true, false, true);
+			SPMModel.ActiveModel.AcadDocument.SendStringToExecute(esc + cmdText, true, false, true);
 		}
 
 		#endregion
 
-		#endregion
-
-		public event EventHandler CanExecuteChanged;
 	}
 }

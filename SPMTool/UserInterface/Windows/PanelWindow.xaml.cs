@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using andrefmello91.Extensions;
 using andrefmello91.Material.Reinforcement;
 using MathNet.Numerics;
+using SPMTool.Annotations;
 using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
@@ -19,15 +22,18 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para StringerGeometryWindow.xaml
 	/// </summary>
-	public partial class PanelWindow
+	public partial class PanelWindow : INotifyPropertyChanged
 	{
 
 		#region Fields
+
+		private readonly SPMModel _database;
 
 		private readonly LengthUnit _geometryUnit;
 		private readonly List<PanelObject> _panels;
 		private readonly LengthUnit _reinforcementUnit;
 		private readonly PressureUnit _stressUnit;
+		private bool _reinforcementXChecked, _reinforcementYChecked, _setGeometry, _setReinforcement;
 
 		#endregion
 
@@ -44,6 +50,62 @@ namespace SPMTool.Application.UserInterface
 		public string HeaderText => _panels.Count == 1
 			? $"Panel {_panels[0].Number}"
 			: $"{_panels.Count} panels selected";
+
+		/// <summary>
+		///     Gets and sets X reinforcement checkbox state.
+		/// </summary>
+		public bool ReinforcementXChecked
+		{
+			get => _reinforcementXChecked;
+			set
+			{
+				_reinforcementXChecked = value;
+
+				OnPropertyChanged();
+			}
+		}
+
+		/// <summary>
+		///     Gets and sets Y reinforcement checkbox state.
+		/// </summary>
+		public bool ReinforcementYChecked
+		{
+			get => _reinforcementYChecked;
+			set
+			{
+				_reinforcementYChecked = value;
+
+				OnPropertyChanged();
+			}
+		}
+
+		/// <summary>
+		///     Get and set option to save geometry to all stringers.
+		/// </summary>
+		public bool SetGeometry
+		{
+			get => _setGeometry;
+			set
+			{
+				_setGeometry = value;
+
+				OnPropertyChanged();
+			}
+		}
+
+		/// <summary>
+		///     Get and set option to save reinforcement to all stringers.
+		/// </summary>
+		public bool SetReinforcement
+		{
+			get => _setReinforcement;
+			set
+			{
+				_setReinforcement = value;
+
+				OnPropertyChanged();
+			}
+		}
 
 		public string StressUnit => _stressUnit.Abbrev();
 
@@ -65,11 +127,14 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private WebReinforcementDirection? OutputReinforcementX
 		{
-			get => ReinforcementXChecked ? new WebReinforcementDirection(XBarDiameter, XSpacing, OutputSteelX, PnlWidth, 0) : null;
+			get => ReinforcementXChecked
+				? WebReinforcementDirection.From(XBarDiameter, XSpacing, OutputSteelX!.Value, PnlWidth, 0, XLegs)
+				: null;
 			set
 			{
 				XSpacing     = value?.BarSpacing ?? Length.FromMillimeters(100);
 				XBarDiameter = value?.BarDiameter ?? Length.FromMillimeters(8);
+				XLegs        = value?.NumberOfLegs ?? 2;
 			}
 		}
 
@@ -78,18 +143,21 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private WebReinforcementDirection? OutputReinforcementY
 		{
-			get => ReinforcementYChecked ? new WebReinforcementDirection(YBarDiameter, YSpacing, OutputSteelY, PnlWidth, Constants.PiOver2) : null;
+			get => ReinforcementYChecked
+				? WebReinforcementDirection.From(YBarDiameter, YSpacing, OutputSteelY!.Value, PnlWidth, Constants.PiOver2, YLegs)
+				: null;
 			set
 			{
 				YSpacing     = value?.BarSpacing ?? Length.FromMillimeters(100);
 				YBarDiameter = value?.BarDiameter ?? Length.FromMillimeters(8);
+				YLegs        = value?.NumberOfLegs ?? 2;
 			}
 		}
 
 		/// <summary>
 		///     Get/set steel for X output.
 		/// </summary>
-		private Steel? OutputSteelX
+		private SteelParameters? OutputSteelX
 		{
 			get => new(XYieldStress, XElasticModule);
 			set
@@ -102,7 +170,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Get/set steel for Y output.
 		/// </summary>
-		private Steel? OutputSteelY
+		private SteelParameters? OutputSteelY
 		{
 			get => new(YYieldStress, YElasticModule);
 			set
@@ -118,46 +186,13 @@ namespace SPMTool.Application.UserInterface
 		private Length PnlWidth
 		{
 			get => Length.From(double.Parse(WBox.Text), _geometryUnit);
-			set => WBox.Text = $"{value.Value:0.00}";
+			set => WBox.Text = $"{value.As(_geometryUnit):F3}";
 		}
 
 		/// <summary>
 		///     Get X reinforcement <see cref="TextBox" />'s.
 		/// </summary>
-		private IEnumerable<TextBox> ReinforcementXBoxes => new[] { SxBox, PhiXBox, FxBox, ExBox };
-
-		/// <summary>
-		///     Gets and sets X reinforcement checkbox state.
-		/// </summary>
-		private bool ReinforcementXChecked
-		{
-			get => ReinforcementXCheck.IsChecked ?? false;
-			set
-			{
-				if (value)
-				{
-					ReinforcementXBoxes.Enable();
-
-					if (Steels.Any())
-						SavedSteelX.Enable();
-
-					if (PanelReinforcements.Any())
-						SavedReinforcementX.Enable();
-				}
-				else
-				{
-					ReinforcementXBoxes.Disable();
-
-					if (Steels.Any())
-						SavedSteelX.Disable();
-
-					if (PanelReinforcements.Any())
-						SavedReinforcementX.Disable();
-				}
-
-				ReinforcementXCheck.IsChecked = value;
-			}
-		}
+		private IEnumerable<TextBox> ReinforcementXBoxes => new[] { SxBox, PhiXBox, NxBox, FxBox, ExBox };
 
 		/// <summary>
 		///     Verify if X reinforcement text boxes are filled.
@@ -167,40 +202,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Get Y reinforcement <see cref="TextBox" />'s.
 		/// </summary>
-		private IEnumerable<TextBox> ReinforcementYBoxes => new[] { SyBox, PhiYBox, FyBox, EyBox };
-
-		/// <summary>
-		///     Gets and sets Y reinforcement checkbox state.
-		/// </summary>
-		private bool ReinforcementYChecked
-		{
-			get => ReinforcementYCheck.IsChecked ?? false;
-			set
-			{
-				if (value)
-				{
-					ReinforcementYBoxes.Enable();
-
-					if (Steels.Any())
-						SavedSteelY.Enable();
-
-					if (PanelReinforcements.Any())
-						SavedReinforcementY.Enable();
-				}
-				else
-				{
-					ReinforcementYBoxes.Disable();
-
-					if (Steels.Any())
-						SavedSteelY.Disable();
-
-					if (PanelReinforcements.Any())
-						SavedReinforcementY.Disable();
-				}
-
-				ReinforcementYCheck.IsChecked = value;
-			}
-		}
+		private IEnumerable<TextBox> ReinforcementYBoxes => new[] { SyBox, PhiYBox, NyBox, FyBox, EyBox };
 
 		/// <summary>
 		///     Verify if Y reinforcement text boxes are filled.
@@ -208,27 +210,9 @@ namespace SPMTool.Application.UserInterface
 		private bool ReinforcementYFilled => CheckBoxes(ReinforcementYBoxes);
 
 		/// <summary>
-		///     Get and set option to save geometry to all stringers.
-		/// </summary>
-		private bool SetGeometry
-		{
-			get => SetGeometryBox.IsChecked ?? false;
-			set => SetGeometryBox.IsChecked = value;
-		}
-
-		/// <summary>
-		///     Get and set option to save reinforcement to all stringers.
-		/// </summary>
-		private bool SetReinforcement
-		{
-			get => SetReinforcementBox.IsChecked ?? false;
-			set => SetReinforcementBox.IsChecked = value;
-		}
-
-		/// <summary>
 		///     Verify if geometry text boxes are filled.
 		/// </summary>
-		private bool WidthFilled => CheckBoxes(new[] { WBox });
+		private bool WidthFilled => CheckBoxes(WBox);
 
 		/// <summary>
 		///     Get/set X bar diameter.
@@ -236,7 +220,7 @@ namespace SPMTool.Application.UserInterface
 		private Length XBarDiameter
 		{
 			get => Length.From(double.Parse(PhiXBox.Text), _reinforcementUnit);
-			set => PhiXBox.Text = $"{value.Value:0.00}";
+			set => PhiXBox.Text = $"{value.As(_reinforcementUnit):F3}";
 		}
 
 		/// <summary>
@@ -245,7 +229,16 @@ namespace SPMTool.Application.UserInterface
 		private Pressure XElasticModule
 		{
 			get => Pressure.From(double.Parse(ExBox.Text), _stressUnit);
-			set => ExBox.Text = $"{value.Value:0.00}";
+			set => ExBox.Text = $"{value.As(_stressUnit):F3}";
+		}
+
+		/// <summary>
+		///     Get/set the number of legs/branches in X direction.
+		/// </summary>
+		private int XLegs
+		{
+			get => int.Parse(NxBox.Text);
+			set => NxBox.Text = $"{value}";
 		}
 
 		/// <summary>
@@ -254,7 +247,7 @@ namespace SPMTool.Application.UserInterface
 		private Length XSpacing
 		{
 			get => Length.From(double.Parse(SxBox.Text), _geometryUnit);
-			set => SxBox.Text = $"{value.Value:0.00}";
+			set => SxBox.Text = $"{value.As(_geometryUnit):F3}";
 		}
 
 		/// <summary>
@@ -263,7 +256,7 @@ namespace SPMTool.Application.UserInterface
 		private Pressure XYieldStress
 		{
 			get => Pressure.From(double.Parse(FxBox.Text), _stressUnit);
-			set => FxBox.Text = $"{value.Value:0.00}";
+			set => FxBox.Text = $"{value.As(_stressUnit):F3}";
 		}
 
 		/// <summary>
@@ -272,7 +265,7 @@ namespace SPMTool.Application.UserInterface
 		private Length YBarDiameter
 		{
 			get => Length.From(double.Parse(PhiYBox.Text), _reinforcementUnit);
-			set => PhiYBox.Text = $"{value.Value:0.00}";
+			set => PhiYBox.Text = $"{value.As(_reinforcementUnit):F3}";
 		}
 
 		/// <summary>
@@ -281,7 +274,16 @@ namespace SPMTool.Application.UserInterface
 		private Pressure YElasticModule
 		{
 			get => Pressure.From(double.Parse(EyBox.Text), _stressUnit);
-			set => EyBox.Text = $"{value.Value:0.00}";
+			set => EyBox.Text = $"{value.As(_stressUnit):F3}";
+		}
+
+		/// <summary>
+		///     Get/set the number of legs/branches in Y direction.
+		/// </summary>
+		private int YLegs
+		{
+			get => int.Parse(NyBox.Text);
+			set => NyBox.Text = $"{value}";
 		}
 
 		/// <summary>
@@ -290,7 +292,7 @@ namespace SPMTool.Application.UserInterface
 		private Length YSpacing
 		{
 			get => Length.From(double.Parse(SyBox.Text), _geometryUnit);
-			set => SyBox.Text = $"{value.Value:0.00}";
+			set => SyBox.Text = $"{value.As(_geometryUnit):F3}";
 		}
 
 		/// <summary>
@@ -299,8 +301,14 @@ namespace SPMTool.Application.UserInterface
 		private Pressure YYieldStress
 		{
 			get => Pressure.From(double.Parse(FyBox.Text), _stressUnit);
-			set => FyBox.Text = $"{value.Value:0.00}";
+			set => FyBox.Text = $"{value.As(_stressUnit):F3}";
 		}
+
+		#endregion
+
+		#region Events
+
+		public event PropertyChangedEventHandler? PropertyChanged;
 
 		#endregion
 
@@ -310,11 +318,13 @@ namespace SPMTool.Application.UserInterface
 		{
 			_panels = panels.ToList();
 
-			_geometryUnit      = SPMDatabase.Settings.Units.Geometry;
-			_reinforcementUnit = SPMDatabase.Settings.Units.Reinforcement;
-			_stressUnit        = SPMDatabase.Settings.Units.MaterialStrength;
-			
-			DataContext        = this;
+			_database = ActiveModel;
+
+			_geometryUnit      = _database.Settings.Units.Geometry;
+			_reinforcementUnit = _database.Settings.Units.Reinforcement;
+			_stressUnit        = _database.Settings.Units.MaterialStrength;
+
+			DataContext = this;
 
 			InitializeComponent();
 
@@ -335,19 +345,133 @@ namespace SPMTool.Application.UserInterface
 		///     Get saved geometry options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedGeoOptions() => ElementWidths.Select(geo => $"{geo.Value:0.00}");
+		private static IEnumerable<string> SavedGeoOptions(SPMModel database) => database.ElementWidths.Distinct()
+			.Select(geo => $"{geo.As(database.Settings.Units.Geometry):F3}");
 
 		/// <summary>
 		///     Get saved reinforcement options as string collection.
 		/// </summary>
 		/// <returns></returns>
-		private static IEnumerable<string> SavedRefOptions() => PanelReinforcements.Select(r => $"{(char) Character.Phi} {r.BarDiameter.Value:0.0} at {r.BarSpacing.Value:0.0}");
+		private static IEnumerable<string> SavedRefOptions(SPMModel database) => database.PanelReinforcements.Distinct()
+			.Select(r => $"{(char) Character.Phi} {r.BarDiameter.As(database.Settings.Units.Reinforcement):F3} at {r.BarSpacing.As(database.Settings.Units.Geometry):F3}");
+
+		[NotifyPropertyChangedInvocator]
+		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
 
 		/// <summary>
-		///     Get saved steel options as string collection.
+		///     Get the initial geometry data of panels.
 		/// </summary>
-		/// <returns></returns>
-		private static IEnumerable<string> SavedSteelOptions() => StringerWindow.SavedSteelOptions();
+		private void GetInitialGeometry()
+		{
+			SetGeometry = true;
+
+			if (_database.ElementWidths.Any())
+			{
+				SavedGeometries.ItemsSource = SavedGeoOptions(_database);
+
+				SavedGeometries.SelectedIndex = _panels.Count == 1
+					? _database.ElementWidths.IndexOf(_panels[0].Width)
+					: 0;
+
+				PnlWidth = _panels.Count == 1
+					? _panels[0].Width
+					: _database.ElementWidths[0];
+
+				return;
+
+			}
+			SavedGeometries.Disable();
+			PnlWidth = Length.FromMillimeters(100);
+		}
+
+		/// <summary>
+		///     Get the initial reinforcement data of panels.
+		/// </summary>
+		private void GetInitialReinforcement()
+		{
+			SetReinforcement = true;
+
+			if (_database.Steels.Any())
+			{
+				SavedSteelX.ItemsSource   = SavedSteelY.ItemsSource   = StringerWindow.SavedSteelOptions(_database);
+				SavedSteelX.SelectedIndex = SavedSteelY.SelectedIndex = 0;
+
+				if (_panels.Count > 1)
+					OutputSteelX = OutputSteelY = _database.Steels[0];
+			}
+			else
+			{
+				SavedSteelX.Disable();
+				SavedSteelY.Disable();
+				OutputSteelX = OutputSteelY = null;
+			}
+
+			if (_database.PanelReinforcements.Any())
+			{
+				SavedReinforcementX.ItemsSource   = SavedReinforcementY.ItemsSource   = SavedRefOptions(_database);
+				SavedReinforcementX.SelectedIndex = SavedReinforcementY.SelectedIndex = 0;
+
+				if (_panels.Count > 1)
+					OutputReinforcementX = OutputReinforcementY = _database.PanelReinforcements[0];
+			}
+			else
+			{
+				SavedReinforcementX.Disable();
+				SavedReinforcementY.Disable();
+				OutputReinforcementX = OutputReinforcementY = null;
+			}
+
+			if (_panels.Count == 1)
+			{
+				var reinforcement = _panels[0].Reinforcement;
+
+				ReinforcementXChecked = reinforcement?.DirectionX is not null;
+				ReinforcementYChecked = reinforcement?.DirectionY is not null;
+
+				OutputReinforcement = reinforcement;
+				OutputSteelX        = reinforcement?.DirectionX?.Steel;
+				OutputSteelY        = reinforcement?.DirectionY?.Steel;
+			}
+
+			else
+			{
+				ReinforcementXChecked = ReinforcementYChecked = false;
+			}
+		}
+
+		/// <summary>
+		///     Save data in the stringer object.
+		/// </summary>
+		private void SaveGeometry()
+		{
+			// Convert values
+			var width = PnlWidth;
+
+			// Save on database
+			_database.ElementWidths.Add(width);
+
+			// Set to panels
+			foreach (var pnl in _panels)
+				pnl.Width = width;
+		}
+
+		/// <summary>
+		///     Save data in the stringer object.
+		/// </summary>
+		private void SaveReinforcement()
+		{
+			// Set to panels
+			var reinforcement = OutputReinforcement;
+
+			_database.PanelReinforcements.Add(reinforcement?.DirectionX);
+			_database.PanelReinforcements.Add(reinforcement?.DirectionY);
+
+			foreach (var pnl in _panels)
+				pnl.Reinforcement = reinforcement;
+		}
 
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
@@ -384,89 +508,6 @@ namespace SPMTool.Application.UserInterface
 			Close();
 		}
 
-		/// <summary>
-		///     Get the initial geometry data of panels.
-		/// </summary>
-		private void GetInitialGeometry()
-		{
-			SetGeometry = true;
-
-			if (ElementWidths.Any())
-			{
-				SavedGeometries.ItemsSource   = SavedGeoOptions();
-				
-				SavedGeometries.SelectedIndex = _panels.Count == 1
-					? ElementWidths.IndexOf(_panels[0].Width)
-					: 0;
-
-				PnlWidth = _panels.Count == 1
-					? _panels[0].Width
-					: ElementWidths[0];
-				
-				return;
-				
-			}
-			SavedGeometries.Disable();
-			PnlWidth = Length.FromMillimeters(100);
-		}
-
-		/// <summary>
-		///     Get the initial reinforcement data of panels.
-		/// </summary>
-		private void GetInitialReinforcement()
-		{
-			SetReinforcement = true;
-
-			if (Steels.Any())
-			{
-				SavedSteelX.ItemsSource   = SavedSteelY.ItemsSource   = SavedSteelOptions();
-				SavedSteelX.SelectedIndex = SavedSteelY.SelectedIndex = 0;
-
-				if (_panels.Count > 1)
-					OutputSteelX = OutputSteelY = Steels[0];
-			}
-			else
-			{
-				SavedSteelX.Disable();
-				SavedSteelY.Disable();
-				OutputSteelX = OutputSteelY = null;
-			}
-
-			if (PanelReinforcements.Any())
-			{
-				SavedReinforcementX.ItemsSource   = SavedReinforcementY.ItemsSource   = SavedRefOptions();
-				SavedReinforcementX.SelectedIndex = SavedReinforcementY.SelectedIndex = 0;
-
-				if (_panels.Count > 1)
-					OutputReinforcementX = OutputReinforcementY = PanelReinforcements[0];
-			}
-			else
-			{
-				SavedReinforcementX.Disable();
-				SavedReinforcementY.Disable();
-				OutputReinforcementX = OutputReinforcementY = null;
-			}
-
-			if (_panels.Count == 1)
-			{
-				var reinforcement = _panels[0].Reinforcement;
-
-				ReinforcementXChecked = reinforcement?.DirectionX is not null;
-				ReinforcementYChecked = reinforcement?.DirectionY is not null;
-
-				OutputReinforcement = reinforcement;
-				OutputSteelX        = reinforcement?.DirectionX?.Steel;
-				OutputSteelY        = reinforcement?.DirectionY?.Steel;
-			}
-
-			else
-				ReinforcementXChecked = ReinforcementYChecked = false;
-		}
-
-		private void ReinforcementXCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementXChecked = ((CheckBox) sender).IsChecked ?? false;
-
-		private void ReinforcementYCheck_OnCheck(object sender, RoutedEventArgs e) => ReinforcementYChecked = ((CheckBox) sender).IsChecked ?? false;
-
 		private void SavedGeometries_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			var box = (ComboBox) sender;
@@ -474,11 +515,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= ElementWidths.Count || i < 0)
+			if (i >= _database.ElementWidths.Count || i < 0)
 				return;
 
 			// Update textboxes
-			PnlWidth = ElementWidths[i];
+			PnlWidth = _database.ElementWidths[i];
 		}
 
 		private void SavedReinforcementX_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -488,11 +529,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= PanelReinforcements.Count || i < 0)
+			if (i >= _database.PanelReinforcements.Count || i < 0)
 				return;
 
 			// Update textboxes
-			OutputReinforcementX = PanelReinforcements[i];
+			OutputReinforcementX = _database.PanelReinforcements[i];
 		}
 
 		private void SavedReinforcementY_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -502,11 +543,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= PanelReinforcements.Count || i < 0)
+			if (i >= _database.PanelReinforcements.Count || i < 0)
 				return;
 
 			// Update textboxes
-			OutputReinforcementY = PanelReinforcements[i];
+			OutputReinforcementY = _database.PanelReinforcements[i];
 		}
 
 		private void SavedSteelX_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -516,11 +557,11 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= Steels.Count || i < 0)
+			if (i >= _database.Steels.Count || i < 0)
 				return;
 
 			// Update textboxes
-			OutputSteelX = Steels[i];
+			OutputSteelX = _database.Steels[i];
 		}
 
 		private void SavedSteelY_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -530,47 +571,12 @@ namespace SPMTool.Application.UserInterface
 			// Get index
 			var i = box.SelectedIndex;
 
-			if (i >= Steels.Count || i < 0)
+			if (i >= _database.Steels.Count || i < 0)
 				return;
 
 			// Update textboxes
-			OutputSteelY = Steels[i];
+			OutputSteelY = _database.Steels[i];
 		}
-
-		/// <summary>
-		///     Save data in the stringer object.
-		/// </summary>
-		private void SaveGeometry()
-		{
-			// Convert values
-			var width = PnlWidth;
-
-			// Save on database
-			ElementWidths.Add(width);
-
-			// Set to panels
-			foreach (var pnl in _panels)
-				pnl.Width = width;
-		}
-
-		/// <summary>
-		///     Save data in the stringer object.
-		/// </summary>
-		private void SaveReinforcement()
-		{
-			// Set to panels
-			var reinforcement = OutputReinforcement;
-
-			PanelReinforcements.Add(reinforcement?.DirectionX);
-			PanelReinforcements.Add(reinforcement?.DirectionY);
-
-			foreach (var pnl in _panels)
-				pnl.Reinforcement = reinforcement;
-		}
-
-		private void SetGeometry_OnCheck(object sender, RoutedEventArgs e) => SetGeometry = ((CheckBox) sender).IsChecked ?? false;
-
-		private void SetReinforcement_OnCheck(object sender, RoutedEventArgs e) => SetReinforcement = ((CheckBox) sender).IsChecked ?? false;
 
 		#endregion
 

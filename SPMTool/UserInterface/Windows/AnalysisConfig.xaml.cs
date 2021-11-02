@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
 using System.Windows;
-using System.Windows.Input;
-using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using SPMTool.Core;
 
@@ -13,10 +8,13 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para AnalysisConfig.xaml
 	/// </summary>
-	public partial class AnalysisConfig : BaseWindow
+	public partial class AnalysisConfig
 	{
+
+		#region Fields
+
 		/// <summary>
-		///		The solver names to show in <see cref="SolverBox"/>.
+		///     The solver names to show in <see cref="SolverBox" />.
 		/// </summary>
 		private static readonly List<string> SolverNames = new()
 		{
@@ -24,26 +22,32 @@ namespace SPMTool.Application.UserInterface
 			"Mod. Newton-Raphson",
 			"Secant"
 		};
-		
+
+		private readonly SPMModel _database;
+
+		#endregion
+
 		#region Properties
 
 		/// <summary>
 		///     Get/set settings.
 		/// </summary>
-		private AnalysisSettings AnalysisSettings
+		public AnalysisParameters Parameters
 		{
-			get => new()
+			get => AnalysisParameters.Default with
 			{
-				Tolerance     = double.Parse(ToleranceBox.Text),
-				NumLoadSteps  = int.Parse(LoadStepsBox.Text),
+				ForceTolerance = double.Parse(FToleranceBox.Text),
+				DisplacementTolerance = double.Parse(DToleranceBox.Text),
+				NumberOfSteps = int.Parse(LoadStepsBox.Text),
 				MaxIterations = int.Parse(IterationsBox.Text),
-				Solver        = (NonLinearSolver) SolverBox.SelectedIndex
+				Solver = (NonLinearSolver) SolverBox.SelectedIndex
 			};
 
 			set
 			{
-				ToleranceBox.Text       = $"{value.Tolerance:G}";
-				LoadStepsBox.Text       = $"{value.NumLoadSteps}";
+				FToleranceBox.Text      = $"{value.ForceTolerance:G2}";
+				DToleranceBox.Text      = $"{value.DisplacementTolerance:G2}";
+				LoadStepsBox.Text       = $"{value.NumberOfSteps}";
 				IterationsBox.Text      = $"{value.MaxIterations}";
 				SolverBox.SelectedIndex = (int) value.Solver;
 			}
@@ -61,7 +65,10 @@ namespace SPMTool.Application.UserInterface
 			SolverBox.ItemsSource = SolverNames;
 
 			// Read saved settings
-			AnalysisSettings = SPMDatabase.Settings.Analysis;
+			_database  = SPMModel.ActiveModel;
+			Parameters = _database.Settings.Analysis;
+
+			DataContext = this;
 		}
 
 		#endregion
@@ -71,7 +78,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     Set default analysis settings.
 		/// </summary>
-		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => AnalysisSettings = AnalysisSettings.Default;
+		private void ButtonDefault_OnClick(object sender, RoutedEventArgs e) => Parameters = AnalysisParameters.Default;
 
 		/// <summary>
 		///     Save units if OK button is clicked.
@@ -79,14 +86,26 @@ namespace SPMTool.Application.UserInterface
 		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
 		{
 			// Check if parameters parse
-			if (!CheckBoxes(ToleranceBox, LoadStepsBox, IterationsBox))
+			if (!CheckBoxes(FToleranceBox, DToleranceBox, LoadStepsBox, IterationsBox))
 			{
 				MessageBox.Show("Please set positive and non zero values.");
 				return;
 			}
 
+			if (double.Parse(FToleranceBox.Text) >= 1 || double.Parse(DToleranceBox.Text) >= 1)
+			{
+				MessageBox.Show("Please set a tolerance smaller than 1.");
+				return;
+			}
+
+			if (int.Parse(IterationsBox.Text) < 1000)
+			{
+				MessageBox.Show("Please set at least 1000 for maximum iterations.");
+				return;
+			}
+
 			// Save units on database
-			SPMDatabase.Settings.Analysis = AnalysisSettings;
+			_database.Settings.Analysis = Parameters;
 
 			Close();
 		}

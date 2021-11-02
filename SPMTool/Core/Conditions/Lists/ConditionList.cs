@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.EList;
 using andrefmello91.OnPlaneComponents;
+using Autodesk.AutoCAD.DatabaseServices;
 
 namespace SPMTool.Core.Conditions
 {
@@ -23,6 +23,18 @@ namespace SPMTool.Core.Conditions
 		#region Properties
 
 		/// <summary>
+		///     Get an element in this list that match <paramref name="position" />.
+		/// </summary>
+		/// <param name="position">The required position.</param>
+		public TConditionObject? this[Point position] => Find(c => c.Position == position);
+
+		/// <summary>
+		///     Get the elements in this collection that match any position in a collection.
+		/// </summary>
+		/// <param name="positions">The collection of required positions.</param>
+		public IEnumerable<TConditionObject> this[IEnumerable<Point> positions] => this.Where(c => positions.Contains(c.Position));
+
+		/// <summary>
 		///     Get the positions of objects in this collection.
 		/// </summary>
 		public List<Point> Positions => this.Select(f => f.Position).ToList();
@@ -31,12 +43,15 @@ namespace SPMTool.Core.Conditions
 
 		#region Constructors
 
-		protected ConditionList()
+		/// <inheritdoc />
+		protected ConditionList(ObjectId blockTableId)
+			: base(blockTableId)
 		{
 		}
 
-		protected ConditionList(IEnumerable<TConditionObject> collection)
-			: base(collection)
+		/// <inheritdoc />
+		protected ConditionList(IEnumerable<TConditionObject> collection, ObjectId blockTableId)
+			: base(collection, blockTableId)
 		{
 		}
 
@@ -127,13 +142,6 @@ namespace SPMTool.Core.Conditions
 			return
 				AddRange(positions, value, raiseEvents, sort);
 		}
-
-		/// <summary>
-		///     Get all the elements in this list that match <paramref name="position" />.
-		/// </summary>
-		/// <param name="position">The required position.</param>
-		[return: MaybeNull]
-		public TConditionObject GetByPosition(Point position) => Find(c => c.Position == position);
 
 		/// <param name="position">The position of the object to remove.</param>
 		/// <inheritdoc cref="EList{T}.Remove(T, bool, bool)" />

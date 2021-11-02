@@ -3,9 +3,7 @@ using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics;
 using SPMTool.Enums;
-
-using static SPMTool.Core.SPMDatabase;
-
+using UnitsNet.Units;
 #nullable enable
 
 namespace SPMTool.Core.Conditions
@@ -49,8 +47,8 @@ namespace SPMTool.Core.Conditions
 		///     Constraint object constructor.
 		/// </summary>
 		/// <inheritdoc />
-		public ConstraintObject(Point position, Constraint value)
-			: base(position, value)
+		public ConstraintObject(Point position, Constraint value, ObjectId blockTableId)
+			: base(position, value, blockTableId)
 		{
 		}
 
@@ -62,19 +60,17 @@ namespace SPMTool.Core.Conditions
 		///     Read a <see cref="ConstraintObject" /> from a <see cref="BlockReference" />.
 		/// </summary>
 		/// <param name="reference">The <see cref="BlockReference" /> object of the force.</param>
-		public static ConstraintObject? ReadFromBlock(BlockReference? reference) =>
-			reference is null
-				? null
-				: new ConstraintObject(reference.Position.ToPoint(Settings.Units.Geometry), Constraint.Free)
+		/// <param name="unit">The unit for geometry.</param>
+		public static ConstraintObject From(BlockReference reference, LengthUnit unit)
+		{
+			var position = reference.Position.ToPoint(unit);
+
+			return
+				new ConstraintObject(position, Constraint.Free, reference.ObjectId.Database.BlockTableId)
 				{
 					ObjectId = reference.ObjectId
 				};
-
-		/// <summary>
-		///     Read a <see cref="ConstraintObject" /> from an <see cref="ObjectId" />.
-		/// </summary>
-		/// <param name="forceObjectId">The <see cref="ObjectId" /> of the force.</param>
-		public static ConstraintObject? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference?) forceObjectId.GetEntity());
+		}
 
 		protected override void GetProperties()
 		{
@@ -93,11 +89,7 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		private Constraint? GetConstraint() => GetDictionary("Constraint").GetConstraint();
 
-		#region Interface Implementations
-
 		public bool Equals(ConstraintObject other) => base.Equals(other);
-
-		#endregion
 
 		#endregion
 
@@ -112,16 +104,14 @@ namespace SPMTool.Core.Conditions
 		public static explicit operator Constraint(ConstraintObject? constraintObject) => constraintObject?.Value ?? Constraint.Free;
 
 		/// <summary>
-		///     Get the <see cref="ConstraintObject" /> from <see cref="Model.Constraints" /> associated to a
+		///     Get the <see cref="ConstraintObject" /> from the active model associated to a
 		///     <see cref="BlockReference" />.
 		/// </summary>
 		/// <remarks>
 		///     Can be null if <paramref name="blockReference" /> is null or doesn't correspond to a
 		///     <see cref="ConstraintObject" />
 		/// </remarks>
-		public static explicit operator ConstraintObject?(BlockReference? blockReference) => blockReference is null
-			? null
-			: SPMModel.Constraints.GetByObjectId(blockReference.ObjectId);
+		public static explicit operator ConstraintObject?(BlockReference? blockReference) => (ConstraintObject?) blockReference?.GetSPMObject();
 
 		#endregion
 

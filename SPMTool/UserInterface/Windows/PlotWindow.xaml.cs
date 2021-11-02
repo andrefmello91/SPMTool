@@ -1,15 +1,20 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
+using andrefmello91.SPMElements;
 using LiveCharts;
 using LiveCharts.Configurations;
 using LiveCharts.Defaults;
 using LiveCharts.Wpf;
+using SPMTool.Annotations;
 using SPMTool.Core;
 using UnitsNet;
 using UnitsNet.Units;
@@ -19,20 +24,26 @@ namespace SPMTool.Application.UserInterface
 	/// <summary>
 	///     Lógica interna para GraphWindow.xaml
 	/// </summary>
-	public partial class PlotWindow : Window
+	public partial class PlotWindow : INotifyPropertyChanged
 	{
 
 		#region Fields
+
+		private readonly List<(string label, ObservablePoint point)>
+			_crackLabels = new(),
+			_yieldLabels = new(),
+			_crushLabels = new();
 
 		/// <summary>
 		///     The <see cref="LengthUnit" /> of displacements.
 		/// </summary>
 		private readonly LengthUnit _displacementUnit;
 
-		/// <summary>
-		///     The <see cref="FEMOutput" />'s.
-		/// </summary>
-		private readonly FEMOutput _femOutput;
+		private readonly List<MonitoredDisplacement> _monitoredDisplacements = new(new[] { new MonitoredDisplacement(Length.Zero, 0) });
+
+		private readonly bool _simulate;
+
+		private bool _done, _inverted, _showCracks, _showCrushing, _showYielding;
 
 		#endregion
 
@@ -43,10 +54,143 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		public string DisplacementTitle => $"Displacement ({_displacementUnit.Abbrev()})";
 
+		public bool Done
+		{
+			get => _done;
+			set
+			{
+				_done = value;
+
+				if (value)
+					AnalysisOk();
+
+				OnPropertyChanged();
+			}
+		}
+
+		public bool ShowCracks
+		{
+			get => _showCracks;
+			set
+			{
+				_showCracks = value;
+
+				if (value)
+					ShowCrushing = ShowYielding = false;
+
+				OnPropertyChanged();
+			}
+		}
+
+		public bool ShowCrushing
+		{
+			get => _showCrushing;
+			set
+			{
+				_showCrushing = value;
+
+				if (value)
+					ShowCracks = ShowYielding = false;
+
+				OnPropertyChanged();
+			}
+		}
+
+		public bool ShowYielding
+		{
+			get => _showYielding;
+			set
+			{
+				_showYielding = value;
+
+				if (value)
+					ShowCracks = ShowCrushing = false;
+
+				OnPropertyChanged();
+			}
+		}
+
+		/// <summary>
+		///     The <see cref="SPMOutput" />'s.
+		/// </summary>
+		private SPMAnalysis Analysis { get; }
+
+		private Func<ChartPoint, string> CrackLabel => point =>
+		{
+			if (!_crackLabels.Any())
+				return Label(point);
+
+			var label = _crackLabels.First(p => (Inverted ? -p.point.X : p.point.X).Approx(point.X, 1E-6) && p.point.Y.Approx(point.Y, 1E-6)).label;
+
+			return
+				(label.IsNullOrEmpty() ? string.Empty : $"{label}\n") +
+				$"{Label(point)}";
+		};
+
+		private Func<ChartPoint, string> CrushLabel => point =>
+		{
+			if (!_crushLabels.Any())
+				return Label(point);
+
+			var label = _crushLabels.First(p => (Inverted ? -p.point.X : p.point.X).Approx(point.X, 1E-6) && p.point.Y.Approx(point.Y, 1E-6)).label;
+
+			return
+				(label.IsNullOrEmpty() ? string.Empty : $"{label}\n") +
+				$"{Label(point)}";
+		};
+
 		/// <summary>
 		///     Get/set inverted displacement axis state.
 		/// </summary>
-		private bool Inverted { get; set; }
+		private bool Inverted
+		{
+			get => _inverted;
+			set
+			{
+				if (_inverted == value)
+					return;
+
+				_inverted = value;
+				SetMapper(value);
+			}
+		}
+
+		/// <summary>
+		///     Get the label of a chart point.
+		/// </summary>
+		private Func<ChartPoint, string> Label => point =>
+			$"LF = {point.Y:0.00}\n" +
+			$"u  = {Length.FromMillimeters(Inverted ? -point.X : point.X).ToUnit(_displacementUnit)}";
+
+		private double MaxLoadFactor
+		{
+			get => LoadFactorAxis.MaxValue;
+			set
+			{
+				if (LoadFactorAxis.MaxValue >= value)
+					return;
+
+				LoadFactorAxis.MaxValue = value;
+			}
+		}
+
+		private Func<ChartPoint, string> YieldLabel => point =>
+		{
+			if (!_yieldLabels.Any())
+				return Label(point);
+
+			var label = _yieldLabels.First(p => (Inverted ? -p.point.X : p.point.X).Approx(point.X, 1E-6) && p.point.Y.Approx(point.Y, 1E-6)).label;
+
+			return
+				(label.IsNullOrEmpty() ? string.Empty : $"{label}\n") +
+				$"{Label(point)}";
+		};
+
+		#endregion
+
+		#region Events
+
+		public event PropertyChangedEventHandler? PropertyChanged;
 
 		#endregion
 
@@ -55,13 +199,17 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     <see cref="PlotWindow" /> constructor.
 		/// </summary>
-		/// <param name="femOutput">The <see cref="FEMOutput" />.</param>
-		public PlotWindow([NotNull] FEMOutput femOutput)
+		/// <param name="analysis">The <see cref="Analysis" />, before initiating analysis.</param>
+		public PlotWindow(SPMAnalysis analysis, bool simulate)
 		{
+			_simulate = simulate;
 			InitializeComponent();
 
-			_displacementUnit = SPMDatabase.Settings.Units.Displacements;
-			_femOutput        = femOutput;
+			_displacementUnit = SPMModel.ActiveModel.Settings.Units.Displacements;
+			Analysis          = analysis;
+			AddEvents(Analysis);
+
+			ContentRendered += On_WindowShown;
 
 			DataContext = this;
 		}
@@ -71,95 +219,295 @@ namespace SPMTool.Application.UserInterface
 		#region Methods
 
 		/// <summary>
-		///     Get the chart values from monitored displacements.
+		///     Get the label for a collection of SPM elements.
 		/// </summary>
-		/// <param name="monitoredDisplacements">The monitored displacements.</param>
-		/// <param name="displacementUnit">The <see cref="LengthUnit" /> of displacements.</param>
-		private static ChartValues<ObservablePoint> GetValues(IEnumerable<MonitoredDisplacement> monitoredDisplacements, LengthUnit displacementUnit)
+		private static string GetLabel(IEnumerable<ISPMElement> elements, ElementPlot elementPlot)
 		{
-			// Add zero
-			var values = new ChartValues<ObservablePoint> { new(0, 0) };
-
-			values.AddRange(monitoredDisplacements.Select(d => new ObservablePoint(d.Displacement.ToUnit(displacementUnit).Value, d.LoadFactor)));
-
-			return values;
-		}
-
-		/// <summary>
-		///     Update the plot.
-		/// </summary>
-		public void UpdatePlot()
-		{
-			// Set max load factor
-			LoadFactorAxis.MaxValue = _femOutput.Select(m => m.LoadFactor).Max();
-
-			// Initiate series
-			CartesianChart.Series = new SeriesCollection
+			var append = elementPlot switch
 			{
-				new LineSeries
-				{
-					Title           = "Load Factor x Displacement",
-					Values          = GetValues(_femOutput, _displacementUnit),
-					PointGeometry   = null,
-					StrokeThickness = 3,
-					Stroke          = Brushes.LightSkyBlue,
-					Fill            = Brushes.Transparent,
-					DataLabels      = false,
-					LabelPoint      = Label
-				}
+				ElementPlot.Cracking         => ": Concrete cracked!",
+				ElementPlot.Crushing         => ": Concrete crushed!",
+				ElementPlot.ConcreteYielding => ": Concrete yielded!",
+				_                            => ": Steel yielded!"
 			};
 
-			SetMapper();
-		}
+			switch (elements.Count())
+			{
+				case 0:
+					return string.Empty;
 
-		private void ButtonExport_OnClick(object sender, RoutedEventArgs e)
-		{
-			// Get location and name
-			string
-				path = SPMDatabase.GetFilePath(),
-				name = $"{Path.GetFileNameWithoutExtension(SPMDatabase.ActiveDocument.Name)}_SPMResult";
+				case 1:
+					return elements.First().Name + append;
 
-			// Export
-			_femOutput.Export(path, name, _displacementUnit);
-			MessageBox.Show("Data exported to file location.");
-		}
+				default:
+					var stringers = elements
+						.Where(e => e is Stringer)
+						.ToList();
 
-		private void ButtonOK_OnClick(object sender, RoutedEventArgs e)
-		{
-			Close();
+					var panels = elements
+						.Where(e => e is Panel)
+						.ToList();
+
+					var sLabel = stringers.Any() switch
+					{
+						true when stringers.Count == 1 => stringers[0].Name + append,
+						true                           => stringers.Aggregate("Stringers", (s, element) => $"{s} {element.Number},").Trim(',') + append,
+						_                              => null
+					};
+
+					var pLabel = panels.Any() switch
+					{
+						true when panels.Count == 1 => panels[0].Name + append,
+						true                        => panels.Aggregate("Panels", (s, element) => $"{s} {element.Number},").Trim(',') + append,
+						_                           => null
+					};
+
+					// Remove ","
+					return
+						(sLabel ?? string.Empty) +
+						(sLabel is not null && pLabel is not null ? "\n" : string.Empty) +
+						(pLabel ?? string.Empty);
+			}
 		}
 
 		/// <summary>
-		///     Get the label of a <paramref name="point" />.
+		///     Get an <see cref="ObservablePoint" /> from a <see cref="MonitoredDisplacement" />.
 		/// </summary>
-		/// <param name="point">The <see cref="ChartPoint" />.</param>
-		private string Label(ChartPoint point) =>
-			$"LF = {point.Y:0.00}\n" +
-			$"u  = {Length.FromMillimeters(Inverted ? -point.X : point.X).ToUnit(_displacementUnit)}";
+		private static ObservablePoint GetPoint(MonitoredDisplacement monitoredDisplacement, LengthUnit unit) => new(monitoredDisplacement.Displacement.As(unit), monitoredDisplacement.LoadFactor);
+
+		[NotifyPropertyChangedInvocator]
+		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+
+		/// <summary>
+		///     Add events to analysis.
+		/// </summary>
+		private void AddEvents(SPMAnalysis analysis)
+		{
+			analysis.ElementsCracked         += OnElementsCracked;
+			analysis.ElementsConcreteYielded += OnElementsConcreteYielded;
+			analysis.ElementsSteelYielded    += OnElementsSteelYielded;
+			analysis.ElementsCrushed         += OnElementsCrushed;
+		}
+
+		/// <summary>
+		///     Add the monitored point to plot.
+		/// </summary>
+		private void AddPoint(MonitoredDisplacement monitoredDisplacement)
+		{
+			_monitoredDisplacements.Add(monitoredDisplacement);
+			Plot.Values.Add(GetPoint(monitoredDisplacement, _displacementUnit));
+		}
+
+		/// <summary>
+		///     Add the point of element's cracking, yielding or crushing.
+		/// </summary>
+		private async Task AddPoints(MonitoredDisplacement monitoredDisplacement, IEnumerable<ISPMElement> elements, ElementPlot elementPlot)
+		{
+			var pt = GetPoint(monitoredDisplacement, _displacementUnit);
+
+			var (plot, labels) = elementPlot switch
+			{
+				ElementPlot.Cracking => (CrackingPlot, _crackLabels),
+				ElementPlot.Crushing => (CrushingPlot, _crushLabels),
+				_                    => (YieldingPlot, _yieldLabels)
+			};
+
+			var label = GetLabel(elements, elementPlot);
+
+			labels.Add((label, pt));
+			plot.Values.Add(pt);
+
+			await Task.Delay(TimeSpan.FromMilliseconds(10), CancellationToken.None);
+		}
+
+		/// <summary>
+		///     Execute when analysis is done.
+		/// </summary>
+		private void AnalysisOk()
+		{
+			Status.Text = Analysis.Stop
+				? Analysis.StopMessage
+				: "Analysis done!";
+		}
+
+		/// <summary>
+		///     Initiate the plot.
+		/// </summary>
+		private void ConfigurePlot()
+		{
+			// Configure main plot
+			Plot.Values        = new ChartValues<ObservablePoint>(new[] { new ObservablePoint(0, 0) });
+			Plot.PointGeometry = null;
+			Plot.LabelPoint    = Label;
+
+			// Configure crack plot
+			CrackingPlot.Values        = new ChartValues<ObservablePoint>();
+			CrackingPlot.PointGeometry = DefaultGeometries.Circle;
+			CrackingPlot.LabelPoint    = CrackLabel;
+
+			// Configure yield plot
+			YieldingPlot.Values        = new ChartValues<ObservablePoint>();
+			YieldingPlot.PointGeometry = DefaultGeometries.Circle;
+			YieldingPlot.LabelPoint    = YieldLabel;
+
+			// Configure crush plot
+			CrushingPlot.Values        = new ChartValues<ObservablePoint>();
+			CrushingPlot.PointGeometry = DefaultGeometries.Circle;
+			CrushingPlot.LabelPoint    = CrushLabel;
+		}
+
+		/// <summary>
+		///     Execute the analysis asynchronously.
+		/// </summary>
+		private async Task<bool> ExecuteAnalysis()
+		{
+			// Analysis by steps
+			while (true)
+			{
+				var md = await Task.Run(() =>
+				{
+					Analysis.ExecuteStep();
+					return Analysis.CurrentStep.MonitoredDisplacement;
+				});
+
+				if (md.HasValue)
+				{
+					AddPoint(md.Value);
+					UpdatePlot(md.Value);
+				}
+
+				if (Analysis.Stop || !_simulate && Analysis.CurrentStep >= Analysis.Parameters.NumberOfSteps)
+					break;
+			}
+
+			return true;
+		}
 
 		/// <summary>
 		///     Set mapper for inverting X axis.
 		/// </summary>
-		private void SetMapper()
+		private void SetMapper(bool inverted)
 		{
-			// If there is a displacement bigger than zero, nothing is done
-			if (_femOutput.Any(p => !p.Displacement.ApproxZero(Units.LengthTolerance) && p.Displacement > Length.Zero))
-			{
-				Inverted = false;
-				return;
-			}
-
 			// Invert x values
-			Inverted = true;
-			CartesianChart.Series[0].Configuration = Mappers.Xy<ObservablePoint>()
-				.X(point => -point.X)
-				.Y(point => point.Y);
+			foreach (var series in CartesianChart.Series)
+				series.Configuration = Mappers.Xy<ObservablePoint>()
+					.X(point => inverted ? -point.X : point.X)
+					.Y(point => point.Y);
 
 			// Correct the labels
-			DisplacementAxis.LabelFormatter = x => $"{x * -1}";
+			DisplacementAxis.LabelFormatter = x => $"{(inverted ? -x : x)}";
+		}
+
+		/// <summary>
+		///     Update plot after adding a monitored displacement.
+		/// </summary>
+		private void UpdatePlot(MonitoredDisplacement monitoredDisplacement)
+		{
+			// Set inversion
+			Inverted = _monitoredDisplacements
+				.Select(md => md.Displacement)
+				.Max() <= Length.Zero;
+
+			var lf = monitoredDisplacement.LoadFactor;
+
+			// Update maximum load factor 
+			while (!lf.Approx(MaxLoadFactor, 1E-3) && lf > MaxLoadFactor)
+				MaxLoadFactor += 0.2;
+		}
+
+		/// <summary>
+		///     Execute when <see cref="ButtonExport" /> is clicked.
+		/// </summary>
+		private void ButtonExport_OnClick(object sender, RoutedEventArgs e)
+		{
+			// Get location and name
+			string
+				path = Path.GetDirectoryName(SPMModel.ActiveModel.Name)!,
+				name = $"{Path.GetFileNameWithoutExtension(SPMModel.ActiveModel.Name)}_SPMResult";
+
+			// Export
+			var output = Analysis.GenerateOutput();
+			output.Export(path, name, _displacementUnit);
+			MessageBox.Show("Data exported to file location.");
+		}
+
+		/// <summary>
+		///     Execute when <see cref="ButtonOk" /> is clicked.
+		/// </summary>
+		private void ButtonOK_OnClick(object sender, RoutedEventArgs e) => Close();
+
+		/// <summary>
+		///     Execute when the window is rendered.
+		/// </summary>
+		private async void On_WindowShown(object sender, EventArgs e)
+		{
+			if (Done)
+				return;
+
+			ConfigurePlot();
+
+			Done = await ExecuteAnalysis();
+		}
+
+		/// <summary>
+		///     Execute when an element's concrete yields.
+		/// </summary>
+		private async void OnElementsConcreteYielded(object sender, SPMElementEventArgs e)
+		{
+			var step = e.LoadStep!.Value;
+
+			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
+
+			await AddPoints(md, e.Elements, ElementPlot.ConcreteYielding);
+		}
+
+		/// <summary>
+		///     Execute when an element cracks.
+		/// </summary>
+		private async void OnElementsCracked(object sender, SPMElementEventArgs e)
+		{
+			var step = e.LoadStep!.Value;
+
+			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
+
+			await AddPoints(md, e.Elements, ElementPlot.Cracking);
+		}
+
+		/// <summary>
+		///     Execute when an element crushes.
+		/// </summary>
+		private async void OnElementsCrushed(object sender, SPMElementEventArgs e)
+		{
+			var step = e.LoadStep!.Value;
+
+			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
+
+			await AddPoints(md, e.Elements, ElementPlot.Crushing);
+		}
+
+		/// <summary>
+		///     Execute when an element's steel yields.
+		/// </summary>
+		private async void OnElementsSteelYielded(object sender, SPMElementEventArgs e)
+		{
+			var step = e.LoadStep!.Value;
+
+			var md = Analysis[step - 1].MonitoredDisplacement!.Value;
+
+			await AddPoints(md, e.Elements, ElementPlot.SteelYielding);
 		}
 
 		#endregion
 
+		private enum ElementPlot
+		{
+			Cracking,
+			ConcreteYielding,
+			SteelYielding,
+			Crushing
+		}
 	}
 }

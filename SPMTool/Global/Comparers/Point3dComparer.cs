@@ -2,7 +2,6 @@
 using andrefmello91.Extensions;
 using Autodesk.AutoCAD.Geometry;
 
-
 namespace SPMTool.Comparers
 {
 	/// <summary>
@@ -22,7 +21,11 @@ namespace SPMTool.Comparers
 
 		#region Methods
 
-		#region Interface Implementations
+		/// <summary>
+		///     Returns true if this <paramref name="point" /> is approximately equal to <paramref name="otherPoint" />.
+		/// </summary>
+		/// <param name="tolerance">A custom tolerance to considering equivalent.</param>
+		public bool Equals(Point3d point, Point3d otherPoint, double tolerance) => point.Approx(otherPoint, tolerance);
 
 		/// <summary>
 		///     Compare two <see cref="Point3d" /> X and Y coordinates.
@@ -56,18 +59,6 @@ namespace SPMTool.Comparers
 		public bool Equals(Point3d point, Point3d otherPoint) => point == otherPoint || Equals(point, otherPoint, Tolerance);
 
 		public int GetHashCode(Point3d obj) => obj.GetHashCode();
-
-		#endregion
-
-		#region Object override
-
-		/// <summary>
-		///     Returns true if this <paramref name="point" /> is approximately equal to <paramref name="otherPoint" />.
-		/// </summary>
-		/// <param name="tolerance">A custom tolerance to considering equivalent.</param>
-		public bool Equals(Point3d point, Point3d otherPoint, double tolerance) => point.Approx(otherPoint, tolerance);
-
-		#endregion
 
 		#endregion
 

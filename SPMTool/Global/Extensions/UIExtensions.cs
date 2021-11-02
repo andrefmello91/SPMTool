@@ -7,7 +7,7 @@ namespace SPMTool
 	/// <summary>
 	///     Extensions for interface elements.
 	/// </summary>
-	public static class UIExtensions
+	public static partial class Extensions
 	{
 
 		#region Methods

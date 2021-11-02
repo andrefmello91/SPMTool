@@ -2,7 +2,6 @@
 using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
-
 #nullable enable
 
 namespace SPMTool.Core.Conditions
@@ -56,21 +55,17 @@ namespace SPMTool.Core.Conditions
 		/// </summary>
 		protected abstract double RotationAngle { get; }
 
-		#region Interface Implementations
-
 		public abstract Block Block { get; }
 
 		public abstract ComponentDirection Direction { get; }
-
-		public abstract override Layer Layer { get; }
-
-		public abstract override string Name { get; }
 
 		public Point Position { get; }
 
 		public virtual TValue Value { get; protected set; }
 
-		#endregion
+		public abstract override Layer Layer { get; }
+
+		public abstract override string Name { get; }
 
 		#endregion
 
@@ -79,14 +74,11 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Condition base constructor.
 		/// </summary>
-		protected ConditionObject()
-		{
-		}
-
 		/// <param name="position">The position.</param>
 		/// <param name="value">The value.</param>
-		/// <inheritdoc cref="ConditionObject()" />
-		protected ConditionObject(Point position, TValue value)
+		/// <inheritdoc />
+		protected ConditionObject(Point position, TValue value, ObjectId blockTableId)
+			: base(blockTableId)
 		{
 			Position = position;
 			Value    = value;
@@ -96,29 +88,6 @@ namespace SPMTool.Core.Conditions
 
 		#region Methods
 
-		#region Interface Implementations
-
-		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(SPMModel.On_ObjectErase);
-
-		public int CompareTo(ConditionObject<TValue>? other) => other is null
-			? 0
-			: Position.CompareTo(other.Position);
-
-		public override DBObject CreateObject() => Block.GetReference(Position.ToPoint3d(), Layer, null, RotationAngle, Axis.Z, null, SPMDatabase.Settings.Units.ScaleFactor)!;
-
-		/// <inheritdoc />
-		BlockReference IDBObjectCreator<BlockReference>.CreateObject() => (BlockReference) CreateObject();
-
-		public virtual bool Equals(ConditionObject<TValue>? other) => other is not null && Position == other.Position;
-
-		BlockReference? IDBObjectCreator<BlockReference>.GetObject() => (BlockReference?) GetObject();
-
-		public override void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
-
-		#endregion
-
-		#region Object override
-
 		/// <inheritdoc />
 		public override bool Equals(object obj) => obj is ConditionObject<TValue> conditionObject && Equals(conditionObject);
 
@@ -127,7 +96,26 @@ namespace SPMTool.Core.Conditions
 
 		public override string ToString() => Value.ToString();
 
-		#endregion
+		public int CompareTo(ConditionObject<TValue>? other) => other is null
+			? 0
+			: Position.CompareTo(other.Position);
+
+		public override DBObject CreateObject()
+		{
+			// Get database
+			var model = SPMModel.GetOpenedModel(BlockTableId)!;
+			var units = model.Settings.Units;
+
+			return
+				model.AcadDatabase.GetReference(Block, Position.ToPoint3d(units.Geometry), Layer, null, RotationAngle, Axis.Z, null, units.ScaleFactor)!;
+		}
+
+		/// <inheritdoc />
+		BlockReference IDBObjectCreator<BlockReference>.CreateObject() => (BlockReference) CreateObject();
+
+		BlockReference? IDBObjectCreator<BlockReference>.GetObject() => (BlockReference?) GetObject();
+
+		public virtual bool Equals(ConditionObject<TValue>? other) => other is not null && Position == other.Position;
 
 		#endregion
 
@@ -139,17 +127,17 @@ namespace SPMTool.Core.Conditions
 		public static bool operator ==(ConditionObject<TValue>? left, ConditionObject<TValue>? right) => left is not null && left.Equals(right);
 
 		/// <summary>
-		///     Returns true if objects are different.
-		/// </summary>
-		public static bool operator !=(ConditionObject<TValue>? left, ConditionObject<TValue>? right) => left is not null && !left.Equals(right);
-
-		/// <summary>
 		///     Get the <see cref="BlockReference" /> associated to a <see cref="ConditionObject{T}" />.
 		/// </summary>
 		/// <remarks>
 		///     Can be null if <paramref name="conditionObject" /> is null or doesn't exist in drawing.
 		/// </remarks>
 		public static explicit operator BlockReference?(ConditionObject<TValue>? conditionObject) => (BlockReference?) conditionObject?.GetObject();
+
+		/// <summary>
+		///     Returns true if objects are different.
+		/// </summary>
+		public static bool operator !=(ConditionObject<TValue>? left, ConditionObject<TValue>? right) => left is not null && !left.Equals(right);
 
 		#endregion
 

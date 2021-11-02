@@ -2,7 +2,6 @@
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
-
 #nullable enable
 
 namespace SPMTool.Core.Elements
@@ -11,21 +10,20 @@ namespace SPMTool.Core.Elements
 	///     Interface for SPM objects.
 	/// </summary>
 	/// <typeparam name="TProperty">The type that represents the main property of the object.</typeparam>
-	public interface ISPMObject<TProperty>
-		where TProperty : IComparable<TProperty>, IEquatable<TProperty>
+	public interface ISPMObject
 	{
 
 		#region Properties
 
 		/// <summary>
+		///		The name of this object.
+		/// </summary>
+		string Name { get; }
+
+		/// <summary>
 		///     Get/set the object number.
 		/// </summary>
 		int Number { get; set; }
-
-		/// <summary>
-		///     Get the main property of this object.
-		/// </summary>
-		TProperty Property { get; }
 
 		#endregion
 
@@ -44,7 +42,7 @@ namespace SPMTool.Core.Elements
 	///     SPM object base class
 	/// </summary>
 	/// <typeparam name="TProperty">The type that represents the main property of the object.</typeparam>
-	public abstract class SPMObject<TProperty> : ExtendedObject, ISPMObject<TProperty>, IDBObjectCreator<Entity>, IEquatable<SPMObject<TProperty>>, IComparable<SPMObject<TProperty>>
+	public abstract class SPMObject<TProperty> : ExtendedObject, ISPMObject, IDBObjectCreator<Entity>, IEquatable<SPMObject<TProperty>>, IComparable<SPMObject<TProperty>>
 		where TProperty : IComparable<TProperty>, IEquatable<TProperty>
 	{
 
@@ -59,31 +57,46 @@ namespace SPMTool.Core.Elements
 
 		#region Properties
 
-		#region Interface Implementations
+		/// <summary>
+		///     The main property of this object.
+		/// </summary>
+		public TProperty Property => PropertyField;
 
 		public int Number { get; set; } = 0;
 
-		TProperty ISPMObject<TProperty>.Property => PropertyField;
-
-		#endregion
+		string ISPMObject.Name => Name;
 
 		#endregion
 
 		#region Constructors
 
-		protected SPMObject()
+		/// <summary>
+		///     Base constructor.
+		/// </summary>
+		/// <inheritdoc />
+		protected SPMObject(ObjectId blockTableId)
+			: base(blockTableId)
 		{
 		}
 
-		protected SPMObject(TProperty property) => PropertyField = property;
+		/// <summary>
+		///     Base constructor.
+		/// </summary>
+		/// <param name="property">The property value.</param>
+		/// <inheritdoc />
+		protected SPMObject(TProperty property, ObjectId blockTableId)
+			: base(blockTableId) =>
+			PropertyField = property;
 
 		#endregion
 
 		#region Methods
 
-		#region Interface Implementations
+		public override bool Equals(object? other) => other is TProperty obj && Equals(obj);
 
-		public override void AddToDrawing() => ObjectId = CreateObject().AddToDrawing(SPMModel.On_ObjectErase);
+		public override int GetHashCode() => PropertyField.GetHashCode();
+
+		public override string ToString() => GetElement()?.ToString() ?? "Null element";
 
 		public int CompareTo(SPMObject<TProperty>? other) => other is null || other.GetType() != GetType()
 			? 0
@@ -92,26 +105,12 @@ namespace SPMTool.Core.Elements
 		/// <inheritdoc />
 		Entity IDBObjectCreator<Entity>.CreateObject() => (Entity) CreateObject();
 
-		public bool Equals(SPMObject<TProperty>? other) => other is not null && PropertyField.Equals(other.PropertyField);
-
-		public abstract INumberedElement GetElement();
-
 		/// <inheritdoc />
 		Entity? IDBObjectCreator<Entity>.GetObject() => (Entity?) GetObject();
 
-		public override void RemoveFromDrawing() => EntityCreatorExtensions.RemoveFromDrawing(this);
+		public bool Equals(SPMObject<TProperty>? other) => other is not null && PropertyField.Equals(other.PropertyField);
 
-		#endregion
-
-		#region Object override
-
-		public override bool Equals(object? other) => other is TProperty obj && Equals(obj);
-
-		public override int GetHashCode() => PropertyField.GetHashCode();
-
-		public override string ToString() => GetElement()?.ToString() ?? "Null element";
-
-		#endregion
+		public abstract INumberedElement GetElement();
 
 		#endregion
 

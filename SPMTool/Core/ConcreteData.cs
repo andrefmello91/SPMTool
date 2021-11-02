@@ -1,7 +1,6 @@
 ﻿using andrefmello91.Material.Concrete;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
-
 using UnitsNet;
 using static andrefmello91.Material.Concrete.Parameters;
 
@@ -23,7 +22,7 @@ namespace SPMTool.Core.Materials
 		private const string ConcreteParams = "ConcreteParams";
 
 		private ConstitutiveModel _model;
-		private IParameters _parameters;
+		private IConcreteParameters _parameters;
 
 		#endregion
 
@@ -47,7 +46,7 @@ namespace SPMTool.Core.Materials
 		/// <summary>
 		///     Get/set <see cref="Material.Concrete.Parameters" /> saved in database.
 		/// </summary>
-		public IParameters Parameters
+		public IConcreteParameters Parameters
 		{
 			get => _parameters;
 			set => SetParameters(value);
@@ -57,9 +56,14 @@ namespace SPMTool.Core.Materials
 
 		#region Constructors
 
-		public ConcreteData()
+		/// <summary>
+		///     Create a concrete data object
+		/// </summary>
+		/// <param name="database">The AutoCAD database.</param>
+		public ConcreteData(Database database)
+			: base(database.BlockTableId)
 		{
-			DictionaryId = SPMDatabase.NodId;
+			DictionaryId = database.NamedObjectsDictionaryId;
 			GetProperties();
 		}
 
@@ -93,7 +97,7 @@ namespace SPMTool.Core.Materials
 		/// <summary>
 		///     Read concrete <see cref="Parameters" /> saved in database.
 		/// </summary>
-		private IParameters GetParameters() => GetDictionary(ConcreteParams).GetParameters() ?? C30(Length.FromMillimeters(19));
+		private IConcreteParameters GetParameters() => GetDictionary(ConcreteParams).GetParameters() ?? C30(Length.FromMillimeters(19), ParameterModel.Default);
 
 		private void SetConstitutive(ConstitutiveModel model)
 		{
@@ -102,7 +106,7 @@ namespace SPMTool.Core.Materials
 			SetDictionary(model.GetTypedValues(), "ConstitutiveModel");
 		}
 
-		private void SetParameters(IParameters parameters)
+		private void SetParameters(IConcreteParameters parameters)
 		{
 			_parameters = parameters;
 

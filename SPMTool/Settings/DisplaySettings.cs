@@ -12,40 +12,12 @@ namespace SPMTool.Application
 
 		#region Fields
 
-		private double _nodeScale;
 		private double _conditionScale;
-		private double _resultScale;
 		private int _displacementMagnifier;
+
+		private double _nodeScale;
+		private double _resultScale;
 		private double _textScale;
-
-		#endregion
-
-		#region Events
-
-		/// <summary>
-		///		Event to run when <see cref="NodeScale"/> changes.
-		/// </summary>
-		public event EventHandler<ScaleChangedEventArgs>? NodeScaleChanged;
-		
-		/// <summary>
-		///		Event to run when <see cref="ConditionScale"/> changes.
-		/// </summary>
-		public event EventHandler<ScaleChangedEventArgs>? ConditionScaleChanged;
-		
-		/// <summary>
-		///		Event to run when <see cref="ResultScale"/> changes.
-		/// </summary>
-		public event EventHandler<ScaleChangedEventArgs>? ResultScaleChanged;
-		
-		/// <summary>
-		///		Event to run when <see cref="TextScale"/> changes.
-		/// </summary>
-		public event EventHandler<ScaleChangedEventArgs>? TextScaleChanged;
-		
-		/// <summary>
-		///		Event to run when <see cref="DisplacementMagnifier"/> changes.
-		/// </summary>
-		public event EventHandler<ScaleChangedEventArgs>? DisplacementMagnifierChanged;
 
 		#endregion
 
@@ -75,9 +47,9 @@ namespace SPMTool.Application
 					return;
 
 				var old = _conditionScale;
-				
+
 				_conditionScale = value;
-				
+
 				ConditionScaleChanged?.Invoke(this, new ScaleChangedEventArgs(old, value));
 			}
 		}
@@ -94,9 +66,9 @@ namespace SPMTool.Application
 					return;
 
 				var old = _displacementMagnifier;
-				
+
 				_displacementMagnifier = value;
-				
+
 				DisplacementMagnifierChanged?.Invoke(this, new ScaleChangedEventArgs(old, value));
 			}
 		}
@@ -113,9 +85,9 @@ namespace SPMTool.Application
 					return;
 
 				var old = _nodeScale;
-				
+
 				_nodeScale = value;
-				
+
 				NodeScaleChanged?.Invoke(this, new ScaleChangedEventArgs(old, value));
 			}
 		}
@@ -132,9 +104,9 @@ namespace SPMTool.Application
 					return;
 
 				var old = _resultScale;
-				
+
 				_resultScale = value;
-				
+
 				ResultScaleChanged?.Invoke(this, new ScaleChangedEventArgs(old, value));
 			}
 		}
@@ -151,26 +123,51 @@ namespace SPMTool.Application
 					return;
 
 				var old = _textScale;
-				
+
 				_textScale = value;
-				
+
 				TextScaleChanged?.Invoke(this, new ScaleChangedEventArgs(old, value));
 			}
 		}
 
 		#endregion
 
-		#region Methods
+		#region Events
 
-		#region Interface Implementations
+		/// <summary>
+		///     Event to run when <see cref="ConditionScale" /> changes.
+		/// </summary>
+		public event EventHandler<ScaleChangedEventArgs>? ConditionScaleChanged;
+
+		/// <summary>
+		///     Event to run when <see cref="DisplacementMagnifier" /> changes.
+		/// </summary>
+		public event EventHandler<ScaleChangedEventArgs>? DisplacementMagnifierChanged;
+
+		/// <summary>
+		///     Event to run when <see cref="NodeScale" /> changes.
+		/// </summary>
+		public event EventHandler<ScaleChangedEventArgs>? NodeScaleChanged;
+
+		/// <summary>
+		///     Event to run when <see cref="ResultScale" /> changes.
+		/// </summary>
+		public event EventHandler<ScaleChangedEventArgs>? ResultScaleChanged;
+
+		/// <summary>
+		///     Event to run when <see cref="TextScale" /> changes.
+		/// </summary>
+		public event EventHandler<ScaleChangedEventArgs>? TextScaleChanged;
+
+		#endregion
+
+		#region Methods
 
 		/// <inheritdoc />
 		public bool Equals(DisplaySettings? other) =>
 			other is not null && DisplacementMagnifier == other.DisplacementMagnifier &&
 			NodeScale.Approx(other.NodeScale) && ResultScale.Approx(other.ResultScale) &&
 			TextScale.Approx(other.TextScale);
-
-		#endregion
 
 		#endregion
 
@@ -184,6 +181,12 @@ namespace SPMTool.Application
 		/// </returns>
 		public static bool operator ==(DisplaySettings? left, DisplaySettings? right) => left.IsEqualTo(right);
 
+		/// <inheritdoc cref="SPMTool.Extensions.GetTypedValues(DisplaySettings)" />
+		public static explicit operator TypedValue[](DisplaySettings? settings) => settings.GetTypedValues();
+
+		/// <inheritdoc cref="SPMTool.Extensions.GetDisplaySettings" />
+		public static explicit operator DisplaySettings?(TypedValue[]? values) => values.GetDisplaySettings();
+
 		/// <summary>
 		///     <inheritdoc cref="Equals" />
 		/// </summary>
@@ -192,25 +195,29 @@ namespace SPMTool.Application
 		/// </returns>
 		public static bool operator !=(DisplaySettings? left, DisplaySettings? right) => left.IsNotEqualTo(right);
 
-		/// <inheritdoc cref="Extensions.GetTypedValues(DisplaySettings)" />
-		public static explicit operator TypedValue[](DisplaySettings? settings) => settings.GetTypedValues();
-
-		/// <inheritdoc cref="Extensions.GetDisplaySettings" />
-		public static explicit operator DisplaySettings?(TypedValue[]? values) => values.GetDisplaySettings();
-
 		#endregion
 
 	}
 
 	public class ScaleChangedEventArgs : EventArgs
 	{
-		public double OldScale { get; }
+
+		#region Properties
+
 		public double NewScale { get; }
+		public double OldScale { get; }
+
+		#endregion
+
+		#region Constructors
 
 		public ScaleChangedEventArgs(double oldScale, double newScaleScale)
 		{
 			OldScale = oldScale;
 			NewScale = newScaleScale;
 		}
+
+		#endregion
+
 	}
 }

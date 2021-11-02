@@ -7,9 +7,9 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
 using SPMTool.Enums;
-
 using UnitsNet;
-using static SPMTool.Core.SPMDatabase;
+using UnitsNet.Units;
+using static SPMTool.Core.SPMModel;
 
 #nullable enable
 
@@ -56,8 +56,8 @@ namespace SPMTool.Core.Conditions
 		///     Plane Force object constructor.
 		/// </summary>
 		/// <inheritdoc />
-		public ForceObject(Point position, PlaneForce value)
-			: base(position, value)
+		public ForceObject(Point position, PlaneForce value, ObjectId blockTableId)
+			: base(position, value, blockTableId)
 		{
 		}
 
@@ -69,41 +69,38 @@ namespace SPMTool.Core.Conditions
 		///     Read a <see cref="ForceObject" /> from a <see cref="BlockReference" />.
 		/// </summary>
 		/// <param name="reference">The <see cref="BlockReference" /> object of the force.</param>
-		public static ForceObject? ReadFromBlock(BlockReference? reference) =>
-			reference is null
-				? null
-				: new ForceObject(reference.Position.ToPoint(Settings.Units.Geometry), PlaneForce.Zero)
+		/// <param name="unit">The unit for geometry.</param>
+		public static ForceObject From(BlockReference reference, LengthUnit unit)
+		{
+			var position = reference.Position.ToPoint(unit);
+
+			return
+				new ForceObject(position, PlaneForce.Zero, reference.ObjectId.Database.BlockTableId)
 				{
 					ObjectId = reference.ObjectId
 				};
-
-		/// <summary>
-		///     Read a <see cref="ForceObject" /> from an <see cref="ObjectId" />.
-		/// </summary>
-		/// <param name="forceObjectId">The <see cref="ObjectId" /> of the force.</param>
-		public static ForceObject? ReadFromObjectId(ObjectId forceObjectId) => ReadFromBlock((BlockReference?) forceObjectId.GetEntity());
-
-		public override void AddToDrawing()
-		{
-			ObjectId = CreateObject().AddToDrawing();
-			SetAttributes();
 		}
 
 		public override DBObject CreateObject()
 		{
-			var insertionPoint = Position.ToPoint3d();
+			// Get database
+			var model = GetOpenedModel(BlockTableId)!;
+			var units = model.Settings.Units;
 
-			var block = Block.GetReference(insertionPoint, Layer, null, 0, Axis.Z, null, Settings.Units.ScaleFactor)!;
+			var insertionPoint = Position.ToPoint3d(units.Geometry);
+
+
+			var block = model.AcadDatabase.GetReference(Block, insertionPoint, Layer, null, 0, Axis.Z, null, units.ScaleFactor)!;
 
 			// Rotate the block
 			if (Direction is ComponentDirection.X)
-				block.TransformBy(Matrix3d.Rotation(Constants.PiOver2, Ucs.Zaxis, insertionPoint));
+				block.TransformBy(Matrix3d.Rotation(Constants.PiOver2, model.Ucs.Zaxis, insertionPoint));
 
 			else if (!RotationAngleY.ApproxZero(1E-3))
-				block.TransformBy(Matrix3d.Rotation(RotationAngleY, Ucs.Xaxis, insertionPoint));
+				block.TransformBy(Matrix3d.Rotation(RotationAngleY, model.Ucs.Xaxis, insertionPoint));
 
 			if (!RotationAngle.ApproxZero(1E-3))
-				block.TransformBy(Matrix3d.Rotation(RotationAngle, Ucs.Yaxis, insertionPoint));
+				block.TransformBy(Matrix3d.Rotation(RotationAngle, model.Ucs.Yaxis, insertionPoint));
 
 			return block;
 		}
@@ -129,14 +126,16 @@ namespace SPMTool.Core.Conditions
 		/// <summary>
 		///     Get the attribute references for force block.
 		/// </summary>
-		private IEnumerable<AttributeReference?>? ForceAttributeReference()
+		private IEnumerable<AttributeReference?> ForceAttributeReference()
 		{
-			var txtH = SPMModel.TextHeight;
-			
+			var model = GetOpenedModel(BlockTableId)!;
+			var unit  = model.Settings.Units.Geometry;
+			var txtH  = model.TextHeight;
+
 			if (!Value.IsXZero)
 				yield return new AttributeReference
 				{
-					Position            = TextInsertionPoint(ComponentDirection.X).ToPoint3d(),
+					Position            = TextInsertionPoint(ComponentDirection.X).ToPoint3d(unit),
 					TextString          = $"{Value.X.Value.Abs():0.00}",
 					Height              = txtH,
 					Justify             = AttachmentPoint.MiddleLeft,
@@ -147,7 +146,7 @@ namespace SPMTool.Core.Conditions
 			if (!Value.IsYZero)
 				yield return new AttributeReference
 				{
-					Position            = TextInsertionPoint(ComponentDirection.Y).ToPoint3d(),
+					Position            = TextInsertionPoint(ComponentDirection.Y).ToPoint3d(unit),
 					TextString          = $"{Value.Y.Value.Abs():0.00}",
 					Height              = txtH,
 					Justify             = AttachmentPoint.MiddleLeft,
@@ -174,11 +173,7 @@ namespace SPMTool.Core.Conditions
 				_                                              => Position
 			};
 
-		#region Interface Implementations
-
 		public bool Equals(ForceObject other) => base.Equals(other);
-
-		#endregion
 
 		#endregion
 
@@ -193,14 +188,12 @@ namespace SPMTool.Core.Conditions
 		public static explicit operator PlaneForce(ForceObject? forceObject) => forceObject?.Value ?? PlaneForce.Zero;
 
 		/// <summary>
-		///     Get the <see cref="ForceObject" /> from <see cref="Model.Forces" /> associated to a <see cref="BlockReference" />.
+		///     Get the <see cref="ForceObject" /> from the model associated to a <see cref="BlockReference" />.
 		/// </summary>
 		/// <remarks>
 		///     Can be null if <paramref name="blockReference" /> is null or doesn't correspond to a <see cref="ForceObject" />
 		/// </remarks>
-		public static explicit operator ForceObject?(BlockReference? blockReference) => blockReference is null
-			? null
-			: SPMModel.Forces.GetByObjectId(blockReference.ObjectId);
+		public static explicit operator ForceObject?(BlockReference? blockReference) => (ForceObject?) blockReference?.GetSPMObject();
 
 		#endregion
 

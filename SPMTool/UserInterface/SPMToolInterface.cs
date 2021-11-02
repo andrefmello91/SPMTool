@@ -1,8 +1,10 @@
-﻿using System.Windows;
+﻿using System.Reflection;
+using System.Windows;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.Windows;
+using SPMTool.Attributes;
+using SPMTool.Commands;
 using SPMTool.Core;
-using SPMTool.Editor.Commands;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Application.UserInterface
@@ -25,8 +27,8 @@ namespace SPMTool.Application.UserInterface
 		/// </summary>
 		private readonly RibbonTab _tab = new()
 		{
-			Title = SPMDatabase.AppName,
-			Id    = SPMDatabase.AppName
+			Title = SPMModel.AppName,
+			Id    = SPMModel.AppName
 		};
 
 		#endregion
@@ -50,7 +52,7 @@ namespace SPMTool.Application.UserInterface
 			var spmInt = new SPMToolInterface();
 
 			// Check if the tab already exists
-			var tab = Ribbon.FindTab(SPMDatabase.AppName);
+			var tab = Ribbon.FindTab(SPMModel.AppName);
 
 			if (tab != null)
 				Ribbon.Tabs.Remove(tab);
@@ -68,16 +70,25 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
-		///     Alternate colors if theme is changed.
+		///     Create a <see cref="RibbonButton" /> based in a command name, contained in <see cref="Command" />.
 		/// </summary>
-		public static void ColorThemeChanged(object senderObj, SystemVariableChangedEventArgs sysVarChEvtArgs)
-		{
-			// Check if it's a theme change
-			if (sysVarChEvtArgs.Name != "COLORTHEME")
-				return;
+		public static RibbonButton? GetRibbonButton(string commandName, RibbonItemSize size = RibbonItemSize.Large, bool showText = true) =>
+			((CommandAttribute?) typeof(Command).GetField(commandName)?.GetCustomAttribute(typeof(CommandAttribute)))?.CreateRibbonButton(size, showText);
 
-			// Reinitialize the ribbon buttons
-			AddButtons();
+		/// <summary>
+		///     Show a modal window in AutoCAD interface.
+		/// </summary>
+		/// <param name="window">The <see cref="Window" /> to show.</param>
+		/// <param name="modeless">Show as a modeless window?</param>
+		public static void ShowWindow(Window window, bool modeless = false)
+		{
+			if (modeless)
+			{
+				ShowModelessWindow(MainWindow.Handle, window, false);
+				return;
+			}
+
+			ShowModalWindow(MainWindow.Handle, window, false);
 		}
 
 		/// <summary>
@@ -96,11 +107,11 @@ namespace SPMTool.Application.UserInterface
 				IsSynchronizedWithCurrentItem = true
 			};
 
-			splitButton.Items.Add(Command.Linear.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.Linear));
 
-			splitButton.Items.Add(Command.Nonlinear.GetRibbonButton());
-			
-			splitButton.Items.Add(Command.Simulation.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.Nonlinear));
+
+			splitButton.Items.Add(GetRibbonButton(Command.Simulation));
 
 			// Add to the panel source
 			pnlSrc.Items.Add(splitButton);
@@ -115,7 +126,7 @@ namespace SPMTool.Application.UserInterface
 			_tab.Panels.Add(new RibbonPanel { Source   = pnlSrc });
 
 			// Material parameters button
-			pnlSrc.Items.Add(Command.Parameters.GetRibbonButton());
+			pnlSrc.Items.Add(GetRibbonButton(Command.Parameters));
 		}
 
 		/// <summary>
@@ -149,9 +160,9 @@ namespace SPMTool.Application.UserInterface
 				IsSynchronizedWithCurrentItem = true
 			};
 
-			splitButton1.Items.Add(Command.AddStringer.GetRibbonButton());
+			splitButton1.Items.Add(GetRibbonButton(Command.AddStringer));
 
-			splitButton1.Items.Add(Command.AddPanel.GetRibbonButton());
+			splitButton1.Items.Add(GetRibbonButton(Command.AddPanel));
 
 			// Add to the panel source
 			pnlSrc.Items.Add(splitButton1);
@@ -169,9 +180,11 @@ namespace SPMTool.Application.UserInterface
 			};
 
 			// Material parameters buttons
-			splitButton2.Items.Add(Command.EditStringer.GetRibbonButton());
+			splitButton2.Items.Add(GetRibbonButton(Command.EditStringer));
 
-			splitButton2.Items.Add(Command.EditPanel.GetRibbonButton());
+			splitButton2.Items.Add(GetRibbonButton(Command.EditPanel));
+
+			splitButton2.Items.Add(GetRibbonButton(Command.CopyElementProperties));
 
 			subPnl1.Items.Add(splitButton2);
 			pnlSrc.Items.Add(subPnl1);
@@ -189,9 +202,9 @@ namespace SPMTool.Application.UserInterface
 				IsSynchronizedWithCurrentItem = true
 			};
 
-			splitButton3.Items.Add(Command.AddConstraint.GetRibbonButton());
+			splitButton3.Items.Add(GetRibbonButton(Command.AddConstraint));
 
-			splitButton3.Items.Add(Command.AddForce.GetRibbonButton());
+			splitButton3.Items.Add(GetRibbonButton(Command.AddForce));
 
 			subPnl2.Items.Add(splitButton3);
 			pnlSrc.Items.Add(subPnl2);
@@ -208,18 +221,18 @@ namespace SPMTool.Application.UserInterface
 				IsSynchronizedWithCurrentItem = true
 			};
 
-			rbSpBtn3.Items.Add(Command.DivideStringer.GetRibbonButton(RibbonItemSize.Standard));
+			rbSpBtn3.Items.Add(GetRibbonButton(Command.DivideStringer, RibbonItemSize.Standard));
 
-			rbSpBtn3.Items.Add(Command.DividePanel.GetRibbonButton(RibbonItemSize.Standard));
+			rbSpBtn3.Items.Add(GetRibbonButton(Command.DividePanel, RibbonItemSize.Standard));
 
 			// Add to the sub panel and create a new ribbon row
 			subPnl3.Items.Add(rbSpBtn3);
 			subPnl3.Items.Add(new RibbonRowBreak());
 
 			// Update elements button
-			subPnl3.Items.Add(Command.ElementData.GetRibbonButton(RibbonItemSize.Standard));
+			subPnl3.Items.Add(GetRibbonButton(Command.ElementData, RibbonItemSize.Standard));
 			subPnl3.Items.Add(new RibbonRowBreak());
-			subPnl3.Items.Add(Command.UpdateElements.GetRibbonButton(RibbonItemSize.Standard));
+			subPnl3.Items.Add(GetRibbonButton(Command.UpdateElements, RibbonItemSize.Standard));
 
 			// Add the sub panel to the panel source
 			pnlSrc.Items.Add(subPnl3);
@@ -242,17 +255,17 @@ namespace SPMTool.Application.UserInterface
 				IsSynchronizedWithCurrentItem = true
 			};
 
-			splitButton.Items.Add(Command.StringerForces.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.StringerForces));
 
-			splitButton.Items.Add(Command.PanelShear.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.PanelShear));
 
-			splitButton.Items.Add(Command.PanelStresses.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.PanelStresses));
 
-			splitButton.Items.Add(Command.ConcreteStresses.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.ConcreteStresses));
 
-			splitButton.Items.Add(Command.Displacements.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.Displacements));
 
-			splitButton.Items.Add(Command.Cracks.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.Cracks));
 
 			// Add to the panel source
 			pnlSrc.Items.Add(splitButton);
@@ -266,11 +279,11 @@ namespace SPMTool.Application.UserInterface
 			var pnlSrc = new RibbonPanelSource { Title = "Settings" };
 			_tab.Panels.Add(new RibbonPanel { Source   = pnlSrc });
 
-			pnlSrc.Items.Add(Command.Units.GetRibbonButton());
+			pnlSrc.Items.Add(GetRibbonButton(Command.Units));
 
-			pnlSrc.Items.Add(Command.Analysis.GetRibbonButton());
-			
-			pnlSrc.Items.Add(Command.Display.GetRibbonButton());
+			pnlSrc.Items.Add(GetRibbonButton(Command.Analysis));
+
+			pnlSrc.Items.Add(GetRibbonButton(Command.Display));
 		}
 
 		/// <summary>
@@ -290,36 +303,34 @@ namespace SPMTool.Application.UserInterface
 				IsSynchronizedWithCurrentItem = true
 			};
 
-			splitButton.Items.Add(Command.Nodes.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.Nodes));
 
-			splitButton.Items.Add(Command.Stringers.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.Stringers));
 
-			splitButton.Items.Add(Command.Panels.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.Panels));
 
-			splitButton.Items.Add(Command.Forces.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.Forces));
 
-			splitButton.Items.Add(Command.Supports.GetRibbonButton());
+			splitButton.Items.Add(GetRibbonButton(Command.Supports));
 
 			// Add to the panel source
 			pnlSrc.Items.Add(splitButton);
 		}
 
+		/// <summary>
+		///     Alternate colors if theme is changed.
+		/// </summary>
+		public static void ColorThemeChanged(object senderObj, SystemVariableChangedEventArgs sysVarChEvtArgs)
+		{
+			// Check if it's a theme change
+			if (sysVarChEvtArgs.Name != "COLORTHEME")
+				return;
+
+			// Reinitialize the ribbon buttons
+			AddButtons();
+		}
+
 		#endregion
 
-		///  <summary>
-		/// 		Show a modal window in AutoCAD interface.
-		///  </summary>
-		///  <param name="window">The <see cref="Window"/> to show.</param>
-		///  <param name="modeless">Show as a modeless window?</param>
-		public static void ShowWindow(Window window, bool modeless = false)
-		{
-			if (modeless)
-			{
-				ShowModelessWindow(MainWindow.Handle, window, false);
-				return;
-			}
-
-			ShowModalWindow(MainWindow.Handle, window, false);
-		}
 	}
 }

@@ -10,10 +10,9 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Core.Blocks;
 using SPMTool.Enums;
-
 using UnitsNet;
 using UnitsNet.Units;
-using static SPMTool.Core.SPMDatabase;
+using static SPMTool.Core.SPMModel;
 
 
 #nullable enable
@@ -94,46 +93,43 @@ namespace SPMTool.Core.Elements
 			set => SetWidth(value);
 		}
 
-		#region Interface Implementations
-
 		public override Layer Layer => Layer.Panel;
 
 		public override string Name => $"Panel {Number}";
 
 		#endregion
 
-		#endregion
-
 		#region Constructors
 
-		/// <inheritdoc cref="PanelObject(PanelGeometry)" />
+		/// <inheritdoc cref="PanelObject(PanelGeometry, ObjectId)" />
 		/// <param name="vertices">The collection of panel's four <see cref="Point3d" /> vertices.</param>
 		/// <param name="unit">The <see cref="LengthUnit" /> of <paramref name="vertices" />.</param>
-		public PanelObject(IEnumerable<Point3d> vertices, LengthUnit unit = LengthUnit.Millimeter)
-			: this(new Vertices(vertices.Select(v => v.ToPoint(unit)).ToArray()))
+		public PanelObject(IEnumerable<Point3d> vertices, ObjectId blockTableId, LengthUnit unit = LengthUnit.Millimeter)
+			: this(Vertices.From(vertices.ToPoints(unit)), blockTableId)
 		{
 		}
 
-		/// <inheritdoc cref="PanelObject(PanelGeometry)" />
+		/// <inheritdoc cref="PanelObject(PanelGeometry, ObjectId)" />
 		/// <param name="vertices">The collection of panel's four <see cref="Point" /> vertices.</param>
-		public PanelObject(IEnumerable<Point> vertices)
-			: this(new Vertices(vertices))
+		public PanelObject(IEnumerable<Point> vertices, ObjectId blockTableId)
+			: this(Vertices.From(vertices), blockTableId)
 		{
 		}
 
-		/// <inheritdoc cref="PanelObject(PanelGeometry)" />
+		/// <inheritdoc cref="PanelObject(PanelGeometry, ObjectId)" />
 		/// <param name="vertices">The panel <see cref="Vertices" />.</param>
-		public PanelObject(Vertices vertices)
-			: this(new PanelGeometry(vertices, 100))
+		public PanelObject(Vertices vertices, ObjectId blockTableId)
+			: this(new PanelGeometry(vertices, 100), blockTableId)
 		{
 		}
 
 		/// <summary>
-		///     Create the panel object.
+		///     Create a panel object.
 		/// </summary>
 		/// <param name="geometry">The panel <see cref="Vertices" />.</param>
-		public PanelObject(PanelGeometry geometry)
-			: base(geometry)
+		/// <inheritdoc />
+		public PanelObject(PanelGeometry geometry, ObjectId blockTableId)
+			: base(geometry, blockTableId)
 		{
 		}
 
@@ -142,26 +138,21 @@ namespace SPMTool.Core.Elements
 		#region Methods
 
 		/// <summary>
-		///     Read a <see cref="PanelObject" /> in the drawing.
-		/// </summary>
-		/// <param name="panelObjectId">The <see cref="ObjectId" /> of the node.</param>
-		public static PanelObject? GetFromObjectId(ObjectId panelObjectId) => panelObjectId.GetEntity() is Solid solid
-			? GetFromSolid(solid)
-			: null;
-
-		/// <summary>
-		///     Read a <see cref="PanelObject" /> in the drawing.
+		///     Read a <see cref="PanelObject" /> from an existing solid in the drawing.
 		/// </summary>
 		/// <param name="solid">The <see cref="Solid" /> object of the stringer.</param>
-		public static PanelObject GetFromSolid(Solid solid) => new(solid.GetVertices().ToArray(), Settings.Units.Geometry)
-		{
-			ObjectId = solid.ObjectId
-		};
+		/// <param name="unit">The unit for geometry.</param>
+		public static PanelObject From(Solid solid, LengthUnit unit) =>
+			new(solid.GetVertices().ToArray(), solid.Database.BlockTableId, unit)
+			{
+				ObjectId = solid.ObjectId
+			};
 
 		/// <summary>
 		///     Calculate the scale factor for block insertion.
 		/// </summary>
-		public double BlockScaleFactor() => UnitMath.Min(Geometry.Dimensions.a, Geometry.Dimensions.b).As(Settings.Units.Geometry) * 0.001;
+		public double BlockScaleFactor() =>
+			UnitMath.Min(Geometry.Dimensions.a, Geometry.Dimensions.b).As(GetOpenedModel(BlockTableId)?.Settings.Units.Geometry ?? LengthUnit.Millimeter) * 0.001;
 
 		/// <summary>
 		///     Divide this <see cref="PanelObject" /> into new ones.
@@ -182,7 +173,7 @@ namespace SPMTool.Core.Elements
 			var verts = Vertices.Divide(rows, columns).ToArray();
 
 			foreach (var vert in verts)
-				yield return new PanelObject(vert)
+				yield return new PanelObject(vert, BlockTableId)
 				{
 					Width = Width,
 					_x    = _x?.Clone(),
@@ -193,26 +184,42 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get panel block creators.
 		/// </summary>
-		public IEnumerable<BlockCreator?> GetBlocks() => new BlockCreator?[]
+		/// <param name="scaleFactor">The scale factor.</param>
+		/// <param name="textHeight">The text height for attributes.</param>
+		/// <param name="stressUnit">The unit of panel stresses.</param>
+		/// <param name="crackUnit">The unit of crack openings.</param>
+		public IEnumerable<BlockCreator?> GetBlocks(double scaleFactor, double textHeight, PressureUnit stressUnit, LengthUnit crackUnit)
 		{
-			ShearBlockCreator.CreateBlock(_panel),
-			StressBlockCreator.CreateAverageBlock(_panel),
-			StressBlockCreator.CreateConcreteBlock(_panel),
-			PanelCrackBlockCreator.CreateBlock(_panel)
-		};
+			yield return
+				ShearBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.AverageStresses.TauXY.ToUnit(stressUnit), scaleFactor, textHeight, BlockTableId);
+
+			yield return
+				StressBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.AveragePrincipalStresses.Convert(stressUnit), scaleFactor, textHeight, BlockTableId);
+
+			yield return
+				StressBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.ConcretePrincipalStresses.Convert(stressUnit), scaleFactor, textHeight, BlockTableId, Layer.ConcreteStress);
+
+			if (_panel.Model is ElementModel.Elastic)
+				yield break;
+
+			yield return
+				PanelCrackBlockCreator.From(_panel!.Geometry.Vertices.CenterPoint, _panel.CrackOpening.ToUnit(crackUnit), _panel.AveragePrincipalStresses.Theta2, scaleFactor, textHeight, BlockTableId);
+		}
 
 		/// <remarks>
 		///     This method a linear object.
 		/// </remarks>
 		/// <inheritdoc />
-		public override INumberedElement GetElement() => GetElement(SPMModel.Nodes.GetElements().Cast<Node>().ToArray());
+		public override INumberedElement GetElement() => GetElement(GetOpenedModel(BlockTableId)!.Nodes.GetElements().Cast<Node>().ToArray()!);
 
 		/// <inheritdoc cref="GetElement()" />
 		/// <param name="nodes">The collection of <see cref="Node" />'s in the drawing.</param>
 		/// <param name="elementModel">The <see cref="ElementModel" />.</param>
 		public Panel GetElement(IEnumerable<Node> nodes, ElementModel elementModel = ElementModel.Elastic)
 		{
-			_panel = Panel.FromNodes(nodes, Geometry, ConcreteData.Parameters, ConcreteData.ConstitutiveModel, Reinforcement, elementModel);
+			var model = GetOpenedModel(BlockTableId)!;
+
+			_panel = Panel.FromNodes(nodes, Geometry, model.ConcreteData.Parameters, model.ConcreteData.ConstitutiveModel, Reinforcement, elementModel);
 
 			_panel.Number = Number;
 
@@ -279,9 +286,9 @@ namespace SPMTool.Core.Elements
 		{
 			var data = GetDictionary("Width");
 
-			return data is null
-				? null
-				: Length.FromMillimeters(data[0].ToDouble()).ToUnit(Settings.Units.Geometry);
+			return data is not null
+				? Length.FromMillimeters(data[0].ToDouble())
+				: null;
 		}
 
 		/// <summary>
@@ -300,22 +307,24 @@ namespace SPMTool.Core.Elements
 			SetDictionary(direction.GetTypedValues(), $"Reinforcement{dir}");
 		}
 
-		#region Interface Implementations
-
-		public override DBObject CreateObject() => new Solid(Vertices.Vertex1.ToPoint3d(), Vertices.Vertex2.ToPoint3d(), Vertices.Vertex4.ToPoint3d(), Vertices.Vertex3.ToPoint3d())
+		public override DBObject CreateObject()
 		{
-			Layer = $"{Layer}"
-		};
+			var unit = GetOpenedModel(BlockTableId)!.Settings.Units.Geometry;
+
+			return
+				new Solid(Vertices.Vertex1.ToPoint3d(unit), Vertices.Vertex2.ToPoint3d(unit), Vertices.Vertex4.ToPoint3d(unit), Vertices.Vertex3.ToPoint3d(unit))
+				{
+					Layer = $"{Layer}"
+				};
+		}
 
 		/// <inheritdoc />
 		Solid IDBObjectCreator<Solid>.CreateObject() => (Solid) CreateObject();
 
-		public bool Equals(PanelObject other) => base.Equals(other);
-
 		/// <inheritdoc />
 		Solid? IDBObjectCreator<Solid>.GetObject() => (Solid?) base.GetObject();
 
-		#endregion
+		public bool Equals(PanelObject other) => base.Equals(other);
 
 		#endregion
 
@@ -327,18 +336,15 @@ namespace SPMTool.Core.Elements
 		public static explicit operator Panel?(PanelObject? panelObject) => (Panel?) panelObject?.GetElement();
 
 		/// <summary>
-		///     Get the <see cref="PanelObject" /> from <see cref="SPMModel.Panels" /> associated to a <see cref="Panel" />.
+		///     Get the <see cref="PanelObject" /> from the active model associated to a <see cref="Panel" />.
 		/// </summary>
-		/// <remarks>
-		///     A <see cref="PanelObject" /> is created if <paramref name="panel" /> is not null and is not listed.
-		/// </remarks>
-		public static explicit operator PanelObject?(Panel? panel) => panel is null
-			? null
-			: SPMModel.Panels.GetByProperty(panel.Geometry)
-			  ?? new PanelObject(panel.Geometry);
+		public static explicit operator PanelObject?(Panel? panel) => panel is not null
+			? ActiveModel.Panels[panel.Geometry]
+			: null;
 
 		/// <summary>
-		///     Get the <see cref="PanelObject" /> from <see cref="SPMModel.Stringers" /> associated to a <see cref="SPMElement{T}" />
+		///     Get the <see cref="PanelObject" /> from <see cref="SPMModel.Stringers" /> associated to a
+		///     <see cref="SPMElement{T}" />
 		///     .
 		/// </summary>
 		/// <remarks>
@@ -354,9 +360,7 @@ namespace SPMTool.Core.Elements
 		/// <remarks>
 		///     Can be null if <paramref name="solid" /> is null or doesn't correspond to a <see cref="PanelObject" />
 		/// </remarks>
-		public static explicit operator PanelObject?(Solid? solid) => solid is null
-			? null
-			: SPMModel.Panels.GetByObjectId(solid.ObjectId);
+		public static explicit operator PanelObject?(Solid? solid) => (PanelObject?) solid.GetSPMObject();
 
 		/// <summary>
 		///     Get the <see cref="Solid" /> associated to a <see cref="PanelObject" />.
