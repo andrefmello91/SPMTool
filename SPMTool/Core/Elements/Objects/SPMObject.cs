@@ -16,7 +16,7 @@ namespace SPMTool.Core.Elements
 		#region Properties
 
 		/// <summary>
-		///		The name of this object.
+		///     The name of this object.
 		/// </summary>
 		string Name { get; }
 

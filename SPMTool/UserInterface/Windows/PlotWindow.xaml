@@ -46,28 +46,41 @@
                 </lvc:Axis>
             </lvc:CartesianChart.AxisY>
             <lvc:CartesianChart.Series>
-                <lvc:LineSeries Name="Plot" Stroke="LightSkyBlue" StrokeThickness="3" Fill="Transparent" DataLabels="False"/>
-                <lvc:LineSeries Name="CrackingPlot" PointGeometrySize="12" PointForeground="Chocolate" Stroke="Transparent" Fill="Transparent" Visibility="{Binding ShowCracks, Mode=TwoWay, Converter={StaticResource bvc}}"/>
-                <lvc:LineSeries Name="YieldingPlot" PointGeometrySize="12" PointForeground="Red" Stroke="Transparent" Fill="Transparent" Visibility="{Binding ShowYielding, Mode=TwoWay, Converter={StaticResource bvc}}"/>
-                <lvc:LineSeries Name="CrushingPlot" PointGeometrySize="12" PointForeground="DarkRed" Stroke="Transparent" Fill="Transparent" Visibility="{Binding ShowCrushing, Mode=TwoWay, Converter={StaticResource bvc}}"/>
+                <lvc:LineSeries Name="Plot" Stroke="LightSkyBlue" StrokeThickness="3" Fill="Transparent"
+                                DataLabels="False" />
+                <lvc:LineSeries Name="CrackingPlot" PointGeometrySize="12" PointForeground="Chocolate"
+                                Stroke="Transparent" Fill="Transparent"
+                                Visibility="{Binding ShowCracks, Mode=TwoWay, Converter={StaticResource bvc}}" />
+                <lvc:LineSeries Name="YieldingPlot" PointGeometrySize="12" PointForeground="Red" Stroke="Transparent"
+                                Fill="Transparent"
+                                Visibility="{Binding ShowYielding, Mode=TwoWay, Converter={StaticResource bvc}}" />
+                <lvc:LineSeries Name="CrushingPlot" PointGeometrySize="12" PointForeground="DarkRed"
+                                Stroke="Transparent" Fill="Transparent"
+                                Visibility="{Binding ShowCrushing, Mode=TwoWay, Converter={StaticResource bvc}}" />
             </lvc:CartesianChart.Series>
             <lvc:CartesianChart.DataTooltip>
                 <lvc:DefaultTooltip SelectionMode="OnlySender" ShowSeries="False" />
             </lvc:CartesianChart.DataTooltip>
         </lvc:CartesianChart>
         <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Width="500" HorizontalAlignment="Left">
-            <TextBlock Name="Status" Text="Running Analysis..." FontWeight="SemiBold" Foreground="WhiteSmoke" HorizontalAlignment="Left" VerticalAlignment="Center"
+            <TextBlock Name="Status" Text="Running Analysis..." FontWeight="SemiBold" Foreground="WhiteSmoke"
+                       HorizontalAlignment="Left" VerticalAlignment="Center"
                        Margin="5,0,0,0" Width="250" />
-            <CheckBox Content="Cracking" IsChecked="{Binding ShowCracks, Mode=TwoWay}" FontWeight="SemiBold" Foreground="WhiteSmoke" VerticalAlignment="Center"
-                     Width="80" ToolTip="Show when elements cracked." />
-            <CheckBox Content="Yielding" IsChecked="{Binding ShowYielding, Mode=TwoWay}" FontWeight="SemiBold" Foreground="WhiteSmoke" VerticalAlignment="Center"
-                     Width="80" ToolTip="Show when elements yielded." />
-            <CheckBox Content="Crushing" IsChecked="{Binding ShowCrushing, Mode=TwoWay}" FontWeight="SemiBold" Foreground="WhiteSmoke" VerticalAlignment="Center"
-                     Width="80" ToolTip="Show when elements crushed." />
+            <CheckBox Content="Cracking" IsChecked="{Binding ShowCracks, Mode=TwoWay}" FontWeight="SemiBold"
+                      Foreground="WhiteSmoke" VerticalAlignment="Center"
+                      Width="80" ToolTip="Show when elements cracked." />
+            <CheckBox Content="Yielding" IsChecked="{Binding ShowYielding, Mode=TwoWay}" FontWeight="SemiBold"
+                      Foreground="WhiteSmoke" VerticalAlignment="Center"
+                      Width="80" ToolTip="Show when elements yielded." />
+            <CheckBox Content="Crushing" IsChecked="{Binding ShowCrushing, Mode=TwoWay}" FontWeight="SemiBold"
+                      Foreground="WhiteSmoke" VerticalAlignment="Center"
+                      Width="80" ToolTip="Show when elements crushed." />
         </StackPanel>
-        <Button Name="ButtonExport" Content="Export" IsEnabled="{Binding Done}" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
+        <Button Name="ButtonExport" Content="Export" IsEnabled="{Binding Done}" HorizontalAlignment="Right"
+                VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
                 Margin="0,0,80,0" Width="58" Click="ButtonExport_OnClick" ToolTip="Export analysis results" />
-        <Button Name="ButtonOk" Content="OK" IsEnabled="{Binding Done}" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
+        <Button Name="ButtonOk" Content="OK" IsEnabled="{Binding Done}" HorizontalAlignment="Right"
+                VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"
                 Margin="0,0,10,0" Width="47" Click="ButtonOK_OnClick" />
     </Grid>
 </Window>

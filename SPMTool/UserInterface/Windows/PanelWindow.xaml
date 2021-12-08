@@ -84,8 +84,9 @@
             <CheckBox Content="Reinforcement X" IsChecked="{Binding ReinforcementXChecked, Mode=TwoWay}"
                       ToolTip="Apply reinforcement in X direction. Disable to remove reinforcement in this direction."
                       HorizontalAlignment="Left" VerticalAlignment="Center" FontWeight="SemiBold" Grid.ColumnSpan="2"
-                      Margin="0,0,0,0"/>
-            <ComboBox Name="SavedReinforcementX" IsEnabled="{Binding ReinforcementXChecked}" VerticalContentAlignment="Center" HorizontalAlignment="left"
+                      Margin="0,0,0,0" />
+            <ComboBox Name="SavedReinforcementX" IsEnabled="{Binding ReinforcementXChecked}"
+                      VerticalContentAlignment="Center" HorizontalAlignment="left"
                       Grid.Column="1" Grid.ColumnSpan="2" Width="110" Height="23"
                       ToolTip="Reinforcement used in other elements."
                       SelectionChanged="SavedReinforcementX_OnSelectionChanged" />
@@ -167,8 +168,9 @@
             <CheckBox Content="Reinforcement Y" IsChecked="{Binding ReinforcementYChecked, Mode=TwoWay}"
                       ToolTip="Apply reinforcement in Y direction. Disable to remove reinforcement in this direction."
                       HorizontalAlignment="Left" VerticalAlignment="Center" FontWeight="SemiBold" Grid.ColumnSpan="2"
-                      Margin="0,0,0,0"/>
-            <ComboBox Name="SavedReinforcementY" IsEnabled="{Binding ReinforcementXChecked}" VerticalContentAlignment="Center" HorizontalAlignment="left"
+                      Margin="0,0,0,0" />
+            <ComboBox Name="SavedReinforcementY" IsEnabled="{Binding ReinforcementXChecked}"
+                      VerticalContentAlignment="Center" HorizontalAlignment="left"
                       Grid.Column="1" Grid.ColumnSpan="2" Width="110" Height="23"
                       ToolTip="Reinforcement used in other elements."
                       SelectionChanged="SavedReinforcementY_OnSelectionChanged" />
@@ -236,14 +238,15 @@
                 </StackPanel>
             </Border>
         </Grid>
-        <TextBlock Text="Set:" FontWeight="SemiBold" Grid.Row="6" Grid.Column="3" HorizontalAlignment="Left" VerticalAlignment="Center"
+        <TextBlock Text="Set:" FontWeight="SemiBold" Grid.Row="6" Grid.Column="3" HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
                    Width="25" Margin="0,0,0,0" />
         <CheckBox Content="Geometry" FontWeight="SemiBold" IsChecked="{Binding SetGeometry, Mode=TwoWay}"
                   ToolTip="Set geometry. Disable to leave each panel widths unchanged." HorizontalAlignment="Left"
-                  VerticalAlignment="Center" Grid.Row="6" Grid.Column="3" Margin="25,0,0,0"/>
+                  VerticalAlignment="Center" Grid.Row="6" Grid.Column="3" Margin="25,0,0,0" />
         <CheckBox Content="Reinforcement" FontWeight="SemiBold" IsChecked="{Binding SetReinforcement, Mode=TwoWay}"
                   ToolTip="Set reinforcement. Disable to leave each panel reinforcement unchanged."
-                  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="6" Grid.Column="3" Margin="105,0,0,0"/>
+                  HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="6" Grid.Column="3" Margin="105,0,0,0" />
         <Button Content="OK" Background="WhiteSmoke" HorizontalAlignment="Right" VerticalAlignment="Center" Width="75"
                 Click="ButtonOK_OnClick" ToolTip="Save panel parameters" Grid.Row="6" Grid.Column="5" Height="20"
                 Margin="0,6,0,5" />
