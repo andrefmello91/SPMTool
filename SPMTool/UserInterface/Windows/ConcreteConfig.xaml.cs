@@ -23,7 +23,7 @@ namespace SPMTool.Application.UserInterface
 		// Options
 		private static readonly string[]
 			AggTypeOptions = Enum.GetNames(typeof(AggregateType)),
-			ConstitutiveOptions = Enum.GetNames(typeof(ConstitutiveModel)),
+			ConstitutiveOptions = { "SMM (Default)", "MCFT", "DSFM" },
 			ParameterOptions = Enum.GetNames(typeof(ParameterModel));
 
 		private readonly LengthUnit _aggUnit;

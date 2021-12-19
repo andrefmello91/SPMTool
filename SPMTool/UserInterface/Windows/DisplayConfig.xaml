@@ -5,7 +5,8 @@
                           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                           xmlns:userInterface="clr-namespace:SPMTool.Application.UserInterface"
                           mc:Ignorable="d"
-                          Title="Display" Height="280" Width="290" d:DataContext="{d:DesignInstance userInterface:DisplayConfig }">
+                          Title="Display" Height="280" Width="290"
+                          d:DataContext="{d:DesignInstance userInterface:DisplayConfig }">
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="30" />

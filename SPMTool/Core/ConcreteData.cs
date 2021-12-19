@@ -92,7 +92,7 @@ namespace SPMTool.Core.Materials
 		/// <summary>
 		///     Read constitutive model.
 		/// </summary>
-		private ConstitutiveModel GetModel() => (ConstitutiveModel) (GetDictionary("ConstitutiveModel").GetEnumValue() ?? (int) ConstitutiveModel.MCFT);
+		private ConstitutiveModel GetModel() => (ConstitutiveModel) (GetDictionary("ConstitutiveModel").GetEnumValue() ?? (int) ConstitutiveModel.SMM);
 
 		/// <summary>
 		///     Read concrete <see cref="Parameters" /> saved in database.
