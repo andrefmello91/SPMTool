@@ -448,7 +448,7 @@
     <ItemGroup>
         <None Include="Resources\viewstringer_large_light.png"/>
     </ItemGroup>
-    <ItemGroup>
+    <ItemGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Any CPU'">
         <ProjectReference Include="..\..\EList\andrefmello91.EList\andrefmello91.EList.csproj">
             <Project>{0b69ed8e-7933-4d5d-984c-43f585694ad1}</Project>
             <Name>andrefmello91.EList</Name>
@@ -477,6 +477,15 @@
             <Project>{47286cce-9482-4c49-ba2f-279f42ca3fac}</Project>
             <Name>andrefmello91.SPMElements</Name>
         </ProjectReference>
+    </ItemGroup>
+    <ItemGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Any CPU' ">
+        <PackageReference Include="andrefmello91.EList" Version="1.0.4"/>
+        <PackageReference Include="andrefmello91.Extensions" Version="1.1.0"/>
+        <PackageReference Include="andrefmello91.OnPlaneComponents" Version="1.1.6"/>
+        <PackageReference Include="andrefmello91.Material" Version="1.1.2"/>
+        <PackageReference Include="andrefmello91.ReinforcedConcreteMembrane" Version="1.1.3"/>
+        <PackageReference Include="andrefmello91.FEMAnalysis" Version="1.0.0"/>
+        <PackageReference Include="andrefmello91.SPMElements" Version="1.0.0"/>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>
