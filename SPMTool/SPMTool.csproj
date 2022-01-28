@@ -37,115 +37,22 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
-        <Reference Include="accoremgd, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.Core.24.1.51000\lib\net47\AcCoreMgd.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="AcCui, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcCui.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="Acdbmgd, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.Model.24.1.51000\lib\net47\AcDbMgd.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="acdbmgdbrep, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.Model.24.1.51000\lib\net47\acdbmgdbrep.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="AcDx, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcDx.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="acmgd, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcMgd.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="AcMr, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcMr.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="AcSeamless, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcSeamless.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="AcTcMgd, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcTcMgd.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="AcWindows, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AcWindows.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="AdUIMgd, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AdUIMgd.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="AdUiPalettes, Version=24.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AdUiPalettes.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="AdWindows, Version=3.1.4.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\AutoCAD.NET.24.1.51000\lib\net47\AdWindows.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="IndexRange, Version=1.0.0.0, Culture=neutral, PublicKeyToken=35e6a3c4212514c6">
-            <HintPath>..\packages\IndexRange.1.0.0\lib\net471\IndexRange.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="LiveCharts, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df">
-            <HintPath>..\packages\LiveCharts.0.9.7\lib\net45\LiveCharts.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="LiveCharts.Wpf, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df">
-            <HintPath>..\packages\LiveCharts.Wpf.0.9.7\lib\net45\LiveCharts.Wpf.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="MathNet.Numerics, Version=4.15.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>C:\Users\andre\.nuget\packages\mathnet.numerics\4.15.0\lib\netstandard2.0\MathNet.Numerics.dll</HintPath>
-        </Reference>
-        <Reference Include="MathNet.Numerics.Data.Text, Version=4.1.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>C:\Users\andre\.nuget\packages\mathnet.numerics.data.text\4.1.0\lib\netstandard2.0\MathNet.Numerics.Data.Text.dll</HintPath>
-        </Reference>
         <Reference Include="mscorlib"/>
         <Reference Include="PresentationCore"/>
         <Reference Include="PresentationFramework"/>
         <Reference Include="System"/>
-        <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
-            <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
         <Reference Include="System.Core"/>
         <Reference Include="System.Drawing"/>
-        <Reference Include="System.Memory, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
-            <HintPath>..\packages\System.Memory.4.5.4\lib\net461\System.Memory.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
         <Reference Include="System.Numerics"/>
-        <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-            <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
-        <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-            <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.5.0.0\lib\net45\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
         <Reference Include="System.Runtime.Serialization"/>
         <Reference Include="System.Windows.Presentation"/>
         <Reference Include="System.Xaml"/>
-        <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-            <HintPath>packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
-        </Reference>
         <Reference Include="System.Xml.Linq"/>
         <Reference Include="System.Data.DataSetExtensions"/>
         <Reference Include="Microsoft.CSharp"/>
         <Reference Include="System.Data"/>
         <Reference Include="System.Net.Http"/>
         <Reference Include="System.Xml"/>
-        <Reference Include="UnitsNet, Version=4.0.0.0, Culture=neutral, PublicKeyToken=f8601875a1f041da">
-            <HintPath>..\packages\UnitsNet.4.102.0\lib\net47\UnitsNet.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
         <Reference Include="WindowsBase"/>
     </ItemGroup>
     <ItemGroup>
@@ -271,7 +178,7 @@
         </EmbeddedResource>
     </ItemGroup>
     <ItemGroup>
-        <None Include="packages.config"/>
+        <None Include="App.config"/>
         <None Include="Resources\viewsupport_large.png"/>
     </ItemGroup>
     <ItemGroup>
@@ -448,7 +355,7 @@
     <ItemGroup>
         <None Include="Resources\viewstringer_large_light.png"/>
     </ItemGroup>
-    <ItemGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Any CPU'">
+    <ItemGroup Condition=" '$(Configuration)' == 'Debug'">
         <ProjectReference Include="..\..\EList\andrefmello91.EList\andrefmello91.EList.csproj">
             <Project>{0b69ed8e-7933-4d5d-984c-43f585694ad1}</Project>
             <Name>andrefmello91.EList</Name>
@@ -478,7 +385,7 @@
             <Name>andrefmello91.SPMElements</Name>
         </ProjectReference>
     </ItemGroup>
-    <ItemGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Any CPU' ">
+    <ItemGroup Condition=" '$(Configuration)' == 'Release' ">
         <PackageReference Include="andrefmello91.EList" Version="1.0.4"/>
         <PackageReference Include="andrefmello91.Extensions" Version="1.1.0"/>
         <PackageReference Include="andrefmello91.OnPlaneComponents" Version="1.1.6"/>
@@ -486,6 +393,22 @@
         <PackageReference Include="andrefmello91.ReinforcedConcreteMembrane" Version="1.1.3"/>
         <PackageReference Include="andrefmello91.FEMAnalysis" Version="1.0.0"/>
         <PackageReference Include="andrefmello91.SPMElements" Version="1.0.0"/>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="AutoCAD.NET" Version="24.1.51000"/>
+        <PackageReference Include="AutoCAD.NET.Core" Version="24.1.51000"/>
+        <PackageReference Include="AutoCAD.NET.Model" Version="24.1.51000"/>
+        <PackageReference Include="IndexRange" Version="1.0.0"/>
+        <PackageReference Include="LiveCharts" Version="0.9.7"/>
+        <PackageReference Include="LiveCharts.Wpf" Version="0.9.7"/>
+        <PackageReference Include="MathNet.Numerics" Version="4.15.0"/>
+        <PackageReference Include="MathNet.Numerics.Data.Text" Version="4.1.0"/>
+        <PackageReference Include="System.Buffers" Version="4.5.1"/>
+        <PackageReference Include="System.Memory" Version="4.5.4"/>
+        <PackageReference Include="System.Numerics.Vectors" Version="4.5.0"/>
+        <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="5.0.0"/>
+        <PackageReference Include="System.ValueTuple" Version="4.5.0"/>
+        <PackageReference Include="UnitsNet" Version="4.102.0"/>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>
