@@ -1,10 +1,8 @@
 ﻿using System.Linq;
-using andrefmello91.EList;
 using andrefmello91.Extensions;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
-using SPMTool.Core;
 using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
@@ -111,7 +109,8 @@ namespace SPMTool.Commands
 		[CommandMethod(Command.DividePanel)]
 		public static void DividePanel()
 		{
-			// Get elements
+			CommandNotImplemented();
+			/*// Get elements
 			var model     = ActiveModel;
 			var stringers = model.Stringers;
 			var nodes     = model.Nodes;
@@ -222,7 +221,7 @@ namespace SPMTool.Commands
 				              : $"{c} panels divided.\n\n") +
 			              " Set geometry to new internal stringers!";
 
-			ShowAlertDialog(message);
+			ShowAlertDialog(message);*/
 		}
 
 		/// <summary>
@@ -231,7 +230,9 @@ namespace SPMTool.Commands
 		[CommandMethod(Command.DivideStringer)]
 		public static void DivideStringer()
 		{
-			// Get elements
+			CommandNotImplemented();
+
+			/*// Get elements
 			var model     = ActiveModel;
 			var stringers = model.Stringers;
 			var nodes     = model.Nodes;
@@ -273,7 +274,7 @@ namespace SPMTool.Commands
 			stringers.AddRange(newStrs);
 
 			// Update nodes
-			nodes.Update();
+			nodes.Update();*/
 		}
 
 		/// <summary>
@@ -337,6 +338,8 @@ namespace SPMTool.Commands
 			model.Editor.WriteMessage($"\n{model.Nodes.Count} nodes, {model.Stringers.Count} stringers and {model.Panels.Count} panels updated.");
 			model.Editor.WriteMessage($"\n{model.Nodes.Count} nodes, {model.Stringers.Count} stringers and {model.Panels.Count} panels updated.");
 		}
+
+		private static void CommandNotImplemented() => ShowAlertDialog("This command is not ready and will be added in a future version.");
 
 		#endregion
 
