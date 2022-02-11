@@ -1,5 +1,6 @@
 ﻿using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
+using SPMTool.UserInterface.Windows;
 
 namespace SPMTool.Commands
 {
@@ -34,6 +35,12 @@ namespace SPMTool.Commands
 		/// </summary>
 		[CommandMethod(Command.Units)]
 		public static void SetUnits() => SPMToolInterface.ShowWindow(new UnitsConfig());
+
+		/// <summary>
+		///     View information.
+		/// </summary>
+		[CommandMethod(Command.Info)]
+		public static void ViewInfo() => SPMToolInterface.ShowWindow(new InfoWindow());
 
 		#endregion
 

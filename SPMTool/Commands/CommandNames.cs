@@ -97,6 +97,9 @@ namespace SPMTool.Commands
 		[Command(UpdateElements, "Enumerate nodes, stringers and panels in the model")]
 		public const string UpdateElements = nameof(UpdateElements);
 
+		[Command(Info, "View information")]
+		public const string Info = nameof(Info);
+
 		#endregion
 
 	}
