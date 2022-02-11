@@ -1,6 +1,6 @@
 # SPMTool: Stringer-Panel Modeling Tool
 
-**This project is work in progress, and it's not released yet.**
+## **Analysis and design of reinforced concrete structures by the Stringer-Panel Method**
 
 **SPMTool** is a plugin for AutoCAD (2020 - 2022) for analysis and design of reinforced concrete structures by the [Stringer-Panel Method](http://resolver.tudelft.nl/uuid:9ebcace7-f3d7-4ee0-93ff-cd157f4e5774).
 
@@ -22,4 +22,16 @@ The following libraries are used:
 
 - [FEM-Analysis](https://github.com/andrefmello91/FEM-Analysis) for finite element calculations;
 
-- [SPMElements](https://github.com/andrefmello91/SPMElements) as the implementation of the finite elements.
+- [SPMElements](https://github.com/andrefmello91/SPMElements) as the implementation of the finite elements;
+
+- [Feather icons](https://feathericons.com/) for some icons and inspiration.
+
+### **Special Thanks**
+* Prof. Dr. Rafael Alves de Souza.
+* Profs. Dr. Pierre Hoogenboom, Dr. Johan Blaauwendraad and the former *SPanCAD*'s team.
+
+## **WARNING**
+
+**The authors are not responsible by eventual damages that may occur in real structures by the use of this program.**
+
+**Use with caution and consider the recommendations of your country's standards.**
