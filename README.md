@@ -37,3 +37,7 @@ The following libraries are used in the development:
 **The authors are not responsible by eventual damages that may occur in real structures by the use of this program.**
 
 **Use with caution and consider the recommendations of your country's standards.**
+
+## **License**
+
+Licensed under [MIT license](https://github.com/andrefmello91/SPMTool/blob/master/LICENSE).
