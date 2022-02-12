@@ -34,7 +34,12 @@ namespace SPMTool.Commands
 		///     Set units.
 		/// </summary>
 		[CommandMethod(Command.Units)]
-		public static void SetUnits() => SPMToolInterface.ShowWindow(new UnitsConfig());
+		public static void SetUnits()
+		{
+			CommandNotImplemented();
+
+			// SPMToolInterface.ShowWindow(new UnitsConfig());
+		}
 
 		/// <summary>
 		///     View information.
