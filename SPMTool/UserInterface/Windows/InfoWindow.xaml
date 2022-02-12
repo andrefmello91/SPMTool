@@ -1,0 +1,62 @@
+﻿<Window x:Class="SPMTool.UserInterface.Windows.InfoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        mc:Ignorable="d"
+        Title="InfoWindow" Height="500" Width="700">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="40" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="30" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="700" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="SPMTool: Stringer-Panel Modelling Tool" FontSize="25" FontWeight="SemiBold"
+                   TextAlignment="Center" VerticalAlignment="Center" />
+        <TextBlock Grid.Row="1"
+                   Text="Analysis and design of reinforced concrete structures by the Stringer-Panel Method"
+                   FontSize="15" FontWeight="SemiBold" TextAlignment="Center" VerticalAlignment="Center" />
+        <TextBlock Grid.Row="2"
+                   Text="Developed by Prof. Ms. André F. A. de Mello as his doctoral research oriented by Prof. Dr. Leandro M. Trautwein."
+                   TextAlignment="Center" FontSize="12" VerticalAlignment="Center" />
+        <TextBlock Grid.Row="3" Text="Special Thanks:" TextAlignment="Center" FontSize="12" VerticalAlignment="Center"
+                   FontWeight="SemiBold" />
+        <TextBlock Grid.Row="4" Text="Prof. Dr. Rafael Alves de Souza" TextAlignment="Center" FontSize="12"
+                   VerticalAlignment="Center" />
+        <TextBlock Grid.Row="5"
+                   Text="Profs. Dr. Pierre Hoogenboom, Dr. Johan Blaauwendraad and the former SPanCAD's team"
+                   TextAlignment="Center" FontSize="12" VerticalAlignment="Center" />
+        <TextBlock Grid.Row="7" Text="This program is free and should not be commercialized." FontSize="15"
+                   FontWeight="SemiBold" TextAlignment="Center" VerticalAlignment="Center" />
+        <TextBlock Grid.Row="9" Text="WARNING" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"
+                   VerticalAlignment="Center" />
+        <TextBlock Grid.Row="10"
+                   Text="The authors are not responsible by eventual damages that may occur in real structures by the use of this program."
+                   FontSize="12" FontWeight="SemiBold" TextAlignment="Center" VerticalAlignment="Center" />
+        <TextBlock Grid.Row="11" Text="Use with caution and consider the recommendations of your country's standards."
+                   FontSize="12" FontWeight="SemiBold" TextAlignment="Center" VerticalAlignment="Center" />
+        <TextBlock Grid.Row="13" Text="Check for updates and view additional information:" FontSize="12"
+                   TextAlignment="Center" VerticalAlignment="Center" />
+        <TextBlock Grid.Row="14" FontSize="12" TextAlignment="Center" FontStyle="Italic" VerticalAlignment="Center">
+            <Hyperlink NavigateUri="https://github.com/andrefmello91/SPMTool"
+                       RequestNavigate="Hyperlink_OnRequestNavigate">
+                SPMTool Repository
+            </Hyperlink>
+        </TextBlock>
+    </Grid>
+</Window>

@@ -284,6 +284,8 @@ namespace SPMTool.Application.UserInterface
 			pnlSrc.Items.Add(GetRibbonButton(Command.Analysis));
 
 			pnlSrc.Items.Add(GetRibbonButton(Command.Display));
+
+			pnlSrc.Items.Add(GetRibbonButton(Command.Info));
 		}
 
 		/// <summary>

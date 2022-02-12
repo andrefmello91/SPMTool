@@ -48,7 +48,8 @@ namespace SPMTool.Application.UserInterface
 			_unitsBmp,
 			_anSetBmp,
 			_dpSetBmp,
-			_copyBmp;
+			_copyBmp,
+			_infoBmp;
 
 		#endregion
 
@@ -133,6 +134,11 @@ namespace SPMTool.Application.UserInterface
 		///     Get ViewForces icon.
 		/// </summary>
 		public BitmapImage Forces => GetBitmap(_viewFBmp);
+
+		/// <summary>
+		///     Get Info icon.
+		/// </summary>
+		public BitmapImage Info => GetBitmap(_infoBmp);
 
 		/// <summary>
 		///     Get LinearAnalysis icon.
@@ -261,6 +267,7 @@ namespace SPMTool.Application.UserInterface
 			_anSetBmp   = GetFromResource("analysissettings", theme)!;
 			_dpSetBmp   = GetFromResource("display_large", theme)!;
 			_copyBmp    = GetFromResource("copy_large", theme)!;
+			_infoBmp    = GetFromResource("info_large", theme)!;
 		}
 
 		#endregion
