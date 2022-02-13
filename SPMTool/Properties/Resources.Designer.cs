@@ -293,6 +293,26 @@ namespace SPMTool.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap help_large {
+            get {
+                object obj = ResourceManager.GetObject("help_large", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap help_large_light {
+            get {
+                object obj = ResourceManager.GetObject("help_large_light", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap info_large {
             get {
                 object obj = ResourceManager.GetObject("info_large", resourceCulture);

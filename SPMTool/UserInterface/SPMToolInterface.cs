@@ -18,6 +18,21 @@ namespace SPMTool.Application.UserInterface
 		#region Fields
 
 		/// <summary>
+		///     SPMTool repository URL.
+		/// </summary>
+		public const string SPMToolRepository = "https://github.com/andrefmello91/SPMTool";
+
+		/// <summary>
+		///     SPMTool wiki URL.
+		/// </summary>
+		public const string SPMToolWiki = "https://github.com/andrefmello91/SPMTool/wiki";
+
+		/// <summary>
+		///     SPMTool current version.
+		/// </summary>
+		public const string SPMToolVersion = "1.0.0";
+
+		/// <summary>
 		///     Icons for user interface.
 		/// </summary>
 		public static readonly Icons Icons = new();
@@ -92,6 +107,26 @@ namespace SPMTool.Application.UserInterface
 		}
 
 		/// <summary>
+		///     Create About Panel.
+		/// </summary>
+		private void AboutPanel()
+		{
+			var pnlSrc = new RibbonPanelSource { Title = "About" };
+			_tab.Panels.Add(new RibbonPanel { Source   = pnlSrc });
+
+			// Correct button texts
+			var infoBtn = GetRibbonButton(Command.SPMToolInfo);
+			infoBtn.Text = "Info";
+
+			var helpBtn = GetRibbonButton(Command.SPMToolHelp);
+			helpBtn.Text = "Help";
+
+			pnlSrc.Items.Add(infoBtn);
+
+			pnlSrc.Items.Add(helpBtn);
+		}
+
+		/// <summary>
 		///     Create Analysis Panel.
 		/// </summary>
 		private void AnalysisPanel()
@@ -140,6 +175,7 @@ namespace SPMTool.Application.UserInterface
 			ViewPanel();
 			ResultsPanel();
 			SettingsPanel();
+			AboutPanel();
 		}
 
 		/// <summary>
@@ -284,8 +320,6 @@ namespace SPMTool.Application.UserInterface
 			pnlSrc.Items.Add(GetRibbonButton(Command.Analysis));
 
 			pnlSrc.Items.Add(GetRibbonButton(Command.Display));
-
-			pnlSrc.Items.Add(GetRibbonButton(Command.Info));
 		}
 
 		/// <summary>

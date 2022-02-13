@@ -41,12 +41,6 @@ namespace SPMTool.Commands
 			// SPMToolInterface.ShowWindow(new UnitsConfig());
 		}
 
-		/// <summary>
-		///     View information.
-		/// </summary>
-		[CommandMethod(Command.Info)]
-		public static void ViewInfo() => SPMToolInterface.ShowWindow(new InfoWindow());
-
 		#endregion
 
 	}
