@@ -4,6 +4,8 @@
 
 ### **SPMTool** is a plugin for AutoCAD (2020 - 2022) for analysis and design of reinforced concrete structures by the [Stringer-Panel Method](http://resolver.tudelft.nl/uuid:9ebcace7-f3d7-4ee0-93ff-cd157f4e5774).
 
+Developed by Prof. André Felipe Ap. de Mello in his doctoral research oriented by Prof. Leandro Mouta Trautwein.
+
 The following libraries are used in the development:
 
 - [MathNet.Numerics](https://github.com/mathnet/mathnet-numerics) for Linear Algebra operations;
