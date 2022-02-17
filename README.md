@@ -31,7 +31,7 @@ The following libraries are used in the development:
 ### See the [Wiki](https://github.com/andrefmello91/SPMTool/wiki) for installation and usage instructions.
 
 ### **Special Thanks**
-* Prof. Dr. Rafael Alves de Souza.
+* Profs. Dr. Leandro Mouta Trautwein and Dr. Rafael Alves de Souza.
 * Profs. Dr. Pierre Hoogenboom, Dr. Johan Blaauwendraad and the former *SPanCAD*'s team.
 
 ## **WARNING**
