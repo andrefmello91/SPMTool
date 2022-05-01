@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.Extensions;
@@ -10,8 +12,6 @@ using SPMTool.Enums;
 using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.SPMModel;
-
-#nullable enable
 
 // ReSharper disable once CheckNamespace
 namespace SPMTool.Core.Conditions
@@ -112,13 +112,8 @@ namespace SPMTool.Core.Conditions
 
 		protected override void GetProperties()
 		{
-			var force = GetForce();
-
-			if (!force.HasValue)
-				return;
-
-			// Get values
-			Value = force.Value;
+			if (GetForce() is { } force)
+				Value = force;
 		}
 
 		protected override void SetProperties() => SetDictionary(Value.GetTypedValues(), "Force");

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.FEMAnalysis;
@@ -13,9 +15,6 @@ using SPMTool.Enums;
 using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.SPMModel;
-
-
-#nullable enable
 
 // ReSharper disable once CheckNamespace
 namespace SPMTool.Core.Elements
@@ -244,20 +243,14 @@ namespace SPMTool.Core.Elements
 
 		protected override void GetProperties()
 		{
-			var w = GetWidth();
+			if (GetWidth() is { } width)
+				PropertyField.Width = width;
 
-			if (w.HasValue)
-				PropertyField.Width = w.Value;
+			if (GetReinforcement(Axis.X) is { } xReinforcement)
+				_x = xReinforcement;
 
-			var x = GetReinforcement(Axis.X);
-
-			if (x is not null)
-				_x = x;
-
-			var y = GetReinforcement(Axis.Y);
-
-			if (y is not null)
-				_y = y;
+			if (GetReinforcement(Axis.Y) is { } yReinforcement)
+				_y = yReinforcement;
 		}
 
 		protected override void SetProperties()
@@ -299,10 +292,19 @@ namespace SPMTool.Core.Elements
 		/// <inheritdoc cref="GetWidth" />
 		private void SetReinforcement(WebReinforcementDirection? direction, Axis dir)
 		{
-			if (dir is Axis.X)
-				_x = direction;
-			else
-				_y = direction;
+			switch (dir)
+			{
+				case Axis.Y:
+					_y = direction;
+					break;
+
+				case Axis.X:
+					_x = direction;
+					break;
+
+				default:
+					return;
+			}
 
 			SetDictionary(direction.GetTypedValues(), $"Reinforcement{dir}");
 		}

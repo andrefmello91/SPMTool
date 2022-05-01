@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.FEMAnalysis;
@@ -13,8 +15,6 @@ using SPMTool.Enums;
 using UnitsNet;
 using UnitsNet.Units;
 using static SPMTool.Core.SPMModel;
-
-#nullable enable
 
 // ReSharper disable once CheckNamespace
 namespace SPMTool.Core.Elements
@@ -206,15 +206,11 @@ namespace SPMTool.Core.Elements
 
 		protected override void GetProperties()
 		{
-			var cs = GetCrossSection();
+			if (GetCrossSection() is { } crossSection)
+				PropertyField.CrossSection = crossSection;
 
-			if (cs.HasValue)
-				PropertyField.CrossSection = cs.Value;
-
-			var rf = GetReinforcement();
-
-			if (rf is not null)
-				_reinforcement = GetReinforcement();
+			if (GetReinforcement() is { } reinforcement)
+				_reinforcement = reinforcement;
 		}
 
 		protected override void SetProperties()

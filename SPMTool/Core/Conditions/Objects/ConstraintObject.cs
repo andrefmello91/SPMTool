@@ -1,10 +1,11 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.DatabaseServices;
 using MathNet.Numerics;
 using SPMTool.Enums;
 using UnitsNet.Units;
-#nullable enable
 
 namespace SPMTool.Core.Conditions
 {
@@ -74,12 +75,8 @@ namespace SPMTool.Core.Conditions
 
 		protected override void GetProperties()
 		{
-			var c = GetConstraint();
-
-			if (!c.HasValue)
-				return;
-
-			Value = c.Value;
+			if (GetConstraint() is { } constraint)
+				Value = constraint;
 		}
 
 		protected override void SetProperties() => SetDictionary(Value.GetTypedValues(), "Constraint");
