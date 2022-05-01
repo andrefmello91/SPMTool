@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using System;
+﻿using System;
 using andrefmello91.FEMAnalysis;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements;
@@ -10,6 +8,8 @@ using SPMTool.Enums;
 using UnitsNet.Units;
 using static SPMTool.Core.Elements.NodeList;
 using static SPMTool.Core.SPMModel;
+
+#nullable enable
 
 // ReSharper disable once CheckNamespace
 namespace SPMTool.Core.Elements
@@ -22,7 +22,7 @@ namespace SPMTool.Core.Elements
 
 		#region Fields
 
-		private PlaneDisplacement? _displacement;
+		private PlaneDisplacement _displacement = PlaneDisplacement.Zero;
 		private Node? _node;
 
 		#endregion
@@ -39,7 +39,7 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		public PlaneDisplacement Displacement
 		{
-			get => GetDisplacement() ?? PlaneDisplacement.Zero;
+			get => _displacement;
 			set => SetDisplacement(value);
 		}
 
@@ -116,7 +116,8 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get this object as a <see cref="Node" />.
 		/// </summary>
-		public override INumberedElement GetElement() =>
+		public override INumberedElement GetElement()
+		{
 			_node = new Node(Position, Type, GetOpenedModel(BlockTableId)?.Settings.Units.Displacements ?? LengthUnit.Millimeter)
 			{
 				Number = Number,
@@ -125,6 +126,9 @@ namespace SPMTool.Core.Elements
 				Force      = Force,
 				Constraint = Constraint
 			};
+
+			return _node;
+		}
 
 		/// <summary>
 		///     Set displacement from the associated <see cref="Node" />.
@@ -138,18 +142,22 @@ namespace SPMTool.Core.Elements
 		/// <inheritdoc />
 		public override string ToString() => _node?.ToString() ?? base.ToString();
 
-		protected override void GetProperties() => GetDisplacement();
-
-		protected override void SetProperties()
+		protected override void GetProperties()
 		{
-			if (_displacement is { } disp)
-				SetDisplacement(disp);
+			var disp = GetDisplacement();
+
+			if (!disp.HasValue)
+				return;
+
+			_displacement = disp.Value;
 		}
+
+		protected override void SetProperties() => SetDisplacement(_displacement);
 
 		/// <summary>
 		///     Get <see cref="PlaneDisplacement" /> saved in XData.
 		/// </summary>
-		private PlaneDisplacement? GetDisplacement() => _displacement ??= GetDictionary("Displacements").GetDisplacement();
+		private PlaneDisplacement? GetDisplacement() => GetDictionary("Displacements").GetDisplacement();
 
 		/// <summary>
 		///     Set <see cref="PlaneDisplacement" /> to this object XData.
@@ -158,7 +166,7 @@ namespace SPMTool.Core.Elements
 		private void SetDisplacement(PlaneDisplacement displacement)
 		{
 			_displacement = displacement;
-			SetDictionary(displacement.GetTypedValues(), "Displacements");
+			SetDictionary(Displacement.GetTypedValues(), "Displacements");
 		}
 
 		public override DBObject CreateObject() =>
