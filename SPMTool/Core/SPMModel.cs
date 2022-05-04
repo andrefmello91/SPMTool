@@ -236,7 +236,9 @@ namespace SPMTool.Core
 
 			// Register events
 			SetEvents(Settings.Display);
-			RegisterEventsToEntities();
+
+			// RegisterEventsToEntities();
+			RegisterDatabaseEvents();
 
 			// Set parameters
 			SetAppParameters();
@@ -653,6 +655,13 @@ namespace SPMTool.Core
 			return list;
 		}
 
+		private void RegisterDatabaseEvents()
+		{
+			AcadDatabase.ObjectErased     += On_ObjectErased;
+			AcadDatabase.ObjectUnappended += On_ObjectUnappended;
+			AcadDatabase.ObjectReappended += On_ObjectReappended;
+		}
+
 		/// <summary>
 		///     Register a <see cref="ObjectErasedEventHandler" /> to these <paramref name="objectIds" />
 		/// </summary>
@@ -737,6 +746,29 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
+		///     Event to execute when an object is erased from database.
+		/// </summary>
+		public void On_ObjectErased(object sender, ObjectErasedEventArgs e)
+		{
+			if (e.DBObject is not Entity entity || !ElementLayers.Contains((Layer) Enum.Parse(typeof(Layer), entity.Layer)))
+				return;
+
+			switch (e.Erased)
+			{
+				case true when entity.GetSPMObject() is { } obj && Remove(obj):
+					Editor.WriteMessage($"\n{obj.Name} removed");
+					return;
+
+				case false when entity.CreateSPMObject(Settings.Units.Geometry) is { } obj && Add(obj):
+					Editor.WriteMessage($"\n{obj.Name} re-added");
+					return;
+
+				default:
+					return;
+			}
+		}
+
+		/// <summary>
 		///     Event to execute when an object is unappended from database.
 		/// </summary>
 		public void On_ObjectModified(object sender, ObjectModifiedEventArgs e)
@@ -760,12 +792,30 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
+		///     Event to execute when an object is re-added to database after undo command.
+		/// </summary>
+		public void On_ObjectReappended(object sender, ObjectEventArgs e)
+		{
+			if (e.DBObject is Entity entity && ElementLayers.Contains((Layer) Enum.Parse(typeof(Layer), entity.Layer)) && entity.CreateSPMObject(Settings.Units.Geometry) is { } obj && Add(obj))
+				Editor.WriteMessage($"\n{obj.Name} reappended");
+		}
+
+		/// <summary>
 		///     Event to execute when an object is reappended to database.
 		/// </summary>
 		public void On_ObjectReappended(object sender, EventArgs e)
 		{
 			if (sender is Entity entity && ElementLayers.Contains((Layer) Enum.Parse(typeof(Layer), entity.Layer)) && entity.CreateSPMObject(Settings.Units.Geometry) is { } obj && Add(obj))
 				Editor.WriteMessage($"\n{obj.Name} reappended");
+		}
+
+		/// <summary>
+		///     Event to execute when an object is removed from database after undo command.
+		/// </summary>
+		public void On_ObjectUnappended(object sender, ObjectEventArgs e)
+		{
+			if (e.DBObject is Entity entity && ElementLayers.Contains((Layer) Enum.Parse(typeof(Layer), entity.Layer)) && entity.GetSPMObject() is { } obj && Remove(obj))
+				Editor.WriteMessage($"\n{obj.Name} removed");
 		}
 
 		private void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => UpdateConditionsScale(e.OldScale, e.NewScale);
