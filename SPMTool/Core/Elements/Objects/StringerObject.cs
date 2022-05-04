@@ -125,11 +125,9 @@ namespace SPMTool.Core.Elements
 				? (pts[0], pts[1])
 				: (pts[1], pts[0]);
 
-			return
-				new StringerObject(p1, p2, line.Database.BlockTableId)
-				{
-					ObjectId = line.ObjectId
-				};
+			var str = new StringerObject(p1, p2, line.Database.BlockTableId);
+			str.AttachObject(line.ObjectId, line.ExtensionDictionary);
+			return str;
 		}
 
 		/// <summary>

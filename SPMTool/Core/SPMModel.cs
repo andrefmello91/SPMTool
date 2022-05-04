@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.EList;
@@ -12,14 +14,14 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Application;
+using SPMTool.Core.Blocks;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Core.Materials;
 using SPMTool.Enums;
+using SPMTool.Global;
 using UnitsNet;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
-
-#nullable enable
 
 namespace SPMTool.Core
 {
@@ -652,6 +654,34 @@ namespace SPMTool.Core
 		}
 
 		/// <summary>
+		///     Register a <see cref="ObjectErasedEventHandler" /> to these <paramref name="objectIds" />
+		/// </summary>
+		private void RegisterEvents(IEnumerable<ObjectId> objectIds)
+		{
+			if (objectIds.IsNullOrEmpty())
+				return;
+
+			var database = AcadDatabase;
+
+			using var lck = AcadDocument.LockDocument();
+
+			using var trans = database.TransactionManager.StartTransaction();
+
+			foreach (var obj in objectIds.Where(o => o.IsOk()))
+			{
+				using var ent = (Entity?) trans.GetObject(obj, OpenMode.ForWrite);
+
+				if (ent is null)
+					continue;
+
+				ent.Unappended += (sender, _) => On_ObjectModified(sender, new ObjectUnappendedEventArgs());
+				ent.Reappended += (sender, _) => On_ObjectModified(sender, new ObjectReappendedEventArgs());
+			}
+
+			trans.Commit();
+		}
+
+		/// <summary>
 		///     Register events for AutoCAD entities.
 		/// </summary>
 		private void RegisterEventsToEntities()
@@ -665,7 +695,7 @@ namespace SPMTool.Core
 				.ToList();
 
 			// Register event
-			AcadDocument.RegisterErasedEvent(ids, On_ObjectErase);
+			RegisterEvents(ids);
 		}
 
 		/// <summary>
@@ -690,39 +720,6 @@ namespace SPMTool.Core
 			displaySettings.TextScaleChanged      += On_TextScaleChange;
 		}
 
-		/// <summary>
-		///     Event to execute when an object is erased or unerased in a database.
-		/// </summary>
-		public static void On_ObjectErase(object sender, ObjectErasedEventArgs e)
-		{
-			if (sender is not Entity entity || ElementLayers.Contains((Layer) Enum.Parse(typeof(Layer), entity.Layer)) || GetOpenedModel(entity.ObjectId) is not { } model)
-				return;
-
-			switch (e.Erased)
-			{
-				case true when entity.GetSPMObject() is { } obj && model.Remove(obj):
-
-					model.Trash.Add(obj);
-
-					model.Editor.WriteMessage($"\n{obj.Name} removed");
-
-					return;
-
-				case false:
-
-					var obj1 = model.Trash.Find(t => t.ObjectId == entity.ObjectId) ?? entity.CreateSPMObject(model.Settings.Units.Geometry);
-
-					if (!model.Add(obj1))
-						return;
-
-					model.Trash.Remove(obj1);
-
-					model.Editor.WriteMessage($"\n{obj1.Name} re-added");
-
-					return;
-			}
-		}
-
 		private static void On_DocumentClosed(object sender, DocumentCollectionEventArgs e) => OpenedModels.RemoveAll(d => d.Name == e.Document.Name);
 
 		private static void On_DocumentCreated(object sender, DocumentCollectionEventArgs e) => OpenedModels.Add(new SPMModel(e.Document));
@@ -732,16 +729,43 @@ namespace SPMTool.Core
 		/// </summary>
 		public void On_ObjectCopied(object sender, ObjectEventArgs e)
 		{
-			var entity = (Entity) e.DBObject;
-
-			if (entity is null)
-				return;
-
-			var obj = entity.CreateSPMObject(Settings.Units.Geometry);
+			var obj = e.DBObject.CreateSPMObject(Settings.Units.Geometry);
 
 			Add(obj);
 
-			// SPMDocument.Editor.WriteMessage($"\n{obj.GetType()} copied.");
+			Editor.WriteMessage($"\n{obj.GetType()} copied.");
+		}
+
+		/// <summary>
+		///     Event to execute when an object is unappended from database.
+		/// </summary>
+		public void On_ObjectModified(object sender, ObjectModifiedEventArgs e)
+		{
+			if (sender is not Entity entity || !ElementLayers.Contains((Layer) Enum.Parse(typeof(Layer), entity.Layer)))
+				return;
+
+			switch (e.Modification)
+			{
+				case ObjectModification.Unappended when entity.GetSPMObject() is { } obj && Remove(obj):
+					Editor.WriteMessage($"\n{obj.Name} removed");
+					return;
+
+				case ObjectModification.Reappended when entity.CreateSPMObject(Settings.Units.Geometry) is { } obj && Add(obj):
+					Editor.WriteMessage($"\n{obj.Name} re-added");
+					return;
+
+				default:
+					return;
+			}
+		}
+
+		/// <summary>
+		///     Event to execute when an object is reappended to database.
+		/// </summary>
+		public void On_ObjectReappended(object sender, EventArgs e)
+		{
+			if (sender is Entity entity && ElementLayers.Contains((Layer) Enum.Parse(typeof(Layer), entity.Layer)) && entity.CreateSPMObject(Settings.Units.Geometry) is { } obj && Add(obj))
+				Editor.WriteMessage($"\n{obj.Name} reappended");
 		}
 
 		private void On_ConditionScaleChange(object sender, ScaleChangedEventArgs e) => UpdateConditionsScale(e.OldScale, e.NewScale);
@@ -794,7 +818,8 @@ namespace SPMTool.Core
 			Trash.Remove(obj);
 
 			// Add to drawing
-			AcadDocument.AddObject(obj);
+			AcadDocument.AddObject(obj.CreateObject());
+			RegisterEvents(new[] { e.Item.ObjectId });
 		}
 
 		/// <summary>
@@ -829,6 +854,7 @@ namespace SPMTool.Core
 
 			// Add to drawing
 			AcadDocument.AddObjects(objs);
+			RegisterEvents(e.ItemCollection.Where(o => o is not BlockCreator and not StringerForceCreator).Select(o => o.ObjectId));
 		}
 
 		/// <summary>

@@ -107,11 +107,12 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		/// <param name="dbPoint">The <see cref="DBPoint" /> object of the node.</param>
 		/// <param name="unit">The unit for geometry.</param>
-		public static NodeObject From(DBPoint dbPoint, LengthUnit unit) =>
-			new(dbPoint.Position, dbPoint.GetNodeType(), dbPoint.Database.BlockTableId, unit)
-			{
-				ObjectId = dbPoint.ObjectId
-			};
+		public static NodeObject From(DBPoint dbPoint, LengthUnit unit)
+		{
+			var node = new NodeObject(dbPoint.Position, dbPoint.GetNodeType(), dbPoint.Database.BlockTableId, unit);
+			node.AttachObject(dbPoint.ObjectId, dbPoint.ExtensionDictionary);
+			return node;
+		}
 
 		/// <summary>
 		///     Get this object as a <see cref="Node" />.

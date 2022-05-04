@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿#nullable enable
+
+using System.Collections.Generic;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
-#nullable enable
 
 namespace SPMTool.Core
 {
@@ -58,7 +59,8 @@ namespace SPMTool.Core
 		///     Attach an <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> to this object.
 		/// </summary>
 		/// <param name="objectId">The <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> to attach.</param>
-		public void AttachObject(ObjectId objectId)
+		/// <param name="dictionaryId">The extended dictionary ID, if existent.</param>
+		public void AttachObject(ObjectId objectId, ObjectId? dictionaryId = null)
 		{
 			if (objectId.IsNull)
 				return;
@@ -67,7 +69,9 @@ namespace SPMTool.Core
 			_objectId = objectId;
 
 			// Set dictionary id
-			DictionaryId = objectId.GetExtendedDictionaryId();
+			DictionaryId = dictionaryId is { } dictId && dictId.IsOk()
+				? dictionaryId.Value
+				: objectId.GetExtendedDictionaryId();
 
 			if (DictionaryId.IsNull)
 				SetProperties();

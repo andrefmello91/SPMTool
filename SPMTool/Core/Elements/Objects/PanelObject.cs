@@ -141,11 +141,12 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		/// <param name="solid">The <see cref="Solid" /> object of the stringer.</param>
 		/// <param name="unit">The unit for geometry.</param>
-		public static PanelObject From(Solid solid, LengthUnit unit) =>
-			new(solid.GetVertices().ToArray(), solid.Database.BlockTableId, unit)
-			{
-				ObjectId = solid.ObjectId
-			};
+		public static PanelObject From(Solid solid, LengthUnit unit)
+		{
+			var pnl = new PanelObject(solid.GetVertices().ToArray(), solid.Database.BlockTableId, unit);
+			pnl.AttachObject(solid.ObjectId, solid.ExtensionDictionary);
+			return pnl;
+		}
 
 		/// <summary>
 		///     Calculate the scale factor for block insertion.

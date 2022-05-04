@@ -74,11 +74,9 @@ namespace SPMTool.Core.Conditions
 		{
 			var position = reference.Position.ToPoint(unit);
 
-			return
-				new ForceObject(position, PlaneForce.Zero, reference.ObjectId.Database.BlockTableId)
-				{
-					ObjectId = reference.ObjectId
-				};
+			var force = new ForceObject(position, PlaneForce.Zero, reference.ObjectId.Database.BlockTableId);
+			force.AttachObject(reference.ObjectId, reference.ExtensionDictionary);
+			return force;
 		}
 
 		public override DBObject CreateObject()

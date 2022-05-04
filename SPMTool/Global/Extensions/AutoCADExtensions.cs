@@ -1,6 +1,7 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.Extensions;
 using Autodesk.AutoCAD.ApplicationServices;
@@ -9,8 +10,6 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
-
-#nullable enable
 
 namespace SPMTool
 {
@@ -24,8 +23,7 @@ namespace SPMTool
 		/// </summary>
 		/// <param name="document">The document to add the object.</param>
 		/// <param name="dbObject">The <see cref="Entity" />.</param>
-		/// <param name="erasedEvent">The event to call if <paramref name="dbObject" /> is erased.</param>
-		public static ObjectId AddObject(this Document document, DBObject? dbObject, ObjectErasedEventHandler? erasedEvent = null)
+		public static ObjectId AddObject(this Document document, DBObject? dbObject)
 		{
 			if (dbObject is null)
 				return ObjectId.Null;
@@ -46,9 +44,6 @@ namespace SPMTool
 			blkTblRec.AppendEntity(entity);
 			trans.AddNewlyCreatedDBObject(entity, true);
 
-			if (erasedEvent != null)
-				dbObject.Erased += erasedEvent;
-
 			// Commit changes
 			trans.Commit();
 
@@ -62,9 +57,10 @@ namespace SPMTool
 		/// </summary>
 		/// <param name="document">The document to add the object.</param>
 		/// <param name="dbObjects">The collection of objects to add to drawing.</param>
-		/// <param name="erasedEvent">The event to call if <paramref name="dbObjects" /> are erased.</param>
-		public static IEnumerable<ObjectId> AddObjects(this Document document, [NotNull] IEnumerable<DBObject?> dbObjects, ObjectErasedEventHandler? erasedEvent = null)
+		/// <param name="eventHandlers">The collection of events to call if <paramref name="dbObjects" /> are modified.</param>
+		public static IEnumerable<ObjectId> AddObjects(this Document document, IEnumerable<DBObject?> dbObjects)
 		{
+
 			// Start a transaction
 			using var lck   = document.LockDocument();
 			using var trans = document.Database.TransactionManager.StartTransaction();
@@ -85,9 +81,6 @@ namespace SPMTool
 				{
 					blkTblRec.AppendEntity(ent);
 					trans.AddNewlyCreatedDBObject(ent, true);
-
-					if (erasedEvent != null)
-						ent.Erased += erasedEvent;
 				}
 
 				list.Add(ent?.ObjectId ?? ObjectId.Null);
@@ -105,7 +98,7 @@ namespace SPMTool
 		/// <param name="document">The document to add the objects.</param>
 		/// <param name="groupEntities">The collection of <see cref="Entity" />'s that form the group.</param>
 		/// <param name="groupName">The <see cref="Group" />.</param>
-		/// <inheritdoc cref="AddObject" />
+		/// <inheritdoc cref="AddObject"/>
 		public static ObjectId AddObjectsAsGroup(this Document document, IEnumerable<Entity> groupEntities, string groupName)
 		{
 			using var lck   = document.LockDocument();
@@ -590,7 +583,7 @@ namespace SPMTool
 		/// <returns>
 		///     True if <paramref name="objectId" /> is valid, not null and not erased.
 		/// </returns>
-		public static bool IsOk(this ObjectId objectId) => objectId != ObjectId.Null || !objectId.IsValid || !objectId.IsErased;
+		public static bool IsOk(this ObjectId objectId) => objectId != ObjectId.Null || objectId.IsValid;
 
 		/// <summary>
 		///     Returns true if this <paramref name="solid" /> is rectangular.
@@ -690,34 +683,6 @@ namespace SPMTool
 		///     Return this collection of <see cref="Solid" />'s ordered in ascending Y then ascending X center point coordinates.
 		/// </summary>
 		public static IEnumerable<Solid> Order(this IEnumerable<Solid> solids) => solids.OrderBy(s => s.CenterPoint().Y).ThenBy(s => s.CenterPoint().X);
-
-		/// <summary>
-		///     Register a <see cref="ObjectErasedEventHandler" /> to these <paramref name="objectIds" />
-		/// </summary>
-		/// <param name="handler"> The <see cref="ObjectErasedEventHandler" /> to add.</param>
-		public static void RegisterErasedEvent(this Document document, IEnumerable<ObjectId> objectIds, ObjectErasedEventHandler handler)
-		{
-			if (objectIds.IsNullOrEmpty())
-				return;
-
-			var database = document.Database;
-
-			using var lck = document.LockDocument();
-
-			using var trans = database.TransactionManager.StartTransaction();
-
-			foreach (var obj in objectIds.Where(o => o.IsOk()))
-			{
-				using var ent = (Entity?) trans.GetObject(obj, OpenMode.ForWrite);
-
-				if (ent is null)
-					continue;
-
-				ent.Erased += handler;
-			}
-
-			trans.Commit();
-		}
 
 		/// <summary>
 		///     Set a collection of <see cref="TypedValue" /> from a <see cref="DBDictionary" />'s <see cref="ObjectId" />.

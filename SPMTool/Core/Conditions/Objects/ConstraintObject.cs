@@ -66,11 +66,9 @@ namespace SPMTool.Core.Conditions
 		{
 			var position = reference.Position.ToPoint(unit);
 
-			return
-				new ConstraintObject(position, Constraint.Free, reference.ObjectId.Database.BlockTableId)
-				{
-					ObjectId = reference.ObjectId
-				};
+			var constraint = new ConstraintObject(position, Constraint.Free, reference.ObjectId.Database.BlockTableId);
+			constraint.AttachObject(reference.ObjectId, reference.ExtensionDictionary);
+			return constraint;
 		}
 
 		protected override void GetProperties()

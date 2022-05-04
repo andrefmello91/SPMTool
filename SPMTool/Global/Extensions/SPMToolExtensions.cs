@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.Extensions;
@@ -18,7 +20,6 @@ using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using UnitsNet;
 using UnitsNet.Units;
-#nullable enable
 
 namespace SPMTool
 {
@@ -43,7 +44,7 @@ namespace SPMTool
 					return;
 
 				case ForceObject force:
-					force.ObjectId = document.AddObject(force.CreateObject(), SPMModel.On_ObjectErase);
+					force.ObjectId = document.AddObject(force.CreateObject());
 					force.SetAttributes();
 					break;
 
@@ -57,7 +58,7 @@ namespace SPMTool
 					break;
 
 				default:
-					obj.ObjectId = document.AddObject(obj.CreateObject(), SPMModel.On_ObjectErase);
+					obj.ObjectId = document.AddObject(obj.CreateObject());
 					return;
 			}
 		}
@@ -83,7 +84,7 @@ namespace SPMTool
 				.ToList();
 
 			// Add objects to drawing
-			var objIds = document.AddObjects(entities, SPMModel.On_ObjectErase)!.ToList();
+			var objIds = document.AddObjects(entities).ToList();
 
 			// Set object ids
 			for (var i = 0; i < objs.Count; i++)
@@ -190,7 +191,7 @@ namespace SPMTool
 			if (element is null)
 				return;
 
-			document.EraseObject(element.ObjectId, SPMModel.On_ObjectErase);
+			document.EraseObject(element.ObjectId);
 		}
 
 		/// <summary>
@@ -210,7 +211,7 @@ namespace SPMTool
 		/// </summary>
 		/// <param name="elements">The objects to remove.</param>
 		public static void EraseObjects<TDbObjectCreator>(this Document document, IEnumerable<TDbObjectCreator?>? elements)
-			where TDbObjectCreator : IDBObjectCreator => document.EraseObjects(elements?.Where(e => e is not null).Select(e => e!.ObjectId), SPMModel.On_ObjectErase);
+			where TDbObjectCreator : IDBObjectCreator => document.EraseObjects(elements?.Where(e => e is not null).Select(e => e!.ObjectId));
 
 		/// <summary>
 		///     Get the <see cref="Vector3d" /> associated to this <paramref name="axis" />.
