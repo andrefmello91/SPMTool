@@ -14,7 +14,6 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Application;
-using SPMTool.Core.Blocks;
 using SPMTool.Core.Conditions;
 using SPMTool.Core.Elements;
 using SPMTool.Core.Materials;
@@ -657,9 +656,10 @@ namespace SPMTool.Core
 
 		private void RegisterDatabaseEvents()
 		{
-			AcadDatabase.ObjectErased     += On_ObjectErased;
-			AcadDatabase.ObjectUnappended += On_ObjectUnappended;
-			AcadDatabase.ObjectReappended += On_ObjectReappended;
+			AcadDatabase.ObjectErased += On_ObjectErased;
+
+			// AcadDatabase.ObjectUnappended += On_ObjectUnappended;
+			// AcadDatabase.ObjectReappended += On_ObjectReappended;
 		}
 
 		/// <summary>
@@ -755,11 +755,13 @@ namespace SPMTool.Core
 
 			switch (e.Erased)
 			{
-				case true when entity.GetSPMObject() is { } obj && Remove(obj):
+				case true when GetSPMObject(entity) is { } obj && Remove(obj):
+					Trash.Add(obj);
 					Editor.WriteMessage($"\n{obj.Name} removed");
 					return;
 
-				case false when entity.CreateSPMObject(Settings.Units.Geometry) is { } obj && Add(obj):
+				case false when (Trash.Find(t => t.ObjectId == entity.ObjectId) ?? entity.CreateSPMObject(Settings.Units.Geometry)) is { } obj && Add(obj):
+					Trash.Remove(obj);
 					Editor.WriteMessage($"\n{obj.Name} re-added");
 					return;
 
@@ -868,8 +870,9 @@ namespace SPMTool.Core
 			Trash.Remove(obj);
 
 			// Add to drawing
-			AcadDocument.AddObject(obj.CreateObject());
-			RegisterEvents(new[] { e.Item.ObjectId });
+			obj.AddToDrawing(AcadDocument);
+
+			// RegisterEvents(new[] { e.Item.ObjectId });
 		}
 
 		/// <summary>
@@ -904,7 +907,8 @@ namespace SPMTool.Core
 
 			// Add to drawing
 			AcadDocument.AddObjects(objs);
-			RegisterEvents(e.ItemCollection.Where(o => o is not BlockCreator and not StringerForceCreator).Select(o => o.ObjectId));
+
+			// RegisterEvents(e.ItemCollection.Where(o => o is not BlockCreator and not StringerForceCreator).Select(o => o.ObjectId));
 		}
 
 		/// <summary>

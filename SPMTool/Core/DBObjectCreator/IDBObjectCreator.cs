@@ -1,6 +1,8 @@
-﻿using Autodesk.AutoCAD.DatabaseServices;
+﻿#nullable enable
+
+using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
-#nullable enable
 
 namespace SPMTool.Core
 {
@@ -35,6 +37,12 @@ namespace SPMTool.Core
 		#endregion
 
 		#region Methods
+
+		/// <summary>
+		///     Add this object to drawing and set its <see cref="ObjectId" />.
+		/// </summary>
+		/// <param name="document">The autocad document.</param>
+		void AddToDrawing(Document? document = null);
 
 		/// <summary>
 		///     Create a <see cref="DBObject" /> based in this object's properties.

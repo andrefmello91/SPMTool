@@ -28,6 +28,7 @@ namespace SPMTool
 
 		#region Methods
 
+		/*
 		/// <summary>
 		///     Add an object to drawing and set its <see cref="ObjectId" />.
 		/// </summary>
@@ -62,6 +63,7 @@ namespace SPMTool
 					return;
 			}
 		}
+		*/
 
 		/// <summary>
 		///     Add a collection of objects to drawing and set their <see cref="ObjectId" />.

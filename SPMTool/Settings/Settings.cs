@@ -1,11 +1,13 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿#nullable enable
+
+using System.Diagnostics.CodeAnalysis;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Core;
 using SPMTool.Enums;
 using UnitsNet.Units;
-#nullable enable
+using Document = Autodesk.AutoCAD.ApplicationServices.Document;
 
 namespace SPMTool.Application
 {
@@ -107,6 +109,12 @@ namespace SPMTool.Application
 		#endregion
 
 		#region Methods
+
+		/// <inheritdoc />
+		public override void AddToDrawing(Document? document = null)
+		{
+			// Do nothing
+		}
 
 		/// <inheritdoc />
 		public override DBObject CreateObject() => new Xrecord

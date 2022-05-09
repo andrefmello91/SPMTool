@@ -1,10 +1,13 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Attributes;
 using SPMTool.Enums;
-#nullable enable
+using AcadApplication = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Core.Blocks
 {
@@ -117,6 +120,15 @@ namespace SPMTool.Core.Blocks
 		///     Set attributes to block.
 		/// </summary>
 		public void SetAttributes() => ObjectId.SetBlockAttributes(Attributes);
+
+		/// <inheritdoc />
+		public void AddToDrawing(Document? document = null)
+		{
+			document ??= AcadApplication.DocumentManager.MdiActiveDocument;
+			var obj = CreateObject();
+			ObjectId = document.AddObject(obj);
+			SetAttributes();
+		}
 
 		/// <inheritdoc />
 		public virtual BlockReference CreateObject()

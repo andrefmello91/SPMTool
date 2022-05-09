@@ -1,13 +1,16 @@
-﻿using System.Collections.Generic;
+﻿#nullable enable
+
+using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
 using andrefmello91.SPMElements.StringerProperties;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Application;
 using SPMTool.Enums;
 using UnitsNet;
-#nullable enable
+using AcadApplication = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Core.Blocks
 {
@@ -279,6 +282,13 @@ namespace SPMTool.Core.Blocks
 				: new[] { PureTensionOrCompression(_geometry, (_n1, _n2), _maxForce, BlockTableId) };
 
 			return entities.Concat(GetTexts(_geometry, (_n1, _n2), _maxForce, _textHeight, BlockTableId));
+		}
+
+		/// <inheritdoc />
+		public void AddToDrawing(Document? document = null)
+		{
+			document ??= AcadApplication.DocumentManager.MdiActiveDocument;
+			ObjectId =   document.AddObjectsAsGroup(CreateDiagram().ToArray(), Name);
 		}
 
 		/// <inheritdoc />

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using andrefmello91.Extensions;
 using andrefmello91.OnPlaneComponents;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using MathNet.Numerics;
@@ -77,6 +78,13 @@ namespace SPMTool.Core.Conditions
 			var force = new ForceObject(position, PlaneForce.Zero, reference.ObjectId.Database.BlockTableId);
 			force.AttachObject(reference.ObjectId, reference.ExtensionDictionary);
 			return force;
+		}
+
+		/// <inheritdoc />
+		public override void AddToDrawing(Document? document = null)
+		{
+			base.AddToDrawing(document);
+			SetAttributes();
 		}
 
 		public override DBObject CreateObject()

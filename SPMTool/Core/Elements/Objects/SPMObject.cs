@@ -1,8 +1,11 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-#nullable enable
+using AcadApplication = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace SPMTool.Core.Elements
 {
@@ -101,6 +104,15 @@ namespace SPMTool.Core.Elements
 		public int CompareTo(SPMObject<TProperty>? other) => other is null || other.GetType() != GetType()
 			? 0
 			: PropertyField.CompareTo(other.PropertyField);
+
+		/// <inheritdoc />
+		public override void AddToDrawing(Document? document = null)
+		{
+			document ??= AcadApplication.DocumentManager.MdiActiveDocument;
+			var obj = CreateObject();
+			var id  = document.AddObject(obj);
+			AttachObject(id, obj.ExtensionDictionary);
+		}
 
 		/// <inheritdoc />
 		Entity IDBObjectCreator<Entity>.CreateObject() => (Entity) CreateObject();

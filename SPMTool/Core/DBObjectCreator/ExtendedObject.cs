@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System.Collections.Generic;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using SPMTool.Enums;
 
@@ -15,6 +16,7 @@ namespace SPMTool.Core
 		#region Fields
 
 		protected ObjectId _objectId = ObjectId.Null;
+		private ObjectId _dictionaryId = ObjectId.Null;
 
 		#endregion
 
@@ -23,7 +25,23 @@ namespace SPMTool.Core
 		/// <summary>
 		///     Get/set the <see cref="Autodesk.AutoCAD.DatabaseServices.ObjectId" /> of this object's extended dictionary.
 		/// </summary>
-		public ObjectId DictionaryId { get; protected set; } = ObjectId.Null;
+		public ObjectId DictionaryId
+		{
+			get => _dictionaryId;
+			protected set
+			{
+				if (value == _dictionaryId)
+					return;
+
+				// Set dictionary id
+				_dictionaryId = value;
+
+				if (value.IsNull)
+					SetProperties();
+				else
+					GetProperties();
+			}
+		}
 
 		/// <inheritdoc />
 		public ObjectId BlockTableId { get; set; }
@@ -70,13 +88,8 @@ namespace SPMTool.Core
 
 			// Set dictionary id
 			DictionaryId = dictionaryId is { } dictId && dictId.IsOk()
-				? dictionaryId.Value
+				? dictId
 				: objectId.GetExtendedDictionaryId();
-
-			if (DictionaryId.IsNull)
-				SetProperties();
-			else
-				GetProperties();
 		}
 
 		/// <summary>
@@ -115,6 +128,9 @@ namespace SPMTool.Core
 		///     True if properties were successfully set to object dictionary.
 		/// </returns>
 		protected abstract void SetProperties();
+
+		/// <inheritdoc />
+		public abstract void AddToDrawing(Document? document = null);
 
 		/// <inheritdoc />
 		public abstract DBObject CreateObject();
