@@ -56,7 +56,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the geometry of this object.
 		/// </summary>
-		public PanelGeometry Geometry => PropertyField;
+		public PanelGeometry Geometry => Property;
 
 		/// <summary>
 		///     Get the <see cref="WebReinforcement" />.
@@ -77,18 +77,14 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get panel's <see cref="andrefmello91.SPMElements.PanelProperties.Vertices" />
 		/// </summary>
-		public Vertices Vertices
-		{
-			get => Geometry.Vertices;
-			set => PropertyField = new PanelGeometry(value, Width);
-		}
+		public Vertices Vertices => Geometry.Vertices;
 
 		/// <summary>
 		///     Get the geometry.
 		/// </summary>
 		public Length Width
 		{
-			get => Geometry.Width;
+			get => PropertyField.Width;
 			set => SetWidth(value);
 		}
 
@@ -252,6 +248,21 @@ namespace SPMTool.Core.Elements
 
 			if (GetReinforcement(Axis.Y) is { } yReinforcement)
 				_y = yReinforcement;
+		}
+
+		/// <inheritdoc />
+		protected override bool PropertyChanged(out PanelGeometry? newProperty)
+		{
+			switch (ObjectId.Database.GetObject(ObjectId))
+			{
+				case Solid solid when Vertices.From(solid.GetVertices().ToPoints(PropertyField.Unit)) is var vertices && vertices != PropertyField.Vertices:
+					newProperty = new PanelGeometry(vertices, PropertyField.Width);
+					return true;
+
+				default:
+					newProperty = null;
+					return false;
+			}
 		}
 
 		protected override void SetProperties()

@@ -39,18 +39,14 @@ namespace SPMTool.Core.Elements
 		/// </summary>
 		public CrossSection CrossSection
 		{
-			get => Geometry.CrossSection;
+			get => PropertyField.CrossSection;
 			set => SetCrossSection(value);
 		}
 
 		/// <summary>
 		///     Get the geometry of this object.
 		/// </summary>
-		public StringerGeometry Geometry
-		{
-			get => PropertyField;
-			set => PropertyField = new StringerGeometry(value.InitialPoint, value.EndPoint, CrossSection);
-		}
+		public StringerGeometry Geometry => Property;
 
 		/// <summary>
 		///     Get the absolute maximum force at the associated <see cref="Stringer" />.
@@ -209,6 +205,21 @@ namespace SPMTool.Core.Elements
 
 			if (GetReinforcement() is { } reinforcement)
 				_reinforcement = reinforcement;
+		}
+
+		/// <inheritdoc />
+		protected override bool PropertyChanged(out StringerGeometry? newProperty)
+		{
+			switch (ObjectId.Database.GetObject(ObjectId))
+			{
+				case Line line when new StringerGeometry(line.StartPoint.ToPoint(PropertyField.Unit), line.EndPoint.ToPoint(PropertyField.Unit), CrossSection) is var geometry && geometry != PropertyField:
+					newProperty = geometry;
+					return true;
+
+				default:
+					newProperty = null;
+					return false;
+			}
 		}
 
 		protected override void SetProperties()

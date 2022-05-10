@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using andrefmello91.Extensions;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.ApplicationServices;
@@ -46,7 +47,7 @@ namespace SPMTool.Core.Elements
 	/// </summary>
 	/// <typeparam name="TProperty">The type that represents the main property of the object.</typeparam>
 	public abstract class SPMObject<TProperty> : ExtendedObject, ISPMObject, IDBObjectCreator<Entity>, IEquatable<SPMObject<TProperty>>, IComparable<SPMObject<TProperty>>
-		where TProperty : IComparable<TProperty>, IEquatable<TProperty>
+		where TProperty : struct, IComparable<TProperty>, IEquatable<TProperty>
 	{
 
 		#region Fields
@@ -63,7 +64,16 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     The main property of this object.
 		/// </summary>
-		public TProperty Property => PropertyField;
+		public TProperty Property
+		{
+			get
+			{
+				if (PropertyChanged(out var newProperty))
+					PropertyField = newProperty.Value;
+
+				return PropertyField;
+			}
+		}
 
 		public int Number { get; set; } = 0;
 
@@ -100,6 +110,15 @@ namespace SPMTool.Core.Elements
 		public override int GetHashCode() => PropertyField.GetHashCode();
 
 		public override string ToString() => GetElement()?.ToString() ?? "Null element";
+
+		/// <summary>
+		///     Check if the property changed in the drawing.
+		/// </summary>
+		/// <returns>
+		///     True if the property changed.
+		/// </returns>
+		/// <param name="newProperty">The property that has changed. Can be null if not changed.</param>
+		protected abstract bool PropertyChanged([NotNullWhen(true)] out TProperty? newProperty);
 
 		public int CompareTo(SPMObject<TProperty>? other) => other is null || other.GetType() != GetType()
 			? 0

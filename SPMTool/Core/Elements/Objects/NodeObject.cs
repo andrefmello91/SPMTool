@@ -62,11 +62,7 @@ namespace SPMTool.Core.Elements
 		/// <summary>
 		///     Get the position.
 		/// </summary>
-		public Point Position
-		{
-			get => PropertyField;
-			set => PropertyField = value;
-		}
+		public Point Position => Property;
 
 		/// <summary>
 		///     Get the node type.
@@ -140,6 +136,21 @@ namespace SPMTool.Core.Elements
 		public override string ToString() => _node?.ToString() ?? base.ToString();
 
 		protected override void GetProperties() => _displacement = GetDisplacement() ?? PlaneDisplacement.Zero;
+
+		/// <inheritdoc />
+		protected override bool PropertyChanged(out Point? newProperty)
+		{
+			switch (ObjectId.Database.GetObject(ObjectId))
+			{
+				case DBPoint node when node.Position.ToPoint(PropertyField.Unit) is var position && position != PropertyField:
+					newProperty = position;
+					return true;
+
+				default:
+					newProperty = null;
+					return false;
+			}
+		}
 
 		protected override void SetProperties() => SetDisplacement(_displacement);
 

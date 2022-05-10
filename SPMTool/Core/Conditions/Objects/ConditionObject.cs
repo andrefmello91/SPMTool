@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using andrefmello91.OnPlaneComponents;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -51,6 +52,12 @@ namespace SPMTool.Core.Conditions
 		where TValue : IEquatable<TValue>
 	{
 
+		#region Fields
+
+		private Point _position;
+
+		#endregion
+
 		#region Properties
 
 		/// <summary>
@@ -62,7 +69,16 @@ namespace SPMTool.Core.Conditions
 
 		public abstract ComponentDirection Direction { get; }
 
-		public Point Position { get; }
+		public Point Position
+		{
+			get
+			{
+				if (PositionChanged(out var newPosition))
+					_position = newPosition.Value;
+
+				return _position;
+			}
+		}
 
 		public virtual TValue Value { get; protected set; }
 
@@ -83,8 +99,8 @@ namespace SPMTool.Core.Conditions
 		protected ConditionObject(Point position, TValue value, ObjectId blockTableId)
 			: base(blockTableId)
 		{
-			Position = position;
-			Value    = value;
+			_position = position;
+			Value     = value;
 		}
 
 		#endregion
@@ -98,6 +114,27 @@ namespace SPMTool.Core.Conditions
 		public override int GetHashCode() => Value.GetHashCode();
 
 		public override string ToString() => Value.ToString();
+
+		/// <summary>
+		///     Check if the position changed in the drawing.
+		/// </summary>
+		/// <returns>
+		///     True if the position changed.
+		/// </returns>
+		/// <param name="newPosition">The position that has changed. Can be null if not changed.</param>
+		protected bool PositionChanged([NotNullWhen(true)] out Point? newPosition)
+		{
+			switch (ObjectId.Database.GetObject(ObjectId))
+			{
+				case BlockReference block when block.Position.ToPoint(_position.Unit) is var position && position != _position:
+					newPosition = position;
+					return true;
+
+				default:
+					newPosition = null;
+					return false;
+			}
+		}
 
 		public int CompareTo(ConditionObject<TValue>? other) => other is null
 			? 0

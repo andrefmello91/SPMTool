@@ -1,10 +1,11 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using andrefmello91.FEMAnalysis;
 using Autodesk.AutoCAD.DatabaseServices;
-#nullable enable
 
 namespace SPMTool.Core.Elements
 {
@@ -15,7 +16,7 @@ namespace SPMTool.Core.Elements
 	/// <typeparam name="TProperty">The type that represents the main property of the object.</typeparam>
 	public abstract class SPMObjectList<TSPMObject, TProperty> : DBObjectCreatorList<TSPMObject>
 		where TSPMObject : SPMObject<TProperty>, IDBObjectCreator, IEquatable<TSPMObject>, IComparable<TSPMObject>
-		where TProperty : IComparable<TProperty>, IEquatable<TProperty>
+		where TProperty : struct, IComparable<TProperty>, IEquatable<TProperty>
 	{
 
 		#region Properties
