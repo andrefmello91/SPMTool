@@ -114,7 +114,7 @@ namespace SPMTool.Core.Elements
 		///     Get this object as a <see cref="Node" />.
 		/// </summary>
 		public override INumberedElement GetElement() =>
-			_node = new Node(Position, Type, GetOpenedModel(BlockTableId)?.Settings.Units.Displacements ?? LengthUnit.Millimeter)
+			_node = new Node(PropertyField, Type, GetOpenedModel(BlockTableId)?.Settings.Units.Displacements ?? LengthUnit.Millimeter)
 			{
 				Number = Number,
 

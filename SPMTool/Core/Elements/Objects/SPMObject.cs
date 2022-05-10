@@ -68,8 +68,13 @@ namespace SPMTool.Core.Elements
 		{
 			get
 			{
-				if (PropertyChanged(out var newProperty))
-					PropertyField = newProperty.Value;
+				if (!PropertyChanged(out var newProperty))
+					return PropertyField;
+
+				PropertyField = newProperty.Value;
+
+				// Update element
+				GetElement();
 
 				return PropertyField;
 			}
