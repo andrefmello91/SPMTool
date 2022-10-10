@@ -30,7 +30,7 @@ namespace SPMTool.Application.UserInterface
 		/// <summary>
 		///     SPMTool current version.
 		/// </summary>
-		public const string SPMToolVersion = "1.0.0";
+		public const string SPMToolVersion = "1.0.1";
 
 		/// <summary>
 		///     Icons for user interface.
