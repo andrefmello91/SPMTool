@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using andrefmello91.Extensions;
-using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Runtime;
 using SPMTool.Application.UserInterface;
 using SPMTool.Core.Elements;
@@ -27,11 +26,9 @@ namespace SPMTool.Commands
 			// Get model and database
 			var model    = ActiveModel;
 			var database = model.AcadDatabase;
-			var unit     = model.Settings.Units.Geometry;
 
 			// Create auxiliary points on panel centers
-			var pts = model.Panels.Select(p => new DBPoint(p.Vertices.CenterPoint.ToPoint3d(unit)) { Layer = $"{Layer.PanelCenter}" }).ToList();
-			model.AcadDocument.AddObjects(pts);
+			using var auxPts = PanelAuxiliaryPoints.Create(model);
 
 			// Get the entity for read
 			var ent = database.GetEntity("Select an element to copy properties:", new[] { Layer.Stringer, Layer.Panel, Layer.PanelCenter });
@@ -54,7 +51,7 @@ namespace SPMTool.Commands
 			var op = model.Editor.GetKeyword("Select properties to copy:", options, options[0]);
 
 			if (op.IsNullOrEmpty())
-				goto Finish;
+				return;
 
 			switch (element)
 			{
@@ -63,7 +60,7 @@ namespace SPMTool.Commands
 					var strs = database.GetStringers("Select the stringers to assign properties (you can select other elements, the properties will be only applied to stringers)")?.ToArray();
 
 					if (strs.IsNullOrEmpty())
-						goto Finish;
+						return;
 
 					// Get the elements
 					var stringers = ActiveModel.Stringers[strs.GetObjectIds()!].ToList();
@@ -77,14 +74,14 @@ namespace SPMTool.Commands
 							stringer.Reinforcement = baseStringer.Reinforcement?.Clone();
 					}
 
-					goto Finish;
+					return;
 
 				case PanelObject basePanel:
 					// Get other panels
 					var pnls = database.GetPanels("Select the panels to assign properties (you can select other elements, the properties will be only applied to panels)")?.ToArray();
 
 					if (pnls.IsNullOrEmpty())
-						goto Finish;
+						return;
 
 					// Get the elements
 					var panels = model.Panels[pnls.GetObjectIds()!].ToArray();
@@ -98,12 +95,8 @@ namespace SPMTool.Commands
 							panel.Reinforcement = basePanel.Reinforcement?.Clone();
 					}
 
-					goto Finish;
+					return;
 			}
-
-			// Remove panel auxiliary points
-			Finish:
-			model.AcadDocument.EraseObjects(Layer.PanelCenter);
 		}
 
 		[CommandMethod(Command.DividePanel)]

@@ -8,6 +8,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using SPMTool.Core;
+using SPMTool.Core.Elements;
 using SPMTool.Enums;
 using UnitsNet.Units;
 using static Autodesk.AutoCAD.ApplicationServices.Core.Application;
@@ -308,8 +309,7 @@ namespace SPMTool
 			var layers = new[] { Layer.Panel, Layer.PanelCenter };
 
 			// Create auxiliary points on panel centers
-			var auxPts = model.Panels.Select(p => new DBPoint(p.Vertices.CenterPoint.ToPoint3d(unit)) { Layer = $"{Layer.PanelCenter}" }).ToList();
-			model.AcadDocument.AddObjects(auxPts);
+			using var auxPts = PanelAuxiliaryPoints.Create(model);
 
 			// Create an infinite loop for selecting elements
 			while (true)
@@ -346,9 +346,6 @@ namespace SPMTool
 
 				ShowAlertDialog("Please select at least one panel.");
 			}
-
-			// Remove panel auxiliary points
-			model.AcadDocument.EraseObjects(Layer.PanelCenter);
 
 			return pnls;
 		}
