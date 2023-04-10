@@ -1,0 +1,21 @@
+[submodule "Submodules/SPMElements"]
+	path = Submodules/SPMElements
+	url = https://github.com/andrefmello91/SPMElements.git
+[submodule "Submodules/Material"]
+	path = Submodules/Material
+	url = https://github.com/andrefmello91/Material.git
+[submodule "Submodules/Reinforced-Concrete-Membrane"]
+	path = Submodules/Reinforced-Concrete-Membrane
+	url = https://github.com/andrefmello91/Reinforced-Concrete-Membrane.git
+[submodule "Submodules/EList"]
+	path = Submodules/EList
+	url = https://github.com/andrefmello91/EList.git
+[submodule "Submodules/FEM-Analysis"]
+	path = Submodules/FEM-Analysis
+	url = https://github.com/andrefmello91/FEM-Analysis.git
+[submodule "Submodules/Extensions"]
+	path = Submodules/Extensions
+	url = https://github.com/andrefmello91/Extensions.git
+[submodule "Submodules/On-Plane-Components"]
+	path = Submodules/On-Plane-Components
+	url = https://github.com/andrefmello91/On-Plane-Components.git
