@@ -363,31 +363,31 @@
         <None Include="Resources\viewstringer_large_light.png"/>
     </ItemGroup>
     <ItemGroup Condition=" '$(Configuration)' == 'Debug'">
-        <ProjectReference Include="..\..\EList\andrefmello91.EList\andrefmello91.EList.csproj">
+        <ProjectReference Include="Submodules\EList\andrefmello91.EList\andrefmello91.EList.csproj">
             <Project>{0b69ed8e-7933-4d5d-984c-43f585694ad1}</Project>
             <Name>andrefmello91.EList</Name>
         </ProjectReference>
-        <ProjectReference Include="..\..\Extensions\andrefmello91.Extensions\andrefmello91.Extensions.csproj">
+        <ProjectReference Include="Submodules\Extensions\andrefmello91.Extensions\andrefmello91.Extensions.csproj">
             <Project>{f853ef6c-0b69-449d-96af-e74bb0d66b6f}</Project>
             <Name>andrefmello91.Extensions</Name>
         </ProjectReference>
-        <ProjectReference Include="..\..\FEM-Analysis\andrefmello91.FEMAnalysis\andrefmello91.FEMAnalysis.csproj">
+        <ProjectReference Include="Submodules\FEM-Analysis\andrefmello91.FEMAnalysis\andrefmello91.FEMAnalysis.csproj">
             <Project>{11ff8a9f-3315-47ff-a437-44fa658492e8}</Project>
             <Name>andrefmello91.FEMAnalysis</Name>
         </ProjectReference>
-        <ProjectReference Include="..\..\Material\andrefmello91.Material\andrefmello91.Material.csproj">
+        <ProjectReference Include="Submodules\Material\andrefmello91.Material\andrefmello91.Material.csproj">
             <Project>{f0b8f7d7-72b6-48f5-9a31-0de7c73c2ccb}</Project>
             <Name>andrefmello91.Material</Name>
         </ProjectReference>
-        <ProjectReference Include="..\..\On-Plane-Components\andrefmello91.OnPlaneComponents\andrefmello91.OnPlaneComponents.csproj">
+        <ProjectReference Include="Submodules\On-Plane-Components\andrefmello91.OnPlaneComponents\andrefmello91.OnPlaneComponents.csproj">
             <Project>{a1516fa1-cbf1-4297-8846-ebb8e3d39670}</Project>
             <Name>andrefmello91.OnPlaneComponents</Name>
         </ProjectReference>
-        <ProjectReference Include="..\..\Reinforced-Concrete-Membrane\andrefmello91.ReinforcedConcreteMembrane\andrefmello91.ReinforcedConcreteMembrane.csproj">
+        <ProjectReference Include="Submodules\Reinforced-Concrete-Membrane\andrefmello91.ReinforcedConcreteMembrane\andrefmello91.ReinforcedConcreteMembrane.csproj">
             <Project>{50c9f779-81ba-4c52-9876-da52aac4325d}</Project>
             <Name>andrefmello91.ReinforcedConcreteMembrane</Name>
         </ProjectReference>
-        <ProjectReference Include="..\..\SPMElements\andrefmello91.SPMElements\andrefmello91.SPMElements.csproj">
+        <ProjectReference Include="Submodules\SPMElements\andrefmello91.SPMElements\andrefmello91.SPMElements.csproj">
             <Project>{47286cce-9482-4c49-ba2f-279f42ca3fac}</Project>
             <Name>andrefmello91.SPMElements</Name>
         </ProjectReference>
